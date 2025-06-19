@@ -1,12 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Check, Star, ArrowRight, Crown, Zap, Shield, Award, Phone, MessageCircle } from "lucide-react";
+import { ArrowRight, Crown, Phone, MessageCircle } from "lucide-react";
 import { AssessmentForm } from "@/components/assessment/AssessmentForm";
+import { PricingSection } from "@/components/sales/PricingSection";
+import { FeaturesGrid } from "@/components/sales/FeaturesGrid";
 
 const Sales = () => {
   const [showAssessment, setShowAssessment] = useState(false);
@@ -31,7 +29,7 @@ const Sales = () => {
             <a href="tel:+5511999999999" className="text-gray-700 hover:text-yellow-600 transition-colors">
               (11) 99999-9999
             </a>
-            <Button className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium">
+            <Button onClick={handleStartAssessment} className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium">
               Começar Avaliação
             </Button>
           </div>
@@ -51,18 +49,18 @@ const Sales = () => {
         <div className="container mx-auto max-w-6xl text-center relative z-20">
           <Badge className="mb-6 bg-yellow-600/90 text-white border-yellow-200 px-4 py-2">
             <Crown className="w-4 h-4 mr-2" />
-            Transformação Garantida em 90 Dias
+            Plataforma Pró 50 - Tecnologia Profissional
           </Badge>
           
           <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight">
             Transforme Seu Corpo<br />
-            <span className="text-yellow-400">Sem Comprometer</span><br />
-            Sua Rotina
+            <span className="text-yellow-400">Com Tecnologia</span><br />
+            Profissional
           </h1>
           
           <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed">
-            O único ecossistema fitness premium que combina personal training, 
-            tecnologia de ponta e acompanhamento 24/7 para resultados excepcionais.
+            Aplicativo móvel nativo, coaching em vídeo, integrações avançadas e 
+            acompanhamento profissional para resultados excepcionais.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -75,69 +73,17 @@ const Sales = () => {
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-4 text-lg">
-              Ver Resultados Reais
+              Ver Planos e Preços
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Ecosystem Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-serif font-bold text-black mb-4">
-              Ecossistema Fitness <span className="text-yellow-600">Premium</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Sete pilares integrados para sua transformação completa
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Crown className="w-8 h-8 text-yellow-600" />,
-                title: "Personal Presencial VIP",
-                description: "Treinos personalizados em estúdios premium com os melhores profissionais"
-              },
-              {
-                icon: <Zap className="w-8 h-8 text-yellow-600" />,
-                title: "Programas Online Elite",
-                description: "Planos sob medida que se adaptam à sua rotina e objetivos específicos"
-              },
-              {
-                icon: <Award className="w-8 h-8 text-yellow-600" />,
-                title: "Netflix Fitness",
-                description: "Biblioteca exclusiva com mais de 500 treinos e masterclasses"
-              },
-              {
-                icon: <Shield className="w-8 h-8 text-yellow-600" />,
-                title: "Avaliação com Dados",
-                description: "Análise completa com bioimpedância e acompanhamento em tempo real"
-              },
-              {
-                icon: <Star className="w-8 h-8 text-yellow-600" />,
-                title: "Produtos Premium",
-                description: "Suplementação personalizada e equipamentos de alta performance"
-              },
-              {
-                icon: <Crown className="w-8 h-8 text-yellow-600" />,
-                title: "Mentorias Executivas",
-                description: "Coaching de performance e mindset para alta performance"
-              }
-            ].map((service, index) => (
-              <Card key={index} className="p-8 border-0 shadow-lg hover:shadow-xl transition-shadow bg-white">
-                <div className="mb-4">{service.icon}</div>
-                <h3 className="text-xl font-semibold text-black mb-3">{service.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{service.description}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Features Grid */}
+      <FeaturesGrid />
 
       {/* Transformation Gallery */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-serif font-bold text-black mb-4">
@@ -202,15 +148,18 @@ const Sales = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <PricingSection onStartAssessment={handleStartAssessment} />
+
       {/* CTA Section */}
       <section className="py-20 bg-black text-white">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-4xl font-serif font-bold mb-4">
-            Sua Transformação <span className="text-yellow-600">Começa Hoje</span>
+            Sua Transformação <span className="text-yellow-600">Profissional</span> Começa Hoje
           </h2>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Responda nossa avaliação personalizada e receba seu plano 
-            de transformação via WhatsApp em menos de 5 minutos.
+            Responda nossa avaliação personalizada e receba acesso à plataforma 
+            Pró 50 com todos os recursos profissionais via WhatsApp em 5 minutos.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
@@ -232,7 +181,7 @@ const Sales = () => {
           </div>
           
           <p className="text-sm text-gray-400">
-            ✅ Avaliação gratuita • ✅ Sem compromisso • ✅ Resultados em 90 dias
+            ✅ Avaliação gratuita • ✅ App móvel incluído • ✅ Suporte profissional 24/7
           </p>
         </div>
       </section>
