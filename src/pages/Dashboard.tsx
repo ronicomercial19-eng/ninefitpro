@@ -5,17 +5,25 @@ import { ChartLine, Calendar, ArrowUp } from "lucide-react";
 import { EvolutionChart } from "@/components/dashboard/EvolutionChart";
 import { WorkoutCard } from "@/components/dashboard/WorkoutCard";
 import { AchievementsBadge } from "@/components/dashboard/AchievementsBadge";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigation } from "@/components/shared/Navigation";
 
 const Dashboard = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navigation />
+      
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Dashboard</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Bem-vindo de volta, João!</span>
+              <span className="text-sm text-muted-foreground">
+                Bem-vindo de volta, {user?.name || 'Usuário'}!
+              </span>
               <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
                 Novo Treino
               </Button>

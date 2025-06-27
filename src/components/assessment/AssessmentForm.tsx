@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowRight, ArrowLeft, MessageCircle, User, Target, Clock, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface AssessmentData {
   name: string;
@@ -20,6 +20,7 @@ interface AssessmentData {
 
 export const AssessmentForm = () => {
   const [step, setStep] = useState(1);
+  const navigate = useNavigate();
   const [data, setData] = useState<AssessmentData>({
     name: "",
     age: "",
@@ -77,6 +78,14 @@ Quero receber meu plano personalizado!
 
     const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  const completeAssessment = () => {
+    // Salvar dados da avaliação (implementar com Supabase depois)
+    console.log('Assessment completed:', data);
+    
+    // Redirecionar para dashboard
+    navigate('/dashboard');
   };
 
   const renderStep = () => {
@@ -392,10 +401,10 @@ Quero receber meu plano personalizado!
         return (
           <div className="space-y-6 text-center">
             <div className="mb-8">
-              <MessageCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <Heart className="w-16 h-16 text-green-600 mx-auto mb-4" />
               <h2 className="text-3xl font-bold mb-2">Perfeito!</h2>
               <p className="text-gray-600">
-                Agora vou enviar seu plano personalizado via WhatsApp
+                Sua avaliação está completa. Vamos para sua área personalizada!
               </p>
             </div>
             
@@ -406,17 +415,16 @@ Quero receber meu plano personalizado!
                 <p><strong>Objetivos:</strong> {data.goals.join(", ")}</p>
                 <p><strong>Experiência:</strong> {data.experience}</p>
                 <p><strong>Disponibilidade:</strong> {data.availability}</p>
-                <p><strong>Investimento:</strong> {data.budget}</p>
               </div>
             </Card>
             
             <Button 
               size="lg" 
-              onClick={generateWhatsAppMessage}
+              onClick={completeAssessment}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-medium w-full"
             >
-              <MessageCircle className="mr-2 w-5 h-5" />
-              Receber Plano no WhatsApp
+              <ArrowRight className="mr-2 w-5 h-5" />
+              Ir para Dashboard
             </Button>
           </div>
         );
