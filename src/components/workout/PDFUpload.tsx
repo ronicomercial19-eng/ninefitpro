@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +5,30 @@ import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-reac
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 
+interface Exercise {
+  nome: string;
+  series: number;
+  reps: string;
+  descanso: string;
+  observacoes?: string;
+}
+
+interface WorkoutDay {
+  grupo: string;
+  exercicios: Exercise[];
+}
+
+interface WorkoutPlan {
+  nome?: string;
+  objetivo?: string;
+  [key: string]: WorkoutDay | string | undefined;
+}
+
 export const PDFUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [generatedWorkout, setGeneratedWorkout] = useState(null);
+  const [generatedWorkout, setGeneratedWorkout] = useState<WorkoutPlan | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'reading' | 'generating' | 'success' | 'error'>('idle');
   const { toast } = useToast();
 
@@ -43,7 +61,7 @@ export const PDFUpload = () => {
     setStatus('idle');
   };
 
-  const simulateWorkoutGeneration = () => {
+  const simulateWorkoutGeneration = (): WorkoutPlan => {
     // Simulação de um treino mais completo com mais exercícios
     return {
       nome: "Treino Completo de Hipertrofia",
@@ -527,13 +545,15 @@ export const PDFUpload = () => {
                 {Object.entries(generatedWorkout).map(([day, dayData]) => {
                   if (day === 'nome' || day === 'objetivo') return null;
                   
+                  const workoutDay = dayData as WorkoutDay;
+                  
                   return (
                     <div key={day} className="border rounded-lg p-4">
                       <h4 className="font-medium text-orange-600 mb-2">
-                        {day.charAt(0).toUpperCase() + day.slice(1)} - {dayData.grupo}
+                        {day.charAt(0).toUpperCase() + day.slice(1)} - {workoutDay.grupo}
                       </h4>
                       <p className="text-sm text-gray-600 mb-2">
-                        {dayData.exercicios.length} exercícios
+                        {workoutDay.exercicios.length} exercícios
                       </p>
                     </div>
                   );
