@@ -5,7 +5,7 @@ import { PDFUpload } from "@/components/workout/PDFUpload";
 import { WorkoutAdminPanel } from "@/components/workout/WorkoutAdminPanel";
 import { WorkoutDisplay } from "@/components/workout/WorkoutDisplay";
 import { exportWorkoutToPDF } from "@/utils/pdfExport";
-import { WorkoutPlan } from "@/types/workout";
+import type { WorkoutPlan } from "@/types/workout";
 
 const WorkoutManager = () => {
   const [sampleWorkout] = useState<WorkoutPlan>({
