@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Assessment from "./pages/Assessment";
 import Dashboard from "./pages/Dashboard";
+import AppDashboard from "./pages/AppDashboard";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Sales from "./pages/Sales";
 import WorkoutManager from "./pages/WorkoutManager";
@@ -39,6 +41,16 @@ const App = () => (
             <Route path="/dashboard" element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            } />
+            <Route path="/app-dashboard" element={
+              <PrivateRoute>
+                <AppDashboard />
+              </PrivateRoute>
+            } />
+            <Route path="/profile" element={
+              <PrivateRoute>
+                <Profile />
               </PrivateRoute>
             } />
             <Route path="/workout-manager" element={

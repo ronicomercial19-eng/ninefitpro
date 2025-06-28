@@ -44,6 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mockUser = { id: '1', email, name: email.split('@')[0] };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
+      
+      // Redirecionar para o dashboard do app após login
+      window.location.href = '/app-dashboard';
     } catch (error) {
       throw new Error('Falha no login');
     }
@@ -55,6 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mockUser = { id: '1', email, name: name || email.split('@')[0] };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
+      
+      // Redirecionar para o dashboard do app após registro
+      window.location.href = '/app-dashboard';
     } catch (error) {
       throw new Error('Falha no registro');
     }
@@ -63,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    window.location.href = '/';
   };
 
   const value = {
