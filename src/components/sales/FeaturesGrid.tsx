@@ -43,7 +43,7 @@ export const FeaturesGrid = () => {
       description: "Mensagens focadas e grupos exclusivos no app"
     },
     {
-      icon: <BarChart3className="w-6 h-6 text-orange-500" />,
+      icon: <BarChart3 className="w-6 h-6 text-orange-500" />,
       title: "Métricas Inteligentes",
       description: "Dados claros que mostram sua evolução real"
     },
