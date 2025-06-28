@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,19 +19,19 @@ const Sales = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-lg border-b border-gray-100 z-50">
+      <nav className="fixed top-0 w-full bg-black/90 backdrop-blur-lg border-b border-gray-800 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-2xl font-serif font-bold text-black">
-            Elite<span className="text-yellow-600">Fitness</span>
+          <div className="text-2xl font-bold text-white">
+            Fit<span className="text-orange-500">Evolution</span>
           </div>
           <div className="flex items-center space-x-4">
-            <a href="tel:+5511999999999" className="text-gray-700 hover:text-yellow-600 transition-colors">
+            <a href="tel:+5511999999999" className="text-gray-300 hover:text-orange-500 transition-colors">
               (11) 99999-9999
             </a>
-            <Button onClick={handleStartAssessment} className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium">
-              Começar Avaliação
+            <Button onClick={handleStartAssessment} className="bg-orange-500 hover:bg-orange-600 text-black font-medium">
+              Começar Evolução
             </Button>
           </div>
         </div>
@@ -38,43 +39,84 @@ const Sales = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black to-gray-900"></div>
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{
             backgroundImage: `url('/lovable-uploads/98b1ae85-067d-447c-bfaf-aedc3a6dc8de.png')`
           }}
         ></div>
         
         <div className="container mx-auto max-w-6xl text-center relative z-20">
-          <Badge className="mb-6 bg-yellow-600/90 text-white border-yellow-200 px-4 py-2">
+          <Badge className="mb-6 bg-orange-500/10 text-orange-500 border-orange-500/20 px-6 py-2">
             <Crown className="w-4 h-4 mr-2" />
-            Plataforma Pró 50 - Tecnologia Profissional
+            Menos é Mais. O Essencial Energiza.
           </Badge>
           
-          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight">
-            Transforme Seu Corpo<br />
-            <span className="text-yellow-400">Com Tecnologia</span><br />
-            Profissional
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            Evolução<br />
+            <span className="text-orange-500">Minimalista</span><br />
+            Resultados Máximos
           </h1>
           
-          <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Aplicativo móvel nativo, coaching em vídeo, integrações avançadas e 
-            acompanhamento profissional para resultados excepcionais.
+          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Tecnologia profissional, design elegante e foco absoluto nos seus resultados. 
+            A transformação acontece quando eliminamos o desnecessário.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button 
               size="lg" 
               onClick={handleStartAssessment}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white px-8 py-4 text-lg font-medium"
+              className="bg-orange-500 hover:bg-orange-600 text-black px-8 py-4 text-lg font-medium"
             >
-              Começar Minha Transformação
+              Iniciar Transformação
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-4 text-lg">
-              Ver Planos e Preços
+            <Button size="lg" variant="outline" className="border-2 border-gray-600 text-white hover:bg-white hover:text-black px-8 py-4 text-lg">
+              Conhecer Metodologia
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Philosophy Section */}
+      <section className="py-20 bg-white text-black">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl font-bold text-black mb-6">
+              <span className="text-orange-500">Minimalismo</span> que Energiza
+            </h2>
+            <p className="text-xl text-gray-600 mb-12 leading-relaxed">
+              Nossa filosofia é simples: eliminar o desnecessário para maximizar resultados. 
+              Cada elemento, cada treino, cada interação tem um propósito claro.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-6 h-6 bg-orange-500 rounded-full"></div>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Clareza</h3>
+                <p className="text-gray-600">Objetivos claros, métodos diretos, resultados visíveis</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-6 h-6 border-2 border-orange-500 rounded-full"></div>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Energia</h3>
+                <p className="text-gray-600">Cada sessão projetada para maximizar sua vitalidade</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-3 h-3 bg-orange-500"></div>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Essencial</h3>
+                <p className="text-gray-600">Apenas o que realmente importa para sua evolução</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -86,51 +128,54 @@ const Sales = () => {
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-serif font-bold text-black mb-4">
-              Resultados <span className="text-yellow-600">Comprovados</span>
+            <h2 className="text-4xl font-bold text-black mb-4">
+              Forma Encontra <span className="text-orange-500">Função</span>
             </h2>
             <p className="text-xl text-gray-600">
-              Veja as transformações reais dos nossos clientes
+              Onde estética e performance se unem
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="relative h-96 rounded-2xl overflow-hidden shadow-xl">
+            <div className="relative h-96 overflow-hidden group">
               <img 
                 src="/lovable-uploads/9457d547-5873-496e-9a50-e6af7215946a.png" 
-                alt="Treino Premium" 
-                className="w-full h-full object-cover"
+                alt="Treino Focado" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
               <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Treino Focado</h3>
-                <p className="text-sm">Metodologia científica aplicada</p>
+                <div className="w-2 h-2 bg-orange-500 mb-2"></div>
+                <h3 className="text-xl font-bold mb-2">Precisão</h3>
+                <p className="text-sm text-gray-300">Movimentos calculados, resultados garantidos</p>
               </div>
             </div>
 
-            <div className="relative h-96 rounded-2xl overflow-hidden shadow-xl">
+            <div className="relative h-96 overflow-hidden group">
               <img 
                 src="/lovable-uploads/1b2f13a6-2280-47a3-ad8d-79c6dbb74994.png" 
-                alt="Flexibilidade e Força" 
-                className="w-full h-full object-cover"
+                alt="Flexibilidade" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
               <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Flexibilidade Total</h3>
-                <p className="text-sm">Mobilidade e força combinadas</p>
+                <div className="w-2 h-2 bg-orange-500 mb-2"></div>
+                <h3 className="text-xl font-bold mb-2">Fluidez</h3>
+                <p className="text-sm text-gray-300">Movimento natural, força funcional</p>
               </div>
             </div>
 
-            <div className="relative h-96 rounded-2xl overflow-hidden shadow-xl">
+            <div className="relative h-96 overflow-hidden group">
               <img 
                 src="/lovable-uploads/4849dd0e-4880-4fa7-b874-b549ee92d6d6.png" 
                 alt="Personal Training" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
               <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Acompanhamento VIP</h3>
-                <p className="text-sm">Personal dedicado e focado</p>
+                <div className="w-2 h-2 bg-orange-500 mb-2"></div>
+                <h3 className="text-xl font-bold mb-2">Foco</h3>
+                <p className="text-sm text-gray-300">Atenção total, evolução constante</p>
               </div>
             </div>
           </div>
@@ -141,7 +186,7 @@ const Sales = () => {
               onClick={handleStartAssessment}
               className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg font-medium"
             >
-              Quero Começar Minha Transformação
+              Começar Minha Evolução
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </div>
@@ -154,83 +199,104 @@ const Sales = () => {
       {/* CTA Section */}
       <section className="py-20 bg-black text-white">
         <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-serif font-bold mb-4">
-            Sua Transformação <span className="text-yellow-600">Profissional</span> Começa Hoje
-          </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Responda nossa avaliação personalizada e receba acesso à plataforma 
-            Pró 50 com todos os recursos profissionais via WhatsApp em 5 minutos.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-            <Button 
-              size="lg" 
-              onClick={handleStartAssessment}
-              className="bg-yellow-600 hover:bg-yellow-700 text-black px-8 py-4 text-lg font-medium"
-            >
-              Fazer Avaliação Gratuita
-              <MessageCircle className="ml-2 w-5 h-5" />
-            </Button>
-            <a 
-              href="https://wa.me/5511999999999" 
-              className="text-yellow-600 hover:text-yellow-500 font-medium flex items-center"
-            >
-              <Phone className="mr-2 w-4 h-4" />
-              Ou falar direto no WhatsApp
-            </a>
+          <div className="max-w-2xl mx-auto">
+            <div className="w-8 h-8 bg-orange-500 mx-auto mb-6"></div>
+            <h2 className="text-4xl font-bold mb-4">
+              Menos é Mais.<br />
+              <span className="text-orange-500">O Essencial Energiza.</span>
+            </h2>
+            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              Sua evolução começa com um passo simples. 
+              Elimine o desnecessário. Foque no essencial.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+              <Button 
+                size="lg" 
+                onClick={handleStartAssessment}
+                className="bg-orange-500 hover:bg-orange-600 text-black px-8 py-4 text-lg font-medium"
+              >
+                Iniciar Transformação
+                <MessageCircle className="ml-2 w-5 h-5" />
+              </Button>
+              <a 
+                href="https://wa.me/5511999999999" 
+                className="text-orange-500 hover:text-orange-400 font-medium flex items-center transition-colors"
+              >
+                <Phone className="mr-2 w-4 h-4" />
+                WhatsApp Direto
+              </a>
+            </div>
+            
+            <div className="flex justify-center items-center space-x-8 text-sm text-gray-400">
+              <span className="flex items-center">
+                <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                Avaliação gratuita
+              </span>
+              <span className="flex items-center">
+                <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                Tecnologia profissional
+              </span>
+              <span className="flex items-center">
+                <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                Suporte 24/7
+              </span>
+            </div>
           </div>
-          
-          <p className="text-sm text-gray-400">
-            ✅ Avaliação gratuita • ✅ App móvel incluído • ✅ Suporte profissional 24/7
-          </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-12 border-t border-gray-800">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <div className="text-2xl font-serif font-bold mb-4">
-                Elite<span className="text-yellow-600">Fitness</span>
+              <div className="text-2xl font-bold mb-4">
+                Fit<span className="text-orange-500">Evolution</span>
               </div>
               <p className="text-gray-400 mb-4">
-                O ecossistema fitness premium para transformações reais.
+                Onde a forma encontra a função, e o minimalismo energiza.
               </p>
+              <div className="flex space-x-2">
+                <div className="w-2 h-2 bg-orange-500"></div>
+                <div className="w-2 h-2 bg-white"></div>
+                <div className="w-2 h-2 bg-gray-600"></div>
+              </div>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Serviços</h4>
+              <h4 className="font-semibold mb-4 text-white">Metodologia</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Personal Training VIP</li>
-                <li>Programas Online</li>
-                <li>Netflix Fitness</li>
-                <li>Mentorias Executivas</li>
+                <li>Treinamento Minimalista</li>
+                <li>Tecnologia Profissional</li>
+                <li>Coaching Personalizado</li>
+                <li>Resultados Mensuráveis</li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Contato</h4>
+              <h4 className="font-semibold mb-4 text-white">Contato</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>São Paulo, SP</li>
                 <li>(11) 99999-9999</li>
-                <li>contato@elitefitness.com</li>
+                <li>contato@fitevolution.com</li>
                 <li>WhatsApp 24/7</li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
+              <h4 className="font-semibold mb-4 text-white">Princípios</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Termos de Uso</li>
-                <li>Política de Privacidade</li>
-                <li>Política de Cancelamento</li>
+                <li>Menos é Mais</li>
+                <li>Clareza de Propósito</li>
+                <li>Energia Constante</li>
+                <li>Evolução Contínua</li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 EliteFitness. Todos os direitos reservados.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 FitEvolution. Menos é mais. O essencial energiza.</p>
           </div>
         </div>
       </footer>

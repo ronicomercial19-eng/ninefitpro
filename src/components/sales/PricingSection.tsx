@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star } from "lucide-react";
+import { Check, Crown, Star } from "lucide-react";
 
 interface PricingSectionProps {
   onStartAssessment: () => void;
@@ -11,81 +11,86 @@ interface PricingSectionProps {
 export const PricingSection = ({ onStartAssessment }: PricingSectionProps) => {
   const plans = [
     {
-      name: "Básico",
+      name: "Essencial",
       price: "R$ 197",
       period: "/mês",
       badge: null,
       features: [
-        "Personal training online",
-        "Planos de treino personalizados",
+        "Personal training focado",
+        "Planos minimalistas eficazes",
         "Acompanhamento via WhatsApp",
         "Suporte durante horário comercial"
       ],
-      cta: "Começar Agora",
+      cta: "Começar Essencial",
       popular: false
     },
     {
-      name: "Pró 50",
+      name: "Evolução Pro",
       price: "R$ 497",
       period: "/mês",
-      badge: <Badge className="bg-yellow-600 text-white"><Crown className="w-4 h-4 mr-1" />Mais Popular</Badge>,
+      badge: <Badge className="bg-orange-500 text-black"><Crown className="w-4 h-4 mr-1" />Escolha Inteligente</Badge>,
       features: [
-        "✅ Aplicativo móvel para iOS e Android",
-        "✅ Programas de treino e monitoramento completo",
-        "✅ Entrega automatizada de programas",
-        "✅ Acompanhamento nutricional no app + PDFs",
-        "✅ Coaching de hábitos e estilo de vida",
-        "✅ Mensagens e grupos de clientes no app",
-        "✅ Perfis digitais com métricas de progresso",
-        "✅ Programação padronizada com treinos mestres",
-        "✅ Recursos educacionais e de ajuda",
-        "✅ Perfil e vitrine de produtos Trainerize.me",
-        "✅ Conexão Apple Health/Watch, Garmin, MyFitnessPal, Fitbit",
-        "✅ Integrações Zapier",
-        "✅ Opção de app personalizado profissional",
-        "✅ Coaching avançado em nutrição",
-        "✅ Coaching em vídeo",
-        "✅ Pagamentos integrados Stripe",
-        "✅ Suporte ao cliente ao vivo"
+        "Aplicativo nativo iOS e Android",
+        "Programas adaptativos e inteligentes",
+        "Entrega automatizada otimizada",
+        "Nutrição funcional no app + PDFs",
+        "Coaching de hábitos essenciais",
+        "Comunicação direta no app",
+        "Métricas inteligentes de progresso",
+        "Programação masterizada",
+        "Recursos educacionais curados",
+        "Perfil profissional FitEvolution",
+        "Integração Apple Health/Watch, Garmin",
+        "Integrações Zapier avançadas",
+        "App personalizado profissional",
+        "Coaching nutricional especializado",
+        "Coaching em vídeo de alta qualidade",
+        "Pagamentos seguros integrados",
+        "Suporte humano prioritário"
       ],
-      cta: "Começar Transformação Premium",
+      cta: "Evoluir Agora",
       popular: true
     },
     {
-      name: "Elite VIP",
+      name: "Elite Evolution",
       price: "R$ 997",
       period: "/mês",
-      badge: <Badge className="bg-black text-white"><Star className="w-4 h-4 mr-1" />VIP</Badge>,
+      badge: <Badge className="bg-black text-white border-white"><Star className="w-4 h-4 mr-1" />Elite</Badge>,
       features: [
-        "Tudo do Pró 50 +",
+        "Tudo do Evolução Pro +",
         "Personal presencial (2x/semana)",
-        "Avaliação física completa mensal",
+        "Avaliação completa mensal",
         "Nutricionista dedicado",
-        "Mentoria executiva individual",
-        "Acesso aos estúdios premium",
+        "Mentoria individual executiva",
+        "Acesso aos estúdios elite",
         "Suplementação personalizada",
         "Concierge fitness 24/7"
       ],
-      cta: "Experiência VIP",
+      cta: "Experiência Elite",
       popular: false
     }
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-serif font-bold text-black mb-4">
-            Planos de <span className="text-yellow-600">Transformação</span>
+          <div className="w-4 h-4 bg-orange-500 mx-auto mb-4"></div>
+          <h2 className="text-4xl font-bold text-black mb-4">
+            Planos de <span className="text-orange-500">Evolução</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Escolha o plano ideal para seus objetivos e estilo de vida
+            Menos opções, mais clareza. Escolha o caminho certo para sua transformação.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {plans.map((plan, index) => (
-            <Card key={index} className={`p-8 relative ${plan.popular ? 'border-2 border-yellow-600 shadow-xl scale-105' : 'border shadow-lg'}`}>
+            <Card key={index} className={`p-8 relative transition-all duration-300 ${
+              plan.popular 
+                ? 'border-2 border-orange-500 shadow-xl scale-105 bg-black text-white' 
+                : 'border border-gray-200 shadow-lg hover:shadow-xl bg-white'
+            }`}>
               {plan.badge && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   {plan.badge}
@@ -93,34 +98,39 @@ export const PricingSection = ({ onStartAssessment }: PricingSectionProps) => {
               )}
               
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-black mb-2">{plan.name}</h3>
+                <div className={`w-2 h-2 ${plan.popular ? 'bg-orange-500' : 'bg-black'} mx-auto mb-4`}></div>
+                <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-black'}`}>
+                  {plan.name}
+                </h3>
                 <div className="flex items-baseline justify-center">
-                  <span className="text-4xl font-bold text-black">{plan.price}</span>
-                  <span className="text-gray-600 ml-1">{plan.period}</span>
+                  <span className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-black'}`}>
+                    {plan.price}
+                  </span>
+                  <span className={`ml-1 ${plan.popular ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {plan.period}
+                  </span>
                 </div>
               </div>
 
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-start text-sm text-gray-700">
-                    {feature.startsWith('✅') ? (
-                      <span className="text-green-600 mr-2 text-xs">{feature}</span>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </>
-                    )}
+                  <li key={featureIndex} className={`flex items-start text-sm ${
+                    plan.popular ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <Check className={`w-4 h-4 mr-2 mt-0.5 flex-shrink-0 ${
+                      plan.popular ? 'text-orange-500' : 'text-orange-500'
+                    }`} />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
 
               <Button 
                 onClick={onStartAssessment}
-                className={`w-full py-3 text-lg font-medium ${
+                className={`w-full py-3 text-lg font-medium transition-all duration-300 ${
                   plan.popular 
-                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-                    : 'bg-black hover:bg-gray-800 text-white'
+                    ? 'bg-orange-500 hover:bg-orange-600 text-black' 
+                    : 'bg-black hover:bg-gray-800 text-white hover:scale-105'
                 }`}
               >
                 {plan.cta}
@@ -130,13 +140,18 @@ export const PricingSection = ({ onStartAssessment }: PricingSectionProps) => {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
-            🔒 Garantia de 30 dias • 💳 Parcelamento em até 12x • 📱 Suporte 24/7
-          </p>
+          <div className="flex justify-center items-center space-x-2 mb-4">
+            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+            <span className="text-gray-600">Garantia de 30 dias</span>
+            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+            <span className="text-gray-600">Parcelamento em até 12x</span>
+            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+            <span className="text-gray-600">Suporte 24/7</span>
+          </div>
           <Button 
             onClick={onStartAssessment}
             variant="outline" 
-            className="border-2 border-yellow-600 text-yellow-600 hover:bg-yellow-600 hover:text-white"
+            className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-black font-medium"
           >
             Fazer Avaliação Gratuita Primeiro
           </Button>
