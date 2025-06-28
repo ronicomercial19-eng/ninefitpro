@@ -5,50 +5,59 @@ import { PDFUpload } from "@/components/workout/PDFUpload";
 import { WorkoutAdminPanel } from "@/components/workout/WorkoutAdminPanel";
 import { WorkoutDisplay } from "@/components/workout/WorkoutDisplay";
 import { exportWorkoutToPDF } from "@/utils/pdfExport";
+import { WorkoutPlan } from "@/types/workout";
 
 const WorkoutManager = () => {
-  const [sampleWorkout] = useState({
-    segunda: {
-      grupo: "Peito e Tríceps",
-      exercicios: [
-        {
-          nome: "Supino Reto",
-          series: 4,
-          reps: "8-10",
-          descanso: "90s",
-          observacoes: "Manter controle na descida"
-        },
-        {
-          nome: "Supino Inclinado",
-          series: 3,
-          reps: "10-12",
-          descanso: "75s"
-        },
-        {
-          nome: "Tríceps Testa",
-          series: 3,
-          reps: "12-15",
-          descanso: "60s"
-        }
-      ]
-    },
-    terca: {
-      grupo: "Costas e Bíceps",
-      exercicios: [
-        {
-          nome: "Puxada Frontal",
-          series: 4,
-          reps: "8-10",
-          descanso: "90s"
-        },
-        {
-          nome: "Remada Curvada",
-          series: 3,
-          reps: "10-12",
-          descanso: "75s"
-        }
-      ]
-    }
+  const [sampleWorkout] = useState<WorkoutPlan>({
+    nome: "Treino Hipertrofia A/B",
+    objetivo: "Ganho de massa muscular e força",
+    dias: [
+      {
+        dia: "Segunda-feira - Treino A",
+        blocos: [
+          {
+            tipo: "Aquecimento",
+            exercicios: [
+              {
+                nome: "Esteira leve",
+                series: "1",
+                repeticoes: "5 min"
+              }
+            ]
+          },
+          {
+            tipo: "Principal",
+            exercicios: [
+              {
+                nome: "Agachamento Livre",
+                series: "4",
+                repeticoes: "8-10",
+                carga: "80kg",
+                cadencia: "3-1-1",
+                rir: "2"
+              },
+              {
+                nome: "Leg Press 45°",
+                series: "3",
+                repeticoes: "12-15",
+                carga: "120kg",
+                rir: "1"
+              }
+            ]
+          },
+          {
+            tipo: "Finalização",
+            exercicios: [
+              {
+                nome: "Alongamento",
+                series: "1",
+                repeticoes: "5 min"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   });
 
   const handleExportPDF = () => {

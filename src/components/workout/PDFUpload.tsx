@@ -1,28 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-
-interface Exercise {
-  nome: string;
-  series: number;
-  reps: string;
-  descanso: string;
-  observacoes?: string;
-}
-
-interface WorkoutDay {
-  grupo: string;
-  exercicios: Exercise[];
-}
-
-interface WorkoutPlan {
-  nome?: string;
-  objetivo?: string;
-  [key: string]: WorkoutDay | string | undefined;
-}
+import { WorkoutPlan } from "@/types/workout";
 
 export const PDFUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -37,7 +20,6 @@ export const PDFUpload = () => {
     
     if (!selectedFile) return;
     
-    // Validação de tipo
     if (selectedFile.type !== 'application/pdf') {
       toast({
         title: "Erro",
@@ -47,7 +29,6 @@ export const PDFUpload = () => {
       return;
     }
     
-    // Validação de tamanho (5MB)
     if (selectedFile.size > 5 * 1024 * 1024) {
       toast({
         title: "Arquivo muito grande",
@@ -62,317 +43,324 @@ export const PDFUpload = () => {
   };
 
   const simulateWorkoutGeneration = (): WorkoutPlan => {
-    // Simulação de um treino mais completo com mais exercícios
     return {
-      nome: "Treino Completo de Hipertrofia",
-      objetivo: "Ganho de massa muscular e força",
-      segunda: {
-        grupo: "Peito, Ombros e Tríceps",
-        exercicios: [
-          {
-            nome: "Supino Reto com Barra",
-            series: 4,
-            reps: "6-8",
-            descanso: "2-3min",
-            observacoes: "Controle total na descida, pausa no peito"
-          },
-          {
-            nome: "Supino Inclinado com Halteres",
-            series: 4,
-            reps: "8-10",
-            descanso: "90s",
-            observacoes: "Amplitude completa, foco na contração"
-          },
-          {
-            nome: "Supino Declinado",
-            series: 3,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Voador no Peck Deck",
-            series: 3,
-            reps: "12-15",
-            descanso: "60s",
-            observacoes: "Movimento controlado, foco na contração"
-          },
-          {
-            nome: "Desenvolvimento com Halteres",
-            series: 4,
-            reps: "8-10",
-            descanso: "90s"
-          },
-          {
-            nome: "Elevação Lateral",
-            series: 4,
-            reps: "12-15",
-            descanso: "45s"
-          },
-          {
-            nome: "Elevação Frontal",
-            series: 3,
-            reps: "12-15",
-            descanso: "45s"
-          },
-          {
-            nome: "Tríceps Testa com Barra W",
-            series: 4,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Tríceps Corda no Pulley",
-            series: 3,
-            reps: "12-15",
-            descanso: "60s"
-          },
-          {
-            nome: "Mergulho no Paralelo",
-            series: 3,
-            reps: "8-12",
-            descanso: "90s"
-          }
-        ]
-      },
-      terca: {
-        grupo: "Costas e Bíceps",
-        exercicios: [
-          {
-            nome: "Barra Fixa (ou Puxada)",
-            series: 4,
-            reps: "6-10",
-            descanso: "2min",
-            observacoes: "Amplitude completa, ativar latíssimo"
-          },
-          {
-            nome: "Remada Curvada com Barra",
-            series: 4,
-            reps: "8-10",
-            descanso: "90s"
-          },
-          {
-            nome: "Puxada Frontal Pegada Aberta",
-            series: 4,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Remada Sentada no Cabo",
-            series: 4,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Remada Unilateral com Halter",
-            series: 3,
-            reps: "12-15",
-            descanso: "60s"
-          },
-          {
-            nome: "Pullover com Halter",
-            series: 3,
-            reps: "12-15",
-            descanso: "60s"
-          },
-          {
-            nome: "Rosca Direta com Barra",
-            series: 4,
-            reps: "8-10",
-            descanso: "75s"
-          },
-          {
-            nome: "Rosca Alternada com Halteres",
-            series: 4,
-            reps: "10-12",
-            descanso: "60s"
-          },
-          {
-            nome: "Rosca Martelo",
-            series: 3,
-            reps: "12-15",
-            descanso: "45s"
-          },
-          {
-            nome: "Rosca no Cabo",
-            series: 3,
-            reps: "12-15",
-            descanso: "45s"
-          }
-        ]
-      },
-      quarta: {
-        grupo: "Pernas Completo",
-        exercicios: [
-          {
-            nome: "Agachamento Livre",
-            series: 5,
-            reps: "6-8",
-            descanso: "3min",
-            observacoes: "Profundidade completa, core ativado"
-          },
-          {
-            nome: "Leg Press 45°",
-            series: 4,
-            reps: "12-15",
-            descanso: "90s"
-          },
-          {
-            nome: "Agachamento Búlgaro",
-            series: 3,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Extensora",
-            series: 4,
-            reps: "12-15",
-            descanso: "60s"
-          },
-          {
-            nome: "Mesa Flexora",
-            series: 4,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Stiff com Halteres",
-            series: 4,
-            reps: "10-12",
-            descanso: "90s"
-          },
-          {
-            nome: "Elevação Pélvica",
-            series: 3,
-            reps: "15-20",
-            descanso: "60s"
-          },
-          {
-            nome: "Panturrilha em Pé",
-            series: 5,
-            reps: "15-20",
-            descanso: "45s"
-          },
-          {
-            nome: "Panturrilha Sentado",
-            series: 4,
-            reps: "15-20",
-            descanso: "45s"
-          }
-        ]
-      },
-      quinta: {
-        grupo: "Peito, Ombros e Tríceps",
-        exercicios: [
-          {
-            nome: "Supino Inclinado com Barra",
-            series: 4,
-            reps: "6-8",
-            descanso: "2-3min"
-          },
-          {
-            nome: "Supino Reto com Halteres",
-            series: 4,
-            reps: "8-10",
-            descanso: "90s"
-          },
-          {
-            nome: "Crucifixo Inclinado",
-            series: 3,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Crossover no Cabo",
-            series: 3,
-            reps: "12-15",
-            descanso: "60s"
-          },
-          {
-            nome: "Desenvolvimento Militar",
-            series: 4,
-            reps: "8-10",
-            descanso: "90s"
-          },
-          {
-            nome: "Elevação Lateral na Polia",
-            series: 4,
-            reps: "12-15",
-            descanso: "45s"
-          },
-          {
-            nome: "Elevação Posterior",
-            series: 3,
-            reps: "12-15",
-            descanso: "45s"
-          },
-          {
-            nome: "Tríceps Francês",
-            series: 4,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Tríceps Supinado",
-            series: 3,
-            reps: "12-15",
-            descanso: "60s"
-          }
-        ]
-      },
-      sexta: {
-        grupo: "Costas e Bíceps",
-        exercicios: [
-          {
-            nome: "Levantamento Terra",
-            series: 4,
-            reps: "5-6",
-            descanso: "3min",
-            observacoes: "Técnica perfeita, core ativado"
-          },
-          {
-            nome: "Puxada Triangular",
-            series: 4,
-            reps: "8-10",
-            descanso: "90s"
-          },
-          {
-            nome: "Remada Alta",
-            series: 4,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Remada T",
-            series: 3,
-            reps: "10-12",
-            descanso: "75s"
-          },
-          {
-            nome: "Encolhimento com Halteres",
-            series: 4,
-            reps: "12-15",
-            descanso: "60s"
-          },
-          {
-            nome: "Rosca 21",
-            series: 3,
-            reps: "21 (7+7+7)",
-            descanso: "90s"
-          },
-          {
-            nome: "Rosca Concentrada",
-            series: 3,
-            reps: "10-12",
-            descanso: "60s"
-          },
-          {
-            nome: "Rosca Inversa",
-            series: 3,
-            reps: "12-15",
-            descanso: "45s"
-          }
-        ]
-      }
+      nome: "Treino Hipertrofia A/B",
+      objetivo: "Ganho de massa muscular",
+      dias: [
+        {
+          dia: "Segunda-feira - Treino A",
+          blocos: [
+            {
+              tipo: "Aquecimento",
+              exercicios: [
+                {
+                  nome: "Esteira leve",
+                  series: "1",
+                  repeticoes: "5 min"
+                },
+                {
+                  nome: "Mobilidade articular",
+                  series: "1",
+                  repeticoes: "5 min"
+                }
+              ]
+            },
+            {
+              tipo: "Principal",
+              exercicios: [
+                {
+                  nome: "Agachamento Livre",
+                  series: "4",
+                  repeticoes: "8-10",
+                  carga: "80kg",
+                  cadencia: "3-1-1",
+                  rir: "2"
+                },
+                {
+                  nome: "Leg Press 45°",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "120kg",
+                  rir: "1"
+                },
+                {
+                  nome: "Extensora",
+                  series: "4",
+                  repeticoes: "12-15",
+                  carga: "50kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Mesa Flexora",
+                  series: "4",
+                  repeticoes: "10-12",
+                  carga: "40kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Stiff com Halteres",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "20kg",
+                  cadencia: "2-1-2"
+                },
+                {
+                  nome: "Panturrilha em Pé",
+                  series: "4",
+                  repeticoes: "15-20",
+                  carga: "60kg",
+                  rir: "1"
+                }
+              ]
+            },
+            {
+              tipo: "Finalização",
+              exercicios: [
+                {
+                  nome: "Bicicleta ergométrica",
+                  series: "1",
+                  repeticoes: "10 min"
+                },
+                {
+                  nome: "Alongamento",
+                  series: "1",
+                  repeticoes: "5 min"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          dia: "Terça-feira - Treino B",
+          blocos: [
+            {
+              tipo: "Aquecimento",
+              exercicios: [
+                {
+                  nome: "Esteira leve",
+                  series: "1",
+                  repeticoes: "5 min"
+                },
+                {
+                  nome: "Aquecimento específico",
+                  series: "1",
+                  repeticoes: "5 min"
+                }
+              ]
+            },
+            {
+              tipo: "Principal",
+              exercicios: [
+                {
+                  nome: "Supino Reto",
+                  series: "4",
+                  repeticoes: "8-10",
+                  carga: "70kg",
+                  cadencia: "2-1-2",
+                  rir: "2"
+                },
+                {
+                  nome: "Supino Inclinado",
+                  series: "3",
+                  repeticoes: "10-12",
+                  carga: "60kg",
+                  rir: "1"
+                },
+                {
+                  nome: "Voador",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "40kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Desenvolvimento",
+                  series: "4",
+                  repeticoes: "8-10",
+                  carga: "45kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Elevação Lateral",
+                  series: "4",
+                  repeticoes: "12-15",
+                  carga: "12kg",
+                  rir: "1"
+                },
+                {
+                  nome: "Tríceps Testa",
+                  series: "3",
+                  repeticoes: "10-12",
+                  carga: "30kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Tríceps Corda",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "25kg",
+                  rir: "1"
+                }
+              ]
+            },
+            {
+              tipo: "Finalização",
+              exercicios: [
+                {
+                  nome: "Abdominal",
+                  series: "3",
+                  repeticoes: "20"
+                },
+                {
+                  nome: "Alongamento",
+                  series: "1",
+                  repeticoes: "5 min"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          dia: "Quinta-feira - Treino A",
+          blocos: [
+            {
+              tipo: "Aquecimento",
+              exercicios: [
+                {
+                  nome: "Esteira leve",
+                  series: "1",
+                  repeticoes: "5 min"
+                }
+              ]
+            },
+            {
+              tipo: "Principal",
+              exercicios: [
+                {
+                  nome: "Agachamento Livre",
+                  series: "4",
+                  repeticoes: "8-10",
+                  carga: "85kg",
+                  cadencia: "3-1-1",
+                  rir: "2"
+                },
+                {
+                  nome: "Leg Press 45°",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "140kg",
+                  metodo: "Drop-set",
+                  rir: "0"
+                },
+                {
+                  nome: "Extensora",
+                  series: "4",
+                  repeticoes: "12-15",
+                  carga: "55kg",
+                  rir: "1"
+                },
+                {
+                  nome: "Mesa Flexora",
+                  series: "4",
+                  repeticoes: "10-12",
+                  carga: "45kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Stiff com Barra",
+                  series: "4",
+                  repeticoes: "10-12",
+                  carga: "50kg",
+                  cadencia: "3-1-2"
+                }
+              ]
+            },
+            {
+              tipo: "Finalização",
+              exercicios: [
+                {
+                  nome: "Panturrilha Sentado",
+                  series: "4",
+                  repeticoes: "15-20",
+                  carga: "30kg"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          dia: "Sexta-feira - Treino B",
+          blocos: [
+            {
+              tipo: "Aquecimento",
+              exercicios: [
+                {
+                  nome: "Esteira leve",
+                  series: "1",
+                  repeticoes: "5 min"
+                }
+              ]
+            },
+            {
+              tipo: "Principal",
+              exercicios: [
+                {
+                  nome: "Puxada Frontal",
+                  series: "4",
+                  repeticoes: "8-10",
+                  carga: "60kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Remada Curvada",
+                  series: "4",
+                  repeticoes: "8-10",
+                  carga: "55kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Remada Sentada",
+                  series: "3",
+                  repeticoes: "10-12",
+                  carga: "50kg",
+                  rir: "1"
+                },
+                {
+                  nome: "Rosca Direta",
+                  series: "4",
+                  repeticoes: "10-12",
+                  carga: "25kg",
+                  rir: "2"
+                },
+                {
+                  nome: "Rosca Martelo",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "15kg",
+                  rir: "1"
+                },
+                {
+                  nome: "Rosca Concentrada",
+                  series: "3",
+                  repeticoes: "12-15",
+                  carga: "12kg",
+                  rir: "1"
+                }
+              ]
+            },
+            {
+              tipo: "Finalização",
+              exercicios: [
+                {
+                  nome: "Abdominal Prancha",
+                  series: "3",
+                  repeticoes: "45s"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     };
   };
 
@@ -542,28 +530,25 @@ export const PDFUpload = () => {
               </div>
               
               <div className="grid gap-4">
-                {Object.entries(generatedWorkout).map(([day, dayData]) => {
-                  if (day === 'nome' || day === 'objetivo') return null;
-                  
-                  const workoutDay = dayData as WorkoutDay;
-                  
-                  return (
-                    <div key={day} className="border rounded-lg p-4">
-                      <h4 className="font-medium text-orange-600 mb-2">
-                        {day.charAt(0).toUpperCase() + day.slice(1)} - {workoutDay.grupo}
-                      </h4>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {workoutDay.exercicios.length} exercícios
-                      </p>
+                {generatedWorkout.dias.map((dia, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <h4 className="font-medium text-orange-600 mb-2">
+                      {dia.dia}
+                    </h4>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {dia.blocos.map((bloco, bIndex) => (
+                        <div key={bIndex}>
+                          <span className="font-medium">{bloco.tipo}:</span> {bloco.exercicios.length} exercícios
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
               
               <Button 
                 className="w-full" 
                 onClick={() => {
-                  // Aqui você redirecionaria para a visualização completa
                   console.log('Visualizar treino completo', generatedWorkout);
                 }}
               >
