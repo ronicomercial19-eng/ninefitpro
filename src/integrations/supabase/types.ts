@@ -154,6 +154,111 @@ export type Database = {
           },
         ]
       }
+      periodizations: {
+        Row: {
+          created_at: string | null
+          current_phase: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          periodization_data: Json | null
+          phase_duration_weeks: number | null
+          professor_id: string
+          title: string
+          total_phases: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_phase?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          periodization_data?: Json | null
+          phase_duration_weeks?: number | null
+          professor_id: string
+          title: string
+          total_phases?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_phase?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          periodization_data?: Json | null
+          phase_duration_weeks?: number | null
+          professor_id?: string
+          title?: string
+          total_phases?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      physical_assessments: {
+        Row: {
+          assessment_date: string
+          core_resistance_after: number | null
+          core_resistance_before: number | null
+          created_at: string | null
+          id: string
+          lower_pull_after: number | null
+          lower_pull_before: number | null
+          lower_push_after: number | null
+          lower_push_before: number | null
+          notes: string | null
+          professor_id: string
+          updated_at: string | null
+          upper_pull_after: number | null
+          upper_pull_before: number | null
+          upper_push_after: number | null
+          upper_push_before: number | null
+          user_id: string
+        }
+        Insert: {
+          assessment_date?: string
+          core_resistance_after?: number | null
+          core_resistance_before?: number | null
+          created_at?: string | null
+          id?: string
+          lower_pull_after?: number | null
+          lower_pull_before?: number | null
+          lower_push_after?: number | null
+          lower_push_before?: number | null
+          notes?: string | null
+          professor_id: string
+          updated_at?: string | null
+          upper_pull_after?: number | null
+          upper_pull_before?: number | null
+          upper_push_after?: number | null
+          upper_push_before?: number | null
+          user_id: string
+        }
+        Update: {
+          assessment_date?: string
+          core_resistance_after?: number | null
+          core_resistance_before?: number | null
+          created_at?: string | null
+          id?: string
+          lower_pull_after?: number | null
+          lower_pull_before?: number | null
+          lower_push_after?: number | null
+          lower_push_before?: number | null
+          notes?: string | null
+          professor_id?: string
+          updated_at?: string | null
+          upper_pull_after?: number | null
+          upper_pull_before?: number | null
+          upper_push_after?: number | null
+          upper_push_before?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_phases: {
         Row: {
           created_at: string | null
@@ -288,6 +393,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles_extended: {
+        Row: {
+          age: number | null
+          created_at: string | null
+          email: string | null
+          experience_level: string | null
+          gender: string | null
+          height: number | null
+          id: string
+          injuries_limitations: string | null
+          name: string
+          phone: string | null
+          primary_goal: string | null
+          training_environment: string | null
+          updated_at: string | null
+          user_id: string
+          user_type: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string | null
+          email?: string | null
+          experience_level?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          injuries_limitations?: string | null
+          name: string
+          phone?: string | null
+          primary_goal?: string | null
+          training_environment?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_type?: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          created_at?: string | null
+          email?: string | null
+          experience_level?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          injuries_limitations?: string | null
+          name?: string
+          phone?: string | null
+          primary_goal?: string | null
+          training_environment?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_type?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       weekly_structures: {
         Row: {
           created_at: string | null
@@ -385,6 +547,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workout_schedules: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_recurring: boolean | null
+          notes: string | null
+          professor_id: string | null
+          recurrence_pattern: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          workout_plan_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          notes?: string | null
+          professor_id?: string | null
+          recurrence_pattern?: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          workout_plan_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          notes?: string | null
+          professor_id?: string | null
+          recurrence_pattern?: string | null
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          workout_plan_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
