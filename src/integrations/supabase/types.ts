@@ -259,6 +259,119 @@ export type Database = {
         }
         Relationships: []
       }
+      questionnaire_responses: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          questionnaire_id: string
+          recommendations: string[] | null
+          responses: Json
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          questionnaire_id: string
+          recommendations?: string[] | null
+          responses: Json
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          questionnaire_id?: string
+          recommendations?: string[] | null
+          responses?: Json
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_responses_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questionnaires: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          questions: Json
+          recommendations: Json | null
+          scoring_system: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          questions: Json
+          recommendations?: Json | null
+          scoring_system?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          questions?: Json
+          recommendations?: Json | null
+          scoring_system?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      real_time_analytics: {
+        Row: {
+          analysis_type: string
+          confidence_score: number | null
+          data: Json
+          generated_at: string | null
+          id: string
+          insights: string[] | null
+          recommendations: string[] | null
+          user_id: string
+        }
+        Insert: {
+          analysis_type: string
+          confidence_score?: number | null
+          data: Json
+          generated_at?: string | null
+          id?: string
+          insights?: string[] | null
+          recommendations?: string[] | null
+          user_id: string
+        }
+        Update: {
+          analysis_type?: string
+          confidence_score?: number | null
+          data?: Json
+          generated_at?: string | null
+          id?: string
+          insights?: string[] | null
+          recommendations?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_phases: {
         Row: {
           created_at: string | null
@@ -326,6 +439,90 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_programs: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          duration_weeks: number | null
+          equipment_needed: string[] | null
+          frequency_per_week: number | null
+          goal: string | null
+          id: string
+          is_ai_generated: boolean | null
+          name: string
+          program_structure: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_weeks?: number | null
+          equipment_needed?: string[] | null
+          frequency_per_week?: number | null
+          goal?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          name: string
+          program_structure?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_weeks?: number | null
+          equipment_needed?: string[] | null
+          frequency_per_week?: number | null
+          goal?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          name?: string
+          program_structure?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_metrics: {
+        Row: {
+          id: string
+          metric_type: string
+          notes: string | null
+          recorded_at: string | null
+          source: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          id?: string
+          metric_type: string
+          notes?: string | null
+          recorded_at?: string | null
+          source?: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          id?: string
+          metric_type?: string
+          notes?: string | null
+          recorded_at?: string | null
+          source?: string | null
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
       }
       user_profiles: {
         Row: {
