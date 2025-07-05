@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import Sales from "./pages/Sales";
 import WorkoutManager from "./pages/WorkoutManager";
 import Pricing from "./pages/Pricing";
 import AITrainingPlatform from "./pages/AITrainingPlatform";
+import EnhancedAssessment from "./pages/EnhancedAssessment";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,11 @@ const App = () => (
             <Route path="/assessment" element={
               <PrivateRoute>
                 <Assessment />
+              </PrivateRoute>
+            } />
+            <Route path="/enhanced-assessment" element={
+              <PrivateRoute>
+                <EnhancedAssessment />
               </PrivateRoute>
             } />
             <Route path="/dashboard" element={

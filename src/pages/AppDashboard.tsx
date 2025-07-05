@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfessorDashboard } from "@/components/dashboard/ProfessorDashboard";
-import { StudentDashboard } from "@/components/dashboard/StudentDashboard";
+import { EnhancedStudentDashboard } from "@/components/dashboard/EnhancedStudentDashboard";
 
 const AppDashboard = () => {
   const { user, logout } = useAuth();
@@ -96,7 +96,7 @@ const AppDashboard = () => {
       </nav>
 
       {/* Dashboard Content */}
-      {userType === 'professor' ? <ProfessorDashboard /> : <StudentDashboard />}
+      {userType === 'professor' ? <ProfessorDashboard /> : <EnhancedStudentDashboard />}
     </div>
   );
 };
