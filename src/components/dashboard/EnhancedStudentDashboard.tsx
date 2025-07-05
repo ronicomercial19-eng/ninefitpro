@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ export const EnhancedStudentDashboard = () => {
         completedAssessments: assessmentsRes.data?.length || 0,
         physicalTests: metricsRes.data?.length || 0,
         strengthRecords: strengthRes.data?.length || 0,
-        lastActivity: strengthRes.data?.[0]?.recorded_at || null
+        lastActivity: strengthRes.data && strengthRes.data.length > 0 ? strengthRes.data[0].recorded_at : null
       });
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);

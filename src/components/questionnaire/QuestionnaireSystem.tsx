@@ -47,6 +47,7 @@ export const QuestionnaireSystem = () => {
 
   useEffect(() => {
     fetchQuestionnaires();
+    initializeMockQuestionnaires();
   }, []);
 
   const fetchQuestionnaires = async () => {
@@ -57,9 +58,136 @@ export const QuestionnaireSystem = () => {
         .eq('is_active', true);
 
       if (error) throw error;
-      setQuestionnaires(data || []);
+      
+      // Type assertion since we know the structure
+      const typedData = data?.map(item => ({
+        ...item,
+        questions: item.questions as { sections: Array<{ title: string; questions: Question[]; }>; }
+      }));
+      
+      setQuestionnaires(typedData || []);
     } catch (error) {
       console.error('Erro ao buscar questionários:', error);
+    }
+  };
+
+  const initializeMockQuestionnaires = () => {
+    // Mock questionnaires for demo purposes
+    const mockQuestionnaires: QuestionnaireData[] = [
+      {
+        id: 'fitness-assessment',
+        title: 'Avaliação de Condicionamento Físico',
+        description: 'Teste sua resistência e força em exercícios básicos',
+        category: 'fitness',
+        questions: {
+          sections: [
+            {
+              title: 'Testes de Resistência (1 minuto cada)',
+              questions: [
+                {
+                  id: 'flexoes_1min',
+                  type: 'number',
+                  question: 'Quantas flexões você consegue fazer em 1 minuto?',
+                  min: 0,
+                  max: 100,
+                  unit: 'repetições'
+                },
+                {
+                  id: 'agachamentos_1min',
+                  type: 'number',
+                  question: 'Quantos agachamentos você consegue fazer em 1 minuto?',
+                  min: 0,
+                  max: 150,
+                  unit: 'repetições'
+                },
+                {
+                  id: 'abdominais_1min',
+                  type: 'number',
+                  question: 'Quantos abdominais você consegue fazer em 1 minuto?',
+                  min: 0,
+                  max: 100,
+                  unit: 'repetições'
+                },
+                {
+                  id: 'polichinelos_1min',
+                  type: 'number',
+                  question: 'Quantos polichinelos você consegue fazer em 1 minuto?',
+                  min: 0,
+                  max: 200,
+                  unit: 'repetições'
+                },
+                {
+                  id: 'elevacao_pelvica_1min',
+                  type: 'number',
+                  question: 'Quantas elevações pélvicas você consegue fazer em 1 minuto?',
+                  min: 0,
+                  max: 100,
+                  unit: 'repetições'
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        id: 'strength-assessment',
+        title: 'Avaliação de Força',
+        description: 'Registre suas cargas máximas nos exercícios principais',
+        category: 'strength',
+        questions: {
+          sections: [
+            {
+              title: 'Cargas Máximas (1RM ou estimativa)',
+              questions: [
+                {
+                  id: 'supino_reto_carga',
+                  type: 'number',
+                  question: 'Qual sua carga máxima no Supino Reto?',
+                  min: 0,
+                  max: 300,
+                  unit: 'kg'
+                },
+                {
+                  id: 'agachamento_livre_carga',
+                  type: 'number',
+                  question: 'Qual sua carga máxima no Agachamento Livre?',
+                  min: 0,
+                  max: 400,
+                  unit: 'kg'
+                },
+                {
+                  id: 'terra_carga',
+                  type: 'number',
+                  question: 'Qual sua carga máxima no Levantamento Terra?',
+                  min: 0,
+                  max: 500,
+                  unit: 'kg'
+                },
+                {
+                  id: 'puxada_frontal_carga',
+                  type: 'number',
+                  question: 'Qual sua carga máxima na Puxada Frontal?',
+                  min: 0,
+                  max: 200,
+                  unit: 'kg'
+                },
+                {
+                  id: 'desenvolvimento_carga',
+                  type: 'number',
+                  question: 'Qual sua carga máxima no Desenvolvimento Militar?',
+                  min: 0,
+                  max: 150,
+                  unit: 'kg'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ];
+
+    if (questionnaires.length === 0) {
+      setQuestionnaires(mockQuestionnaires);
     }
   };
 

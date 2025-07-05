@@ -372,6 +372,42 @@ export type Database = {
         }
         Relationships: []
       }
+      strength_records: {
+        Row: {
+          created_at: string
+          exercise_name: string
+          id: string
+          notes: string | null
+          recorded_at: string
+          reps: number
+          sets: number
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string
+          exercise_name: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          reps?: number
+          sets?: number
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          reps?: number
+          sets?: number
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       training_phases: {
         Row: {
           created_at: string | null
@@ -493,31 +529,37 @@ export type Database = {
       }
       user_metrics: {
         Row: {
+          category: string | null
           id: string
           metric_type: string
           notes: string | null
           recorded_at: string | null
           source: string | null
+          test_date: string | null
           unit: string
           user_id: string
           value: number
         }
         Insert: {
+          category?: string | null
           id?: string
           metric_type: string
           notes?: string | null
           recorded_at?: string | null
           source?: string | null
+          test_date?: string | null
           unit: string
           user_id: string
           value: number
         }
         Update: {
+          category?: string | null
           id?: string
           metric_type?: string
           notes?: string | null
           recorded_at?: string | null
           source?: string | null
+          test_date?: string | null
           unit?: string
           user_id?: string
           value?: number
