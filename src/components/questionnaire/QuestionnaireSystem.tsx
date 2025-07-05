@@ -1,26 +1,27 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, FileText, Clock, Target, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Activity, Timer, Zap, Target } from "lucide-react";
+import { toast } from "sonner";
 
 interface Question {
   id: string;
-  type: string;
-  question: string;
+  text: string;
+  type: 'multiple_choice' | 'text' | 'scale';
   options?: string[];
-  multiple?: boolean;
-  min?: number;
-  max?: number;
-  unit?: string;
+  required: boolean;
+}
+
+interface QuestionSection {
+  title: string;
+  questions: Question[];
 }
 
 interface QuestionnaireData {
@@ -29,26 +30,40 @@ interface QuestionnaireData {
   description: string;
   category: string;
   questions: {
-    sections: Array<{
-      title: string;
-      questions: Question[];
-    }>;
+    sections: QuestionSection[];
   };
+  is_active: boolean;
 }
 
 export const QuestionnaireSystem = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireData[]>([]);
-  const [currentQuestionnaire, setCurrentQuestionnaire] = useState<QuestionnaireData | null>(null);
-  const [responses, setResponses] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(false);
-  const [currentSection, setCurrentSection] = useState(0);
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireData | null>(null);
+  const [currentSection, setCurrentSection] = useState<number>(0);
+  const [responses, setResponses] = useState<{ [questionId: string]: string }>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchQuestionnaires();
-    initializeMockQuestionnaires();
   }, []);
+
+  const handleQuestionnaireSelect = (questionnaire: QuestionnaireData) => {
+    setSelectedQuestionnaire(questionnaire);
+    setCurrentSection(0);
+    setResponses({});
+  };
+
+  const handleNextSection = () => {
+    setCurrentSection(prev => Math.min(prev + 1, selectedQuestionnaire?.questions.sections.length ? selectedQuestionnaire.questions.sections.length - 1 : 0));
+  };
+
+  const handlePrevSection = () => {
+    setCurrentSection(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleResponseChange = (questionId: string, value: string) => {
+    setResponses(prev => ({ ...prev, [questionId]: value }));
+  };
 
   const fetchQuestionnaires = async () => {
     try {
@@ -58,402 +73,182 @@ export const QuestionnaireSystem = () => {
         .eq('is_active', true);
 
       if (error) throw error;
-      
-      // Type assertion since we know the structure
-      const typedData = data?.map(item => ({
+
+      // Safe type conversion with validation
+      const validatedData = data?.map(item => ({
         ...item,
-        questions: item.questions as { sections: Array<{ title: string; questions: Question[]; }>; }
-      }));
-      
-      setQuestionnaires(typedData || []);
+        questions: typeof item.questions === 'object' && item.questions !== null 
+          ? item.questions as { sections: QuestionSection[] }
+          : { sections: [] }
+      })) || [];
+
+      setQuestionnaires(validatedData);
     } catch (error) {
       console.error('Erro ao buscar questionários:', error);
-    }
-  };
-
-  const initializeMockQuestionnaires = () => {
-    // Mock questionnaires for demo purposes
-    const mockQuestionnaires: QuestionnaireData[] = [
-      {
-        id: 'fitness-assessment',
-        title: 'Avaliação de Condicionamento Físico',
-        description: 'Teste sua resistência e força em exercícios básicos',
-        category: 'fitness',
-        questions: {
-          sections: [
-            {
-              title: 'Testes de Resistência (1 minuto cada)',
-              questions: [
-                {
-                  id: 'flexoes_1min',
-                  type: 'number',
-                  question: 'Quantas flexões você consegue fazer em 1 minuto?',
-                  min: 0,
-                  max: 100,
-                  unit: 'repetições'
-                },
-                {
-                  id: 'agachamentos_1min',
-                  type: 'number',
-                  question: 'Quantos agachamentos você consegue fazer em 1 minuto?',
-                  min: 0,
-                  max: 150,
-                  unit: 'repetições'
-                },
-                {
-                  id: 'abdominais_1min',
-                  type: 'number',
-                  question: 'Quantos abdominais você consegue fazer em 1 minuto?',
-                  min: 0,
-                  max: 100,
-                  unit: 'repetições'
-                },
-                {
-                  id: 'polichinelos_1min',
-                  type: 'number',
-                  question: 'Quantos polichinelos você consegue fazer em 1 minuto?',
-                  min: 0,
-                  max: 200,
-                  unit: 'repetições'
-                },
-                {
-                  id: 'elevacao_pelvica_1min',
-                  type: 'number',
-                  question: 'Quantas elevações pélvicas você consegue fazer em 1 minuto?',
-                  min: 0,
-                  max: 100,
-                  unit: 'repetições'
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        id: 'strength-assessment',
-        title: 'Avaliação de Força',
-        description: 'Registre suas cargas máximas nos exercícios principais',
-        category: 'strength',
-        questions: {
-          sections: [
-            {
-              title: 'Cargas Máximas (1RM ou estimativa)',
-              questions: [
-                {
-                  id: 'supino_reto_carga',
-                  type: 'number',
-                  question: 'Qual sua carga máxima no Supino Reto?',
-                  min: 0,
-                  max: 300,
-                  unit: 'kg'
-                },
-                {
-                  id: 'agachamento_livre_carga',
-                  type: 'number',
-                  question: 'Qual sua carga máxima no Agachamento Livre?',
-                  min: 0,
-                  max: 400,
-                  unit: 'kg'
-                },
-                {
-                  id: 'terra_carga',
-                  type: 'number',
-                  question: 'Qual sua carga máxima no Levantamento Terra?',
-                  min: 0,
-                  max: 500,
-                  unit: 'kg'
-                },
-                {
-                  id: 'puxada_frontal_carga',
-                  type: 'number',
-                  question: 'Qual sua carga máxima na Puxada Frontal?',
-                  min: 0,
-                  max: 200,
-                  unit: 'kg'
-                },
-                {
-                  id: 'desenvolvimento_carga',
-                  type: 'number',
-                  question: 'Qual sua carga máxima no Desenvolvimento Militar?',
-                  min: 0,
-                  max: 150,
-                  unit: 'kg'
-                }
-              ]
-            }
-          ]
-        }
-      }
-    ];
-
-    if (questionnaires.length === 0) {
-      setQuestionnaires(mockQuestionnaires);
-    }
-  };
-
-  const handleQuestionnaireSelect = (questionnaire: QuestionnaireData) => {
-    setCurrentQuestionnaire(questionnaire);
-    setCurrentSection(0);
-    setResponses({});
-  };
-
-  const handleResponseChange = (questionId: string, value: any) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
-  };
-
-  const handleSubmit = async () => {
-    if (!currentQuestionnaire || !user) return;
-
-    setLoading(true);
-    try {
-      // Salvar respostas do questionário
-      const { error: responseError } = await supabase
-        .from('questionnaire_responses')
-        .insert({
-          user_id: user.id,
-          questionnaire_id: currentQuestionnaire.id,
-          responses: responses
-        });
-
-      if (responseError) throw responseError;
-
-      // Salvar métricas específicas baseadas no tipo de questionário
-      if (currentQuestionnaire.category === 'fitness') {
-        await savePhysicalMetrics();
-      } else if (currentQuestionnaire.category === 'strength') {
-        await saveStrengthRecords();
-      }
-
-      toast({
-        title: "Sucesso!",
-        description: "Questionário respondido com sucesso!"
-      });
-
-      setCurrentQuestionnaire(null);
-      setResponses({});
-    } catch (error) {
-      console.error('Erro ao salvar respostas:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar respostas.",
-        variant: "destructive"
-      });
+      toast.error('Erro ao carregar questionários');
     } finally {
       setLoading(false);
     }
   };
 
-  const savePhysicalMetrics = async () => {
-    const metrics = [
-      { type: 'flexoes_1min', value: responses.flexoes_1min, unit: 'reps' },
-      { type: 'agachamentos_1min', value: responses.agachamentos_1min, unit: 'reps' },
-      { type: 'abdominais_1min', value: responses.abdominais_1min, unit: 'reps' },
-      { type: 'polichinelos_1min', value: responses.polichinelos_1min, unit: 'reps' },
-      { type: 'elevacao_pelvica_1min', value: responses.elevacao_pelvica_1min, unit: 'reps' }
-    ];
+  const handleSubmitResponse = async () => {
+    if (!user || !selectedQuestionnaire) return;
 
-    for (const metric of metrics) {
-      if (metric.value) {
-        await supabase.from('user_metrics').insert({
-          user_id: user!.id,
-          metric_type: metric.type,
-          value: metric.value,
-          unit: metric.unit,
-          category: 'physical_test',
-          test_date: new Date().toISOString().split('T')[0]
+    try {
+      const { error } = await supabase
+        .from('questionnaire_responses')
+        .insert({
+          user_id: user.id,
+          questionnaire_id: selectedQuestionnaire.id,
+          responses: responses,
+          completed_at: new Date().toISOString()
         });
-      }
+
+      if (error) throw error;
+
+      toast.success('Questionário enviado com sucesso!');
+      setSelectedQuestionnaire(null);
+      setResponses({});
+      setCurrentSection(0);
+    } catch (error) {
+      console.error('Erro ao enviar respostas:', error);
+      toast.error('Erro ao enviar questionário');
     }
   };
 
-  const saveStrengthRecords = async () => {
-    const exercises = [
-      { name: 'Supino Reto', weight: responses.supino_reto_carga },
-      { name: 'Agachamento Livre', weight: responses.agachamento_livre_carga },
-      { name: 'Levantamento Terra', weight: responses.terra_carga },
-      { name: 'Puxada Frontal', weight: responses.puxada_frontal_carga },
-      { name: 'Desenvolvimento Militar', weight: responses.desenvolvimento_carga }
-    ];
-
-    for (const exercise of exercises) {
-      if (exercise.weight) {
-        await supabase.from('strength_records').insert({
-          user_id: user!.id,
-          exercise_name: exercise.name,
-          weight_kg: exercise.weight,
-          reps: 1,
-          sets: 1
-        });
-      }
-    }
-  };
-
-  const renderQuestion = (question: Question) => {
-    switch (question.type) {
-      case 'number':
-        return (
-          <div className="space-y-2">
-            <Label>{question.question}</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                min={question.min}
-                max={question.max}
-                value={responses[question.id] || ''}
-                onChange={(e) => handleResponseChange(question.id, parseInt(e.target.value) || 0)}
-                className="flex-1"
-              />
-              {question.unit && <span className="text-sm text-gray-500">{question.unit}</span>}
-            </div>
-          </div>
-        );
-
-      case 'multiple_choice':
-        return (
-          <div className="space-y-3">
-            <Label>{question.question}</Label>
-            <div className="grid grid-cols-1 gap-2">
-              {question.options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${question.id}_${index}`}
-                    checked={question.multiple 
-                      ? (responses[question.id] || []).includes(option)
-                      : responses[question.id] === option
-                    }
-                    onCheckedChange={(checked) => {
-                      if (question.multiple) {
-                        const current = responses[question.id] || [];
-                        if (checked) {
-                          handleResponseChange(question.id, [...current, option]);
-                        } else {
-                          handleResponseChange(question.id, current.filter((item: string) => item !== option));
-                        }
-                      } else {
-                        handleResponseChange(question.id, checked ? option : '');
-                      }
-                    }}
-                  />
-                  <Label htmlFor={`${question.id}_${index}`}>{option}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'fitness': return <Activity className="w-5 h-5" />;
-      case 'strength': return <Zap className="w-5 h-5" />;
-      case 'preferences': return <Target className="w-5 h-5" />;
-      default: return <Timer className="w-5 h-5" />;
-    }
-  };
-
-  if (currentQuestionnaire) {
-    const currentSectionData = currentQuestionnaire.questions.sections[currentSection];
-    const totalSections = currentQuestionnaire.questions.sections.length;
-    const progress = ((currentSection + 1) / totalSections) * 100;
-
+  if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {getCategoryIcon(currentQuestionnaire.category)}
-                <CardTitle>{currentQuestionnaire.title}</CardTitle>
-              </div>
-              <Badge variant="outline">
-                Seção {currentSection + 1} de {totalSections}
-              </Badge>
-            </div>
-            <Progress value={progress} className="w-full" />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">{currentSectionData.title}</h3>
-              <div className="space-y-4">
-                {currentSectionData.questions.map((question) => (
-                  <div key={question.id} className="p-4 border rounded-lg">
-                    {renderQuestion(question)}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentSection(Math.max(0, currentSection - 1))}
-                disabled={currentSection === 0}
-              >
-                Anterior
-              </Button>
-
-              {currentSection < totalSections - 1 ? (
-                <Button
-                  onClick={() => setCurrentSection(currentSection + 1)}
-                >
-                  Próxima
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="bg-orange-500 hover:bg-orange-600"
-                >
-                  {loading ? 'Salvando...' : 'Finalizar'}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex justify-center items-center h-48">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Avaliação Física Completa</h2>
-        <p className="text-gray-600">
-          Complete os questionários para personalizar seu treino
-        </p>
-      </div>
+      {/* Questionnaire Selection */}
+      {!selectedQuestionnaire ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Selecione um Questionário
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {questionnaires.map(questionnaire => (
+              <Card key={questionnaire.id} className="hover:shadow-md transition-shadow duration-200">
+                <CardHeader>
+                  <CardTitle>{questionnaire.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-gray-500">{questionnaire.description}</p>
+                  <Badge className="bg-blue-100 text-blue-800">{questionnaire.category}</Badge>
+                  <Button onClick={() => handleQuestionnaireSelect(questionnaire)} className="w-full mt-2">
+                    Responder
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        /* Questionnaire Display */
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                {selectedQuestionnaire.title}
+              </CardTitle>
+              <Badge className="bg-blue-100 text-blue-800">{selectedQuestionnaire.category}</Badge>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">{selectedQuestionnaire.description}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selectedQuestionnaire.questions.sections.length > 0 ? (
+              <>
+                {/* Section Progress */}
+                <div className="mb-4">
+                  <div className="text-sm font-medium">
+                    Seção {currentSection + 1} de {selectedQuestionnaire.questions.sections.length}
+                  </div>
+                  <Progress value={((currentSection + 1) / selectedQuestionnaire.questions.sections.length) * 100} />
+                </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {questionnaires.map((questionnaire) => (
-          <Card 
-            key={questionnaire.id} 
-            className="cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => handleQuestionnaireSelect(questionnaire)}
-          >
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                {getCategoryIcon(questionnaire.category)}
-                <CardTitle className="text-lg">{questionnaire.title}</CardTitle>
+                {/* Questions */}
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">
+                    {selectedQuestionnaire.questions.sections[currentSection].title}
+                  </h2>
+                  {selectedQuestionnaire.questions.sections[currentSection].questions.map(question => (
+                    <div key={question.id} className="space-y-2">
+                      <Label htmlFor={question.id} className="font-medium">
+                        {question.text}
+                        {question.required && <span className="text-red-500">*</span>}
+                      </Label>
+                      {question.type === 'multiple_choice' && question.options ? (
+                        <RadioGroup defaultValue={responses[question.id]} onValueChange={(value) => handleResponseChange(question.id, value)}>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {question.options.map(option => (
+                              <div key={option} className="flex items-center space-x-2">
+                                <RadioGroupItem value={option} id={`${question.id}-${option}`} />
+                                <Label htmlFor={`${question.id}-${option}`}>{option}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </RadioGroup>
+                      ) : question.type === 'scale' ? (
+                        <RadioGroup defaultValue={responses[question.id]} onValueChange={(value) => handleResponseChange(question.id, value)}>
+                          <div className="flex items-center space-x-4">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(scaleValue => (
+                              <div key={scaleValue} className="flex flex-col items-center">
+                                <RadioGroupItem value={scaleValue.toString()} id={`${question.id}-${scaleValue}`} />
+                                <Label htmlFor={`${question.id}-${scaleValue}`}>{scaleValue}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </RadioGroup>
+                      ) : (
+                        <Textarea
+                          id={question.id}
+                          placeholder="Sua resposta"
+                          value={responses[question.id] || ''}
+                          onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevSection}
+                    disabled={currentSection === 0}
+                  >
+                    Anterior
+                  </Button>
+                  {currentSection === selectedQuestionnaire.questions.sections.length - 1 ? (
+                    <Button onClick={handleSubmitResponse} className="bg-green-500 hover:bg-green-600">
+                      Enviar Questionário
+                    </Button>
+                  ) : (
+                    <Button onClick={handleNextSection}>Próxima</Button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <h3 className="text-lg font-semibold text-gray-600">
+                  Nenhuma pergunta disponível neste questionário.
+                </h3>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
-                {questionnaire.description}
-              </p>
-              <Badge className="bg-orange-500 text-white">
-                {questionnaire.questions.sections.length} seções
-              </Badge>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

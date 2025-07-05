@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import { TrainingPlanGenerator } from "@/components/training/TrainingPlanGenerator";
 import { ExerciseDatabase } from "@/components/training/ExerciseDatabase";
 import { ProgressionEngine } from "@/components/training/ProgressionEngine";
-import { Zap, Database, TrendingUp, Brain, Target, Users } from "lucide-react";
+import { Zap, Database, TrendingUp, Brain, Target, Users, Upload, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FitnessProfileForm } from "@/components/training/FitnessProfileForm";
+import { WorkoutGenerator } from "@/components/training/WorkoutGenerator";
+import { PeriodizationUpload } from "@/components/training/PeriodizationUpload";
 
 const AITrainingPlatform = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("generator");
 
   const platformStats = [
     {
@@ -101,28 +104,44 @@ const AITrainingPlatform = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="generator" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto mb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 max-w-4xl mx-auto mb-8">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Perfil Fitness
+            </TabsTrigger>
             <TabsTrigger value="generator" className="flex items-center gap-2">
               <Zap className="w-4 h-4" />
               Gerador IA
             </TabsTrigger>
             <TabsTrigger value="database" className="flex items-center gap-2">
               <Database className="w-4 h-4" />
-              Banco de Exercícios
+              Exercícios
+            </TabsTrigger>
+            <TabsTrigger value="periodization" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Periodização
             </TabsTrigger>
             <TabsTrigger value="progression" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Motor de Progressão
+              Progressão
             </TabsTrigger>
           </TabsList>
           
+          <TabsContent value="profile">
+            <FitnessProfileForm />
+          </TabsContent>
+          
           <TabsContent value="generator">
-            <TrainingPlanGenerator />
+            <WorkoutGenerator />
           </TabsContent>
           
           <TabsContent value="database">
             <ExerciseDatabase />
+          </TabsContent>
+          
+          <TabsContent value="periodization">
+            <PeriodizationUpload />
           </TabsContent>
           
           <TabsContent value="progression">
