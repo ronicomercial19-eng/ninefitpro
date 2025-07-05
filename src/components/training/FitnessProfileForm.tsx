@@ -206,7 +206,7 @@ export const FitnessProfileForm = () => {
                   <SelectContent>
                     <SelectItem value="beginner">Iniciante (0-6 meses)</SelectItem>
                     <SelectItem value="intermediate">Intermediário (6-24 meses)</SelectItem>
-                    <SelectItem value="advanced">Avançado (>24 meses)</SelectItem>
+                    <SelectItem value="advanced">Avançado (mais de 24 meses)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -245,7 +245,7 @@ export const FitnessProfileForm = () => {
                   <SelectItem value="30-45 min">30-45 minutos</SelectItem>
                   <SelectItem value="45-60 min">45-60 minutos</SelectItem>
                   <SelectItem value="60-90 min">60-90 minutos</SelectItem>
-                  <SelectItem value=">90 min">Mais de 90 minutos</SelectItem>
+                  <SelectItem value="90+ min">Mais de 90 minutos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
