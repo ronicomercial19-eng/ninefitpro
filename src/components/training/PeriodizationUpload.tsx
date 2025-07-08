@@ -12,11 +12,10 @@ import { toast } from "sonner";
 
 interface PeriodizationData {
   id: string;
-  file_name: string;
-  interpreted_data: any;
-  phases: any;
-  current_phase: number;
-  upload_date: string;
+  title: string;
+  periodization_data: any;
+  current_phase: string;
+  created_at: string;
 }
 
 export const PeriodizationUpload = () => {
@@ -62,13 +61,15 @@ export const PeriodizationUpload = () => {
       const mockInterpretation = await interpretPeriodization(file);
       
       const { data, error } = await supabase
-        .from('periodization_uploads')
+        .from('periodizations')
         .insert({
           user_id: user.id,
-          file_name: file.name,
+          professor_id: user.id, // Using user as professor for now
+          title: file.name,
           file_url: urlData.publicUrl,
-          interpreted_data: mockInterpretation,
-          phases: mockInterpretation.phases
+          file_type: file.type,
+          periodization_data: mockInterpretation,
+          current_phase: 'Fase 1'
         })
         .select()
         .single();
@@ -139,10 +140,10 @@ export const PeriodizationUpload = () => {
     
     try {
       const { data, error } = await supabase
-        .from('periodization_uploads')
+        .from('periodizations')
         .select('*')
         .eq('user_id', user.id)
-        .order('upload_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setUploadedFiles(data || []);
@@ -225,35 +226,35 @@ export const PeriodizationUpload = () => {
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-500" />
-                        {periodization.file_name}
+                        {periodization.title}
                       </h3>
                       <Badge className="bg-green-500">
-                        Fase {periodization.current_phase}
+                        {periodization.current_phase}
                       </Badge>
                     </div>
                     
-                    {periodization.interpreted_data && (
+                    {periodization.periodization_data && (
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="font-medium">Tipo:</span>
-                            <p className="capitalize">{periodization.interpreted_data.type?.replace('_', ' ')}</p>
+                            <p className="capitalize">{periodization.periodization_data.type?.replace('_', ' ')}</p>
                           </div>
                           <div>
                             <span className="font-medium">Duração:</span>
-                            <p>{periodization.interpreted_data.duration_weeks} semanas</p>
+                            <p>{periodization.periodization_data.duration_weeks} semanas</p>
                           </div>
                           <div>
                             <span className="font-medium">Fases:</span>
-                            <p>{periodization.interpreted_data.phases?.length || 0} fases</p>
+                            <p>{periodization.periodization_data.phases?.length || 0} fases</p>
                           </div>
                         </div>
                         
-                        {periodization.interpreted_data.phases && (
+                        {periodization.periodization_data.phases && (
                           <div className="mt-4">
                             <h4 className="font-medium mb-2">Fases da Periodização:</h4>
                             <div className="space-y-2">
-                              {periodization.interpreted_data.phases.map((phase: any, index: number) => (
+                              {periodization.periodization_data.phases.map((phase: any, index: number) => (
                                 <div key={index} className="bg-gray-50 p-3 rounded-lg">
                                   <div className="flex items-center justify-between mb-2">
                                     <h5 className="font-medium">{phase.name}</h5>
@@ -274,7 +275,7 @@ export const PeriodizationUpload = () => {
                     )}
                     
                     <p className="text-xs text-gray-500 mt-3">
-                      Enviado em {new Date(periodization.upload_date).toLocaleDateString('pt-BR')}
+                      Enviado em {new Date(periodization.created_at).toLocaleDateString('pt-BR')}
                     </p>
                   </CardContent>
                 </Card>

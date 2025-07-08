@@ -13,21 +13,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface FitnessProfile {
+  name: string;
   age?: number;
-  biological_sex?: 'male' | 'female';
-  height_cm?: number;
-  weight_kg?: number;
+  gender?: 'male' | 'female';
+  height?: number;
+  weight?: number;
   experience_level?: 'beginner' | 'intermediate' | 'advanced';
   experience_months?: number;
-  weekly_availability?: number;
+  weekly_frequency?: number;
   session_duration?: string;
-  primary_goals: string[];
+  primary_goal?: string;
   injuries_limitations?: string;
-  preferred_training_types: string[];
-  available_equipment: string[];
-  preferred_environments: string[];
-  preferred_stimuli: string[];
-  priority_muscle_groups: string[];
+  training_environment?: string;
 }
 
 const goalOptions = [
@@ -48,24 +45,12 @@ const equipmentOptions = [
 
 const environmentOptions = ['Academia', 'Casa', 'Ar Livre', 'Estúdio'];
 
-const stimuliOptions = [
-  'Resistência Muscular', 'Pliometria', 'Treino de Força Máxima',
-  'Treino Metabólico', 'Mobilidade', 'Estabilização'
-];
-
-const muscleGroups = [
-  'Glúteos', 'Ombros', 'Costas', 'Abdômen', 'Pernas', 'Peito', 'Braços'
-];
-
 export const FitnessProfileForm = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<FitnessProfile>({
-    primary_goals: [],
-    preferred_training_types: [],
-    available_equipment: [],
-    preferred_environments: [],
-    preferred_stimuli: [],
-    priority_muscle_groups: []
+    name: '',
+    primary_goal: '',
+    training_environment: ''
   });
   const [loading, setLoading] = useState(false);
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
@@ -81,7 +66,7 @@ export const FitnessProfileForm = () => {
     
     try {
       const { data, error } = await supabase
-        .from('user_fitness_profiles')
+        .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -92,21 +77,25 @@ export const FitnessProfileForm = () => {
       }
 
       if (data) {
-        setProfile(data);
+        setProfile({
+          name: data.name,
+          age: data.age || undefined,
+          gender: data.gender as 'male' | 'female' || undefined,
+          height: data.height || undefined,
+          weight: data.weight || undefined,
+          experience_level: data.experience_level as 'beginner' | 'intermediate' | 'advanced' || undefined,
+          experience_months: data.experience_months || undefined,
+          weekly_frequency: data.weekly_frequency || undefined,
+          session_duration: data.session_duration || undefined,
+          primary_goal: data.primary_goal || undefined,
+          injuries_limitations: data.injuries_limitations || undefined,
+          training_environment: data.training_environment || undefined
+        });
         setHasExistingProfile(true);
       }
     } catch (error) {
       console.log('Error fetching profile:', error);
     }
-  };
-
-  const handleArrayToggle = (field: keyof FitnessProfile, value: string) => {
-    const currentArray = profile[field] as string[] || [];
-    const newArray = currentArray.includes(value)
-      ? currentArray.filter(item => item !== value)
-      : [...currentArray, value];
-    
-    setProfile(prev => ({ ...prev, [field]: newArray }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,7 +112,7 @@ export const FitnessProfileForm = () => {
 
       if (hasExistingProfile) {
         const { error } = await supabase
-          .from('user_fitness_profiles')
+          .from('user_profiles')
           .update(profileData)
           .eq('user_id', user.id);
         
@@ -131,7 +120,7 @@ export const FitnessProfileForm = () => {
         toast.success('Perfil atualizado com sucesso!');
       } else {
         const { error } = await supabase
-          .from('user_fitness_profiles')
+          .from('user_profiles')
           .insert(profileData);
         
         if (error) throw error;
@@ -152,11 +141,22 @@ export const FitnessProfileForm = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            Perfil Fitness Avançado
+            Perfil Fitness
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Nome */}
+            <div>
+              <Label htmlFor="name">Nome Completo</Label>
+              <Input
+                id="name"
+                value={profile.name}
+                onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
+                required
+              />
+            </div>
+
             {/* Dados Demográficos */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
@@ -169,8 +169,8 @@ export const FitnessProfileForm = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="biological_sex">Sexo Biológico</Label>
-                <Select value={profile.biological_sex} onValueChange={(value: 'male' | 'female') => setProfile(prev => ({ ...prev, biological_sex: value }))}>
+                <Label htmlFor="gender">Sexo</Label>
+                <Select value={profile.gender} onValueChange={(value: 'male' | 'female') => setProfile(prev => ({ ...prev, gender: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
@@ -185,8 +185,8 @@ export const FitnessProfileForm = () => {
                 <Input
                   id="height"
                   type="number"
-                  value={profile.height_cm || ''}
-                  onChange={(e) => setProfile(prev => ({ ...prev, height_cm: parseInt(e.target.value) }))}
+                  value={profile.height || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, height: parseInt(e.target.value) }))}
                 />
               </div>
               <div>
@@ -195,8 +195,8 @@ export const FitnessProfileForm = () => {
                   id="weight"
                   type="number"
                   step="0.1"
-                  value={profile.weight_kg || ''}
-                  onChange={(e) => setProfile(prev => ({ ...prev, weight_kg: parseFloat(e.target.value) }))}
+                  value={profile.weight || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, weight: parseFloat(e.target.value) }))}
                 />
               </div>
             </div>
@@ -226,8 +226,8 @@ export const FitnessProfileForm = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="weekly_availability">Dias por semana</Label>
-                <Select value={profile.weekly_availability?.toString()} onValueChange={(value) => setProfile(prev => ({ ...prev, weekly_availability: parseInt(value) }))}>
+                <Label htmlFor="weekly_frequency">Dias por semana</Label>
+                <Select value={profile.weekly_frequency?.toString()} onValueChange={(value) => setProfile(prev => ({ ...prev, weekly_frequency: parseInt(value) }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
@@ -256,25 +256,22 @@ export const FitnessProfileForm = () => {
               </Select>
             </div>
 
-            {/* Objetivos */}
+            {/* Objetivo Principal */}
             <div>
               <Label className="text-base font-semibold flex items-center gap-2 mb-3">
                 <Target className="w-4 h-4" />
-                Objetivos Primários (até 3)
+                Objetivo Principal
               </Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {goalOptions.map(goal => (
-                  <div key={goal} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={goal}
-                      checked={profile.primary_goals.includes(goal)}
-                      onCheckedChange={() => handleArrayToggle('primary_goals', goal)}
-                      disabled={!profile.primary_goals.includes(goal) && profile.primary_goals.length >= 3}
-                    />
-                    <Label htmlFor={goal} className="text-sm">{goal}</Label>
-                  </div>
-                ))}
-              </div>
+              <Select value={profile.primary_goal} onValueChange={(value) => setProfile(prev => ({ ...prev, primary_goal: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar objetivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {goalOptions.map(goal => (
+                    <SelectItem key={goal} value={goal}>{goal}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Lesões e Limitações */}
@@ -288,95 +285,22 @@ export const FitnessProfileForm = () => {
               />
             </div>
 
-            {/* Preferências de Treino */}
-            <div>
-              <Label className="text-base font-semibold flex items-center gap-2 mb-3">
-                <Dumbbell className="w-4 h-4" />
-                Tipos de Treino Preferidos
-              </Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {trainingTypes.map(type => (
-                  <div key={type} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={type}
-                      checked={profile.preferred_training_types.includes(type)}
-                      onCheckedChange={() => handleArrayToggle('preferred_training_types', type)}
-                    />
-                    <Label htmlFor={type} className="text-sm">{type}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Equipamentos */}
-            <div>
-              <Label className="text-base font-semibold mb-3 block">Equipamentos Disponíveis</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {equipmentOptions.map(equipment => (
-                  <div key={equipment} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={equipment}
-                      checked={profile.available_equipment.includes(equipment)}
-                      onCheckedChange={() => handleArrayToggle('available_equipment', equipment)}
-                    />
-                    <Label htmlFor={equipment} className="text-sm">{equipment}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Ambientes */}
+            {/* Ambiente de Treino */}
             <div>
               <Label className="text-base font-semibold flex items-center gap-2 mb-3">
                 <MapPin className="w-4 h-4" />
-                Ambientes Preferidos
+                Ambiente de Treino Preferido
               </Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {environmentOptions.map(env => (
-                  <div key={env} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={env}
-                      checked={profile.preferred_environments.includes(env)}
-                      onCheckedChange={() => handleArrayToggle('preferred_environments', env)}
-                    />
-                    <Label htmlFor={env} className="text-sm">{env}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Estímulos Preferidos */}
-            <div>
-              <Label className="text-base font-semibold mb-3 block">Estímulos Preferidos</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {stimuliOptions.map(stimulus => (
-                  <div key={stimulus} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={stimulus}
-                      checked={profile.preferred_stimuli.includes(stimulus)}
-                      onCheckedChange={() => handleArrayToggle('preferred_stimuli', stimulus)}
-                    />
-                    <Label htmlFor={stimulus} className="text-sm">{stimulus}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Grupos Musculares a Priorizar */}
-            <div>
-              <Label className="text-base font-semibold mb-3 block">Grupos Musculares a Priorizar</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {muscleGroups.map(group => (
-                  <div key={group} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={group}
-                      checked={profile.priority_muscle_groups.includes(group)}
-                      onCheckedChange={() => handleArrayToggle('priority_muscle_groups', group)}
-                    />
-                    <Label htmlFor={group} className="text-sm">{group}</Label>
-                  </div>
-                ))}
-              </div>
+              <Select value={profile.training_environment} onValueChange={(value) => setProfile(prev => ({ ...prev, training_environment: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar ambiente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {environmentOptions.map(env => (
+                    <SelectItem key={env} value={env}>{env}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
