@@ -19,10 +19,13 @@ interface Exercise {
 
 interface GeneratedWorkout {
   id: string;
-  user_id: string;
-  workout_data: any;
-  generated_at: string;
-  completed: boolean;
+  user_profile_id: string | null;
+  variation_used: string;
+  duration_months: number;
+  plan_data: any;
+  generated_at: string | null;
+  status: string | null;
+  feedback_data: any;
 }
 
 export const WorkoutGenerator = () => {
@@ -52,6 +55,8 @@ export const WorkoutGenerator = () => {
 
       if (data) {
         setUserProfile(data);
+      } else if (error) {
+        console.log('No profile found, will create one when needed');
       }
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
@@ -82,7 +87,18 @@ export const WorkoutGenerator = () => {
         .limit(10);
 
       if (data) {
-        setGeneratedWorkouts(data);
+        // Map the data to match our interface
+        const mappedWorkouts: GeneratedWorkout[] = data.map(workout => ({
+          id: workout.id,
+          user_profile_id: workout.user_profile_id,
+          variation_used: workout.variation_used,
+          duration_months: workout.duration_months,
+          plan_data: workout.plan_data,
+          generated_at: workout.generated_at,
+          status: workout.status,
+          feedback_data: workout.feedback_data
+        }));
+        setGeneratedWorkouts(mappedWorkouts);
       }
     } catch (error) {
       console.error('Erro ao buscar treinos:', error);
@@ -98,6 +114,22 @@ export const WorkoutGenerator = () => {
     setIsGenerating(true);
     
     try {
+      // Create user profile if it doesn't exist
+      if (!userProfile) {
+        const { data: newProfile, error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: mockUserId,
+            name: 'Usuário Teste',
+            primary_goal: selectedGoal
+          })
+          .select()
+          .single();
+
+        if (profileError) throw profileError;
+        setUserProfile(newProfile);
+      }
+
       const workoutData = {
         goal: selectedGoal,
         duration: selectedDuration,
@@ -113,7 +145,7 @@ export const WorkoutGenerator = () => {
       const { data, error } = await supabase
         .from('generated_workout_plans')
         .insert({
-          user_profile_id: mockUserId,
+          user_profile_id: userProfile?.id || mockUserId,
           variation_used: selectedGoal,
           duration_months: parseInt(selectedDuration),
           plan_data: workoutData
@@ -238,7 +270,7 @@ export const WorkoutGenerator = () => {
                           <Badge>{workout.duration_months} meses</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Gerado em {new Date(workout.generated_at).toLocaleDateString('pt-BR')}
+                          Gerado em {workout.generated_at ? new Date(workout.generated_at).toLocaleDateString('pt-BR') : 'Data não disponível'}
                         </p>
                       </CardContent>
                     </Card>

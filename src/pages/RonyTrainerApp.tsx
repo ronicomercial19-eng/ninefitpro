@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   Dumbbell, 
   TrendingUp, 
@@ -14,13 +16,16 @@ import {
   BarChart3,
   Target,
   Clock,
-  Trophy
+  Trophy,
+  Shield
 } from "lucide-react";
 import { WorkoutGenerator } from "@/components/training/WorkoutGenerator";
 import { PeriodizationUpload } from "@/components/training/PeriodizationUpload";
+import { TrainerAdminPanel } from "@/components/admin/TrainerAdminPanel";
 
 const RonyTrainerApp = () => {
   const [activeTab, setActiveTab] = useState("workouts");
+  const [isTrainerMode, setIsTrainerMode] = useState(false);
 
   const statsCards = [
     { title: "Treinos Realizados", value: "24", icon: Dumbbell, color: "text-blue-600" },
@@ -28,6 +33,10 @@ const RonyTrainerApp = () => {
     { title: "Tempo Ativo", value: "48h", icon: Clock, color: "text-green-600" },
     { title: "Meta Mensal", value: "85%", icon: Target, color: "text-purple-600" }
   ];
+
+  if (isTrainerMode) {
+    return <TrainerAdminPanel />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -46,6 +55,17 @@ const RonyTrainerApp = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="trainer-mode" className="text-white text-sm">
+                  Modo Professor
+                </Label>
+                <Switch
+                  id="trainer-mode"
+                  checked={isTrainerMode}
+                  onCheckedChange={setIsTrainerMode}
+                />
+                <Shield className="w-4 h-4 text-orange-500" />
+              </div>
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                 <User className="w-4 h-4 mr-2" />
                 Perfil
@@ -62,7 +82,7 @@ const RonyTrainerApp = () => {
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statsCards.map((stat, index) => (
-            <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -122,7 +142,9 @@ const RonyTrainerApp = () => {
                 </CardContent>
               </Card>
               
-              <WorkoutGenerator />
+              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6">
+                <WorkoutGenerator />
+              </div>
             </div>
           </TabsContent>
 
@@ -134,7 +156,10 @@ const RonyTrainerApp = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-64 flex items-center justify-center text-gray-400">
-                    Gráfico de Progressão
+                    <div className="text-center">
+                      <BarChart3 className="w-16 h-16 mx-auto mb-4" />
+                      <p>Gráfico de Progressão em breve</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -145,7 +170,10 @@ const RonyTrainerApp = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-64 flex items-center justify-center text-gray-400">
-                    Gráfico de Volume
+                    <div className="text-center">
+                      <TrendingUp className="w-16 h-16 mx-auto mb-4" />
+                      <p>Gráfico de Volume em breve</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -153,7 +181,9 @@ const RonyTrainerApp = () => {
           </TabsContent>
 
           <TabsContent value="periodization" className="mt-6">
-            <PeriodizationUpload />
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6">
+              <PeriodizationUpload />
+            </div>
           </TabsContent>
 
           <TabsContent value="dashboard" className="mt-6">
@@ -164,7 +194,10 @@ const RonyTrainerApp = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-64 flex items-center justify-center text-gray-400">
-                    Dashboard Principal
+                    <div className="text-center">
+                      <BarChart3 className="w-16 h-16 mx-auto mb-4" />
+                      <p>Dashboard Principal em desenvolvimento</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

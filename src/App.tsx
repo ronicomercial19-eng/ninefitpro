@@ -26,7 +26,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<OptimizedIndex />} />
+          <Route path="/" element={<RonyTrainerApp />} />
+          <Route path="/home" element={<OptimizedIndex />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/ai-training" element={<AITrainingPlatform />} />
