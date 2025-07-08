@@ -6,8 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Zap, Play, Clock, Target, Dumbbell, Heart, 
-  Thermometer, CheckCircle, Star, MessageSquare 
+  Zap, Play, Target, Dumbbell, CheckCircle, MessageSquare 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,12 +75,14 @@ export const WorkoutGenerator = () => {
   }, [user]);
 
   const fetchUserProfile = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_fitness_profiles')
         .select('*')
-        .eq('user_id', user!.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (data) {
         setUserProfile(data);
@@ -105,11 +106,13 @@ export const WorkoutGenerator = () => {
   };
 
   const fetchWorkoutHistory = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('generated_workouts')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('generated_at', { ascending: false })
         .limit(10);
 
@@ -150,7 +153,7 @@ export const WorkoutGenerator = () => {
         .select('id')
         .eq('user_id', user!.id)
         .eq('workout_hash', workoutHash)
-        .single();
+        .maybeSingle();
 
       if (existingWorkout && workoutHistory.length < 99) {
         // If workout exists and we haven't reached 99 unique workouts, generate a new one
@@ -361,8 +364,7 @@ export const WorkoutGenerator = () => {
                 Treino Atual
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
+                <Badge variant="outline">
                   {currentWorkout.workout_data.estimated_duration} min
                 </Badge>
                 <Badge variant="outline">
@@ -409,7 +411,6 @@ export const WorkoutGenerator = () => {
                                 </Badge>
                               )}
                               <Badge variant="outline">
-                                <Clock className="w-3 h-3 mr-1" />
                                 {exercise.rest}
                               </Badge>
                             </div>

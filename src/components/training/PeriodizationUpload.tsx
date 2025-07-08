@@ -5,125 +5,155 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, Calendar, Target, TrendingUp } from "lucide-react";
+import { Upload, FileText, Brain, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-interface PeriodizationPhase {
-  phase_number: number;
-  name: string;
-  duration_weeks: number;
-  objective: string;
-  volume_level: string;
-  intensity_level: string;
-  key_exercises: string[];
+interface PeriodizationData {
+  id: string;
+  file_name: string;
+  interpreted_data: any;
+  phases: any;
+  current_phase: number;
+  upload_date: string;
 }
 
 export const PeriodizationUpload = () => {
   const { user } = useAuth();
+  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [interpretedData, setInterpretedData] = useState<{
-    phases: PeriodizationPhase[];
-    total_duration: number;
-    main_objective: string;
-  } | null>(null);
+  const [interpreting, setInterpreting] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<PeriodizationData[]>([]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      const allowedTypes = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
+      if (allowedTypes.includes(selectedFile.type)) {
+        setFile(selectedFile);
+      } else {
+        toast.error('Formato de arquivo não suportado. Use PDF, Excel ou CSV.');
+      }
+    }
+  };
+
+  const uploadFile = async () => {
     if (!file || !user) return;
 
     setUploading(true);
-    setUploadedFile(file);
-
     try {
-      // Simulate AI interpretation of the periodization file
-      const interpretedData = await simulateAIInterpretation(file);
+      // Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
       
-      // Save to database
-      const { error } = await supabase
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('exercicios')
+        .upload(`periodizations/${fileName}`, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('exercicios')
+        .getPublicUrl(`periodizations/${fileName}`);
+
+      // Save file record with mock AI interpretation
+      const mockInterpretation = await interpretPeriodization(file);
+      
+      const { data, error } = await supabase
         .from('periodization_uploads')
         .insert({
           user_id: user.id,
           file_name: file.name,
-          interpreted_data: interpretedData,
-          phases: interpretedData.phases,
-          current_phase: 1
-        });
+          file_url: urlData.publicUrl,
+          interpreted_data: mockInterpretation,
+          phases: mockInterpretation.phases
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setInterpretedData(interpretedData);
-      toast.success('Periodização interpretada com sucesso!');
+      toast.success('Periodização enviada e interpretada com sucesso!');
+      setFile(null);
+      fetchUploadedFiles();
     } catch (error) {
-      console.error('Erro ao processar arquivo:', error);
-      toast.error('Erro ao processar arquivo');
+      console.error('Erro no upload:', error);
+      toast.error('Erro ao enviar arquivo');
     } finally {
       setUploading(false);
     }
   };
 
-  const simulateAIInterpretation = async (file: File): Promise<any> => {
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Mock interpretation based on file type
+  const interpretPeriodization = async (file: File): Promise<any> => {
+    setInterpreting(true);
+    
+    // Mock AI interpretation - In reality, this would use AI to parse the file
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
+    
+    setInterpreting(false);
+    
     return {
-      total_duration: 16,
-      main_objective: "Hipertrofia e Força",
+      type: 'linear_periodization',
+      duration_weeks: 12,
       phases: [
         {
-          phase_number: 1,
-          name: "Adaptação Anatômica",
-          duration_weeks: 4,
-          objective: "Preparação muscular e articular para cargas maiores",
-          volume_level: "Alto",
-          intensity_level: "Baixa-Moderada",
-          key_exercises: ["Agachamento", "Supino", "Remada", "Desenvolvimento"]
+          name: 'Adaptação Anatômica',
+          weeks: 4,
+          focus: 'Volume alto, intensidade baixa',
+          sets_range: '3-4',
+          reps_range: '12-15',
+          load: '60-70%',
+          objectives: ['Preparação muscular', 'Técnica', 'Capacidade aeróbica']
         },
         {
-          phase_number: 2,
-          name: "Hipertrofia",
-          duration_weeks: 6,
-          objective: "Maximizar ganho de massa muscular",
-          volume_level: "Alto",
-          intensity_level: "Moderada",
-          key_exercises: ["Agachamento", "Leg Press", "Supino Inclinado", "Remada Curvada"]
+          name: 'Hipertrofia',
+          weeks: 4,
+          focus: 'Volume moderado-alto, intensidade moderada',
+          sets_range: '3-5',
+          reps_range: '8-12',
+          load: '70-80%',
+          objectives: ['Ganho de massa muscular', 'Aumento de força']
         },
         {
-          phase_number: 3,
-          name: "Força Máxima",
-          duration_weeks: 4,
-          objective: "Desenvolver força máxima",
-          volume_level: "Baixo",
-          intensity_level: "Alta",
-          key_exercises: ["Agachamento Livre", "Supino Reto", "Levantamento Terra"]
-        },
-        {
-          phase_number: 4,
-          name: "Transição/Regeneração",
-          duration_weeks: 2,
-          objective: "Recuperação ativa e manutenção",
-          volume_level: "Baixo",
-          intensity_level: "Baixa",
-          key_exercises: ["Exercícios funcionais", "Mobilidade", "Cardio leve"]
+          name: 'Força Máxima',
+          weeks: 4,
+          focus: 'Volume baixo, intensidade alta',
+          sets_range: '4-6',
+          reps_range: '3-6',
+          load: '80-95%',
+          objectives: ['Força máxima', 'Potência', 'Coordenação neuromuscular']
         }
-      ]
+      ],
+      training_variables: {
+        frequency: '4-5x/semana',
+        session_duration: '60-90min',
+        equipment: ['Barra', 'Halteres', 'Máquinas']
+      }
     };
   };
 
-  const getCurrentPhaseProgress = () => {
-    if (!interpretedData) return 0;
+  const fetchUploadedFiles = async () => {
+    if (!user) return;
     
-    const currentWeek = 3; // This would come from actual tracking
-    const totalWeeks = interpretedData.total_duration;
-    return (currentWeek / totalWeeks) * 100;
+    try {
+      const { data, error } = await supabase
+        .from('periodization_uploads')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('upload_date', { ascending: false });
+
+      if (error) throw error;
+      setUploadedFiles(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar arquivos:', error);
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Upload Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -131,164 +161,128 @@ export const PeriodizationUpload = () => {
             Upload de Periodização
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="periodization-file">
-                Arquivo de Periodização (PDF, Excel, CSV)
-              </Label>
-              <Input
-                id="periodization-file"
-                type="file"
-                accept=".pdf,.xlsx,.xls,.csv"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="mt-1"
-              />
-            </div>
-            
-            {uploading && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-                <span>Processando e interpretando arquivo...</span>
-              </div>
-            )}
-            
-            {uploadedFile && !uploading && (
-              <div className="flex items-center gap-2 text-green-600">
-                <FileText className="w-4 h-4" />
-                <span>Arquivo carregado: {uploadedFile.name}</span>
-              </div>
-            )}
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="file-upload">Selecionar Arquivo</Label>
+            <Input
+              id="file-upload"
+              type="file"
+              accept=".pdf,.xlsx,.xls,.csv"
+              onChange={handleFileSelect}
+              className="mt-1"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Formatos aceitos: PDF, Excel, CSV
+            </p>
           </div>
+
+          {file && (
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                <span className="text-sm font-medium">{file.name}</span>
+                <Badge variant="outline">{(file.size / 1024 / 1024).toFixed(2)} MB</Badge>
+              </div>
+              <Button 
+                onClick={uploadFile} 
+                disabled={uploading || interpreting}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                {uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Enviando...
+                  </>
+                ) : interpreting ? (
+                  <>
+                    <Brain className="w-4 h-4 mr-2" />
+                    Interpretando...
+                  </>
+                ) : (
+                  'Enviar e Interpretar'
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {interpretedData && (
-        <>
-          {/* Periodization Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="w-5 h-5" />
-                Visão Geral da Periodização
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {interpretedData.total_duration}
-                  </div>
-                  <div className="text-sm text-gray-600">Semanas Totais</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {interpretedData.phases.length}
-                  </div>
-                  <div className="text-sm text-gray-600">Fases</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold text-orange-600">
-                    {interpretedData.main_objective}
-                  </div>
-                  <div className="text-sm text-gray-600">Objetivo Principal</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Progresso Geral</span>
-                  <span>Semana 3 de {interpretedData.total_duration}</span>
-                </div>
-                <Progress value={getCurrentPhaseProgress()} className="w-full" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Phases Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Fases da Periodização
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {interpretedData.phases.map((phase, index) => (
-                  <Card key={phase.phase_number} className="border-l-4 border-l-orange-500">
-                    <CardContent className="pt-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg">
-                            Fase {phase.phase_number}: {phase.name}
-                          </h3>
-                          <p className="text-gray-600">{phase.objective}</p>
+      {/* Uploaded Files */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Periodizações Interpretadas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {uploadedFiles.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              Nenhuma periodização enviada ainda
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {uploadedFiles.map(periodization => (
+                <Card key={periodization.id} className="border-l-4 border-l-green-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        {periodization.file_name}
+                      </h3>
+                      <Badge className="bg-green-500">
+                        Fase {periodization.current_phase}
+                      </Badge>
+                    </div>
+                    
+                    {periodization.interpreted_data && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium">Tipo:</span>
+                            <p className="capitalize">{periodization.interpreted_data.type?.replace('_', ' ')}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Duração:</span>
+                            <p>{periodization.interpreted_data.duration_weeks} semanas</p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Fases:</span>
+                            <p>{periodization.interpreted_data.phases?.length || 0} fases</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <Badge variant="outline">
-                            {phase.duration_weeks} semanas
-                          </Badge>
-                          {index === 0 && (
-                            <Badge className="ml-2 bg-green-500">Atual</Badge>
-                          )}
-                        </div>
+                        
+                        {periodization.interpreted_data.phases && (
+                          <div className="mt-4">
+                            <h4 className="font-medium mb-2">Fases da Periodização:</h4>
+                            <div className="space-y-2">
+                              {periodization.interpreted_data.phases.map((phase: any, index: number) => (
+                                <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h5 className="font-medium">{phase.name}</h5>
+                                    <Badge variant="outline">{phase.weeks} semanas</Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-2">{phase.focus}</p>
+                                  <div className="flex gap-4 text-xs">
+                                    <span><strong>Séries:</strong> {phase.sets_range}</span>
+                                    <span><strong>Reps:</strong> {phase.reps_range}</span>
+                                    <span><strong>Carga:</strong> {phase.load}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <span className="text-sm font-medium text-gray-700">Volume: </span>
-                          <Badge variant="secondary">{phase.volume_level}</Badge>
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-gray-700">Intensidade: </span>
-                          <Badge variant="secondary">{phase.intensity_level}</Badge>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <span className="text-sm font-medium text-gray-700 block mb-2">
-                          Exercícios Principais:
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {phase.key_exercises.map(exercise => (
-                            <Badge key={exercise} variant="outline" className="text-xs">
-                              {exercise}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI Integration Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Integração com IA
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Como a IA usará sua periodização:</h4>
-                <ul className="text-sm space-y-1 text-gray-700">
-                  <li>• Treinos serão gerados respeitando a fase atual</li>
-                  <li>• Volume e intensidade ajustados automaticamente</li>
-                  <li>• Exercícios priorizados conforme o plano</li>
-                  <li>• Progressão automática entre as fases</li>
-                  <li>• Adaptações baseadas no seu perfil e limitações</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
+                    )}
+                    
+                    <p className="text-xs text-gray-500 mt-3">
+                      Enviado em {new Date(periodization.upload_date).toLocaleDateString('pt-BR')}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

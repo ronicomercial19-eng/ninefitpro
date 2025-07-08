@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { User, Target, Dumbbell, Clock, MapPin } from "lucide-react";
+import { User, Target, Dumbbell, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -78,19 +77,26 @@ export const FitnessProfileForm = () => {
   }, [user]);
 
   const fetchExistingProfile = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_fitness_profiles')
         .select('*')
-        .eq('user_id', user!.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.log('No existing profile found');
+        return;
+      }
 
       if (data) {
         setProfile(data);
         setHasExistingProfile(true);
       }
     } catch (error) {
-      console.log('No existing profile found');
+      console.log('Error fetching profile:', error);
     }
   };
 
