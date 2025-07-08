@@ -16,6 +16,7 @@ import {
   Video
 } from "lucide-react";
 import { VideoManager } from "../training/VideoManager";
+import { StudentsManagement } from "../students/StudentsManagement";
 
 export const TrainerAdminPanel = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -96,7 +97,11 @@ export const TrainerAdminPanel = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Alunos Recentes</span>
-                    <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
+                    <Button 
+                      size="sm" 
+                      className="bg-orange-500 hover:bg-orange-600"
+                      onClick={() => setActiveTab("students")}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Novo Aluno
                     </Button>
@@ -133,7 +138,10 @@ export const TrainerAdminPanel = () => {
                       <Dumbbell className="w-6 h-6" />
                       <span className="text-sm">Criar Treino</span>
                     </Button>
-                    <Button className="h-16 flex-col gap-2 bg-green-500 hover:bg-green-600">
+                    <Button 
+                      className="h-16 flex-col gap-2 bg-green-500 hover:bg-green-600"
+                      onClick={() => setActiveTab("students")}
+                    >
                       <Users className="w-6 h-6" />
                       <span className="text-sm">Novo Aluno</span>
                     </Button>
@@ -141,7 +149,10 @@ export const TrainerAdminPanel = () => {
                       <Calendar className="w-6 h-6" />
                       <span className="text-sm">Agendar</span>
                     </Button>
-                    <Button className="h-16 flex-col gap-2 bg-orange-500 hover:bg-orange-600">
+                    <Button 
+                      className="h-16 flex-col gap-2 bg-orange-500 hover:bg-orange-600"
+                      onClick={() => setActiveTab("videos")}
+                    >
                       <Video className="w-6 h-6" />
                       <span className="text-sm">Vídeo</span>
                     </Button>
@@ -152,26 +163,7 @@ export const TrainerAdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="students" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Gerenciar Alunos</span>
-                  <Button className="bg-orange-500 hover:bg-orange-600">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Aluno
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">Gerenciamento de Alunos</h3>
-                  <p className="text-gray-600">
-                    Aqui você poderá visualizar, adicionar e gerenciar todos os seus alunos
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <StudentsManagement />
           </TabsContent>
 
           <TabsContent value="workouts" className="mt-6">

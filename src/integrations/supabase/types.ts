@@ -454,6 +454,57 @@ export type Database = {
         }
         Relationships: []
       }
+      students: {
+        Row: {
+          altura_cm: number | null
+          ativo: boolean | null
+          created_at: string | null
+          data_nascimento: string | null
+          email: string
+          id: string
+          nivel_experiencia: string | null
+          nome: string
+          objetivo: string
+          observacoes: string | null
+          peso_kg: number | null
+          professor_id: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          altura_cm?: number | null
+          ativo?: boolean | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          email: string
+          id?: string
+          nivel_experiencia?: string | null
+          nome: string
+          objetivo: string
+          observacoes?: string | null
+          peso_kg?: number | null
+          professor_id: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          altura_cm?: number | null
+          ativo?: boolean | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          email?: string
+          id?: string
+          nivel_experiencia?: string | null
+          nome?: string
+          objetivo?: string
+          observacoes?: string | null
+          peso_kg?: number | null
+          professor_id?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       training_phases: {
         Row: {
           created_at: string | null
