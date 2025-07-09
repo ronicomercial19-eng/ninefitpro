@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExerciseDatabase } from "@/components/training/ExerciseDatabase";
 import { TrainingPlanGenerator } from "@/components/training/TrainingPlanGenerator";
-import { VideoManager } from "@/components/training/VideoManager";
+import { PeriodizationAnalyzer } from "@/components/training/PeriodizationAnalyzer";
 import { WorkoutAdminPanel } from "@/components/workout/WorkoutAdminPanel";
 import { StudentsManagement } from "@/components/students/StudentsManagement";
 
@@ -18,7 +18,7 @@ const WorkoutManager = () => {
         <Tabs defaultValue="exercises" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="exercises">Biblioteca</TabsTrigger>
-            <TabsTrigger value="videos">Vídeos</TabsTrigger>
+            <TabsTrigger value="periodization">Periodização IA</TabsTrigger>
             <TabsTrigger value="create">Criar Treino</TabsTrigger>
             <TabsTrigger value="students">Alunos</TabsTrigger>
             <TabsTrigger value="admin">Admin</TabsTrigger>
@@ -28,8 +28,8 @@ const WorkoutManager = () => {
             <ExerciseDatabase />
           </TabsContent>
           
-          <TabsContent value="videos">
-            <VideoManager />
+          <TabsContent value="periodization">
+            <PeriodizationAnalyzer />
           </TabsContent>
           
           <TabsContent value="create">
