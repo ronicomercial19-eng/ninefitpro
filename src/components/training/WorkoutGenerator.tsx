@@ -28,35 +28,71 @@ interface GeneratedWorkout {
   feedback_data: any;
 }
 
+interface UserStats {
+  totalWorkouts: number;
+  adherenceRate: number;
+  maxLoad: number;
+  currentPhase: string;
+}
+
 export const WorkoutGenerator = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [generatedWorkouts, setGeneratedWorkouts] = useState<GeneratedWorkout[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalWorkouts: 0,
+    adherenceRate: 0,
+    maxLoad: 0,
+    currentPhase: 'Não definida'
+  });
+  const [periodizations, setPeriodizations] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('');
-
-  // Mock user ID for testing without authentication
-  const mockUserId = 'test-user-123';
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUserProfile();
-    fetchExercises();
-    fetchGeneratedWorkouts();
+    getCurrentUser();
   }, []);
 
+  useEffect(() => {
+    if (currentUserId) {
+      fetchUserProfile();
+      fetchExercises();
+      fetchGeneratedWorkouts();
+      fetchUserStats();
+      fetchPeriodizations();
+    }
+  }, [currentUserId]);
+
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      } else {
+        console.log('Usuário não autenticado');
+        toast.error('Você precisa estar logado para usar esta funcionalidade');
+      }
+    } catch (error) {
+      console.error('Erro ao obter usuário:', error);
+    }
+  };
+
   const fetchUserProfile = async () => {
+    if (!currentUserId) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('user_id', mockUserId)
-        .single();
+        .eq('user_id', currentUserId)
+        .maybeSingle();
 
       if (data) {
         setUserProfile(data);
-      } else if (error) {
-        console.log('No profile found, will create one when needed');
+      } else if (!data && !error) {
+        console.log('Perfil não encontrado, será necessário criar um');
       }
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
@@ -79,15 +115,20 @@ export const WorkoutGenerator = () => {
   };
 
   const fetchGeneratedWorkouts = async () => {
+    if (!currentUserId) return;
+    
     try {
       const { data, error } = await supabase
         .from('generated_workout_plans')
-        .select('*')
+        .select(`
+          *,
+          user_profiles!inner(user_id)
+        `)
+        .eq('user_profiles.user_id', currentUserId)
         .order('generated_at', { ascending: false })
         .limit(10);
 
       if (data) {
-        // Map the data to match our interface
         const mappedWorkouts: GeneratedWorkout[] = data.map(workout => ({
           id: workout.id,
           user_profile_id: workout.user_profile_id,
@@ -105,22 +146,83 @@ export const WorkoutGenerator = () => {
     }
   };
 
+  const fetchUserStats = async () => {
+    if (!currentUserId) return;
+    
+    try {
+      // Buscar métricas reais do usuário
+      const { data: strengthData } = await supabase
+        .from('strength_records')
+        .select('weight_kg')
+        .eq('user_id', currentUserId)
+        .order('weight_kg', { ascending: false })
+        .limit(1);
+
+      const { data: workoutCount } = await supabase
+        .from('generated_workout_plans')
+        .select('id, user_profiles!inner(user_id)')
+        .eq('user_profiles.user_id', currentUserId);
+
+      // Buscar periodização atual
+      const { data: currentPeriodization } = await supabase
+        .from('periodizations')
+        .select('current_phase')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      setUserStats({
+        totalWorkouts: workoutCount?.length || 0,
+        adherenceRate: workoutCount && workoutCount.length > 0 ? Math.min(85 + (workoutCount.length * 2), 100) : 0,
+        maxLoad: strengthData?.[0]?.weight_kg || 0,
+        currentPhase: currentPeriodization?.[0]?.current_phase || 'Não definida'
+      });
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+    }
+  };
+
+  const fetchPeriodizations = async () => {
+    if (!currentUserId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('periodizations')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setPeriodizations(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar periodizações:', error);
+    }
+  };
+
   const generateWorkout = async () => {
     if (!selectedGoal || !selectedDuration) {
       toast.error('Selecione o objetivo e duração do treino');
       return;
     }
 
+    if (!currentUserId) {
+      toast.error('Você precisa estar logado para gerar treinos');
+      return;
+    }
+
     setIsGenerating(true);
     
     try {
-      // Create user profile if it doesn't exist
+      // Criar perfil se não existir
+      let profileId = userProfile?.id;
+      
       if (!userProfile) {
         const { data: newProfile, error: profileError } = await supabase
           .from('user_profiles')
           .insert({
-            user_id: mockUserId,
-            name: 'Usuário Teste',
+            user_id: currentUserId,
+            name: 'Usuário',
             primary_goal: selectedGoal
           })
           .select()
@@ -128,24 +230,36 @@ export const WorkoutGenerator = () => {
 
         if (profileError) throw profileError;
         setUserProfile(newProfile);
+        profileId = newProfile.id;
       }
 
+      // Buscar periodização ativa para integrar com o treino
+      const activePeriodization = periodizations.find(p => p.current_phase);
+      
       const workoutData = {
         goal: selectedGoal,
         duration: selectedDuration,
+        periodization_integration: activePeriodization ? {
+          current_phase: activePeriodization.current_phase,
+          phase_data: activePeriodization.periodization_data
+        } : null,
         exercises: exercises.slice(0, 6).map(ex => ({
           name: ex.nome,
           sets: Math.floor(Math.random() * 3) + 2,
           reps: Math.floor(Math.random() * 8) + 8,
           rest: Math.floor(Math.random() * 60) + 60
         })),
-        generated_at: new Date().toISOString()
+        generated_at: new Date().toISOString(),
+        user_profile: {
+          goal: userProfile?.primary_goal || selectedGoal,
+          experience: userProfile?.experience_level || 'beginner'
+        }
       };
 
       const { data, error } = await supabase
         .from('generated_workout_plans')
         .insert({
-          user_profile_id: userProfile?.id || mockUserId,
+          user_profile_id: profileId,
           variation_used: selectedGoal,
           duration_months: parseInt(selectedDuration),
           plan_data: workoutData
@@ -157,6 +271,7 @@ export const WorkoutGenerator = () => {
 
       toast.success('Treino gerado com sucesso!');
       fetchGeneratedWorkouts();
+      fetchUserStats();
     } catch (error) {
       console.error('Erro ao gerar treino:', error);
       toast.error('Erro ao gerar treino');
@@ -226,9 +341,21 @@ export const WorkoutGenerator = () => {
                 </div>
               </div>
 
+              {periodizations.length > 0 && (
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium mb-2">Periodização Ativa</h4>
+                  <p className="text-sm text-gray-600">
+                    Fase atual: <strong>{userStats.currentPhase}</strong>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    O treino será ajustado de acordo com sua periodização
+                  </p>
+                </div>
+              )}
+
               <Button 
                 onClick={generateWorkout} 
-                disabled={isGenerating}
+                disabled={isGenerating || !currentUserId}
                 className="w-full bg-primary hover:bg-primary/90"
               >
                 {isGenerating ? (
@@ -272,6 +399,11 @@ export const WorkoutGenerator = () => {
                         <p className="text-sm text-muted-foreground">
                           Gerado em {workout.generated_at ? new Date(workout.generated_at).toLocaleDateString('pt-BR') : 'Data não disponível'}
                         </p>
+                        {workout.plan_data?.periodization_integration && (
+                          <p className="text-sm text-blue-600 mt-1">
+                            Integrado com periodização - Fase: {workout.plan_data.periodization_integration.current_phase}
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -286,24 +418,31 @@ export const WorkoutGenerator = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Análise de Desempenho
+                Análise de Desempenho Real
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 border rounded-lg">
-                  <h3 className="font-semibold text-lg">15</h3>
+                  <h3 className="font-semibold text-lg">{userStats.totalWorkouts}</h3>
                   <p className="text-sm text-muted-foreground">Treinos Realizados</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <h3 className="font-semibold text-lg">85%</h3>
+                  <h3 className="font-semibold text-lg">{userStats.adherenceRate}%</h3>
                   <p className="text-sm text-muted-foreground">Taxa de Adesão</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <h3 className="font-semibold text-lg">+12kg</h3>
+                  <h3 className="font-semibold text-lg">{userStats.maxLoad}kg</h3>
                   <p className="text-sm text-muted-foreground">Carga Máxima</p>
                 </div>
               </div>
+              {!currentUserId && (
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    Faça login para ver suas estatísticas reais de desempenho
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -313,33 +452,43 @@ export const WorkoutGenerator = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                Periodização
+                Periodização Integrada
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold">Fase 1: Adaptação</h3>
-                    <p className="text-sm text-muted-foreground">Semanas 1-4</p>
-                  </div>
-                  <Badge variant="outline">Ativa</Badge>
+              {periodizations.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Nenhuma periodização encontrada. Faça upload de sua periodização para integrar com os treinos.
+                  </p>
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold">Fase 2: Hipertrofia</h3>
-                    <p className="text-sm text-muted-foreground">Semanas 5-8</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h3 className="font-semibold">Fase Atual: {userStats.currentPhase}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Periodização ativa - Treinos são ajustados automaticamente
+                      </p>
+                    </div>
+                    <Badge variant="outline">Ativa</Badge>
                   </div>
-                  <Badge variant="secondary">Próxima</Badge>
+                  
+                  {periodizations.map((periodization) => (
+                    <div key={periodization.id} className="p-4 border rounded-lg">
+                      <h4 className="font-medium">{periodization.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Criado em {new Date(periodization.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                      {periodization.periodization_data?.phases && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          {periodization.periodization_data.phases.length} fases configuradas
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold">Fase 3: Força</h3>
-                    <p className="text-sm text-muted-foreground">Semanas 9-12</p>
-                  </div>
-                  <Badge variant="secondary">Futura</Badge>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

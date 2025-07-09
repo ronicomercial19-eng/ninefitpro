@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,16 +22,105 @@ import {
 import { WorkoutGenerator } from "@/components/training/WorkoutGenerator";
 import { PeriodizationUpload } from "@/components/training/PeriodizationUpload";
 import { TrainerAdminPanel } from "@/components/admin/TrainerAdminPanel";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UserStats {
+  totalWorkouts: number;
+  totalWeight: string;
+  activeTime: string;
+  monthlyGoal: string;
+}
 
 const RonyTrainerApp = () => {
   const [activeTab, setActiveTab] = useState("workouts");
   const [isTrainerMode, setIsTrainerMode] = useState(false);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalWorkouts: 0,
+    totalWeight: "0kg",
+    activeTime: "0h",
+    monthlyGoal: "0%"
+  });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchRealUserStats();
+    }
+  }, [currentUserId]);
+
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    } catch (error) {
+      console.error('Erro ao obter usuário:', error);
+    }
+  };
+
+  const fetchRealUserStats = async () => {
+    if (!currentUserId) return;
+
+    try {
+      // Buscar total de treinos gerados
+      const { data: workoutsData } = await supabase
+        .from('generated_workout_plans')
+        .select('id, user_profiles!inner(user_id)')
+        .eq('user_profiles.user_id', currentUserId);
+
+      // Buscar peso total levantado dos registros de força
+      const { data: strengthData } = await supabase
+        .from('strength_records')
+        .select('weight_kg, sets, reps')
+        .eq('user_id', currentUserId);
+
+      // Calcular peso total levantado
+      const totalWeight = strengthData?.reduce((total, record) => {
+        return total + (record.weight_kg * record.sets * record.reps);
+      }, 0) || 0;
+
+      // Estimar tempo ativo baseado no número de treinos (assumindo 1h por treino)
+      const totalWorkouts = workoutsData?.length || 0;
+      const activeHours = totalWorkouts * 1; // 1 hora por treino
+
+      // Calcular meta mensal baseada na frequência de treinos
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+      
+      const { data: monthlyWorkouts } = await supabase
+        .from('generated_workout_plans')
+        .select('id, user_profiles!inner(user_id)')
+        .eq('user_profiles.user_id', currentUserId)
+        .gte('generated_at', firstDayOfMonth.toISOString());
+
+      const monthlyWorkoutCount = monthlyWorkouts?.length || 0;
+      const expectedMonthlyWorkouts = 12; // Meta de 12 treinos por mês
+      const monthlyProgress = Math.min((monthlyWorkoutCount / expectedMonthlyWorkouts) * 100, 100);
+
+      setUserStats({
+        totalWorkouts: totalWorkouts,
+        totalWeight: totalWeight > 1000 ? `${(totalWeight / 1000).toFixed(1)}t` : `${totalWeight.toFixed(0)}kg`,
+        activeTime: `${activeHours}h`,
+        monthlyGoal: `${Math.round(monthlyProgress)}%`
+      });
+
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas reais:', error);
+    }
+  };
 
   const statsCards = [
-    { title: "Treinos Realizados", value: "24", icon: Dumbbell, color: "text-blue-600" },
-    { title: "Peso Levantado", value: "2.8t", icon: Trophy, color: "text-yellow-600" },
-    { title: "Tempo Ativo", value: "48h", icon: Clock, color: "text-green-600" },
-    { title: "Meta Mensal", value: "85%", icon: Target, color: "text-purple-600" }
+    { title: "Treinos Realizados", value: userStats.totalWorkouts.toString(), icon: Dumbbell, color: "text-blue-600" },
+    { title: "Peso Levantado", value: userStats.totalWeight, icon: Trophy, color: "text-yellow-600" },
+    { title: "Tempo Ativo", value: userStats.activeTime, icon: Clock, color: "text-green-600" },
+    { title: "Meta Mensal", value: userStats.monthlyGoal, icon: Target, color: "text-purple-600" }
   ];
 
   if (isTrainerMode) {
@@ -96,6 +185,14 @@ const RonyTrainerApp = () => {
           ))}
         </div>
 
+        {!currentUserId && (
+          <div className="mb-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+            <p className="text-yellow-200 text-center">
+              Faça login para ver suas estatísticas reais e gerar treinos personalizados
+            </p>
+          </div>
+        )}
+
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-black/30 border-white/20">
@@ -130,13 +227,18 @@ const RonyTrainerApp = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                       <div>
-                        <h3 className="font-semibold text-white">Treino A - Push</h3>
-                        <p className="text-sm text-gray-300">Peito, Ombros e Tríceps</p>
+                        <h3 className="font-semibold text-white">Treino Personalizado</h3>
+                        <p className="text-sm text-gray-300">Baseado na sua periodização atual</p>
                       </div>
-                      <Badge className="bg-green-500/20 text-green-400">Pendente</Badge>
+                      <Badge className="bg-green-500/20 text-green-400">
+                        {currentUserId ? 'Disponível' : 'Login necessário'}
+                      </Badge>
                     </div>
-                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-                      Iniciar Treino
+                    <Button 
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                      disabled={!currentUserId}
+                    >
+                      {currentUserId ? 'Iniciar Treino' : 'Faça login para treinar'}
                     </Button>
                   </div>
                 </CardContent>
@@ -158,7 +260,14 @@ const RonyTrainerApp = () => {
                   <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <BarChart3 className="w-16 h-16 mx-auto mb-4" />
-                      <p>Gráfico de Progressão em breve</p>
+                      {currentUserId ? (
+                        <div>
+                          <p className="text-white text-lg font-semibold">{userStats.totalWeight}</p>
+                          <p>Total levantado</p>
+                        </div>
+                      ) : (
+                        <p>Faça login para ver sua progressão</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -172,7 +281,14 @@ const RonyTrainerApp = () => {
                   <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <TrendingUp className="w-16 h-16 mx-auto mb-4" />
-                      <p>Gráfico de Volume em breve</p>
+                      {currentUserId ? (
+                        <div>
+                          <p className="text-white text-lg font-semibold">{userStats.totalWorkouts}</p>
+                          <p>Treinos realizados</p>
+                        </div>
+                      ) : (
+                        <p>Faça login para ver seu volume</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -196,7 +312,11 @@ const RonyTrainerApp = () => {
                   <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <BarChart3 className="w-16 h-16 mx-auto mb-4" />
-                      <p>Dashboard Principal em desenvolvimento</p>
+                      {currentUserId ? (
+                        <p className="text-white">Dados baseados em seus treinos reais</p>
+                      ) : (
+                        <p>Faça login para ver seu dashboard personalizado</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -209,16 +329,16 @@ const RonyTrainerApp = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300">Frequência Semanal</span>
-                      <span className="text-white font-semibold">4/5</span>
+                      <span className="text-sm text-gray-300">Meta Mensal</span>
+                      <span className="text-white font-semibold">{userStats.monthlyGoal}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300">Carga Progressiva</span>
-                      <span className="text-white font-semibold">+5kg</span>
+                      <span className="text-sm text-gray-300">Treinos Feitos</span>
+                      <span className="text-white font-semibold">{userStats.totalWorkouts}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300">Consistência</span>
-                      <span className="text-white font-semibold">85%</span>
+                      <span className="text-sm text-gray-300">Tempo Ativo</span>
+                      <span className="text-white font-semibold">{userStats.activeTime}</span>
                     </div>
                   </div>
                 </CardContent>
