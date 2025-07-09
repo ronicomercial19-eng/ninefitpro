@@ -73,6 +73,54 @@ export type Database = {
         }
         Relationships: []
       }
+      exercises: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          difficulty_level: string | null
+          equipment: string | null
+          goal: string | null
+          id: string
+          instructions: string | null
+          is_optional: boolean | null
+          name: string
+          phase: string | null
+          target_muscles: string[]
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          equipment?: string | null
+          goal?: string | null
+          id?: string
+          instructions?: string | null
+          is_optional?: boolean | null
+          name: string
+          phase?: string | null
+          target_muscles?: string[]
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          equipment?: string | null
+          goal?: string | null
+          id?: string
+          instructions?: string | null
+          is_optional?: boolean | null
+          name?: string
+          phase?: string | null
+          target_muscles?: string[]
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       generated_workout_plans: {
         Row: {
           duration_months: number
@@ -964,6 +1012,96 @@ export type Database = {
           workout_plan_id?: string | null
         }
         Relationships: []
+      }
+      workout_templates: {
+        Row: {
+          created_at: string | null
+          exercise_count: number | null
+          goal: string
+          id: string
+          name: string
+          phase: string
+          template_data: Json
+        }
+        Insert: {
+          created_at?: string | null
+          exercise_count?: number | null
+          goal: string
+          id?: string
+          name: string
+          phase: string
+          template_data: Json
+        }
+        Update: {
+          created_at?: string | null
+          exercise_count?: number | null
+          goal?: string
+          id?: string
+          name?: string
+          phase?: string
+          template_data?: Json
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          created_at: string | null
+          day_number: number
+          exercises: Json
+          id: string
+          method: string | null
+          notes: string | null
+          periodization_id: string | null
+          phase: string
+          status: string | null
+          student_id: string | null
+          updated_at: string | null
+          week_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          day_number: number
+          exercises?: Json
+          id?: string
+          method?: string | null
+          notes?: string | null
+          periodization_id?: string | null
+          phase: string
+          status?: string | null
+          student_id?: string | null
+          updated_at?: string | null
+          week_number: number
+        }
+        Update: {
+          created_at?: string | null
+          day_number?: number
+          exercises?: Json
+          id?: string
+          method?: string | null
+          notes?: string | null
+          periodization_id?: string | null
+          phase?: string
+          status?: string | null
+          student_id?: string | null
+          updated_at?: string | null
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_periodization_id_fkey"
+            columns: ["periodization_id"]
+            isOneToOne: false
+            referencedRelation: "periodizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workouts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -4,163 +4,257 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Plus, Edit, Trash2, Youtube } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Play, Plus, Edit, Search, Filter, ExternalLink, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface Video {
+interface VideoExercise {
   id: string;
-  title: string;
-  youtube_url: string;
-  exercise_name: string;
+  name: string;
   description?: string;
-  created_at: string;
+  target_muscles: string[];
+  phase?: string;
+  goal?: string;
+  equipment?: string;
+  difficulty_level?: string;
+  video_url?: string;
+  instructions?: string;
 }
 
 export const VideoManager = () => {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [isAddingVideo, setIsAddingVideo] = useState(false);
-  const [newVideo, setNewVideo] = useState({
-    title: '',
-    youtube_url: '',
-    exercise_name: '',
-    description: ''
+  const [exercises, setExercises] = useState<VideoExercise[]>([]);
+  const [filteredExercises, setFilteredExercises] = useState<VideoExercise[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPhase, setFilterPhase] = useState("all");
+  const [editingExercise, setEditingExercise] = useState<VideoExercise | null>(null);
+  const [videoForm, setVideoForm] = useState({
+    id: "",
+    name: "",
+    video_url: "",
+    description: "",
+    instructions: ""
   });
 
   useEffect(() => {
-    fetchVideos();
+    fetchExercises();
   }, []);
 
-  const fetchVideos = async () => {
+  useEffect(() => {
+    filterExercises();
+  }, [exercises, searchTerm, filterPhase]);
+
+  const fetchExercises = async () => {
     try {
-      // For now, we'll use a mock data structure
-      // In a real implementation, you would fetch from a videos table
-      const mockVideos: Video[] = [
-        {
-          id: '1',
-          title: 'Agachamento Livre - Técnica Correta',
-          youtube_url: 'https://www.youtube.com/watch?v=example1',
-          exercise_name: 'Agachamento Livre',
-          description: 'Demonstração da técnica correta para agachamento livre',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          title: 'Supino Reto - Execução Perfeita',
-          youtube_url: 'https://www.youtube.com/watch?v=example2',
-          exercise_name: 'Supino Reto',
-          description: 'Como executar o supino reto com segurança',
-          created_at: new Date().toISOString()
-        }
-      ];
-      setVideos(mockVideos);
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .not('video_url', 'is', null)
+        .order('name');
+
+      if (error) throw error;
+      setExercises(data || []);
     } catch (error) {
-      console.error('Erro ao buscar vídeos:', error);
+      console.error('Erro ao buscar exercícios com vídeo:', error);
+      toast.error('Erro ao carregar exercícios');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addVideo = async () => {
-    if (!newVideo.title || !newVideo.youtube_url || !newVideo.exercise_name) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
+  const filterExercises = () => {
+    let filtered = exercises;
+
+    if (searchTerm) {
+      filtered = filtered.filter(ex => 
+        ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ex.target_muscles.some(muscle => muscle.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
     }
 
-    try {
-      // In a real implementation, you would insert into a videos table
-      const videoId = `video_${Date.now()}`;
-      const videoData: Video = {
-        id: videoId,
-        ...newVideo,
-        created_at: new Date().toISOString()
-      };
-
-      setVideos(prev => [videoData, ...prev]);
-      setNewVideo({ title: '', youtube_url: '', exercise_name: '', description: '' });
-      setIsAddingVideo(false);
-      toast.success('Vídeo adicionado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao adicionar vídeo:', error);
-      toast.error('Erro ao adicionar vídeo');
+    if (filterPhase !== "all") {
+      filtered = filtered.filter(ex => ex.phase === filterPhase);
     }
+
+    setFilteredExercises(filtered);
   };
 
-  const getYouTubeVideoId = (url: string) => {
-    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/;
+  const extractYouTubeId = (url: string) => {
+    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
     const match = url.match(regex);
     return match ? match[1] : null;
   };
 
-  const deleteVideo = (videoId: string) => {
-    setVideos(prev => prev.filter(video => video.id !== videoId));
-    toast.success('Vídeo removido com sucesso!');
+  const generateYouTubeThumbnail = (url: string) => {
+    const videoId = extractYouTubeId(url);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
   };
+
+  const handleVideoUpdate = async () => {
+    try {
+      if (!videoForm.id || !videoForm.video_url) {
+        toast.error('URL do vídeo é obrigatória');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('exercises')
+        .update({
+          video_url: videoForm.video_url,
+          instructions: videoForm.instructions,
+          description: videoForm.description || undefined
+        })
+        .eq('id', videoForm.id);
+
+      if (error) throw error;
+
+      // Atualizar lista local
+      setExercises(exercises.map(ex => 
+        ex.id === videoForm.id 
+          ? { 
+              ...ex, 
+              video_url: videoForm.video_url,
+              instructions: videoForm.instructions,
+              description: videoForm.description || ex.description
+            }
+          : ex
+      ));
+
+      setEditingExercise(null);
+      setVideoForm({ id: "", name: "", video_url: "", description: "", instructions: "" });
+      toast.success('Vídeo atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar vídeo:', error);
+      toast.error('Erro ao atualizar vídeo');
+    }
+  };
+
+  const startEditing = (exercise: VideoExercise) => {
+    setEditingExercise(exercise);
+    setVideoForm({
+      id: exercise.id,
+      name: exercise.name,
+      video_url: exercise.video_url || "",
+      description: exercise.description || "",
+      instructions: exercise.instructions || ""
+    });
+  };
+
+  const openVideo = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <span className="ml-3">Carregando vídeos...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Gerenciar Vídeos</h2>
-        <Button 
-          onClick={() => setIsAddingVideo(true)}
-          className="bg-orange-500 hover:bg-orange-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Vídeo
-        </Button>
+        <div className="flex items-center gap-2">
+          <Youtube className="w-6 h-6 text-red-600" />
+          <h2 className="text-2xl font-bold">Gerenciador de Vídeos</h2>
+          <Badge variant="secondary">{exercises.length} vídeos</Badge>
+        </div>
       </div>
 
-      {isAddingVideo && (
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Nome do exercício..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Fase</Label>
+              <Select value={filterPhase} onValueChange={setFilterPhase}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as fases</SelectItem>
+                  <SelectItem value="base">Base</SelectItem>
+                  <SelectItem value="intensification">Intensificação</SelectItem>
+                  <SelectItem value="peaking">Pico</SelectItem>
+                  <SelectItem value="recovery">Recuperação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Formulário de Edição */}
+      {editingExercise && (
         <Card>
           <CardHeader>
-            <CardTitle>Novo Vídeo</CardTitle>
+            <CardTitle>Editar Vídeo - {editingExercise.name}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  value={newVideo.title}
-                  onChange={(e) => setNewVideo(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Ex: Agachamento - Técnica Correta"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="exercise">Nome do Exercício *</Label>
-                <Input
-                  id="exercise"
-                  value={newVideo.exercise_name}
-                  onChange={(e) => setNewVideo(prev => ({ ...prev, exercise_name: e.target.value }))}
-                  placeholder="Ex: Agachamento Livre"
-                />
-              </div>
-            </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="youtube_url">URL do YouTube *</Label>
+              <Label>URL do Vídeo *</Label>
               <Input
-                id="youtube_url"
-                value={newVideo.youtube_url}
-                onChange={(e) => setNewVideo(prev => ({ ...prev, youtube_url: e.target.value }))}
-                placeholder="https://www.youtube.com/watch?v=..."
+                value={videoForm.video_url}
+                onChange={(e) => setVideoForm({ ...videoForm, video_url: e.target.value })}
+                placeholder="https://youtube.com/watch?v=..."
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Input
-                id="description"
-                value={newVideo.description}
-                onChange={(e) => setNewVideo(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Descrição do vídeo..."
+              <Label>Descrição</Label>
+              <Textarea
+                value={videoForm.description}
+                onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
+                placeholder="Descrição do exercício"
+                rows={3}
               />
             </div>
-            
+
+            <div className="space-y-2">
+              <Label>Instruções</Label>
+              <Textarea
+                value={videoForm.instructions}
+                onChange={(e) => setVideoForm({ ...videoForm, instructions: e.target.value })}
+                placeholder="Instruções detalhadas de execução"
+                rows={4}
+              />
+            </div>
+
             <div className="flex gap-2">
-              <Button onClick={addVideo} className="bg-green-500 hover:bg-green-600">
-                Salvar Vídeo
+              <Button onClick={handleVideoUpdate} className="bg-green-600 hover:bg-green-700">
+                Salvar Alterações
               </Button>
-              <Button variant="outline" onClick={() => setIsAddingVideo(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setEditingExercise(null);
+                  setVideoForm({ id: "", name: "", video_url: "", description: "", instructions: "" });
+                }}
+              >
                 Cancelar
               </Button>
             </div>
@@ -168,83 +262,113 @@ export const VideoManager = () => {
         </Card>
       )}
 
+      {/* Grid de Vídeos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {videos.map((video) => {
-          const videoId = getYouTubeVideoId(video.youtube_url);
-          const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
-
-          return (
-            <Card key={video.id} className="overflow-hidden">
-              <div className="relative">
-                {thumbnailUrl ? (
-                  <img 
-                    src={thumbnailUrl} 
-                    alt={video.title}
-                    className="w-full h-48 object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                    <Youtube className="w-12 h-12 text-gray-400" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    className="bg-red-600 hover:bg-red-700"
-                    onClick={() => window.open(video.youtube_url, '_blank')}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Assistir
-                  </Button>
-                </div>
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-sm line-clamp-2">{video.title}</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {video.exercise_name}
+        {filteredExercises.map((exercise) => (
+          <Card key={exercise.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>{exercise.name}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startEditing(exercise)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {exercise.target_muscles.slice(0, 3).map(muscle => (
+                  <Badge key={muscle} variant="secondary" className="text-xs">
+                    {muscle}
                   </Badge>
-                  {video.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {video.description}
-                    </p>
+                ))}
+                {exercise.target_muscles.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{exercise.target_muscles.length - 3}
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Thumbnail do YouTube */}
+              {exercise.video_url && generateYouTubeThumbnail(exercise.video_url) && (
+                <div className="relative mb-4 cursor-pointer" onClick={() => openVideo(exercise.video_url!)}>
+                  <img
+                    src={generateYouTubeThumbnail(exercise.video_url)}
+                    alt={exercise.name}
+                    className="w-full h-32 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg hover:bg-opacity-40 transition-all">
+                    <Play className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+              )}
+
+              {exercise.description && (
+                <p className="text-sm text-gray-600 mb-3 line-clamp-3">{exercise.description}</p>
+              )}
+
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex flex-wrap gap-1">
+                  {exercise.phase && (
+                    <Badge variant="outline">{exercise.phase}</Badge>
+                  )}
+                  {exercise.goal && (
+                    <Badge variant="outline">{exercise.goal}</Badge>
+                  )}
+                  {exercise.difficulty_level && (
+                    <Badge variant="outline">{exercise.difficulty_level}</Badge>
                   )}
                 </div>
-                
-                <div className="flex justify-between items-center mt-4">
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(video.created_at).toLocaleDateString('pt-BR')}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteVideo(video.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => exercise.video_url && openVideo(exercise.video_url)}
+                >
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  Assistir
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => startEditing(exercise)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {exercise.instructions && (
+                <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
+                  <p className="font-medium mb-1">Instruções:</p>
+                  <p className="line-clamp-2">{exercise.instructions}</p>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
-      
-      {videos.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Youtube className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum vídeo cadastrado</h3>
-            <p className="text-muted-foreground mb-4">
-              Adicione vídeos do YouTube para enriquecer os treinos
-            </p>
-            <Button onClick={() => setIsAddingVideo(true)} className="bg-orange-500 hover:bg-orange-600">
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Primeiro Vídeo
-            </Button>
-          </CardContent>
-        </Card>
+
+      {filteredExercises.length === 0 && (
+        <div className="text-center py-12">
+          <Youtube className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg mb-2">
+            {searchTerm ? 'Nenhum vídeo encontrado' : 'Nenhum exercício com vídeo cadastrado'}
+          </p>
+          <p className="text-gray-400 text-sm">
+            {searchTerm 
+              ? 'Tente alterar os filtros de busca'
+              : 'Adicione URLs de vídeo aos exercícios na biblioteca'
+            }
+          </p>
+        </div>
       )}
     </div>
   );

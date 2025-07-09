@@ -1,558 +1,468 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, Zap, Target, Calendar, Database } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { TrainingPlan, UserProfile } from "@/types/training";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Upload, FileText, Users, Calendar, Target } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Student {
+  id: string;
+  nome: string;
+  email: string;
+  objetivo: string;
+}
+
+interface Periodization {
+  id: string;
+  title: string;
+  periodization_data: any;
+  current_phase: string;
+}
+
+interface Exercise {
+  id: string;
+  name: string;
+  phase: string;
+  goal: string;
+  target_muscles: string[];
+}
+
+interface WorkoutTemplate {
+  id: string;
+  name: string;
+  phase: string;
+  goal: string;
+  exercise_count: number;
+  template_data: any;
+}
 
 export const TrainingPlanGenerator = () => {
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState<Partial<UserProfile>>({
-    demographics: { age: 25, biological_sex: 'male', height: 175, weight: 70 },
-    fitness: { level: 'intermediate', experience_months: 12, injuries: [], goals: [], weekly_availability: 4, session_duration: '60-90min' },
-    preferences: { training_environment: 'gym', equipment_available: [], time_preferences: [] }
-  });
-  const [generatedPlan, setGeneratedPlan] = useState<TrainingPlan | null>(null);
-  const { toast } = useToast();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [periodizations, setPeriodizations] = useState<Periodization[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<string>("");
+  const [selectedPeriodization, setSelectedPeriodization] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
-  const totalSteps = 4;
-  const progress = (step / totalSteps) * 100;
+  useEffect(() => {
+    getCurrentUser();
+    fetchStudents();
+    fetchPeriodizations();
+    fetchExercises();
+    fetchTemplates();
+  }, []);
 
-  const handleNext = () => {
-    if (step < totalSteps) {
-      setStep(step + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
-  };
-
-  const generateTrainingPlan = async () => {
-    setLoading(true);
+  const getCurrentUser = async () => {
     try {
-      // Simular processamento de IA
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockPlan: TrainingPlan = {
-        metadata: {
-          version: "3.0",
-          generated_at: new Date().toISOString(),
-          user_id: "user-123"
-        },
-        user_profile: userProfile as UserProfile,
-        periodization: {
-          type: 'undulating',
-          total_weeks: 12,
-          current_phase: 1,
-          phases: [
-            {
-              name: "Adaptação",
-              duration_weeks: 2,
-              focus: "Padrões de movimento e técnica",
-              intensity_level: 'moderate',
-              volume_level: 'moderate',
-              objective: "Estabelecer base técnica sólida",
-              key_adaptations: ["Melhora da coordenação", "Aprendizado motor"],
-              scientific_rationale: "Fase inicial focada em adaptações neurais e aprendizado motor"
-            },
-            {
-              name: "Hipertrofia",
-              duration_weeks: 6,
-              focus: "Ganho de massa muscular",
-              intensity_level: 'moderate',
-              volume_level: 'high',
-              objective: "Maximizar síntese proteica",
-              key_adaptations: ["Aumento da área de secção transversa", "Hipertrofia sarcoplasmática"],
-              scientific_rationale: "Volume elevado com intensidade moderada para otimizar hipertrofia"
-            },
-            {
-              name: "Força",
-              duration_weeks: 4,
-              focus: "Ganho de força máxima",
-              intensity_level: 'high',
-              volume_level: 'moderate',
-              objective: "Aumentar capacidade de produção de força",
-              key_adaptations: ["Adaptações neurais", "Sincronização de unidades motoras"],
-              scientific_rationale: "Alta intensidade para adaptações neurais e ganho de força"
-            }
-          ]
-        },
-        weekly_schedule: {
-          "segunda": {
-            day: "Segunda-feira",
-            focus: "Membros superiores - Empurrar",
-            estimated_duration: 75,
-            warm_up: [],
-            main_exercises: [
-              {
-                id: "1",
-                name: "Supino reto com halteres",
-                category: "Peito",
-                muscle_groups: ["Peitoral maior", "Deltoides anterior", "Tríceps"],
-                equipment_type: "Halteres",
-                difficulty_level: "intermediate",
-                instructions: ["Deitar no banco", "Segurar halteres", "Descer controladamente", "Empurrar com força"],
-                sets: 4,
-                reps: "8-10",
-                rest_seconds: 90,
-                rpe_target: 8,
-                load_percentage: "75-80%",
-                tempo: "3-1-1-0",
-                notes: "Manter ombros retraídos durante todo movimento"
-              }
-            ],
-            cool_down: []
-          }
-        },
-        additional_modules: {
-          nutrition: {
-            daily_macros: {
-              calories: 2500,
-              protein_g: 150,
-              carbs_g: 300,
-              fat_g: 80
-            },
-            meal_timing: ["Pré-treino: 1h antes", "Pós-treino: até 30min após"]
-          },
-          recovery: {
-            recommendations: ["Foam rolling", "Mobilidade articular", "Respiração diafragmática"],
-            sleep_target_hours: 8,
-            stress_management: ["Meditação", "Caminhadas ao ar livre"]
-          }
-        },
-        progression_rules: {
-          load_increase_percentage: 5,
-          rpe_targets: { min: 7, max: 9 },
-          deload_frequency_weeks: 4
-        }
-      };
-
-      setGeneratedPlan(mockPlan);
-      toast({
-        title: "Plano Gerado com Sucesso!",
-        description: "Seu plano de treino personalizado foi criado com base em IA.",
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
     } catch (error) {
-      toast({
-        title: "Erro na Geração",
-        description: "Ocorreu um erro ao gerar seu plano. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      console.error('Erro ao obter usuário:', error);
     }
   };
 
-  const exportToPDF = () => {
-    toast({
-      title: "Exportando PDF",
-      description: "Seu plano será exportado em formato PDF.",
-    });
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar alunos:', error);
+      toast.error('Erro ao carregar alunos');
+    }
   };
 
-  const exportToJSON = () => {
-    const dataStr = JSON.stringify(generatedPlan, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'plano-treino.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+  const fetchPeriodizations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('periodizations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPeriodizations(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar periodizações:', error);
+    }
   };
 
-  if (generatedPlan) {
-    return (
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
+  const fetchExercises = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setExercises(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar exercícios:', error);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('workout_templates')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar templates:', error);
+    }
+  };
+
+  const generateWorkoutPlan = async () => {
+    if (!selectedStudent || !selectedPeriodization || !selectedTemplate) {
+      toast.error('Selecione todas as opções antes de gerar o plano');
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const selectedPeriod = periodizations.find(p => p.id === selectedPeriodization);
+      const selectedTemp = templates.find(t => t.id === selectedTemplate);
+      
+      if (!selectedPeriod || !selectedTemp) {
+        throw new Error('Periodização ou template não encontrado');
+      }
+
+      // Buscar exercícios compatíveis com a fase atual da periodização
+      const compatibleExercises = exercises.filter(ex => 
+        ex.phase === selectedTemp.phase && ex.goal === selectedTemp.goal
+      );
+
+      // Gerar treinos para cada semana/dia da periodização
+      const phases = selectedPeriod.periodization_data?.phases || [];
+      const workouts = [];
+
+      for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex++) {
+        const phase = phases[phaseIndex];
+        const weeksInPhase = phase.duration_weeks || 4;
+        
+        for (let week = 1; week <= weeksInPhase; week++) {
+          for (let day = 1; day <= 4; day++) { // 4 treinos por semana
+            // Selecionar exercícios aleatórios compatíveis
+            const selectedExercises = compatibleExercises
+              .sort(() => 0.5 - Math.random())
+              .slice(0, selectedTemp.exercise_count)
+              .map(ex => ({
+                id: ex.id,
+                name: ex.name,
+                target_muscles: ex.target_muscles,
+                sets: selectedTemp.template_data.sets_range || "4",
+                reps: selectedTemp.template_data.reps_range || "8-12",
+                rest: selectedTemp.template_data.rest_time || "60-90s",
+                load: phase.load_percentage || "70-85%"
+              }));
+
+            workouts.push({
+              student_id: selectedStudent,
+              periodization_id: selectedPeriodization,
+              week_number: week,
+              day_number: day,
+              phase: phase.name || selectedTemp.phase,
+              exercises: selectedExercises,
+              method: phase.method || "Tradicional",
+              status: 'pending'
+            });
+          }
+        }
+      }
+
+      // Salvar todos os treinos no banco
+      const { error } = await supabase
+        .from('workouts')
+        .insert(workouts);
+
+      if (error) throw error;
+
+      toast.success(`Plano de treino gerado com sucesso! ${workouts.length} treinos criados.`);
+      
+      // Reset form
+      setStep(1);
+      setSelectedStudent("");
+      setSelectedPeriodization("");
+      setSelectedTemplate("");
+      
+    } catch (error) {
+      console.error('Erro ao gerar plano:', error);
+      toast.error('Erro ao gerar plano de treino');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const nextStep = () => {
+    if (step === 1 && !selectedStudent) {
+      toast.error('Selecione um aluno primeiro');
+      return;
+    }
+    if (step === 2 && !selectedPeriodization) {
+      toast.error('Selecione uma periodização');
+      return;
+    }
+    setStep(step + 1);
+  };
+
+  const prevStep = () => {
+    setStep(step - 1);
+  };
+
+  const selectedStudentData = students.find(s => s.id === selectedStudent);
+  const selectedPeriodData = periodizations.find(p => p.id === selectedPeriodization);
+  const selectedTemplateData = templates.find(t => t.id === selectedTemplate);
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold mb-2">Gerador de Planos de Treino</h1>
+        <div className="flex items-center justify-center space-x-4 mb-6">
+          <div className={`flex items-center ${step >= 1 ? 'text-orange-600' : 'text-gray-400'}`}>
+            <Users className="w-5 h-5 mr-2" />
+            <span>1. Aluno</span>
+          </div>
+          <div className={`flex items-center ${step >= 2 ? 'text-orange-600' : 'text-gray-400'}`}>
+            <Upload className="w-5 h-5 mr-2" />
+            <span>2. Periodização</span>
+          </div>
+          <div className={`flex items-center ${step >= 3 ? 'text-orange-600' : 'text-gray-400'}`}>
+            <Target className="w-5 h-5 mr-2" />
+            <span>3. Modelo</span>
+          </div>
+          <div className={`flex items-center ${step >= 4 ? 'text-orange-600' : 'text-gray-400'}`}>
+            <Calendar className="w-5 h-5 mr-2" />
+            <span>4. Finalizar</span>
+          </div>
+        </div>
+      </div>
+
+      {step === 1 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="w-6 h-6 text-orange-500" />
-              Plano de Treino Personalizado
+              <Users className="w-5 h-5" />
+              Selecionar Aluno
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-orange-900">Periodização</h3>
-                <p className="text-sm text-orange-700">{generatedPlan.periodization.type}</p>
-                <p className="text-sm text-orange-700">{generatedPlan.periodization.total_weeks} semanas</p>
-              </div>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900">Fase Atual</h3>
-                <p className="text-sm text-blue-700">{generatedPlan.periodization.phases[0].name}</p>
-                <p className="text-sm text-blue-700">{generatedPlan.periodization.phases[0].focus}</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-green-900">Nutrição</h3>
-                <p className="text-sm text-green-700">{generatedPlan.additional_modules.nutrition?.daily_macros.calories} kcal/dia</p>
-                <p className="text-sm text-green-700">{generatedPlan.additional_modules.nutrition?.daily_macros.protein_g}g proteína</p>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Escolha o aluno para criar o plano de treino:</Label>
+              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um aluno" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map(student => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.nome} - {student.objetivo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Cronograma Semanal</h3>
-              {Object.entries(generatedPlan.weekly_schedule).map(([day, workout]) => (
-                <Card key={day} className="border-l-4 border-l-orange-500">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-lg">{workout.day}</CardTitle>
-                      <span className="text-sm text-gray-500">{workout.estimated_duration} min</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{workout.focus}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {workout.main_exercises.map((exercise, idx) => (
-                        <div key={idx} className="bg-gray-50 p-3 rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">{exercise.name}</h4>
-                              <p className="text-sm text-gray-600">{exercise.muscle_groups.join(', ')}</p>
-                            </div>
-                            <div className="text-right text-sm">
-                              <p className="font-medium">{exercise.sets} x {exercise.reps}</p>
-                              <p className="text-gray-500">RPE {exercise.rpe_target}</p>
-                            </div>
-                          </div>
-                          {exercise.notes && (
-                            <p className="text-sm text-orange-600 mt-2 font-medium">💡 {exercise.notes}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="flex gap-4 mt-8">
-              <Button onClick={exportToPDF} className="bg-red-500 hover:bg-red-600">
-                <Database className="w-4 h-4 mr-2" />
-                Exportar PDF
-              </Button>
-              <Button onClick={exportToJSON} variant="outline">
-                <Database className="w-4 h-4 mr-2" />
-                Exportar JSON
-              </Button>
-              <Button onClick={() => setGeneratedPlan(null)} variant="outline">
-                Gerar Novo Plano
+            
+            {selectedStudentData && (
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium">Informações do Aluno:</h4>
+                <p><strong>Nome:</strong> {selectedStudentData.nome}</p>
+                <p><strong>Email:</strong> {selectedStudentData.email}</p>
+                <p><strong>Objetivo:</strong> {selectedStudentData.objetivo}</p>
+              </div>
+            )}
+            
+            <div className="flex justify-end">
+              <Button onClick={nextStep} disabled={!selectedStudent}>
+                Próximo
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-6 h-6 text-orange-500" />
-            Gerador de Treino com IA
-          </CardTitle>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progresso</span>
-              <span>{step} de {totalSteps}</span>
+      {step === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Selecionar Periodização
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Escolha a periodização para o plano:</Label>
+              <Select value={selectedPeriodization} onValueChange={setSelectedPeriodization}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma periodização" />
+                </SelectTrigger>
+                <SelectContent>
+                  {periodizations.map(period => (
+                    <SelectItem key={period.id} value={period.id}>
+                      {period.title} - Fase: {period.current_phase}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Progress value={progress} className="w-full" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {step === 1 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Dados Demográficos</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="age">Idade</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    min="18"
-                    max="75"
-                    value={userProfile.demographics?.age || 25}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      demographics: { ...userProfile.demographics!, age: parseInt(e.target.value) }
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label>Sexo Biológico</Label>
-                  <Select
-                    value={userProfile.demographics?.biological_sex}
-                    onValueChange={(value) => setUserProfile({
-                      ...userProfile,
-                      demographics: { ...userProfile.demographics!, biological_sex: value as 'male' | 'female' }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Masculino</SelectItem>
-                      <SelectItem value="female">Feminino</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="height">Altura (cm)</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={userProfile.demographics?.height || 175}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      demographics: { ...userProfile.demographics!, height: parseInt(e.target.value) }
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight">Peso (kg)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    value={userProfile.demographics?.weight || 70}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      demographics: { ...userProfile.demographics!, weight: parseInt(e.target.value) }
-                    })}
-                  />
-                </div>
+
+            {selectedPeriodData && (
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-medium">Informações da Periodização:</h4>
+                <p><strong>Título:</strong> {selectedPeriodData.title}</p>
+                <p><strong>Fase Atual:</strong> {selectedPeriodData.current_phase}</p>
+                {selectedPeriodData.periodization_data?.phases && (
+                  <p><strong>Total de Fases:</strong> {selectedPeriodData.periodization_data.phases.length}</p>
+                )}
               </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Perfil de Fitness</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Nível de Experiência</Label>
-                  <Select
-                    value={userProfile.fitness?.level}
-                    onValueChange={(value) => setUserProfile({
-                      ...userProfile,
-                      fitness: { ...userProfile.fitness!, level: value as 'beginner' | 'intermediate' | 'advanced' }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="beginner">Iniciante (0-6 meses)</SelectItem>
-                      <SelectItem value="intermediate">Intermediário (6-24 meses)</SelectItem>
-                      <SelectItem value="advanced">Avançado (24+ meses)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="experience">Experiência (meses)</Label>
-                  <Input
-                    id="experience"
-                    type="number"
-                    min="0"
-                    value={userProfile.fitness?.experience_months || 12}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      fitness: { ...userProfile.fitness!, experience_months: parseInt(e.target.value) }
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="availability">Disponibilidade Semanal</Label>
-                  <Select
-                    value={userProfile.fitness?.weekly_availability?.toString()}
-                    onValueChange={(value) => setUserProfile({
-                      ...userProfile,
-                      fitness: { ...userProfile.fitness!, weekly_availability: parseInt(value) }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2">2 dias por semana</SelectItem>
-                      <SelectItem value="3">3 dias por semana</SelectItem>
-                      <SelectItem value="4">4 dias por semana</SelectItem>
-                      <SelectItem value="5">5 dias por semana</SelectItem>
-                      <SelectItem value="6">6 dias por semana</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Duração da Sessão</Label>
-                  <Select
-                    value={userProfile.fitness?.session_duration}
-                    onValueChange={(value) => setUserProfile({
-                      ...userProfile,
-                      fitness: { ...userProfile.fitness!, session_duration: value }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30-45min">30-45 minutos</SelectItem>
-                      <SelectItem value="45-60min">45-60 minutos</SelectItem>
-                      <SelectItem value="60-90min">60-90 minutos</SelectItem>
-                      <SelectItem value="90+min">90+ minutos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Objetivos e Limitações</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label>Objetivos Primários (selecione até 3)</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {['Hipertrofia', 'Força', 'Resistência', 'Perda de peso', 'Condicionamento', 'Reabilitação'].map((goal) => (
-                      <div key={goal} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={goal}
-                          checked={userProfile.fitness?.goals?.includes(goal)}
-                          onCheckedChange={(checked) => {
-                            const currentGoals = userProfile.fitness?.goals || [];
-                            if (checked) {
-                              setUserProfile({
-                                ...userProfile,
-                                fitness: { ...userProfile.fitness!, goals: [...currentGoals, goal] }
-                              });
-                            } else {
-                              setUserProfile({
-                                ...userProfile,
-                                fitness: { ...userProfile.fitness!, goals: currentGoals.filter(g => g !== goal) }
-                              });
-                            }
-                          }}
-                        />
-                        <Label htmlFor={goal}>{goal}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="injuries">Histórico de Lesões</Label>
-                  <Textarea
-                    id="injuries"
-                    placeholder="Descreva lesões passadas ou limitações físicas..."
-                    value={userProfile.fitness?.injuries?.join(', ') || ''}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      fitness: { ...userProfile.fitness!, injuries: e.target.value ? e.target.value.split(',').map(s => s.trim()) : [] }
-                    })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Preferências de Treino</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label>Ambiente de Treino</Label>
-                  <Select
-                    value={userProfile.preferences?.training_environment}
-                    onValueChange={(value) => setUserProfile({
-                      ...userProfile,
-                      preferences: { ...userProfile.preferences!, training_environment: value as 'home' | 'gym' | 'outdoor' }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="home">Casa</SelectItem>
-                      <SelectItem value="gym">Academia</SelectItem>
-                      <SelectItem value="outdoor">Ao ar livre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Equipamentos Disponíveis</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {['Halteres', 'Barra', 'Máquinas', 'Elásticos', 'Kettlebell', 'Peso corporal'].map((equipment) => (
-                      <div key={equipment} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={equipment}
-                          checked={userProfile.preferences?.equipment_available?.includes(equipment)}
-                          onCheckedChange={(checked) => {
-                            const currentEquipment = userProfile.preferences?.equipment_available || [];
-                            if (checked) {
-                              setUserProfile({
-                                ...userProfile,
-                                preferences: { ...userProfile.preferences!, equipment_available: [...currentEquipment, equipment] }
-                              });
-                            } else {
-                              setUserProfile({
-                                ...userProfile,
-                                preferences: { ...userProfile.preferences!, equipment_available: currentEquipment.filter(e => e !== equipment) }
-                              });
-                            }
-                          }}
-                        />
-                        <Label htmlFor={equipment}>{equipment}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-between mt-8">
-            {step > 1 && (
-              <Button variant="outline" onClick={handlePrevious}>
-                Anterior
-              </Button>
             )}
-            {step < totalSteps ? (
-              <Button onClick={handleNext} className="ml-auto">
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={prevStep}>
+                Voltar
+              </Button>
+              <Button onClick={nextStep} disabled={!selectedPeriodization}>
                 Próximo
               </Button>
-            ) : (
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5" />
+              Selecionar Modelo de Treino
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Escolha o modelo de treino baseado na periodização:</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {templates.map(template => (
+                  <div
+                    key={template.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedTemplate === template.id 
+                        ? 'border-orange-500 bg-orange-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setSelectedTemplate(template.id)}
+                  >
+                    <h4 className="font-medium">{template.name}</h4>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline">{template.phase}</Badge>
+                      <Badge variant="outline">{template.goal}</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {template.exercise_count} exercícios por treino
+                    </p>
+                    {template.template_data && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Series: {template.template_data.sets_range} | 
+                        Reps: {template.template_data.reps_range} | 
+                        Descanso: {template.template_data.rest_time}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={prevStep}>
+                Voltar
+              </Button>
+              <Button onClick={nextStep} disabled={!selectedTemplate}>
+                Próximo
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 4 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Confirmar e Gerar Plano
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium mb-2">Aluno Selecionado</h4>
+                <p className="text-sm">{selectedStudentData?.nome}</p>
+                <p className="text-xs text-gray-600">{selectedStudentData?.objetivo}</p>
+              </div>
+              
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-medium mb-2">Periodização</h4>
+                <p className="text-sm">{selectedPeriodData?.title}</p>
+                <p className="text-xs text-gray-600">Fase: {selectedPeriodData?.current_phase}</p>
+              </div>
+              
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <h4 className="font-medium mb-2">Modelo de Treino</h4>
+                <p className="text-sm">{selectedTemplateData?.name}</p>
+                <p className="text-xs text-gray-600">{selectedTemplateData?.exercise_count} exercícios</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-yellow-50 rounded-lg">
+              <h4 className="font-medium mb-2">O que será criado:</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Treinos personalizados baseados na periodização</li>
+                <li>• Exercícios selecionados automaticamente do banco de dados</li>
+                <li>• Plano estruturado por semanas e fases</li>
+                <li>• Acesso via web app e mobile para o aluno</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={prevStep}>
+                Voltar
+              </Button>
               <Button 
-                onClick={generateTrainingPlan} 
-                disabled={loading}
-                className="ml-auto bg-orange-500 hover:bg-orange-600"
+                onClick={generateWorkoutPlan} 
+                disabled={generating}
+                className="bg-green-600 hover:bg-green-700"
               >
-                {loading ? (
+                {generating ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Gerando com IA...
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Gerando Plano...
                   </>
                 ) : (
                   <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Gerar Plano
+                    <FileText className="w-4 h-4 mr-2" />
+                    Gerar Plano de Treino
                   </>
                 )}
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

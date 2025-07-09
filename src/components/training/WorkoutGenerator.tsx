@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,12 +101,16 @@ export const WorkoutGenerator = () => {
   const fetchExercises = async () => {
     try {
       const { data, error } = await supabase
-        .from('exercise_library')
+        .from('exercises')
         .select('*')
         .limit(50);
 
       if (data) {
-        setExercises(data);
+        setExercises(data.map(ex => ({
+          id: ex.id,
+          nome: ex.name,
+          categoria: ex.target_muscles?.[0] || 'geral'
+        })));
       }
     } catch (error) {
       console.error('Erro ao buscar exercícios:', error);
@@ -233,6 +236,13 @@ export const WorkoutGenerator = () => {
         profileId = newProfile.id;
       }
 
+      // Buscar exercícios compatíveis do novo banco de dados
+      const { data: compatibleExercises } = await supabase
+        .from('exercises')
+        .select('*')
+        .eq('goal', selectedGoal === 'hipertrofia' ? 'hypertrophy' : selectedGoal)
+        .limit(8);
+
       // Buscar periodização ativa para integrar com o treino
       const activePeriodization = periodizations.find(p => p.current_phase);
       
@@ -243,11 +253,15 @@ export const WorkoutGenerator = () => {
           current_phase: activePeriodization.current_phase,
           phase_data: activePeriodization.periodization_data
         } : null,
-        exercises: exercises.slice(0, 6).map(ex => ({
-          name: ex.nome,
+        exercises: (compatibleExercises || []).slice(0, 6).map(ex => ({
+          id: ex.id,
+          name: ex.name,
+          target_muscles: ex.target_muscles,
           sets: Math.floor(Math.random() * 3) + 2,
           reps: Math.floor(Math.random() * 8) + 8,
-          rest: Math.floor(Math.random() * 60) + 60
+          rest: Math.floor(Math.random() * 60) + 60,
+          phase: ex.phase,
+          equipment: ex.equipment
         })),
         generated_at: new Date().toISOString(),
         user_profile: {
