@@ -28,7 +28,7 @@ interface StudentStats {
 }
 
 const StudentApp = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("workouts");
   const [studentStats, setStudentStats] = useState<StudentStats>({
     totalWorkouts: 0,
@@ -114,7 +114,7 @@ const StudentApp = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      logout();
       toast.success('Logout realizado com sucesso!');
     } catch (error) {
       console.error('Erro no logout:', error);

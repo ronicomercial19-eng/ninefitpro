@@ -9,12 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+interface Exercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;
+  rest_seconds: number;
+  notes?: string;
+}
+
 interface Workout {
   id: string;
   week_number: number;
   day_number: number;
   phase: string;
-  exercises: any[];
+  exercises: Exercise[];
   method: string;
   status: string;
   notes?: string;
@@ -79,7 +88,20 @@ export const StudentWorkoutViewer = () => {
           .order('week_number, day_number');
 
         if (workoutsError) throw workoutsError;
-        setWorkouts(workoutsData || []);
+        
+        // Converter os dados do Supabase para o formato esperado
+        const formattedWorkouts: Workout[] = (workoutsData || []).map(workout => ({
+          id: workout.id,
+          week_number: workout.week_number,
+          day_number: workout.day_number,
+          phase: workout.phase,
+          exercises: Array.isArray(workout.exercises) ? workout.exercises : [],
+          method: workout.method || '',
+          status: workout.status || 'pending',
+          notes: workout.notes || undefined
+        }));
+        
+        setWorkouts(formattedWorkouts);
       }
 
     } catch (error) {

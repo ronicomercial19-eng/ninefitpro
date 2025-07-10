@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +38,7 @@ export const PeriodizationAnalyzer = () => {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [showStudentSelection, setShowStudentSelection] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     if (user) {
       fetchStudents();
       fetchAvailableModels();
