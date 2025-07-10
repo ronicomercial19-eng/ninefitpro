@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +49,35 @@ export const StudentWorkoutViewer = () => {
     }
   }, [user]);
 
+  const parseExercises = (exercisesData: any): Exercise[] => {
+    if (!exercisesData) return [];
+    
+    try {
+      // Se já é um array, usar diretamente
+      if (Array.isArray(exercisesData)) {
+        return exercisesData.map((exercise, index) => ({
+          id: exercise.id || `exercise-${index}`,
+          name: exercise.name || exercise.nome || `Exercício ${index + 1}`,
+          sets: exercise.sets || exercise.series || 3,
+          reps: exercise.reps || exercise.repeticoes || "12",
+          rest_seconds: exercise.rest_seconds || exercise.descanso || 60,
+          notes: exercise.notes || exercise.observacoes
+        }));
+      }
+      
+      // Se é uma string JSON, fazer parse
+      if (typeof exercisesData === 'string') {
+        const parsed = JSON.parse(exercisesData);
+        return Array.isArray(parsed) ? parseExercises(parsed) : [];
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Erro ao fazer parse dos exercícios:', error);
+      return [];
+    }
+  };
+
   const fetchStudentData = async () => {
     if (!user) return;
 
@@ -95,7 +123,7 @@ export const StudentWorkoutViewer = () => {
           week_number: workout.week_number,
           day_number: workout.day_number,
           phase: workout.phase,
-          exercises: Array.isArray(workout.exercises) ? workout.exercises : [],
+          exercises: parseExercises(workout.exercises),
           method: workout.method || '',
           status: workout.status || 'pending',
           notes: workout.notes || undefined
@@ -304,22 +332,22 @@ export const StudentWorkoutViewer = () => {
               </Card>
             ))
           }
+
+          {filteredWorkouts.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <TrendingUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  Nenhum Treino Encontrado
+                </h3>
+                <p className="text-gray-500">
+                  Não há treinos disponíveis para o filtro selecionado.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
-
-      {filteredWorkouts.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <TrendingUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">
-              Nenhum Treino Encontrado
-            </h3>
-            <p className="text-gray-500">
-              Não há treinos disponíveis para o filtro selecionado.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
