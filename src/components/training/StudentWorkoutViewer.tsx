@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Clock, Play, Calendar, TrendingUp, ArrowLeft, Timer, Camera } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, Clock, Play, Calendar, TrendingUp, ArrowLeft, Timer, Camera, Minus, Plus, RotateCcw, BarChart3, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -41,16 +41,31 @@ export const StudentWorkoutViewer = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [periodization, setPeriodization] = useState<Periodization | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-  const [selectedPhase, setSelectedPhase] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [isWorkoutStarted, setIsWorkoutStarted] = useState(false);
+  const [currentWeight, setCurrentWeight] = useState(0);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchStudentData();
     }
   }, [user]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isTimerRunning && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds(seconds => seconds - 1);
+      }, 1000);
+    } else if (timerSeconds === 0) {
+      setIsTimerRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timerSeconds]);
 
   const parseExercises = (exercisesData: any): Exercise[] => {
     if (!exercisesData) return [];
@@ -151,12 +166,32 @@ export const StudentWorkoutViewer = () => {
       ));
 
       toast.success('Treino marcado como concluído!');
-      setSelectedWorkout(null);
+      setSelectedWorkout({...selectedWorkout!, status: 'completed'});
       setIsWorkoutStarted(false);
     } catch (error) {
       console.error('Erro ao completar treino:', error);
       toast.error('Erro ao marcar treino como concluído');
     }
+  };
+
+  const startTimer = (seconds: number) => {
+    setTimerSeconds(seconds);
+    setIsTimerRunning(true);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getWorkoutDuration = () => {
+    if (!workoutStartTime) return "0M35S";
+    const now = new Date();
+    const diffMs = now.getTime() - workoutStartTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+    return `${diffMins}M${diffSecs}S`;
   };
 
   const getPhaseColor = (phase: string) => {
@@ -194,134 +229,182 @@ export const StudentWorkoutViewer = () => {
     );
   }
 
-  // Tela de treino individual
-  if (selectedWorkout) {
-    if (selectedWorkout.status === 'completed') {
-      return (
-        <div className="min-h-screen bg-black text-white p-4">
-          <div className="flex items-center mb-6">
-            <button onClick={() => setSelectedWorkout(null)} className="mr-4">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-xl font-bold">TREINO</h1>
-          </div>
+  // Tela de treino concluído
+  if (selectedWorkout && selectedWorkout.status === 'completed' && !isWorkoutStarted) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="flex items-center p-4 border-b border-gray-800">
+          <button onClick={() => setSelectedWorkout(null)} className="mr-4">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-bold">TREINO</h1>
+        </div>
 
-          <div className="text-center py-12">
-            <div className="w-24 h-24 rounded-full border-4 border-white flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-12 h-12" />
+        <div className="text-center py-12 px-6">
+          <div className="w-24 h-24 rounded-full border-4 border-white flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-12 h-12" />
+          </div>
+          <h2 className="text-2xl font-bold mb-8">TREINO CONCLUÍDO</h2>
+          
+          <div className="space-y-6 text-left max-w-sm mx-auto">
+            <div>
+              <span className="text-gray-400 text-sm block mb-1">RESUMO</span>
+              <div className="text-xl font-bold">A - PEITORAL, OMBRO, TRÍCEPS</div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">TREINO CONCLUÍDO</h2>
             
-            <div className="space-y-4 mt-8 text-left">
-              <div>
-                <span className="text-gray-400">RESUMO</span>
-                <div className="text-xl font-bold">A - PEITORAL, OMBRO, TRÍCEPS</div>
-              </div>
-              
-              <div>
-                <span className="text-gray-400">TEMPO DE TREINO</span>
-                <div className="text-xl font-bold">0M35S</div>
-              </div>
-              
-              <div>
-                <span className="text-gray-400">EXERCÍCIOS</span>
-                <div className="text-xl font-bold">{selectedWorkout.exercises.length} REALIZADOS</div>
-              </div>
+            <div>
+              <span className="text-gray-400 text-sm block mb-1">TEMPO DE TREINO</span>
+              <div className="text-xl font-bold">{getWorkoutDuration()}</div>
             </div>
+            
+            <div>
+              <span className="text-gray-400 text-sm block mb-1">EXERCÍCIOS</span>
+              <div className="text-xl font-bold">{selectedWorkout.exercises.length} REALIZADOS</div>
+            </div>
+          </div>
 
-            <div className="mt-12 space-y-4">
-              <Button className="w-full bg-gray-800 text-white border border-gray-600">
-                <Camera className="w-4 h-4 mr-2" />
-                COMPARTILHAR TREINO
-              </Button>
-              
-              <Button 
-                onClick={() => setSelectedWorkout(null)}
-                className="w-full bg-white text-black hover:bg-gray-200"
-              >
-                VOLTAR PARA HOME
-              </Button>
-            </div>
+          <div className="mt-12 space-y-4 px-6">
+            <Button className="w-full bg-gray-800 text-white border border-gray-600 py-4">
+              <Camera className="w-4 h-4 mr-2" />
+              COMPARTILHAR TREINO
+            </Button>
+            
+            <Button 
+              onClick={() => setSelectedWorkout(null)}
+              className="w-full bg-white text-black hover:bg-gray-200 py-4"
+            >
+              VOLTAR PARA HOME
+            </Button>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    if (isWorkoutStarted) {
-      const currentExercise = selectedWorkout.exercises[currentExerciseIndex];
-      
-      return (
-        <div className="min-h-screen bg-black text-white">
-          <div className="flex items-center p-4 border-b border-gray-800">
-            <button onClick={() => setIsWorkoutStarted(false)} className="mr-4">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-xl font-bold">TREINO</h1>
+  // Tela de execução individual do exercício
+  if (selectedWorkout && isWorkoutStarted) {
+    const currentExercise = selectedWorkout.exercises[currentExerciseIndex];
+    
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="flex items-center p-4 border-b border-gray-800">
+          <button onClick={() => setIsWorkoutStarted(false)} className="mr-4">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-bold">TREINO</h1>
+        </div>
+
+        <div className="p-0">
+          {/* Imagem do exercício */}
+          <div className="relative h-64 bg-gray-900">
+            <img 
+              src="/lovable-uploads/a5ebd2c5-5df1-46c3-a547-93316a2d1fe5.png" 
+              alt="Exercício"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-20" />
           </div>
 
-          <div className="p-4">
-            <div className="mb-6">
-              <img 
-                src="/lovable-uploads/a5ebd2c5-5df1-46c3-a547-93316a2d1fe5.png" 
-                alt="Exercício"
-                className="w-full h-64 object-cover rounded-lg"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-gray-900 rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-2">ANOTAÇÕES</div>
+          {/* Informações do exercício */}
+          <div className="p-4 space-y-4">
+            <div className="bg-gray-900 rounded-xl p-4">
+              <h3 className="text-xl font-bold mb-4">{currentExerciseIndex + 1} - {currentExercise.name.toUpperCase()}</h3>
+              
+              <div className="flex space-x-3 mb-4">
+                <Button variant="outline" className="bg-gray-700 border-gray-600 text-white text-xs px-3 py-1">
+                  <FileText className="w-3 h-3 mr-1" />
+                  ANOTAÇÕES
+                </Button>
+                <Button variant="outline" className="bg-gray-700 border-gray-600 text-white text-xs px-3 py-1">
+                  <BarChart3 className="w-3 h-3 mr-1" />
+                  EVOLUÇÃO
+                </Button>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-center space-x-8 text-center">
-                  <div>
-                    <div className="text-lg font-bold">{currentExercise.sets} x {currentExercise.reps} séries</div>
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-center space-x-8">
+                  <div className="text-center">
+                    <div className="text-lg font-bold">Séries {currentExercise.sets}x - {currentExercise.reps} Repetições</div>
                   </div>
-                  <div>
-                    <Timer className="w-6 h-6 mx-auto mb-1" />
-                    <div className="text-sm">30s</div>
+                  <div className="text-center">
+                    <Timer className="w-5 h-5 mx-auto mb-1" />
+                    <div className="text-sm">{currentExercise.rest_seconds}s</div>
                   </div>
-                  <div>
-                    <div className="text-sm">190 bpm</div>
+                  <div className="text-center">
+                    <div className="text-sm">0-1-0-1</div>
                   </div>
                 </div>
-              </div>
-
-              <div className="bg-gray-800 rounded-lg p-6">
-                <div className="text-center">
-                  <div className="text-sm text-gray-400 mb-2">CRONÔMETRO</div>
-                  <div className="text-4xl font-bold mb-4">00:30</div>
-                  <div className="flex justify-center space-x-4">
-                    <button className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center">
-                      <Timer className="w-6 h-6" />
-                    </button>
-                    <button className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center">
-                      <Play className="w-6 h-6" />
-                    </button>
-                  </div>
+                <div className="text-center mt-2 text-gray-400">
+                  <span>Pausa ativa - MEIO BURPEE</span>
                 </div>
               </div>
-
-              <Button 
-                onClick={() => {
-                  if (currentExerciseIndex < selectedWorkout.exercises.length - 1) {
-                    setCurrentExerciseIndex(currentExerciseIndex + 1);
-                  } else {
-                    completeWorkout(selectedWorkout.id);
-                  }
-                }}
-                className="w-full bg-white text-black hover:bg-gray-200 py-4 text-lg font-bold"
-              >
-                {currentExerciseIndex < selectedWorkout.exercises.length - 1 ? 'CONCLUIR EXERCÍCIO' : 'FINALIZAR TREINO'}
-              </Button>
             </div>
+
+            {/* Controle de carga */}
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="text-center text-lg font-bold mb-4">CARGA ATUAL (KG)</h4>
+              <div className="flex items-center justify-center space-x-4">
+                <Button 
+                  onClick={() => setCurrentWeight(Math.max(0, currentWeight - 1))}
+                  className="w-12 h-12 bg-gray-700 border border-gray-600 rounded-lg"
+                >
+                  <Minus className="w-5 h-5" />
+                </Button>
+                <div className="text-4xl font-bold w-16 text-center">{currentWeight}</div>
+                <Button 
+                  onClick={() => setCurrentWeight(currentWeight + 1)}
+                  className="w-12 h-12 bg-gray-700 border border-gray-600 rounded-lg"
+                >
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Cronômetro */}
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h4 className="text-center text-lg font-bold mb-4">CRONÔMETRO</h4>
+              <div className="text-center">
+                <div className="text-4xl font-bold mb-4">{formatTime(timerSeconds)}</div>
+                <div className="flex justify-center space-x-4">
+                  <button 
+                    onClick={() => startTimer(currentExercise.rest_seconds)}
+                    className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center"
+                  >
+                    <RotateCcw className="w-6 h-6" />
+                  </button>
+                  <button 
+                    onClick={() => setIsTimerRunning(!isTimerRunning)}
+                    className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center"
+                  >
+                    <Play className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Button 
+              onClick={() => {
+                if (currentExerciseIndex < selectedWorkout.exercises.length - 1) {
+                  setCurrentExerciseIndex(currentExerciseIndex + 1);
+                  setCurrentWeight(0);
+                  setTimerSeconds(0);
+                  setIsTimerRunning(false);
+                } else {
+                  completeWorkout(selectedWorkout.id);
+                }
+              }}
+              className="w-full bg-white text-black hover:bg-gray-200 py-4 text-lg font-bold"
+            >
+              CONCLUIR EXERCÍCIO
+            </Button>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    // Lista de exercícios do treino
+  // Lista de exercícios do treino
+  if (selectedWorkout) {
     return (
       <div className="min-h-screen bg-black text-white">
         <div className="flex items-center p-4 border-b border-gray-800">
@@ -343,21 +426,42 @@ export const StudentWorkoutViewer = () => {
             />
           </div>
 
+          {/* Exercício de Cardio */}
+          <div className="bg-gray-200 text-black rounded-lg p-4 flex items-center mb-3">
+            <div className="w-12 h-12 bg-gray-800 rounded-lg mr-4 flex items-center justify-center">
+              <span className="text-white font-bold text-xl">R</span>
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold">0 CÁRDIO</div>
+            </div>
+          </div>
+
+          {/* Lista de exercícios */}
           <div className="space-y-3 mb-6">
             {selectedWorkout.exercises.map((exercise, index) => (
               <div key={exercise.id} className="bg-gray-200 text-black rounded-lg p-4 flex items-center">
-                <div className="w-12 h-12 bg-gray-800 rounded-lg mr-4 flex items-center justify-center">
-                  <span className="text-white font-bold">{index === 0 ? 'R' : index}</span>
+                <div className="w-12 h-12 bg-gray-300 rounded-lg mr-4 flex items-center justify-center">
+                  <img 
+                    src="/lovable-uploads/a5ebd2c5-5df1-46c3-a547-93316a2d1fe5.png"
+                    alt={exercise.name}
+                    className="w-10 h-10 object-cover rounded"
+                  />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold">{exercise.name}</div>
+                  <div className="font-semibold">{index + 1} {exercise.name.toUpperCase()}</div>
                 </div>
               </div>
             ))}
           </div>
 
           <Button 
-            onClick={() => setIsWorkoutStarted(true)}
+            onClick={() => {
+              setIsWorkoutStarted(true);
+              setCurrentExerciseIndex(0);
+              setWorkoutStartTime(new Date());
+              setCurrentWeight(0);
+              setTimerSeconds(0);
+            }}
             className="w-full bg-white text-black hover:bg-gray-200 py-4 text-lg font-bold"
           >
             INICIAR TREINO
@@ -369,10 +473,6 @@ export const StudentWorkoutViewer = () => {
 
   // Lista principal de treinos
   const phases = [...new Set(workouts.map(w => w.phase))];
-  const filteredWorkouts = workouts.filter(workout => {
-    if (selectedPhase === "all") return true;
-    return workout.phase === selectedPhase;
-  });
 
   return (
     <div className="space-y-6 text-white">
@@ -442,7 +542,7 @@ export const StudentWorkoutViewer = () => {
         ))}
       </div>
 
-      {/* Lista de Treinos */}
+      {/* Lista de Treinos Anteriores */}
       <div>
         <h3 className="text-lg font-bold mb-4">ANTERIORES</h3>
         <div className="space-y-3">
