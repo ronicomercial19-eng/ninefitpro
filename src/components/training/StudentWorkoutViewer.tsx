@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Clock, Play, Calendar, TrendingUp } from "lucide-react";
+import { CheckCircle, Clock, Play, Calendar, TrendingUp, ArrowLeft, Timer, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -39,9 +40,11 @@ export const StudentWorkoutViewer = () => {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [periodization, setPeriodization] = useState<Periodization | null>(null);
-  const [currentWeek, setCurrentWeek] = useState(1);
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [isWorkoutStarted, setIsWorkoutStarted] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -53,7 +56,6 @@ export const StudentWorkoutViewer = () => {
     if (!exercisesData) return [];
     
     try {
-      // Se já é um array, usar diretamente
       if (Array.isArray(exercisesData)) {
         return exercisesData.map((exercise, index) => ({
           id: exercise.id || `exercise-${index}`,
@@ -65,7 +67,6 @@ export const StudentWorkoutViewer = () => {
         }));
       }
       
-      // Se é uma string JSON, fazer parse
       if (typeof exercisesData === 'string') {
         const parsed = JSON.parse(exercisesData);
         return Array.isArray(parsed) ? parseExercises(parsed) : [];
@@ -82,7 +83,6 @@ export const StudentWorkoutViewer = () => {
     if (!user) return;
 
     try {
-      // Buscar dados do aluno pelo email
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('*')
@@ -94,7 +94,6 @@ export const StudentWorkoutViewer = () => {
         return;
       }
 
-      // Buscar periodização ativa do aluno
       const { data: periodizationData, error: periodizationError } = await supabase
         .from('periodizations')
         .select('*')
@@ -107,7 +106,6 @@ export const StudentWorkoutViewer = () => {
       if (periodizationData && periodizationData.length > 0) {
         setPeriodization(periodizationData[0]);
 
-        // Buscar treinos da periodização
         const { data: workoutsData, error: workoutsError } = await supabase
           .from('workouts')
           .select('*')
@@ -117,7 +115,6 @@ export const StudentWorkoutViewer = () => {
 
         if (workoutsError) throw workoutsError;
         
-        // Converter os dados do Supabase para o formato esperado
         const formattedWorkouts: Workout[] = (workoutsData || []).map(workout => ({
           id: workout.id,
           week_number: workout.week_number,
@@ -154,6 +151,8 @@ export const StudentWorkoutViewer = () => {
       ));
 
       toast.success('Treino marcado como concluído!');
+      setSelectedWorkout(null);
+      setIsWorkoutStarted(false);
     } catch (error) {
       console.error('Erro ao completar treino:', error);
       toast.error('Erro ao marcar treino como concluído');
@@ -172,35 +171,9 @@ export const StudentWorkoutViewer = () => {
     return colors[phase] || 'bg-gray-500';
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      default:
-        return <Play className="w-4 h-4 text-blue-500" />;
-    }
-  };
-
-  const filteredWorkouts = workouts.filter(workout => {
-    if (selectedPhase === "all") return true;
-    return workout.phase === selectedPhase;
-  });
-
-  const workoutsByWeek = filteredWorkouts.reduce((acc, workout) => {
-    if (!acc[workout.week_number]) {
-      acc[workout.week_number] = [];
-    }
-    acc[workout.week_number].push(workout);
-    return acc;
-  }, {} as Record<number, Workout[]>);
-
-  const phases = [...new Set(workouts.map(w => w.phase))];
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 text-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
         <span className="ml-3">Carregando treinos...</span>
       </div>
@@ -209,145 +182,298 @@ export const StudentWorkoutViewer = () => {
 
   if (!periodization) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">
-            Nenhuma Periodização Encontrada
-          </h3>
-          <p className="text-gray-500">
-            Você ainda não possui uma periodização ativa. Entre em contato com seu professor.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="p-8 text-center text-white">
+        <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Nenhuma aula reservada</h3>
+        <p className="text-gray-400 mb-2">Você ainda não agendou</p>
+        <p className="text-gray-400">nenhuma atividade</p>
+        <Button className="w-full bg-white text-black hover:bg-gray-200 mt-6">
+          RESERVAR AGORA
+        </Button>
+      </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header da Periodização */}
-      <Card className="border-l-4 border-l-orange-500">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{periodization.title}</CardTitle>
-              <p className="text-gray-600 mt-1">
-                Fase Atual: <span className="font-semibold">{periodization.current_phase}</span>
-              </p>
-            </div>
-            <Badge className={`${getPhaseColor(periodization.current_phase?.toLowerCase())} text-white`}>
-              {workouts.filter(w => w.status === 'completed').length} / {workouts.length} concluídos
-            </Badge>
+  // Tela de treino individual
+  if (selectedWorkout) {
+    if (selectedWorkout.status === 'completed') {
+      return (
+        <div className="min-h-screen bg-black text-white p-4">
+          <div className="flex items-center mb-6">
+            <button onClick={() => setSelectedWorkout(null)} className="mr-4">
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl font-bold">TREINO</h1>
           </div>
-        </CardHeader>
-      </Card>
 
-      {/* Filtros por Fase */}
-      <Tabs value={selectedPhase} onValueChange={setSelectedPhase}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="all">Todas</TabsTrigger>
-          {phases.map(phase => (
-            <TabsTrigger key={phase} value={phase} className="capitalize">
-              {phase}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+          <div className="text-center py-12">
+            <div className="w-24 h-24 rounded-full border-4 border-white flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">TREINO CONCLUÍDO</h2>
+            
+            <div className="space-y-4 mt-8 text-left">
+              <div>
+                <span className="text-gray-400">RESUMO</span>
+                <div className="text-xl font-bold">A - PEITORAL, OMBRO, TRÍCEPS</div>
+              </div>
+              
+              <div>
+                <span className="text-gray-400">TEMPO DE TREINO</span>
+                <div className="text-xl font-bold">0M35S</div>
+              </div>
+              
+              <div>
+                <span className="text-gray-400">EXERCÍCIOS</span>
+                <div className="text-xl font-bold">{selectedWorkout.exercises.length} REALIZADOS</div>
+              </div>
+            </div>
 
-        <TabsContent value={selectedPhase} className="space-y-4">
-          {Object.entries(workoutsByWeek)
-            .sort(([a], [b]) => parseInt(a) - parseInt(b))
-            .map(([week, weekWorkouts]) => (
-              <Card key={week}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Semana {week}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {weekWorkouts
-                      .sort((a, b) => a.day_number - b.day_number)
-                      .map((workout) => (
-                        <Card 
-                          key={workout.id} 
-                          className={`border-l-4 ${getPhaseColor(workout.phase)} ${
-                            workout.status === 'completed' ? 'bg-green-50' : ''
-                          }`}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold">
-                                Treino {workout.day_number}
-                              </h4>
-                              {getStatusIcon(workout.status)}
-                            </div>
-                            <div className="flex gap-2">
-                              <Badge variant="outline" className="capitalize">
-                                {workout.phase}
-                              </Badge>
-                              <Badge variant="secondary">
-                                {workout.method}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2 mb-4">
-                              {workout.exercises.slice(0, 3).map((exercise, index) => (
-                                <div key={index} className="text-sm">
-                                  <span className="font-medium">{exercise.name}</span>
-                                  <div className="text-gray-600">
-                                    {exercise.sets}x{exercise.reps} - {exercise.rest_seconds}s
-                                  </div>
-                                </div>
-                              ))}
-                              {workout.exercises.length > 3 && (
-                                <p className="text-xs text-gray-500">
-                                  +{workout.exercises.length - 3} exercícios
-                                </p>
-                              )}
-                            </div>
+            <div className="mt-12 space-y-4">
+              <Button className="w-full bg-gray-800 text-white border border-gray-600">
+                <Camera className="w-4 h-4 mr-2" />
+                COMPARTILHAR TREINO
+              </Button>
+              
+              <Button 
+                onClick={() => setSelectedWorkout(null)}
+                className="w-full bg-white text-black hover:bg-gray-200"
+              >
+                VOLTAR PARA HOME
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-                            {workout.status === 'pending' && (
-                              <Button
-                                onClick={() => completeWorkout(workout.id)}
-                                className="w-full bg-orange-500 hover:bg-orange-600"
-                                size="sm"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Marcar como Concluído
-                              </Button>
-                            )}
+    if (isWorkoutStarted) {
+      const currentExercise = selectedWorkout.exercises[currentExerciseIndex];
+      
+      return (
+        <div className="min-h-screen bg-black text-white">
+          <div className="flex items-center p-4 border-b border-gray-800">
+            <button onClick={() => setIsWorkoutStarted(false)} className="mr-4">
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl font-bold">TREINO</h1>
+          </div>
 
-                            {workout.status === 'completed' && (
-                              <div className="text-center text-green-600 font-medium text-sm">
-                                ✓ Treino Concluído
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
+          <div className="p-4">
+            <div className="mb-6">
+              <img 
+                src="/lovable-uploads/a5ebd2c5-5df1-46c3-a547-93316a2d1fe5.png" 
+                alt="Exercício"
+                className="w-full h-64 object-cover rounded-lg"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-900 rounded-lg p-4">
+                <div className="text-sm text-gray-400 mb-2">ANOTAÇÕES</div>
+              </div>
+
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="flex items-center justify-center space-x-8 text-center">
+                  <div>
+                    <div className="text-lg font-bold">{currentExercise.sets} x {currentExercise.reps} séries</div>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          }
+                  <div>
+                    <Timer className="w-6 h-6 mx-auto mb-1" />
+                    <div className="text-sm">30s</div>
+                  </div>
+                  <div>
+                    <div className="text-sm">190 bpm</div>
+                  </div>
+                </div>
+              </div>
 
-          {filteredWorkouts.length === 0 && (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <TrendingUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                  Nenhum Treino Encontrado
-                </h3>
-                <p className="text-gray-500">
-                  Não há treinos disponíveis para o filtro selecionado.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+              <div className="bg-gray-800 rounded-lg p-6">
+                <div className="text-center">
+                  <div className="text-sm text-gray-400 mb-2">CRONÔMETRO</div>
+                  <div className="text-4xl font-bold mb-4">00:30</div>
+                  <div className="flex justify-center space-x-4">
+                    <button className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center">
+                      <Timer className="w-6 h-6" />
+                    </button>
+                    <button className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center">
+                      <Play className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => {
+                  if (currentExerciseIndex < selectedWorkout.exercises.length - 1) {
+                    setCurrentExerciseIndex(currentExerciseIndex + 1);
+                  } else {
+                    completeWorkout(selectedWorkout.id);
+                  }
+                }}
+                className="w-full bg-white text-black hover:bg-gray-200 py-4 text-lg font-bold"
+              >
+                {currentExerciseIndex < selectedWorkout.exercises.length - 1 ? 'CONCLUIR EXERCÍCIO' : 'FINALIZAR TREINO'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Lista de exercícios do treino
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="flex items-center p-4 border-b border-gray-800">
+          <button onClick={() => setSelectedWorkout(null)} className="mr-4">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-bold">TREINO</h1>
+        </div>
+
+        <div className="p-4">
+          <h2 className="text-xl font-bold mb-2">A - PEITORAL, OMBRO, TRÍCEPS</h2>
+          <p className="text-gray-400 mb-6">{selectedWorkout.exercises.length} exercícios</p>
+
+          <div className="mb-6">
+            <img 
+              src="/lovable-uploads/84d10bda-c9d1-45f2-bea0-11a422b00b03.png" 
+              alt="Treino"
+              className="w-full h-64 object-cover rounded-lg"
+            />
+          </div>
+
+          <div className="space-y-3 mb-6">
+            {selectedWorkout.exercises.map((exercise, index) => (
+              <div key={exercise.id} className="bg-gray-200 text-black rounded-lg p-4 flex items-center">
+                <div className="w-12 h-12 bg-gray-800 rounded-lg mr-4 flex items-center justify-center">
+                  <span className="text-white font-bold">{index === 0 ? 'R' : index}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold">{exercise.name}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button 
+            onClick={() => setIsWorkoutStarted(true)}
+            className="w-full bg-white text-black hover:bg-gray-200 py-4 text-lg font-bold"
+          >
+            INICIAR TREINO
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Lista principal de treinos
+  const phases = [...new Set(workouts.map(w => w.phase))];
+  const filteredWorkouts = workouts.filter(workout => {
+    if (selectedPhase === "all") return true;
+    return workout.phase === selectedPhase;
+  });
+
+  return (
+    <div className="space-y-6 text-white">
+      {/* Progresso Geral */}
+      <div className="bg-gradient-to-r from-orange-600 to-orange-800 rounded-lg p-6">
+        <h3 className="text-lg font-bold mb-2">EMAGRECIMENTO</h3>
+        <p className="text-sm mb-4">TREINO 4 - 18 TREINOS EM 6 SEMANAS</p>
+        <p className="text-sm">PROF. AMANDA PINHEIRO DE SOUSA</p>
+        
+        <div className="mt-6">
+          <h4 className="font-bold mb-2">PROGRESSO</h4>
+          <div className="grid grid-cols-3 gap-4 text-center text-sm">
+            <div>
+              <div className="font-bold">13/12/2024</div>
+              <div className="text-xs">Data de início</div>
+            </div>
+            <div>
+              <div className="font-bold">4 níveis</div>
+              <div className="text-xs">Treinos realizados</div>
+            </div>
+            <div>
+              <div className="font-bold">Semanas: 6</div>
+              <div className="text-xs">Tempo no nível atual</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-6">
+          <h4 className="font-bold mb-2">NÍVEL DE SUPORTE</h4>
+          <div className="flex items-center justify-center space-x-4">
+            <div className="w-4 h-4 bg-white rounded-full"></div>
+            <div className="flex-1 h-1 bg-white rounded"></div>
+            <div className="w-4 h-4 bg-white rounded-full border-4 border-orange-300"></div>
+            <div className="flex-1 h-1 bg-gray-400 rounded"></div>
+            <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
+          </div>
+          <div className="text-center mt-2">
+            <div className="font-bold">MÉDIO</div>
+            <div className="text-xs">Preciso de um pouco de ajuda para treinar</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Próximo Treino */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold">PRÓXIMO TREINO</h3>
+          <span className="text-gray-400 text-sm">Meus agendamentos ›</span>
+        </div>
+        
+        {workouts.filter(w => w.status === 'pending').slice(0, 1).map((workout) => (
+          <div 
+            key={workout.id}
+            onClick={() => setSelectedWorkout(workout)}
+            className="bg-gray-800 rounded-lg p-4 cursor-pointer"
+          >
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg mr-4 flex items-center justify-center">
+                <span className="text-white font-bold text-xl">A</span>
+              </div>
+              <div className="flex-1">
+                <div className="font-bold">Peitoral, Ombro, Tríceps</div>
+              </div>
+              <span className="text-gray-400">›</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lista de Treinos */}
+      <div>
+        <h3 className="text-lg font-bold mb-4">ANTERIORES</h3>
+        <div className="space-y-3">
+          {workouts.slice(1).map((workout) => (
+            <div 
+              key={workout.id}
+              onClick={() => setSelectedWorkout(workout)}
+              className="bg-gray-800 rounded-lg p-4 cursor-pointer flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gray-600 rounded mr-3 flex items-center justify-center">
+                  {workout.status === 'completed' ? (
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-yellow-500" />
+                  )}
+                </div>
+                <div>
+                  <div className="font-semibold">Treino {workout.day_number}</div>
+                  <div className="text-sm text-gray-400">Semana {workout.week_number}</div>
+                </div>
+              </div>
+              <Badge 
+                className={`${getPhaseColor(workout.phase)} text-white text-xs`}
+              >
+                {workout.phase}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

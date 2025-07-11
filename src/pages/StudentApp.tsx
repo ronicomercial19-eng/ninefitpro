@@ -13,7 +13,16 @@ import {
   User,
   LogOut,
   CheckCircle,
-  Clock
+  Clock,
+  Home,
+  Trophy,
+  Target,
+  Bell,
+  Menu,
+  ArrowLeft,
+  Play,
+  Timer,
+  Camera
 } from "lucide-react";
 import { StudentWorkoutViewer } from "@/components/training/StudentWorkoutViewer";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +38,7 @@ interface StudentStats {
 
 const StudentApp = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState("workouts");
+  const [activeTab, setActiveTab] = useState("home");
   const [studentStats, setStudentStats] = useState<StudentStats>({
     totalWorkouts: 0,
     completedWorkouts: 0,
@@ -38,6 +47,7 @@ const StudentApp = () => {
   });
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [studentName, setStudentName] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -56,19 +66,21 @@ const StudentApp = () => {
         .eq('email', user.email)
         .single();
 
-      if (!studentData) return;
+      if (studentData) {
+        setStudentName(studentData.nome);
+      }
 
       // Buscar treinos do aluno
       const { data: workoutsData } = await supabase
         .from('workouts')
         .select('*')
-        .eq('student_id', studentData.id);
+        .eq('student_id', studentData?.id);
 
       // Buscar periodização ativa
       const { data: periodizationData } = await supabase
         .from('periodizations')
         .select('current_phase')
-        .eq('user_id', studentData.id)
+        .eq('user_id', studentData?.id)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -122,44 +134,17 @@ const StudentApp = () => {
     }
   };
 
-  const statsCards = [
-    { 
-      title: "Treinos Totais", 
-      value: studentStats.totalWorkouts.toString(), 
-      icon: Dumbbell, 
-      color: "text-blue-600" 
-    },
-    { 
-      title: "Concluídos", 
-      value: studentStats.completedWorkouts.toString(), 
-      icon: CheckCircle, 
-      color: "text-green-600" 
-    },
-    { 
-      title: "Taxa de Adesão", 
-      value: `${studentStats.adherenceRate}%`, 
-      icon: TrendingUp, 
-      color: "text-purple-600" 
-    },
-    { 
-      title: "Fase Atual", 
-      value: studentStats.currentPhase, 
-      icon: Clock, 
-      color: "text-orange-600" 
-    }
-  ];
-
   // Tela de Login
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <Card className="w-full max-w-md bg-white/10 backdrop-blur-sm border-white/20">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Card className="w-full max-w-md bg-gray-900 border-gray-800">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Dumbbell className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl text-white">Rony Trainer</CardTitle>
-            <p className="text-gray-300">Acesso do Aluno</p>
+            <CardTitle className="text-2xl text-white">BIORITMO</CardTitle>
+            <p className="text-gray-400">Acesso do Aluno</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -170,7 +155,7 @@ const StudentApp = () => {
                   type="email"
                   value={loginData.email}
                   onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
                   placeholder="seu-email@exemplo.com"
                   required
                 />
@@ -183,7 +168,7 @@ const StudentApp = () => {
                   type="password"
                   value={loginData.password}
                   onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
                   placeholder="••••••••"
                   required
                 />
@@ -192,7 +177,7 @@ const StudentApp = () => {
               <Button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
               >
                 {isLoggingIn ? 'Entrando...' : 'Entrar'}
               </Button>
@@ -205,134 +190,195 @@ const StudentApp = () => {
 
   // App Principal do Aluno
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="bg-black/50 backdrop-blur-sm border-b border-white/10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                <Dumbbell className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">Meus Treinos</h1>
-                <p className="text-sm text-gray-300">{user.email}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-                <User className="w-4 h-4 mr-2" />
-                Perfil
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-white hover:bg-white/10"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
+      <header className="bg-black border-b border-gray-800 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-xl font-bold text-white">BIORITMO</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Bell className="w-6 h-6 text-white" />
+            <Menu className="w-6 h-6 text-white" />
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsCards.map((stat, index) => (
-            <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-300">{stat.title}</p>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  </div>
-                  <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-black/30 border-white/20">
-            <TabsTrigger value="workouts" className="text-white data-[state=active]:bg-white/20">
-              <Dumbbell className="w-4 h-4 mr-2" />
-              Treinos
-            </TabsTrigger>
-            <TabsTrigger value="progress" className="text-white data-[state=active]:bg-white/20">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Progresso
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="text-white data-[state=active]:bg-white/20">
-              <Calendar className="w-4 h-4 mr-2" />
-              Agenda
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="workouts" className="mt-6">
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6">
-              <StudentWorkoutViewer />
+      {/* Conteúdo Principal */}
+      <div className="pb-20">
+        {activeTab === "home" && (
+          <div className="p-4 space-y-6">
+            {/* Perfil do Usuário */}
+            <div className="text-center py-6">
+              <div className="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-4"></div>
+              <h2 className="text-2xl font-bold text-white mb-2">Olá, {studentName || 'Aluno'}</h2>
+              <p className="text-gray-400 text-sm">DÉBITO AUTOMÁTICO - PERMANÊNCIA MÍNIMA 12 MESES</p>
+              <p className="text-gray-400 text-sm">- SHOPPING MORUMBI TOWN</p>
             </div>
-          </TabsContent>
 
-          <TabsContent value="progress" className="mt-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white">Progresso Pessoal</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-white font-semibold">Estatísticas Gerais</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-gray-300">
-                        <span>Taxa de Adesão:</span>
-                        <Badge className={`${studentStats.adherenceRate >= 80 ? 'bg-green-500' : studentStats.adherenceRate >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}>
-                          {studentStats.adherenceRate}%
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between text-gray-300">
-                        <span>Fase Atual:</span>
-                        <Badge variant="outline" className="text-white border-white/20">
-                          {studentStats.currentPhase}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-white font-semibold">Próximos Objetivos</h3>
-                    <div className="space-y-2 text-gray-300">
-                      <p>• Manter consistência nos treinos</p>
-                      <p>• Progredir para próxima fase</p>
-                      <p>• Melhorar técnica de execução</p>
-                    </div>
-                  </div>
+            {/* Menu de Opções */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white mb-4">CONTA</h3>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Conquistas</span>
+                  <span className="text-gray-400">›</span>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Minha jornada</span>
+                  <span className="text-gray-400">›</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Minha frequência</span>
+                  <span className="text-gray-400">›</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Meu plano</span>
+                  <span className="text-gray-400">›</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Trancamento de férias</span>
+                  <span className="text-gray-400">›</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Editar informações</span>
+                  <span className="text-gray-400">›</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                  <span className="text-white">Avaliações Físicas</span>
+                  <span className="text-gray-400">›</span>
+                </div>
+              </div>
+            </div>
 
-          <TabsContent value="schedule" className="mt-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white">Agenda de Treinos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-300">
-                    Funcionalidade de agenda em desenvolvimento
+            {/* Seção de Treinos */}
+            <div className="mt-8">
+              <div className="relative">
+                <img 
+                  src="/lovable-uploads/50c7d2be-e22b-4cac-b456-e0a80c7180f6.png" 
+                  alt="Treinos"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex flex-col justify-center items-center">
+                  <h3 className="text-3xl font-bold text-white mb-2">TREINOS</h3>
+                  <p className="text-white text-center px-4">
+                    Eleve seu poder com treinos exclusivos e personalizados.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "aulas" && (
+          <div className="p-4">
+            <div className="text-center py-8">
+              <img 
+                src="/lovable-uploads/ae95e72e-72b0-4ac4-9e34-698d640ecfe4.png" 
+                alt="Aulas"
+                className="w-full h-64 object-cover rounded-lg mb-6"
+              />
+              <div className="bg-gray-900 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-2">Shopping Morumbi Town</h3>
+                <p className="text-gray-400 mb-4">Reserve seu horário com antecedência</p>
+                <Button className="w-full bg-white text-black hover:bg-gray-200 mb-4">
+                  RESERVAR AGORA
+                </Button>
+                <Button variant="outline" className="w-full border-gray-600 text-white">
+                  Ver créditos ›
+                </Button>
+              </div>
+              
+              <div className="mt-8 text-center">
+                <h4 className="text-lg font-semibold text-white mb-2">Nenhuma aula reservada</h4>
+                <p className="text-gray-400 mb-2">Você ainda não agendou</p>
+                <p className="text-gray-400">nenhuma atividade</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "treino" && (
+          <div className="p-4">
+            <StudentWorkoutViewer />
+          </div>
+        )}
+
+        {activeTab === "perfil" && (
+          <div className="p-4 space-y-6">
+            {/* Perfil */}
+            <div className="text-center py-6">
+              <div className="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-4"></div>
+              <h2 className="text-2xl font-bold text-white mb-2">{studentName || 'Aluno'}</h2>
+              <p className="text-gray-400 text-sm">{user.email}</p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-900 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-white">{studentStats.completedWorkouts}</div>
+                <div className="text-gray-400 text-sm">Treinos Concluídos</div>
+              </div>
+              <div className="bg-gray-900 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-white">{studentStats.adherenceRate}%</div>
+                <div className="text-gray-400 text-sm">Taxa de Adesão</div>
+              </div>
+            </div>
+
+            {/* Logout */}
+            <Button 
+              onClick={handleLogout}
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800">
+        <div className="flex justify-around py-2">
+          <button
+            onClick={() => setActiveTab("home")}
+            className={`flex flex-col items-center p-2 ${activeTab === "home" ? "text-white" : "text-gray-500"}`}
+          >
+            <Home className="w-6 h-6" />
+            <span className="text-xs mt-1">Home</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("aulas")}
+            className={`flex flex-col items-center p-2 ${activeTab === "aulas" ? "text-white" : "text-gray-500"}`}
+          >
+            <Calendar className="w-6 h-6" />
+            <span className="text-xs mt-1">Aulas</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("treino")}
+            className={`flex flex-col items-center p-2 ${activeTab === "treino" ? "text-white" : "text-gray-500"}`}
+          >
+            <Dumbbell className="w-6 h-6" />
+            <span className="text-xs mt-1">Treino</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("perfil")}
+            className={`flex flex-col items-center p-2 ${activeTab === "perfil" ? "text-white" : "text-gray-500"}`}
+          >
+            <User className="w-6 h-6" />
+            <span className="text-xs mt-1">Perfil</span>
+          </button>
+        </div>
       </div>
     </div>
   );
