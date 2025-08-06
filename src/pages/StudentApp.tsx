@@ -143,7 +143,7 @@ const StudentApp = () => {
             <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Dumbbell className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl text-white">BIORITMO</CardTitle>
+            <CardTitle className="text-2xl text-white">9FIT</CardTitle>
             <p className="text-gray-400">Acesso do Aluno</p>
           </CardHeader>
           <CardContent>
@@ -195,7 +195,7 @@ const StudentApp = () => {
       <header className="bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <h1 className="text-xl font-bold text-white">BIORITMO</h1>
+            <h1 className="text-xl font-bold text-white">9FIT</h1>
           </div>
           <div className="flex items-center space-x-4">
             <Bell className="w-6 h-6 text-white" />
