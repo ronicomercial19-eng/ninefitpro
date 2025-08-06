@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { 
   Home, 
   Calendar, 
@@ -21,10 +29,23 @@ import {
   Settings,
   Bell,
   Plus,
-  Minus
+  Minus,
+  Apple,
+  ChevronRight,
+  CreditCard,
+  Edit,
+  ExternalLink,
+  TrendingUp,
+  Award,
+  Clock,
+  Percent,
+  Star,
+  Crown,
+  Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import useEmblaCarousel from 'embla-carousel-react';
 
 interface Program {
   id: string;
@@ -66,9 +87,41 @@ interface WorkoutLog {
   sets: Array<{ reps: number; weight: number }>;
 }
 
+interface Achievement {
+  id: string;
+  achievement_type: string;
+  achievement_name: string;
+  description: string;
+  points: number;
+  unlocked_at: string;
+}
+
+interface UserCredits {
+  credits_remaining: number;
+  total_credits: number;
+  plan_type: string;
+}
+
+interface UserPlan {
+  plan_name: string;
+  plan_type: string;
+  monthly_price: number;
+  features: any;
+  is_active: boolean;
+}
+
+interface UserProfileDetails {
+  name: string;
+  weight: number;
+  body_fat_percentage: number;
+  goal: string;
+  photo_url?: string;
+  payment_method?: string;
+}
+
 const FitnessApp = () => {
   const [activeTab, setActiveTab] = useState("home");
-  const [currentView, setCurrentView] = useState("main"); // main, program-overview, exercise-list, exercise-execution, workout-summary
+  const [currentView, setCurrentView] = useState("main"); // main, program-overview, exercise-list, exercise-execution, workout-summary, achievements, journey, frequency, plan, freeze, edit-profile, assessments
   const [programs, setPrograms] = useState<Program[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [currentProgram, setCurrentProgram] = useState<Program | null>(null);
@@ -82,6 +135,20 @@ const FitnessApp = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
+  
+  // New state for profile features
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [userCredits, setUserCredits] = useState<UserCredits | null>(null);
+  const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
+  const [profileDetails, setProfileDetails] = useState<UserProfileDetails | null>(null);
+  const [workoutHistory, setWorkoutHistory] = useState<any[]>([]);
+  const [attendanceRate, setAttendanceRate] = useState(85);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  
+  // Carousel setup
+  const [emblaRef] = useEmblaCarousel({ loop: true });
 
   // Simulated user email for demo purposes
   const userEmail = "demo@user.com";
@@ -90,6 +157,11 @@ const FitnessApp = () => {
     fetchPrograms();
     fetchUserProgress();
     fetchGymClasses();
+    fetchAchievements();
+    fetchUserCredits();
+    fetchUserPlan();
+    fetchProfileDetails();
+    fetchWorkoutHistory();
   }, []);
 
   useEffect(() => {
@@ -304,24 +376,117 @@ const FitnessApp = () => {
     toast.success('Treino concluído!');
   };
 
+  const fetchAchievements = async () => {
+    const { data, error } = await supabase
+      .from('user_achievements')
+      .select('*')
+      .eq('user_email', userEmail)
+      .order('unlocked_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching achievements:', error);
+      return;
+    }
+    
+    setAchievements(data || []);
+  };
+
+  const fetchUserCredits = async () => {
+    const { data, error } = await supabase
+      .from('user_credits')
+      .select('*')
+      .eq('user_email', userEmail)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching user credits:', error);
+      return;
+    }
+    
+    setUserCredits(data);
+  };
+
+  const fetchUserPlan = async () => {
+    const { data, error } = await supabase
+      .from('user_plans')
+      .select('*')
+      .eq('user_email', userEmail)
+      .eq('is_active', true)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching user plan:', error);
+      return;
+    }
+    
+    setUserPlan(data);
+  };
+
+  const fetchProfileDetails = async () => {
+    const { data, error } = await supabase
+      .from('user_profile_details')
+      .select('*')
+      .eq('user_email', userEmail)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching profile details:', error);
+      return;
+    }
+    
+    setProfileDetails(data);
+  };
+
+  const fetchWorkoutHistory = async () => {
+    const { data, error } = await supabase
+      .from('user_workout_logs')
+      .select('*')
+      .eq('user_email', userEmail)
+      .order('completed_at', { ascending: false })
+      .limit(20);
+    
+    if (error) {
+      console.error('Error fetching workout history:', error);
+      return;
+    }
+    
+    setWorkoutHistory(data || []);
+  };
+
   const bookClass = async (classId: string) => {
+    if (!userCredits || userCredits.credits_remaining <= 0) {
+      toast.error('Você não tem créditos suficientes');
+      return;
+    }
+
     const bookingData = {
       user_email: userEmail,
       class_id: classId,
       status: 'confirmed'
     };
 
-    const { error } = await supabase
+    const { error: bookingError } = await supabase
       .from('class_bookings')
       .insert(bookingData);
 
-    if (error) {
-      console.error('Error booking class:', error);
+    if (bookingError) {
+      console.error('Error booking class:', bookingError);
       toast.error('Erro ao reservar aula');
       return;
     }
 
+    // Update user credits
+    const { error: creditsError } = await supabase
+      .from('user_credits')
+      .update({ credits_remaining: userCredits.credits_remaining - 1 })
+      .eq('user_email', userEmail);
+
+    if (creditsError) {
+      console.error('Error updating credits:', creditsError);
+    }
+
     toast.success('Aula reservada com sucesso!');
+    fetchUserCredits(); // Refresh credits
   };
 
   const formatTime = (seconds: number) => {
@@ -345,10 +510,44 @@ const FitnessApp = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Olá, Usuário</h1>
+          <h1 className="text-2xl font-bold text-white">Olá, {profileDetails?.name || 'Usuário'}</h1>
           <p className="text-gray-400">Pronto para treinar hoje?</p>
         </div>
         <Bell className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Auto-sliding Banner */}
+      <div className="mb-6">
+        <Carousel ref={emblaRef} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <Card className="bg-gradient-to-r from-purple-600 to-pink-600 border-none">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-2">🔴 AO VIVO</h3>
+                  <p className="text-white/90">Yoga com Ana Silva - 19:00</p>
+                  <p className="text-white/70 text-sm">Ainda há vagas disponíveis!</p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            <CarouselItem>
+              <Card className="bg-gradient-to-r from-orange-500 to-red-500 border-none">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-2">BIO RITMO</h3>
+                  <p className="text-white/90">Transforme seu corpo, transforme sua vida</p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            <CarouselItem>
+              <Card className="bg-gradient-to-r from-green-500 to-teal-500 border-none">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-2">🏆 DESAFIO</h3>
+                  <p className="text-white/90">Complete 5 treinos esta semana</p>
+                  <p className="text-white/70 text-sm">Ganhe 100 pontos extras!</p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
       </div>
 
       {/* Quick Actions */}
@@ -373,14 +572,26 @@ const FitnessApp = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-teal-500 border-none">
+        <Card 
+          className="bg-gradient-to-br from-green-500 to-teal-500 border-none cursor-pointer"
+          onClick={() => {
+            setActiveTab("perfil");
+            setCurrentView("achievements");
+          }}
+        >
           <CardContent className="p-4 text-center">
             <Trophy className="w-8 h-8 text-white mx-auto mb-2" />
             <p className="text-white font-medium">Conquistas</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 border-none">
+        <Card 
+          className="bg-gradient-to-br from-yellow-500 to-orange-500 border-none cursor-pointer"
+          onClick={() => {
+            setActiveTab("perfil");
+            setCurrentView("frequency");
+          }}
+        >
           <CardContent className="p-4 text-center">
             <BarChart3 className="w-8 h-8 text-white mx-auto mb-2" />
             <p className="text-white font-medium">Frequência</p>
@@ -388,46 +599,146 @@ const FitnessApp = () => {
         </Card>
       </div>
 
-      {/* Banner */}
-      <Card className="bg-gradient-to-r from-purple-600 to-pink-600 border-none">
-        <CardContent className="p-6">
-          <h3 className="text-xl font-bold text-white mb-2">BIO RITMO</h3>
-          <p className="text-white/90">Transforme seu corpo, transforme sua vida</p>
-        </CardContent>
-      </Card>
+      {/* Credits Display */}
+      {userCredits && (
+        <Card className="bg-gray-900 border-gray-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white font-medium">Créditos Disponíveis</p>
+                <p className="text-gray-400 text-sm">{userCredits.credits_remaining} de {userCredits.total_credits}</p>
+              </div>
+              <div className="text-right">
+                <Badge variant={userCredits.credits_remaining > 5 ? "default" : "destructive"}>
+                  {userCredits.plan_type}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
   const renderClassesContent = () => (
     <div className="p-4 space-y-6 pb-20">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Aulas Disponíveis</h2>
+        <h2 className="text-2xl font-bold text-white">Aulas</h2>
         <Badge variant="secondary">Shopping Morumbi Town</Badge>
       </div>
 
-      <div className="space-y-4">
-        {gymClasses.map((gymClass) => (
-          <Card key={gymClass.id} className="bg-gray-900 border-gray-800">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-semibold text-white">{gymClass.class_name}</h3>
-                  <p className="text-gray-400 text-sm">{gymClass.instructor_name}</p>
-                  <p className="text-gray-500 text-xs">{formatDate(gymClass.class_datetime)}</p>
-                </div>
-                <Badge variant="outline">{gymClass.available_slots} vagas</Badge>
-              </div>
-              <p className="text-gray-400 text-sm mb-3">{gymClass.description}</p>
-              <Button 
-                onClick={() => bookClass(gymClass.id)}
-                className="w-full bg-orange-500 hover:bg-orange-600"
-              >
-                RESERVAR AGORA
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Toggle between list and calendar */}
+      <div className="flex gap-2">
+        <Button 
+          variant={!showCalendar ? "default" : "outline"}
+          onClick={() => setShowCalendar(false)}
+          className="flex-1"
+        >
+          Lista
+        </Button>
+        <Button 
+          variant={showCalendar ? "default" : "outline"}
+          onClick={() => setShowCalendar(true)}
+          className="flex-1"
+        >
+          Calendário
+        </Button>
       </div>
+
+      {/* Credits info */}
+      {userCredits && (
+        <Card className="bg-gray-900 border-gray-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-white">Créditos restantes:</span>
+              <Badge variant={userCredits.credits_remaining > 0 ? "default" : "destructive"}>
+                {userCredits.credits_remaining}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showCalendar ? (
+        // Calendar view
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-white">Dezembro 2024</h3>
+          <div className="grid grid-cols-7 gap-2">
+            {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day) => (
+              <div key={day} className="text-center text-gray-400 font-medium p-2">
+                {day}
+              </div>
+            ))}
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
+              const hasClass = [1, 3, 8, 10, 15, 17, 22, 24, 29].includes(day);
+              const isPast = day < new Date().getDate();
+              
+              return (
+                <Button
+                  key={day}
+                  variant={hasClass ? "default" : "ghost"}
+                  size="sm"
+                  className={`p-2 ${hasClass ? 'bg-orange-500 hover:bg-orange-600' : ''} ${isPast ? 'opacity-50' : ''}`}
+                  disabled={isPast || !hasClass || !userCredits || userCredits.credits_remaining <= 0}
+                  onClick={() => hasClass && !isPast && setSelectedDate(new Date(2024, 11, day))}
+                >
+                  {day}
+                </Button>
+              );
+            })}
+          </div>
+          
+          {selectedDate && (
+            <Card className="bg-gray-900 border-gray-800">
+              <CardContent className="p-4">
+                <h4 className="text-white font-semibold mb-2">
+                  Aulas do dia {selectedDate.getDate()}/12
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Yoga - 07:00</span>
+                    <Button size="sm" onClick={() => toast.success('Aula agendada!')}>
+                      Agendar
+                    </Button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">CrossFit - 18:00</span>
+                    <Button size="sm" onClick={() => toast.success('Aula agendada!')}>
+                      Agendar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : (
+        // List view
+        <div className="space-y-4">
+          {gymClasses.map((gymClass) => (
+            <Card key={gymClass.id} className="bg-gray-900 border-gray-800">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-semibold text-white">{gymClass.class_name}</h3>
+                    <p className="text-gray-400 text-sm">{gymClass.instructor_name}</p>
+                    <p className="text-gray-500 text-xs">{formatDate(gymClass.class_datetime)}</p>
+                  </div>
+                  <Badge variant="outline">{gymClass.available_slots} vagas</Badge>
+                </div>
+                <p className="text-gray-400 text-sm mb-3">{gymClass.description}</p>
+                <Button 
+                  onClick={() => bookClass(gymClass.id)}
+                  disabled={!userCredits || userCredits.credits_remaining <= 0}
+                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {userCredits && userCredits.credits_remaining > 0 ? 'RESERVAR AGORA' : 'SEM CRÉDITOS'}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -803,40 +1114,475 @@ const FitnessApp = () => {
     );
   };
 
-  const renderProfileContent = () => (
-    <div className="p-4 space-y-6 pb-20">
-      <div className="text-center py-6">
-        <div className="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-4"></div>
-        <h2 className="text-2xl font-bold text-white mb-2">Usuário Demo</h2>
-        <p className="text-gray-400 text-sm">PLANO PREMIUM - SHOPPING MORUMBI TOWN</p>
-      </div>
+  const renderProfileContent = () => {
+    if (currentView === "achievements") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
 
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-white">CONTA</h3>
-        
-        <div className="space-y-2">
-          {[
-            'Conquistas',
-            'Minha jornada', 
-            'Minha frequência',
-            'Meu plano',
-            'Trancamento de férias',
-            'Editar informações',
-            'Avaliações Físicas'
-          ].map((item) => (
-            <Card key={item} className="bg-gray-900 border-gray-800">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">{item}</span>
-                  <span className="text-gray-400">›</span>
+          <div className="text-center">
+            <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Conquistas</h2>
+            <p className="text-gray-400">
+              Total de pontos: {achievements.reduce((sum, a) => sum + a.points, 0)}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {achievements.map((achievement) => (
+              <Card key={achievement.id} className="bg-gray-900 border-gray-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                      {achievement.achievement_type === 'workout' && <Dumbbell className="w-6 h-6 text-white" />}
+                      {achievement.achievement_type === 'consistency' && <Clock className="w-6 h-6 text-white" />}
+                      {achievement.achievement_type === 'milestone' && <Star className="w-6 h-6 text-white" />}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white">{achievement.achievement_name}</h3>
+                      <p className="text-gray-400 text-sm">{achievement.description}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Badge variant="secondary">{achievement.points} pts</Badge>
+                        <span className="text-xs text-gray-500">
+                          {new Date(achievement.unlocked_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (currentView === "journey") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <BarChart3 className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Minha Jornada</h2>
+            <p className="text-gray-400">
+              {workoutHistory.length} treinos realizados
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {workoutHistory.map((workout) => (
+              <Card key={workout.id} className="bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-white">{workout.exercise_name}</h3>
+                      <p className="text-gray-400 text-sm">
+                        {new Date(workout.completed_at).toLocaleDateString('pt-BR')}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {JSON.parse(workout.sets_completed || '[]').length} séries realizadas
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <TrendingUp className="w-5 h-5 text-green-500" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (currentView === "frequency") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <Percent className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Minha Frequência</h2>
+            <p className="text-gray-400">
+              Taxa de comparecimento nas aulas
+            </p>
+          </div>
+
+          <Card className="bg-gray-900 border-gray-800">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-green-500 mb-2">{attendanceRate}%</div>
+                <p className="text-gray-400 mb-4">Taxa de frequência</p>
+                <Progress value={attendanceRate} className="w-full" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-gray-900 border-gray-800">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-white">12</div>
+                <div className="text-gray-400 text-sm">Aulas reservadas</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gray-900 border-gray-800">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-white">10</div>
+                <div className="text-gray-400 text-sm">Aulas comparecidas</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentView === "plan") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <Crown className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Meu Plano</h2>
+          </div>
+
+          {userPlan && (
+            <Card className="bg-gradient-to-br from-purple-600 to-pink-600 border-none">
+              <CardContent className="p-6">
+                <div className="text-center text-white">
+                  <h3 className="text-2xl font-bold mb-2">{userPlan.plan_name}</h3>
+                  <p className="text-xl mb-4">R$ {userPlan.monthly_price.toFixed(2)}/mês</p>
+                  <div className="space-y-2">
+                    {Array.isArray(userPlan.features) ? userPlan.features.map((feature, index) => (
+                      <p key={index} className="text-sm opacity-90">✓ {feature}</p>
+                    )) : null}
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">Upgrade Recomendado</h3>
+            <Card className="bg-gray-900 border-gray-800">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-white">Plano Elite</h4>
+                    <p className="text-gray-400 text-sm">Acesso a personal trainer</p>
+                    <p className="text-orange-500 font-bold">R$ 299,90/mês</p>
+                  </div>
+                  <Button className="bg-gradient-to-r from-orange-500 to-red-500">
+                    Upgrade
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentView === "freeze") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <Settings className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Trancamento de Férias</h2>
+            <p className="text-gray-400 text-sm">
+              Congele seu plano por até 30 dias
+            </p>
+          </div>
+
+          <Card className="bg-yellow-900/20 border-yellow-600">
+            <CardContent className="p-4">
+              <h3 className="text-yellow-400 font-semibold mb-2">⚠️ Regras Importantes</h3>
+              <ul className="text-yellow-300 text-sm space-y-1">
+                <li>• Solicitação deve ser feita 30 dias antes do vencimento</li>
+                <li>• Máximo de 30 dias de trancamento por ano</li>
+                <li>• Não há cobrança durante o período</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <Label htmlFor="freeze-reason" className="text-white">Motivo do trancamento</Label>
+            <Textarea 
+              id="freeze-reason" 
+              placeholder="Descreva o motivo para o trancamento..."
+              className="bg-gray-900 border-gray-700 text-white"
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="freeze-start" className="text-white">Data de início</Label>
+                <Input 
+                  id="freeze-start" 
+                  type="date" 
+                  className="bg-gray-900 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="freeze-end" className="text-white">Data de fim</Label>
+                <Input 
+                  id="freeze-end" 
+                  type="date" 
+                  className="bg-gray-900 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={() => toast.success('Solicitação enviada com sucesso!')}
+            >
+              SOLICITAR TRANCAMENTO
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentView === "edit-profile") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <Edit className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Editar Informações</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-white">Nome</Label>
+              <Input 
+                id="name" 
+                defaultValue={profileDetails?.name || ''}
+                className="bg-gray-900 border-gray-700 text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="weight" className="text-white">Peso (kg)</Label>
+                <Input 
+                  id="weight" 
+                  type="number" 
+                  defaultValue={profileDetails?.weight || ''}
+                  className="bg-gray-900 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="body-fat" className="text-white">% Gordura</Label>
+                <Input 
+                  id="body-fat" 
+                  type="number" 
+                  defaultValue={profileDetails?.body_fat_percentage || ''}
+                  className="bg-gray-900 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="goal" className="text-white">Objetivo</Label>
+              <Input 
+                id="goal" 
+                defaultValue={profileDetails?.goal || ''}
+                className="bg-gray-900 border-gray-700 text-white"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="payment" className="text-white">Forma de Pagamento</Label>
+              <Input 
+                id="payment" 
+                defaultValue={profileDetails?.payment_method || ''}
+                className="bg-gray-900 border-gray-700 text-white"
+              />
+            </div>
+
+            <Button 
+              className="w-full bg-green-600 hover:bg-green-700"
+              onClick={() => toast.success('Informações atualizadas!')}
+            >
+              SALVAR ALTERAÇÕES
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentView === "assessments") {
+      return (
+        <div className="p-4 space-y-6 pb-20">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setCurrentView("main")}
+              className="text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <Target className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Avaliações Físicas</h2>
+            <p className="text-gray-400">
+              Acompanhe sua evolução com avaliações profissionais
+            </p>
+          </div>
+
+          <Card className="bg-gray-900 border-gray-800">
+            <CardContent className="p-6 text-center">
+              <h3 className="text-xl font-bold text-white mb-4">Agendar Avaliação</h3>
+              <p className="text-gray-400 mb-6">
+                Clique no botão abaixo para ser redirecionado ao nosso site de agendamento
+              </p>
+              <Button 
+                className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                onClick={() => {
+                  window.open('https://exemplo.com/agendamento', '_blank');
+                  toast.success('Redirecionando para agendamento...');
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                AGENDAR AGORA
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">Histórico de Avaliações</h3>
+            
+            <Card className="bg-gray-900 border-gray-800">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-semibold text-white">Avaliação Inicial</h4>
+                    <p className="text-gray-400 text-sm">15 de novembro, 2024</p>
+                    <p className="text-gray-500 text-xs">Dr. João Silva</p>
+                  </div>
+                  <Badge variant="outline">Concluída</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Main profile view
+    return (
+      <div className="p-4 space-y-6 pb-20">
+        <div className="text-center py-6">
+          <div className="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-white mb-2">{profileDetails?.name || 'Usuário Demo'}</h2>
+          <p className="text-gray-400 text-sm">
+            {userPlan?.plan_name?.toUpperCase() || 'PLANO PREMIUM'} - SHOPPING MORUMBI TOWN
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-white">CONTA</h3>
+          
+          <div className="space-y-2">
+            {[
+              { name: 'Conquistas', view: 'achievements', icon: Trophy },
+              { name: 'Minha jornada', view: 'journey', icon: BarChart3 }, 
+              { name: 'Minha frequência', view: 'frequency', icon: Percent },
+              { name: 'Meu plano', view: 'plan', icon: Crown },
+              { name: 'Trancamento de férias', view: 'freeze', icon: Settings },
+              { name: 'Editar informações', view: 'edit-profile', icon: Edit },
+              { name: 'Avaliações Físicas', view: 'assessments', icon: Target }
+            ].map((item) => (
+              <Card 
+                key={item.name} 
+                className="bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => setCurrentView(item.view)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <item.icon className="w-5 h-5 text-gray-400" />
+                      <span className="text-white">{item.name}</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -859,6 +1605,53 @@ const FitnessApp = () => {
             {renderClassesContent()}
           </TabsContent>
           
+          <TabsContent value="nutricao">
+            <div className="p-4 space-y-6 pb-20">
+              <div className="text-center">
+                <Apple className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-white mb-2">Nutrição</h2>
+                <p className="text-gray-400">Sua jornada nutricional personalizada</p>
+              </div>
+
+              <Card className="bg-gradient-to-br from-green-500 to-teal-500 border-none">
+                <CardContent className="p-6 text-center">
+                  <Zap className="w-12 h-12 text-white mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-2">Plano Nutricional</h3>
+                  <p className="text-white/90 mb-4">Baseado no seu objetivo: {profileDetails?.goal || 'Emagrecimento'}</p>
+                  <Button className="bg-white/20 hover:bg-white/30 text-white border-none">
+                    VER PLANO COMPLETO
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-gray-900 border-gray-800">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-white">2,200</div>
+                    <div className="text-gray-400 text-sm">Calorias/dia</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gray-900 border-gray-800">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-white">150g</div>
+                    <div className="text-gray-400 text-sm">Proteínas</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="bg-gray-900 border-gray-800">
+                <CardContent className="p-4">
+                  <h3 className="text-white font-semibold mb-3">Dicas de Hoje</h3>
+                  <div className="space-y-2">
+                    <p className="text-gray-300 text-sm">🥗 Inclua mais vegetais verdes nas refeições</p>
+                    <p className="text-gray-300 text-sm">💧 Beba pelo menos 2L de água hoje</p>
+                    <p className="text-gray-300 text-sm">🥜 Adicione oleaginosas como lanche</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="treino">
             {renderWorkoutContent()}
           </TabsContent>
@@ -873,7 +1666,10 @@ const FitnessApp = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800">
         <div className="flex justify-around py-2">
           <button
-            onClick={() => setActiveTab("home")}
+            onClick={() => {
+              setActiveTab("home");
+              setCurrentView("main");
+            }}
             className={`flex flex-col items-center p-2 ${activeTab === "home" ? "text-orange-500" : "text-gray-500"}`}
           >
             <Home className="w-6 h-6" />
@@ -881,7 +1677,10 @@ const FitnessApp = () => {
           </button>
           
           <button
-            onClick={() => setActiveTab("aulas")}
+            onClick={() => {
+              setActiveTab("aulas");
+              setCurrentView("main");
+            }}
             className={`flex flex-col items-center p-2 ${activeTab === "aulas" ? "text-orange-500" : "text-gray-500"}`}
           >
             <Calendar className="w-6 h-6" />
@@ -889,7 +1688,21 @@ const FitnessApp = () => {
           </button>
           
           <button
-            onClick={() => setActiveTab("treino")}
+            onClick={() => {
+              setActiveTab("nutricao");
+              setCurrentView("main");
+            }}
+            className={`flex flex-col items-center p-2 ${activeTab === "nutricao" ? "text-orange-500" : "text-gray-500"}`}
+          >
+            <Apple className="w-6 h-6" />
+            <span className="text-xs mt-1">Nutrição</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              setActiveTab("treino");
+              setCurrentView("main");
+            }}
             className={`flex flex-col items-center p-2 ${activeTab === "treino" ? "text-orange-500" : "text-gray-500"}`}
           >
             <Dumbbell className="w-6 h-6" />
@@ -897,7 +1710,10 @@ const FitnessApp = () => {
           </button>
           
           <button
-            onClick={() => setActiveTab("perfil")}
+            onClick={() => {
+              setActiveTab("perfil");
+              setCurrentView("main");
+            }}
             className={`flex flex-col items-center p-2 ${activeTab === "perfil" ? "text-orange-500" : "text-gray-500"}`}
           >
             <User className="w-6 h-6" />

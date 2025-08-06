@@ -926,6 +926,69 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_name: string
+          achievement_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number | null
+          unlocked_at: string | null
+          user_email: string
+        }
+        Insert: {
+          achievement_name: string
+          achievement_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number | null
+          unlocked_at?: string | null
+          user_email: string
+        }
+        Update: {
+          achievement_name?: string
+          achievement_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number | null
+          unlocked_at?: string | null
+          user_email?: string
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          created_at: string | null
+          credits_remaining: number | null
+          id: string
+          plan_type: string | null
+          total_credits: number | null
+          updated_at: string | null
+          user_email: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_remaining?: number | null
+          id?: string
+          plan_type?: string | null
+          total_credits?: number | null
+          updated_at?: string | null
+          user_email: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_remaining?: number | null
+          id?: string
+          plan_type?: string | null
+          total_credits?: number | null
+          updated_at?: string | null
+          user_email?: string
+        }
+        Relationships: []
+      }
       user_metrics: {
         Row: {
           category: string | null
@@ -962,6 +1025,84 @@ export type Database = {
           unit?: string
           user_id?: string
           value?: number
+        }
+        Relationships: []
+      }
+      user_plans: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          monthly_price: number | null
+          plan_name: string
+          plan_type: string
+          started_at: string | null
+          user_email: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          monthly_price?: number | null
+          plan_name: string
+          plan_type: string
+          started_at?: string | null
+          user_email: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          monthly_price?: number | null
+          plan_name?: string
+          plan_type?: string
+          started_at?: string | null
+          user_email?: string
+        }
+        Relationships: []
+      }
+      user_profile_details: {
+        Row: {
+          body_fat_percentage: number | null
+          created_at: string | null
+          goal: string | null
+          id: string
+          name: string | null
+          payment_method: string | null
+          photo_url: string | null
+          updated_at: string | null
+          user_email: string
+          weight: number | null
+        }
+        Insert: {
+          body_fat_percentage?: number | null
+          created_at?: string | null
+          goal?: string | null
+          id?: string
+          name?: string | null
+          payment_method?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+          user_email: string
+          weight?: number | null
+        }
+        Update: {
+          body_fat_percentage?: number | null
+          created_at?: string | null
+          goal?: string | null
+          id?: string
+          name?: string | null
+          payment_method?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+          user_email?: string
+          weight?: number | null
         }
         Relationships: []
       }
@@ -1188,6 +1329,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vacation_freeze_requests: {
+        Row: {
+          created_at: string | null
+          freeze_end_date: string
+          freeze_start_date: string
+          id: string
+          reason: string | null
+          request_date: string | null
+          status: string | null
+          user_email: string
+        }
+        Insert: {
+          created_at?: string | null
+          freeze_end_date: string
+          freeze_start_date: string
+          id?: string
+          reason?: string | null
+          request_date?: string | null
+          status?: string | null
+          user_email: string
+        }
+        Update: {
+          created_at?: string | null
+          freeze_end_date?: string
+          freeze_start_date?: string
+          id?: string
+          reason?: string | null
+          request_date?: string | null
+          status?: string | null
+          user_email?: string
+        }
+        Relationships: []
       }
       weekly_structures: {
         Row: {
