@@ -16,6 +16,7 @@ import Pricing from "./pages/Pricing";
 import AITrainingPlatform from "./pages/AITrainingPlatform";
 import EnhancedAssessment from "./pages/EnhancedAssessment";
 import RonyTrainerApp from "./pages/RonyTrainerApp";
+import FitnessApp from "./pages/FitnessApp";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<RonyTrainerApp />} />
+          <Route path="/" element={<FitnessApp />} />
+          <Route path="/professor" element={<RonyTrainerApp />} />
           <Route path="/home" element={<OptimizedIndex />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/sales" element={<Sales />} />
