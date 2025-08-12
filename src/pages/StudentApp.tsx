@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
   Dumbbell, 
+  Utensils,
   Calendar, 
   TrendingUp, 
   User,
@@ -28,6 +29,10 @@ import { StudentWorkoutViewer } from "@/components/training/StudentWorkoutViewer
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import LiveClassesBanner from "@/components/classes/LiveClassesBanner";
+import ClassesCalendar from "@/components/classes/ClassesCalendar";
+import Achievements from "@/components/profile/Achievements";
+import Journey from "@/components/profile/Journey";
 
 interface StudentStats {
   totalWorkouts: number;
@@ -48,6 +53,7 @@ const StudentApp = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [profileSection, setProfileSection] = useState<'overview'|'achievements'|'journey'|'attendance'|'plan'|'freeze'|'edit'|'assessments'>('overview');
 
   useEffect(() => {
     if (user) {
@@ -221,40 +227,56 @@ const StudentApp = () => {
               <h3 className="text-lg font-semibold text-white mb-4">CONTA</h3>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('achievements'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                  aria-label="Conquistas"
+                >
                   <span className="text-white">Conquistas</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('journey'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                  aria-label="Minha jornada"
+                >
                   <span className="text-white">Minha jornada</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('attendance'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                >
                   <span className="text-white">Minha frequência</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('plan'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                >
                   <span className="text-white">Meu plano</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('freeze'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                >
                   <span className="text-white">Trancamento de férias</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('edit'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                >
                   <span className="text-white">Editar informações</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
+                <button onClick={() => { setActiveTab("perfil"); setProfileSection('assessments'); }}
+                  className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
+                >
                   <span className="text-white">Avaliações Físicas</span>
                   <span className="text-gray-400">›</span>
-                </div>
+                </button>
               </div>
             </div>
 
@@ -278,36 +300,28 @@ const StudentApp = () => {
         )}
 
         {activeTab === "aulas" && (
-          <div className="p-4">
-            <div className="text-center py-8">
-              <img 
-                src="/lovable-uploads/ae95e72e-72b0-4ac4-9e34-698d640ecfe4.png" 
-                alt="Aulas"
-                className="w-full h-64 object-cover rounded-lg mb-6"
-              />
-              <div className="bg-gray-900 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-white mb-2">Shopping Morumbi Town</h3>
-                <p className="text-gray-400 mb-4">Reserve seu horário com antecedência</p>
-                <Button className="w-full bg-white text-black hover:bg-gray-200 mb-4">
-                  RESERVAR AGORA
-                </Button>
-                <Button variant="outline" className="w-full border-gray-600 text-white">
-                  Ver créditos ›
-                </Button>
-              </div>
-              
-              <div className="mt-8 text-center">
-                <h4 className="text-lg font-semibold text-white mb-2">Nenhuma aula reservada</h4>
-                <p className="text-gray-400 mb-2">Você ainda não agendou</p>
-                <p className="text-gray-400">nenhuma atividade</p>
-              </div>
-            </div>
+          <div className="p-4 space-y-6">
+            <LiveClassesBanner />
+            <ClassesCalendar userEmail={user?.email || ''} />
           </div>
         )}
 
         {activeTab === "treino" && (
           <div className="p-4">
             <StudentWorkoutViewer />
+          </div>
+        )}
+
+        {activeTab === "nutricao" && (
+          <div className="p-4 space-y-4">
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">Nutrição</CardTitle>
+              </CardHeader>
+              <CardContent className="text-gray-300 text-sm">
+                Em breve: plano alimentar personalizado baseado no seu objetivo.
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -320,7 +334,37 @@ const StudentApp = () => {
               <p className="text-gray-400 text-sm">{user.email}</p>
             </div>
 
-            {/* Stats */}
+            {/* Navegação interna do perfil */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant={profileSection==='achievements' ? 'default' : 'outline'} onClick={() => setProfileSection('achievements')}>Conquistas</Button>
+              <Button variant={profileSection==='journey' ? 'default' : 'outline'} onClick={() => setProfileSection('journey')}>Minha jornada</Button>
+              <Button variant={profileSection==='attendance' ? 'default' : 'outline'} onClick={() => setProfileSection('attendance')}>Frequência</Button>
+              <Button variant={profileSection==='plan' ? 'default' : 'outline'} onClick={() => setProfileSection('plan')}>Meu plano</Button>
+              <Button variant={profileSection==='freeze' ? 'default' : 'outline'} onClick={() => setProfileSection('freeze')}>Trancamento</Button>
+              <Button variant={profileSection==='edit' ? 'default' : 'outline'} onClick={() => setProfileSection('edit')}>Editar</Button>
+            </div>
+
+            {/* Seções */}
+            {profileSection === 'achievements' && (
+              <Achievements userEmail={user.email} />
+            )}
+            {profileSection === 'journey' && (
+              <Journey userEmail={user.email} />
+            )}
+            {profileSection === 'attendance' && (
+              <Card className="bg-gray-900 border-gray-800"><CardContent className="p-4 text-gray-300 text-sm">Em breve: percentual de frequência com base nas aulas reservadas via créditos.</CardContent></Card>
+            )}
+            {profileSection === 'plan' && (
+              <Card className="bg-gray-900 border-gray-800"><CardContent className="p-4 text-gray-300 text-sm">Em breve: detalhes do plano atual e ofertas de upsell personalizadas.</CardContent></Card>
+            )}
+            {profileSection === 'freeze' && (
+              <Card className="bg-gray-900 border-gray-800"><CardContent className="p-4 text-gray-300 text-sm">Regra: solicitar trancamento 30 dias antes do próximo vencimento do plano.</CardContent></Card>
+            )}
+            {profileSection === 'edit' && (
+              <Card className="bg-gray-900 border-gray-800"><CardContent className="p-4 text-gray-300 text-sm">Em breve: formulário para atualizar peso, gordura, objetivo, foto e pagamento.</CardContent></Card>
+            )}
+
+            {/* Stats rápidos */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-900 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-white">{studentStats.completedWorkouts}</div>
@@ -369,6 +413,14 @@ const StudentApp = () => {
           >
             <Dumbbell className="w-6 h-6" />
             <span className="text-xs mt-1">Treino</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("nutricao")}
+            className={`flex flex-col items-center p-2 ${activeTab === "nutricao" ? "text-white" : "text-gray-500"}`}
+          >
+            <Utensils className="w-6 h-6" />
+            <span className="text-xs mt-1">Nutrição</span>
           </button>
           
           <button
