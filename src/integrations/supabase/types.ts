@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      athletes: {
+        Row: {
+          birthdate: string | null
+          coach_id: string
+          created_at: string
+          goals: string[] | null
+          id: string
+          injuries: string[] | null
+          metadata: Json | null
+          name: string
+          sessions_per_week: number | null
+          training_level: string | null
+          updated_at: string
+        }
+        Insert: {
+          birthdate?: string | null
+          coach_id: string
+          created_at?: string
+          goals?: string[] | null
+          id?: string
+          injuries?: string[] | null
+          metadata?: Json | null
+          name: string
+          sessions_per_week?: number | null
+          training_level?: string | null
+          updated_at?: string
+        }
+        Update: {
+          birthdate?: string | null
+          coach_id?: string
+          created_at?: string
+          goals?: string[] | null
+          id?: string
+          injuries?: string[] | null
+          metadata?: Json | null
+          name?: string
+          sessions_per_week?: number | null
+          training_level?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_bookings: {
         Row: {
           booking_time: string | null
@@ -365,12 +407,16 @@ export type Database = {
         Row: {
           created_at: string | null
           current_phase: string | null
+          description: string | null
+          duration: string | null
           file_type: string | null
           file_url: string | null
+          graph_data: Json | null
           id: string
           periodization_data: Json | null
           phase_duration_weeks: number | null
           professor_id: string
+          recommended_for: Json | null
           title: string
           total_phases: number | null
           updated_at: string | null
@@ -379,12 +425,16 @@ export type Database = {
         Insert: {
           created_at?: string | null
           current_phase?: string | null
+          description?: string | null
+          duration?: string | null
           file_type?: string | null
           file_url?: string | null
+          graph_data?: Json | null
           id?: string
           periodization_data?: Json | null
           phase_duration_weeks?: number | null
           professor_id: string
+          recommended_for?: Json | null
           title: string
           total_phases?: number | null
           updated_at?: string | null
@@ -393,12 +443,16 @@ export type Database = {
         Update: {
           created_at?: string | null
           current_phase?: string | null
+          description?: string | null
+          duration?: string | null
           file_type?: string | null
           file_url?: string | null
+          graph_data?: Json | null
           id?: string
           periodization_data?: Json | null
           phase_duration_weeks?: number | null
           professor_id?: string
+          recommended_for?: Json | null
           title?: string
           total_phases?: number | null
           updated_at?: string | null
@@ -465,6 +519,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      plans: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          filled_variables: Json | null
+          generated_html: string | null
+          id: string
+          pdf_url: string | null
+          periodization_id: string
+          start_date: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          filled_variables?: Json | null
+          generated_html?: string | null
+          id?: string
+          pdf_url?: string | null
+          periodization_id: string
+          start_date: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          filled_variables?: Json | null
+          generated_html?: string | null
+          id?: string
+          pdf_url?: string | null
+          periodization_id?: string
+          start_date?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_plans_periodization"
+            columns: ["periodization_id"]
+            isOneToOne: false
+            referencedRelation: "periodizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_periodization_matches: {
         Row: {
@@ -771,6 +879,33 @@ export type Database = {
           professor_id?: string
           telefone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      system_health: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          key: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          key: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          key?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
