@@ -1589,7 +1589,7 @@ const FitnessApp = () => {
       {/* Header */}
       <header className="bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-white">BIO RITMO</h1>
+          <h1 className="text-xl font-bold text-white">9FIT</h1>
           <Settings className="w-6 h-6 text-white" />
         </div>
       </header>
