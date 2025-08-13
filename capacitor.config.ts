@@ -1,13 +1,10 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.9c713e4a7db848ba829c18abc2bf4a27',
-  appName: 'fit-evolution-platform',
+  appId: 'com.9fit.app',
+  appName: '9FIT',
   webDir: 'dist',
-  server: {
-    url: 'https://9c713e4a-7db8-48ba-829c-18abc2bf4a27.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
+  bundledWebRuntime: false,
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,

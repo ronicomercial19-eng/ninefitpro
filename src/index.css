@@ -122,6 +122,29 @@
   html {
     scroll-behavior: smooth;
   }
+  
+  /* Mobile Optimizations */
+  .keyboard-is-open {
+    padding-bottom: env(keyboard-inset-height, 0);
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Improve tap targets */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better touch scrolling */
+    .scroll-container {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
 }
 
 @layer components {
