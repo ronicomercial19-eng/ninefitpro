@@ -26,6 +26,8 @@ import {
   Camera
 } from "lucide-react";
 import { StudentWorkoutViewer } from "@/components/training/StudentWorkoutViewer";
+import { Base44TrainingPlanViewer } from "@/components/base44/Base44TrainingPlanViewer";
+import { Base44NutritionViewer } from "@/components/base44/Base44NutritionViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -307,21 +309,22 @@ const StudentApp = () => {
         )}
 
         {activeTab === "treino" && (
-          <div className="p-4">
-            <StudentWorkoutViewer />
+          <div className="p-4 space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Planos de Treinamento</h2>
+              <p className="text-gray-400">Seus treinos personalizados do Base44</p>
+            </div>
+            <Base44TrainingPlanViewer userEmail={user?.email} />
           </div>
         )}
 
         {activeTab === "nutricao" && (
-          <div className="p-4 space-y-4">
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-white">Nutrição</CardTitle>
-              </CardHeader>
-              <CardContent className="text-gray-300 text-sm">
-                Em breve: plano alimentar personalizado baseado no seu objetivo.
-              </CardContent>
-            </Card>
+          <div className="p-4 space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Planos Nutricionais</h2>
+              <p className="text-gray-400">Seus planos alimentares do Base44</p>
+            </div>
+            <Base44NutritionViewer userEmail={user?.email} />
           </div>
         )}
 

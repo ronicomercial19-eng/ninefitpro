@@ -6,6 +6,7 @@ import { TrainingPlanGenerator } from "@/components/training/TrainingPlanGenerat
 import { PeriodizationAnalyzer } from "@/components/training/PeriodizationAnalyzer";
 import { WorkoutAdminPanel } from "@/components/workout/WorkoutAdminPanel";
 import { StudentsManagement } from "@/components/students/StudentsManagement";
+import { Base44SyncPanel } from "@/components/base44/Base44SyncPanel";
 
 const WorkoutManager = () => {
   return (
@@ -16,11 +17,12 @@ const WorkoutManager = () => {
         </h1>
         
         <Tabs defaultValue="exercises" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="exercises">Biblioteca</TabsTrigger>
             <TabsTrigger value="periodization">Periodização IA</TabsTrigger>
             <TabsTrigger value="create">Criar Treino</TabsTrigger>
             <TabsTrigger value="students">Alunos</TabsTrigger>
+            <TabsTrigger value="sync">Base44 Sync</TabsTrigger>
             <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
           
@@ -38,6 +40,10 @@ const WorkoutManager = () => {
           
           <TabsContent value="students">
             <StudentsManagement />
+          </TabsContent>
+          
+          <TabsContent value="sync">
+            <Base44SyncPanel />
           </TabsContent>
           
           <TabsContent value="admin">
