@@ -37,6 +37,7 @@ export function StudentsList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
 
   useEffect(() => {
     fetchStudents();
@@ -148,6 +149,24 @@ export function StudentsList() {
     );
   }
 
+  if (viewMode === 'detail' && selectedStudent) {
+    return (
+      <StudentDetailedView
+        student={selectedStudent}
+        onBack={() => {
+          setViewMode('list');
+          setSelectedStudent(null);
+        }}
+        onStudentUpdated={(updatedStudent) => {
+          setStudents(students.map(s => 
+            s.id === updatedStudent.id ? { ...s, ...updatedStudent } : s
+          ));
+          setSelectedStudent({ ...selectedStudent, ...updatedStudent });
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header e Busca */}
@@ -227,7 +246,10 @@ export function StudentsList() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setSelectedStudent(student)}
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setViewMode('detail');
+                          }}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -248,72 +270,21 @@ export function StudentsList() {
         </CardContent>
       </Card>
 
-      {/* Modal de Detalhes do Aluno */}
-      {selectedStudent && (
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Detalhes - {selectedStudent.nome}</CardTitle>
-              <Button
-                variant="outline"
-                onClick={() => setSelectedStudent(null)}
-              >
-                Fechar
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h4 className="font-semibold">Informações Pessoais</h4>
-                <div className="space-y-2">
-                  <p><strong>Nome:</strong> {selectedStudent.nome}</p>
-                  <p><strong>Email:</strong> {selectedStudent.email}</p>
-                  {selectedStudent.telefone && (
-                    <p><strong>Telefone:</strong> {selectedStudent.telefone}</p>
-                  )}
-                  {selectedStudent.data_nascimento && (
-                    <p><strong>Idade:</strong> {calculateAge(selectedStudent.data_nascimento)} anos</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h4 className="font-semibold">Informações de Treino</h4>
-                <div className="space-y-2">
-                  <p><strong>Objetivo:</strong> {selectedStudent.objetivo}</p>
-                  <p><strong>Nível:</strong> {selectedStudent.nivel_experiencia || 'Não informado'}</p>
-                  {selectedStudent.peso_kg && (
-                    <p><strong>Peso:</strong> {selectedStudent.peso_kg} kg</p>
-                  )}
-                  {selectedStudent.altura_cm && (
-                    <p><strong>Altura:</strong> {selectedStudent.altura_cm} cm</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {selectedStudent.observacoes && (
-              <div className="mt-6">
-                <h4 className="font-semibold mb-2">Observações</h4>
-                <p className="text-gray-600 bg-gray-50 p-3 rounded">
-                  {selectedStudent.observacoes}
-                </p>
-              </div>
-            )}
-            
-            <div className="mt-6 flex gap-2">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Calendar className="w-4 h-4 mr-2" />
-                Ver Treinos
-              </Button>
-              <Button variant="outline">
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Vista Detalhada */}
+      {viewMode === 'detail' && selectedStudent && (
+        <StudentDetailedView
+          student={selectedStudent}
+          onBack={() => {
+            setViewMode('list');
+            setSelectedStudent(null);
+          }}
+          onStudentUpdated={(updatedStudent) => {
+            setStudents(students.map(s => 
+              s.id === updatedStudent.id ? { ...s, ...updatedStudent } : s
+            ));
+            setSelectedStudent({ ...selectedStudent, ...updatedStudent });
+          }}
+        />
       )}
     </div>
   );

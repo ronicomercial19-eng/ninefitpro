@@ -7,15 +7,61 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
+      aluno_periodizacao: {
+        Row: {
+          aluno_id: string
+          compatibilidade: number | null
+          created_at: string
+          explicacao: string | null
+          id: string
+          periodizacao_id: string
+          updated_at: string
+        }
+        Insert: {
+          aluno_id: string
+          compatibilidade?: number | null
+          created_at?: string
+          explicacao?: string | null
+          id?: string
+          periodizacao_id: string
+          updated_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          compatibilidade?: number | null
+          created_at?: string
+          explicacao?: string | null
+          id?: string
+          periodizacao_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_periodizacao_id_fkey"
+            columns: ["periodizacao_id"]
+            isOneToOne: false
+            referencedRelation: "periodizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athletes: {
         Row: {
+          altura_cm: number | null
           birthdate: string | null
           coach_id: string
           created_at: string
@@ -24,11 +70,18 @@ export type Database = {
           injuries: string[] | null
           metadata: Json | null
           name: string
+          nivel: string | null
+          objetivo: string | null
+          perfil_classificado: Json | null
+          peso_kg: number | null
+          respostas_anamnese: Json | null
+          restricoes: Json | null
           sessions_per_week: number | null
           training_level: string | null
           updated_at: string
         }
         Insert: {
+          altura_cm?: number | null
           birthdate?: string | null
           coach_id: string
           created_at?: string
@@ -37,11 +90,18 @@ export type Database = {
           injuries?: string[] | null
           metadata?: Json | null
           name: string
+          nivel?: string | null
+          objetivo?: string | null
+          perfil_classificado?: Json | null
+          peso_kg?: number | null
+          respostas_anamnese?: Json | null
+          restricoes?: Json | null
           sessions_per_week?: number | null
           training_level?: string | null
           updated_at?: string
         }
         Update: {
+          altura_cm?: number | null
           birthdate?: string | null
           coach_id?: string
           created_at?: string
@@ -50,6 +110,12 @@ export type Database = {
           injuries?: string[] | null
           metadata?: Json | null
           name?: string
+          nivel?: string | null
+          objetivo?: string | null
+          perfil_classificado?: Json | null
+          peso_kg?: number | null
+          respostas_anamnese?: Json | null
+          restricoes?: Json | null
           sessions_per_week?: number | null
           training_level?: string | null
           updated_at?: string
@@ -131,6 +197,108 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      estruturas_de_treinamento: {
+        Row: {
+          carga: number | null
+          dia: number
+          exercicio_id: string | null
+          id: string
+          modelo_id: string | null
+          ordem: number
+          repeticoes: string | null
+          series: number | null
+        }
+        Insert: {
+          carga?: number | null
+          dia: number
+          exercicio_id?: string | null
+          id?: string
+          modelo_id?: string | null
+          ordem: number
+          repeticoes?: string | null
+          series?: number | null
+        }
+        Update: {
+          carga?: number | null
+          dia?: number
+          exercicio_id?: string | null
+          id?: string
+          modelo_id?: string | null
+          ordem?: number
+          repeticoes?: string | null
+          series?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estruturas_de_treinamento_exercicio_id_fkey"
+            columns: ["exercicio_id"]
+            isOneToOne: false
+            referencedRelation: "exercicios_novos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estruturas_de_treinamento_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "modelos_de_treino"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estudantes: {
+        Row: {
+          altura: number | null
+          criado_em: string | null
+          data_nascimento: string | null
+          email: string
+          id: string
+          nome: string
+          peso: number | null
+        }
+        Insert: {
+          altura?: number | null
+          criado_em?: string | null
+          data_nascimento?: string | null
+          email: string
+          id?: string
+          nome: string
+          peso?: number | null
+        }
+        Update: {
+          altura?: number | null
+          criado_em?: string | null
+          data_nascimento?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          peso?: number | null
+        }
+        Relationships: []
+      }
+      exercicios_novos: {
+        Row: {
+          criado_em: string | null
+          grupo_muscular: string
+          id: string
+          nome: string
+          video_url: string | null
+        }
+        Insert: {
+          criado_em?: string | null
+          grupo_muscular: string
+          id?: string
+          nome: string
+          video_url?: string | null
+        }
+        Update: {
+          criado_em?: string | null
+          grupo_muscular?: string
+          id?: string
+          nome?: string
+          video_url?: string | null
+        }
+        Relationships: []
       }
       exercise_library: {
         Row: {
@@ -287,6 +455,65 @@ export type Database = {
         }
         Relationships: []
       }
+      modelos_de_treino: {
+        Row: {
+          criado_em: string | null
+          descricao: string | null
+          duracao_em_semanas: number | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          criado_em?: string | null
+          descricao?: string | null
+          duracao_em_semanas?: number | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          criado_em?: string | null
+          descricao?: string | null
+          duracao_em_semanas?: number | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      periodizacoes_novas: {
+        Row: {
+          carga_prevista: number | null
+          carga_real: number | null
+          criado_em: string | null
+          estudante_id: string | null
+          id: string
+          semana: number
+        }
+        Insert: {
+          carga_prevista?: number | null
+          carga_real?: number | null
+          criado_em?: string | null
+          estudante_id?: string | null
+          id?: string
+          semana: number
+        }
+        Update: {
+          carga_prevista?: number | null
+          carga_real?: number | null
+          criado_em?: string | null
+          estudante_id?: string | null
+          id?: string
+          semana?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodizacoes_novas_estudante_id_fkey"
+            columns: ["estudante_id"]
+            isOneToOne: false
+            referencedRelation: "estudantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       periodization_models: {
         Row: {
           created_at: string | null
@@ -307,12 +534,12 @@ export type Database = {
           description: string
           duration: string
           goal: string
-          graph_data: Json
+          graph_data?: Json
           id: string
-          macrocycle: Json
-          mesocycle: Json
-          microcycle: Json
-          recommended_for: Json
+          macrocycle?: Json
+          mesocycle?: Json
+          microcycle?: Json
+          recommended_for?: Json
           title: string
           updated_at?: string | null
         }
@@ -413,6 +640,9 @@ export type Database = {
           file_url: string | null
           graph_data: Json | null
           id: string
+          macrocycle: Json | null
+          mesocycle: Json | null
+          microcycle: Json | null
           periodization_data: Json | null
           phase_duration_weeks: number | null
           professor_id: string
@@ -431,6 +661,9 @@ export type Database = {
           file_url?: string | null
           graph_data?: Json | null
           id?: string
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
           periodization_data?: Json | null
           phase_duration_weeks?: number | null
           professor_id: string
@@ -449,6 +682,9 @@ export type Database = {
           file_url?: string | null
           graph_data?: Json | null
           id?: string
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
           periodization_data?: Json | null
           phase_duration_weeks?: number | null
           professor_id?: string
@@ -519,6 +755,42 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      planos_de_treino_gerados: {
+        Row: {
+          criado_em: string | null
+          estudante_id: string | null
+          id: string
+          modelo_id: string | null
+        }
+        Insert: {
+          criado_em?: string | null
+          estudante_id?: string | null
+          id?: string
+          modelo_id?: string | null
+        }
+        Update: {
+          criado_em?: string | null
+          estudante_id?: string | null
+          id?: string
+          modelo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_de_treino_gerados_estudante_id_fkey"
+            columns: ["estudante_id"]
+            isOneToOne: false
+            referencedRelation: "estudantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_de_treino_gerados_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "modelos_de_treino"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
@@ -608,6 +880,13 @@ export type Database = {
             columns: ["periodization_model_id"]
             isOneToOne: false
             referencedRelation: "periodization_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_periodization_matches_periodization_model_id_fkey"
+            columns: ["periodization_model_id"]
+            isOneToOne: false
+            referencedRelation: "v_periodizations_catalog"
             referencedColumns: ["id"]
           },
           {
@@ -831,13 +1110,251 @@ export type Database = {
         }
         Relationships: []
       }
+      student_activity_history: {
+        Row: {
+          activity_date: string
+          activity_name: string
+          activity_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          status: string | null
+          student_id: string
+        }
+        Insert: {
+          activity_date?: string
+          activity_name: string
+          activity_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          status?: string | null
+          student_id: string
+        }
+        Update: {
+          activity_date?: string
+          activity_name?: string
+          activity_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          status?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_activity_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_anamnesis: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          questions_answers: Json
+          student_id: string
+          title: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          questions_answers?: Json
+          student_id: string
+          title: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          questions_answers?: Json
+          student_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_anamnesis_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_measurements: {
+        Row: {
+          altura_cm: number | null
+          circunferencia_braco_cm: number | null
+          circunferencia_cintura_cm: number | null
+          circunferencia_coxa_cm: number | null
+          circunferencia_panturrilha_cm: number | null
+          circunferencia_peitoral_cm: number | null
+          circunferencia_quadril_cm: number | null
+          created_at: string | null
+          gordura_corporal: number | null
+          id: string
+          imc: number | null
+          massa_muscular: number | null
+          measurement_date: string
+          observacoes: string | null
+          peso_kg: number | null
+          student_id: string
+        }
+        Insert: {
+          altura_cm?: number | null
+          circunferencia_braco_cm?: number | null
+          circunferencia_cintura_cm?: number | null
+          circunferencia_coxa_cm?: number | null
+          circunferencia_panturrilha_cm?: number | null
+          circunferencia_peitoral_cm?: number | null
+          circunferencia_quadril_cm?: number | null
+          created_at?: string | null
+          gordura_corporal?: number | null
+          id?: string
+          imc?: number | null
+          massa_muscular?: number | null
+          measurement_date?: string
+          observacoes?: string | null
+          peso_kg?: number | null
+          student_id: string
+        }
+        Update: {
+          altura_cm?: number | null
+          circunferencia_braco_cm?: number | null
+          circunferencia_cintura_cm?: number | null
+          circunferencia_coxa_cm?: number | null
+          circunferencia_panturrilha_cm?: number | null
+          circunferencia_peitoral_cm?: number | null
+          circunferencia_quadril_cm?: number | null
+          created_at?: string | null
+          gordura_corporal?: number | null
+          id?: string
+          imc?: number | null
+          massa_muscular?: number | null
+          measurement_date?: string
+          observacoes?: string | null
+          peso_kg?: number | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_measurements_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_photos: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          photo_category: string | null
+          photo_type: string
+          photo_url: string
+          student_id: string
+          taken_date: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          photo_category?: string | null
+          photo_type: string
+          photo_url: string
+          student_id: string
+          taken_date?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          photo_category?: string | null
+          photo_type?: string
+          photo_url?: string
+          student_id?: string
+          taken_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_photos_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_training_assignments: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          start_date: string
+          student_id: string
+          training_data: Json
+          training_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          student_id: string
+          training_data?: Json
+          training_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          student_id?: string
+          training_data?: Json
+          training_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_training_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           altura_cm: number | null
           ativo: boolean | null
+          cpf: string | null
           created_at: string | null
           data_nascimento: string | null
+          data_vencimento_plano: string | null
           email: string
+          endereco_completo: string | null
+          estado_civil: string | null
+          forma_pagamento: string | null
+          foto_url: string | null
           id: string
           nivel_experiencia: string | null
           nome: string
@@ -845,15 +1362,25 @@ export type Database = {
           observacoes: string | null
           peso_kg: number | null
           professor_id: string
+          profissao: string | null
+          status_pagamento: string | null
           telefone: string | null
           updated_at: string | null
+          valor_mensalidade: number | null
+          whatsapp: string | null
         }
         Insert: {
           altura_cm?: number | null
           ativo?: boolean | null
+          cpf?: string | null
           created_at?: string | null
           data_nascimento?: string | null
+          data_vencimento_plano?: string | null
           email: string
+          endereco_completo?: string | null
+          estado_civil?: string | null
+          forma_pagamento?: string | null
+          foto_url?: string | null
           id?: string
           nivel_experiencia?: string | null
           nome: string
@@ -861,15 +1388,25 @@ export type Database = {
           observacoes?: string | null
           peso_kg?: number | null
           professor_id: string
+          profissao?: string | null
+          status_pagamento?: string | null
           telefone?: string | null
           updated_at?: string | null
+          valor_mensalidade?: number | null
+          whatsapp?: string | null
         }
         Update: {
           altura_cm?: number | null
           ativo?: boolean | null
+          cpf?: string | null
           created_at?: string | null
           data_nascimento?: string | null
+          data_vencimento_plano?: string | null
           email?: string
+          endereco_completo?: string | null
+          estado_civil?: string | null
+          forma_pagamento?: string | null
+          foto_url?: string | null
           id?: string
           nivel_experiencia?: string | null
           nome?: string
@@ -877,8 +1414,12 @@ export type Database = {
           observacoes?: string | null
           peso_kg?: number | null
           professor_id?: string
+          profissao?: string | null
+          status_pagamento?: string | null
           telefone?: string | null
           updated_at?: string | null
+          valor_mensalidade?: number | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -1855,19 +2396,81 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_periodizations_catalog: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          goal: string | null
+          graph_data: Json | null
+          id: string | null
+          macrocycle: Json | null
+          mesocycle: Json | null
+          microcycle: Json | null
+          recommended_for: Json | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          goal?: string | null
+          graph_data?: Json | null
+          id?: string | null
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
+          recommended_for?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          goal?: string | null
+          graph_data?: Json | null
+          id?: string | null
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
+          recommended_for?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      calcular_periodizacao_correspondencia: {
+        Args: { estudante: string }
+        Returns: {
+          carga_prevista: number
+          carga_real: number
+          diferenca: number
+          semana: number
+        }[]
+      }
       calculate_periodization_match: {
         Args: {
-          profile_goal: string
-          profile_experience: string
-          profile_age: number
-          profile_injuries: string
           model_goal: string
           model_recommended_for: Json
+          profile_age: number
+          profile_experience: string
+          profile_goal: string
+          profile_injuries: string
         }
         Returns: number
+      }
+      match_periodizations_for_profile: {
+        Args: { p_user_profile_id: string }
+        Returns: {
+          match_factors: Json
+          match_percentage: number
+          periodization_model_id: string
+          title: string
+        }[]
       }
     }
     Enums: {
