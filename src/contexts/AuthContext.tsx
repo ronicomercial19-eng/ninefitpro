@@ -1,18 +1,30 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
-interface User {
+interface Profile {
   id: string;
+  user_id: string;
   email: string;
-  name?: string;
+  full_name: string | null;
+  role: 'admin' | 'student' | 'professor';
+  phone: string | null;
+  avatar_url: string | null;
+  is_active: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => void;
+  profile: Profile | null;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
   loading: boolean;
+  isAdmin: boolean;
+  isProfessor: boolean;
+  isStudent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,57 +39,131 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simular verificação de usuário logado
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Fetch user profile
+          setTimeout(async () => {
+            await fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
-      // Simular login - substituir por integração real com Supabase
-      const mockUser = { id: '1', email, name: email.split('@')[0] };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      
-      // Redirecionar para o dashboard do app após login
-      window.location.href = '/app-dashboard';
-    } catch (error) {
-      throw new Error('Falha no login');
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (error: any) {
+      return { error: error.message || 'Erro no login' };
+    } finally {
+      setLoading(false);
     }
   };
 
   const register = async (email: string, password: string, name?: string) => {
     try {
-      // Simular registro - substituir por integração real com Supabase
-      const mockUser = { id: '1', email, name: name || email.split('@')[0] };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      
-      // Redirecionar para o dashboard do app após registro
-      window.location.href = '/app-dashboard';
-    } catch (error) {
-      throw new Error('Falha no registro');
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: name,
+          },
+        },
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (error: any) {
+      return { error: error.message || 'Erro no registro' };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('user');
-    window.location.href = '/';
+    setProfile(null);
+    setSession(null);
   };
+
+  const isAdmin = profile?.role === 'admin';
+  const isProfessor = profile?.role === 'professor';
+  const isStudent = profile?.role === 'student';
 
   const value = {
     user,
+    profile,
+    session,
     login,
     register,
     logout,
     loading,
+    isAdmin,
+    isProfessor,
+    isStudent,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

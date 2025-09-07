@@ -8,7 +8,7 @@ import { ProfessorDashboard } from "@/components/dashboard/ProfessorDashboard";
 import { EnhancedStudentDashboard } from "@/components/dashboard/EnhancedStudentDashboard";
 
 const AppDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const [userType, setUserType] = useState<string>('student');
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ const AppDashboard = () => {
           .from('user_profiles_extended')
           .insert({
             user_id: user.id,
-            name: user.name || user.email?.split('@')[0] || 'Usuário',
+            name: profile?.full_name || user.email?.split('@')[0] || 'Usuário',
             email: user.email,
             user_type: 'student'
           });

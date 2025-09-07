@@ -898,6 +898,45 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       program_workouts: {
         Row: {
           created_at: string | null
@@ -1362,6 +1401,7 @@ export type Database = {
           observacoes: string | null
           peso_kg: number | null
           professor_id: string
+          profile_id: string | null
           profissao: string | null
           status_pagamento: string | null
           telefone: string | null
@@ -1388,6 +1428,7 @@ export type Database = {
           observacoes?: string | null
           peso_kg?: number | null
           professor_id: string
+          profile_id?: string | null
           profissao?: string | null
           status_pagamento?: string | null
           telefone?: string | null
@@ -1414,6 +1455,7 @@ export type Database = {
           observacoes?: string | null
           peso_kg?: number | null
           professor_id?: string
+          profile_id?: string | null
           profissao?: string | null
           status_pagamento?: string | null
           telefone?: string | null
@@ -1421,7 +1463,15 @@ export type Database = {
           valor_mensalidade?: number | null
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_health: {
         Row: {
@@ -2474,7 +2524,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "student" | "professor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2601,6 +2651,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "student", "professor"],
+    },
   },
 } as const

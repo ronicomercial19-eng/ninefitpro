@@ -20,13 +20,13 @@ import {
 } from "lucide-react";
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, profile: userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: user?.name || '',
+    name: userProfile?.full_name || '',
     email: user?.email || '',
-    phone: '',
+    phone: userProfile?.phone || '',
     age: '',
     height: '',
     weight: '',

@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Dumbbell, 
   TrendingUp, 
@@ -17,7 +19,9 @@ import {
   Target,
   Clock,
   Trophy,
-  Shield
+  Shield,
+  ArrowLeft,
+  LogOut
 } from "lucide-react";
 import { WorkoutGenerator } from "@/components/training/WorkoutGenerator";
 import { PeriodizationUpload } from "@/components/training/PeriodizationUpload";
@@ -32,6 +36,8 @@ interface UserStats {
 }
 
 const RonyTrainerApp = () => {
+  const { user, profile, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("workouts");
   const [isTrainerMode, setIsTrainerMode] = useState(false);
   const [userStats, setUserStats] = useState<UserStats>({
@@ -42,15 +48,19 @@ const RonyTrainerApp = () => {
   });
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  // Redirect non-admin/professor users
   useEffect(() => {
-    getCurrentUser();
-  }, []);
+    if (user && profile && !['admin', 'professor'].includes(profile.role)) {
+      navigate('/');
+    }
+  }, [user, profile, navigate]);
 
+  // Fetch stats when user is available
   useEffect(() => {
-    if (currentUserId) {
+    if (user) {
       fetchRealUserStats();
     }
-  }, [currentUserId]);
+  }, [user]);
 
   const getCurrentUser = async () => {
     try {
@@ -64,20 +74,20 @@ const RonyTrainerApp = () => {
   };
 
   const fetchRealUserStats = async () => {
-    if (!currentUserId) return;
+    if (!user) return;
 
     try {
       // Buscar total de treinos gerados
       const { data: workoutsData } = await supabase
         .from('generated_workout_plans')
         .select('id, user_profiles!inner(user_id)')
-        .eq('user_profiles.user_id', currentUserId);
+        .eq('user_profiles.user_id', user.id);
 
       // Buscar peso total levantado dos registros de força
       const { data: strengthData } = await supabase
         .from('strength_records')
         .select('weight_kg, sets, reps')
-        .eq('user_id', currentUserId);
+        .eq('user_id', user.id);
 
       // Calcular peso total levantado
       const totalWeight = strengthData?.reduce((total, record) => {
@@ -97,7 +107,7 @@ const RonyTrainerApp = () => {
       const { data: monthlyWorkouts } = await supabase
         .from('generated_workout_plans')
         .select('id, user_profiles!inner(user_id)')
-        .eq('user_profiles.user_id', currentUserId)
+        .eq('user_profiles.user_id', user.id)
         .gte('generated_at', firstDayOfMonth.toISOString());
 
       const monthlyWorkoutCount = monthlyWorkouts?.length || 0;
@@ -144,6 +154,15 @@ const RonyTrainerApp = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-white hover:bg-white/10"
+                onClick={() => navigate('/')}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar ao App
+              </Button>
               <div className="flex items-center space-x-2">
                 <Label htmlFor="trainer-mode" className="text-white text-sm">
                   Modo Professor
@@ -155,9 +174,14 @@ const RonyTrainerApp = () => {
                 />
                 <Shield className="w-4 h-4 text-orange-500" />
               </div>
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-                <User className="w-4 h-4 mr-2" />
-                Perfil
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-white hover:bg-white/10"
+                onClick={logout}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
               </Button>
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                 <Settings className="w-4 h-4" />
@@ -185,7 +209,7 @@ const RonyTrainerApp = () => {
           ))}
         </div>
 
-        {!currentUserId && (
+        {!user && (
           <div className="mb-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
             <p className="text-yellow-200 text-center">
               Faça login para ver suas estatísticas reais e gerar treinos personalizados
@@ -231,14 +255,14 @@ const RonyTrainerApp = () => {
                         <p className="text-sm text-gray-300">Baseado na sua periodização atual</p>
                       </div>
                       <Badge className="bg-green-500/20 text-green-400">
-                        {currentUserId ? 'Disponível' : 'Login necessário'}
+                        {user ? 'Disponível' : 'Login necessário'}
                       </Badge>
                     </div>
                     <Button 
                       className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                      disabled={!currentUserId}
+                      disabled={!user}
                     >
-                      {currentUserId ? 'Iniciar Treino' : 'Faça login para treinar'}
+                      {user ? 'Iniciar Treino' : 'Faça login para treinar'}
                     </Button>
                   </div>
                 </CardContent>
@@ -260,7 +284,7 @@ const RonyTrainerApp = () => {
                   <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <BarChart3 className="w-16 h-16 mx-auto mb-4" />
-                      {currentUserId ? (
+                     {user ? (
                         <div>
                           <p className="text-white text-lg font-semibold">{userStats.totalWeight}</p>
                           <p>Total levantado</p>
@@ -281,7 +305,7 @@ const RonyTrainerApp = () => {
                   <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <TrendingUp className="w-16 h-16 mx-auto mb-4" />
-                      {currentUserId ? (
+                      {user ? (
                         <div>
                           <p className="text-white text-lg font-semibold">{userStats.totalWorkouts}</p>
                           <p>Treinos realizados</p>
@@ -312,7 +336,7 @@ const RonyTrainerApp = () => {
                   <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <BarChart3 className="w-16 h-16 mx-auto mb-4" />
-                      {currentUserId ? (
+                      {user ? (
                         <p className="text-white">Dados baseados em seus treinos reais</p>
                       ) : (
                         <p>Faça login para ver seu dashboard personalizado</p>

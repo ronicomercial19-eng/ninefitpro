@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigation } from "@/components/shared/Navigation";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -22,7 +22,7 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold">Dashboard</h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
-                Bem-vindo de volta, {user?.name || 'Usuário'}!
+                Bem-vindo de volta, {profile?.full_name || 'Usuário'}!
               </span>
               <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
                 Novo Treino

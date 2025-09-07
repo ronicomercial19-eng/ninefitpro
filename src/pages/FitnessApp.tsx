@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Carousel,
   CarouselContent,
@@ -41,7 +43,9 @@ import {
   Percent,
   Star,
   Crown,
-  Zap
+  Zap,
+  LogIn,
+  LogOut
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -120,6 +124,7 @@ interface UserProfileDetails {
 }
 
 const FitnessApp = () => {
+  const { user, profile, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("home");
   const [currentView, setCurrentView] = useState("main"); // main, program-overview, exercise-list, exercise-execution, workout-summary, achievements, journey, frequency, plan, freeze, edit-profile, assessments
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -1590,7 +1595,33 @@ const FitnessApp = () => {
       <header className="bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-white">9FIT</h1>
-          <Settings className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-2">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">
+                  Olá, {profile?.full_name || user.email?.split('@')[0]}
+                </span>
+                {profile?.role === 'admin' || profile?.role === 'professor' ? (
+                  <Link to="/professor">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      Painel Admin
+                    </Button>
+                  </Link>
+                ) : null}
+                <Button size="sm" variant="ghost" onClick={logout}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button size="sm" variant="outline" className="flex items-center gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Entrar
+                </Button>
+              </Link>
+            )}
+            <Settings className="w-6 h-6 text-white" />
+          </div>
         </div>
       </header>
 
