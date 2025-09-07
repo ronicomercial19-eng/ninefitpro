@@ -15,6 +15,7 @@ import {
 import { Search, Eye, Edit, Trash2, Users, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { StudentDetailedView } from "./StudentDetailedView";
 
 interface Student {
   id: string;
