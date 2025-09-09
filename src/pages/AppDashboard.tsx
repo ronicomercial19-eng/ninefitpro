@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfessorDashboard } from "@/components/dashboard/ProfessorDashboard";
 import { EnhancedStudentDashboard } from "@/components/dashboard/EnhancedStudentDashboard";
+import { AdminStudentsPanel } from "@/components/admin/AdminStudentsPanel";
+import { StudentRealtimeSync } from "@/components/student/StudentRealtimeSync";
 
 const AppDashboard = () => {
   const { user, profile, logout } = useAuth();
@@ -65,6 +67,9 @@ const AppDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Realtime sync for students */}
+      <StudentRealtimeSync />
+      
       {/* Navigation Header */}
       <nav className="bg-black text-white px-6 py-4">
         <div className="flex justify-between items-center">
@@ -73,13 +78,14 @@ const AppDashboard = () => {
               className="text-2xl font-bold cursor-pointer"
               onClick={() => navigate('/')}
             >
-              Fit<span className="text-orange-500">Evolution</span>
+              Mobi<span className="text-orange-500">Trainer</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
             <span className="text-gray-300">
-              {userType === 'professor' ? 'Professor' : 'Aluno'}
+              {profile?.role === 'admin' ? 'Administrador' : 
+               profile?.role === 'professor' ? 'Professor' : 'Aluno'}
             </span>
             <Button 
               variant="outline" 
@@ -96,7 +102,11 @@ const AppDashboard = () => {
       </nav>
 
       {/* Dashboard Content */}
-      {userType === 'professor' ? <ProfessorDashboard /> : <EnhancedStudentDashboard />}
+      <div className="p-6">
+        {profile?.role === 'admin' && <AdminStudentsPanel />}
+        {profile?.role === 'professor' && <ProfessorDashboard />}
+        {profile?.role === 'student' && <EnhancedStudentDashboard />}
+      </div>
     </div>
   );
 };
