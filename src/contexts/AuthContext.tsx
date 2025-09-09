@@ -14,9 +14,39 @@ interface Profile {
   is_active: boolean;
 }
 
+interface StudentProfile {
+  id: string;
+  email: string;
+  nome_completo?: string;
+  full_name?: string;
+  telefone?: string;
+  phone?: string;
+  ativo?: boolean;
+  status?: string;
+  professor_id?: string;
+  data_nascimento?: string;
+  cpf?: string;
+  endereco_completo?: string;
+  estado_civil?: string;
+  profissao?: string;
+  emergencia_contato_nome?: string;
+  emergencia_contato_telefone?: string;
+  condicoes_medicas?: string;
+  objetivos_fitness?: string;
+  observacoes?: string;
+  status_pagamento?: string;
+  data_vencimento_plano?: string;
+  whatsapp?: string;
+  altura_cm?: number;
+  peso_kg?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  studentProfile: StudentProfile | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
@@ -40,6 +70,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,9 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Fetch user profile
           setTimeout(async () => {
             await fetchUserProfile(session.user.id);
+            await fetchStudentProfile(session.user.email);
           }, 0);
         } else {
           setProfile(null);
+          setStudentProfile(null);
         }
         
         setLoading(false);
@@ -70,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session?.user) {
         fetchUserProfile(session.user.id);
+        fetchStudentProfile(session.user.email);
       }
       setLoading(false);
     });
@@ -93,6 +127,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
+    }
+  };
+
+  const fetchStudentProfile = async (userEmail: string | undefined) => {
+    if (!userEmail) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('email', userEmail)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching student profile:', error);
+        return;
+      }
+
+      setStudentProfile(data || null);
+    } catch (error) {
+      console.error('Error in fetchStudentProfile:', error);
     }
   };
 
@@ -146,16 +201,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    setStudentProfile(null);
     setSession(null);
   };
 
   const isAdmin = profile?.role === 'admin';
   const isProfessor = profile?.role === 'professor';
-  const isStudent = profile?.role === 'student';
+  const isStudent = profile?.role === 'student' || Boolean(studentProfile);
 
   const value = {
     user,
     profile,
+    studentProfile,
     session,
     login,
     register,
