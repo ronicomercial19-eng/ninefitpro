@@ -6,10 +6,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
+import { AppLayout } from "@/components/layout/AppLayout";
 import OptimizedIndex from "./pages/OptimizedIndex";
 import Assessment from "./pages/Assessment";
 import Dashboard from "./pages/Dashboard";
 import AppDashboard from "./pages/AppDashboard";
+import GymDashboard from "./pages/GymDashboard";
+import StudentsPage from "./pages/StudentsPage";
+import ExercisesPage from "./pages/ExercisesPage";
+import SuperSetsPage from "./pages/SuperSetsPage";
+import ReferenceSeriesPage from "./pages/ReferenceSeriesPage";
+import AITrainingPage from "./pages/AITrainingPage";
+import StatisticsPage from "./pages/StatisticsPage";
+import ReportsPage from "./pages/ReportsPage";
+import AgendaPage from "./pages/AgendaPage";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Sales from "./pages/Sales";
@@ -51,7 +61,69 @@ const App = () => (
             <Route path="/ai-training" element={<AITrainingPlatform />} />
             <Route path="/assessment" element={<Assessment />} />
             <Route path="/enhanced-assessment" element={<EnhancedAssessment />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <GymDashboard />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/agenda" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <AgendaPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/alunos" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <StudentsPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/exercicios" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <ExercisesPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/super-series" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <SuperSetsPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/series-referencia" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <ReferenceSeriesPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/treino-ia" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <AITrainingPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/estatisticas" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <StatisticsPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/relatorios" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <ReportsPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />\
             <Route path="/app-dashboard" element={<AppDashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/workout-manager" element={<WorkoutManager />} />

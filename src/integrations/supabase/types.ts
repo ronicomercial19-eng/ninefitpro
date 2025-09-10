@@ -59,6 +59,48 @@ export type Database = {
           },
         ]
       }
+      appointments: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number | null
+          id: string
+          location: string | null
+          scheduled_at: string
+          status: Database["public"]["Enums"]["appointment_status"] | null
+          student_id: string
+          teacher_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          id?: string
+          location?: string | null
+          scheduled_at: string
+          status?: Database["public"]["Enums"]["appointment_status"] | null
+          student_id: string
+          teacher_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          id?: string
+          location?: string | null
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"] | null
+          student_id?: string
+          teacher_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       athletes: {
         Row: {
           altura_cm: number | null
@@ -318,16 +360,65 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_logs: {
+        Row: {
+          exercise_id: string
+          id: string
+          notes: string | null
+          reps_completed: string | null
+          sets_completed: number | null
+          weight_used: number | null
+          workout_log_id: string
+        }
+        Insert: {
+          exercise_id: string
+          id?: string
+          notes?: string | null
+          reps_completed?: string | null
+          sets_completed?: number | null
+          weight_used?: number | null
+          workout_log_id: string
+        }
+        Update: {
+          exercise_id?: string
+          id?: string
+          notes?: string | null
+          reps_completed?: string | null
+          sets_completed?: number | null
+          weight_used?: number | null
+          workout_log_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_logs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_logs_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           created_at: string | null
+          created_by: string | null
           description: string | null
           difficulty_level: string | null
           equipment: string | null
+          equipment_needed: string | null
           goal: string | null
           id: string
+          image_url: string | null
           instructions: string | null
           is_optional: boolean | null
+          muscle_groups: Json | null
           name: string
           phase: string | null
           target_muscles: string[]
@@ -336,13 +427,17 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           difficulty_level?: string | null
           equipment?: string | null
+          equipment_needed?: string | null
           goal?: string | null
           id?: string
+          image_url?: string | null
           instructions?: string | null
           is_optional?: boolean | null
+          muscle_groups?: Json | null
           name: string
           phase?: string | null
           target_muscles?: string[]
@@ -351,13 +446,17 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           difficulty_level?: string | null
           equipment?: string | null
+          equipment_needed?: string | null
           goal?: string | null
           id?: string
+          image_url?: string | null
           instructions?: string | null
           is_optional?: boolean | null
+          muscle_groups?: Json | null
           name?: string
           phase?: string | null
           target_muscles?: string[]
@@ -476,6 +575,78 @@ export type Database = {
           duracao_em_semanas?: number | null
           id?: string
           nome?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"] | null
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          student_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          student_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          student_id?: string
+          transaction_id?: string | null
         }
         Relationships: []
       }
@@ -846,6 +1017,93 @@ export type Database = {
           },
         ]
       }
+      posts: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean | null
+          published_at: string | null
+          target_audience: string | null
+          title: string
+          type: Database["public"]["Enums"]["post_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          published_at?: string | null
+          target_audience?: string | null
+          title: string
+          type: Database["public"]["Enums"]["post_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          published_at?: string | null
+          target_audience?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["post_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number | null
+          stock_quantity: number | null
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price?: number | null
+          stock_quantity?: number | null
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number | null
+          stock_quantity?: number | null
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profile_periodization_matches: {
         Row: {
           created_at: string | null
@@ -902,36 +1160,57 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          date_of_birth: string | null
           email: string
+          first_name: string | null
           full_name: string | null
           id: string
           is_active: boolean | null
+          last_login: string | null
+          last_name: string | null
           phone: string | null
+          profile_image_url: string | null
           role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["user_status"] | null
+          subscription_expires_at: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email: string
+          first_name?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          last_login?: string | null
+          last_name?: string | null
           phone?: string | null
+          profile_image_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["user_status"] | null
+          subscription_expires_at?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string
+          first_name?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          last_login?: string | null
+          last_name?: string | null
           phone?: string | null
+          profile_image_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["user_status"] | null
+          subscription_expires_at?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1110,6 +1389,51 @@ export type Database = {
           insights?: string[] | null
           recommendations?: string[] | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      reference_series: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          duration_weeks: number | null
+          exercises: Json
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          duration_weeks?: number | null
+          exercises?: Json
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          duration_weeks?: number | null
+          exercises?: Json
+          id?: string
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1334,6 +1658,48 @@ export type Database = {
           },
         ]
       }
+      student_profiles: {
+        Row: {
+          created_at: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          fitness_goals: string | null
+          id: string
+          medical_conditions: string | null
+          notes: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          teacher_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          fitness_goals?: string | null
+          id?: string
+          medical_conditions?: string | null
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          teacher_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          fitness_goals?: string | null
+          id?: string
+          medical_conditions?: string | null
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          teacher_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_training_assignments: {
         Row: {
           created_at: string | null
@@ -1472,6 +1838,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      supersets: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          exercises: Json
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          exercises?: Json
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          exercises?: Json
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       system_health: {
         Row: {
@@ -2127,6 +2532,50 @@ export type Database = {
           },
         ]
       }
+      workout_assignments_new: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["workout_status"] | null
+          student_id: string
+          workout_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["workout_status"] | null
+          student_id: string
+          workout_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["workout_status"] | null
+          student_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_assignments_new_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_exercises: {
         Row: {
           created_at: string | null
@@ -2183,6 +2632,98 @@ export type Database = {
             columns: ["exercise_id"]
             isOneToOne: false
             referencedRelation: "exercise_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_exercises_new: {
+        Row: {
+          created_at: string | null
+          exercise_id: string
+          id: string
+          notes: string | null
+          order_index: number | null
+          reps: string | null
+          rest_time: number | null
+          sets: number | null
+          weight: number | null
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          exercise_id: string
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          reps?: string | null
+          rest_time?: number | null
+          sets?: number | null
+          weight?: number | null
+          workout_id: string
+        }
+        Update: {
+          created_at?: string | null
+          exercise_id?: string
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          reps?: string | null
+          rest_time?: number | null
+          sets?: number | null
+          weight?: number | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercises_new_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercises_new_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_logs: {
+        Row: {
+          completed_at: string | null
+          id: string
+          notes: string | null
+          rating: number | null
+          started_at: string | null
+          student_id: string
+          workout_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          started_at?: string | null
+          student_id: string
+          workout_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          started_at?: string | null
+          student_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_logs_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts_new"
             referencedColumns: ["id"]
           },
         ]
@@ -2444,6 +2985,51 @@ export type Database = {
           },
         ]
       }
+      workouts_new: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          estimated_duration: number | null
+          id: string
+          is_template: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          estimated_duration?: number | null
+          id?: string
+          is_template?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?:
+            | Database["public"]["Enums"]["difficulty_level"]
+            | null
+          estimated_duration?: number | null
+          id?: string
+          is_template?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_periodizations_catalog: {
@@ -2524,7 +3110,15 @@ export type Database = {
       }
     }
     Enums: {
+      appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
+      difficulty_level: "beginner" | "intermediate" | "advanced"
+      notification_type: "info" | "warning" | "success" | "error"
+      payment_status: "pending" | "paid" | "overdue" | "cancelled"
+      post_type: "announcement" | "workout" | "nutrition" | "tips"
+      product_type: "supplement" | "equipment" | "apparel" | "membership"
       user_role: "admin" | "student" | "professor"
+      user_status: "active" | "inactive" | "suspended"
+      workout_status: "pending" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2652,7 +3246,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
+      difficulty_level: ["beginner", "intermediate", "advanced"],
+      notification_type: ["info", "warning", "success", "error"],
+      payment_status: ["pending", "paid", "overdue", "cancelled"],
+      post_type: ["announcement", "workout", "nutrition", "tips"],
+      product_type: ["supplement", "equipment", "apparel", "membership"],
       user_role: ["admin", "student", "professor"],
+      user_status: ["active", "inactive", "suspended"],
+      workout_status: ["pending", "active", "completed", "cancelled"],
     },
   },
 } as const
