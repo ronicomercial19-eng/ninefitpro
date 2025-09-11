@@ -31,6 +31,11 @@ import RonyTrainerApp from "./pages/RonyTrainerApp";
 import FitnessApp from "./pages/FitnessApp";
 import StudentApp from "./pages/StudentApp";
 import Auth from "./pages/Auth";
+import HomeDashboard from "./pages/HomeDashboard";
+import DiscoverPage from "./pages/DiscoverPage";
+import ListOverviewPage from "./pages/ListOverviewPage";
+import GeneralPanelPage from "./pages/GeneralPanelPage";
+import StudentAreaPage from "./pages/StudentAreaPage";
 
 const queryClient = new QueryClient();
 
@@ -123,7 +128,32 @@ const App = () => (
                   <ReportsPage />
                 </AppLayout>
               </PrivateRoute>
-            } />\
+            } />
+            <Route path="/lar" element={
+              <PrivateRoute>
+                <HomeDashboard />
+              </PrivateRoute>
+            } />
+            <Route path="/descobrir" element={
+              <PrivateRoute>
+                <DiscoverPage />
+              </PrivateRoute>
+            } />
+            <Route path="/visao-geral-da-lista" element={
+              <PrivateRoute>
+                <ListOverviewPage />
+              </PrivateRoute>
+            } />
+            <Route path="/painel-geral" element={
+              <PrivateRoute>
+                <GeneralPanelPage />
+              </PrivateRoute>
+            } />
+            <Route path="/area-do-aluno" element={
+              <PrivateRoute>
+                <StudentAreaPage />
+              </PrivateRoute>
+            } />
             <Route path="/app-dashboard" element={<AppDashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/workout-manager" element={<WorkoutManager />} />
