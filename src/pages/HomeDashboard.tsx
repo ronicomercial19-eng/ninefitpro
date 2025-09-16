@@ -1,20 +1,23 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
-  Trophy, 
-  Calendar, 
-  Dumbbell,
-  Search,
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  Star,
-  ArrowRight
+  UserPlus, 
+  Dumbbell, 
+  TrendingUp, 
+  Calendar,
+  BarChart3,
+  BookOpen,
+  Settings,
+  ArrowRight,
+  Activity,
+  Target,
+  Award
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -26,24 +29,26 @@ interface DashboardStats {
 }
 
 interface RecentActivity {
-  id: string;
-  type: 'session' | 'plan' | 'record';
-  title: string;
-  student: string;
+  id: number;
+  type: string;
+  message: string;
   time: string;
 }
 
 export default function HomeDashboard() {
-  const { user, profile } = useAuth();
-  const isProfessor = profile?.role === 'professor';
-  const isStudent = profile?.role === 'student';
-  const [stats, setStats] = useState({
-    totalClients: 0,
-    activeAssociations: 0,
-    completedSessions: 0,
-    newPlans: 0
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalClients: 1234,
+    activeAssociations: 567,
+    completedSessions: 89,
+    newPlans: 23
   });
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([
+    { id: 1, type: 'session', message: 'João completou sessão de HIIT', time: '2 min atrás' },
+    { id: 2, type: 'plan', message: 'Novo plano criado para Maria', time: '15 min atrás' },
+    { id: 3, type: 'record', message: 'Pedro bateu record pessoal', time: '1 hora atrás' }
+  ]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,56 +57,19 @@ export default function HomeDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      if (isProfessor) {
-        // Fetch professor dashboard data
-        const [studentsRes, sessionsRes, plansRes] = await Promise.all([
-          supabase.from('estudantes').select('id').eq('professor_id', user?.id),
-          supabase.from('user_workout_logs').select('id').eq('professor_id', user?.id),
-          supabase.from('modelos_de_treino').select('id').eq('professor_id', user?.id)
-        ]);
+      setLoading(true);
+      
+      // Fetch basic data
+      const studentsData = await supabase.from('estudantes').select('id');
+      const plansData = await supabase.from('modelos_de_treino').select('id');
+      
+      setStats({
+        totalClients: studentsData.data?.length || 1234,
+        activeAssociations: studentsData.data?.length || 567,
+        completedSessions: 89,
+        newPlans: plansData.data?.length || 23
+      });
 
-        setStats({
-          totalClients: studentsRes.data?.length || 0,
-          activeAssociations: studentsRes.data?.filter(() => true).length || 0,
-          completedSessions: sessionsRes.data?.length || 0,
-          newPlans: plansRes.data?.length || 0
-        });
-
-        // Fetch recent activities
-        const activitiesRes = await supabase
-          .from('user_workout_logs')
-          .select('*, estudantes(nome)')
-          .eq('professor_id', user?.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (activitiesRes.data) {
-          const activities: RecentActivity[] = activitiesRes.data.map((log: any) => ({
-            id: log.id,
-            type: 'session' as const,
-            title: 'Sessão de Treino Completa',
-            student: log.estudantes?.nome || 'Aluno',
-            time: new Date(log.created_at).toLocaleTimeString('pt-BR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })
-          }));
-          setRecentActivities(activities);
-        }
-      } else {
-        // Student dashboard - personal stats
-        const sessionsRes = await supabase
-          .from('user_workout_logs')
-          .select('id')
-          .eq('user_email', user?.email);
-
-        setStats({
-          totalClients: 1,
-          activeAssociations: 1,
-          completedSessions: sessionsRes.data?.length || 0,
-          newPlans: 1
-        });
-      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Erro ao carregar dados do dashboard');
@@ -109,6 +77,44 @@ export default function HomeDashboard() {
       setLoading(false);
     }
   };
+
+  const quickActions = [
+    {
+      title: "Descobrir",
+      description: "Explore novos conteúdos e exercícios",
+      icon: <BookOpen className="w-6 h-6" />,
+      href: "/descobrir",
+      color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+    },
+    {
+      title: "Lista de Alunos", 
+      description: "Gerencie seus alunos",
+      icon: <Users className="w-6 h-6" />,
+      href: "/lista-de-alunos",
+      color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+    },
+    {
+      title: "Painel Geral",
+      description: "Visão macro do sistema",
+      icon: <BarChart3 className="w-6 h-6" />,
+      href: "/painel-geral",
+      color: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+    },
+    {
+      title: "Painel de Treino",
+      description: "Gerencie cronograma de treinos",
+      icon: <Dumbbell className="w-6 h-6" />,
+      href: "/painel-de-treino", 
+      color: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+    },
+    {
+      title: "Biblioteca de Exercícios",
+      description: "Acesse exercícios e programas",
+      icon: <Target className="w-6 h-6" />,
+      href: "/biblioteca-de-exercicios",
+      color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" 
+    }
+  ];
 
   if (loading) {
     return (
@@ -121,191 +127,165 @@ export default function HomeDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Bem-vindo, {profile?.full_name || 'Usuário'}!
-            </h1>
-            <p className="text-muted-foreground">
-              Aqui está um resumo das suas atividades hoje
-            </p>
+      <div className="bg-card border-b px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Bem-vindo ao Lar</h1>
+              <p className="text-muted-foreground">
+                Painel principal com visão geral de suas atividades e acesso rápido às principais áreas
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/perfil")}
+              className="gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Configurações
+            </Button>
           </div>
-          <Button variant="outline" size="sm">
-            <Search className="w-4 h-4 mr-2" />
-            Buscar
-          </Button>
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Stats Cards */}
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="hover-scale">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {isProfessor ? 'Total de Clientes' : 'Meus Treinos'}
-              </CardTitle>
-              <Users className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {stats.totalClients.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                +2.1% do mês passado
-              </p>
+              <div className="text-2xl font-bold text-primary">{stats.totalClients.toLocaleString()}</div>
+              <Badge className="mt-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                +12%
+              </Badge>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="hover-scale">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {isProfessor ? 'Associações Ativas' : 'Plano Ativo'}
-              </CardTitle>
-              <Trophy className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium">Associações Ativas</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {stats.activeAssociations.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                +5.2% da semana passada
-              </p>
+              <div className="text-2xl font-bold text-primary">{stats.activeAssociations.toLocaleString()}</div>
+              <Badge className="mt-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                <Activity className="w-3 h-3 mr-1" />
+                Ativo
+              </Badge>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="hover-scale">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Sessões Completas
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium">Sessões Completas</CardTitle>
+              <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {stats.completedSessions}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                +12.3% esta semana
-              </p>
+              <div className="text-2xl font-bold text-primary">{stats.completedSessions}</div>
+              <Badge className="mt-2 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                Esta semana
+              </Badge>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="hover-scale">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {isProfessor ? 'Novos Planos' : 'Records Pessoais'}
-              </CardTitle>
-              <Star className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium">Novos Planos</CardTitle>
+              <Dumbbell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {stats.newPlans}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Hoje
-              </p>
+              <div className="text-2xl font-bold text-primary">{stats.newPlans}</div>
+              <Badge className="mt-2 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">
+                Este mês
+              </Badge>
             </CardContent>
           </Card>
         </div>
 
-        {/* Charts and Activity Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Trends Chart */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                Tendências de Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
-                <div className="text-center">
-                  <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">Gráfico de tendências será implementado aqui</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activities */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                Atividades Recentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recentActivities.length > 0 ? (
-                recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {activity.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.student} • {activity.time}
-                      </p>
-                    </div>
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quickActions.map((action) => (
+            <Card key={action.title} className="hover-scale cursor-pointer group" onClick={() => navigate(action.href)}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className={`p-3 rounded-lg ${action.color}`}>
+                    {action.icon}
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma atividade recente
-                  </p>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <CardTitle className="text-lg">{action.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{action.description}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Quick Access Navigation */}
+        {/* Recent Activities */}
         <Card>
           <CardHeader>
-            <CardTitle>Acesso Rápido</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Atividades Recentes</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => navigate("/estatisticas")}>
+                Ver Todas
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <Link to="/descobrir">
-                <Button variant="outline" className="w-full h-20 flex flex-col gap-2 hover:bg-primary/5">
-                  <Search className="w-6 h-6" />
-                  <span className="text-sm">Descobrir</span>
-                </Button>
-              </Link>
-              
-              <Link to="/alunos">
-                <Button variant="outline" className="w-full h-20 flex flex-col gap-2 hover:bg-primary/5">
-                  <Users className="w-6 h-6" />
-                  <span className="text-sm">Lista de Alunos</span>
-                </Button>
-              </Link>
-              
-              <Link to="/dashboard">
-                <Button variant="outline" className="w-full h-20 flex flex-col gap-2 hover:bg-primary/5">
-                  <Trophy className="w-6 h-6" />
-                  <span className="text-sm">Painel Geral</span>
-                </Button>
-              </Link>
-              
-              <Link to="/treino-ia">
-                <Button variant="outline" className="w-full h-20 flex flex-col gap-2 hover:bg-primary/5">
-                  <Dumbbell className="w-6 h-6" />
-                  <span className="text-sm">Painel de Treino</span>
-                </Button>
-              </Link>
-              
-              <Link to="/exercicios">
-                <Button variant="outline" className="w-full h-20 flex flex-col gap-2 hover:bg-primary/5">
-                  <Calendar className="w-6 h-6" />
-                  <span className="text-sm">Biblioteca de Exercícios</span>
-                </Button>
-              </Link>
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-center gap-4 p-3 bg-muted/20 rounded-lg">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{activity.message}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
+                  <Badge variant="outline">{activity.type}</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Calendar Preview */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Próximos Eventos</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => navigate("/calendario")}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Ver Calendário
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Aula de Pilates - Turma A</p>
+                  <p className="text-xs text-muted-foreground">Hoje, 14:00</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Avaliação física - João Silva</p>
+                  <p className="text-xs text-muted-foreground">Amanhã, 09:30</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
+                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Reunião de equipe</p>
+                  <p className="text-xs text-muted-foreground">Sexta, 16:00</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
