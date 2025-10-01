@@ -7,11 +7,11 @@
 
 @layer base {
   :root {
-    /* Brand Colors - Rony Trainer */
-    --brand-orange: 25 100% 50%;    /* #FF8000 */
-    --brand-red: 0 84% 60%;         /* #FF4444 */
-    --brand-purple: 259 94% 51%;    /* #8B5CF6 */
-    --brand-blue: 239 84% 40%;      /* #262666 */
+    /* Brand Colors - 9FIT */
+    --brand-orange: 25 95% 53%;     /* #FF8426 - 9FIT Primary Orange */
+    --brand-red: 14 91% 51%;        /* #F04E23 - 9FIT Red */
+    --brand-dark: 220 13% 18%;      /* #282E3A - 9FIT Dark */
+    --brand-light: 210 20% 98%;     /* #F8FAFB - 9FIT Light */
     
     /* Neutral Colors */
     --neutral-black: 0 0% 8%;       /* #141414 */
@@ -51,12 +51,12 @@
 
     --radius: 0.75rem;
 
-    /* Custom Design Tokens - Rony Trainer */
+    /* Custom Design Tokens - 9FIT */
     --gradient-primary: linear-gradient(135deg, hsl(var(--brand-orange)), hsl(var(--brand-red)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--brand-purple)), hsl(var(--brand-blue)));
-    --gradient-dark: linear-gradient(135deg, hsl(var(--neutral-black)), hsl(var(--neutral-dark)));
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--brand-orange) / 0.3);
-    --shadow-soft: 0 4px 6px -1px hsl(var(--neutral-black) / 0.1);
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--brand-dark)), hsl(var(--neutral-dark)));
+    --gradient-hero: linear-gradient(180deg, hsl(var(--brand-light)), hsl(var(--background)));
+    --shadow-9fit: 0 4px 20px 0 hsl(var(--brand-orange) / 0.15);
+    --shadow-card: 0 2px 8px 0 hsl(var(--neutral-black) / 0.08);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
@@ -148,13 +148,17 @@
 }
 
 @layer components {
-  /* Button Variants - Rony Trainer Style */
-  .btn-primary {
-    @apply bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-elegant hover:shadow-lg transition-all duration-300;
+  /* Button Variants - 9FIT Style */
+  .btn-9fit {
+    @apply bg-gradient-to-r from-[#FF8426] to-[#F04E23] text-white hover:from-[#FF9447] hover:to-[#FF5E34] rounded-lg font-semibold transition-all duration-300;
   }
   
-  .btn-secondary {
-    @apply bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600;
+  .btn-9fit-outline {
+    @apply border-2 border-[#FF8426] text-[#FF8426] hover:bg-[#FF8426] hover:text-white rounded-lg font-semibold transition-all duration-300;
+  }
+  
+  .btn-9fit-dark {
+    @apply bg-[#282E3A] text-white hover:bg-[#3A4254] rounded-lg font-semibold transition-all duration-300;
   }
   
   /* Animations */
