@@ -36,6 +36,8 @@ import DiscoverPage from "./pages/DiscoverPage";
 import ListOverviewPage from "./pages/ListOverviewPage";
 import GeneralPanelPage from "./pages/GeneralPanelPage";
 import StudentAreaPage from "./pages/StudentAreaPage";
+import Perfil from "./pages/Perfil";
+import Suporte from "./pages/Suporte";
 
 const queryClient = new QueryClient();
 
@@ -48,18 +50,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomeDashboard />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="/suporte" element={<Suporte />} />
             <Route path="/conecte-se" element={<Auth />} />
-            <Route path="/descobrir" element={<DiscoverPage />} />
-            <Route path="/visao-geral-da-lista" element={<ListOverviewPage />} />
-            <Route path="/calendario" element={<AgendaPage />} />
-            <Route path="/estatisticas" element={<StatisticsPage />} />
-            <Route path="/lista-de-alunos" element={<StudentsPage />} />
-            <Route path="/area-do-aluno" element={<StudentAreaPage />} />
-            <Route path="/painel-geral" element={<GeneralPanelPage />} />
-            <Route path="/painel-de-treino" element={<GymDashboard />} />
-            <Route path="/biblioteca-de-exercicios" element={<ExercisesPage />} />
-            <Route path="/fitness-app" element={<FitnessApp />} />
-            <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/professor" element={
               <PrivateRoute>

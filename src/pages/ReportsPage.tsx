@@ -14,7 +14,7 @@ export default function ReportsPage() {
     {
       id: 1,
       name: 'Ana Beatriz (exemplo)',
-      email: 'ana51168@mobitrainer.com.br',
+      email: 'ana51168@fitevolution.com.br',
       phone: '',
       planExpiry: 'Não preenchido',
       trainer: 'Rony Trainer',

@@ -65,8 +65,8 @@ const Auth = () => {
               <Dumbbell className="w-8 h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-white">MobiTrainer</CardTitle>
-          <p className="text-gray-300">Sistema de Treinamento Personalizado</p>
+          <CardTitle className="text-2xl text-white">9FIT</CardTitle>
+          <p className="text-gray-300">Fit Evolution - Sistema de Treinamento Personalizado</p>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">

@@ -107,9 +107,9 @@ export default function ExercisesPage() {
           <Button variant="outline" className="bg-orange-500 text-white border-orange-500 hover:bg-orange-600">
             Exercícios para casa
           </Button>
-          <Button className="bg-blue-500 hover:bg-blue-600">
+          <Button className="btn-9fit">
             <Grid className="w-4 h-4 mr-2" />
-            Biblioteca Mobitrainer
+            Biblioteca 9FIT
           </Button>
           <Button className="bg-green-500 hover:bg-green-600">
             <Plus className="w-4 h-4 mr-2" />

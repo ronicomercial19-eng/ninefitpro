@@ -12,7 +12,7 @@ export default function StudentsPage() {
 
   const students = [
     { id: 1, name: 'Nelson angélico', email: 'nelson.angelico@outlook.com', initials: 'NA', status: 'active' },
-    { id: 2, name: 'Ana Beatriz (exemplo)', email: 'ana51168@mobitrainer.com.br', initials: 'AB', status: 'blocked', hasPayment: true },
+    { id: 2, name: 'Ana Beatriz (exemplo)', email: 'ana51168@fitevolution.com.br', initials: 'AB', status: 'blocked', hasPayment: true },
     { id: 3, name: 'Beatriz Prado', email: 'beatriz.prado1717@gmail.com', initials: 'BP', status: 'active' },
     { id: 4, name: 'Bruno Nuldman', email: 'bruno@420011@gmail.com', initials: 'BN', status: 'active' },
     { id: 5, name: 'carolina 123', email: 'carolinaoleto2olive@gmail.com', initials: 'C1', status: 'active' },  
