@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfessorDashboard } from "@/components/dashboard/ProfessorDashboard";
-import { EnhancedStudentDashboard } from "@/components/dashboard/EnhancedStudentDashboard";
+import { OptimizedStudentDashboard } from "@/components/dashboard/OptimizedStudentDashboard";
 import { AdminStudentsPanel } from "@/components/admin/AdminStudentsPanel";
 import { StudentRealtimeSync } from "@/components/student/StudentRealtimeSync";
 
@@ -105,7 +105,7 @@ const AppDashboard = () => {
       <div className="p-6">
         {profile?.role === 'admin' && <AdminStudentsPanel />}
         {profile?.role === 'professor' && <ProfessorDashboard />}
-        {profile?.role === 'student' && <EnhancedStudentDashboard />}
+        {profile?.role === 'student' && <OptimizedStudentDashboard />}
       </div>
     </div>
   );

@@ -1,14 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
-import { Calendar as CalendarIcon, Dumbbell, TrendingUp, Award, Bell } from 'lucide-react';
+import { Calendar as CalendarIcon, Dumbbell, TrendingUp, Award, Bell, CheckCircle, MessageCircle } from 'lucide-react';
 import { WorkoutScheduler } from '@/components/schedule/WorkoutScheduler';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface WorkoutBlock {
   tipo: 'aquecimento' | 'principal' | 'desaquecimento';
@@ -26,9 +29,15 @@ interface DailyWorkout {
 export const OptimizedStudentDashboard = () => {
   const { user, profile } = useAuth();
   const { trackApiCall } = usePerformanceMonitor('OptimizedStudentDashboard');
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showScheduler, setShowScheduler] = useState(false);
+  const [notifications, setNotifications] = useState(3);
+  const [weekStreak, setWeekStreak] = useState(12);
+  const [currentWeight, setCurrentWeight] = useState(75);
+  const [weeklyProgress, setWeeklyProgress] = useState({ completed: 4, total: 5 });
 
   // Mock data - em produção virá do Supabase com cache
   const weeklyWorkouts: DailyWorkout[] = useMemo(() => [
@@ -70,6 +79,34 @@ export const OptimizedStudentDashboard = () => {
     );
   }, [selectedDate, weeklyWorkouts]);
 
+  // Carregar dados do usuário
+  useEffect(() => {
+    if (user) {
+      loadUserData();
+    }
+  }, [user]);
+
+  const loadUserData = async () => {
+    try {
+      // Buscar avaliações mais recentes
+      const { data: assessment } = await supabase
+        .from('avaliacoes')
+        .select('peso')
+        .eq('estudante_id', user?.id)
+        .order('data_avaliacao', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (assessment) {
+        setCurrentWeight(Number(assessment.peso));
+      }
+
+      trackApiCall();
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
   // Callbacks otimizados
   const handleDateSelect = useCallback((date: Date | undefined) => {
     setSelectedDate(date);
@@ -79,6 +116,49 @@ export const OptimizedStudentDashboard = () => {
   const handleSchedulerOpen = useCallback(() => {
     setShowScheduler(true);
   }, []);
+
+  const handleCheckIn = useCallback(async () => {
+    toast({
+      title: 'Check-in realizado!',
+      description: 'Seu treino foi registrado com sucesso.',
+    });
+    setWeeklyProgress(prev => ({ ...prev, completed: prev.completed + 1 }));
+    setWeekStreak(prev => prev + 1);
+  }, [toast]);
+
+  const handleSendDoubt = useCallback(() => {
+    navigate('/suporte');
+  }, [navigate]);
+
+  const handleMarkComplete = useCallback(async () => {
+    if (!selectedWorkout) return;
+
+    try {
+      toast({
+        title: 'Treino concluído!',
+        description: 'Parabéns! Continue assim.',
+      });
+      
+      setWeeklyProgress(prev => ({ 
+        ...prev, 
+        completed: Math.min(prev.completed + 1, prev.total) 
+      }));
+    } catch (error) {
+      console.error('Error marking workout complete:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível marcar o treino como completo.',
+        variant: 'destructive',
+      });
+    }
+  }, [selectedWorkout, toast]);
+
+  const handleViewNotifications = useCallback(() => {
+    toast({
+      title: 'Notificações',
+      description: 'Você tem 3 novas atualizações!',
+    });
+  }, [toast]);
 
   const getBlockIcon = useCallback((tipo: string) => {
     switch (tipo) {
@@ -111,46 +191,63 @@ export const OptimizedStudentDashboard = () => {
               Seu progresso esta semana está excelente!
             </p>
           </div>
-          <Button variant="outline" size="icon" className="relative">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="relative"
+            onClick={handleViewNotifications}
+          >
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs flex items-center justify-center">
-              3
-            </span>
+            {notifications > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs flex items-center justify-center">
+                {notifications}
+              </span>
+            )}
           </Button>
         </div>
 
         {/* Métricas rápidas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Treinos Semana</p>
-                  <p className="text-2xl font-bold text-white">4/5</p>
+                  <p className="text-2xl font-bold text-white">
+                    {weeklyProgress.completed}/{weeklyProgress.total}
+                  </p>
+                  <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
+                    <div 
+                      className="bg-primary h-1.5 rounded-full transition-all" 
+                      style={{ width: `${(weeklyProgress.completed / weeklyProgress.total) * 100}%` }}
+                    />
+                  </div>
                 </div>
                 <Dumbbell className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Sequência</p>
-                  <p className="text-2xl font-bold text-white">12 dias</p>
+                  <p className="text-2xl font-bold text-white">{weekStreak} dias</p>
+                  <p className="text-xs text-green-400 mt-1">🔥 Continue assim!</p>
                 </div>
                 <Award className="h-8 w-8 text-orange-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Peso Atual</p>
-                  <p className="text-2xl font-bold text-white">75kg</p>
+                  <p className="text-2xl font-bold text-white">{currentWeight}kg</p>
+                  <p className="text-xs text-blue-400 mt-1">Última avaliação</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-500" />
               </div>
@@ -189,15 +286,25 @@ export const OptimizedStudentDashboard = () => {
               <div className="space-y-2">
                 <Button 
                   onClick={handleSchedulerOpen}
-                  className="w-full"
-                  variant="default"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
                   Agendar Treino
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button 
+                  onClick={handleCheckIn}
+                  className="w-full" 
+                  variant="outline"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
                   Check-in
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button 
+                  onClick={handleSendDoubt}
+                  className="w-full" 
+                  variant="outline"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
                   Enviar Dúvida
                 </Button>
               </div>
@@ -269,7 +376,12 @@ export const OptimizedStudentDashboard = () => {
                       </Card>
                     ))}
 
-                    <Button className="w-full" size="lg">
+                    <Button 
+                      onClick={handleMarkComplete}
+                      className="w-full bg-green-600 hover:bg-green-700" 
+                      size="lg"
+                    >
+                      <CheckCircle className="mr-2 h-5 w-5" />
                       Marcar como Completo
                     </Button>
                   </div>

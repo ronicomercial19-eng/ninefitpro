@@ -9,7 +9,6 @@ import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import OptimizedIndex from "./pages/OptimizedIndex";
 import Assessment from "./pages/Assessment";
-import Dashboard from "./pages/Dashboard";
 import AppDashboard from "./pages/AppDashboard";
 import GymDashboard from "./pages/GymDashboard";
 import StudentsPage from "./pages/StudentsPage";
