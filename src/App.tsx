@@ -52,7 +52,6 @@ const App = () => (
             <Route path="/" element={<HomeDashboard />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/suporte" element={<Suporte />} />
-            <Route path="/auth" element={<Auth />} />
             <Route path="/conecte-se" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/professor" element={
