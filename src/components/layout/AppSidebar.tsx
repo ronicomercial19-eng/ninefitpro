@@ -27,14 +27,14 @@ import {
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Agenda', url: '/agenda', icon: Calendar },
-  { title: 'Alunos', url: '/alunos', icon: Users },
-  { title: 'Exercícios', url: '/exercicios', icon: Dumbbell },
-  { title: 'Super séries', url: '/super-series', icon: Zap },
-  { title: 'Séries de referência', url: '/series-referencia', icon: BookOpen },
-  { title: 'Treino com IA', url: '/treino-ia', icon: Bot },
-  { title: 'Estatísticas', url: '/estatisticas', icon: BarChart3 },
-  { title: 'Relatórios', url: '/relatorios', icon: FileText },
+  { title: 'Agenda', url: '/app/agenda', icon: Calendar },
+  { title: 'Alunos', url: '/app/alunos', icon: Users },
+  { title: 'Exercícios', url: '/app/exercicios', icon: Dumbbell },
+  { title: 'Super séries', url: '/app/super-series', icon: Zap },
+  { title: 'Séries de referência', url: '/app/series-referencia', icon: BookOpen },
+  { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
+  { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
+  { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
 ];
 
 export function AppSidebar() {

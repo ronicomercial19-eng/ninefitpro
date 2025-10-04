@@ -9,9 +9,9 @@ import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import OptimizedIndex from "./pages/OptimizedIndex";
 import Assessment from "./pages/Assessment";
-import AppDashboard from "./pages/AppDashboard";
-import GymDashboard from "./pages/GymDashboard";
+import UnifiedDashboard from "./pages/UnifiedDashboard";
 import StudentsPage from "./pages/StudentsPage";
+import WhatsAppRedirect from "./pages/WhatsAppRedirect";
 import ExercisesPage from "./pages/ExercisesPage";
 import SuperSetsPage from "./pages/SuperSetsPage";
 import ReferenceSeriesPage from "./pages/ReferenceSeriesPage";
@@ -30,7 +30,6 @@ import RonyTrainerApp from "./pages/RonyTrainerApp";
 import FitnessApp from "./pages/FitnessApp";
 import StudentApp from "./pages/StudentApp";
 import Auth from "./pages/Auth";
-import HomeDashboard from "./pages/HomeDashboard";
 import DiscoverPage from "./pages/DiscoverPage";
 import ListOverviewPage from "./pages/ListOverviewPage";
 import GeneralPanelPage from "./pages/GeneralPanelPage";
@@ -51,6 +50,7 @@ const App = () => (
             <Route path="/" element={<OptimizedIndex />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/suporte" element={<Suporte />} />
+            <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />
             <Route path="/conecte-se" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/professor" element={
@@ -69,72 +69,77 @@ const App = () => (
             <Route path="/ai-training" element={<AITrainingPlatform />} />
             <Route path="/assessment" element={<Assessment />} />
             <Route path="/enhanced-assessment" element={<EnhancedAssessment />} />
+            {/* Main Dashboard */}
             <Route path="/dashboard" element={
               <PrivateRoute>
                 <AppLayout>
-                  <GymDashboard />
+                  <UnifiedDashboard />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/agenda" element={
+            
+            {/* App Routes - All under /app */}
+            <Route path="/app" element={
               <PrivateRoute>
                 <AppLayout>
-                  <AgendaPage />
+                  <UnifiedDashboard />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/alunos" element={
+            <Route path="/app/alunos" element={
               <PrivateRoute>
                 <AppLayout>
                   <StudentsPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/exercicios" element={
+            <Route path="/app/exercicios" element={
               <PrivateRoute>
                 <AppLayout>
                   <ExercisesPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/super-series" element={
+            <Route path="/app/super-series" element={
               <PrivateRoute>
                 <AppLayout>
                   <SuperSetsPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/series-referencia" element={
+            <Route path="/app/series-referencia" element={
               <PrivateRoute>
                 <AppLayout>
                   <ReferenceSeriesPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/treino-ia" element={
+            <Route path="/app/treino-ia" element={
               <PrivateRoute>
                 <AppLayout>
                   <AITrainingPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/estatisticas" element={
+            <Route path="/app/estatisticas" element={
               <PrivateRoute>
                 <AppLayout>
                   <StatisticsPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/relatorios" element={
+            <Route path="/app/relatorios" element={
               <PrivateRoute>
                 <AppLayout>
                   <ReportsPage />
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/dashboard" element={
+            <Route path="/app/agenda" element={
               <PrivateRoute>
-                <HomeDashboard />
+                <AppLayout>
+                  <AgendaPage />
+                </AppLayout>
               </PrivateRoute>
             } />
             <Route path="/descobrir" element={
@@ -157,7 +162,6 @@ const App = () => (
                 <StudentAreaPage />
               </PrivateRoute>
             } />
-            <Route path="/app-dashboard" element={<AppDashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/workout-manager" element={<WorkoutManager />} />
             <Route path="/rony-trainer" element={<RonyTrainerApp />} />

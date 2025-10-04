@@ -100,10 +100,19 @@ export const QuestionnaireSystem = () => {
   };
 
   const submitQuestionnaire = async () => {
-    if (!currentQuestionnaire || !user) return;
+    if (!currentQuestionnaire) return;
 
     setLoading(true);
     try {
+      // Se não tiver usuário logado, apenas redireciona ao WhatsApp
+      if (!user) {
+        toast.success('Questionário concluído! Redirecionando...');
+        setTimeout(() => {
+          window.location.href = '/whatsapp-redirect';
+        }, 1500);
+        return;
+      }
+
       const { error } = await supabase
         .from('questionnaire_responses')
         .insert({

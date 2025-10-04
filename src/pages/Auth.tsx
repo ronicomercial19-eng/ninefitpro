@@ -26,6 +26,19 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Restrição: apenas professores podem fazer login
+    const allowedEmails = [
+      'admin@lovable.app',
+      'professor@9fit.com',
+      'admin@system.com'
+    ];
+
+    if (!allowedEmails.includes(email.toLowerCase())) {
+      toast.error('Acesso restrito a professores. Para alunos, entre em contato via WhatsApp.');
+      setLoading(false);
+      return;
+    }
+
     const { error } = await login(email, password);
     
     if (error) {
@@ -41,14 +54,8 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await register(email, password, name);
-    
-    if (error) {
-      toast.error(error);
-    } else {
-      toast.success('Conta criada com sucesso! Verifique seu email.');
-    }
-    
+    // Registro também restrito a professores
+    toast.error('Registro restrito. Entre em contato com o administrador para criar uma conta de professor.');
     setLoading(false);
   };
 

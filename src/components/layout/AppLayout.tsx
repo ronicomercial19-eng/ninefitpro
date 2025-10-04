@@ -1,14 +1,53 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+const routeLabels: Record<string, string> = {
+  '/app': 'Dashboard',
+  '/app/alunos': 'Alunos',
+  '/app/exercicios': 'Exercícios',
+  '/app/super-series': 'Super Séries',
+  '/app/series-referencia': 'Séries de Referência',
+  '/app/treino-ia': 'Treino IA',
+  '/app/estatisticas': 'Estatísticas',
+  '/app/relatorios': 'Relatórios',
+  '/app/agenda': 'Agenda',
+};
+
 export function AppLayout({ children }: AppLayoutProps) {
+  const location = useLocation();
+  
+  const getBreadcrumbs = () => {
+    const paths = location.pathname.split('/').filter(Boolean);
+    const breadcrumbs = [{ label: 'Início', path: '/dashboard' }];
+    
+    let currentPath = '';
+    paths.forEach(path => {
+      currentPath += `/${path}`;
+      const label = routeLabels[currentPath] || path;
+      breadcrumbs.push({ label, path: currentPath });
+    });
+    
+    return breadcrumbs;
+  };
+
+  const breadcrumbs = getBreadcrumbs();
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-background">
@@ -19,10 +58,22 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div className="text-sm text-muted-foreground">
-                Você está em: <span className="text-foreground font-medium">Treino</span> › 
-                <span className="text-foreground font-medium"> Dashboard treino</span>
-              </div>
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {breadcrumbs.map((crumb, index) => (
+                    <React.Fragment key={crumb.path}>
+                      {index > 0 && <BreadcrumbSeparator />}
+                      <BreadcrumbItem>
+                        {index === breadcrumbs.length - 1 ? (
+                          <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink href={crumb.path}>{crumb.label}</BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                    </React.Fragment>
+                  ))}
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
             
             <div className="flex items-center gap-2">
