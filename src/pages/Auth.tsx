@@ -19,11 +19,7 @@ const Auth = () => {
   const { login, register, user, profile } = useAuth();
 
   if (user && profile) {
-    if (profile.role === 'admin' || profile.role === 'professor') {
-      return <Navigate to="/professor" replace />;
-    } else {
-      return <Navigate to="/" replace />;
-    }
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {

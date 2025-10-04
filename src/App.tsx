@@ -48,7 +48,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<HomeDashboard />} />
+            <Route path="/" element={<OptimizedIndex />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/suporte" element={<Suporte />} />
             <Route path="/conecte-se" element={<Auth />} />
@@ -132,7 +132,7 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
-            <Route path="/lar" element={
+            <Route path="/dashboard" element={
               <PrivateRoute>
                 <HomeDashboard />
               </PrivateRoute>
