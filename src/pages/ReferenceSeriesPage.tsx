@@ -2,133 +2,32 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ReferenceSeriesPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newSeries, setNewSeries] = useState({
+    name: '',
+    difficulty: 'Básico',
+    exercises: ''
+  });
 
-  const referenceSeries = [
-    {
-      id: 1,
-      name: 'Abdome/1',
-      difficulty: 'Intermediário',
-      exercises: '7 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 2,
-      name: 'Abdome/1',
-      difficulty: 'Intermediário',
-      exercises: '8 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 3,
-      name: 'Cardio + abs',
-      difficulty: 'Intermediário',
-      exercises: '15 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 4,
-      name: 'CORE WORKOUT',
-      difficulty: 'Avançado',
-      exercises: '11 exercícios',
-      color: 'bg-red-500'
-    },
-    {
-      id: 5,
-      name: 'Costas/bíceps',
-      difficulty: 'Avançado',
-      exercises: '10 exercícios',
-      color: 'bg-red-500'
-    },
-    {
-      id: 6,
-      name: 'Drop-set pernas',
-      difficulty: 'Intermediário',
-      exercises: '10 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 7,
-      name: 'FORÇA',
-      difficulty: 'Básico',
-      exercises: '7 exercícios',
-      color: 'bg-green-500'
-    },
-    {
-      id: 8,
-      name: 'FORÇA',
-      difficulty: 'Básico',
-      exercises: '7 exercícios',
-      color: 'bg-green-500'
-    },
-    {
-      id: 9,
-      name: 'FORTALECIMENTO- CAMINHADA',
-      difficulty: 'Básico',
-      exercises: '6 exercícios',
-      color: 'bg-green-500'
-    },
-    {
-      id: 10,
-      name: 'FullBody Calistenic',
-      difficulty: 'Avançado',
-      exercises: '10 exercícios',
-      color: 'bg-red-500'
-    },
-    {
-      id: 11,
-      name: 'HIT',
-      difficulty: 'Intermediário',
-      exercises: '8 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 12,
-      name: 'HIT',
-      difficulty: 'Intermediário',
-      exercises: '8 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 13,
-      name: 'HIT ACADEMIA',
-      difficulty: 'Intermediário',
-      exercises: '13 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 14,
-      name: 'inicialização na luta',
-      difficulty: 'Intermediário',
-      exercises: '8 exercícios',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 15,
-      name: 'Legs Day - Ênfase anterior',
-      difficulty: 'Avançado',
-      exercises: '12 exercícios',
-      color: 'bg-red-500'
-    },
-    {
-      id: 16,
-      name: 'Legs Day!',
-      difficulty: 'Avançado',
-      exercises: '9 exercícios',
-      color: 'bg-red-500'
-    },
-    {
-      id: 17,
-      name: 'LEGS DAY!',
-      difficulty: 'Avançado',
-      exercises: '9 exercícios',
-      color: 'bg-red-500'
+  const handleCreateSeries = () => {
+    if (!newSeries.name) {
+      toast.error('Por favor, preencha o nome da série');
+      return;
     }
-  ];
+    toast.success('Série de referência criada com sucesso!');
+    setIsDialogOpen(false);
+    setNewSeries({ name: '', difficulty: 'Básico', exercises: '' });
+  };
+
+  const referenceSeries: any[] = [];
 
   const filteredSeries = referenceSeries.filter(series =>
     series.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -151,10 +50,59 @@ export default function ReferenceSeriesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Séries de referência</h1>
-        <Button className="bg-green-500 hover:bg-green-600">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova série de referência
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-green-500 hover:bg-green-600">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova série de referência
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Nova Série de Referência</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome da Série</Label>
+                <Input
+                  id="name"
+                  value={newSeries.name}
+                  onChange={(e) => setNewSeries({...newSeries, name: e.target.value})}
+                  placeholder="Ex: Treino Completo de Pernas"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">Dificuldade</Label>
+                <Select
+                  value={newSeries.difficulty}
+                  onValueChange={(value) => setNewSeries({...newSeries, difficulty: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Básico">Básico</SelectItem>
+                    <SelectItem value="Intermediário">Intermediário</SelectItem>
+                    <SelectItem value="Avançado">Avançado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="exercises">Número de Exercícios</Label>
+                <Input
+                  id="exercises"
+                  type="number"
+                  value={newSeries.exercises}
+                  onChange={(e) => setNewSeries({...newSeries, exercises: e.target.value})}
+                  placeholder="Ex: 8"
+                />
+              </div>
+              <Button onClick={handleCreateSeries} className="w-full">
+                Criar Série de Referência
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Info Card */}
@@ -187,36 +135,6 @@ export default function ReferenceSeriesPage() {
       </Card>
 
       {/* Reference Series Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSeries.map((series) => (
-          <Card key={series.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-4 h-20 ${series.color} rounded`}></div>
-                <div className="flex-1 ml-4">
-                  <h3 className="font-semibold text-lg mb-2">{series.name}</h3>
-                  <div className="space-y-2">
-                    <Badge variant="outline" className={getDifficultyColor(series.difficulty)}>
-                      {series.difficulty}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">{series.exercises}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Editar
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  Ver detalhes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {filteredSeries.length === 0 && (
         <Card>
           <CardContent className="py-12">

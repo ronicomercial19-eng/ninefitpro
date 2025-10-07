@@ -79,9 +79,9 @@ export default function StudentAreaPage() {
 
   const fetchStudentData = async () => {
     try {
-      // Fetch student data
+      // Fetch student data from students table
       const { data: studentData, error: studentError } = await supabase
-        .from('estudantes')
+        .from('students')
         .select('*')
         .eq('id', studentId)
         .single();
@@ -92,55 +92,32 @@ export default function StudentAreaPage() {
         return;
       }
 
-      setStudent(studentData);
+      setStudent(studentData as any);
 
-      // Fetch workout history (sample data for now)
-      const sampleWorkouts: WorkoutHistory[] = [
-        {
-          id: '1',
-          name: 'HIIT Cardio',
-          type: 'Cardio',
-          status: 'ativo',
-          start_date: '2024-01-15',
-          progress: 75,
+      // Fetch actual workout history from workouts table
+      const { data: workoutsData, error: workoutsError } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false });
+
+      if (!workoutsError && workoutsData) {
+        const formattedWorkouts: WorkoutHistory[] = workoutsData.map(workout => ({
+          id: workout.id,
+          name: workout.phase || 'Treino sem nome',
+          type: workout.method || 'Geral',
+          status: workout.status === 'completed' ? 'concluido' : 
+                  workout.status === 'active' ? 'ativo' : 'vencido',
+          start_date: workout.created_at,
+          end_date: undefined,
+          progress: workout.status === 'completed' ? 100 : 50,
           total_sessions: 12,
-          completed_sessions: 9
-        },
-        {
-          id: '2',
-          name: 'Yoga Relax',
-          type: 'Flexibilidade',
-          status: 'vencido',
-          start_date: '2023-12-01',
-          end_date: '2024-01-01',
-          progress: 100,
-          total_sessions: 15,
-          completed_sessions: 15
-        },
-        {
-          id: '3',
-          name: 'Noções Básicas',
-          type: 'Fundamentos',
-          status: 'vencido',
-          start_date: '2023-11-01',
-          end_date: '2023-11-30',
-          progress: 85,
-          total_sessions: 10,
-          completed_sessions: 8
-        },
-        {
-          id: '4',
-          name: 'Força Funcional',
-          type: 'Força',
-          status: 'ativo',
-          start_date: '2024-01-10',
-          progress: 40,
-          total_sessions: 20,
-          completed_sessions: 8
-        }
-      ];
-
-      setWorkoutHistory(sampleWorkouts);
+          completed_sessions: workout.status === 'completed' ? 12 : 6
+        }));
+        setWorkoutHistory(formattedWorkouts);
+      } else {
+        setWorkoutHistory([]);
+      }
 
     } catch (error) {
       console.error('Error fetching student data:', error);

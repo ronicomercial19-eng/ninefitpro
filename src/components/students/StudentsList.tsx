@@ -248,8 +248,7 @@ export function StudentsList() {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            setSelectedStudent(student);
-                            setViewMode('detail');
+                            window.location.href = `/area-do-aluno?id=${student.id}`;
                           }}
                         >
                           <Eye className="w-4 h-4" />

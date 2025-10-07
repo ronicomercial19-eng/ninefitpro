@@ -2,35 +2,32 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SuperSetsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newSuperSet, setNewSuperSet] = useState({
+    name: '',
+    difficulty: 'Básico',
+    exercises: ''
+  });
 
-  const superSets = [
-    {
-      id: 1,
-      name: 'Bi-set Costas',
-      difficulty: 'Básico',
-      exercises: '2 exercícios',
-      color: 'bg-green-500'
-    },
-    {
-      id: 2,
-      name: 'Bi-set Supino',
-      difficulty: 'Intermediário',
-      exercises: '2 exercícios',
-      color: 'bg-yellow-500'
-    },
-    {
-      id: 3,
-      name: 'Circuito de exercícios',
-      difficulty: 'Avançado',
-      exercises: '5 exercícios',
-      color: 'bg-red-500'
+  const handleCreateSuperSet = () => {
+    if (!newSuperSet.name) {
+      toast.error('Por favor, preencha o nome da super série');
+      return;
     }
-  ];
+    toast.success('Super série criada com sucesso!');
+    setIsDialogOpen(false);
+    setNewSuperSet({ name: '', difficulty: 'Básico', exercises: '' });
+  };
+
+  const superSets: any[] = [];
 
   const filteredSuperSets = superSets.filter(superSet =>
     superSet.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -40,10 +37,59 @@ export default function SuperSetsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Super séries</h1>
-        <Button className="bg-green-500 hover:bg-green-600">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova super série
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-green-500 hover:bg-green-600">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova super série
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Nova Super Série</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome da Super Série</Label>
+                <Input
+                  id="name"
+                  value={newSuperSet.name}
+                  onChange={(e) => setNewSuperSet({...newSuperSet, name: e.target.value})}
+                  placeholder="Ex: Bi-set Peito e Costas"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">Dificuldade</Label>
+                <Select
+                  value={newSuperSet.difficulty}
+                  onValueChange={(value) => setNewSuperSet({...newSuperSet, difficulty: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Básico">Básico</SelectItem>
+                    <SelectItem value="Intermediário">Intermediário</SelectItem>
+                    <SelectItem value="Avançado">Avançado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="exercises">Número de Exercícios</Label>
+                <Input
+                  id="exercises"
+                  type="number"
+                  value={newSuperSet.exercises}
+                  onChange={(e) => setNewSuperSet({...newSuperSet, exercises: e.target.value})}
+                  placeholder="Ex: 2"
+                />
+              </div>
+              <Button onClick={handleCreateSuperSet} className="w-full">
+                Criar Super Série
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Info Card */}
@@ -76,36 +122,6 @@ export default function SuperSetsPage() {
       </Card>
 
       {/* Super Sets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSuperSets.map((superSet) => (
-          <Card key={superSet.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-4 h-20 ${superSet.color} rounded`}></div>
-                <div className="flex-1 ml-4">
-                  <h3 className="font-semibold text-lg mb-2">{superSet.name}</h3>
-                  <div className="space-y-2">
-                    <Badge variant="outline" className="text-xs">
-                      {superSet.difficulty}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">{superSet.exercises}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Editar
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  Ver detalhes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {filteredSuperSets.length === 0 && (
         <Card>
           <CardContent className="py-12">

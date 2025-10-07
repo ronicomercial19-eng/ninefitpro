@@ -72,9 +72,9 @@ export default function GeneralPanelPage() {
     try {
       // Fetch real metrics from database
       const [clientsRes, sessionsRes, assessmentsRes] = await Promise.all([
-        supabase.from('estudantes').select('*'),
-        supabase.from('user_workout_logs').select('*'),
-        supabase.from('physical_assessments').select('*')
+        supabase.from('students').select('*'),
+        supabase.from('workouts').select('*'),
+        supabase.from('avaliacoes').select('*')
       ]);
 
       const totalClients = clientsRes.data?.length || 0;
