@@ -5,143 +5,23 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Download, Search, FileText, Columns } from 'lucide-react';
+import { Download, Search, FileText, Columns, Plus } from 'lucide-react';
+import { ReportGenerator } from '@/components/reports/ReportGenerator';
 
 export default function ReportsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showReportGenerator, setShowReportGenerator] = useState(false);
 
-  const studentsData = [
-    {
-      id: 1,
-      name: 'Ana Beatriz (exemplo)',
-      email: 'ana51168@fitevolution.com.br',
-      phone: '',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: '1471'
-    },
-    {
-      id: 2,
-      name: 'Luiz Busmann',
-      email: 'leduardopiccolo@terra.com',
-      phone: '11961962656',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: '1471'
-    },
-    {
-      id: 3,
-      name: 'Julia Tafner',
-      email: 'juliatafner@hotmail.com',
-      phone: '(11) 5680-03401',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: '1588'
-    },
-    {
-      id: 4,
-      name: 'Sophia Costa',
-      email: 'sophia_costaramalho@hotmail.com',
-      phone: '(11) 9554-06868',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: '25/02/2021',
-      daysWithoutBooking: '1668'
-    },
-    {
-      id: 5,
-      name: 'Giovanna Prodomo',
-      email: 'gilvadomo@gmail.com',
-      phone: '(11) 9561-33626',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: ''
-    },
-    {
-      id: 6,
-      name: 'Raphael Soares',
-      email: 'raphael.soares@me.com',
-      phone: '11963244962',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: ''
-    },
-    {
-      id: 7,
-      name: 'Raquel Miron',
-      email: 'raquel@lmca.com.br',
-      phone: '(11) 5527-66668',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: ''
-    },
-    {
-      id: 8,
-      name: 'Rafaela Ribas',
-      email: 'rafaelaribascouto@gmail.com',
-      phone: '11984330355',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: '1253'
-    },
-    {
-      id: 9,
-      name: 'Roberto Evangelista',
-      email: 'roberto.evangelista@engenhemor.com.br',
-      phone: '(11) 9415-66347',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: ''
-    },
-    {
-      id: 10,
-      name: 'Beatriz Prado',
-      email: 'beatriz.prado1717@gmail.com',
-      phone: '11584736429',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: '1262'
-    },
-    {
-      id: 11,
-      name: 'leda Ishi',
-      email: 'iedaishi@uol.com.br',
-      phone: '11959236001',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: ''
-    },
-    {
-      id: 12,
-      name: 'Isac Nuldeman',
-      email: 'isac.nudeman@gmail.com',
-      phone: '(11) 9595-19608',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: ''
-    },
-    {
-      id: 13,
-      name: 'Pault Lopez',
-      email: 'paultilopez@gmail.com',
-      phone: '(11) 95250-16100',
-      planExpiry: 'Não preenchido',
-      trainer: 'Rony Trainer',
-      trainingExpiry: 'Não preenchido',
-      daysWithoutBooking: '1183'
-    }
-  ];
+  if (showReportGenerator) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <ReportGenerator onClose={() => setShowReportGenerator(false)} />
+      </div>
+    );
+  }
+
+  const studentsData: any[] = [];
+  // Dados virão do Supabase quando integrado
 
   const filteredData = studentsData.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -152,6 +32,13 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Relatórios</h1>
+        <Button 
+          className="bg-blue-500 hover:bg-blue-600"
+          onClick={() => setShowReportGenerator(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Gerar Relatório
+        </Button>
       </div>
 
       {/* Report Header */}

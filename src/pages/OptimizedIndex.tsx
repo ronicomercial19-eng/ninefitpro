@@ -101,7 +101,7 @@ const OptimizedIndex = () => {
       }`}>
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-white cursor-pointer" onClick={() => navigate('/')}>
-            Fit<span className="text-orange-500">Evolution</span>
+            9<span className="text-orange-500">FIT</span>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
@@ -118,17 +118,17 @@ const OptimizedIndex = () => {
 
           <div className="flex items-center space-x-4">
             <Button 
-              onClick={() => navigate('/login')} 
+              onClick={() => navigate('/conecte-se')} 
               variant="outline" 
               className="border-gray-600 text-white hover:bg-white hover:text-black transition-all duration-300"
             >
               Entrar
             </Button>
             <Button 
-              onClick={() => navigate('/sales')} 
-              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-black font-medium transition-all duration-300 transform hover:scale-105"
+              onClick={() => navigate('/conecte-se')} 
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 transform hover:scale-105"
             >
-              Começar
+              Começar Agora
             </Button>
           </div>
         </div>
@@ -146,11 +146,11 @@ const OptimizedIndex = () => {
               Comprovado por Milhares
             </Badge>
             <h2 className="text-4xl font-bold mb-4">
-              Por que <span className="text-orange-500">+10.000 pessoas</span> escolheram a FitEvolution?
+              Por que <span className="text-orange-500">milhares de pessoas</span> escolheram a 9FIT?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Resultados reais de pessoas reais. Veja como nossa metodologia científica 
-              está transformando vidas todos os dias.
+              está transformando vidas todos os dias com treinos personalizados.
             </p>
           </div>
 
@@ -184,10 +184,10 @@ const OptimizedIndex = () => {
           <div className="text-center">
             <Button 
               size="lg" 
-              onClick={() => navigate('/sales')}
+              onClick={() => navigate('/conecte-se')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg font-medium transition-all duration-300 transform hover:scale-105"
             >
-              Quero Meus Resultados Também
+              Quero Começar Meu Treino
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </div>
@@ -231,7 +231,7 @@ const OptimizedIndex = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4">
-                O Que Você Ganha com a <span className="text-orange-500">FitEvolution</span>
+                O Que Você Ganha com a <span className="text-orange-500">9FIT</span>
               </h2>
               <p className="text-xl text-gray-600">
                 Mais que um app de treino. Uma metodologia completa para sua transformação.
@@ -253,14 +253,14 @@ const OptimizedIndex = () => {
             <div className="text-center mt-12">
               <Button 
                 size="lg" 
-                onClick={() => navigate('/sales')}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-black px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                onClick={() => navigate('/conecte-se')}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                Começar Transformação Agora
+                Começar Meu Treino Agora
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <p className="text-sm text-gray-500 mt-4">
-                ✅ 7 dias grátis • ✅ Sem compromisso • ✅ Cancele quando quiser
+                ✅ Acesso imediato • ✅ Treinos personalizados • ✅ Suporte especializado
               </p>
             </div>
           </div>
@@ -272,22 +272,22 @@ const OptimizedIndex = () => {
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Sua Transformação<br />
+              Seu Treino Personalizado<br />
               <span className="text-orange-500">Começa Hoje</span>
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Junte-se a mais de 10.000 pessoas que já descobriram o poder da metodologia FitEvolution. 
-              <strong className="text-orange-400"> Resultados garantidos em 30 dias</strong> ou seu dinheiro de volta.
+              Junte-se a milhares de pessoas que já descobriram o poder da 9FIT. 
+              <strong className="text-orange-400"> Treinos personalizados com IA</strong> adaptados aos seus objetivos.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Button 
                 size="lg" 
-                onClick={() => navigate('/sales')}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-black px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                onClick={() => navigate('/conecte-se')}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 <TrendingUp className="mr-2 w-6 h-6" />
-                Transformar Meu Corpo Agora
+                Começar Agora
                 <ArrowRight className="ml-2 w-6 h-6" />
               </Button>
             </div>
@@ -316,10 +316,10 @@ const OptimizedIndex = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="text-2xl font-bold mb-4">
-                Fit<span className="text-orange-500">Evolution</span>
+                9<span className="text-orange-500">FIT</span>
               </div>
               <p className="text-gray-400 mb-4">
-                A revolução no fitness chegou. Transforme seu corpo com ciência, tecnologia e acompanhamento humano.
+                Transforme seu corpo com treinos personalizados por IA, acompanhamento profissional e metodologia científica.
               </p>
               <div className="flex space-x-2">
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
@@ -351,8 +351,8 @@ const OptimizedIndex = () => {
             <div>
               <h4 className="font-semibold mb-4 text-white">Contato</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>📧 suporte@fitevolution.app</li>
-                <li>📱 [SEU WHATSAPP]</li>
+                <li>📧 suporte@9fit.com</li>
+                <li>📱 (11) 9xxxx-xxxx</li>
                 <li>📍 São Paulo, SP</li>
                 <li>🕒 Atendimento 24/7</li>
               </ul>
@@ -360,7 +360,7 @@ const OptimizedIndex = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 FitEvolution. Todos os direitos reservados. Transforme-se com ciência e tecnologia.</p>
+            <p>&copy; 2025 9FIT. Todos os direitos reservados. Transforme-se com treinos inteligentes e personalizados.</p>
           </div>
         </div>
       </footer>

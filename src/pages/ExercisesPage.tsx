@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Play, Plus, Search, Grid, List } from 'lucide-react';
+import { AddExerciseForm } from '@/components/exercises/AddExerciseForm';
 
 export default function ExercisesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +14,7 @@ export default function ExercisesPage() {
   const [muscleFilter, setMuscleFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const exercises = [
     {
@@ -99,6 +101,18 @@ export default function ExercisesPage() {
     return matchesSearch && matchesCategory && matchesEquipment && matchesMuscle && matchesType;
   });
 
+  if (showAddForm) {
+    return (
+      <AddExerciseForm
+        onSuccess={() => {
+          setShowAddForm(false);
+          // Refresh exercises list
+        }}
+        onCancel={() => setShowAddForm(false)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -111,7 +125,10 @@ export default function ExercisesPage() {
             <Grid className="w-4 h-4 mr-2" />
             Biblioteca 9FIT
           </Button>
-          <Button className="bg-green-500 hover:bg-green-600">
+          <Button 
+            className="bg-green-500 hover:bg-green-600"
+            onClick={() => setShowAddForm(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Novo exercício
           </Button>

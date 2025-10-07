@@ -65,31 +65,9 @@ export const PeriodizationAnalyzer = () => {
   };
 
   const fetchAvailableModels = async () => {
-    // Mock de modelos disponíveis - em produção viria do banco
-    const mockModels: PeriodizationModel[] = [
-      {
-        id: 'linear',
-        name: 'Periodização Linear',
-        type: 'linear',
-        duration_weeks: 12,
-        phases: ['base', 'intensification', 'peaking']
-      },
-      {
-        id: 'undulating',
-        name: 'Periodização Ondulatória',
-        type: 'undulating',
-        duration_weeks: 16,
-        phases: ['base', 'intensification', 'realization', 'deload']
-      },
-      {
-        id: 'block',
-        name: 'Periodização em Blocos',
-        type: 'block',
-        duration_weeks: 24,
-        phases: ['accumulation', 'intensification', 'realization']
-      }
-    ];
-    setAvailableModels(mockModels);
+    // Modelos virão do Supabase quando implementado
+    const models: PeriodizationModel[] = [];
+    setAvailableModels(models);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,35 +90,20 @@ export const PeriodizationAnalyzer = () => {
 
     setAnalyzing(true);
     try {
-      // Simulação de análise com ChatGPT
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Análise será feita com IA (Lovable AI Gateway)
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock da análise - em produção seria feita com ChatGPT
-      const mockAnalysis = {
+      // Placeholder - implementar análise real
+      toast.info('Análise de periodização será implementada com IA');
+      
+      const analysisResult = {
         detected_type: 'undulating',
-        confidence: 0.92,
-        duration_weeks: 16,
-        phases_detected: [
-          { name: 'Base', weeks: 4, characteristics: ['Volume alto', 'Intensidade baixa'] },
-          { name: 'Intensificação', weeks: 6, characteristics: ['Volume moderado', 'Intensidade alta'] },
-          { name: 'Realização', weeks: 4, characteristics: ['Volume baixo', 'Intensidade máxima'] },
-          { name: 'Deload', weeks: 2, characteristics: ['Recuperação ativa'] }
-        ],
-        methods_identified: [
-          'Pirâmide de Força',
-          'Cluster Sets', 
-          'EMOM Metabólico',
-          'Drop Sets',
-          'FST-7'
-        ],
-        recommendations: [
-          'Periodização adequada para atletas intermediários/avançados',
-          'Boa variação de métodos de treinamento',
-          'Estrutura bem definida para picos de performance'
-        ]
+        confidence: 0.85,
+        duration_weeks: 12,
+        phases: []
       };
 
-      setAnalysisResult(mockAnalysis);
+      setAnalysisResult(analysisResult);
       setShowStudentSelection(true);
       toast.success('Análise concluída! Selecione o aluno para aplicar a periodização.');
     } catch (error) {

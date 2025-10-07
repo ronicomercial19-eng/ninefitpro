@@ -47,7 +47,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<OptimizedIndex />} />
+            <Route path="/" element={<Auth />} />
+            <Route path="/home" element={<OptimizedIndex />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/suporte" element={<Suporte />} />
             <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />

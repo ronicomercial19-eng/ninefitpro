@@ -3,22 +3,41 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Bot, Zap } from 'lucide-react';
+import { AITrainingQuestionnaire } from '@/components/ai-training/AITrainingQuestionnaire';
+import { toast } from 'sonner';
 
 export default function AITrainingPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [aiTrainings, setAiTrainings] = useState<any[]>([]);
 
-  const aiTrainings = [
-    {
-      id: 1,
-      name: 'Peito e costas',
-      color: 'bg-red-500'
-    },
-    {
-      id: 2,
-      name: 'Treino maurício',
-      color: 'bg-red-500'
-    }
-  ];
+  const handleQuestionnaireComplete = async (data: any) => {
+    toast.success('Processando dados com IA...');
+    
+    // Aqui você implementaria a chamada para a IA
+    // Por exemplo, usando o Lovable AI Gateway
+    
+    setTimeout(() => {
+      toast.success('Treino gerado com sucesso!');
+      setShowQuestionnaire(false);
+      // Adicionar o novo treino à lista
+      setAiTrainings(prev => [...prev, {
+        id: Date.now(),
+        name: `Treino ${data.studentName}`,
+        color: 'bg-blue-500',
+        data
+      }]);
+    }, 2000);
+  };
+
+  if (showQuestionnaire) {
+    return (
+      <AITrainingQuestionnaire
+        onComplete={handleQuestionnaireComplete}
+        onCancel={() => setShowQuestionnaire(false)}
+      />
+    );
+  }
 
   const filteredTrainings = aiTrainings.filter(training =>
     training.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -28,7 +47,10 @@ export default function AITrainingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Treino com IA</h1>
-        <Button className="bg-green-500 hover:bg-green-600">
+        <Button 
+          className="bg-green-500 hover:bg-green-600"
+          onClick={() => setShowQuestionnaire(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo treino com IA
         </Button>

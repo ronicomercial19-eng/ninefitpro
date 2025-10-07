@@ -36,7 +36,7 @@ export const ProfessorDashboard = () => {
         totalStudents: studentsRes.data?.length || 0,
         scheduledWorkouts: schedulesRes.data?.length || 0,
         completedAssessments: assessmentsRes.data?.length || 0,
-        pendingReviews: 3 // Mock data
+        pendingReviews: 0
       });
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
@@ -98,26 +98,7 @@ export const ProfessorDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Mock student data */}
-                  {[1, 2, 3].map((student) => (
-                    <div key={student} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold">A{student}</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Aluno {student}</p>
-                          <p className="text-sm text-gray-600">aluno{student}@email.com</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline">Ativo</Badge>
-                        <Button size="sm" variant="outline">
-                          Ver Perfil
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                  <p className="text-sm text-muted-foreground">Nenhum aluno pendente no momento.</p>
                 </div>
               </CardContent>
             </Card>

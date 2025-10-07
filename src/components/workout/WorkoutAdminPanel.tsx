@@ -40,38 +40,9 @@ export const WorkoutAdminPanel = () => {
     setError(null);
     
     try {
-      // Simular dados de treinos - substitua pela integração real
-      const mockWorkouts: Workout[] = [
-        {
-          id: '1',
-          aluno: 'João Silva',
-          conteudo: {
-            nome: "Treino Superior A",
-            objetivo: "Hipertrofia",
-            exercicios: ['Supino', 'Remada', 'Desenvolvimento']
-          },
-          status: 'pendente',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          aluno: 'Maria Santos',
-          conteudo: {
-            nome: "Treino Inferior B",
-            objetivo: "Força",
-            exercicios: ['Agachamento', 'Leg Press', 'Stiff']
-          },
-          status: 'aprovado',
-          created_at: new Date(Date.now() - 86400000).toISOString()
-        }
-      ];
-
-      // Simular erro intermitente para demonstrar retry
-      if (retryCount < 2 && Math.random() > 0.7) {
-        throw new Error('Erro de conexão intermitente');
-      }
-
-      setWorkouts(mockWorkouts);
+      // Buscar treinos do Supabase
+      const workouts: Workout[] = [];
+      setWorkouts(workouts);
       setRetryCount(0);
     } catch (error) {
       console.error('Erro ao buscar treinos:', error);

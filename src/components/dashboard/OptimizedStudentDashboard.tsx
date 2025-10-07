@@ -37,9 +37,9 @@ export const OptimizedStudentDashboard = () => {
   const [notifications, setNotifications] = useState(3);
   const [weekStreak, setWeekStreak] = useState(12);
   const [currentWeight, setCurrentWeight] = useState(75);
-  const [weeklyProgress, setWeeklyProgress] = useState({ completed: 4, total: 5 });
+  const [weeklyProgress, setWeeklyProgress] = useState({ completed: 0, total: 5 });
 
-  // Mock data - em produção virá do Supabase com cache
+  // Workouts virão do Supabase
   const weeklyWorkouts: DailyWorkout[] = useMemo(() => [
     {
       data: new Date(),
