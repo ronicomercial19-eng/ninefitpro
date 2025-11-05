@@ -177,13 +177,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         return { error: error.message };
+      }
+
+      // Redirecionar para dashboard após login bem-sucedido
+      if (data?.user) {
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 100);
       }
 
       return {};

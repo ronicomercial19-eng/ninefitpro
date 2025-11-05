@@ -61,7 +61,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => (
-                    <React.Fragment key={crumb.path}>
+                    <div key={crumb.path} className="flex items-center">
                       {index > 0 && <BreadcrumbSeparator />}
                       <BreadcrumbItem>
                         {index === breadcrumbs.length - 1 ? (
@@ -70,7 +70,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                           <BreadcrumbLink href={crumb.path}>{crumb.label}</BreadcrumbLink>
                         )}
                       </BreadcrumbItem>
-                    </React.Fragment>
+                    </div>
                   ))}
                 </BreadcrumbList>
               </Breadcrumb>

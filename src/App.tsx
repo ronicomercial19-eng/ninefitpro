@@ -47,13 +47,30 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Auth />} />
+            {/* Public Routes */}
+            <Route path="/" element={<OptimizedIndex />} />
             <Route path="/home" element={<OptimizedIndex />} />
+            <Route path="/conecte-se" element={<Auth />} />
+            <Route path="/login" element={<Auth />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/suporte" element={<Suporte />} />
             <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />
-            <Route path="/conecte-se" element={<Auth />} />
-            <Route path="/login" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/ai-training" element={<AITrainingPlatform />} />
+            <Route path="/assessment" element={<Assessment />} />
+            <Route path="/enhanced-assessment" element={<EnhancedAssessment />} />
+            
+            {/* Protected Routes - Main Dashboard */}
+            <Route path="/dashboard" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <UnifiedDashboard />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            
+            {/* Legacy Professor/Student Routes */}
             <Route path="/professor" element={
               <PrivateRoute>
                 <RonyTrainerApp />
@@ -62,20 +79,6 @@ const App = () => (
             <Route path="/student" element={
               <PrivateRoute>
                 <StudentApp />
-              </PrivateRoute>
-            } />
-            <Route path="/home" element={<OptimizedIndex />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/ai-training" element={<AITrainingPlatform />} />
-            <Route path="/assessment" element={<Assessment />} />
-            <Route path="/enhanced-assessment" element={<EnhancedAssessment />} />
-            {/* Main Dashboard */}
-            <Route path="/dashboard" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <UnifiedDashboard />
-                </AppLayout>
               </PrivateRoute>
             } />
             
