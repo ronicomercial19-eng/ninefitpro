@@ -685,6 +685,161 @@ export type Database = {
           },
         ]
       }
+      avaliacoes_unificadas: {
+        Row: {
+          agua_corporal: number | null
+          altura: number | null
+          aluno_id: string
+          avaliacao_exames: string | null
+          avaliador_cref: string | null
+          avaliador_nome: string | null
+          circunferencia_braco: number | null
+          circunferencia_cintura: number | null
+          circunferencia_coxa: number | null
+          circunferencia_panturrilha: number | null
+          circunferencia_peitoral: number | null
+          circunferencia_quadril: number | null
+          created_at: string
+          dados_adicionais: Json | null
+          data_avaliacao: string
+          dobra_abdominal: number | null
+          dobra_axilar_media: number | null
+          dobra_coxa: number | null
+          dobra_panturrilha: number | null
+          dobra_peitoral: number | null
+          dobra_subescapular: number | null
+          dobra_suprailiaca: number | null
+          dobra_triceps: number | null
+          exames: Json | null
+          gordura_corporal: number | null
+          id: string
+          id_externo: string | null
+          imc: number | null
+          massa_gorda: number | null
+          massa_magra: number | null
+          massa_muscular: number | null
+          observacoes: string | null
+          origem: string
+          peso: number | null
+          rm1_empurrar_perna: number | null
+          rm1_empurrar_superior: number | null
+          rm1_puxar_costas: number | null
+          rm1_puxar_inferior: number | null
+          rml_abs: number | null
+          rml_agachamento: number | null
+          rml_elevacao_p: number | null
+          rml_flexao: number | null
+          rml_pull: number | null
+          sincronizado: boolean | null
+          taxa_metabolica: number | null
+          updated_at: string
+        }
+        Insert: {
+          agua_corporal?: number | null
+          altura?: number | null
+          aluno_id: string
+          avaliacao_exames?: string | null
+          avaliador_cref?: string | null
+          avaliador_nome?: string | null
+          circunferencia_braco?: number | null
+          circunferencia_cintura?: number | null
+          circunferencia_coxa?: number | null
+          circunferencia_panturrilha?: number | null
+          circunferencia_peitoral?: number | null
+          circunferencia_quadril?: number | null
+          created_at?: string
+          dados_adicionais?: Json | null
+          data_avaliacao?: string
+          dobra_abdominal?: number | null
+          dobra_axilar_media?: number | null
+          dobra_coxa?: number | null
+          dobra_panturrilha?: number | null
+          dobra_peitoral?: number | null
+          dobra_subescapular?: number | null
+          dobra_suprailiaca?: number | null
+          dobra_triceps?: number | null
+          exames?: Json | null
+          gordura_corporal?: number | null
+          id?: string
+          id_externo?: string | null
+          imc?: number | null
+          massa_gorda?: number | null
+          massa_magra?: number | null
+          massa_muscular?: number | null
+          observacoes?: string | null
+          origem: string
+          peso?: number | null
+          rm1_empurrar_perna?: number | null
+          rm1_empurrar_superior?: number | null
+          rm1_puxar_costas?: number | null
+          rm1_puxar_inferior?: number | null
+          rml_abs?: number | null
+          rml_agachamento?: number | null
+          rml_elevacao_p?: number | null
+          rml_flexao?: number | null
+          rml_pull?: number | null
+          sincronizado?: boolean | null
+          taxa_metabolica?: number | null
+          updated_at?: string
+        }
+        Update: {
+          agua_corporal?: number | null
+          altura?: number | null
+          aluno_id?: string
+          avaliacao_exames?: string | null
+          avaliador_cref?: string | null
+          avaliador_nome?: string | null
+          circunferencia_braco?: number | null
+          circunferencia_cintura?: number | null
+          circunferencia_coxa?: number | null
+          circunferencia_panturrilha?: number | null
+          circunferencia_peitoral?: number | null
+          circunferencia_quadril?: number | null
+          created_at?: string
+          dados_adicionais?: Json | null
+          data_avaliacao?: string
+          dobra_abdominal?: number | null
+          dobra_axilar_media?: number | null
+          dobra_coxa?: number | null
+          dobra_panturrilha?: number | null
+          dobra_peitoral?: number | null
+          dobra_subescapular?: number | null
+          dobra_suprailiaca?: number | null
+          dobra_triceps?: number | null
+          exames?: Json | null
+          gordura_corporal?: number | null
+          id?: string
+          id_externo?: string | null
+          imc?: number | null
+          massa_gorda?: number | null
+          massa_magra?: number | null
+          massa_muscular?: number | null
+          observacoes?: string | null
+          origem?: string
+          peso?: number | null
+          rm1_empurrar_perna?: number | null
+          rm1_empurrar_superior?: number | null
+          rm1_puxar_costas?: number | null
+          rm1_puxar_inferior?: number | null
+          rml_abs?: number | null
+          rml_agachamento?: number | null
+          rml_elevacao_p?: number | null
+          rml_flexao?: number | null
+          rml_pull?: number | null
+          sincronizado?: boolean | null
+          taxa_metabolica?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_bookings: {
         Row: {
           booking_time: string | null
@@ -1773,25 +1928,49 @@ export type Database = {
       }
       planos_de_treino_gerados: {
         Row: {
-          criado_em: string | null
+          created_at: string | null
+          duracao_semanas: number | null
           estudante_id: string | null
           estudante_id_ref: string | null
           id: string
           modelo_id: string | null
+          nivel: string | null
+          nome_plano: string | null
+          objetivo: string | null
+          plano_completo: Json | null
+          professor_id: string | null
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
-          criado_em?: string | null
+          created_at?: string | null
+          duracao_semanas?: number | null
           estudante_id?: string | null
           estudante_id_ref?: string | null
           id?: string
           modelo_id?: string | null
+          nivel?: string | null
+          nome_plano?: string | null
+          objetivo?: string | null
+          plano_completo?: Json | null
+          professor_id?: string | null
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
-          criado_em?: string | null
+          created_at?: string | null
+          duracao_semanas?: number | null
           estudante_id?: string | null
           estudante_id_ref?: string | null
           id?: string
           modelo_id?: string | null
+          nivel?: string | null
+          nome_plano?: string | null
+          objetivo?: string | null
+          plano_completo?: Json | null
+          professor_id?: string | null
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -2564,6 +2743,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_invitations: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          nome_aluno: string
+          professor_id: string
+          status: string | null
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          nome_aluno: string
+          professor_id: string
+          status?: string | null
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          nome_aluno?: string
+          professor_id?: string
+          status?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
       }
       student_measurements: {
         Row: {
@@ -3913,6 +4128,63 @@ export type Database = {
           },
         ]
       }
+      workout_progress: {
+        Row: {
+          aluno_id: string
+          created_at: string | null
+          date: string
+          exercise_name: string
+          id: string
+          notes: string | null
+          reps: number
+          rpe: number | null
+          sets: number
+          weight_kg: number | null
+          workout_id: string | null
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string | null
+          date?: string
+          exercise_name: string
+          id?: string
+          notes?: string | null
+          reps: number
+          rpe?: number | null
+          sets: number
+          weight_kg?: number | null
+          workout_id?: string | null
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string | null
+          date?: string
+          exercise_name?: string
+          id?: string
+          notes?: string | null
+          reps?: number
+          rpe?: number | null
+          sets?: number
+          weight_kg?: number | null
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_progress_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_progress_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_schedules: {
         Row: {
           created_at: string | null
@@ -4184,6 +4456,7 @@ export type Database = {
         Returns: number
       }
       current_user_email: { Args: never; Returns: string }
+      generate_invitation_token: { Args: never; Returns: string }
       gerar_modelo_treino: {
         Args: {
           p_estudante_id: string
@@ -4231,7 +4504,7 @@ export type Database = {
     }
     Enums: {
       aluno_status: "ativo" | "inativo" | "suspenso"
-      app_role: "admin" | "professor" | "student" | "demo"
+      app_role: "admin" | "professor" | "student" | "demo" | "user"
       appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       notification_type: "info" | "warning" | "success" | "error"
@@ -4374,7 +4647,7 @@ export const Constants = {
   public: {
     Enums: {
       aluno_status: ["ativo", "inativo", "suspenso"],
-      app_role: ["admin", "professor", "student", "demo"],
+      app_role: ["admin", "professor", "student", "demo", "user"],
       appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       notification_type: ["info", "warning", "success", "error"],

@@ -34,6 +34,7 @@ import DiscoverPage from "./pages/DiscoverPage";
 import ListOverviewPage from "./pages/ListOverviewPage";
 import GeneralPanelPage from "./pages/GeneralPanelPage";
 import StudentAreaPage from "./pages/StudentAreaPage";
+import StudentAreaComplete from "./pages/StudentAreaComplete";
 import Perfil from "./pages/Perfil";
 import Suporte from "./pages/Suporte";
 
@@ -164,6 +165,11 @@ const App = () => (
             <Route path="/area-do-aluno" element={
               <PrivateRoute>
                 <StudentAreaPage />
+              </PrivateRoute>
+            } />
+            <Route path="/minha-area" element={
+              <PrivateRoute>
+                <StudentAreaComplete />
               </PrivateRoute>
             } />
             <Route path="/profile" element={<Profile />} />

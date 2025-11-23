@@ -229,6 +229,14 @@ const StudentApp = () => {
               <h3 className="text-lg font-semibold text-white mb-4">CONTA</h3>
               
               <div className="space-y-3">
+                <button onClick={() => window.location.href = '/minha-area'}
+                  className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg hover:from-orange-600 hover:to-red-600"
+                  aria-label="Área Completa do Aluno"
+                >
+                  <span className="text-white font-semibold">📱 Área Completa do Aluno</span>
+                  <span className="text-white">›</span>
+                </button>
+
                 <button onClick={() => { setActiveTab("perfil"); setProfileSection('achievements'); }}
                   className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800"
                   aria-label="Conquistas"
