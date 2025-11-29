@@ -1,52 +1,152 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, UserPlus } from 'lucide-react';
+import { Plus, Search, UserPlus, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { AdicionarAlunoForm } from '@/components/students/AdicionarAlunoForm';
+import { StudentDetailedView } from '@/components/students/StudentDetailedView';
+
+interface Student {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  objetivo: string;
+  nivel_experiencia?: string;
+  peso_kg?: number;
+  altura_cm?: number;
+  observacoes?: string;
+  ativo: boolean;
+  created_at: string;
+  foto_url?: string;
+  status_pagamento?: string;
+  data_nascimento?: string;
+  profissao?: string;
+  endereco_completo?: string;
+  data_vencimento_plano?: string;
+  forma_pagamento?: string;
+  valor_mensalidade?: number;
+}
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  
 
-  const students = [
-    { id: 1, name: 'Nelson angélico', email: 'nelson.angelico@outlook.com', initials: 'NA', status: 'active' },
-    { id: 2, name: 'Ana Beatriz (exemplo)', email: 'ana51168@fitevolution.com.br', initials: 'AB', status: 'blocked', hasPayment: true },
-    { id: 3, name: 'Beatriz Prado', email: 'beatriz.prado1717@gmail.com', initials: 'BP', status: 'active' },
-    { id: 4, name: 'Bruno Nuldman', email: 'bruno@420011@gmail.com', initials: 'BN', status: 'active' },
-    { id: 5, name: 'carolina 123', email: 'carolinaoleto2olive@gmail.com', initials: 'C1', status: 'active' },  
-    { id: 6, name: 'Carol Simaes', email: 'csaury@voxus.com.br', initials: 'CS', status: 'active' },
-    { id: 7, name: 'Denise Costa', email: 'denisecostmail.com.br', initials: 'DC', status: 'active' },
-    { id: 8, name: 'Denise Rem', email: 'denise.rem@gmail.com', initials: 'DR', status: 'active' },
-    { id: 9, name: 'Fabiana Oliveira', email: 'dru.faebimplacavioleta@g.br', initials: 'FO', status: 'active' },
-    { id: 10, name: 'Flávio Feio', email: 'flavioefepverde@gmail.com', initials: 'FF', status: 'active' },
-    { id: 11, name: 'Flávio Lima', email: 'flaolima5@gmail.com', initials: 'FL', status: 'active' },
-    { id: 12, name: 'fernanda tafner', email: 'fernandatafner1@outlook.com', initials: 'FT', status: 'active' },
-    { id: 13, name: 'Giovanna Prodomo', email: 'gilvadomo@gmail.com', initials: 'GP', status: 'active' },
-    { id: 14, name: 'gui 125', email: 'guimaraes126@gmail.com', initials: 'G1', status: 'active' },
-    { id: 15, name: 'leda lshi', email: 'iedaeglcr@iofani.br', initials: 'LL', status: 'active' },
-    { id: 16, name: 'Isac Nuldeman', email: 'isac.nudeman@gmail.com', initials: 'IN', status: 'active' },
-    { id: 17, name: 'Jade Guerra', email: 'jadeguerra@gmail.com', initials: 'JG', status: 'active' },
-    { id: 18, name: 'José Bruno', email: 'josebruno5@gmail.com', initials: 'JB', status: 'active' }
-  ];
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('professor_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setStudents(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar alunos:', error);
+      toast.error('Erro ao carregar lista de alunos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = student.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filter === 'all') return matchesSearch;
-    if (filter === 'blocked') return matchesSearch && student.status === 'blocked';
-    if (filter === 'active') return matchesSearch && student.status === 'active';
+    if (filter === 'blocked') return matchesSearch && !student.ativo;
+    if (filter === 'active') return matchesSearch && student.ativo;
     
     return matchesSearch;
   });
+
+  const handleStudentAdded = () => {
+    setShowAddForm(false);
+    fetchStudents();
+    toast.success('Aluno adicionado com sucesso!');
+  };
+
+  const handleViewStudent = (student: Student) => {
+    setSelectedStudent(student);
+  };
+
+  const handleEditStudent = (student: Student) => {
+    // Go to detailed view for editing
+    setSelectedStudent(student);
+  };
+
+  const handleBackToList = () => {
+    setSelectedStudent(null);
+  };
+
+  const handleStudentUpdated = (updatedStudent: Student) => {
+    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+    setSelectedStudent(updatedStudent);
+  };
+
+  // Show student detailed view
+  if (selectedStudent) {
+    return (
+      <StudentDetailedView 
+        student={selectedStudent}
+        onBack={handleBackToList}
+        onStudentUpdated={handleStudentUpdated}
+      />
+    );
+  }
+
+  // Show add form
+  if (showAddForm) {
+    return (
+      <div className="space-y-6">
+        <AdicionarAlunoForm 
+          onStudentAdded={handleStudentAdded}
+          onCancel={() => setShowAddForm(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Alunos</h1>
-        <Button className="bg-green-500 hover:bg-green-600">
+        <Button 
+          className="bg-green-500 hover:bg-green-600"
+          onClick={() => setShowAddForm(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo aluno
         </Button>
@@ -82,55 +182,86 @@ export default function StudentsPage() {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      )}
+
       {/* Students Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-        {filteredStudents.map((student) => (
-          <Card key={student.id} className="relative">
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center space-y-3">
-                <div className="relative">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                    <span className="text-lg font-semibold">{student.initials}</span>
-                  </div>
-                  {student.status === 'blocked' && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">!</span>
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+          {filteredStudents.map((student) => (
+            <Card key={student.id} className="relative">
+              <CardContent className="p-4">
+                <div className="flex flex-col items-center space-y-3">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+                      {student.foto_url ? (
+                        <img 
+                          src={student.foto_url} 
+                          alt={student.nome}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-semibold">{getInitials(student.nome)}</span>
+                      )}
                     </div>
+                    {!student.ativo && (
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs">!</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="text-center space-y-1">
+                    <h3 className="font-medium text-sm text-foreground">{student.nome}</h3>
+                    <p className="text-xs text-muted-foreground break-all">{student.email}</p>
+                  </div>
+
+                  {student.status_pagamento === 'atrasado' && (
+                    <Badge variant="destructive" className="text-xs">
+                      Inadimplente
+                    </Badge>
                   )}
-                </div>
-                
-                <div className="text-center space-y-1">
-                  <h3 className="font-medium text-sm text-foreground">{student.name}</h3>
-                  <p className="text-xs text-muted-foreground break-all">{student.email}</p>
-                </div>
 
-                {student.hasPayment && (
-                  <Badge variant="destructive" className="text-xs">
-                    Inadimplente
-                  </Badge>
-                )}
-
-                <div className="flex space-x-2 w-full">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs">
-                    Editar
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-xs">
-                    Ver
-                  </Button>
+                  <div className="flex space-x-2 w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleEditStudent(student)}
+                    >
+                      Editar
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleViewStudent(student)}
+                    >
+                      Ver
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filteredStudents.length === 0 && (
+      {!loading && filteredStudents.length === 0 && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
               <UserPlus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">Nenhum aluno encontrado</h3>
-              <p className="text-muted-foreground">Tente ajustar os filtros ou adicione um novo aluno.</p>
+              <p className="text-muted-foreground mb-4">Tente ajustar os filtros ou adicione um novo aluno.</p>
+              <Button onClick={() => setShowAddForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar primeiro aluno
+              </Button>
             </div>
           </CardContent>
         </Card>
