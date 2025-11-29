@@ -2933,36 +2933,48 @@ export type Database = {
           created_at: string | null
           created_by: string
           end_date: string | null
+          html_file_path: string | null
+          html_file_url: string | null
           id: string
           is_active: boolean | null
           start_date: string
           student_id: string
           training_data: Json
+          training_description: string | null
           training_name: string
+          training_type: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           created_by: string
           end_date?: string | null
+          html_file_path?: string | null
+          html_file_url?: string | null
           id?: string
           is_active?: boolean | null
           start_date?: string
           student_id: string
           training_data?: Json
+          training_description?: string | null
           training_name: string
+          training_type?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string
           end_date?: string | null
+          html_file_path?: string | null
+          html_file_url?: string | null
           id?: string
           is_active?: boolean | null
           start_date?: string
           student_id?: string
           training_data?: Json
+          training_description?: string | null
           training_name?: string
+          training_type?: string | null
           updated_at?: string | null
         }
         Relationships: [

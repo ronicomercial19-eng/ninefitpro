@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { HTMLTrainingUpload } from "@/components/training/HTMLTrainingUpload";
 
 interface Student {
   id: string;
@@ -19,6 +21,10 @@ interface TrainingAssignment {
   end_date?: string;
   is_active: boolean;
   created_at: string;
+  training_type?: string;
+  training_description?: string;
+  html_file_url?: string;
+  html_file_path?: string;
 }
 
 interface StudentTrainingProps {
@@ -29,6 +35,8 @@ interface StudentTrainingProps {
 export function StudentTraining({ student, onStudentUpdate }: StudentTrainingProps) {
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showHTMLUpload, setShowHTMLUpload] = useState(false);
+  const [selectedHTMLTraining, setSelectedHTMLTraining] = useState<TrainingAssignment | null>(null);
 
   useEffect(() => {
     fetchTrainings();
@@ -75,32 +83,97 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
     }
   };
 
+  const handleViewTraining = (training: TrainingAssignment) => {
+    if (training.training_type === 'html' && training.html_file_url) {
+      setSelectedHTMLTraining(training);
+    } else {
+      // TODO: Implementar visualização de treino JSON
+      toast.info('Visualização de treino JSON em desenvolvimento');
+    }
+  };
+
+  const handleDeleteTraining = async (training: TrainingAssignment) => {
+    if (!confirm(`Tem certeza que deseja excluir o treino "${training.training_name}"?`)) {
+      return;
+    }
+
+    try {
+      // If HTML training, delete file from storage first
+      if (training.training_type === 'html' && training.html_file_path) {
+        const { error: storageError } = await supabase.storage
+          .from('training-html-files')
+          .remove([training.html_file_path]);
+        
+        if (storageError) {
+          console.error('Erro ao deletar arquivo:', storageError);
+        }
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('student_training_assignments')
+        .delete()
+        .eq('id', training.id);
+
+      if (error) throw error;
+
+      setTrainings(trainings.filter(t => t.id !== training.id));
+      toast.success('Treino excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir treino:', error);
+      toast.error('Erro ao excluir treino');
+    }
+  };
+
+  const getTrainingTypeBadge = (training: TrainingAssignment) => {
+    if (training.training_type === 'html') {
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <FileText className="w-3 h-3 mr-1" />
+          HTML
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+        <Sparkles className="w-3 h-3 mr-1" />
+        IA
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         <span className="ml-3">Carregando treinos...</span>
       </div>
     );
   }
 
+  const activeTrainings = trainings.filter(t => t.is_active);
+  const inactiveTrainings = trainings.filter(t => !t.is_active);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Dumbbell className="w-5 h-5" />
           <h2 className="text-xl font-semibold">Treino do Aluno</h2>
         </div>
         
         <div className="flex gap-2">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button className="bg-primary hover:bg-primary/90">
+            <Sparkles className="w-4 h-4 mr-2" />
             Novo Treino IA
           </Button>
-          <Button variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Importar Treino
+          <Button 
+            variant="outline"
+            onClick={() => setShowHTMLUpload(true)}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload HTML
           </Button>
         </div>
       </div>
@@ -112,21 +185,25 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {trainings.filter(t => t.is_active).length}
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {activeTrainings.length}
               </div>
-              <div className="text-sm text-gray-600">Treinos Ativos</div>
+              <div className="text-sm text-muted-foreground">Treinos Ativos</div>
             </div>
             
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">15</div>
-              <div className="text-sm text-gray-600">Sessões Concluídas</div>
+            <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {trainings.filter(t => t.training_type === 'html').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Treinos HTML</div>
             </div>
             
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">3</div>
-              <div className="text-sm text-gray-600">Semanas de Treino</div>
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {trainings.filter(t => t.training_type !== 'html').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Treinos IA</div>
             </div>
           </div>
         </CardContent>
@@ -140,21 +217,24 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         <CardContent>
           {trainings.length === 0 ? (
             <div className="text-center py-12">
-              <Dumbbell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhuma Série Selecionada
+              <Dumbbell className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                Nenhum Treino Atribuído
               </h3>
-              <p className="text-gray-600 mb-6">
-                Clique na série para visualizar os exercícios
+              <p className="text-muted-foreground mb-6">
+                Comece criando um treino personalizado para este aluno
               </p>
-              <div className="space-y-2">
-                <Button className="w-full bg-orange-500 hover:bg-orange-600">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Criar Série
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Criar com IA
                 </Button>
-                <Button variant="outline" className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Importar treino de referência
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowHTMLUpload(true)}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload HTML
                 </Button>
               </div>
             </div>
@@ -163,51 +243,83 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
               {trainings.map((training) => (
                 <div
                   key={training.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                    training.is_active 
+                      ? 'bg-card hover:bg-muted/50' 
+                      : 'bg-muted/30 opacity-75'
+                  }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <Dumbbell className="w-6 h-6 text-orange-600" />
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      training.training_type === 'html' 
+                        ? 'bg-blue-100 dark:bg-blue-950' 
+                        : 'bg-purple-100 dark:bg-purple-950'
+                    }`}>
+                      {training.training_type === 'html' ? (
+                        <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      ) : (
+                        <Dumbbell className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                      )}
                     </div>
                     
-                    <div>
-                      <h3 className="font-medium">{training.training_name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Início: {new Date(training.start_date).toLocaleDateString('pt-BR')}
-                        </span>
-                        {training.end_date && (
-                          <span>
-                            - Fim: {new Date(training.end_date).toLocaleDateString('pt-BR')}
-                          </span>
-                        )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-medium truncate">{training.training_name}</h3>
+                        {getTrainingTypeBadge(training)}
                       </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Calendar className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">
+                          Início: {new Date(training.start_date).toLocaleDateString('pt-BR')}
+                          {training.end_date && (
+                            <> - Fim: {new Date(training.end_date).toLocaleDateString('pt-BR')}</>
+                          )}
+                        </span>
+                      </div>
+                      {training.training_description && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
+                          {training.training_description}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                     <Badge 
+                      variant={training.is_active ? 'default' : 'secondary'}
                       className={training.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300' 
+                        : ''
                       }
                     >
                       {training.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
                     
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleViewTraining(training)}
+                      title="Ver treino"
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                     
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      title="Editar treino"
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                     
                     <Button
                       size="sm"
                       variant={training.is_active ? "destructive" : "default"}
-                      onClick={() => toggleTrainingStatus(training.id, training.is_active)}
+                      onClick={() => training.is_active 
+                        ? toggleTrainingStatus(training.id, training.is_active)
+                        : toggleTrainingStatus(training.id, training.is_active)
+                      }
+                      title={training.is_active ? 'Desativar' : 'Ativar'}
                     >
                       {training.is_active ? (
                         <Trash2 className="w-4 h-4" />
@@ -223,48 +335,94 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </CardContent>
       </Card>
 
-      {/* Séries Fora do Treino */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Séries fora do treino</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">Não visível para o aluno</p>
+      {/* Séries Fora do Treino (Inativas) */}
+      {inactiveTrainings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-muted-foreground">
+              Treinos Inativos ({inactiveTrainings.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Estes treinos não estão visíveis para o aluno
+            </p>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="font-medium">CORE WORKOUT</span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+              {inactiveTrainings.map((training) => (
+                <div 
+                  key={training.id}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    {getTrainingTypeBadge(training)}
+                    <span className="font-medium">{training.training_name}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleViewTraining(training)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => toggleTrainingStatus(training.id, training.is_active)}
+                    >
+                      Ativar
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => handleDeleteTraining(training)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="font-medium">Legs Day!</span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* HTML Upload Dialog */}
+      <Dialog open={showHTMLUpload} onOpenChange={setShowHTMLUpload}>
+        <DialogContent className="max-w-2xl">
+          <HTMLTrainingUpload
+            studentId={student.id}
+            studentName={student.nome}
+            onUploadSuccess={() => {
+              setShowHTMLUpload(false);
+              fetchTrainings();
+            }}
+            onCancel={() => setShowHTMLUpload(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* HTML Training Viewer Dialog */}
+      <Dialog 
+        open={!!selectedHTMLTraining} 
+        onOpenChange={() => setSelectedHTMLTraining(null)}
+      >
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>{selectedHTMLTraining?.training_name}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[70vh] border rounded-lg bg-white">
+            {selectedHTMLTraining?.html_file_url && (
+              <iframe
+                src={selectedHTMLTraining.html_file_url}
+                sandbox="allow-scripts allow-same-origin"
+                className="w-full h-[600px] border-0"
+                title={selectedHTMLTraining.training_name}
+              />
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
