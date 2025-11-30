@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Clock, Play, Calendar, TrendingUp, ArrowLeft, Timer, Camera, Minus, Plus, RotateCcw, BarChart3, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CheckCircle, Clock, Play, Calendar, TrendingUp, ArrowLeft, Timer, Camera, Minus, Plus, RotateCcw, BarChart3, FileText, Eye } from "lucide-react";
+import { StudentHTMLTrainingViewer } from "./StudentHTMLTrainingViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -475,9 +477,14 @@ export const StudentWorkoutViewer = () => {
   const phases = [...new Set(workouts.map(w => w.phase))];
 
   return (
-    <div className="space-y-6 text-white">
+    <div className="space-y-6">
+      {/* Seção de Treinos HTML */}
+      <div className="bg-card rounded-lg p-4">
+        <StudentHTMLTrainingViewer />
+      </div>
+
       {/* Progresso Geral */}
-      <div className="bg-gradient-to-r from-orange-600 to-orange-800 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-800 rounded-lg p-6 text-white">
         <h3 className="text-lg font-bold mb-2">EMAGRECIMENTO</h3>
         <p className="text-sm mb-4">TREINO 4 - 18 TREINOS EM 6 SEMANAS</p>
         <p className="text-sm">PROF. AMANDA PINHEIRO DE SOUSA</p>
@@ -517,17 +524,17 @@ export const StudentWorkoutViewer = () => {
       </div>
 
       {/* Próximo Treino */}
-      <div>
+      <div className="text-foreground">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">PRÓXIMO TREINO</h3>
-          <span className="text-gray-400 text-sm">Meus agendamentos ›</span>
+          <span className="text-muted-foreground text-sm">Meus agendamentos ›</span>
         </div>
         
         {workouts.filter(w => w.status === 'pending').slice(0, 1).map((workout) => (
           <div 
             key={workout.id}
             onClick={() => setSelectedWorkout(workout)}
-            className="bg-gray-800 rounded-lg p-4 cursor-pointer"
+            className="bg-muted rounded-lg p-4 cursor-pointer"
           >
             <div className="flex items-center">
               <div className="w-12 h-12 bg-orange-500 rounded-lg mr-4 flex items-center justify-center">
@@ -536,24 +543,24 @@ export const StudentWorkoutViewer = () => {
               <div className="flex-1">
                 <div className="font-bold">Peitoral, Ombro, Tríceps</div>
               </div>
-              <span className="text-gray-400">›</span>
+              <span className="text-muted-foreground">›</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Lista de Treinos Anteriores */}
-      <div>
+      <div className="text-foreground">
         <h3 className="text-lg font-bold mb-4">ANTERIORES</h3>
         <div className="space-y-3">
           {workouts.slice(1).map((workout) => (
             <div 
               key={workout.id}
               onClick={() => setSelectedWorkout(workout)}
-              className="bg-gray-800 rounded-lg p-4 cursor-pointer flex items-center justify-between"
+              className="bg-muted rounded-lg p-4 cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-gray-600 rounded mr-3 flex items-center justify-center">
+                <div className="w-8 h-8 bg-muted-foreground/20 rounded mr-3 flex items-center justify-center">
                   {workout.status === 'completed' ? (
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   ) : (
@@ -562,7 +569,7 @@ export const StudentWorkoutViewer = () => {
                 </div>
                 <div>
                   <div className="font-semibold">Treino {workout.day_number}</div>
-                  <div className="text-sm text-gray-400">Semana {workout.week_number}</div>
+                  <div className="text-sm text-muted-foreground">Semana {workout.week_number}</div>
                 </div>
               </div>
               <Badge 
