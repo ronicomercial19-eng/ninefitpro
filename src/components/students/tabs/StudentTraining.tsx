@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { HTMLTrainingUpload } from "@/components/training/HTMLTrainingUpload";
+import { HTMLTrainingUpload } from "@/components/students/HTMLTrainingUpload";
 
 interface Student {
   id: string;
