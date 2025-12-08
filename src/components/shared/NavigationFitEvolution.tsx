@@ -4,7 +4,7 @@ import { Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const Navigation9Fit = () => {
+export const NavigationFitEvolution = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();

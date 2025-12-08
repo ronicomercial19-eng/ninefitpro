@@ -1,4 +1,4 @@
-import { Navigation9Fit } from '@/components/shared/Navigation9Fit';
+import { NavigationFitEvolution } from '@/components/shared/NavigationFitEvolution';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +64,7 @@ export default function Support() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB]">
-      <Navigation9Fit />
+      <NavigationFitEvolution />
       
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
