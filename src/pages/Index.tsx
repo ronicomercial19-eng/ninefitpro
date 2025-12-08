@@ -95,20 +95,17 @@ const Index = () => {
     <div className="min-h-screen bg-black text-white">
       {/* Enhanced Navigation with Scroll Effect */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrollY > 50
-          ? 'bg-black/95 backdrop-blur-xl border-b border-orange-500/20 shadow-lg'
-          : 'bg-black/90 backdrop-blur-lg border-b border-gray-800'
+        ? 'bg-black/95 backdrop-blur-xl border-b border-orange-500/20 shadow-lg'
+        : 'bg-black/90 backdrop-blur-lg border-b border-gray-800'
         }`}>
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-white cursor-pointer" onClick={() => navigate('/')}>
-            9<span className="text-orange-500">FIT</span>
+            Fit<span className="text-orange-500">Evolution</span>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
             <button onClick={() => navigate('/sales')} className="text-gray-300 hover:text-orange-500 transition-colors">
               Planos
-            </button>
-            <button onClick={() => navigate('/ai-training')} className="text-gray-300 hover:text-orange-500 transition-colors">
-              IA Training
             </button>
             <button onClick={() => navigate('/assessment')} className="text-gray-300 hover:text-orange-500 transition-colors">
               Avaliação
@@ -117,10 +114,15 @@ const Index = () => {
 
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => navigate('/login')}
+              size="lg"
               variant="outline"
-              className="border-gray-600 text-white hover:bg-white hover:text-black transition-all duration-300"
+              onClick={() => navigate('/login')}
+              className="bg-black text-white border-black 
+             hover:bg-black/80 hover:border-black 
+             hover:text-white 
+             px-8 py-4 text-lg backdrop-blur-sm transition-all duration-300"
             >
+              <Play className="mr-2 w-5 h-5" />
               Entrar
             </Button>
             <Button
@@ -145,7 +147,7 @@ const Index = () => {
               Comprovado por Milhares
             </Badge>
             <h2 className="text-4xl font-bold mb-4">
-              Por que <span className="text-orange-500">milhares de pessoas</span> escolheram a 9FIT?
+              Por que <span className="text-orange-500">milhares de pessoas</span> escolheram a FitEvolution?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Resultados reais de pessoas reais. Veja como nossa metodologia científica
@@ -230,7 +232,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4">
-                O Que Você Ganha com a <span className="text-orange-500">9FIT</span>
+                O Que Você Ganha com a <span className="text-orange-500">FitEvolution</span>
               </h2>
               <p className="text-xl text-gray-600">
                 Mais que um app de treino. Uma metodologia completa para sua transformação.
@@ -275,7 +277,7 @@ const Index = () => {
               <span className="text-orange-500">Começa Hoje</span>
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Junte-se a milhares de pessoas que já descobriram o poder da 9FIT.
+              Junte-se a milhares de pessoas que já descobriram o poder da FitEvolution.
               <strong className="text-orange-400"> Treinos personalizados com IA</strong> adaptados aos seus objetivos.
             </p>
 
@@ -359,7 +361,7 @@ const Index = () => {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 9FIT. Todos os direitos reservados. Transforme-se com treinos inteligentes e personalizados.</p>
+            <p>&copy; 2025 FitEvolution. Todos os direitos reservados. Transforme-se com treinos inteligentes e personalizados.</p>
           </div>
         </div>
       </footer>
