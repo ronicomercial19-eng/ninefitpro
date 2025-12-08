@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight, 
-  Target, 
-  Zap, 
-  Users, 
+import {
+  ArrowRight,
+  Target,
+  Zap,
+  Users,
   Star,
   CheckCircle,
   Play,
@@ -22,7 +22,7 @@ import { WhatsAppFloat } from "@/components/sections/WhatsAppFloat";
 import { ExitIntentPopup } from "@/components/sections/ExitIntentPopup";
 import { ProgressChart } from "@/components/sections/ProgressChart";
 
-const OptimizedIndex = () => {
+const Index = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -94,16 +94,15 @@ const OptimizedIndex = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Enhanced Navigation with Scroll Effect */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrollY > 50 
-          ? 'bg-black/95 backdrop-blur-xl border-b border-orange-500/20 shadow-lg' 
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrollY > 50
+          ? 'bg-black/95 backdrop-blur-xl border-b border-orange-500/20 shadow-lg'
           : 'bg-black/90 backdrop-blur-lg border-b border-gray-800'
-      }`}>
+        }`}>
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-white cursor-pointer" onClick={() => navigate('/')}>
             9<span className="text-orange-500">FIT</span>
           </div>
-          
+
           <div className="hidden md:flex items-center space-x-8">
             <button onClick={() => navigate('/sales')} className="text-gray-300 hover:text-orange-500 transition-colors">
               Planos
@@ -117,15 +116,15 @@ const OptimizedIndex = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button 
-              onClick={() => navigate('/conecte-se')} 
-              variant="outline" 
+            <Button
+              onClick={() => navigate('/conecte-se')}
+              variant="outline"
               className="border-gray-600 text-white hover:bg-white hover:text-black transition-all duration-300"
             >
               Entrar
             </Button>
-            <Button 
-              onClick={() => navigate('/conecte-se')} 
+            <Button
+              onClick={() => navigate('/conecte-se')}
               className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 transform hover:scale-105"
             >
               Começar Agora
@@ -149,7 +148,7 @@ const OptimizedIndex = () => {
               Por que <span className="text-orange-500">milhares de pessoas</span> escolheram a 9FIT?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Resultados reais de pessoas reais. Veja como nossa metodologia científica 
+              Resultados reais de pessoas reais. Veja como nossa metodologia científica
               está transformando vidas todos os dias com treinos personalizados.
             </p>
           </div>
@@ -182,8 +181,8 @@ const OptimizedIndex = () => {
           </div>
 
           <div className="text-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={() => navigate('/conecte-se')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg font-medium transition-all duration-300 transform hover:scale-105"
             >
@@ -202,7 +201,7 @@ const OptimizedIndex = () => {
               Tecnologia <span className="text-orange-500">Revolucionária</span>
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Cada funcionalidade foi desenvolvida com base em ciência do esporte 
+              Cada funcionalidade foi desenvolvida com base em ciência do esporte
               e feedback de milhares de usuários.
             </p>
           </div>
@@ -240,7 +239,7 @@ const OptimizedIndex = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {benefits.map((benefit, index) => (
-                <div 
+                <div
                   key={index}
                   className="flex items-center space-x-3 p-4 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors duration-300"
                 >
@@ -251,8 +250,8 @@ const OptimizedIndex = () => {
             </div>
 
             <div className="text-center mt-12">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={() => navigate('/conecte-se')}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
@@ -276,13 +275,13 @@ const OptimizedIndex = () => {
               <span className="text-orange-500">Começa Hoje</span>
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Junte-se a milhares de pessoas que já descobriram o poder da 9FIT. 
+              Junte-se a milhares de pessoas que já descobriram o poder da 9FIT.
               <strong className="text-orange-400"> Treinos personalizados com IA</strong> adaptados aos seus objetivos.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={() => navigate('/conecte-se')}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
@@ -327,7 +326,7 @@ const OptimizedIndex = () => {
                 <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4 text-white">Aplicativo</h4>
               <ul className="space-y-2 text-gray-400">
@@ -337,7 +336,7 @@ const OptimizedIndex = () => {
                 <li><button onClick={() => navigate('/workout-manager')} className="hover:text-orange-500 transition-colors">Treinos</button></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4 text-white">Conta</h4>
               <ul className="space-y-2 text-gray-400">
@@ -347,7 +346,7 @@ const OptimizedIndex = () => {
                 <li><button onClick={() => navigate('/pricing')} className="hover:text-orange-500 transition-colors">Preços</button></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4 text-white">Contato</h4>
               <ul className="space-y-2 text-gray-400">
@@ -358,7 +357,7 @@ const OptimizedIndex = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2025 9FIT. Todos os direitos reservados. Transforme-se com treinos inteligentes e personalizados.</p>
           </div>
@@ -372,4 +371,4 @@ const OptimizedIndex = () => {
   );
 };
 
-export default OptimizedIndex;
+export default Index;

@@ -34,7 +34,7 @@ interface DashboardStats {
   overdueTraining: number;
 }
 
-export default function UnifiedDashboard() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
