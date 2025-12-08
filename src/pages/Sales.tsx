@@ -43,7 +43,7 @@ const Sales = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{
-            backgroundImage: `url('/lovable-uploads/98b1ae85-067d-447c-bfaf-aedc3a6dc8de.png')`
+            backgroundImage: `url('/images/background.png')`
           }}
         ></div>
         
@@ -139,7 +139,7 @@ const Sales = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="relative h-96 overflow-hidden group">
               <img 
-                src="/lovable-uploads/9457d547-5873-496e-9a50-e6af7215946a.png" 
+                src="/images/treino-focado.png" 
                 alt="Treino Focado" 
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
@@ -153,7 +153,7 @@ const Sales = () => {
 
             <div className="relative h-96 overflow-hidden group">
               <img 
-                src="/lovable-uploads/1b2f13a6-2280-47a3-ad8d-79c6dbb74994.png" 
+                src="/images/flexibilidade.png" 
                 alt="Flexibilidade" 
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
@@ -167,7 +167,7 @@ const Sales = () => {
 
             <div className="relative h-96 overflow-hidden group">
               <img 
-                src="/lovable-uploads/4849dd0e-4880-4fa7-b874-b549ee92d6d6.png" 
+                src="/images/personal-training.png" 
                 alt="Personal Training" 
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
