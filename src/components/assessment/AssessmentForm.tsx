@@ -85,7 +85,7 @@ Quero receber meu plano personalizado!
     console.log('Assessment completed:', data);
     
     // Redirecionar para dashboard
-    navigate('/dashboard');
+    navigate('/app');
   };
 
   const renderStep = () => {
