@@ -17,7 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
-export default function Suporte() {
+export default function Support() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 

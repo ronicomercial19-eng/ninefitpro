@@ -1,250 +1,227 @@
+import { useState } from 'react';
+import { Navigation9Fit } from '@/components/shared/Navigation9Fit';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
+import { Camera, Save, User, Shield, Bell } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  Target, 
-  Activity,
-  Settings,
-  Camera,
-  Save
-} from "lucide-react";
+export default function Profile() {
+  const { profile, user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-const Profile = () => {
-  const { user, profile: userProfile, logout } = useAuth();
-  const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: userProfile?.full_name || '',
-    email: user?.email || '',
-    phone: userProfile?.phone || '',
-    age: '',
-    height: '',
-    weight: '',
-    goal: 'Hipertrofia',
-    experience: 'Intermediário'
-  });
-
-  const handleSave = () => {
-    // Aqui você salvaria os dados no backend
-    setIsEditing(false);
-    console.log('Profile saved:', profile);
+  const handleSaveProfile = async () => {
+    setLoading(true);
+    try {
+      // Simulate save
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast({
+        title: "Perfil atualizado!",
+        description: "Suas alterações foram salvas com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o perfil.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const stats = [
-    { label: "Treinos Totais", value: "47", icon: Activity },
-    { label: "Dias Ativos", value: "32", icon: Calendar },
-    { label: "Meta Atual", value: "Hipertrofia", icon: Target }
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation Header */}
-      <nav className="bg-black text-white px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-8">
-            <div 
-              className="text-2xl font-bold cursor-pointer"
-              onClick={() => navigate('/')}
-            >
-              Fit<span className="text-orange-500">Evolution</span>
-            </div>
-            <button
-              onClick={() => navigate('/app-dashboard')}
-              className="text-gray-300 hover:text-white px-3 py-2"
-            >
-              ← Voltar ao Dashboard
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-300">Perfil</span>
-            <Button variant="outline" size="sm" onClick={logout}>
-              Sair
-            </Button>
-          </div>
+    <div className="min-h-screen bg-[#F8FAFB]">
+      <Navigation9Fit />
+      
+      <div className="container mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-[#282E3A] mb-2">Meu Perfil</h1>
+          <p className="text-[#666666]">Gerencie suas informações pessoais e preferências</p>
         </div>
-      </nav>
 
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        {/* Profile Header */}
-        <Card className="p-8 mb-8">
-          <div className="flex items-center space-x-6">
-            <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                <User className="w-12 h-12 text-white" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Profile Picture Card */}
+          <Card className="lg:col-span-1 shadow-card">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative">
+                  <Avatar className="w-32 h-32">
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback className="text-2xl bg-gradient-to-r from-[#FF8426] to-[#F04E23] text-white">
+                      {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    size="icon"
+                    className="absolute bottom-0 right-0 rounded-full btn-9fit"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="text-center">
+                  <h2 className="text-xl font-bold text-[#282E3A]">{profile?.full_name || 'Usuário'}</h2>
+                  <p className="text-sm text-[#666666]">{profile?.email}</p>
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#FF8426]/10 text-[#FF8426]">
+                      {profile?.role === 'admin' ? 'Administrador' : profile?.role === 'professor' ? 'Professor' : 'Aluno'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                <Camera className="w-4 h-4 text-white" />
-              </button>
-            </div>
-            
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-black mb-2">
-                {profile.name || 'Usuário FitEvolution'}
-              </h1>
-              <p className="text-gray-600 mb-4">{profile.email}</p>
-              <div className="flex space-x-2">
-                <Badge className="bg-orange-500 text-black">{profile.experience}</Badge>
-                <Badge variant="outline">{profile.goal}</Badge>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <Button
-              onClick={() => setIsEditing(!isEditing)}
-              className={isEditing ? "bg-green-500 hover:bg-green-600" : "bg-orange-500 hover:bg-orange-600"}
-            >
-              {isEditing ? <Save className="w-4 h-4 mr-2" /> : <Settings className="w-4 h-4 mr-2" />}
-              {isEditing ? 'Salvar' : 'Editar'}
-            </Button>
-          </div>
-        </Card>
+          {/* Profile Details */}
+          <Card className="lg:col-span-2 shadow-card">
+            <CardHeader>
+              <CardTitle className="text-[#282E3A]">Informações da Conta</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="personal" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="personal" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Pessoal
+                  </TabsTrigger>
+                  <TabsTrigger value="security" className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Segurança
+                  </TabsTrigger>
+                  <TabsTrigger value="notifications" className="flex items-center gap-2">
+                    <Bell className="w-4 h-4" />
+                    Notificações
+                  </TabsTrigger>
+                </TabsList>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Stats */}
-          <div className="lg:col-span-1">
-            <Card className="p-6 mb-6">
-              <h3 className="text-lg font-semibold text-black mb-4">Estatísticas</h3>
-              <div className="space-y-4">
-                {stats.map((stat, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <stat.icon className="w-5 h-5 text-orange-500" />
-                      <span className="text-gray-600">{stat.label}</span>
+                <TabsContent value="personal" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="full_name">Nome Completo</Label>
+                      <Input
+                        id="full_name"
+                        defaultValue={profile?.full_name || ''}
+                        placeholder="Seu nome completo"
+                      />
                     </div>
-                    <span className="font-semibold text-black">{stat.value}</span>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        defaultValue={profile?.phone || ''}
+                        placeholder="(11) 99999-9999"
+                      />
+                    </div>
                   </div>
-                ))}
-              </div>
-            </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-black mb-4">Conquistas</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-black">30</span>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      defaultValue={profile?.email}
+                      disabled
+                      className="bg-[#F8FAFB]"
+                    />
                   </div>
-                  <span className="text-sm text-gray-600">30 dias consecutivos</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">💪</span>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="birth_date">Data de Nascimento</Label>
+                    <Input
+                      id="birth_date"
+                      type="date"
+                      placeholder="DD/MM/AAAA"
+                    />
                   </div>
-                  <span className="text-sm text-gray-600">Primeira meta alcançada</span>
-                </div>
-              </div>
-            </Card>
-          </div>
 
-          {/* Profile Form */}
-          <div className="lg:col-span-2">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-black mb-6">Informações Pessoais</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input
-                    id="name"
-                    value={profile.name}
-                    onChange={(e) => setProfile({...profile, name: e.target.value})}
-                    disabled={!isEditing}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile({...profile, email: e.target.value})}
-                    disabled={!isEditing}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    value={profile.phone}
-                    onChange={(e) => setProfile({...profile, phone: e.target.value})}
-                    disabled={!isEditing}
-                    placeholder="(11) 99999-9999"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="age">Idade</Label>
-                  <Input
-                    id="age"
-                    value={profile.age}
-                    onChange={(e) => setProfile({...profile, age: e.target.value})}
-                    disabled={!isEditing}
-                    placeholder="25"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="height">Altura (cm)</Label>
-                  <Input
-                    id="height"
-                    value={profile.height}
-                    onChange={(e) => setProfile({...profile, height: e.target.value})}
-                    disabled={!isEditing}
-                    placeholder="175"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="weight">Peso (kg)</Label>
-                  <Input
-                    id="weight"
-                    value={profile.weight}
-                    onChange={(e) => setProfile({...profile, weight: e.target.value})}
-                    disabled={!isEditing}
-                    placeholder="70"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              {isEditing && (
-                <div className="flex justify-end space-x-4 mt-6 pt-6 border-t">
                   <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditing(false)}
+                    onClick={handleSaveProfile}
+                    className="btn-9fit"
+                    disabled={loading}
                   >
-                    Cancelar
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
-                  <Button 
-                    onClick={handleSave}
-                    className="bg-orange-500 hover:bg-orange-600 text-black"
-                  >
-                    Salvar Alterações
+                </TabsContent>
+
+                <TabsContent value="security" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current_password">Senha Atual</Label>
+                    <Input
+                      id="current_password"
+                      type="password"
+                      placeholder="Digite sua senha atual"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new_password">Nova Senha</Label>
+                    <Input
+                      id="new_password"
+                      type="password"
+                      placeholder="Digite a nova senha"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm_password">Confirmar Nova Senha</Label>
+                    <Input
+                      id="confirm_password"
+                      type="password"
+                      placeholder="Confirme a nova senha"
+                    />
+                  </div>
+
+                  <Button className="btn-9fit">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Atualizar Senha
                   </Button>
-                </div>
-              )}
-            </Card>
-          </div>
+                </TabsContent>
+
+                <TabsContent value="notifications" className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-lg">
+                      <div>
+                        <h3 className="font-medium text-[#282E3A]">Notificações por Email</h3>
+                        <p className="text-sm text-[#666666]">Receba atualizações sobre treinos e atividades</p>
+                      </div>
+                      <input type="checkbox" className="toggle" defaultChecked />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-lg">
+                      <div>
+                        <h3 className="font-medium text-[#282E3A]">Notificações Push</h3>
+                        <p className="text-sm text-[#666666]">Receba lembretes de treinos e metas</p>
+                      </div>
+                      <input type="checkbox" className="toggle" defaultChecked />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-lg">
+                      <div>
+                        <h3 className="font-medium text-[#282E3A]">Newsletter</h3>
+                        <p className="text-sm text-[#666666]">Receba dicas e novidades da 9FIT</p>
+                      </div>
+                      <input type="checkbox" className="toggle" />
+                    </div>
+                  </div>
+
+                  <Button className="btn-9fit">
+                    <Bell className="w-4 h-4 mr-2" />
+                    Salvar Preferências
+                  </Button>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
-};
-
-export default Profile;
+}
