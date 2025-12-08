@@ -14,14 +14,13 @@ import Dashboard from "./pages/Dashboard";
 import ExercisesPage from "./pages/ExercisesPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Perfil from "./pages/Perfil";
 import ReferenceSeriesPage from "./pages/ReferenceSeriesPage";
 import ReportsPage from "./pages/ReportsPage";
 import Sales from "./pages/Sales";
 import StatisticsPage from "./pages/StatisticsPage";
 import StudentsPage from "./pages/StudentsPage";
 import SuperSetsPage from "./pages/SuperSetsPage";
-import Suporte from "./pages/Suporte";
+import Support from "./pages/Support";
 import WhatsAppRedirect from "./pages/WhatsAppRedirect";
 
 const queryClient = new QueryClient();
@@ -37,8 +36,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Auth />} />
-            <Route path="/perfil" element={<Perfil />} />
-            <Route path="/suporte" element={<Suporte />} />
+            <Route path="/suporte" element={<Support />} />
             <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/assessment" element={<Assessment />} />
