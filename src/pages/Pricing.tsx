@@ -164,11 +164,11 @@ const Pricing = () => {
             <div className="hidden md:flex items-center space-x-8">
               <Link to="/" className="text-gray-600 hover:text-gray-900">Início</Link>
               <Link to="/pricing" className="text-blue-600 font-medium">Preços</Link>
-              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
+              <Link to="/login" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
-                <Link to="/dashboard">Entrar</Link>
+                <Link to="/login">Entrar</Link>
               </Button>
               <Button asChild>
                 <Link to="/pricing">Começar Grátis</Link>
@@ -245,7 +245,7 @@ const Pricing = () => {
                     }`}
                     asChild
                   >
-                    <Link to="/dashboard">{plan.cta}</Link>
+                    <Link to="/login">{plan.cta}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -364,7 +364,7 @@ const Pricing = () => {
               className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
               asChild
             >
-              <Link to="/dashboard">Começar Grátis</Link>
+              <Link to="/app">Começar Grátis</Link>
             </Button>
             <Button 
               size="lg" 
@@ -396,7 +396,7 @@ const Pricing = () => {
               <h4 className="font-semibold mb-4">Produto</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><Link to="/pricing" className="hover:text-white">Preços</Link></li>
-                <li><Link to="/dashboard" className="hover:text-white">Dashboard</Link></li>
+                <li><Link to="/app" className="hover:text-white">Dashboard</Link></li>
                 <li><a href="#" className="hover:text-white">Documentação</a></li>
               </ul>
             </div>

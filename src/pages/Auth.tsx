@@ -19,7 +19,7 @@ const Auth = () => {
   const { login, register, user, profile } = useAuth();
 
   if (user && profile) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {

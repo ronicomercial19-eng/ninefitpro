@@ -117,14 +117,14 @@ const Index = () => {
 
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => navigate('/conecte-se')}
+              onClick={() => navigate('/login')}
               variant="outline"
               className="border-gray-600 text-white hover:bg-white hover:text-black transition-all duration-300"
             >
               Entrar
             </Button>
             <Button
-              onClick={() => navigate('/conecte-se')}
+              onClick={() => navigate('/login')}
               className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 transform hover:scale-105"
             >
               Começar Agora
@@ -183,7 +183,7 @@ const Index = () => {
           <div className="text-center">
             <Button
               size="lg"
-              onClick={() => navigate('/conecte-se')}
+              onClick={() => navigate('/login')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg font-medium transition-all duration-300 transform hover:scale-105"
             >
               Quero Começar Meu Treino
@@ -252,7 +252,7 @@ const Index = () => {
             <div className="text-center mt-12">
               <Button
                 size="lg"
-                onClick={() => navigate('/conecte-se')}
+                onClick={() => navigate('/login')}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Começar Meu Treino Agora
@@ -282,7 +282,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Button
                 size="lg"
-                onClick={() => navigate('/conecte-se')}
+                onClick={() => navigate('/app')}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 <TrendingUp className="mr-2 w-6 h-6" />
