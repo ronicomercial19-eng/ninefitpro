@@ -23,6 +23,15 @@ import SuperSetsPage from "./pages/SuperSetsPage";
 import Support from "./pages/Support";
 import WhatsAppRedirect from "./pages/WhatsAppRedirect";
 
+// 9FIT Pages
+import NineFitLogin from "./pages/9fit/Login";
+import NineFitHub from "./pages/9fit/Hub";
+import NineFitTrain from "./pages/9fit/Train";
+import NineFitSocial from "./pages/9fit/Social";
+import NineFitStats from "./pages/9fit/Stats";
+import NineFitProfile from "./pages/9fit/Profile";
+import NineFitOnboarding from "./pages/9fit/Onboarding";
+
 const queryClient = new QueryClient();
 
 const App = () => (

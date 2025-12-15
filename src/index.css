@@ -1,111 +1,92 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* 9FIT Design System - Dark Mode Futuristic with Neon Accents */
 
 @layer base {
   :root {
-    /* Brand Colors - 9FIT */
-    --brand-orange: 25 95% 53%;     /* #FF8426 - 9FIT Primary Orange */
-    --brand-red: 14 91% 51%;        /* #F04E23 - 9FIT Red */
-    --brand-dark: 220 13% 18%;      /* #282E3A - 9FIT Dark */
-    --brand-light: 210 20% 98%;     /* #F8FAFB - 9FIT Light */
+    /* 9FIT Neon Colors */
+    --neon-400: 20 100% 50%;        /* #FF5500 - Primary Neon */
+    --neon-500: 20 100% 45%;        /* Darker neon */
+    --neon-300: 20 100% 60%;        /* Lighter neon */
     
-    /* Neutral Colors */
-    --neutral-black: 0 0% 8%;       /* #141414 */
-    --neutral-dark: 0 0% 15%;       /* #262626 */
-    --neutral-gray: 0 0% 40%;       /* #666666 */
-    --neutral-light: 0 0% 44%;      /* #707070 */
-    --neutral-white: 0 0% 98%;      /* #FAFAFA */
+    /* Dark Palette */
+    --dark-900: 0 0% 0%;            /* #000000 - Pure Black */
+    --dark-800: 0 0% 12%;           /* #1F1F1F - Card Background */
+    --dark-700: 0 0% 16%;           /* #2A2A2A - Borders */
+    --dark-600: 0 0% 20%;           /* #333333 */
     
-    /* System Colors */
-    --background: var(--neutral-white);
-    --foreground: var(--neutral-black);
+    /* Gray Scale */
+    --gray-600: 0 0% 30%;           /* #4B5563 */
+    --gray-500: 0 0% 42%;           /* #6B7280 */
+    --gray-400: 0 0% 61%;           /* #9CA3AF */
+    --gray-300: 0 0% 80%;           /* #CCCCCC */
+    
+    /* System Colors - Dark Mode Default */
+    --background: var(--dark-900);
+    --foreground: 0 0% 100%;        /* White text */
 
-    --card: var(--neutral-white);
-    --card-foreground: var(--neutral-black);
+    --card: var(--dark-800);
+    --card-foreground: 0 0% 100%;
 
-    --popover: var(--neutral-white);
-    --popover-foreground: var(--neutral-black);
+    --popover: var(--dark-800);
+    --popover-foreground: 0 0% 100%;
 
-    --primary: var(--brand-orange);
-    --primary-foreground: var(--neutral-black);
+    --primary: var(--neon-400);
+    --primary-foreground: 0 0% 0%;  /* Black on neon */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: var(--neutral-black);
+    --secondary: var(--dark-700);
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: var(--neutral-gray);
+    --muted: var(--dark-700);
+    --muted-foreground: var(--gray-400);
 
-    --accent: var(--brand-orange);
-    --accent-foreground: var(--neutral-black);
+    --accent: var(--neon-400);
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: var(--brand-orange);
+    --border: var(--dark-700);
+    --input: var(--dark-700);
+    --ring: var(--neon-400);
 
-    --radius: 0.75rem;
+    --radius: 0.25rem;
 
-    /* Custom Design Tokens - 9FIT */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--brand-orange)), hsl(var(--brand-red)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--brand-dark)), hsl(var(--neutral-dark)));
-    --gradient-hero: linear-gradient(180deg, hsl(var(--brand-light)), hsl(var(--background)));
-    --shadow-9fit: 0 4px 20px 0 hsl(var(--brand-orange) / 0.15);
-    --shadow-card: 0 2px 8px 0 hsl(var(--neutral-black) / 0.08);
+    /* 9FIT Custom Tokens */
+    --glow-neon: 0 0 15px hsla(var(--neon-400) / 0.5);
+    --glow-soft: 0 0 80px hsla(var(--neon-400) / 0.05);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: var(--dark-800);
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: var(--neon-400);
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: var(--dark-700);
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: var(--dark-700);
+    --sidebar-ring: var(--neon-400);
   }
 
-  .dark {
-    --background: var(--neutral-black);
-    --foreground: var(--neutral-white);
-
-    --card: var(--neutral-dark);
-    --card-foreground: var(--neutral-white);
-
-    --popover: var(--neutral-dark);
-    --popover-foreground: var(--neutral-white);
-
-    --primary: var(--brand-orange);
-    --primary-foreground: var(--neutral-black);
-
-    --secondary: var(--neutral-dark);
-    --secondary-foreground: var(--neutral-white);
-
-    --muted: var(--neutral-dark);
-    --muted-foreground: var(--neutral-light);
-
-    --accent: var(--brand-orange);
-    --accent-foreground: var(--neutral-black);
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: var(--neutral-dark);
-    --input: var(--neutral-dark);
-    --ring: var(--brand-orange);
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  /* Light mode override (rarely used in 9FIT) */
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+    --primary: var(--neon-400);
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 8%;
+    --muted: 0 0% 96%;
+    --muted-foreground: var(--gray-500);
+    --accent: var(--neon-400);
+    --accent-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
   }
 }
 
@@ -114,109 +95,135 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
-  }
-  
   html {
     scroll-behavior: smooth;
   }
-  
-  /* Mobile Optimizations */
-  .keyboard-is-open {
-    padding-bottom: env(keyboard-inset-height, 0);
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
   }
   
+  /* Mobile Optimizations */
   @media (max-width: 768px) {
     .container {
       padding-left: 1rem;
       padding-right: 1rem;
     }
     
-    /* Improve tap targets */
     button, a, [role="button"] {
       min-height: 44px;
-      min-width: 44px;
-    }
-    
-    /* Better touch scrolling */
-    .scroll-container {
-      -webkit-overflow-scrolling: touch;
     }
   }
 }
 
 @layer components {
-  /* Button Variants - 9FIT Style */
-  .btn-9fit {
-    @apply bg-gradient-to-r from-[#FF8426] to-[#F04E23] text-white hover:from-[#FF9447] hover:to-[#FF5E34] rounded-lg font-semibold transition-all duration-300;
+  /* 9FIT Button Variants */
+  .btn-neon {
+    @apply bg-primary text-primary-foreground font-bold uppercase tracking-wide;
+    @apply hover:opacity-90 disabled:opacity-50;
+    @apply transition-all duration-300;
   }
   
-  .btn-9fit-outline {
-    @apply border-2 border-[#FF8426] text-[#FF8426] hover:bg-[#FF8426] hover:text-white rounded-lg font-semibold transition-all duration-300;
+  .btn-neon-outline {
+    @apply border border-primary text-primary bg-transparent;
+    @apply hover:bg-primary hover:text-primary-foreground;
+    @apply font-bold uppercase tracking-wide;
+    @apply transition-all duration-300;
   }
   
-  .btn-9fit-dark {
-    @apply bg-[#282E3A] text-white hover:bg-[#3A4254] rounded-lg font-semibold transition-all duration-300;
+  .btn-ghost {
+    @apply text-primary hover:text-foreground bg-transparent;
+    @apply font-bold uppercase tracking-wide;
+    @apply transition-all duration-300;
+  }
+
+  /* 9FIT Cards */
+  .card-9fit {
+    @apply bg-card border border-border rounded-sm p-6;
+    @apply hover:border-foreground/20 transition-all duration-300;
+  }
+
+  /* 9FIT Input */
+  .input-9fit {
+    @apply bg-card border border-border rounded-sm;
+    @apply focus:border-primary focus:outline-none;
+    @apply text-foreground placeholder:text-muted-foreground;
+    @apply transition-all duration-300;
+  }
+
+  /* Glow Effects */
+  .glow-neon {
+    box-shadow: var(--glow-neon);
   }
   
-  /* Animations */
-  .fade-in {
+  .glow-soft {
+    box-shadow: var(--glow-soft);
+  }
+
+  /* Animation Classes */
+  .animate-fade-in {
     animation: fadeIn 0.6s ease-out forwards;
   }
   
-  .slide-up {
+  .animate-slide-up {
     animation: slideUp 0.8s ease-out forwards;
   }
   
-  .scale-on-hover {
-    @apply transition-all duration-300 hover:scale-105;
+  .animate-pulse-slow {
+    animation: pulseSlow 2s ease-in-out infinite;
   }
-  
-  /* Gradient Backgrounds */
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-  
-  .gradient-secondary {
-    background: var(--gradient-secondary);
-  }
-  
-  .gradient-dark {
-    background: var(--gradient-dark);
-  }
-  
-  /* Shadows */
-  .shadow-elegant {
-    box-shadow: var(--shadow-elegant);
-  }
-  
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
-}
 
-@layer utilities {
-  /* Smooth Transitions */
-  .transition-smooth {
-    transition: var(--transition-smooth);
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
   }
-  
-  /* Text Gradients */
-  .text-gradient {
-    background: var(--gradient-primary);
+
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(90deg, 
+      hsl(var(--dark-800)) 0%, 
+      hsl(var(--dark-700)) 50%, 
+      hsl(var(--dark-800)) 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  /* Text Utilities */
+  .text-gradient-neon {
+    background: linear-gradient(135deg, hsl(var(--neon-300)), hsl(var(--neon-400)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Title Style */
+  .title-9fit {
+    @apply font-black italic tracking-tighter uppercase;
+  }
   
-  /* Glass Effect */
-  .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  /* Label Style */
+  .label-9fit {
+    @apply text-xs font-bold uppercase tracking-widest;
   }
 }
 
+@layer utilities {
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  /* Glass Effect */
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+
+  /* Safe area padding for mobile */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+/* Keyframes */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -239,9 +246,36 @@
   }
 }
 
-/* Custom scrollbar */
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom scrollbar - 9FIT Style */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -249,10 +283,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--brand-orange) / 0.3);
-  border-radius: 4px;
+  background: hsl(var(--neon-400) / 0.3);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--brand-orange) / 0.5);
+  background: hsl(var(--neon-400) / 0.5);
 }
