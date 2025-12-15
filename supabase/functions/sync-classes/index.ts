@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log(`Fetched ${base44Classes.length} classes from Base44`);
 
     // Sync each class to our Supabase database
-    const syncResults = [];
+    const syncResults: Array<{ action: string; class?: any; error?: string }> = [];
     
     for (const classItem of base44Classes) {
       try {
@@ -83,7 +83,8 @@ serve(async (req) => {
         }
       } catch (syncError) {
         console.error(`Error syncing class ${classItem.name}:`, syncError);
-        syncResults.push({ action: 'error', class: classItem.name, error: syncError.message });
+        const errorMessage = syncError instanceof Error ? syncError.message : 'Unknown error';
+        syncResults.push({ action: 'error', class: classItem.name, error: errorMessage });
       }
     }
 
@@ -99,8 +100,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Classes sync error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({
-      error: error.message,
+      error: errorMessage,
       success: false
     }), {
       status: 500,

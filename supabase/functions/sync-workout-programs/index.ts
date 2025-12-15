@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log(`Fetched ${base44Programs.length} programs from Base44`);
 
     // Sync each program to our Supabase database
-    const syncResults = [];
+    const syncResults: Array<{ action: string; program?: any; error?: string }> = [];
     
     for (const program of base44Programs) {
       try {
@@ -78,7 +78,8 @@ serve(async (req) => {
         }
       } catch (syncError) {
         console.error(`Error syncing program ${program.name}:`, syncError);
-        syncResults.push({ action: 'error', program: program.name, error: syncError.message });
+        const errorMessage = syncError instanceof Error ? syncError.message : 'Unknown error';
+        syncResults.push({ action: 'error', program: program.name, error: errorMessage });
       }
     }
 
@@ -94,8 +95,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Sync error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({
-      error: error.message,
+      error: errorMessage,
       success: false
     }), {
       status: 500,
