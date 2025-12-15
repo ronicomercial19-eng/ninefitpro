@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log(`Fetched ${base44Exercises.length} exercises from Base44`);
 
     // Sync each exercise to our Supabase database
-    const syncResults = [];
+    const syncResults: Array<{ action: string; exercise?: any; error?: string }> = [];
     
     for (const exercise of base44Exercises) {
       try {
@@ -83,7 +83,8 @@ serve(async (req) => {
         }
       } catch (syncError) {
         console.error(`Error syncing exercise ${exercise.name}:`, syncError);
-        syncResults.push({ action: 'error', exercise: exercise.name, error: syncError.message });
+        const errorMessage = syncError instanceof Error ? syncError.message : 'Unknown error';
+        syncResults.push({ action: 'error', exercise: exercise.name, error: errorMessage });
       }
     }
 
@@ -99,8 +100,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Exercises sync error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({
-      error: error.message,
+      error: errorMessage,
       success: false
     }), {
       status: 500,
