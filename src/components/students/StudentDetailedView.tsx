@@ -16,7 +16,10 @@ import {
   Phone,
   Calendar,
   MapPin,
-  Briefcase
+  Briefcase,
+  MessageCircle,
+  Bell,
+  Send
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -96,6 +99,65 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
     const updated = { ...currentStudent, ...updatedData };
     setCurrentStudent(updated);
     onStudentUpdated(updated);
+  };
+
+  const handleSendWhatsAppRegistration = () => {
+    const phone = currentStudent.telefone || currentStudent.whatsapp;
+    if (!phone) {
+      toast.error('Aluno não possui telefone cadastrado');
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    const appUrl = `${window.location.origin}/9fit`;
+    
+    const message = `🏋️ *Bem-vindo ao 9FIT!*
+
+Olá ${currentStudent.nome}! 👋
+
+Seu cadastro foi realizado com sucesso! 🎉
+
+*Dados do seu perfil:*
+📧 Email: ${currentStudent.email}
+🎯 Objetivo: ${currentStudent.objetivo}
+${currentStudent.nivel_experiencia ? `💪 Nível: ${currentStudent.nivel_experiencia}` : ''}
+
+📱 *Acesse o app pelo link:*
+${appUrl}
+
+Bons treinos! 💪🔥`;
+
+    const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    toast.success('Redirecionando para WhatsApp...');
+  };
+
+  const handleSendNewTrainingNotification = () => {
+    const phone = currentStudent.telefone || currentStudent.whatsapp;
+    if (!phone) {
+      toast.error('Aluno não possui telefone cadastrado');
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    const appUrl = `${window.location.origin}/9fit/train`;
+    
+    const message = `🆕 *Novo Treino Disponível!*
+
+Olá ${currentStudent.nome}! 👋
+
+Seu professor adicionou um *novo treino* para você! 🏋️
+
+📱 *Acesse agora:*
+${appUrl}
+
+Não esqueça de conferir e começar a treinar! 💪🔥
+
+Bons treinos! 🎯`;
+
+    const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    toast.success('Notificação enviada via WhatsApp!');
   };
 
   return (
@@ -182,11 +244,26 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
 
             {/* Quick actions */}
             <div className="flex flex-col gap-2">
-              <Button size="sm" variant="outline">
-                Editar Perfil
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleSendWhatsAppRegistration}
+                className="bg-green-500 hover:bg-green-600 text-white border-green-500"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar Cadastro
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleSendNewTrainingNotification}
+                className="bg-neon-400 hover:bg-neon-400/90 text-black border-neon-400"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Notificar Treino
               </Button>
               <Button size="sm" variant="outline">
-                Novo Treino
+                Editar Perfil
               </Button>
               <Button size="sm" variant="outline">
                 Agendar Aula
