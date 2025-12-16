@@ -114,6 +114,17 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
+            
+            {/* 9FIT Routes */}
+            <Route path="/9fit" element={<NineFitLogin />} />
+            <Route path="/9fit/login" element={<NineFitLogin />} />
+            <Route path="/9fit/onboarding" element={<NineFitOnboarding />} />
+            <Route path="/9fit/hub" element={<NineFitHub />} />
+            <Route path="/9fit/train" element={<NineFitTrain />} />
+            <Route path="/9fit/social" element={<NineFitSocial />} />
+            <Route path="/9fit/stats" element={<NineFitStats />} />
+            <Route path="/9fit/profile" element={<NineFitProfile />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
