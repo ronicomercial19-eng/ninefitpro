@@ -101,6 +101,13 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
     onStudentUpdated(updated);
   };
 
+  // Generate temporary password based on student data
+  const generateTempPassword = () => {
+    const namePart = currentStudent.nome.split(' ')[0].toLowerCase().slice(0, 4);
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `${namePart}${randomNum}`;
+  };
+
   const handleSendWhatsAppRegistration = () => {
     const phone = currentStudent.telefone || currentStudent.whatsapp;
     if (!phone) {
@@ -110,6 +117,7 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
 
     const cleanPhone = phone.replace(/\D/g, '');
     const appUrl = `${window.location.origin}/9fit`;
+    const tempPassword = generateTempPassword();
     
     const message = `🏋️ *Bem-vindo ao 9FIT!*
 
@@ -117,13 +125,18 @@ Olá ${currentStudent.nome}! 👋
 
 Seu cadastro foi realizado com sucesso! 🎉
 
-*Dados do seu perfil:*
+*Dados de acesso:*
 📧 Email: ${currentStudent.email}
+🔐 Senha: ${tempPassword}
+
+*Dados do seu perfil:*
 🎯 Objetivo: ${currentStudent.objetivo}
 ${currentStudent.nivel_experiencia ? `💪 Nível: ${currentStudent.nivel_experiencia}` : ''}
 
 📱 *Acesse o app pelo link:*
 ${appUrl}
+
+⚠️ _Recomendamos alterar sua senha no primeiro acesso._
 
 Bons treinos! 💪🔥`;
 
