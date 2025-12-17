@@ -116,7 +116,7 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
     }
 
     const cleanPhone = phone.replace(/\D/g, '');
-    const appUrl = `${window.location.origin}/9fit`;
+    const appUrl = `${window.location.origin}/9fit/login`;
     const tempPassword = generateTempPassword();
     
     const message = `🏋️ *Bem-vindo ao 9FIT!*

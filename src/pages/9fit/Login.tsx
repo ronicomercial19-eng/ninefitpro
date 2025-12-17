@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Lock, ArrowRight, Chrome } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,17 @@ export default function NineFitLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/9fit/hub");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +34,11 @@ export default function NineFitLogin() {
 
       if (error) throw error;
 
-      navigate("/9fit");
+      navigate("/9fit/hub");
     } catch (error: any) {
       toast({
-        title: "Access Denied",
-        description: error.message || "Invalid credentials",
+        title: "Acesso Negado",
+        description: error.message || "Credenciais inválidas",
         variant: "destructive",
       });
     } finally {
@@ -40,14 +51,14 @@ export default function NineFitLogin() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/9fit`,
+          redirectTo: `${window.location.origin}/9fit/hub`,
         },
       });
 
       if (error) throw error;
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Erro",
         description: error.message,
         variant: "destructive",
       });
