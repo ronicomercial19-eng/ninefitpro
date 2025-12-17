@@ -31,6 +31,7 @@ import NineFitSocial from "./pages/9fit/Social";
 import NineFitStats from "./pages/9fit/Stats";
 import NineFitProfile from "./pages/9fit/Profile";
 import NineFitOnboarding from "./pages/9fit/Onboarding";
+import { NineFitLayout } from "./components/9fit/NineFitLayout";
 
 const queryClient = new QueryClient();
 
@@ -115,15 +116,17 @@ const App = () => (
               </PrivateRoute>
             } />
             
-            {/* 9FIT Routes */}
+            {/* 9FIT Routes - Public */}
             <Route path="/9fit" element={<NineFitLogin />} />
             <Route path="/9fit/login" element={<NineFitLogin />} />
             <Route path="/9fit/onboarding" element={<NineFitOnboarding />} />
-            <Route path="/9fit/hub" element={<NineFitHub />} />
-            <Route path="/9fit/train" element={<NineFitTrain />} />
-            <Route path="/9fit/social" element={<NineFitSocial />} />
-            <Route path="/9fit/stats" element={<NineFitStats />} />
-            <Route path="/9fit/profile" element={<NineFitProfile />} />
+            
+            {/* 9FIT Routes - Protected */}
+            <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
+            <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
+            <Route path="/9fit/social" element={<NineFitLayout><NineFitSocial /></NineFitLayout>} />
+            <Route path="/9fit/stats" element={<NineFitLayout><NineFitStats /></NineFitLayout>} />
+            <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
