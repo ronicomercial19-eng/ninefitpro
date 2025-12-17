@@ -166,22 +166,35 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Ruler className="w-5 h-5" />
-          <h2 className="text-xl font-semibold">Medidas</h2>
-        </div>
-        
-        <Button 
-          onClick={() => setShowNewForm(!showNewForm)}
-          className="bg-green-600 hover:bg-green-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova medida
-        </Button>
-      </div>
+    <Tabs defaultValue="medidas" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsTrigger value="medidas" className="flex items-center gap-2">
+          <Ruler className="w-4 h-4" />
+          Medidas
+        </TabsTrigger>
+        <TabsTrigger value="avaliacoes-pdf" className="flex items-center gap-2">
+          <FileText className="w-4 h-4" />
+          Avaliações PDF
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="medidas">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Ruler className="w-5 h-5" />
+              <h2 className="text-xl font-semibold">Medidas</h2>
+            </div>
+            
+            <Button 
+              onClick={() => setShowNewForm(!showNewForm)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova medida
+            </Button>
+          </div>
 
       {/* Medidas Atuais */}
       <Card>
@@ -440,6 +453,12 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
           </div>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="avaliacoes-pdf">
+        <PhysicalAssessmentPDF studentId={studentId} />
+      </TabsContent>
+    </Tabs>
   );
 }
