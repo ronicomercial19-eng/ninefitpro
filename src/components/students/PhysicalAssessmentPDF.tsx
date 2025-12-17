@@ -49,16 +49,15 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
   const fetchAssessments = async () => {
     try {
       const { data, error } = await supabase
-        .from('student_pdf_assessments')
+        .from('student_pdf_assessments' as any)
         .select('*')
         .eq('student_id', studentId)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
-      setAssessments(data || []);
+      setAssessments((data as unknown as Assessment[]) || []);
     } catch (error) {
       console.error('Erro ao buscar avaliações:', error);
-      // Table might not exist yet, that's ok
       setAssessments([]);
     } finally {
       setLoading(false);
@@ -103,7 +102,7 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
 
       // Save to database
       const { data, error } = await supabase
-        .from('student_pdf_assessments')
+        .from('student_pdf_assessments' as any)
         .insert({
           student_id: studentId,
           file_url: urlData.publicUrl,
@@ -116,7 +115,7 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
 
       if (error) throw error;
 
-      setAssessments([data, ...assessments]);
+      setAssessments([(data as unknown as Assessment), ...assessments]);
       setSelectedFile(null);
       setDescription('');
       toast.success('Avaliação física enviada com sucesso!');
@@ -140,7 +139,7 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
 
       // Delete from database
       const { error } = await supabase
-        .from('student_pdf_assessments')
+        .from('student_pdf_assessments' as any)
         .delete()
         .eq('id', assessment.id);
 

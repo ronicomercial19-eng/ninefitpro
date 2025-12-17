@@ -2845,6 +2845,36 @@ export type Database = {
           },
         ]
       }
+      student_pdf_assessments: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_name: string
+          file_url: string
+          id: string
+          student_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          student_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          student_id?: string
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       student_photos: {
         Row: {
           created_at: string | null
