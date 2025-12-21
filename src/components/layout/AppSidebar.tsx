@@ -10,7 +10,8 @@ import {
   Bot, 
   BarChart3, 
   FileText,
-  ChevronRight
+  ChevronRight,
+  Map
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const menuItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Dashboard', url: '/app', icon: LayoutDashboard },
   { title: 'Agenda', url: '/app/agenda', icon: Calendar },
   { title: 'Alunos', url: '/app/alunos', icon: Users },
   { title: 'Exercícios', url: '/app/exercicios', icon: Dumbbell },
@@ -35,6 +36,7 @@ const menuItems = [
   { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
   { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
   { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
+  { title: 'Roadmap', url: '/app/roadmap', icon: Map },
 ];
 
 export function AppSidebar() {
@@ -59,8 +61,8 @@ export function AppSidebar() {
             </div>
             {!collapsed && (
               <div>
-                <h2 className="text-lg font-bold text-foreground">Mobi Trainer</h2>
-                <p className="text-xs text-muted-foreground">Treino</p>
+                <h2 className="text-lg font-bold text-foreground">9FIT PRO</h2>
+                <p className="text-xs text-muted-foreground">Painel do Professor</p>
               </div>
             )}
           </div>

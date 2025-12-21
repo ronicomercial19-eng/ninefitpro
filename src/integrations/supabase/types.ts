@@ -270,6 +270,35 @@ export type Database = {
         }
         Relationships: []
       }
+      athlete_auth_link: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athlete_periodizations: {
         Row: {
           assigned_at: string | null
@@ -322,6 +351,7 @@ export type Database = {
           activated: boolean | null
           age: number | null
           altura_cm: number | null
+          auto_password_temp: string | null
           birthdate: string | null
           coach_id: string
           created_at: string
@@ -337,6 +367,7 @@ export type Database = {
           name: string
           nivel: string | null
           objetivo: string | null
+          password_changed: boolean | null
           perfil_classificado: Json | null
           peso_kg: number | null
           phone: string | null
@@ -355,6 +386,7 @@ export type Database = {
           activated?: boolean | null
           age?: number | null
           altura_cm?: number | null
+          auto_password_temp?: string | null
           birthdate?: string | null
           coach_id: string
           created_at?: string
@@ -370,6 +402,7 @@ export type Database = {
           name: string
           nivel?: string | null
           objetivo?: string | null
+          password_changed?: boolean | null
           perfil_classificado?: Json | null
           peso_kg?: number | null
           phone?: string | null
@@ -388,6 +421,7 @@ export type Database = {
           activated?: boolean | null
           age?: number | null
           altura_cm?: number | null
+          auto_password_temp?: string | null
           birthdate?: string | null
           coach_id?: string
           created_at?: string
@@ -403,6 +437,7 @@ export type Database = {
           name?: string
           nivel?: string | null
           objetivo?: string | null
+          password_changed?: boolean | null
           perfil_classificado?: Json | null
           peso_kg?: number | null
           phone?: string | null
@@ -4496,6 +4531,15 @@ export type Database = {
           profile_injuries: string
         }
         Returns: number
+      }
+      create_athlete_auth_user: {
+        Args: {
+          p_athlete_id: string
+          p_email: string
+          p_name: string
+          p_password: string
+        }
+        Returns: Json
       }
       current_user_email: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }

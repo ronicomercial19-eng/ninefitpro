@@ -42,7 +42,7 @@ export function HUDBar({ level, xp, maxXp, streak }: HUDBarProps) {
 
         {/* Settings */}
         <button
-          onClick={() => navigate("/9fit/settings")}
+          onClick={() => navigate("/9fit/profile")}
           className="text-gray-500 hover:text-foreground transition-colors"
         >
           <Settings className="w-5 h-5" />

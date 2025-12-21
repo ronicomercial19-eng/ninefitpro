@@ -132,7 +132,7 @@ export default function NineFitProfile() {
       {/* Version */}
       <div className="text-center mt-8">
         <p className="text-[10px] text-gray-600 uppercase tracking-wider">
-          9FIT OS v2.0.0
+          9FIT PRO v2.0.0
         </p>
       </div>
 

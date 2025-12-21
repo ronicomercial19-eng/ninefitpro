@@ -108,18 +108,49 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
     return `${namePart}${randomNum}`;
   };
 
-  const handleSendWhatsAppRegistration = () => {
+  const handleSendWhatsAppRegistration = async () => {
     const phone = currentStudent.telefone || currentStudent.whatsapp;
     if (!phone) {
       toast.error('Aluno não possui telefone cadastrado');
       return;
     }
 
+    setLoading(true);
+    const tempPassword = generateTempPassword();
+
+    try {
+      // Create auth user for athlete via edge function
+      const response = await fetch(
+        `https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/create-athlete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            athleteId: currentStudent.id,
+            email: currentStudent.email,
+            password: tempPassword,
+            name: currentStudent.nome,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error('Error creating user:', result.error);
+        // Continue with WhatsApp even if user creation fails (might already exist)
+      }
+    } catch (error) {
+      console.error('Error calling edge function:', error);
+    }
+
     const cleanPhone = phone.replace(/\D/g, '');
     const appUrl = `${window.location.origin}/9fit/login`;
-    const tempPassword = generateTempPassword();
     
-    const message = `🏋️ *Bem-vindo ao 9FIT!*
+    const message = `🏋️ *Bem-vindo ao 9FIT PRO!*
 
 Olá ${currentStudent.nome}! 👋
 
@@ -142,7 +173,8 @@ Bons treinos! 💪🔥`;
 
     const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-    toast.success('Redirecionando para WhatsApp...');
+    toast.success('Usuário criado e redirecionando para WhatsApp...');
+    setLoading(false);
   };
 
   const handleSendNewTrainingNotification = () => {
@@ -159,7 +191,7 @@ Bons treinos! 💪🔥`;
 
 Olá ${currentStudent.nome}! 👋
 
-Seu professor adicionou um *novo treino* para você! 🏋️
+Seu professor adicionou um *novo treino* para você no 9FIT PRO! 🏋️
 
 📱 *Acesse agora:*
 ${appUrl}
