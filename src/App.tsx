@@ -22,6 +22,7 @@ import StudentsPage from "./pages/StudentsPage";
 import SuperSetsPage from "./pages/SuperSetsPage";
 import Support from "./pages/Support";
 import WhatsAppRedirect from "./pages/WhatsAppRedirect";
+import RoadmapPage from "./pages/RoadmapPage";
 
 // 9FIT Pages
 import NineFitLogin from "./pages/9fit/Login";
@@ -112,6 +113,13 @@ const App = () => (
               <PrivateRoute>
                 <AppLayout>
                   <AgendaPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/roadmap" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <RoadmapPage />
                 </AppLayout>
               </PrivateRoute>
             } />

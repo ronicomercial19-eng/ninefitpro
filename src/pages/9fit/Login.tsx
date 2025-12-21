@@ -76,11 +76,16 @@ export default function NineFitLogin() {
       <div className="w-full max-w-sm relative z-10 animate-fade-in">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-            WELCOME BACK
-          </h1>
-          <p className="text-sm text-gray-500 tracking-wide">
-            ENTER THE 9FIT ECOSYSTEM
+          <div className="mb-4">
+            <h1 className="text-4xl font-black italic tracking-tighter text-foreground">
+              9FIT
+            </h1>
+            <span className="text-xl font-bold text-neon-400 tracking-wider">
+              PRO
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 tracking-wide uppercase">
+            Acesse sua conta
           </p>
         </div>
 

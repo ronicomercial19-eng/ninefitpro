@@ -46,11 +46,14 @@ export default function NineFitHub() {
 
       {/* Date Header */}
       <div className="px-4 py-6">
-        <h1 className="text-3xl font-black italic tracking-tighter uppercase text-foreground">
-          9FIT OS
-        </h1>
-        <p className="text-neon-400 text-xs uppercase tracking-[0.2em] font-bold">
-          System Operational
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-3xl font-black italic tracking-tighter uppercase text-foreground">
+            9FIT
+          </h1>
+          <span className="text-xl font-bold text-neon-400">PRO</span>
+        </div>
+        <p className="text-muted-foreground text-xs uppercase tracking-[0.2em] font-bold mt-1">
+          Sistema Operacional
         </p>
       </div>
 

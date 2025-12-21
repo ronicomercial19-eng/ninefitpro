@@ -36,9 +36,14 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
           <div className="absolute inset-0 w-16 h-16 bg-neon-400/20 rounded-full blur-xl" />
         </div>
 
-        <h1 className="text-6xl font-black italic tracking-tighter text-foreground">
-          9FIT
-        </h1>
+        <div className="text-center">
+          <h1 className="text-5xl font-black italic tracking-tighter text-foreground">
+            9FIT
+          </h1>
+          <span className="text-2xl font-bold text-neon-400 tracking-wider">
+            PRO
+          </span>
+        </div>
 
         <p className="text-xs text-gray-600 tracking-widest uppercase animate-slide-up">
           System Initializing
