@@ -144,12 +144,12 @@ export function HTMLTrainingUpload({
         throw new Error(`Erro no upload: ${uploadError.message}`);
       }
 
-      // Get signed URL (valid for 1 year)
-      const { data: urlData } = await supabase.storage
+      // Get public URL (bucket is public now)
+      const { data: urlData } = supabase.storage
         .from('training-html-files')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+        .getPublicUrl(filePath);
 
-      const htmlUrl = urlData?.signedUrl || '';
+      const htmlUrl = urlData?.publicUrl || '';
 
       // Create record in student_training_assignments
       const { error: dbError } = await supabase
