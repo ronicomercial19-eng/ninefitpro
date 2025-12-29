@@ -36,7 +36,7 @@ serve(async (req) => {
       user_metadata: {
         full_name: name,
         athlete_id: athleteId,
-        role: "athlete",
+        user_type: "athlete",
       },
     });
 

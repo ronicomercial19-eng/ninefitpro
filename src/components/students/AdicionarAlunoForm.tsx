@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,17 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 interface AdicionarAlunoFormProps {
   onStudentAdded: () => void;
   onCancel: () => void;
 }
 
+// Gerar senha aleatória segura
+const generatePassword = () => {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$!';
+  let password = '';
+  for (let i = 0; i < 10; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
+
 export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoFormProps) {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [createAuth, setCreateAuth] = useState(true);
+  const [sendEmail, setSendEmail] = useState(true);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -26,7 +39,8 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
     data_nascimento: '',
     peso_kg: '',
     altura_cm: '',
-    observacoes: ''
+    observacoes: '',
+    senha: generatePassword()
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,6 +48,11 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
     
     if (!formData.nome || !formData.email || !formData.objetivo) {
       toast.error('Nome, email e objetivo são obrigatórios');
+      return;
+    }
+
+    if (createAuth && !formData.senha) {
+      toast.error('Senha é obrigatória para criar acesso ao app');
       return;
     }
 
@@ -48,25 +67,85 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
         return;
       }
 
-      // Preparar dados para inserção
-      const studentData = {
-        ...formData,
-        professor_id: user.id,
+      // Buscar nome do professor
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      // Preparar dados para inserção na tabela athletes (não students)
+      const athleteData = {
+        name: formData.nome,
+        coach_id: user.id,
+        phone: formData.telefone || null,
+        birthdate: formData.data_nascimento || null,
+        primary_goal: formData.objetivo,
+        experience_level: formData.nivel_experiencia,
         peso_kg: formData.peso_kg ? parseFloat(formData.peso_kg) : null,
         altura_cm: formData.altura_cm ? parseFloat(formData.altura_cm) : null,
-        data_nascimento: formData.data_nascimento || null,
-        ativo: true
+        injuries_limitations: formData.observacoes || null,
+        activated: false,
+        auto_password_temp: createAuth ? formData.senha : null
       };
 
-      const { data, error } = await supabase
-        .from('students')
-        .insert([studentData])
+      const { data: athleteResult, error: athleteError } = await supabase
+        .from('athletes')
+        .insert([athleteData])
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro detalhado:', error);
-        throw error;
+      if (athleteError) {
+        console.error('Erro ao criar atleta:', athleteError);
+        throw athleteError;
+      }
+
+      // Se deve criar acesso ao app
+      if (createAuth && athleteResult) {
+        try {
+          const { data: authResult, error: authFuncError } = await supabase.functions.invoke('create-athlete-user', {
+            body: {
+              athleteId: athleteResult.id,
+              email: formData.email,
+              password: formData.senha,
+              name: formData.nome
+            }
+          });
+
+          if (authFuncError) {
+            console.error('Erro ao criar usuário:', authFuncError);
+            toast.warning('Aluno criado, mas houve erro ao criar acesso ao app');
+          } else {
+            console.log('Usuário auth criado:', authResult);
+          }
+        } catch (funcError) {
+          console.error('Erro na função de criar usuário:', funcError);
+        }
+      }
+
+      // Enviar email de boas-vindas
+      if (sendEmail && formData.email) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-student-welcome', {
+            body: {
+              studentName: formData.nome,
+              studentEmail: formData.email,
+              password: formData.senha,
+              coachName: profileData?.full_name || 'Seu Professor',
+              objetivo: formData.objetivo,
+              appUrl: `${window.location.origin}/9fit/login`
+            }
+          });
+
+          if (emailError) {
+            console.error('Erro ao enviar email:', emailError);
+            toast.warning('Aluno criado, mas houve erro ao enviar email');
+          } else {
+            toast.success('Email de boas-vindas enviado!');
+          }
+        } catch (emailFuncError) {
+          console.error('Erro na função de email:', emailFuncError);
+        }
       }
 
       toast.success('Aluno adicionado com sucesso!');
@@ -91,6 +170,13 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const regeneratePassword = () => {
+    setFormData(prev => ({
+      ...prev,
+      senha: generatePassword()
     }));
   };
 
@@ -161,6 +247,72 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Acesso ao App */}
+            <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Acesso ao App
+              </h3>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="createAuth" 
+                  checked={createAuth}
+                  onCheckedChange={(checked) => setCreateAuth(checked === true)}
+                />
+                <Label htmlFor="createAuth" className="cursor-pointer">
+                  Criar acesso ao app para o aluno
+                </Label>
+              </div>
+
+              {createAuth && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="senha">Senha de Acesso</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          id="senha"
+                          type={showPassword ? "text" : "password"}
+                          value={formData.senha}
+                          onChange={(e) => handleInputChange('senha', e.target.value)}
+                          placeholder="Senha do aluno"
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      <Button type="button" variant="outline" onClick={regeneratePassword}>
+                        Gerar Nova
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Senha gerada automaticamente. Você pode editar ou gerar uma nova.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="sendEmail" 
+                      checked={sendEmail}
+                      onCheckedChange={(checked) => setSendEmail(checked === true)}
+                    />
+                    <Label htmlFor="sendEmail" className="cursor-pointer flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Enviar dados de acesso por email
+                    </Label>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Informações de Treino */}
