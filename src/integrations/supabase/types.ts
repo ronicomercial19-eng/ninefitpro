@@ -4603,7 +4603,7 @@ export type Database = {
         | "progresso"
         | "periodizacao"
       user_role: "admin" | "student" | "professor"
-      user_status: "active" | "inactive" | "suspended"
+      user_status: "active" | "inactive" | "suspended" | "pending"
       workout_status: "pending" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -4747,7 +4747,7 @@ export const Constants = {
         "periodizacao",
       ],
       user_role: ["admin", "student", "professor"],
-      user_status: ["active", "inactive", "suspended"],
+      user_status: ["active", "inactive", "suspended", "pending"],
       workout_status: ["pending", "active", "completed", "cancelled"],
     },
   },
