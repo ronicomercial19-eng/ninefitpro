@@ -4563,6 +4563,7 @@ export type Database = {
       }
       is_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_professor: { Args: { check_user_id: string }; Returns: boolean }
+      is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       log_audit: {
         Args: {
           p_action: string
