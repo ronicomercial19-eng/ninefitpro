@@ -23,6 +23,9 @@ import SuperSetsPage from "./pages/SuperSetsPage";
 import Support from "./pages/Support";
 import WhatsAppRedirect from "./pages/WhatsAppRedirect";
 import RoadmapPage from "./pages/RoadmapPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import SettingsPage from "./pages/SettingsPage";
+import Register from "./pages/Register";
 
 // 9FIT Pages
 import NineFitLogin from "./pages/9fit/Login";
@@ -47,6 +50,8 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Auth />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/suporte" element={<Support />} />
             <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />
             <Route path="/sales" element={<Sales />} />
@@ -120,6 +125,13 @@ const App = () => (
               <PrivateRoute>
                 <AppLayout>
                   <RoadmapPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/configuracoes" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <SettingsPage />
                 </AppLayout>
               </PrivateRoute>
             } />

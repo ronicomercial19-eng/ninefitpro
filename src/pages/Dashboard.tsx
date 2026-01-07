@@ -56,14 +56,23 @@ export default function Dashboard() {
     try {
       setLoading(true);
       
-      const [studentsRes, workoutsRes, appointmentsRes] = await Promise.all([
-        supabase.from('students').select('id, ativo'),
+      // Obter o usuário atual
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      }
+      
+      // Buscar atletas do coach atual
+      const [athletesRes, workoutsRes, appointmentsRes] = await Promise.all([
+        supabase.from('athletes').select('id, activated').eq('coach_id', currentUser.id),
         supabase.from('workouts').select('id, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('appointments').select('id, scheduled_at').gte('scheduled_at', new Date().toISOString())
       ]);
       
-      const totalClients = studentsRes.data?.length || 0;
-      const activeMembers = studentsRes.data?.filter(s => s.ativo)?.length || 0;
+      const totalClients = athletesRes.data?.length || 0;
+      const activeMembers = athletesRes.data?.filter(s => s.activated)?.length || 0;
       
       setStats({
         totalClients,

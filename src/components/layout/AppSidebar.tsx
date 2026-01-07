@@ -26,6 +26,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
+import { Settings } from 'lucide-react';
+
 const menuItems = [
   { title: 'Dashboard', url: '/app', icon: LayoutDashboard },
   { title: 'Agenda', url: '/app/agenda', icon: Calendar },
@@ -37,6 +39,7 @@ const menuItems = [
   { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
   { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
   { title: 'Roadmap', url: '/app/roadmap', icon: Map },
+  { title: 'Configurações', url: '/app/configuracoes', icon: Settings },
 ];
 
 export function AppSidebar() {
