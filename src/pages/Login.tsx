@@ -52,9 +52,9 @@ const Login = () => {
       await login(email, password);
       toast({
         title: "Login bem-sucedido!",
-        description: "Bem-vindo de volta à Fit Evolution!",
+        description: "Bem-vindo de volta à 9FIT PRO!",
       });
-      navigate('/dashboard');
+      navigate('/app');
     } catch (err: any) {
       const errorMessage = err?.message || 'Email ou senha inválidos';
       toast({

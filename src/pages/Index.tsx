@@ -332,10 +332,10 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4 text-white">Aplicativo</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><button onClick={() => navigate('/dashboard')} className="hover:text-orange-500 transition-colors">Dashboard</button></li>
-                <li><button onClick={() => navigate('/ai-training')} className="hover:text-orange-500 transition-colors">IA Training</button></li>
+                <li><button onClick={() => navigate('/app')} className="hover:text-orange-500 transition-colors">Dashboard</button></li>
+                <li><button onClick={() => navigate('/app/treino-ia')} className="hover:text-orange-500 transition-colors">IA Training</button></li>
                 <li><button onClick={() => navigate('/assessment')} className="hover:text-orange-500 transition-colors">Avaliação</button></li>
-                <li><button onClick={() => navigate('/workout-manager')} className="hover:text-orange-500 transition-colors">Treinos</button></li>
+                <li><button onClick={() => navigate('/app/alunos')} className="hover:text-orange-500 transition-colors">Alunos</button></li>
               </ul>
             </div>
 
@@ -345,7 +345,7 @@ const Index = () => {
                 <li><button onClick={() => navigate('/login')} className="hover:text-orange-500 transition-colors">Entrar</button></li>
                 <li><button onClick={() => navigate('/register')} className="hover:text-orange-500 transition-colors">Registrar</button></li>
                 <li><button onClick={() => navigate('/sales')} className="hover:text-orange-500 transition-colors">Planos</button></li>
-                <li><button onClick={() => navigate('/pricing')} className="hover:text-orange-500 transition-colors">Preços</button></li>
+                <li><button onClick={() => navigate('/suporte')} className="hover:text-orange-500 transition-colors">Suporte</button></li>
               </ul>
             </div>
 

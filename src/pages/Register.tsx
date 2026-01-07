@@ -20,8 +20,9 @@ const Register = () => {
   const { register, user } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect if already logged in
   if (user) {
-    return <Navigate to="/assessment" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

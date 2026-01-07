@@ -55,15 +55,34 @@ export default function StudentsPage() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('students')
+      // Buscar da tabela athletes (onde os alunos são cadastrados)
+      const { data: athletesData, error: athletesError } = await supabase
+        .from('athletes')
         .select('*')
-        .eq('professor_id', user.id)
+        .eq('coach_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (athletesError) throw athletesError;
       
-      setStudents(data || []);
+      // Mapear dados dos athletes para o formato de Student
+      const mappedStudents: Student[] = (athletesData || []).map(athlete => ({
+        id: athlete.id,
+        nome: athlete.name,
+        email: athlete.user_id || '', // Email pode não estar diretamente no athlete
+        telefone: athlete.phone || undefined,
+        objetivo: athlete.primary_goal || athlete.objetivo || '',
+        nivel_experiencia: athlete.experience_level || athlete.nivel || undefined,
+        peso_kg: athlete.peso_kg || undefined,
+        altura_cm: athlete.altura_cm || undefined,
+        observacoes: athlete.injuries_limitations || undefined,
+        ativo: athlete.activated || false,
+        created_at: athlete.created_at,
+        foto_url: undefined,
+        status_pagamento: undefined,
+        data_nascimento: athlete.birthdate || undefined,
+      }));
+      
+      setStudents(mappedStudents);
     } catch (error: any) {
       console.error('Erro ao carregar alunos:', error);
       toast.error('Erro ao carregar lista de alunos');

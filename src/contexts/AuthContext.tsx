@@ -186,13 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: error.message };
       }
 
-      // Redirecionar para dashboard após login bem-sucedido
-      if (data?.user) {
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 100);
-      }
-
+      // Login bem-sucedido - não redirecionar automaticamente, deixar o componente decidir
       return {};
     } catch (error: any) {
       return { error: error.message || 'Erro no login' };
