@@ -116,7 +116,7 @@ const Index = () => {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/auth')}
               className="bg-black text-white border-black 
              hover:bg-black/80 hover:border-black 
              hover:text-white 
@@ -126,7 +126,7 @@ const Index = () => {
               Entrar
             </Button>
             <Button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/auth')}
               className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 transform hover:scale-105"
             >
               Começar Agora
@@ -185,7 +185,7 @@ const Index = () => {
           <div className="text-center">
             <Button
               size="lg"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/auth')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg font-medium transition-all duration-300 transform hover:scale-105"
             >
               Quero Começar Meu Treino
@@ -254,7 +254,7 @@ const Index = () => {
             <div className="text-center mt-12">
               <Button
                 size="lg"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/auth')}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Começar Meu Treino Agora
@@ -342,8 +342,8 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4 text-white">Conta</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><button onClick={() => navigate('/login')} className="hover:text-orange-500 transition-colors">Entrar</button></li>
-                <li><button onClick={() => navigate('/register')} className="hover:text-orange-500 transition-colors">Registrar</button></li>
+                <li><button onClick={() => navigate('/auth')} className="hover:text-orange-500 transition-colors">Entrar</button></li>
+                <li><button onClick={() => navigate('/auth')} className="hover:text-orange-500 transition-colors">Registrar</button></li>
                 <li><button onClick={() => navigate('/sales')} className="hover:text-orange-500 transition-colors">Planos</button></li>
                 <li><button onClick={() => navigate('/suporte')} className="hover:text-orange-500 transition-colors">Suporte</button></li>
               </ul>

@@ -4554,6 +4554,7 @@ export type Database = {
           modelo_id: string
         }[]
       }
+      get_user_role: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -4563,6 +4564,8 @@ export type Database = {
       }
       is_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_professor: { Args: { check_user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_trainer: { Args: { _user_id: string }; Returns: boolean }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       log_audit: {
         Args: {

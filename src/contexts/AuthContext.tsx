@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -8,10 +7,15 @@ interface Profile {
   user_id: string;
   email: string;
   full_name: string | null;
-  role: 'admin' | 'student' | 'professor';
+  role: string;
   phone: string | null;
   avatar_url: string | null;
   is_active: boolean;
+  status?: string;
+}
+
+interface UserRole {
+  role: string;
 }
 
 interface StudentProfile {
@@ -24,23 +28,6 @@ interface StudentProfile {
   ativo?: boolean;
   status?: string;
   professor_id?: string;
-  data_nascimento?: string;
-  cpf?: string;
-  endereco_completo?: string;
-  estado_civil?: string;
-  profissao?: string;
-  emergencia_contato_nome?: string;
-  emergencia_contato_telefone?: string;
-  condicoes_medicas?: string;
-  objetivos_fitness?: string;
-  observacoes?: string;
-  status_pagamento?: string;
-  data_vencimento_plano?: string;
-  whatsapp?: string;
-  altura_cm?: number;
-  peso_kg?: number;
-  created_at?: string;
-  updated_at?: string;
 }
 
 interface AuthContextType {
@@ -48,12 +35,14 @@ interface AuthContextType {
   profile: Profile | null;
   studentProfile: StudentProfile | null;
   session: Session | null;
+  userRole: string | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   loading: boolean;
+  isSuperAdmin: boolean;
   isAdmin: boolean;
-  isProfessor: boolean;
+  isTrainer: boolean;
   isStudent: boolean;
 }
 
@@ -72,37 +61,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile
           setTimeout(async () => {
             await fetchUserProfile(session.user.id);
+            await fetchUserRole(session.user.id);
             await fetchStudentProfile(session.user.email);
           }, 0);
         } else {
           setProfile(null);
           setStudentProfile(null);
+          setUserRole(null);
         }
         
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         fetchUserProfile(session.user.id);
+        fetchUserRole(session.user.id);
         fetchStudentProfile(session.user.email);
       }
       setLoading(false);
@@ -110,6 +100,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+
+      if (!error && data) {
+        setUserRole(data.role);
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -126,27 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data) {
         setProfile(data);
-      } else {
-        // Create profile if doesn't exist
-        const user = await supabase.auth.getUser();
-        if (user.data.user) {
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: userId,
-              email: user.data.user.email,
-              full_name: user.data.user.user_metadata?.full_name || user.data.user.email?.split('@')[0] || 'User',
-              role: user.data.user.email === 'admin@system.com' ? 'admin' : 'student'
-            })
-            .select()
-            .single();
-
-          if (createError) {
-            console.error('Error creating profile:', createError);
-          } else {
-            setProfile(newProfile);
-          }
-        }
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -186,7 +171,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: error.message };
       }
 
-      // Login bem-sucedido - não redirecionar automaticamente, deixar o componente decidir
       return {};
     } catch (error: any) {
       return { error: error.message || 'Erro no login' };
@@ -202,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/9fit/hub`,
           data: {
             full_name: name,
           },
@@ -227,23 +211,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
     setStudentProfile(null);
     setSession(null);
+    setUserRole(null);
   };
 
-  const isAdmin = profile?.role === 'admin';
-  const isProfessor = profile?.role === 'professor';
-  const isStudent = profile?.role === 'student' || Boolean(studentProfile);
+  // Role checks based on user_roles table
+  const isSuperAdmin = userRole === 'super_admin';
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const isTrainer = userRole === 'trainer' || userRole === 'admin' || userRole === 'super_admin';
+  const isStudent = userRole === 'student' || userRole === 'user' || Boolean(studentProfile);
 
   const value = {
     user,
     profile,
     studentProfile,
     session,
+    userRole,
     login,
     register,
     logout,
     loading,
+    isSuperAdmin,
     isAdmin,
-    isProfessor,
+    isTrainer,
     isStudent,
   };
 
