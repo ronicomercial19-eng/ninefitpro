@@ -4591,7 +4591,14 @@ export type Database = {
     }
     Enums: {
       aluno_status: "ativo" | "inativo" | "suspenso"
-      app_role: "admin" | "professor" | "student" | "demo" | "user"
+      app_role:
+        | "admin"
+        | "professor"
+        | "student"
+        | "demo"
+        | "user"
+        | "super_admin"
+        | "trainer"
       appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       notification_type: "info" | "warning" | "success" | "error"
@@ -4734,7 +4741,15 @@ export const Constants = {
   public: {
     Enums: {
       aluno_status: ["ativo", "inativo", "suspenso"],
-      app_role: ["admin", "professor", "student", "demo", "user"],
+      app_role: [
+        "admin",
+        "professor",
+        "student",
+        "demo",
+        "user",
+        "super_admin",
+        "trainer",
+      ],
       appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       notification_type: ["info", "warning", "success", "error"],
