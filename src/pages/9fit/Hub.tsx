@@ -10,23 +10,22 @@ export default function NineFitHub() {
   const [isLoading, setIsLoading] = useState(true);
   const [mission, setMission] = useState<any>(null);
 
-  // Mock data - would come from API
+  // Dados - seria obtido via API/wearables ou entrada manual
   const stats = {
-    level: 12,
-    xp: 750,
-    maxXp: 1000,
+    calories: 320,
+    caloriesGoal: 500,
     streak: 7,
   };
 
   useEffect(() => {
-    // Simulate AI generating mission
+    // Simular geração de missão pela IA
     const timer = setTimeout(() => {
       setMission({
         title: "Complete 20 Min HIIT",
         description:
-          "Based on your goal of fat loss and current fitness level, a high-intensity interval session will maximize caloric burn while preserving muscle mass.",
-        xpReward: 150,
-        type: "workout",
+          "Baseado no seu objetivo de perda de gordura e nível de condicionamento atual, uma sessão de alta intensidade vai maximizar a queima calórica enquanto preserva massa muscular.",
+        caloriesReward: 150,
+        type: "treino",
       });
       setIsLoading(false);
     }, 2000);
@@ -38,9 +37,8 @@ export default function NineFitHub() {
     <div className="min-h-screen bg-background pb-24">
       {/* HUD Bar */}
       <HUDBar
-        level={stats.level}
-        xp={stats.xp}
-        maxXp={stats.maxXp}
+        calories={stats.calories}
+        caloriesGoal={stats.caloriesGoal}
         streak={stats.streak}
       />
 
@@ -50,7 +48,7 @@ export default function NineFitHub() {
           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-foreground">
             9FIT
           </h1>
-          <span className="text-xl font-bold text-neon-400">PRO</span>
+          <span className="text-xl font-bold text-primary">PRO</span>
         </div>
         <p className="text-muted-foreground text-xs uppercase tracking-[0.2em] font-bold mt-1">
           Sistema Operacional
@@ -63,7 +61,7 @@ export default function NineFitHub() {
           mission={mission}
           isLoading={isLoading}
           onComplete={() => {
-            // Update XP, show celebration, etc.
+            // Atualizar calorias, mostrar celebração, etc.
           }}
         />
       </div>
