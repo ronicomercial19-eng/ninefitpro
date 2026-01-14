@@ -1,11 +1,11 @@
-import { Home, Dumbbell, Users, BarChart2, User } from "lucide-react";
+import { Home, Dumbbell, CalendarDays, BarChart2, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   { icon: Home, label: "Início", path: "/9fit/hub" },
   { icon: Dumbbell, label: "Treinos", path: "/9fit/train" },
-  { icon: Users, label: "Social", path: "/9fit/social" },
-  { icon: BarChart2, label: "Stats", path: "/9fit/stats" },
+  { icon: CalendarDays, label: "Aulas", path: "/9fit/aulas" },
+  { icon: BarChart2, label: "Progresso", path: "/9fit/stats" },
   { icon: User, label: "Perfil", path: "/9fit/profile" },
 ];
 

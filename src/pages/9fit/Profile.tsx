@@ -8,26 +8,26 @@ import {
   HelpCircle, 
   LogOut,
   ChevronRight,
-  Camera
+  Camera,
+  Flame
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 
 const menuItems = [
-  { icon: Bell, label: "Notifications", path: "/9fit/settings/notifications" },
-  { icon: Shield, label: "Privacy", path: "/9fit/settings/privacy" },
-  { icon: CreditCard, label: "Subscription", path: "/9fit/premium" },
-  { icon: HelpCircle, label: "Help & Support", path: "/9fit/support" },
+  { icon: Bell, label: "Notificações", path: "/9fit/settings/notifications" },
+  { icon: Shield, label: "Privacidade", path: "/9fit/settings/privacy" },
+  { icon: CreditCard, label: "Assinatura", path: "/9fit/premium" },
+  { icon: HelpCircle, label: "Ajuda & Suporte", path: "/9fit/support" },
 ];
 
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const [user] = useState({
-    name: "Operative 9FIT",
-    email: "user@9fit.app",
-    level: 12,
-    xp: 8500,
+    name: "Operador 9FIT",
+    email: "usuario@9fit.app",
+    calories: 8500,
     workouts: 45,
     streak: 7,
   });
@@ -42,13 +42,13 @@ export default function NineFitProfile() {
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <h1 className="text-2xl font-black italic uppercase tracking-tighter text-foreground">
-          Profile
+          Perfil
         </h1>
       </div>
 
       {/* Digital ID Card */}
       <div className="px-4 mb-8">
-        <div className="bg-gradient-to-br from-dark-800 to-dark-700 border border-dark-600 rounded-sm p-6 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-card to-muted border border-border rounded-sm p-6 relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-5">
             <div className="absolute top-0 right-0 w-32 h-32 border border-foreground rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -58,10 +58,10 @@ export default function NineFitProfile() {
           <div className="relative flex items-start gap-4">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-20 h-20 bg-dark-600 rounded-sm flex items-center justify-center">
-                <User className="w-10 h-10 text-gray-500" />
+              <div className="w-20 h-20 bg-muted rounded-sm flex items-center justify-center">
+                <User className="w-10 h-10 text-muted-foreground" />
               </div>
-              <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-neon-400 rounded-full flex items-center justify-center">
+              <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Camera className="w-4 h-4 text-primary-foreground" />
               </button>
             </div>
@@ -71,20 +71,23 @@ export default function NineFitProfile() {
               <h2 className="text-lg font-black uppercase text-foreground">
                 {user.name}
               </h2>
-              <p className="text-xs text-gray-500 mb-3">{user.email}</p>
+              <p className="text-xs text-muted-foreground mb-3">{user.email}</p>
 
               <div className="flex gap-4">
                 <div>
-                  <p className="text-xl font-black text-neon-400">{user.level}</p>
-                  <p className="text-[10px] text-gray-500 uppercase">Level</p>
-                </div>
-                <div>
-                  <p className="text-xl font-black text-foreground">{user.xp.toLocaleString()}</p>
-                  <p className="text-[10px] text-gray-500 uppercase">XP</p>
+                  <p className="text-xl font-black text-primary flex items-center gap-1">
+                    <Flame className="w-4 h-4" />
+                    {user.calories.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Calorias</p>
                 </div>
                 <div>
                   <p className="text-xl font-black text-foreground">{user.workouts}</p>
-                  <p className="text-[10px] text-gray-500 uppercase">Workouts</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Treinos</p>
+                </div>
+                <div>
+                  <p className="text-xl font-black text-foreground">{user.streak}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Sequência</p>
                 </div>
               </div>
             </div>
@@ -92,8 +95,8 @@ export default function NineFitProfile() {
 
           {/* Badge */}
           <div className="absolute top-4 right-4">
-            <span className="text-[10px] font-black uppercase tracking-wider text-neon-400 border border-neon-400 px-2 py-1 rounded-sm">
-              LVL {user.level}
+            <span className="text-[10px] font-black uppercase tracking-wider text-primary border border-primary px-2 py-1 rounded-sm">
+              PRO
             </span>
           </div>
         </div>
@@ -101,18 +104,18 @@ export default function NineFitProfile() {
 
       {/* Menu */}
       <div className="px-4">
-        <div className="bg-dark-800 border border-dark-700 rounded-sm overflow-hidden divide-y divide-dark-700">
+        <div className="bg-card border border-border rounded-sm overflow-hidden divide-y divide-border">
           {menuItems.map((item) => (
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className="w-full flex items-center gap-4 p-4 hover:bg-dark-700 transition-colors"
+              className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors"
             >
-              <item.icon className="w-5 h-5 text-gray-500" />
+              <item.icon className="w-5 h-5 text-muted-foreground" />
               <span className="flex-1 text-left text-sm font-medium text-foreground">
                 {item.label}
               </span>
-              <ChevronRight className="w-5 h-5 text-gray-500" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
           ))}
         </div>
@@ -120,18 +123,18 @@ export default function NineFitProfile() {
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-4 p-4 mt-4 bg-dark-800 border border-dark-700 rounded-sm hover:bg-red-500/10 hover:border-red-500/30 transition-colors group"
+          className="w-full flex items-center gap-4 p-4 mt-4 bg-card border border-border rounded-sm hover:bg-destructive/10 hover:border-destructive/30 transition-colors group"
         >
-          <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
-          <span className="text-sm font-medium text-foreground group-hover:text-red-500">
-            Logout
+          <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-destructive" />
+          <span className="text-sm font-medium text-foreground group-hover:text-destructive">
+            Sair
           </span>
         </button>
       </div>
 
       {/* Version */}
       <div className="text-center mt-8">
-        <p className="text-[10px] text-gray-600 uppercase tracking-wider">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
           9FIT PRO v2.0.0
         </p>
       </div>

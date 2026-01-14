@@ -883,6 +883,7 @@ export type Database = {
           id: string
           status: string | null
           user_email: string
+          user_id: string | null
         }
         Insert: {
           booking_time?: string | null
@@ -891,6 +892,7 @@ export type Database = {
           id?: string
           status?: string | null
           user_email: string
+          user_id?: string | null
         }
         Update: {
           booking_time?: string | null
@@ -899,6 +901,7 @@ export type Database = {
           id?: string
           status?: string | null
           user_email?: string
+          user_id?: string | null
         }
         Relationships: [
           {
