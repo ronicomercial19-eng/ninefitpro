@@ -51,10 +51,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "aluno_periodizacao_periodizacao_id_fkey"
             columns: ["periodizacao_id"]
             isOneToOne: false
             referencedRelation: "periodizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_periodizacao_id_fkey"
+            columns: ["periodizacao_id"]
+            isOneToOne: false
+            referencedRelation: "v_periodizations_canonical"
             referencedColumns: ["id"]
           },
         ]
@@ -297,6 +311,13 @@ export type Database = {
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
         ]
       }
       athlete_periodizations: {
@@ -342,6 +363,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
         ]
@@ -2141,10 +2169,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_plans_periodization"
             columns: ["periodization_id"]
             isOneToOne: false
             referencedRelation: "periodizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_plans_periodization"
+            columns: ["periodization_id"]
+            isOneToOne: false
+            referencedRelation: "v_periodizations_canonical"
             referencedColumns: ["id"]
           },
         ]
@@ -3183,6 +3225,39 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      system_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          metadata: Json | null
+          target_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          event_type: Database["public"]["Enums"]["event_type"]
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
         }
         Relationships: []
       }
@@ -4413,6 +4488,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "workouts_periodization_id_fkey"
+            columns: ["periodization_id"]
+            isOneToOne: false
+            referencedRelation: "v_periodizations_canonical"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "workouts_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -4468,6 +4550,203 @@ export type Database = {
       }
     }
     Views: {
+      v_assessments_canonical: {
+        Row: {
+          altura: number | null
+          assessment_date: string | null
+          athlete_id: string | null
+          circunferencia_braco: number | null
+          circunferencia_cintura: number | null
+          circunferencia_coxa: number | null
+          circunferencia_panturrilha: number | null
+          circunferencia_peitoral: number | null
+          circunferencia_quadril: number | null
+          created_at: string | null
+          evaluator_name: string | null
+          gordura_corporal: number | null
+          id: string | null
+          imc: number | null
+          massa_gorda: number | null
+          massa_magra: number | null
+          massa_muscular: number | null
+          notes: string | null
+          peso: number | null
+          rml_abs: number | null
+          rml_agachamento: number | null
+          rml_flexao: number | null
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          altura?: number | null
+          assessment_date?: string | null
+          athlete_id?: string | null
+          circunferencia_braco?: number | null
+          circunferencia_cintura?: number | null
+          circunferencia_coxa?: number | null
+          circunferencia_panturrilha?: number | null
+          circunferencia_peitoral?: number | null
+          circunferencia_quadril?: number | null
+          created_at?: string | null
+          evaluator_name?: string | null
+          gordura_corporal?: number | null
+          id?: string | null
+          imc?: number | null
+          massa_gorda?: number | null
+          massa_magra?: number | null
+          massa_muscular?: number | null
+          notes?: string | null
+          peso?: number | null
+          rml_abs?: number | null
+          rml_agachamento?: number | null
+          rml_flexao?: number | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          altura?: number | null
+          assessment_date?: string | null
+          athlete_id?: string | null
+          circunferencia_braco?: number | null
+          circunferencia_cintura?: number | null
+          circunferencia_coxa?: number | null
+          circunferencia_panturrilha?: number | null
+          circunferencia_peitoral?: number | null
+          circunferencia_quadril?: number | null
+          created_at?: string | null
+          evaluator_name?: string | null
+          gordura_corporal?: number | null
+          id?: string | null
+          imc?: number | null
+          massa_gorda?: number | null
+          massa_magra?: number | null
+          massa_muscular?: number | null
+          notes?: string | null
+          peso?: number | null
+          rml_abs?: number | null
+          rml_agachamento?: number | null
+          rml_flexao?: number | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_assignments_canonical: {
+        Row: {
+          assigned_at: string | null
+          athlete_id: string | null
+          created_at: string | null
+          id: string | null
+          match_factors: Json | null
+          match_percentage: number | null
+          notes: string | null
+          periodization_model_id: string | null
+          professor_id: string | null
+          status: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          athlete_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          match_factors?: Json | null
+          match_percentage?: number | null
+          notes?: string | null
+          periodization_model_id?: string | null
+          professor_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          athlete_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          match_factors?: Json | null
+          match_percentage?: number | null
+          notes?: string | null
+          periodization_model_id?: string | null
+          professor_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_periodizations_canonical: {
+        Row: {
+          athlete_id: string | null
+          created_at: string | null
+          current_phase: string | null
+          description: string | null
+          duration: string | null
+          graph_data: Json | null
+          id: string | null
+          macrocycle: Json | null
+          mesocycle: Json | null
+          microcycle: Json | null
+          periodization_data: Json | null
+          professor_id: string | null
+          title: string | null
+          total_phases: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          athlete_id?: string | null
+          created_at?: string | null
+          current_phase?: string | null
+          description?: string | null
+          duration?: string | null
+          graph_data?: Json | null
+          id?: string | null
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
+          periodization_data?: Json | null
+          professor_id?: string | null
+          title?: string | null
+          total_phases?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          athlete_id?: string | null
+          created_at?: string | null
+          current_phase?: string | null
+          description?: string | null
+          duration?: string | null
+          graph_data?: Json | null
+          id?: string | null
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
+          periodization_data?: Json | null
+          professor_id?: string | null
+          title?: string | null
+          total_phases?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       v_periodizations_catalog: {
         Row: {
           created_at: string | null
@@ -4510,6 +4789,80 @@ export type Database = {
           recommended_for?: Json | null
           title?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      v_students_canonical: {
+        Row: {
+          altura_cm: number | null
+          ambiente_treino: string | null
+          ativo: boolean | null
+          created_at: string | null
+          data_nascimento: string | null
+          frequencia_semanal: number | null
+          genero: string | null
+          id: string | null
+          metadata: Json | null
+          nivel_experiencia: string | null
+          nome: string | null
+          objetivo: string | null
+          peso_kg: number | null
+          professor_id: string | null
+          restricoes_medicas: string | null
+          telefone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          altura_cm?: number | null
+          ambiente_treino?: string | null
+          ativo?: boolean | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          frequencia_semanal?: never
+          genero?: string | null
+          id?: string | null
+          metadata?: Json | null
+          nivel_experiencia?: never
+          nome?: string | null
+          objetivo?: never
+          peso_kg?: number | null
+          professor_id?: string | null
+          restricoes_medicas?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          altura_cm?: number | null
+          ambiente_treino?: string | null
+          ativo?: boolean | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          frequencia_semanal?: never
+          genero?: string | null
+          id?: string | null
+          metadata?: Json | null
+          nivel_experiencia?: never
+          nome?: string | null
+          objetivo?: never
+          peso_kg?: number | null
+          professor_id?: string | null
+          restricoes_medicas?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      v_system_health: {
+        Row: {
+          active_assignments: number | null
+          active_athletes: number | null
+          checked_at: string | null
+          events_last_24h: number | null
+          pending_notifications: number | null
+          workouts_last_7_days: number | null
         }
         Relationships: []
       }
@@ -4578,6 +4931,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_event: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_event_type: Database["public"]["Enums"]["event_type"]
+          p_metadata?: Json
+          p_target_id?: string
+        }
+        Returns: string
+      }
       match_periodizations_for_profile: {
         Args: { p_user_profile_id: string }
         Returns: {
@@ -4606,7 +4969,31 @@ export type Database = {
         | "super_admin"
         | "trainer"
       appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
+      assignment_status:
+        | "pending"
+        | "assigned"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
       difficulty_level: "beginner" | "intermediate" | "advanced"
+      entity_status: "active" | "inactive" | "pending" | "archived" | "deleted"
+      event_type:
+        | "created"
+        | "updated"
+        | "deleted"
+        | "assigned"
+        | "started"
+        | "completed"
+        | "approved"
+        | "rejected"
+        | "notified"
+        | "viewed"
+      execution_status:
+        | "not_started"
+        | "in_progress"
+        | "paused"
+        | "completed"
+        | "skipped"
       notification_type: "info" | "warning" | "success" | "error"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
       post_type: "announcement" | "workout" | "nutrition" | "tips"
@@ -4757,7 +5144,34 @@ export const Constants = {
         "trainer",
       ],
       appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
+      assignment_status: [
+        "pending",
+        "assigned",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
       difficulty_level: ["beginner", "intermediate", "advanced"],
+      entity_status: ["active", "inactive", "pending", "archived", "deleted"],
+      event_type: [
+        "created",
+        "updated",
+        "deleted",
+        "assigned",
+        "started",
+        "completed",
+        "approved",
+        "rejected",
+        "notified",
+        "viewed",
+      ],
+      execution_status: [
+        "not_started",
+        "in_progress",
+        "paused",
+        "completed",
+        "skipped",
+      ],
       notification_type: ["info", "warning", "success", "error"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
       post_type: ["announcement", "workout", "nutrition", "tips"],
