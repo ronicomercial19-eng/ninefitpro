@@ -488,6 +488,8 @@ export type Database = {
           created_at: string | null
           id: string
           ip_address: unknown
+          new_data: Json | null
+          old_data: Json | null
           resource_id: string
           resource_type: string
           user_agent: string | null
@@ -498,6 +500,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           ip_address?: unknown
+          new_data?: Json | null
+          old_data?: Json | null
           resource_id: string
           resource_type: string
           user_agent?: string | null
@@ -508,6 +512,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           ip_address?: unknown
+          new_data?: Json | null
+          old_data?: Json | null
           resource_id?: string
           resource_type?: string
           user_agent?: string | null
