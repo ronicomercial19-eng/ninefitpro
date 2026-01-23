@@ -35,6 +35,8 @@ import NineFitAulas from "./pages/9fit/Aulas";
 import NineFitStats from "./pages/9fit/Stats";
 import NineFitProfile from "./pages/9fit/Profile";
 import NineFitOnboarding from "./pages/9fit/Onboarding";
+import NineFitDieta from "./pages/9fit/Dieta";
+import NineFitMensagens from "./pages/9fit/Mensagens";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 
 const queryClient = new QueryClient();
@@ -148,6 +150,8 @@ const App = () => (
             <Route path="/9fit/aulas" element={<NineFitLayout><NineFitAulas /></NineFitLayout>} />
             <Route path="/9fit/stats" element={<NineFitLayout><NineFitStats /></NineFitLayout>} />
             <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />
+            <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />
+            <Route path="/9fit/mensagens" element={<NineFitLayout><NineFitMensagens /></NineFitLayout>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
