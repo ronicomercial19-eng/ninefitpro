@@ -3,11 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles } from "lucide-react";
+import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles, Globe, Code2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { HTMLTrainingUpload } from "@/components/students/HTMLTrainingUpload";
-
+import { TrainingContentUpload } from "@/components/students/TrainingContentUpload";
 interface Student {
   id: string;
   nome: string;
@@ -126,16 +125,26 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   };
 
   const getTrainingTypeBadge = (training: TrainingAssignment) => {
-    if (training.training_type === 'html') {
+    if (training.training_type === 'link') {
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          <FileText className="w-3 h-3 mr-1" />
-          HTML
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-700">
+          <Globe className="w-3 h-3 mr-1" />
+          Link
+        </Badge>
+      );
+    }
+    if (training.training_type === 'html') {
+      const source = training.training_data?.source;
+      const isCodePaste = source === 'html_code_paste';
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700">
+          {isCodePaste ? <Code2 className="w-3 h-3 mr-1" /> : <FileText className="w-3 h-3 mr-1" />}
+          {isCodePaste ? 'Código' : 'HTML'}
         </Badge>
       );
     }
     return (
-      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-700">
         <Sparkles className="w-3 h-3 mr-1" />
         IA
       </Badge>
@@ -164,16 +173,12 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </div>
         
         <div className="flex gap-2">
-          <Button className="bg-primary hover:bg-primary/90">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Novo Treino IA
-          </Button>
           <Button 
-            variant="outline"
             onClick={() => setShowHTMLUpload(true)}
+            className="bg-primary hover:bg-primary/90"
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload HTML
+            <Plus className="w-4 h-4 mr-2" />
+            Atribuir Treino
           </Button>
         </div>
       </div>
@@ -184,19 +189,26 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
           <CardTitle>Status do Treinamento</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {activeTrainings.length}
               </div>
-              <div className="text-sm text-muted-foreground">Treinos Ativos</div>
+              <div className="text-sm text-muted-foreground">Ativos</div>
             </div>
             
             <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {trainings.filter(t => t.training_type === 'link').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Links</div>
+            </div>
+            
+            <div className="text-center p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg">
+              <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
                 {trainings.filter(t => t.training_type === 'html').length}
               </div>
-              <div className="text-sm text-muted-foreground">Treinos HTML</div>
+              <div className="text-sm text-muted-foreground">HTML</div>
             </div>
             
             <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
@@ -387,10 +399,10 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </Card>
       )}
 
-      {/* HTML Upload Dialog */}
+      {/* Training Content Upload Dialog */}
       <Dialog open={showHTMLUpload} onOpenChange={setShowHTMLUpload}>
-        <DialogContent className="max-w-2xl">
-          <HTMLTrainingUpload
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <TrainingContentUpload
             studentId={student.id}
             studentName={student.nome}
             onUploadSuccess={() => {
