@@ -28,9 +28,19 @@ serve(async (req) => {
       throw new Error("Missing required fields: athleteId, email, password");
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (!emailRegex.test(trimmedEmail)) {
+      throw new Error(`Invalid email format: "${email}". Please provide a valid email address.`);
+    }
+
+    console.log("Creating auth user for:", { athleteId, email: trimmedEmail, name });
+
     // Create auth user with admin API
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: trimmedEmail,
       password,
       email_confirm: true,
       user_metadata: {

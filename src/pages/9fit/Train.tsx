@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X } from "lucide-react";
+import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ export default function NineFitTrain() {
   const [loading, setLoading] = useState(true);
   const [selectedTraining, setSelectedTraining] = useState<TrainingAssignment | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -87,13 +89,50 @@ export default function NineFitTrain() {
     }
   };
 
-  const handleOpenTraining = (training: TrainingAssignment) => {
-    if (training.html_file_url || training.training_type === 'link') {
-      setSelectedTraining(training);
-      setIsFullscreen(true);
-    } else {
-      toast.info("Visualização em desenvolvimento");
+  const handleOpenTraining = async (training: TrainingAssignment) => {
+    if (training.training_type === 'link' && training.html_file_url) {
+      // Open external link in new tab
+      window.open(training.html_file_url, '_blank');
+      return;
     }
+    
+    if (training.html_file_url && training.training_type === 'html') {
+      setSelectedTraining(training);
+      setLoadingContent(true);
+      setHtmlContent(null);
+      
+      try {
+        // Fetch HTML content directly to avoid Content-Type issues
+        const response = await fetch(training.html_file_url);
+        const text = await response.text();
+        
+        // Check if the content is already HTML or if it's escaped
+        if (text.startsWith('<html') || text.startsWith('<!DOCTYPE') || text.startsWith('<HTML')) {
+          setHtmlContent(text);
+        } else if (text.includes('&lt;html') || text.includes('&lt;HTML')) {
+          // Content is HTML-escaped, decode it
+          const decoded = text
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'");
+          setHtmlContent(decoded);
+        } else {
+          // Raw text, wrap in basic HTML
+          setHtmlContent(`<!DOCTYPE html><html><body>${text}</body></html>`);
+        }
+      } catch (error) {
+        console.error("Error fetching training content:", error);
+        toast.error("Erro ao carregar o treino");
+        setHtmlContent(null);
+      } finally {
+        setLoadingContent(false);
+      }
+      return;
+    }
+    
+    toast.info("Visualização em desenvolvimento");
   };
 
   const getTrainingIcon = (training: TrainingAssignment) => {
@@ -257,34 +296,68 @@ export default function NineFitTrain() {
       </div>
 
       {/* Fullscreen Training Viewer Dialog */}
-      <Dialog open={!!selectedTraining} onOpenChange={() => setSelectedTraining(null)}>
+      <Dialog open={!!selectedTraining} onOpenChange={() => {
+        setSelectedTraining(null);
+        setHtmlContent(null);
+      }}>
         <DialogContent className="max-w-[100vw] w-full h-[100vh] p-0 m-0 bg-white rounded-none">
           {/* Custom Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-dark-900 border-b border-dark-700">
             <div className="flex items-center gap-3">
               {selectedTraining && getTrainingIcon(selectedTraining)}
               <div>
-                <h2 className="text-sm font-bold text-foreground">
+                <DialogTitle className="text-sm font-bold text-foreground">
                   {selectedTraining?.training_name}
-                </h2>
+                </DialogTitle>
                 <p className="text-xs text-muted-foreground">
                   {selectedTraining && getTrainingTypeLabel(selectedTraining)}
                 </p>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setSelectedTraining(null)}
-              className="text-foreground hover:bg-dark-700"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {selectedTraining?.html_file_url && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => window.open(selectedTraining.html_file_url, '_blank')}
+                  className="text-foreground hover:bg-dark-700"
+                  title="Abrir em nova aba"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => {
+                  setSelectedTraining(null);
+                  setHtmlContent(null);
+                }}
+                className="text-foreground hover:bg-dark-700"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
           
           {/* Content Area - Full Height */}
           <div className="flex-1 w-full h-[calc(100vh-60px)] bg-white overflow-hidden">
-            {selectedTraining?.html_file_url && (
+            {loadingContent ? (
+              <div className="flex items-center justify-center h-full bg-dark-900">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Carregando treino...</p>
+                </div>
+              </div>
+            ) : htmlContent ? (
+              <iframe
+                srcDoc={htmlContent}
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                className="w-full h-full border-0"
+                title={selectedTraining?.training_name || "Treino"}
+                style={{ minHeight: 'calc(100vh - 60px)' }}
+              />
+            ) : selectedTraining?.html_file_url ? (
               <iframe
                 src={selectedTraining.html_file_url}
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -292,6 +365,10 @@ export default function NineFitTrain() {
                 title={selectedTraining.training_name}
                 style={{ minHeight: 'calc(100vh - 60px)' }}
               />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-dark-900">
+                <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
+              </div>
             )}
           </div>
         </DialogContent>

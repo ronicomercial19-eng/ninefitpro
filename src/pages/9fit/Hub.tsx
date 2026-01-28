@@ -66,7 +66,10 @@ export default function NineFitHub() {
       // Fetch today's training assignment for this user
       const today = format(new Date(), "yyyy-MM-dd");
       
-      // Get athlete profile linked to this user
+      // Get athlete profile linked to this user (try both direct link and athlete_auth_link)
+      let athleteId: string | null = null;
+      
+      // First try direct user_id in athletes
       const { data: athleteData } = await supabase
         .from("athletes")
         .select("id, name")
@@ -74,26 +77,48 @@ export default function NineFitHub() {
         .single();
 
       if (athleteData) {
+        athleteId = athleteData.id;
+      } else {
+        // Fallback: try athlete_auth_link table
+        const { data: linkData } = await supabase
+          .from("athlete_auth_link")
+          .select("athlete_id")
+          .eq("user_id", user?.id)
+          .single();
+        
+        if (linkData) {
+          athleteId = linkData.athlete_id;
+        }
+      }
+
+      if (athleteId) {
         // Fetch training assignments for this athlete
-        const { data: trainingData } = await supabase
+        const { data: trainingData, error: trainingError } = await supabase
           .from("student_training_assignments")
           .select("*")
-          .eq("student_id", athleteData.id)
+          .eq("student_id", athleteId)
           .eq("is_active", true)
           .lte("start_date", today)
-          .or(`end_date.is.null,end_date.gte.${today}`)
+          .order("created_at", { ascending: false })
           .limit(1);
+
+        console.log("Training data for athlete:", athleteId, trainingData, trainingError);
 
         if (trainingData && trainingData.length > 0) {
           const training = trainingData[0];
-          setTodayTraining({
-            id: training.id,
-            name: training.training_name,
-            type: training.training_type || "Treino de Força",
-            exerciseCount: 4,
-            estimatedDuration: 45,
-            html_file_url: training.html_file_url
-          });
+          // Check if end_date is null or >= today
+          const endDateValid = !training.end_date || training.end_date >= today;
+          
+          if (endDateValid) {
+            setTodayTraining({
+              id: training.id,
+              name: training.training_name,
+              type: training.training_type || "Treino de Força",
+              exerciseCount: 4,
+              estimatedDuration: 45,
+              html_file_url: training.html_file_url
+            });
+          }
         }
 
         // Fetch workout progress for stats
