@@ -1,170 +1,240 @@
 
-# Plano de Correção: Fluxo Admin-Aluno para Treinos
+# Plano: Adicionar Dieta ao Perfil do Aluno
 
-## Resumo do Problema
-
-Foram identificados 4 bugs críticos que quebram o fluxo de criação de treinos:
-
-1. **Foreign Key Incorreta**: A tabela `student_training_assignments.student_id` referencia `students.id`, mas o admin passa IDs da tabela `athletes` (que é a tabela ativa com dados reais)
-2. **Constraint de Tipo Violada**: O campo `training_type` só aceita `['json', 'html']`, mas o código tenta inserir `'link'`
-3. **Fontes de Dados Inconsistentes**: `StudentsPage.tsx` busca de `athletes`, mas `StudentsList.tsx` busca de `students` (vazia)
-4. **Componentes Duplicados**: Duas listas de alunos acessando tabelas diferentes
+## Objetivo
+Implementar um sistema de atribuição de dietas no perfil do aluno que permita ao admin (coach) enviar planos nutricionais via **Link**, **Código HTML** ou **Upload de arquivo HTML**. O aluno visualiza as dietas na página de Dieta com um botão "Ver Completo" que renderiza o conteúdo em fullscreen.
 
 ---
 
-## Correções Necessárias
+## Arquitetura do Sistema
 
-### Fase 1: Correção do Banco de Dados
-
-**1.1 Alterar Foreign Key para apontar para `athletes`**
 ```text
-- Remover FK atual: student_training_assignments_student_id_fkey
-- Criar nova FK: student_training_assignments -> athletes(id)
+ADMIN (Coach)                         ALUNO (Athlete)
++----------------------------+        +----------------------------+
+| StudentDetailedView        |        | /9fit/dieta                |
+| └── Tab: Dieta (NOVA)     |        |                            |
+|     └── DietContentUpload  |        | Lista dietas atribuídas    |
+|         • Link            --|-----→ | Botão "Ver Completo"       |
+|         • Código HTML     --|-----→ | Dialog Fullscreen          |
+|         • Upload Arquivo  --|-----→ | Renderiza HTML/Link        |
++----------------------------+        +----------------------------+
+            ↓                                     ↑
+     student_diet_assignments ←-------------------+
+     (NOVA TABELA)
 ```
 
-**1.2 Atualizar Check Constraint do `training_type`**
+---
+
+## Fase 1: Banco de Dados
+
+### 1.1 Criar Tabela `student_diet_assignments`
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | PK |
+| student_id | uuid | FK → athletes(id) |
+| diet_name | text | Nome do plano alimentar |
+| diet_description | text | Descrição opcional |
+| diet_type | varchar | 'link', 'html', 'json' |
+| diet_file_url | text | URL do arquivo/link |
+| diet_file_path | text | Path no storage |
+| diet_data | jsonb | Metadados (source, etc) |
+| start_date | date | Data início |
+| end_date | date | Data fim (opcional) |
+| is_active | boolean | Visível para aluno |
+| created_by | uuid | Coach que criou |
+| created_at | timestamptz | Auto |
+| updated_at | timestamptz | Auto |
+
+### 1.2 Criar Storage Bucket `diet-html-files`
+- Bucket público para arquivos de dieta HTML
+- RLS permitindo coaches fazer upload e alunos visualizarem
+
+---
+
+## Fase 2: Componentes Admin
+
+### 2.1 Criar `DietContentUpload.tsx`
+Componente baseado no `TrainingContentUpload.tsx`:
+- 3 tabs: Link / Código HTML / Upload Arquivo
+- Validação de URL, arquivo .html, tamanho máx 10MB
+- Upload para bucket `diet-html-files`
+- Campos: nome, descrição, data início/fim, ativar
+- Preview antes de enviar
+
+### 2.2 Criar `StudentDiet.tsx` (nova tab)
+Componente para a tab "Dieta" no perfil do aluno:
+- Lista dietas atribuídas (ativas/inativas)
+- Cards com badges de tipo (Link/HTML/Código)
+- Botões: Visualizar, Editar, Ativar/Desativar, Excluir
+- Dialog para preview do admin
+- Estatísticas: total dietas, ativas, por tipo
+
+### 2.3 Atualizar `StudentDetailedView.tsx`
+- Adicionar nova tab "Dieta" com ícone de utensílios
+- Importar e renderizar `StudentDiet` component
+
+---
+
+## Fase 3: Página do Aluno
+
+### 3.1 Atualizar `Dieta.tsx` (/9fit/dieta)
+Transformar de mock data para dados reais:
+
+1. **Fetch de dietas atribuídas:**
+   - Buscar athlete_id do usuário logado
+   - Query `student_diet_assignments` filtrado por athlete_id e is_active
+   - Filtrar por data válida (start_date ≤ hoje ≤ end_date)
+
+2. **Nova seção: Meus Planos Alimentares**
+   - Card para cada dieta atribuída
+   - Informações: nome, descrição, validade
+   - Badge de tipo (Link/HTML/Código)
+   - Botão **"Ver Completo"** destaque
+
+3. **Dialog Fullscreen ao clicar "Ver Completo":**
+   - Cabeçalho com nome e tipo
+   - Fetch do conteúdo HTML (mesma lógica do Train.tsx)
+   - Renderização via iframe srcDoc
+   - Botão para abrir em nova aba (links externos)
+   - Botão fechar
+
+---
+
+## Fase 4: Fluxo de Dados
+
 ```text
-- Alterar constraint para aceitar: ['json', 'html', 'link']
+1. Coach abre StudentDetailedView
+2. Clica na tab "Dieta"
+3. Clica "Atribuir Dieta"
+4. Modal DietContentUpload abre
+5. Coach cola link/código ou faz upload
+6. Preenche nome, descrição, datas
+7. Clica "Enviar Dieta"
+8. Sistema:
+   - Upload do arquivo (se necessário) → storage
+   - Insert em student_diet_assignments
+9. Aluno abre /9fit/dieta
+10. Página busca student_diet_assignments
+11. Exibe lista com botão "Ver Completo"
+12. Aluno clica → Dialog fullscreen renderiza
 ```
 
-**Migração SQL necessária:**
+---
+
+## Arquivos a Criar
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/students/DietContentUpload.tsx` | Upload de dieta (3 métodos) |
+| `src/components/students/tabs/StudentDiet.tsx` | Tab dieta no admin |
+
+## Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/components/students/StudentDetailedView.tsx` | Adicionar tab Dieta |
+| `src/pages/9fit/Dieta.tsx` | Integrar com Supabase, adicionar "Ver Completo" |
+
+---
+
+## Seção Técnica
+
+### Migração SQL
 ```sql
--- Remover FK antiga
-ALTER TABLE student_training_assignments
-DROP CONSTRAINT IF EXISTS student_training_assignments_student_id_fkey;
+-- Criar tabela de atribuição de dietas
+CREATE TABLE IF NOT EXISTS public.student_diet_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id UUID NOT NULL REFERENCES public.athletes(id) ON DELETE CASCADE,
+  diet_name TEXT NOT NULL,
+  diet_description TEXT,
+  diet_type VARCHAR(20) CHECK (diet_type IN ('link', 'html', 'json')),
+  diet_file_url TEXT,
+  diet_file_path TEXT,
+  diet_data JSONB DEFAULT '{}',
+  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date DATE,
+  is_active BOOLEAN DEFAULT true,
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
--- Criar nova FK para athletes
-ALTER TABLE student_training_assignments
-ADD CONSTRAINT student_training_assignments_student_id_fkey
-FOREIGN KEY (student_id) REFERENCES athletes(id) ON DELETE CASCADE;
+-- Índices para performance
+CREATE INDEX idx_diet_assignments_student ON student_diet_assignments(student_id);
+CREATE INDEX idx_diet_assignments_active ON student_diet_assignments(is_active);
 
--- Atualizar check constraint do training_type
-ALTER TABLE student_training_assignments
-DROP CONSTRAINT IF EXISTS student_training_assignments_training_type_check;
+-- RLS
+ALTER TABLE student_diet_assignments ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE student_training_assignments
-ADD CONSTRAINT student_training_assignments_training_type_check
-CHECK (training_type IN ('json', 'html', 'link'));
+-- Coaches podem gerenciar dietas dos seus alunos
+CREATE POLICY "Coaches can manage diet assignments"
+ON student_diet_assignments FOR ALL
+USING (created_by = auth.uid() OR EXISTS (
+  SELECT 1 FROM athletes WHERE id = student_id AND coach_id = auth.uid()
+));
+
+-- Alunos podem ver suas próprias dietas
+CREATE POLICY "Athletes can view own diets"
+ON student_diet_assignments FOR SELECT
+USING (EXISTS (
+  SELECT 1 FROM athletes WHERE id = student_id AND user_id = auth.uid()
+));
+
+-- Criar bucket de storage para dietas
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('diet-html-files', 'diet-html-files', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Políticas de storage
+CREATE POLICY "Anyone can view diet files"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'diet-html-files');
+
+CREATE POLICY "Authenticated users can upload diet files"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'diet-html-files' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Owners can delete diet files"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'diet-html-files' AND owner = auth.uid());
 ```
 
----
+### Estrutura do DietContentUpload
+- Reutilizar 90% do código de TrainingContentUpload
+- Mudar referências: "treino" → "dieta"
+- Mudar bucket: `training-html-files` → `diet-html-files`
+- Mudar tabela: `student_training_assignments` → `student_diet_assignments`
+- Manter mesma lógica de validação e upload
 
-### Fase 2: Unificação das Fontes de Dados
-
-**2.1 Remover/Deprecar `StudentsList.tsx`**
-- O arquivo `src/components/students/StudentsList.tsx` busca da tabela `students` (vazia)
-- Será removido pois `StudentsPage.tsx` já faz o trabalho correto buscando de `athletes`
-
-**2.2 Atualizar `StudentsManagement.tsx`**
-- Redirecionar para usar a estrutura de `StudentsPage.tsx` que busca de `athletes`
-
-**2.3 Arquivos Afetados:**
-- `src/components/students/StudentsList.tsx` - REMOVER
-- `src/components/students/StudentsManagement.tsx` - ATUALIZAR
-
----
-
-### Fase 3: Correção do Componente de Upload
-
-**3.1 Atualizar `TrainingContentUpload.tsx`**
-- Linha 271: Garantir que `training_type` use valores válidos
-- Adicionar validação para o tipo 'link'
-
-**Mudanças no código:**
+### Integração na Dieta.tsx
 ```typescript
-// Antes (linha 191):
-trainingType = 'link';  // ERRO - não aceito pelo banco
+// Buscar athlete_id
+const { data: athlete } = await supabase
+  .from("athletes")
+  .select("id")
+  .eq("user_id", user.id)
+  .single();
 
-// Depois:
-// Manter 'link' mas banco será atualizado para aceitar
-trainingType = 'link';
+// Buscar dietas atribuídas
+const { data: diets } = await supabase
+  .from("student_diet_assignments")
+  .select("*")
+  .eq("student_id", athlete.id)
+  .eq("is_active", true);
 ```
 
 ---
 
-### Fase 4: Correção do Fluxo do Aluno
+## Resultado Final
 
-**4.1 Atualizar `Train.tsx`**
-- O componente já busca corretamente o `athlete_id` vinculado ao usuário
-- Com a correção da FK, vai funcionar automaticamente
+**Admin:**
+- Nova aba "Dieta" no perfil do aluno
+- Pode atribuir dietas via link, código ou upload
+- Gerencia dietas ativas/inativas
 
-**4.2 Validar fluxo completo:**
-```text
-Admin -> Seleciona Aluno (athletes.id)
-      -> Cria Treino (student_training_assignments.student_id = athletes.id)
-      
-Aluno -> Login
-      -> Busca athlete_auth_link ou athletes.user_id
-      -> Busca treinos via student_training_assignments
-      -> Renderiza HTML/Link em fullscreen
-```
-
----
-
-### Fase 5: Limpeza de Código Duplicado
-
-**Arquivos a remover:**
-- `src/components/students/StudentsList.tsx`
-
-**Arquivos a atualizar:**
-- `src/components/students/StudentsManagement.tsx` - simplificar para usar estrutura correta
-
----
-
-## Diagrama do Fluxo Corrigido
-
-```text
-+------------------+     +------------------+     +-------------------------+
-|    ADMIN         |     |    athletes      |     | student_training_       |
-|  (coach)         |---->|  (tabela ativa)  |<----|  assignments            |
-+------------------+     +------------------+     +-------------------------+
-                              ^                            |
-                              |                            |
-                         coach_id                     student_id (FK)
-                              |                            |
-                         +----+----+                       |
-                         |  AUTH   |                       v
-                         | USERS   |              +------------------+
-                         +---------+              |  storage bucket  |
-                              ^                   |  training-html   |
-                              |                   +------------------+
-                         user_id                           |
-                              |                            |
-                    +------------------+                   |
-                    |  athlete_auth_   |                   |
-                    |  link            |                   |
-                    +------------------+                   |
-                              |                            |
-                              v                            v
-                    +------------------+          +------------------+
-                    |     ALUNO        |--------->|  Train.tsx       |
-                    |  (9FIT App)      |          |  (visualizar)    |
-                    +------------------+          +------------------+
-```
-
----
-
-## Resumo Técnico das Mudanças
-
-| Arquivo/Recurso | Ação | Motivo |
-|----------------|------|--------|
-| `student_training_assignments` FK | Alterar para `athletes` | FK atual aponta para tabela vazia |
-| `training_type` constraint | Adicionar 'link' | Código usa 'link' mas DB não aceita |
-| `StudentsList.tsx` | Remover | Busca de tabela `students` vazia |
-| `StudentsManagement.tsx` | Simplificar | Usar fluxo do `StudentsPage.tsx` |
-| RLS policies | Verificar | Garantir que coach veja seus athletes |
-
----
-
-## Ordem de Execução
-
-1. Executar migração SQL (FK + constraint)
-2. Remover `StudentsList.tsx`
-3. Atualizar `StudentsManagement.tsx`
-4. Testar fluxo completo:
-   - Login como admin
-   - Ir para /app/alunos
-   - Selecionar aluno
-   - Atribuir treino (link/HTML/arquivo)
-   - Login como aluno
-   - Verificar treino em /9fit/train
+**Aluno:**
+- Vê dietas atribuídas em /9fit/dieta
+- Botão "Ver Completo" abre fullscreen
+- Conteúdo renderizado igual ao treino
+- Experiência consistente com o sistema de treinos
