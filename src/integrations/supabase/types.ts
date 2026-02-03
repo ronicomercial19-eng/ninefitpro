@@ -2830,6 +2830,72 @@ export type Database = {
           },
         ]
       }
+      student_diet_assignments: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          diet_data: Json | null
+          diet_description: string | null
+          diet_file_path: string | null
+          diet_file_url: string | null
+          diet_name: string
+          diet_type: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          start_date: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          diet_data?: Json | null
+          diet_description?: string | null
+          diet_file_path?: string | null
+          diet_file_url?: string | null
+          diet_name: string
+          diet_type?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          diet_data?: Json | null
+          diet_description?: string | null
+          diet_file_path?: string | null
+          diet_file_url?: string | null
+          diet_name?: string
+          diet_type?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_invitations: {
         Row: {
           created_at: string | null
