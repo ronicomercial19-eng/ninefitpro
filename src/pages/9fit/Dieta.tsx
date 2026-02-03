@@ -11,12 +11,32 @@ import {
   Beef,
   Droplets,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Eye,
+  ExternalLink,
+  Globe,
+  FileText,
+  X,
+  Calendar
 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+interface DietAssignment {
+  id: string;
+  diet_name: string;
+  diet_description: string | null;
+  diet_type: string;
+  diet_file_url: string | null;
+  start_date: string;
+  end_date: string | null;
+  is_active: boolean;
+}
 
 interface NutritionPlan {
   id: string;
@@ -58,15 +78,11 @@ function EmptyDieta() {
         <Utensils className="w-8 h-8 text-primary" />
       </div>
       <h3 className="text-lg font-bold text-foreground mb-2">
-        Nenhuma refeição registrada hoje
+        Nenhum plano alimentar disponível
       </h3>
       <p className="text-sm text-muted-foreground mb-4">
-        Registre suas refeições no plano alimentar e acompanhe seus macros.
+        Seu professor ainda não atribuiu um plano alimentar para você.
       </p>
-      <button className="btn-neon px-6 py-3 rounded-sm inline-flex items-center gap-2">
-        <Plus className="w-4 h-4" />
-        Adicionar Refeição
-      </button>
     </div>
   );
 }
@@ -75,6 +91,12 @@ export default function NineFitDieta() {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [assignedDiets, setAssignedDiets] = useState<DietAssignment[]>([]);
+  const [selectedDiet, setSelectedDiet] = useState<DietAssignment | null>(null);
+  const [dietContent, setDietContent] = useState<string>('');
+  const [loadingContent, setLoadingContent] = useState(false);
+  
+  // Mock nutrition tracking (keep for future feature)
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
   const [consumed, setConsumed] = useState({
     calories: 0,
@@ -83,109 +105,131 @@ export default function NineFitDieta() {
     fat: 0
   });
 
-  // Simulated data - would come from Supabase
+  // Fetch assigned diets from database
   useEffect(() => {
-    const fetchNutritionPlan = async () => {
+    const fetchAssignedDiets = async () => {
+      if (!user) return;
+      
       setLoading(true);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data - in production, fetch from Supabase filtered by user
-      const mockPlan: NutritionPlan = {
-        id: "1",
-        calories_goal: 2000,
-        protein_goal: 150,
-        carbs_goal: 200,
-        fat_goal: 70,
-        meals: [
-          {
-            id: "1",
-            name: "Café da Manhã",
-            time: "07:00",
-            calories: 420,
-            protein: 30,
-            carbs: 45,
-            fat: 15,
-            foods: ["2 ovos mexidos", "1 pão integral", "1 banana"],
-            completed: true
-          },
-          {
-            id: "2",
-            name: "Almoço",
-            time: "12:00",
-            calories: 600,
-            protein: 45,
-            carbs: 60,
-            fat: 20,
-            foods: ["150g frango grelhado", "Arroz integral", "Salada verde"],
-            completed: false
-          },
-          {
-            id: "3",
-            name: "Jantar",
-            time: "19:00",
-            calories: 500,
-            protein: 40,
-            carbs: 50,
-            fat: 15,
-            foods: ["Peixe grelhado", "Batata doce", "Legumes"],
-            completed: false
-          }
-        ]
-      };
-
-      setPlan(mockPlan);
-      
-      // Calculate consumed from completed meals
-      const completedMeals = mockPlan.meals.filter(m => m.completed);
-      setConsumed({
-        calories: completedMeals.reduce((acc, m) => acc + m.calories, 0),
-        protein: completedMeals.reduce((acc, m) => acc + m.protein, 0),
-        carbs: completedMeals.reduce((acc, m) => acc + m.carbs, 0),
-        fat: completedMeals.reduce((acc, m) => acc + m.fat, 0)
-      });
-      
-      setLoading(false);
-    };
-
-    fetchNutritionPlan();
-  }, [currentDate, user]);
-
-  const toggleMealCompleted = (mealId: string) => {
-    if (!plan) return;
-    
-    const updatedMeals = plan.meals.map(meal => {
-      if (meal.id === mealId) {
-        const newCompleted = !meal.completed;
+      try {
+        // First, find the athlete record for this user
+        let athleteId: string | null = null;
         
-        // Update consumed
-        if (newCompleted) {
-          setConsumed(prev => ({
-            calories: prev.calories + meal.calories,
-            protein: prev.protein + meal.protein,
-            carbs: prev.carbs + meal.carbs,
-            fat: prev.fat + meal.fat
-          }));
+        // Try direct lookup
+        const { data: athleteData } = await supabase
+          .from('athletes')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (athleteData) {
+          athleteId = athleteData.id;
         } else {
-          setConsumed(prev => ({
-            calories: prev.calories - meal.calories,
-            protein: prev.protein - meal.protein,
-            carbs: prev.carbs - meal.carbs,
-            fat: prev.fat - meal.fat
-          }));
+          // Try athlete_auth_link fallback
+          const { data: linkData } = await supabase
+            .from('athlete_auth_link')
+            .select('athlete_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (linkData) {
+            athleteId = linkData.athlete_id;
+          }
         }
         
-        return { ...meal, completed: newCompleted };
+        if (!athleteId) {
+          console.log('No athlete found for user');
+          setAssignedDiets([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch active diet assignments
+        const today = new Date().toISOString().split('T')[0];
+        const { data: diets, error } = await supabase
+          .from('student_diet_assignments')
+          .select('*')
+          .eq('student_id', athleteId)
+          .eq('is_active', true)
+          .lte('start_date', today)
+          .or(`end_date.is.null,end_date.gte.${today}`)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        setAssignedDiets(diets || []);
+      } catch (error) {
+        console.error('Error fetching diets:', error);
+        toast.error('Erro ao carregar planos alimentares');
+      } finally {
+        setLoading(false);
       }
-      return meal;
-    });
+    };
+
+    fetchAssignedDiets();
+  }, [user]);
+
+  // Open diet viewer
+  const handleOpenDiet = async (diet: DietAssignment) => {
+    setSelectedDiet(diet);
     
-    setPlan({ ...plan, meals: updatedMeals });
-    toast.success("Refeição atualizada!");
+    if (diet.diet_type === 'link') {
+      // For links, just show the dialog with link info
+      setDietContent('');
+      return;
+    }
+    
+    if (diet.diet_file_url) {
+      setLoadingContent(true);
+      try {
+        const response = await fetch(diet.diet_file_url);
+        let content = await response.text();
+        
+        // Decode HTML entities if content was escaped
+        if (content.includes('&lt;') || content.includes('&gt;')) {
+          const textarea = document.createElement('textarea');
+          textarea.innerHTML = content;
+          content = textarea.value;
+        }
+        
+        // If content doesn't look like HTML, wrap it
+        if (!content.trim().startsWith('<') && !content.trim().startsWith('<!')) {
+          content = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <pre style="white-space: pre-wrap;">${content}</pre>
+</body>
+</html>`;
+        }
+        
+        setDietContent(content);
+      } catch (error) {
+        console.error('Error fetching diet content:', error);
+        toast.error('Erro ao carregar conteúdo');
+      } finally {
+        setLoadingContent(false);
+      }
+    }
   };
 
-  const caloriesProgress = plan ? (consumed.calories / plan.calories_goal) * 100 : 0;
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('pt-BR');
+  };
+
+  const getTypeBadge = (type: string) => {
+    if (type === 'link') {
+      return <Badge className="bg-blue-100 text-blue-800"><Globe className="w-3 h-3 mr-1" />Link</Badge>;
+    }
+    return <Badge className="bg-purple-100 text-purple-800"><FileText className="w-3 h-3 mr-1" />Documento</Badge>;
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -214,161 +258,147 @@ export default function NineFitDieta() {
         <div className="px-4">
           <DietaSkeleton />
         </div>
-      ) : !plan || plan.meals.length === 0 ? (
+      ) : assignedDiets.length === 0 ? (
         <div className="px-4">
           <EmptyDieta />
         </div>
       ) : (
-        <>
-          {/* Macros Summary Card */}
-          <div className="px-4 mb-6">
-            <div className="bg-card border border-border rounded-sm p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                  Meu Plano Alimentar
-                </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Meta</span>
-                  <span className="text-xs text-primary">{plan.calories_goal} kcal</span>
-                </div>
-              </div>
-
-              {/* Circular Progress */}
-              <div className="flex items-center justify-center mb-4">
-                <div className="relative w-28 h-28">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="56"
-                      cy="56"
-                      r="50"
-                      stroke="hsl(var(--muted))"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                    <circle
-                      cx="56"
-                      cy="56"
-                      r="50"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${caloriesProgress * 3.14} 314`}
-                      className="transition-all duration-500"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-foreground">
-                      {consumed.calories.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground uppercase">kcal</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Macros Grid */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Beef className="w-4 h-4 text-red-400" />
-                    <span className="text-sm font-bold text-foreground">{consumed.protein}g</span>
-                  </div>
-                  <div className="w-full bg-muted h-1 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-red-400 transition-all duration-300"
-                      style={{ width: `${Math.min((consumed.protein / plan.protein_goal) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">Proteína</span>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Apple className="w-4 h-4 text-green-400" />
-                    <span className="text-sm font-bold text-foreground">{consumed.carbs}g</span>
-                  </div>
-                  <div className="w-full bg-muted h-1 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-green-400 transition-all duration-300"
-                      style={{ width: `${Math.min((consumed.carbs / plan.carbs_goal) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">Carbs</span>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Droplets className="w-4 h-4 text-yellow-400" />
-                    <span className="text-sm font-bold text-foreground">{consumed.fat}g</span>
-                  </div>
-                  <div className="w-full bg-muted h-1 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-yellow-400 transition-all duration-300"
-                      style={{ width: `${Math.min((consumed.fat / plan.fat_goal) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">Gordura</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Meals List */}
-          <div className="px-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">
-              Refeições do Dia
+        <div className="px-4 space-y-6">
+          {/* Assigned Diets Section */}
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+              <Utensils className="w-4 h-4 text-primary" />
+              Meus Planos Alimentares
             </h2>
-
+            
             <div className="space-y-3">
-              {plan.meals.map((meal) => (
+              {assignedDiets.map((diet) => (
                 <div
-                  key={meal.id}
-                  className={`bg-card border rounded-sm p-4 transition-all ${
-                    meal.completed 
-                      ? "border-primary/50 bg-primary/5" 
-                      : "border-border"
-                  }`}
+                  key={diet.id}
+                  className="bg-card border border-border rounded-sm p-4 transition-all hover:border-primary/50"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-bold text-foreground">{meal.name}</h3>
-                      <p className="text-xs text-muted-foreground">{meal.time}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-primary">
-                        {meal.calories} kcal
-                      </span>
-                      {meal.completed && (
-                        <CheckCircle className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-foreground">{diet.diet_name}</h3>
+                        {getTypeBadge(diet.diet_type)}
+                      </div>
+                      
+                      {diet.diet_description && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {diet.diet_description}
+                        </p>
                       )}
+                      
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          Desde {formatDate(diet.start_date)}
+                        </span>
+                        {diet.end_date && (
+                          <span>até {formatDate(diet.end_date)}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {meal.foods.map((food, i) => (
-                      <span 
-                        key={i}
-                        className="text-xs bg-muted px-2 py-1 rounded-sm text-muted-foreground"
-                      >
-                        {food}
-                      </span>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => toggleMealCompleted(meal.id)}
-                    className={`w-full py-2 rounded-sm font-medium text-sm transition-all ${
-                      meal.completed
-                        ? "bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    }`}
+                  
+                  <Button
+                    onClick={() => handleOpenDiet(diet)}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   >
-                    {meal.completed ? "Desmarcar" : "Marcar como Consumida"}
-                  </button>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Ver Completo
+                  </Button>
                 </div>
               ))}
             </div>
           </div>
-        </>
+
+          {/* Quick Macros Section (placeholder for future) */}
+          <div className="bg-card border border-border rounded-sm p-4 opacity-50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                Acompanhamento Diário
+              </h2>
+              <Badge variant="secondary">Em breve</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Registre suas refeições e acompanhe seus macros diariamente.
+            </p>
+          </div>
+        </div>
       )}
+
+      {/* Fullscreen Diet Viewer Dialog */}
+      <Dialog open={!!selectedDiet} onOpenChange={() => setSelectedDiet(null)}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full p-0 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b bg-background">
+            <div>
+              <h3 className="font-bold text-lg">{selectedDiet?.diet_name}</h3>
+              <p className="text-sm text-muted-foreground">
+                {selectedDiet?.diet_type === 'link' ? 'Link externo' : 'Plano alimentar'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedDiet?.diet_type === 'link' && selectedDiet.diet_file_url && (
+                <Button asChild variant="outline" size="sm">
+                  <a 
+                    href={selectedDiet.diet_file_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Abrir em Nova Aba
+                  </a>
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setSelectedDiet(null)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 overflow-auto h-[calc(95vh-80px)]">
+            {loadingContent ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            ) : selectedDiet?.diet_type === 'link' ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <Globe className="w-20 h-20 text-muted-foreground mb-6" />
+                <h3 className="text-xl font-bold mb-2">Link Externo</h3>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  Este plano alimentar está hospedado em um link externo. 
+                  Clique no botão abaixo para visualizar.
+                </p>
+                <Button asChild size="lg">
+                  <a 
+                    href={selectedDiet?.diet_file_url || ''} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Abrir Plano Alimentar
+                  </a>
+                </Button>
+              </div>
+            ) : (
+              <iframe
+                srcDoc={dietContent}
+                className="w-full h-full border-0"
+                sandbox="allow-same-origin"
+                title="Plano Alimentar"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>

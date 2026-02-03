@@ -19,7 +19,8 @@ import {
   Briefcase,
   MessageCircle,
   Bell,
-  Send
+  Send,
+  Utensils
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ import { StudentMeasurements } from "./tabs/StudentMeasurements";
 import { StudentAnamnesis } from "./tabs/StudentAnamnesis";
 import { StudentPhotos } from "./tabs/StudentPhotos";
 import { StudentPayments } from "./tabs/StudentPayments";
+import { StudentDiet } from "./tabs/StudentDiet";
 
 interface Student {
   id: string;
@@ -320,34 +322,38 @@ Bons treinos! 🎯`;
 
       {/* Abas principais */}
       <Tabs defaultValue="dados-pessoais" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="dados-pessoais" className="flex items-center gap-2">
             <User className="w-4 h-4" />
-            Dados Pessoais
+            <span className="hidden lg:inline">Dados</span>
           </TabsTrigger>
           <TabsTrigger value="treino" className="flex items-center gap-2">
             <Dumbbell className="w-4 h-4" />
-            Treino
+            <span className="hidden lg:inline">Treino</span>
+          </TabsTrigger>
+          <TabsTrigger value="dieta" className="flex items-center gap-2">
+            <Utensils className="w-4 h-4" />
+            <span className="hidden lg:inline">Dieta</span>
           </TabsTrigger>
           <TabsTrigger value="historico" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
-            Histórico
+            <span className="hidden lg:inline">Histórico</span>
           </TabsTrigger>
           <TabsTrigger value="medidas" className="flex items-center gap-2">
             <Ruler className="w-4 h-4" />
-            Medidas
+            <span className="hidden lg:inline">Medidas</span>
           </TabsTrigger>
           <TabsTrigger value="anamneses" className="flex items-center gap-2">
             <ClipboardList className="w-4 h-4" />
-            Anamneses
+            <span className="hidden lg:inline">Anamneses</span>
           </TabsTrigger>
           <TabsTrigger value="fotos" className="flex items-center gap-2">
             <Camera className="w-4 h-4" />
-            Fotos
+            <span className="hidden lg:inline">Fotos</span>
           </TabsTrigger>
           <TabsTrigger value="mensalidade" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
-            Mensalidade
+            <span className="hidden lg:inline">Mensalidade</span>
           </TabsTrigger>
         </TabsList>
 
@@ -363,6 +369,10 @@ Bons treinos! 🎯`;
             student={currentStudent}
             onStudentUpdate={handleStudentUpdate}
           />
+        </TabsContent>
+
+        <TabsContent value="dieta">
+          <StudentDiet student={currentStudent} />
         </TabsContent>
 
         <TabsContent value="historico">
