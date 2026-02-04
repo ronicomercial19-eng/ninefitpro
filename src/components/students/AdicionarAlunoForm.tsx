@@ -75,8 +75,10 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
         .single();
 
       // Preparar dados para inserção na tabela athletes
+      const trimmedEmail = formData.email.trim().toLowerCase();
       const athleteData = {
         name: formData.nome,
+        email: trimmedEmail, // Store email in dedicated column
         coach_id: user.id,
         phone: formData.telefone || null,
         birthdate: formData.data_nascimento || null,
@@ -87,8 +89,7 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
         injuries_limitations: formData.observacoes || null,
         activated: false,
         auto_password_temp: createAuth ? formData.senha : null,
-        // Store email in metadata since athletes table may not have email column
-        metadata: { email: formData.email.trim().toLowerCase() }
+        metadata: { email: trimmedEmail } // Keep for backward compatibility
       };
 
       const { data: athleteResult, error: athleteError } = await supabase
