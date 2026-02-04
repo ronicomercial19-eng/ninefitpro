@@ -383,6 +383,7 @@ export type Database = {
           birthdate: string | null
           coach_id: string
           created_at: string
+          email: string | null
           experience_level: string | null
           gender: string | null
           goals: string[] | null
@@ -418,6 +419,7 @@ export type Database = {
           birthdate?: string | null
           coach_id: string
           created_at?: string
+          email?: string | null
           experience_level?: string | null
           gender?: string | null
           goals?: string[] | null
@@ -453,6 +455,7 @@ export type Database = {
           birthdate?: string | null
           coach_id?: string
           created_at?: string
+          email?: string | null
           experience_level?: string | null
           gender?: string | null
           goals?: string[] | null

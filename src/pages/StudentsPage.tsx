@@ -65,22 +65,29 @@ export default function StudentsPage() {
       if (athletesError) throw athletesError;
       
       // Mapear dados dos athletes para o formato de Student
-      const mappedStudents: Student[] = (athletesData || []).map(athlete => ({
-        id: athlete.id,
-        nome: athlete.name,
-        email: athlete.user_id || '', // Email pode não estar diretamente no athlete
-        telefone: athlete.phone || undefined,
-        objetivo: athlete.primary_goal || athlete.objetivo || '',
-        nivel_experiencia: athlete.experience_level || athlete.nivel || undefined,
-        peso_kg: athlete.peso_kg || undefined,
-        altura_cm: athlete.altura_cm || undefined,
-        observacoes: athlete.injuries_limitations || undefined,
-        ativo: athlete.activated || false,
-        created_at: athlete.created_at,
-        foto_url: undefined,
-        status_pagamento: undefined,
-        data_nascimento: athlete.birthdate || undefined,
-      }));
+      const mappedStudents: Student[] = (athletesData || []).map(athlete => {
+        // Extract email from: 1) email column, 2) metadata.email, 3) fallback empty
+        const athleteEmail = athlete.email || 
+          (athlete.metadata as { email?: string } | null)?.email || 
+          '';
+        
+        return {
+          id: athlete.id,
+          nome: athlete.name,
+          email: athleteEmail,
+          telefone: athlete.phone || undefined,
+          objetivo: athlete.primary_goal || athlete.objetivo || '',
+          nivel_experiencia: athlete.experience_level || athlete.nivel || undefined,
+          peso_kg: athlete.peso_kg || undefined,
+          altura_cm: athlete.altura_cm || undefined,
+          observacoes: athlete.injuries_limitations || undefined,
+          ativo: athlete.activated || false,
+          created_at: athlete.created_at,
+          foto_url: undefined,
+          status_pagamento: undefined,
+          data_nascimento: athlete.birthdate || undefined,
+        };
+      });
       
       setStudents(mappedStudents);
     } catch (error: any) {
