@@ -74,7 +74,7 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
         .eq('user_id', user.id)
         .single();
 
-      // Preparar dados para inserção na tabela athletes (não students)
+      // Preparar dados para inserção na tabela athletes
       const athleteData = {
         name: formData.nome,
         coach_id: user.id,
@@ -86,7 +86,9 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
         altura_cm: formData.altura_cm ? parseFloat(formData.altura_cm) : null,
         injuries_limitations: formData.observacoes || null,
         activated: false,
-        auto_password_temp: createAuth ? formData.senha : null
+        auto_password_temp: createAuth ? formData.senha : null,
+        // Store email in metadata since athletes table may not have email column
+        metadata: { email: formData.email.trim().toLowerCase() }
       };
 
       const { data: athleteResult, error: athleteError } = await supabase

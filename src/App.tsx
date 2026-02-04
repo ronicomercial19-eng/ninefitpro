@@ -49,11 +49,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Index />} />
+            {/* Public Routes - Login is the main entry point */}
+            <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/register" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/suporte" element={<Support />} />
             <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />

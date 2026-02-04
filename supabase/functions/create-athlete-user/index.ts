@@ -91,12 +91,14 @@ serve(async (req) => {
       console.error("Error linking athlete:", linkError);
     }
 
-    // Update athlete with temp password
+    // Update athlete with temp password and link user
     await supabaseAdmin.from("athletes").update({
       auto_password_temp: password,
       password_changed: false,
       activated: true,
       user_id: userData.user.id,
+      // Store email in metadata for consistency
+      metadata: { email: trimmedEmail }
     }).eq("id", athleteId);
 
     return new Response(
