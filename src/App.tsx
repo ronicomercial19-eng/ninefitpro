@@ -37,6 +37,7 @@ import NineFitProfile from "./pages/9fit/Profile";
 import NineFitOnboarding from "./pages/9fit/Onboarding";
 import NineFitDieta from "./pages/9fit/Dieta";
 import NineFitMensagens from "./pages/9fit/Mensagens";
+import NineFitFirstAccess from "./pages/9fit/FirstAccess";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 
 const queryClient = new QueryClient();
@@ -143,6 +144,7 @@ const App = () => (
             <Route path="/9fit" element={<NineFitLogin />} />
             <Route path="/9fit/login" element={<NineFitLogin />} />
             <Route path="/9fit/onboarding" element={<NineFitOnboarding />} />
+            <Route path="/9fit/first-access" element={<NineFitFirstAccess />} />
             
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
