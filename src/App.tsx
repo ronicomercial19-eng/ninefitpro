@@ -32,6 +32,7 @@ import NineFitLogin from "./pages/9fit/Login";
 import NineFitHub from "./pages/9fit/Hub";
 import NineFitTrain from "./pages/9fit/Train";
 import NineFitAulas from "./pages/9fit/Aulas";
+import AulasCreditos from "./pages/9fit/AulasCreditos";
 import NineFitStats from "./pages/9fit/Stats";
 import NineFitProfile from "./pages/9fit/Profile";
 import NineFitOnboarding from "./pages/9fit/Onboarding";
@@ -150,6 +151,7 @@ const App = () => (
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
             <Route path="/9fit/aulas" element={<NineFitLayout><NineFitAulas /></NineFitLayout>} />
+            <Route path="/9fit/aulas-creditos" element={<NineFitLayout><AulasCreditos /></NineFitLayout>} />
             <Route path="/9fit/stats" element={<NineFitLayout><NineFitStats /></NineFitLayout>} />
             <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />
             <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />

@@ -915,8 +915,12 @@ export type Database = {
       class_bookings: {
         Row: {
           booking_time: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          check_in_at: string | null
           class_id: string | null
           created_at: string | null
+          credits_used: number | null
           id: string
           status: string | null
           user_email: string
@@ -924,8 +928,12 @@ export type Database = {
         }
         Insert: {
           booking_time?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          check_in_at?: string | null
           class_id?: string | null
           created_at?: string | null
+          credits_used?: number | null
           id?: string
           status?: string | null
           user_email: string
@@ -933,8 +941,12 @@ export type Database = {
         }
         Update: {
           booking_time?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          check_in_at?: string | null
           class_id?: string | null
           created_at?: string | null
+          credits_used?: number | null
           id?: string
           status?: string | null
           user_email?: string
@@ -1164,6 +1176,8 @@ export type Database = {
           difficulty_level: string | null
           equipment: string | null
           equipment_needed: string | null
+          external_video_id: string | null
+          gif_url: string | null
           goal: string | null
           id: string
           image_url: string | null
@@ -1174,6 +1188,7 @@ export type Database = {
           phase: string | null
           target_muscles: string[]
           updated_at: string | null
+          video_cached_at: string | null
           video_url: string | null
         }
         Insert: {
@@ -1183,6 +1198,8 @@ export type Database = {
           difficulty_level?: string | null
           equipment?: string | null
           equipment_needed?: string | null
+          external_video_id?: string | null
+          gif_url?: string | null
           goal?: string | null
           id?: string
           image_url?: string | null
@@ -1193,6 +1210,7 @@ export type Database = {
           phase?: string | null
           target_muscles?: string[]
           updated_at?: string | null
+          video_cached_at?: string | null
           video_url?: string | null
         }
         Update: {
@@ -1202,6 +1220,8 @@ export type Database = {
           difficulty_level?: string | null
           equipment?: string | null
           equipment_needed?: string | null
+          external_video_id?: string | null
+          gif_url?: string | null
           goal?: string | null
           id?: string
           image_url?: string | null
@@ -1212,6 +1232,7 @@ export type Database = {
           phase?: string | null
           target_muscles?: string[]
           updated_at?: string | null
+          video_cached_at?: string | null
           video_url?: string | null
         }
         Relationships: []
@@ -1262,7 +1283,9 @@ export type Database = {
           available_slots: number
           class_datetime: string
           class_name: string
+          class_type: string | null
           created_at: string | null
+          credits_required: number | null
           description: string | null
           id: string
           instructor_name: string | null
@@ -1272,7 +1295,9 @@ export type Database = {
           available_slots?: number
           class_datetime: string
           class_name: string
+          class_type?: string | null
           created_at?: string | null
+          credits_required?: number | null
           description?: string | null
           id?: string
           instructor_name?: string | null
@@ -1282,7 +1307,9 @@ export type Database = {
           available_slots?: number
           class_datetime?: string
           class_name?: string
+          class_type?: string | null
           created_at?: string | null
+          credits_required?: number | null
           description?: string | null
           id?: string
           instructor_name?: string | null
@@ -2833,6 +2860,51 @@ export type Database = {
           },
         ]
       }
+      student_credits: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          student_id: string
+          total_credits: number
+          updated_at: string
+          used_credits: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          student_id: string
+          total_credits?: number
+          updated_at?: string
+          used_credits?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          student_id?: string
+          total_credits?: number
+          updated_at?: string
+          used_credits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_diet_assignments: {
         Row: {
           created_at: string | null
@@ -4011,6 +4083,57 @@ export type Database = {
           user_email?: string
         }
         Relationships: []
+      }
+      vacation_requests: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_date: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_structures: {
         Row: {

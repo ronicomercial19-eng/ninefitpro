@@ -1,11 +1,12 @@
 import { Home, Dumbbell, Utensils, MessageSquare, User } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   { icon: Home, label: "Início", path: "/9fit/hub" },
   { icon: Dumbbell, label: "Treinos", path: "/9fit/train" },
+  { icon: CalendarCheck, label: "Aulas", path: "/9fit/aulas-creditos" },
   { icon: Utensils, label: "Dieta", path: "/9fit/dieta" },
-  { icon: MessageSquare, label: "Mensagens", path: "/9fit/mensagens" },
   { icon: User, label: "Perfil", path: "/9fit/profile" },
 ];
 
