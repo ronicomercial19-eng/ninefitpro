@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, parseISO, isAfter, isBefore, isEqual } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   ChevronLeft, 
@@ -116,7 +116,7 @@ export default function NineFitDieta() {
         // First, find the athlete record for this user
         let athleteId: string | null = null;
         
-        // Try direct lookup
+        // Try direct lookup via user_id
         const { data: athleteData } = await supabase
           .from('athletes')
           .select('id')
@@ -125,8 +125,10 @@ export default function NineFitDieta() {
         
         if (athleteData) {
           athleteId = athleteData.id;
-        } else {
-          // Try athlete_auth_link fallback
+        }
+        
+        // Fallback: Try athlete_auth_link
+        if (!athleteId) {
           const { data: linkData } = await supabase
             .from('athlete_auth_link')
             .select('athlete_id')
@@ -138,6 +140,19 @@ export default function NineFitDieta() {
           }
         }
         
+        // Fallback: Try by email
+        if (!athleteId && user.email) {
+          const { data: emailData } = await supabase
+            .from('athletes')
+            .select('id')
+            .eq('email', user.email)
+            .maybeSingle();
+          
+          if (emailData) {
+            athleteId = emailData.id;
+          }
+        }
+        
         if (!athleteId) {
           console.log('No athlete found for user');
           setAssignedDiets([]);
@@ -145,20 +160,34 @@ export default function NineFitDieta() {
           return;
         }
         
-        // Fetch active diet assignments
-        const today = new Date().toISOString().split('T')[0];
+        console.log('Found athlete ID:', athleteId);
+        
+        // Fetch ALL active diet assignments for this student
         const { data: diets, error } = await supabase
           .from('student_diet_assignments')
           .select('*')
           .eq('student_id', athleteId)
           .eq('is_active', true)
-          .lte('start_date', today)
-          .or(`end_date.is.null,end_date.gte.${today}`)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
         
-        setAssignedDiets(diets || []);
+        // Filter by date client-side for more reliable results
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const validDiets = (diets || []).filter(diet => {
+          const startDate = parseISO(diet.start_date);
+          const endDate = diet.end_date ? parseISO(diet.end_date) : null;
+          
+          const startValid = isBefore(startDate, today) || isEqual(startDate, today);
+          const endValid = !endDate || isAfter(endDate, today) || isEqual(endDate, today);
+          
+          return startValid && endValid;
+        });
+        
+        console.log('Found diets:', validDiets.length);
+        setAssignedDiets(validDiets);
       } catch (error) {
         console.error('Error fetching diets:', error);
         toast.error('Erro ao carregar planos alimentares');
