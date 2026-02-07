@@ -1,240 +1,290 @@
 
-# Plano: Adicionar Dieta ao Perfil do Aluno
+# Plano de Transformacao: 9FIT PRO - Motor de Acao Imediata
 
-## Objetivo
-Implementar um sistema de atribuição de dietas no perfil do aluno que permita ao admin (coach) enviar planos nutricionais via **Link**, **Código HTML** ou **Upload de arquivo HTML**. O aluno visualiza as dietas na página de Dieta com um botão "Ver Completo" que renderiza o conteúdo em fullscreen.
+## Contexto e Filosofia
+
+Com base na analise do Gemini, a 9FIT PRO precisa evoluir de um "visualizador passivo" para um "motor de acao". O conceito da "Tela Zero" elimina a paralisia de escolha e garante que o usuario sempre tenha uma unica acao clara para executar.
+
+**Principio Central**: Nunca mostrar tela vazia. Sempre oferecer uma missao ou acao.
 
 ---
 
-## Arquitetura do Sistema
+## Diagnostico dos Problemas Atuais
+
+### 1. AgendaPage (Admin)
+- Faltam botoes para "Avaliacao Fisica" e "Aulas Agendadas"
+- Pagina basica sem funcionalidade real
+
+### 2. Treinos nao Renderizando
+- Dados existem no banco (10 treinos ativos verificados)
+- Problema: Logica de busca do `athlete_id` pode falhar se `user_id` ou `athlete_auth_link` nao estiver corretamente populado
+- Alguns athletes antigos nao tem `email` ou `user_id` populado
+
+### 3. Dieta com Erros
+- Componente de upload funciona (DietContentUpload.tsx)
+- Problema na renderizacao do lado do aluno (Dieta.tsx)
+- Mesma logica de busca do athlete_id que afeta treinos
+
+### 4. Ecossistema Fragmentado
+- AppGrid abre apps externos em novas abas
+- Usuario perde o contexto e engajamento
+- Sem hierarquia de acao - muitos botoes, nenhuma direcao
+
+---
+
+## Solucao Proposta: Arquitetura "Tela Zero"
 
 ```text
-ADMIN (Coach)                         ALUNO (Athlete)
-+----------------------------+        +----------------------------+
-| StudentDetailedView        |        | /9fit/dieta                |
-| └── Tab: Dieta (NOVA)     |        |                            |
-|     └── DietContentUpload  |        | Lista dietas atribuídas    |
-|         • Link            --|-----→ | Botão "Ver Completo"       |
-|         • Código HTML     --|-----→ | Dialog Fullscreen          |
-|         • Upload Arquivo  --|-----→ | Renderiza HTML/Link        |
-+----------------------------+        +----------------------------+
-            ↓                                     ↑
-     student_diet_assignments ←-------------------+
-     (NOVA TABELA)
++----------------------------------------+
+|  HEADER GAMIFICADO (Stats Visiveis)    |
+|  [Avatar] Ola, Roni!  [Fire] 12 dias   |
+|  [Barra Calorias] 150/500 kcal         |
++----------------------------------------+
+|                                        |
+|  +----------------------------------+  |
+|  |  CARD MISSAO UNICA (50% tela)   |  |
+|  |  "Treino A - Superiores"        |  |
+|  |  ou "Missao de Recuperacao"     |  |
+|  |  [ INICIAR AGORA ] btn-neon     |  |
+|  +----------------------------------+  |
+|                                        |
+|  CARDS RESUMO (Info integrada)         |
+|  +----------+  +----------+            |
+|  | DIETA    |  | AULAS    |            |
+|  | 1200kcal |  | 2 agend  |            |
+|  +----------+  +----------+            |
+|                                        |
+|  PROGRESSO SEMANAL (grafico)           |
+|                                        |
++----------------------------------------+
+|  BOTTOM NAV (5 icones)                 |
++----------------------------------------+
 ```
 
 ---
 
-## Fase 1: Banco de Dados
+## Fases de Implementacao
 
-### 1.1 Criar Tabela `student_diet_assignments`
+### FASE 1: Correcoes Criticas (Problemas Atuais)
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid | PK |
-| student_id | uuid | FK → athletes(id) |
-| diet_name | text | Nome do plano alimentar |
-| diet_description | text | Descrição opcional |
-| diet_type | varchar | 'link', 'html', 'json' |
-| diet_file_url | text | URL do arquivo/link |
-| diet_file_path | text | Path no storage |
-| diet_data | jsonb | Metadados (source, etc) |
-| start_date | date | Data início |
-| end_date | date | Data fim (opcional) |
-| is_active | boolean | Visível para aluno |
-| created_by | uuid | Coach que criou |
-| created_at | timestamptz | Auto |
-| updated_at | timestamptz | Auto |
+#### 1.1 Corrigir Renderizacao de Treinos/Dietas
+**Arquivos**: `src/pages/9fit/Train.tsx`, `src/pages/9fit/Dieta.tsx`, `src/pages/9fit/Hub.tsx`
 
-### 1.2 Criar Storage Bucket `diet-html-files`
-- Bucket público para arquivos de dieta HTML
-- RLS permitindo coaches fazer upload e alunos visualizarem
+- Implementar estrategia de busca robusta do athlete_id:
+  1. Primeiro: `athletes.user_id = auth.user.id`
+  2. Fallback: `athlete_auth_link.user_id = auth.user.id`
+  3. Fallback: `athletes.email = auth.user.email`
+- Adicionar logs detalhados para debug
+- Tratar caso de usuario sem athlete vinculado
 
----
+#### 1.2 AgendaPage - Botoes Funcionais
+**Arquivo**: `src/pages/AgendaPage.tsx`
 
-## Fase 2: Componentes Admin
+Adicionar:
+- Botao "Avaliacao Fisica" (link para 9Progress externo ou modal)
+- Botao "Aulas Agendadas" (lista de bookings do professor)
+- Card resumo com proximos agendamentos
+- Filtros: Hoje/Semana/Mes
+- Integracao com `class_bookings` e `avaliacoes_unificadas`
 
-### 2.1 Criar `DietContentUpload.tsx`
-Componente baseado no `TrainingContentUpload.tsx`:
-- 3 tabs: Link / Código HTML / Upload Arquivo
-- Validação de URL, arquivo .html, tamanho máx 10MB
-- Upload para bucket `diet-html-files`
-- Campos: nome, descrição, data início/fim, ativar
-- Preview antes de enviar
+### FASE 2: Transformacao Hub (Tela Zero)
 
-### 2.2 Criar `StudentDiet.tsx` (nova tab)
-Componente para a tab "Dieta" no perfil do aluno:
-- Lista dietas atribuídas (ativas/inativas)
-- Cards com badges de tipo (Link/HTML/Código)
-- Botões: Visualizar, Editar, Ativar/Desativar, Excluir
-- Dialog para preview do admin
-- Estatísticas: total dietas, ativas, por tipo
+#### 2.1 Header Gamificado Persistente
+**Arquivo**: `src/components/9fit/HUDBar.tsx`
 
-### 2.3 Atualizar `StudentDetailedView.tsx`
-- Adicionar nova tab "Dieta" com ícone de utensílios
-- Importar e renderizar `StudentDiet` component
+Melhorias:
+- Adicionar avatar do usuario
+- Mostrar nivel/badge dinamico
+- Indicador visual de streak pulsando
+- Barra de progresso calorico mais proeminente
 
----
+#### 2.2 Card de Missao Unica Contextual
+**Arquivo**: `src/pages/9fit/Hub.tsx`
 
-## Fase 3: Página do Aluno
-
-### 3.1 Atualizar `Dieta.tsx` (/9fit/dieta)
-Transformar de mock data para dados reais:
-
-1. **Fetch de dietas atribuídas:**
-   - Buscar athlete_id do usuário logado
-   - Query `student_diet_assignments` filtrado por athlete_id e is_active
-   - Filtrar por data válida (start_date ≤ hoje ≤ end_date)
-
-2. **Nova seção: Meus Planos Alimentares**
-   - Card para cada dieta atribuída
-   - Informações: nome, descrição, validade
-   - Badge de tipo (Link/HTML/Código)
-   - Botão **"Ver Completo"** destaque
-
-3. **Dialog Fullscreen ao clicar "Ver Completo":**
-   - Cabeçalho com nome e tipo
-   - Fetch do conteúdo HTML (mesma lógica do Train.tsx)
-   - Renderização via iframe srcDoc
-   - Botão para abrir em nova aba (links externos)
-   - Botão fechar
-
----
-
-## Fase 4: Fluxo de Dados
-
+Logica:
 ```text
-1. Coach abre StudentDetailedView
-2. Clica na tab "Dieta"
-3. Clica "Atribuir Dieta"
-4. Modal DietContentUpload abre
-5. Coach cola link/código ou faz upload
-6. Preenche nome, descrição, datas
-7. Clica "Enviar Dieta"
-8. Sistema:
-   - Upload do arquivo (se necessário) → storage
-   - Insert em student_diet_assignments
-9. Aluno abre /9fit/dieta
-10. Página busca student_diet_assignments
-11. Exibe lista com botão "Ver Completo"
-12. Aluno clica → Dialog fullscreen renderiza
+SE (hora < 12 && sem registro cafe) ENTAO
+  Missao = "Registrar Cafe da Manha"
+SENAO SE (hora >= 17 && treino_hoje) ENTAO
+  Missao = "Iniciar Treino do Dia"
+SENAO SE (treino == null) ENTAO
+  Missao = "Dia de Recuperacao Ativa"
+  Botao = "Fazer Check-in de Agua"
 ```
+
+- Nunca mostrar "Sem treino hoje" como mensagem passiva
+- Sempre oferecer acao alternativa (alongamento, hidratacao, caminhada)
+
+#### 2.3 Cards de Resumo Integrados
+**Novo componente**: `src/components/9fit/EcosystemStatusCards.tsx`
+
+Substituir AppGrid atual por cards de status:
+- **Card Dieta**: Mostra calorias consumidas / meta (link para /9fit/dieta)
+- **Card Aulas**: Mostra proximas aulas agendadas (link para /9fit/aulas-creditos)
+- **Card Progresso**: Ultima avaliacao fisica (link para 9Progress)
+- **Card Premium**: Acesso a recursos exclusivos
+
+### FASE 3: Sistema de Aulas com Creditos
+
+#### 3.1 Melhorar AulasCreditos.tsx
+**Arquivo**: `src/pages/9fit/AulasCreditos.tsx`
+
+Funcionalidades:
+- Exibir saldo de creditos no topo
+- Multi-selecao de aulas com checkout
+- Calculo automatico de creditos
+- Check-in com QR code (futuro)
+- Solicitacao de ferias via modal
+- Historico de cancelamentos
+
+#### 3.2 Integracao com tabelas existentes
+- `student_credits`: Saldo de creditos
+- `class_bookings`: Reservas com check_in_at
+- `vacation_requests`: Solicitacoes de ferias
+- `gym_classes`: Aulas disponiveis
+
+### FASE 4: Ecossistema Guiado (Anti-Fragmentacao)
+
+#### 4.1 Remover Navegacao Livre para Apps Externos
+**Arquivo**: `src/components/9fit/AppGrid.tsx`
+
+Mudancas:
+- Remover links diretos para apps externos
+- Apps so sao acessados via contexto relevante
+- Exemplo: "Fazer Avaliacao" aparece quando faz 30 dias da ultima
+
+#### 4.2 Criar Componente de Sugestao Contextual
+**Novo componente**: `src/components/9fit/SmartSuggestion.tsx`
+
+Logica inteligente:
+- Se ultima avaliacao > 30 dias: "Atualize sua avaliacao" (9Progress)
+- Se treino estagnado: "Gere novo treino" (SmartTreino)
+- Se objetivo mudou: "Refaca diagnostico" (Fit Path Finder)
+
+### FASE 5: Database e Integridade
+
+#### 5.1 Garantir Vinculacao Athlete-User
+Verificar e corrigir athletes sem `user_id` ou `email`:
+- Trigger para popular email automaticamente na criacao
+- Migracao para popular dados faltantes
 
 ---
 
-## Arquivos a Criar
+## Arquivos a Criar/Modificar
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/components/students/DietContentUpload.tsx` | Upload de dieta (3 métodos) |
-| `src/components/students/tabs/StudentDiet.tsx` | Tab dieta no admin |
+### Novos Arquivos
+1. `src/components/9fit/EcosystemStatusCards.tsx` - Cards de status integrados
+2. `src/components/9fit/SmartSuggestion.tsx` - Sugestoes contextuais
+3. `src/components/9fit/RecoveryMission.tsx` - Missao para dias sem treino
 
-## Arquivos a Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/components/students/StudentDetailedView.tsx` | Adicionar tab Dieta |
-| `src/pages/9fit/Dieta.tsx` | Integrar com Supabase, adicionar "Ver Completo" |
+### Arquivos a Modificar
+1. `src/pages/9fit/Hub.tsx` - Logica "Tela Zero"
+2. `src/pages/9fit/Train.tsx` - Corrigir busca athlete_id
+3. `src/pages/9fit/Dieta.tsx` - Corrigir busca athlete_id
+4. `src/pages/9fit/AulasCreditos.tsx` - Sistema de creditos completo
+5. `src/pages/AgendaPage.tsx` - Botoes funcionais
+6. `src/components/9fit/AppGrid.tsx` - Transformar em status cards
+7. `src/components/9fit/HUDBar.tsx` - Gamificacao aprimorada
+8. `src/components/9fit/MissionCard.tsx` - Tipos expandidos
 
 ---
 
-## Seção Técnica
+## Secao Tecnica
 
-### Migração SQL
-```sql
--- Criar tabela de atribuição de dietas
-CREATE TABLE IF NOT EXISTS public.student_diet_assignments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  student_id UUID NOT NULL REFERENCES public.athletes(id) ON DELETE CASCADE,
-  diet_name TEXT NOT NULL,
-  diet_description TEXT,
-  diet_type VARCHAR(20) CHECK (diet_type IN ('link', 'html', 'json')),
-  diet_file_url TEXT,
-  diet_file_path TEXT,
-  diet_data JSONB DEFAULT '{}',
-  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-  end_date DATE,
-  is_active BOOLEAN DEFAULT true,
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Índices para performance
-CREATE INDEX idx_diet_assignments_student ON student_diet_assignments(student_id);
-CREATE INDEX idx_diet_assignments_active ON student_diet_assignments(is_active);
-
--- RLS
-ALTER TABLE student_diet_assignments ENABLE ROW LEVEL SECURITY;
-
--- Coaches podem gerenciar dietas dos seus alunos
-CREATE POLICY "Coaches can manage diet assignments"
-ON student_diet_assignments FOR ALL
-USING (created_by = auth.uid() OR EXISTS (
-  SELECT 1 FROM athletes WHERE id = student_id AND coach_id = auth.uid()
-));
-
--- Alunos podem ver suas próprias dietas
-CREATE POLICY "Athletes can view own diets"
-ON student_diet_assignments FOR SELECT
-USING (EXISTS (
-  SELECT 1 FROM athletes WHERE id = student_id AND user_id = auth.uid()
-));
-
--- Criar bucket de storage para dietas
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('diet-html-files', 'diet-html-files', true)
-ON CONFLICT (id) DO NOTHING;
-
--- Políticas de storage
-CREATE POLICY "Anyone can view diet files"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'diet-html-files');
-
-CREATE POLICY "Authenticated users can upload diet files"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'diet-html-files' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Owners can delete diet files"
-ON storage.objects FOR DELETE
-USING (bucket_id = 'diet-html-files' AND owner = auth.uid());
-```
-
-### Estrutura do DietContentUpload
-- Reutilizar 90% do código de TrainingContentUpload
-- Mudar referências: "treino" → "dieta"
-- Mudar bucket: `training-html-files` → `diet-html-files`
-- Mudar tabela: `student_training_assignments` → `student_diet_assignments`
-- Manter mesma lógica de validação e upload
-
-### Integração na Dieta.tsx
+### Estrategia de Busca Athlete (Corrigida)
 ```typescript
-// Buscar athlete_id
-const { data: athlete } = await supabase
-  .from("athletes")
-  .select("id")
-  .eq("user_id", user.id)
-  .single();
+const getAthleteId = async (userId: string, userEmail: string) => {
+  // 1. Busca direta por user_id
+  let { data: athlete } = await supabase
+    .from('athletes')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (athlete) return athlete.id;
+  
+  // 2. Fallback: athlete_auth_link
+  const { data: link } = await supabase
+    .from('athlete_auth_link')
+    .select('athlete_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (link) return link.athlete_id;
+  
+  // 3. Fallback: email
+  if (userEmail) {
+    const { data: emailAthlete } = await supabase
+      .from('athletes')
+      .select('id')
+      .eq('email', userEmail)
+      .maybeSingle();
+    
+    if (emailAthlete) return emailAthlete.id;
+  }
+  
+  return null;
+};
+```
 
-// Buscar dietas atribuídas
-const { data: diets } = await supabase
-  .from("student_diet_assignments")
-  .select("*")
-  .eq("student_id", athlete.id)
-  .eq("is_active", true);
+### Logica Missao Contextual
+```typescript
+const getMission = (trainings, hour, lastMeal, lastWater) => {
+  if (hour < 10 && !lastMeal) {
+    return { type: 'nutricao', title: 'Registre seu Cafe', action: '/9fit/dieta' };
+  }
+  if (trainings.length > 0 && hour >= 6 && hour <= 22) {
+    return { type: 'treino', title: trainings[0].name, action: '/9fit/train' };
+  }
+  return { 
+    type: 'recuperacao', 
+    title: 'Dia de Recuperacao Ativa', 
+    subtitle: 'Alongamento + Hidratacao',
+    action: 'complete-recovery'
+  };
+};
+```
+
+### Componente EcosystemStatusCards
+```typescript
+// Cards que mostram STATUS, nao apenas ICONES
+const EcosystemStatusCards = ({ dieta, aulas, progresso }) => (
+  <div className="grid grid-cols-2 gap-3">
+    <StatusCard 
+      title="Dieta" 
+      value={`${dieta.consumed}/${dieta.goal} kcal`}
+      progress={(dieta.consumed / dieta.goal) * 100}
+      path="/9fit/dieta"
+    />
+    <StatusCard 
+      title="Aulas" 
+      value={`${aulas.booked} agendadas`}
+      badge={aulas.nextClass}
+      path="/9fit/aulas-creditos"
+    />
+  </div>
+);
 ```
 
 ---
 
-## Resultado Final
+## Prioridades de Implementacao
 
-**Admin:**
-- Nova aba "Dieta" no perfil do aluno
-- Pode atribuir dietas via link, código ou upload
-- Gerencia dietas ativas/inativas
+| Prioridade | Item | Impacto |
+|------------|------|---------|
+| CRITICA | Corrigir busca athlete_id | Treinos/Dietas funcionando |
+| ALTA | Logica "nunca vazio" no Hub | UX imediata |
+| ALTA | AgendaPage botoes funcionais | Operacional admin |
+| MEDIA | Cards de status integrados | Engajamento |
+| MEDIA | Sistema creditos aulas | Feature completa |
+| BAIXA | Sugestoes contextuais | Retencao longo prazo |
 
-**Aluno:**
-- Vê dietas atribuídas em /9fit/dieta
-- Botão "Ver Completo" abre fullscreen
-- Conteúdo renderizado igual ao treino
-- Experiência consistente com o sistema de treinos
+---
+
+## Resultado Esperado
+
+1. **Zero telas vazias**: Usuario sempre tem acao clara
+2. **Treinos/Dietas funcionando**: Dados renderizam corretamente
+3. **Ecossistema guiado**: Apps aparecem no contexto certo
+4. **Gamificacao visivel**: Stats no header motivam consistencia
+5. **Admin funcional**: AgendaPage com acoes reais
