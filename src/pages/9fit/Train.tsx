@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink } from "lucide-react";
+import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink, Heart, Droplets, PersonStanding } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
-import { EmptyState } from "@/components/9fit/EmptyState";
+import { RecoveryMission } from "@/components/9fit/RecoveryMission";
+import { useAthleteId } from "@/hooks/useAthleteId";
 
 interface TrainingAssignment {
   id: string;
@@ -23,11 +24,11 @@ interface TrainingAssignment {
 }
 
 export default function NineFitTrain() {
+  const { athleteId, loading: athleteLoading } = useAthleteId();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTraining, setSelectedTraining] = useState<TrainingAssignment | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
@@ -35,55 +36,45 @@ export default function NineFitTrain() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   useEffect(() => {
-    fetchTrainings();
-  }, []);
+    if (!athleteLoading && athleteId) {
+      fetchTrainings(athleteId);
+    } else if (!athleteLoading && !athleteId) {
+      setLoading(false);
+    }
+  }, [athleteId, athleteLoading]);
 
-  const fetchTrainings = async () => {
+  const fetchTrainings = async (athleteId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      console.log('[Train] Fetching trainings for athlete:', athleteId);
+      
+      const { data, error } = await supabase
+        .from("student_training_assignments")
+        .select("*")
+        .eq("student_id", athleteId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
 
-      // Get athlete linked to this user
-      const { data: link } = await supabase
-        .from("athlete_auth_link")
-        .select("athlete_id")
-        .eq("user_id", user.id)
-        .single();
-
-      let athleteId = link?.athlete_id;
-
-      if (!athleteId) {
-        // Try to find by user_id in athletes table
-        const { data: athlete } = await supabase
-          .from("athletes")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-        
-        athleteId = athlete?.id;
+      if (error) {
+        console.error('[Train] Query error:', error);
+        throw error;
       }
 
-      if (athleteId) {
-        const { data, error } = await supabase
-          .from("student_training_assignments")
-          .select("*")
-          .eq("student_id", athleteId)
-          .eq("is_active", true)
-          .order("created_at", { ascending: false });
+      console.log('[Train] Raw trainings found:', data?.length || 0);
 
-        if (!error && data) {
-          // Filter by date - show trainings that are valid for today
-          const today = new Date().toISOString().split('T')[0];
-          const validTrainings = data.filter((t: TrainingAssignment) => {
-            const startValid = t.start_date <= today;
-            const endValid = !t.end_date || t.end_date >= today;
-            return startValid && endValid;
-          });
-          setTrainings(validTrainings as TrainingAssignment[]);
-        }
+      if (data) {
+        // Filter by date - show trainings that are valid for today
+        const today = new Date().toISOString().split('T')[0];
+        const validTrainings = data.filter((t: TrainingAssignment) => {
+          const startValid = t.start_date <= today;
+          const endValid = !t.end_date || t.end_date >= today;
+          return startValid && endValid;
+        });
+        console.log('[Train] Valid trainings after date filter:', validTrainings.length);
+        setTrainings(validTrainings as TrainingAssignment[]);
       }
     } catch (error) {
-      console.error("Error fetching trainings:", error);
+      console.error("[Train] Error fetching trainings:", error);
+      toast.error("Erro ao carregar treinos");
     } finally {
       setLoading(false);
     }
@@ -229,17 +220,30 @@ export default function NineFitTrain() {
           </span>
         </div>
 
-        {loading ? (
+        {loading || athleteLoading ? (
           <div className="space-y-3">
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : trainings.length === 0 ? (
-          <EmptyState
-            icon={Dumbbell}
-            title="Nenhum Treino Disponível"
-            description="Seu professor ainda não atribuiu treinos para você."
-          />
+          <div className="space-y-6">
+            {/* Recovery Mission instead of empty state */}
+            <RecoveryMission 
+              onComplete={(calories) => {
+                console.log('[Train] Recovery calories:', calories);
+              }} 
+            />
+            
+            {/* Info card */}
+            <div className="bg-card border border-border rounded-sm p-4 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                <Dumbbell className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Nenhum treino atribuído ainda. Complete as tarefas de recuperação!
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="space-y-3">
             {trainings.map((training) => (
