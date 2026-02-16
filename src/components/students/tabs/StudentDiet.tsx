@@ -133,9 +133,9 @@ export function StudentDiet({ student }: StudentDietProps) {
         
         // Decode HTML entities if needed
         if (content.includes('&lt;') || content.includes('&gt;')) {
-          const textarea = document.createElement('textarea');
-          textarea.innerHTML = content;
-          content = textarea.value;
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(`<!doctype html><body>${content}`, 'text/html');
+          content = doc.body.textContent || '';
         }
         
         setPreviewContent(content);

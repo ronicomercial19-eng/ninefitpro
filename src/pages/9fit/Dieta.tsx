@@ -217,9 +217,9 @@ export default function NineFitDieta() {
         
         // Decode HTML entities if content was escaped
         if (content.includes('&lt;') || content.includes('&gt;')) {
-          const textarea = document.createElement('textarea');
-          textarea.innerHTML = content;
-          content = textarea.value;
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(`<!doctype html><body>${content}`, 'text/html');
+          content = doc.body.textContent || '';
         }
         
         // If content doesn't look like HTML, wrap it
