@@ -35,6 +35,22 @@ export default function NineFitTrain() {
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  // Map day index to Portuguese day names for filtering
+  const dayNames = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+  // Get the selected day name for filtering
+  const selectedDayIndex = (selectedDate.getDay() + 6) % 7; // Mon=0, Sun=6
+  const selectedDayName = dayNames[selectedDayIndex];
+
+  // Filter trainings by selected day
+  const filteredTrainings = trainings.filter((t) => {
+    const trainingDays = t.training_data?.training_days as string[] | undefined;
+    // If no specific days set, show on all days (fallback)
+    if (!trainingDays || trainingDays.length === 0) return true;
+    return trainingDays.includes(selectedDayName);
+  });
+
   useEffect(() => {
     if (!athleteLoading && athleteId) {
       fetchTrainings(athleteId);
@@ -213,10 +229,10 @@ export default function NineFitTrain() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
             <Dumbbell className="w-4 h-4 text-neon-400" />
-            Treinos Ativos
+            {dayLabels[selectedDayIndex]} - Treinos
           </h2>
           <span className="text-xs text-muted-foreground">
-            {trainings.length} treino{trainings.length !== 1 ? "s" : ""}
+            {filteredTrainings.length} treino{filteredTrainings.length !== 1 ? "s" : ""}
           </span>
         </div>
 
@@ -225,7 +241,7 @@ export default function NineFitTrain() {
             <SkeletonCard />
             <SkeletonCard />
           </div>
-        ) : trainings.length === 0 ? (
+        ) : filteredTrainings.length === 0 ? (
           <div className="space-y-6">
             {/* Recovery Mission instead of empty state */}
             <RecoveryMission 
@@ -240,13 +256,15 @@ export default function NineFitTrain() {
                 <Dumbbell className="w-6 h-6 text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Nenhum treino atribuído ainda. Complete as tarefas de recuperação!
+                {trainings.length === 0 
+                  ? "Nenhum treino atribuído ainda. Complete as tarefas de recuperação!"
+                  : `Nenhum treino para ${dayLabels[selectedDayIndex]}. Selecione outro dia.`}
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-3">
-            {trainings.map((training) => (
+            {filteredTrainings.map((training) => (
               <button
                 key={training.id}
                 onClick={() => handleOpenTraining(training)}
