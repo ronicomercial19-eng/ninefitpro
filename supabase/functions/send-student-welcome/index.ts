@@ -1,11 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 import { Resend } from "npm:resend@4.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface StudentWelcomeRequest {
@@ -20,6 +21,34 @@ interface StudentWelcomeRequest {
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Auth check - require trainer role
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+
+  const authClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+  if (claimsError || !claimsData?.claims) {
+    return new Response(JSON.stringify({ error: "Invalid token" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+
+  const callerId = claimsData.claims.sub;
+  const { data: roleCheck } = await authClient.from("user_roles").select("role").eq("user_id", callerId).single();
+  if (!roleCheck || !["admin", "super_admin", "trainer"].includes(roleCheck.role)) {
+    return new Response(JSON.stringify({ error: "Insufficient permissions" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
 
   try {
@@ -55,12 +84,12 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="background: #fff7ed; border-left: 4px solid #ea580c; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
               <h3 style="color: #ea580c; margin: 0 0 10px 0;">📋 Seus Dados de Acesso</h3>
               <p style="margin: 5px 0;"><strong>Email:</strong> ${studentEmail}</p>
-              <p style="margin: 5px 0;"><strong>Senha:</strong> ${password}</p>
+              <p style="margin: 5px 0;"><strong>Senha temporária:</strong> ${password}</p>
               <p style="margin: 5px 0;"><strong>Objetivo:</strong> ${objetivo || 'A definir'}</p>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${appUrl || 'https://9c713e4a-7db8-48ba-829c-18abc2bf4a27.lovableproject.com/9fit/login'}" 
+              <a href="${appUrl || 'https://ninefitpro.lovable.app/9fit/login'}" 
                  style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;">
                 🚀 Acessar o App
               </a>
@@ -98,10 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error sending welcome email:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };

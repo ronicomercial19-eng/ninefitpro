@@ -77,85 +77,118 @@ export type Database = {
         Row: {
           altura_cm: number | null
           ambiente_treino: string | null
+          condicionamento_cardio: string | null
           data_cadastro: string | null
           data_fim_plano: string | null
           data_inicio_plano: string | null
           data_nascimento: string | null
           email: string
+          experiencia_pesos_livres: string | null
+          foco_muscular: string | null
           foto_perfil_url: string | null
           frequencia_semanal: number | null
           genero: string | null
+          historico_lesoes: string | null
           historico_medico: string | null
+          horario_preferido: string | null
           id: string
           id_plano_ativo: string | null
+          meta_tempo_meses: number | null
           nivel_experiencia: string | null
           nome: string
           nome_completo: string | null
           objetivo: string
           observacoes: string | null
           peso_atual: number | null
+          preferencia_cardio: string | null
+          preferencia_equipamento: string | null
+          preferencia_intensidade: string | null
           professor_id: string
           restricoes_alimentares: string | null
           restricoes_medicas: string | null
           status: Database["public"]["Enums"]["aluno_status"] | null
           status_plano: string | null
           telefone: string | null
+          tempo_disponivel_min: number | null
+          treina_sozinho: boolean | null
           ultima_atualizacao: string | null
         }
         Insert: {
           altura_cm?: number | null
           ambiente_treino?: string | null
+          condicionamento_cardio?: string | null
           data_cadastro?: string | null
           data_fim_plano?: string | null
           data_inicio_plano?: string | null
           data_nascimento?: string | null
           email: string
+          experiencia_pesos_livres?: string | null
+          foco_muscular?: string | null
           foto_perfil_url?: string | null
           frequencia_semanal?: number | null
           genero?: string | null
+          historico_lesoes?: string | null
           historico_medico?: string | null
+          horario_preferido?: string | null
           id?: string
           id_plano_ativo?: string | null
+          meta_tempo_meses?: number | null
           nivel_experiencia?: string | null
           nome: string
           nome_completo?: string | null
           objetivo: string
           observacoes?: string | null
           peso_atual?: number | null
+          preferencia_cardio?: string | null
+          preferencia_equipamento?: string | null
+          preferencia_intensidade?: string | null
           professor_id: string
           restricoes_alimentares?: string | null
           restricoes_medicas?: string | null
           status?: Database["public"]["Enums"]["aluno_status"] | null
           status_plano?: string | null
           telefone?: string | null
+          tempo_disponivel_min?: number | null
+          treina_sozinho?: boolean | null
           ultima_atualizacao?: string | null
         }
         Update: {
           altura_cm?: number | null
           ambiente_treino?: string | null
+          condicionamento_cardio?: string | null
           data_cadastro?: string | null
           data_fim_plano?: string | null
           data_inicio_plano?: string | null
           data_nascimento?: string | null
           email?: string
+          experiencia_pesos_livres?: string | null
+          foco_muscular?: string | null
           foto_perfil_url?: string | null
           frequencia_semanal?: number | null
           genero?: string | null
+          historico_lesoes?: string | null
           historico_medico?: string | null
+          horario_preferido?: string | null
           id?: string
           id_plano_ativo?: string | null
+          meta_tempo_meses?: number | null
           nivel_experiencia?: string | null
           nome?: string
           nome_completo?: string | null
           objetivo?: string
           observacoes?: string | null
           peso_atual?: number | null
+          preferencia_cardio?: string | null
+          preferencia_equipamento?: string | null
+          preferencia_intensidade?: string | null
           professor_id?: string
           restricoes_alimentares?: string | null
           restricoes_medicas?: string | null
           status?: Database["public"]["Enums"]["aluno_status"] | null
           status_plano?: string | null
           telefone?: string | null
+          tempo_disponivel_min?: number | null
+          treina_sozinho?: boolean | null
           ultima_atualizacao?: string | null
         }
         Relationships: [

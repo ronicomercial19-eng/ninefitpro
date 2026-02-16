@@ -17,16 +17,22 @@ refresh_token_rotation_enabled = true
 security_update_password_require_reauthentication = true
 
 [functions.sync-workout-programs]
-verify_jwt = true
+verify_jwt = false
 
 [functions.sync-exercises]
-verify_jwt = true
+verify_jwt = false
 
 [functions.sync-classes]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-base44-training-plans]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-base44-nutrition-plans]
-verify_jwt = true
+verify_jwt = false
+
+[functions.create-athlete-user]
+verify_jwt = false
+
+[functions.send-student-welcome]
+verify_jwt = false
