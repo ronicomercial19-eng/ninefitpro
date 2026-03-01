@@ -73,17 +73,30 @@ export default function FirstAccess() {
       // Update password_changed flag in athletes table
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: link } = await supabase
-          .from('athlete_auth_link')
-          .select('athlete_id')
-          .eq('user_id', user.id)
-          .single();
+        // Try update via user_id directly first (most reliable with RLS)
+        const { error: updateError, count } = await supabase
+          .from('athletes')
+          .update({ password_changed: true, auto_password_temp: null })
+          .eq('user_id', user.id);
 
-        if (link) {
-          await supabase
-            .from('athletes')
-            .update({ password_changed: true })
-            .eq('id', link.athlete_id);
+        if (updateError || count === 0) {
+          // Fallback: try via athlete_auth_link
+          const { data: link } = await supabase
+            .from('athlete_auth_link')
+            .select('athlete_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (link) {
+            const { error: fallbackError } = await supabase
+              .from('athletes')
+              .update({ password_changed: true, auto_password_temp: null })
+              .eq('id', link.athlete_id);
+            
+            if (fallbackError) {
+              console.error('Failed to update password_changed flag:', fallbackError);
+            }
+          }
         }
       }
 

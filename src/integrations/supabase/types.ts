@@ -277,6 +277,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          appointment_type: string | null
           created_at: string | null
           description: string | null
           duration: number | null
@@ -290,6 +291,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          appointment_type?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -303,6 +305,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          appointment_type?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -1637,6 +1640,163 @@ export type Database = {
           tipo_modelo?: string | null
         }
         Relationships: []
+      }
+      ninefit_checkins: {
+        Row: {
+          alimentacao: number | null
+          aluno_id: string
+          created_at: string
+          data_checkin: string
+          dificuldade_mes: string | null
+          dor: number | null
+          dor_local: string | null
+          energia: number | null
+          fator_atrapalhou: string | null
+          fator_consistencia: string | null
+          id: string
+          medida_chave: string | null
+          meta_proximo_mes: string | null
+          professor_id: string
+          sono: number | null
+          tipo: Database["public"]["Enums"]["ninefit_checkin_tipo"]
+          treinos_semana: number | null
+          vitoria_mes: string | null
+        }
+        Insert: {
+          alimentacao?: number | null
+          aluno_id: string
+          created_at?: string
+          data_checkin?: string
+          dificuldade_mes?: string | null
+          dor?: number | null
+          dor_local?: string | null
+          energia?: number | null
+          fator_atrapalhou?: string | null
+          fator_consistencia?: string | null
+          id?: string
+          medida_chave?: string | null
+          meta_proximo_mes?: string | null
+          professor_id: string
+          sono?: number | null
+          tipo?: Database["public"]["Enums"]["ninefit_checkin_tipo"]
+          treinos_semana?: number | null
+          vitoria_mes?: string | null
+        }
+        Update: {
+          alimentacao?: number | null
+          aluno_id?: string
+          created_at?: string
+          data_checkin?: string
+          dificuldade_mes?: string | null
+          dor?: number | null
+          dor_local?: string | null
+          energia?: number | null
+          fator_atrapalhou?: string | null
+          fator_consistencia?: string | null
+          id?: string
+          medida_chave?: string | null
+          meta_proximo_mes?: string | null
+          professor_id?: string
+          sono?: number | null
+          tipo?: Database["public"]["Enums"]["ninefit_checkin_tipo"]
+          treinos_semana?: number | null
+          vitoria_mes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ninefit_checkins_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ninefit_reports: {
+        Row: {
+          aluno_id: string
+          biomecanica: Json | null
+          created_at: string
+          data_relatorio: string
+          evidencias: Json | null
+          id: string
+          mes_ciclo: string | null
+          objetivo: string | null
+          plano_proximo_ciclo: Json | null
+          prescricao: Json | null
+          professor_id: string
+          proxima_revisao: string | null
+          publicado_em: string | null
+          resumo_executivo: Json | null
+          score_exercise: number | null
+          score_integrated: number | null
+          score_neuro: number | null
+          score_nutrition: number | null
+          score_total: number | null
+          status: string
+          tipo: Database["public"]["Enums"]["ninefit_report_tipo"]
+          updated_at: string
+          vitorias: Json | null
+        }
+        Insert: {
+          aluno_id: string
+          biomecanica?: Json | null
+          created_at?: string
+          data_relatorio?: string
+          evidencias?: Json | null
+          id?: string
+          mes_ciclo?: string | null
+          objetivo?: string | null
+          plano_proximo_ciclo?: Json | null
+          prescricao?: Json | null
+          professor_id: string
+          proxima_revisao?: string | null
+          publicado_em?: string | null
+          resumo_executivo?: Json | null
+          score_exercise?: number | null
+          score_integrated?: number | null
+          score_neuro?: number | null
+          score_nutrition?: number | null
+          score_total?: number | null
+          status?: string
+          tipo?: Database["public"]["Enums"]["ninefit_report_tipo"]
+          updated_at?: string
+          vitorias?: Json | null
+        }
+        Update: {
+          aluno_id?: string
+          biomecanica?: Json | null
+          created_at?: string
+          data_relatorio?: string
+          evidencias?: Json | null
+          id?: string
+          mes_ciclo?: string | null
+          objetivo?: string | null
+          plano_proximo_ciclo?: Json | null
+          prescricao?: Json | null
+          professor_id?: string
+          proxima_revisao?: string | null
+          publicado_em?: string | null
+          resumo_executivo?: Json | null
+          score_exercise?: number | null
+          score_integrated?: number | null
+          score_neuro?: number | null
+          score_nutrition?: number | null
+          score_total?: number | null
+          status?: string
+          tipo?: Database["public"]["Enums"]["ninefit_report_tipo"]
+          updated_at?: string
+          vitorias?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ninefit_reports_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -3375,6 +3535,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      super_sets: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          difficulty: string | null
+          exercise_count: number | null
+          exercises: Json | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          difficulty?: string | null
+          exercise_count?: number | null
+          exercises?: Json | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          difficulty?: string | null
+          exercise_count?: number | null
+          exercises?: Json | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       supersets: {
         Row: {
@@ -5232,6 +5425,8 @@ export type Database = {
         | "paused"
         | "completed"
         | "skipped"
+      ninefit_checkin_tipo: "semanal" | "mensal" | "trimestral"
+      ninefit_report_tipo: "diagnostico" | "evolutivo" | "trimestral"
       notification_type: "info" | "warning" | "success" | "error"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
       post_type: "announcement" | "workout" | "nutrition" | "tips"
@@ -5410,6 +5605,8 @@ export const Constants = {
         "completed",
         "skipped",
       ],
+      ninefit_checkin_tipo: ["semanal", "mensal", "trimestral"],
+      ninefit_report_tipo: ["diagnostico", "evolutivo", "trimestral"],
       notification_type: ["info", "warning", "success", "error"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
       post_type: ["announcement", "workout", "nutrition", "tips"],
