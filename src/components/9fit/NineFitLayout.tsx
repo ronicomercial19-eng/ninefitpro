@@ -24,30 +24,21 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
 
       // Check if this is first access (needs password change)
       try {
-        const { data: link } = await supabase
-          .from('athlete_auth_link')
-          .select('athlete_id')
+        const { data: athlete } = await supabase
+          .from('athletes')
+          .select('password_changed, auto_password_temp')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
-        if (link) {
-          const { data: athlete } = await supabase
-            .from('athletes')
-            .select('password_changed, auto_password_temp')
-            .eq('id', link.athlete_id)
-            .single();
-
-          // If it's first access and not already on first-access page, redirect
-          const isFirstAccess = athlete?.password_changed === false && 
-                                athlete?.auto_password_temp !== null;
-          
-          if (isFirstAccess && !location.pathname.includes('first-access')) {
+        // Only redirect if we confirmed athlete exists AND hasn't changed password
+        if (athlete && athlete.password_changed === false && athlete.auto_password_temp !== null) {
+          if (!location.pathname.includes('first-access')) {
             navigate("/9fit/first-access");
             return;
           }
         }
       } catch (error) {
-        // Continue if check fails - might not be an athlete
+        // Continue if check fails - don't block access
         console.log('First access check:', error);
       }
       
