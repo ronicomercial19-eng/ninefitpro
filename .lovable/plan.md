@@ -1,83 +1,141 @@
 
 
-# Plano de Correcao: Dieta, Aulas e Treinos por Dia
+# Plano de Correcao: Primeiro Acesso, Agenda Admin, Relatorios e Mais
 
-## Diagnostico dos Problemas
+## Problemas Identificados e Causa Raiz
 
-### 1. Dieta NAO aparece para o aluno (CRITICO)
-**Causa raiz encontrada**: A tabela `athletes` NAO tem uma politica RLS que permita ao aluno ler seu proprio registro. As politicas existentes so permitem `coach_id = auth.uid()` ou roles de admin.
-
-Quando a politica de `student_diet_assignments` faz:
+### 1. GARGALO CRITICO: Loop no Primeiro Acesso
+**Causa raiz confirmada**: A tabela `athletes` NAO tem politica RLS de **UPDATE** para o aluno. Quando `FirstAccess.tsx` executa:
 ```
-EXISTS (SELECT 1 FROM athletes WHERE athletes.user_id = auth.uid())
+.update({ password_changed: true }).eq('id', link.athlete_id)
 ```
-Essa subquery retorna vazio porque o aluno nao consegue ler a tabela `athletes`. Logo, o resultado final e vazio.
+O update **falha silenciosamente** (retorna 0 rows affected). Quando o usuario navega para `/9fit/hub`, o `NineFitLayout` verifica `password_changed` que continua `false`, e redireciona de volta para `/9fit/first-access`.
 
-**Prova**: A requisicao de rede mostra `student_id=eq.876a6316...` retornando `[]` mesmo com 2 dietas ativas no banco para esse aluno. O console mostra `Found diets: 0`.
+**Solucao**: Adicionar politica RLS UPDATE na tabela `athletes` para `user_id = auth.uid()`, restrita aos campos `password_changed` e `auto_password_temp`.
 
-Esse mesmo bug afeta `student_credits` e `vacation_requests` (mesma subquery).
+### 2. Relatorios - Lista de Alunos Vazia
+**Causa raiz**: `ReportsPage.tsx` linha 23: `const studentsData: any[] = []` - array hardcoded vazio, sem fetch do Supabase.
 
-### 2. Sistema de Aulas nao funciona
-**Causa raiz**: As unicas aulas em `gym_classes` sao de dezembro de 2024. Nao existem aulas em 2026. O calendario mostra vazio porque nao ha dados.
+### 3. Agenda Admin - Agendamento Incompleto
+**Situacao atual**: Botao "Novo agendamento" existe mas nao faz nada. Precisa de modal com selecao de aluno + tipo (avaliacao fisica / aulas / consultoria).
 
-Alem disso, as politicas de `class_bookings` usam `user_email` para match, o que funciona, mas `student_credits` e `vacation_requests` dependem da subquery em `athletes` que esta bloqueada (mesmo bug do item 1).
+### 4. Super Series e Series de Referencia - Sem Persistencia
+**Causa raiz**: Ambas as paginas usam arrays vazios hardcoded (`const superSets: any[] = []`), sem integracao com Supabase.
 
-### 3. Treinos por dia da semana
-O usuario quer que apos o admin criar treinos, eles aparecam organizados por dia da semana (Seg/Ter/Qua...) na view do aluno, nao apenas como lista flat.
+### 5. Check-in de Aula do Aluno
+**Situacao atual**: O `handleCheckIn` ja existe em `AulasCreditos.tsx` mas precisa ficar mais visivel e debitar creditos automaticamente.
 
 ---
 
-## Solucao
+## Fases de Implementacao
 
-### Bloco 1: Corrigir RLS da tabela `athletes` (resolve dieta + creditos + ferias)
+### FASE 1: Corrigir Loop do Primeiro Acesso (CRITICO)
 
-Adicionar uma politica SELECT que permite ao atleta ler seu proprio registro:
+**Migracao SQL**:
+- Adicionar politica RLS UPDATE em `athletes` para alunos atualizarem `password_changed` e `auto_password_temp` do proprio registro
+- A politica sera: `UPDATE ON athletes FOR authenticated USING (user_id = (select auth.uid()))`
 
-```sql
-CREATE POLICY "Athletes can view own profile"
-  ON public.athletes FOR SELECT
-  USING (user_id = (select auth.uid()));
-```
+**Arquivo `src/pages/9fit/FirstAccess.tsx`**:
+- Adicionar verificacao de erro no update do `password_changed`
+- Se o update via `athlete_auth_link` falhar, tentar update direto via `user_id`
+- Adicionar `auto_password_temp = null` ao update (limpar senha temporaria)
+- Log de erro explicito se update falhar
 
-Isso desbloqueia automaticamente:
-- Dietas (`student_diet_assignments`)
-- Creditos (`student_credits`)  
-- Ferias (`vacation_requests`)
+**Arquivo `src/components/9fit/NineFitLayout.tsx`**:
+- Adicionar fallback: se `password_changed` nao puder ser lido, nao redirecionar para first-access (evitar loop)
 
-### Bloco 2: Criar aulas de exemplo para fevereiro 2026
+### FASE 2: Relatorios com Dados Reais
 
-Inserir aulas recorrentes para que o calendario tenha dados para testar:
-- Aulas variadas (Musculacao, Funcional, Pilates, etc.)
-- Distribuidas ao longo de fevereiro 2026
-- Com slots e creditos configurados
+**Arquivo `src/pages/ReportsPage.tsx`**:
+- Substituir array vazio por fetch da tabela `athletes`
+- Buscar dados com join em `student_training_assignments` e `class_bookings`
+- Mapear campos: nome, email, telefone, objetivo, ultimo treino, dias sem agendar
+- Manter filtro de busca existente
 
-### Bloco 3: Treinos por dia da semana
+### FASE 3: Agenda Admin - Fluxo de Agendamento
 
-Modificar `Train.tsx` para:
-- Ao clicar em um dia da semana no calendario, filtrar treinos atribuidos para aquele dia
-- Adicionar campo `training_days` (array de dias: ["segunda", "terca"...]) ao assignment
-- Se nao houver dia especifico, mostrar o treino em todos os dias
+**Arquivo `src/pages/AgendaPage.tsx`**:
+- Criar modal "Novo Agendamento" com:
+  - Select de aluno (busca da tabela `athletes`)
+  - Select de tipo: Avaliacao Fisica / Aula / Consultoria
+  - Date/time picker
+  - Campo de observacoes
+- Ao salvar, inserir em `class_bookings` (para aulas) ou tabela de agendamentos generica
+- Tipo "Avaliacao Fisica" pode linkar ao 9Progress ou criar registro em `avaliacoes_unificadas`
+
+**Migracao SQL**:
+- Criar tabela `appointments` (se nao existir) para agendamentos genericos (consultoria, avaliacao)
+- Campos: id, athlete_id, coach_id, type (enum: avaliacao/aula/consultoria), datetime, notes, status
+
+### FASE 4: Super Series e Series de Referencia com Persistencia
+
+**Migracao SQL**:
+- Criar tabela `super_sets` (id, name, difficulty, exercises jsonb, created_by, created_at)
+- Criar tabela `reference_series` (id, name, difficulty, exercises jsonb, created_by, created_at)
+- RLS: trainers/admins podem CRUD, alunos podem SELECT
+
+**Arquivos `SuperSetsPage.tsx` e `ReferenceSeriesPage.tsx`**:
+- Substituir arrays vazios por fetch do Supabase
+- CRUD completo: criar, editar, excluir
+- Salvar exercicios como JSONB com detalhes (nome, series, repeticoes)
+
+### FASE 5: Check-in e Creditos do Aluno
+
+**Arquivo `src/pages/9fit/AulasCreditos.tsx`**:
+- Tornar botao de check-in mais proeminente (destaque visual quando aula esta no horario)
+- Garantir que check-in debita creditos automaticamente (ja faz via `handleBookClass`, validar)
+- Adicionar badge visual "Check-in disponivel" quando aula esta dentro do horario
 
 ---
-
-## Arquivos a Modificar
-
-1. **Migracao SQL** - Nova politica RLS em `athletes` + aulas de exemplo
-2. `src/pages/9fit/Train.tsx` - Filtrar treinos por dia selecionado no calendario
-3. `src/pages/9fit/Dieta.tsx` - Nenhuma mudanca necessaria (o fix de RLS resolve)
-4. `src/pages/9fit/AulasCreditos.tsx` - Nenhuma mudanca necessaria (o fix de RLS resolve)
 
 ## Secao Tecnica
 
-### Politica RLS Critica
+### Politica RLS Critica (Fase 1)
+```sql
+-- Permitir que atletas atualizem campos especificos do proprio registro
+CREATE POLICY "Athletes can update own password fields"
+  ON public.athletes
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
+```
 
-O problema e que a tabela `athletes` tem ~20 politicas redundantes, todas baseadas em `coach_id = auth.uid()`. Nenhuma permite `user_id = auth.uid()`. A nova politica e simples e resolve toda a cadeia de dependencias.
+### Tabela de Agendamentos (Fase 3)
+A tabela `appointments` ja existe no schema. Verificar se tem os campos necessarios e adicionar RLS. Se nao existir, criar com:
+- `id` uuid PK
+- `athlete_id` uuid FK athletes
+- `coach_id` uuid FK auth.users
+- `appointment_type` text (avaliacao_fisica, aula, consultoria)
+- `scheduled_at` timestamptz
+- `notes` text
+- `status` text (pendente, confirmado, cancelado, concluido)
 
-### Treinos por dia
+### Fetch de Alunos para Relatorios (Fase 2)
+```typescript
+const { data } = await supabase
+  .from('athletes')
+  .select('id, name, email, phone, goal, created_at')
+  .order('name');
+```
 
-A estrategia e usar o campo `training_data` (JSONB) ja existente para armazenar os dias da semana. No `Train.tsx`, ao clicar em "Segunda", filtramos os treinos que incluem "segunda" no array de dias. Se o treino nao tiver dias especificados, ele aparece em todos os dias (comportamento atual mantido como fallback).
+### Prioridades
 
-### Aulas de teste
+| Prioridade | Item | Impacto |
+|------------|------|---------|
+| CRITICA | Fix loop primeiro acesso (RLS UPDATE) | App inacessivel para novos alunos |
+| ALTA | Relatorios com dados reais | Feature basica quebrada |
+| ALTA | Agenda admin com agendamento | Operacional admin |
+| MEDIA | Super series / series referencia | Features sem persistencia |
+| MEDIA | Check-in mais visivel | UX do aluno |
 
-Inserir 15-20 aulas distribuidas em fevereiro/marco 2026 para validar o fluxo completo de agendamento, multi-selecao e checkout.
+### Ordem de Execucao
+
+1. Migracao SQL: politica UPDATE em athletes + tabela appointments (se necessario)
+2. Fix FirstAccess.tsx e NineFitLayout.tsx (resolve loop)
+3. ReportsPage.tsx com fetch real
+4. AgendaPage.tsx com modal de agendamento
+5. SuperSetsPage.tsx e ReferenceSeriesPage.tsx com persistencia
+
+**Nota**: Fluxo de pagamento para compra de creditos e um feature maior que requer integracao Stripe e sera tratado separadamente apos estas correcoes.
 
