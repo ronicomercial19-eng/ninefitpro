@@ -55,8 +55,15 @@
    total_credits: number;
    used_credits: number;
    expires_at: string | null;
- }
- 
+  }
+
+  interface MyAppointment {
+    id: string;
+    title: string;
+    scheduled_at: string;
+    status: string;
+    appointment_type: string | null;
+  }
  export default function AulasCreditos() {
    const { user } = useAuth();
    const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -78,8 +85,8 @@
    const [vacationStart, setVacationStart] = useState('');
    const [vacationEnd, setVacationEnd] = useState('');
    const [vacationReason, setVacationReason] = useState('');
-   const [submittingVacation, setSubmittingVacation] = useState(false);
- 
+    const [submittingVacation, setSubmittingVacation] = useState(false);
+    const [myAppointments, setMyAppointments] = useState<MyAppointment[]>([]);
    const monthStart = startOfMonth(currentMonth);
    const monthEnd = endOfMonth(currentMonth);
    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -113,11 +120,12 @@
      findAthleteId();
    }, [user]);
  
-   useEffect(() => {
-     fetchClasses();
-     fetchBookings();
-     fetchCredits();
-   }, [currentMonth, user, athleteId]);
+    useEffect(() => {
+      fetchClasses();
+      fetchBookings();
+      fetchCredits();
+      fetchMyAppointments();
+    }, [currentMonth, user, athleteId]);
  
    const fetchClasses = async () => {
      setLoading(true);
@@ -165,9 +173,22 @@
        // No credits found, set default
        setCredits({ total_credits: 0, used_credits: 0, expires_at: null });
      }
-   };
- 
-   const availableCredits = credits ? credits.total_credits - credits.used_credits : 0;
+    };
+
+    const fetchMyAppointments = async () => {
+      if (!athleteId) return;
+      const { data } = await supabase
+        .from("appointments")
+        .select("id, title, scheduled_at, status, appointment_type")
+        .eq("student_id", athleteId)
+        .neq("status", "cancelled")
+        .order("scheduled_at", { ascending: true })
+        .limit(10);
+
+      if (data) setMyAppointments(data);
+    };
+
+    const availableCredits = credits ? credits.total_credits - credits.used_credits : 0;
  
    const toggleClassSelection = (gymClass: GymClass) => {
      const isSelected = selectedClasses.some(c => c.id === gymClass.id);
@@ -860,7 +881,32 @@
          </DialogContent>
        </Dialog>
  
-       <BottomNavigation />
-     </div>
-   );
- }
+        {/* Meus Agendamentos */}
+        {myAppointments.length > 0 && (
+          <div className="px-4 mb-6">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Meus Agendamentos</h2>
+            <div className="space-y-2">
+              {myAppointments.map((apt) => (
+                <div key={apt.id} className="bg-card border border-border rounded-sm p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{apt.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {apt.appointment_type === 'avaliacao_fisica' ? 'Avaliação' : apt.appointment_type === 'consultoria' ? 'Consultoria' : 'Aula'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <BottomNavigation />
+      </div>
+    );
+  }

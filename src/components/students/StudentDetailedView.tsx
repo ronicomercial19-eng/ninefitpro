@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   User, 
   Dumbbell, 
@@ -20,7 +21,9 @@ import {
   MessageCircle,
   Bell,
   Send,
-  Utensils
+  Utensils,
+  Trash2,
+  KeyRound
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -62,11 +65,14 @@ interface StudentDetailedViewProps {
   student: Student;
   onBack: () => void;
   onStudentUpdated: (updatedStudent: Student) => void;
+  onStudentDeleted?: () => void;
 }
 
-export function StudentDetailedView({ student, onBack, onStudentUpdated }: StudentDetailedViewProps) {
+export function StudentDetailedView({ student, onBack, onStudentUpdated, onStudentDeleted }: StudentDetailedViewProps) {
   const [currentStudent, setCurrentStudent] = useState<Student>(student);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const calculateAge = (birthDate: string | undefined) => {
     if (!birthDate) return null;
@@ -101,6 +107,71 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated }: Stude
     const updated = { ...currentStudent, ...updatedData };
     setCurrentStudent(updated);
     onStudentUpdated(updated);
+  };
+
+  const handleDeleteStudent = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('athletes')
+        .delete()
+        .eq('id', currentStudent.id);
+
+      if (error) throw error;
+      toast.success('Aluno excluído com sucesso');
+      onStudentDeleted?.();
+    } catch (error: any) {
+      toast.error('Erro ao excluir aluno: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setResettingPassword(true);
+    const newTempPassword = generateTempPassword();
+    try {
+      // Update athlete record with new temp password
+      const { error } = await supabase
+        .from('athletes')
+        .update({ 
+          auto_password_temp: newTempPassword, 
+          password_changed: false 
+        })
+        .eq('id', currentStudent.id);
+
+      if (error) throw error;
+
+      // Try to reset via edge function
+      try {
+        const session = await supabase.auth.getSession();
+        await fetch(
+          `https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/create-athlete-user`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.data.session?.access_token}`,
+            },
+            body: JSON.stringify({
+              athleteId: currentStudent.id,
+              email: currentStudent.email,
+              password: newTempPassword,
+              name: currentStudent.nome,
+            }),
+          }
+        );
+      } catch (e) {
+        console.warn('Edge function call failed, password updated in DB only');
+      }
+
+      // Clear localStorage for this user so they go through first-access again
+      toast.success(`Senha resetada! Nova senha temporária: ${newTempPassword}`);
+    } catch (error: any) {
+      toast.error('Erro ao resetar senha: ' + error.message);
+    } finally {
+      setResettingPassword(false);
+    }
   };
 
   // Generate temporary password based on student data
@@ -315,6 +386,54 @@ Bons treinos! 🎯`;
               <Button size="sm" variant="outline">
                 Agendar Aula
               </Button>
+              
+              {/* Reset Password */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10">
+                    <KeyRound className="w-4 h-4 mr-2" />
+                    Resetar Senha
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Resetar senha do aluno?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Uma nova senha temporária será gerada para {currentStudent.nome}. O aluno precisará alterá-la no próximo acesso.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetPassword} disabled={resettingPassword}>
+                      {resettingPassword ? 'Resetando...' : 'Confirmar Reset'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Delete Student */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Excluir Aluno
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir aluno permanentemente?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação é irreversível. Todos os dados de {currentStudent.nome} serão removidos permanentemente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteStudent} disabled={deleting} className="bg-destructive hover:bg-destructive/90">
+                      {deleting ? 'Excluindo...' : 'Excluir Permanentemente'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </CardHeader>

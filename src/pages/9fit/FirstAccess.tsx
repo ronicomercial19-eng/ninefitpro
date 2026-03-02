@@ -74,12 +74,15 @@ export default function FirstAccess() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         // Try update via user_id directly first (most reliable with RLS)
-        const { error: updateError, count } = await supabase
+        const { data: updateData, error: updateError } = await supabase
           .from('athletes')
           .update({ password_changed: true, auto_password_temp: null })
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .select('id');
 
-        if (updateError || count === 0) {
+        console.log('[FirstAccess] Update via user_id:', { updateData, updateError });
+
+        if (updateError || !updateData || updateData.length === 0) {
           // Fallback: try via athlete_auth_link
           const { data: link } = await supabase
             .from('athlete_auth_link')
@@ -88,17 +91,23 @@ export default function FirstAccess() {
             .single();
 
           if (link) {
-            const { error: fallbackError } = await supabase
+            const { data: fallbackData, error: fallbackError } = await supabase
               .from('athletes')
               .update({ password_changed: true, auto_password_temp: null })
-              .eq('id', link.athlete_id);
+              .eq('id', link.athlete_id)
+              .select('id');
             
-            if (fallbackError) {
-              console.error('Failed to update password_changed flag:', fallbackError);
+            console.log('[FirstAccess] Fallback update:', { fallbackData, fallbackError });
+            
+            if (fallbackError || !fallbackData || fallbackData.length === 0) {
+              console.error('[FirstAccess] Both update attempts failed');
             }
           }
         }
       }
+
+      // Always set localStorage fallback to prevent loop
+      localStorage.setItem('9fit_first_access_completed', 'true');
 
       toast({
         title: "Senha alterada!",

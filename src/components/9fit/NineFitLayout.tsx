@@ -22,24 +22,29 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         return;
       }
 
-      // Check if this is first access (needs password change)
-      try {
-        const { data: athlete } = await supabase
-          .from('athletes')
-          .select('password_changed, auto_password_temp')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
+      // Check localStorage fallback first
+      const localCompleted = localStorage.getItem('9fit_first_access_completed');
+      
+      if (localCompleted !== 'true') {
+        // Check if this is first access (needs password change)
+        try {
+          const { data: athlete } = await supabase
+            .from('athletes')
+            .select('password_changed, auto_password_temp')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
 
-        // Only redirect if we confirmed athlete exists AND hasn't changed password
-        if (athlete && athlete.password_changed === false && athlete.auto_password_temp !== null) {
-          if (!location.pathname.includes('first-access')) {
-            navigate("/9fit/first-access");
-            return;
+          // Only redirect if we confirmed athlete exists AND hasn't changed password
+          if (athlete && athlete.password_changed === false && athlete.auto_password_temp !== null) {
+            if (!location.pathname.includes('first-access')) {
+              navigate("/9fit/first-access");
+              return;
+            }
           }
+        } catch (error) {
+          // Continue if check fails - don't block access
+          console.log('First access check:', error);
         }
-      } catch (error) {
-        // Continue if check fails - don't block access
-        console.log('First access check:', error);
       }
       
       setIsAuthenticated(true);

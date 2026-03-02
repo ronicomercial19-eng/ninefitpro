@@ -45,12 +45,24 @@ interface Athlete {
   email: string | null;
 }
 
+interface Appointment {
+  id: string;
+  student_id: string;
+  title: string;
+  description: string | null;
+  scheduled_at: string;
+  status: string;
+  appointment_type: string | null;
+  student_name?: string;
+}
+
 export default function AgendaPage() {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [bookings, setBookings] = useState<ClassBooking[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -70,7 +82,7 @@ export default function AgendaPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [bookingsRes, assessmentRes, athletesRes] = await Promise.all([
+      const [bookingsRes, assessmentRes, athletesRes, appointmentsRes] = await Promise.all([
         supabase.from('class_bookings').select(`
           id, class_id, user_email, status, booking_time,
           gym_classes (class_name, class_datetime, location, instructor_name)
@@ -81,11 +93,21 @@ export default function AgendaPage() {
           .lte('data_avaliacao', format(endOfMonth(currentDate), 'yyyy-MM-dd'))
           .order('data_avaliacao', { ascending: false }),
         supabase.from('athletes').select('id, name, email').order('name'),
+        supabase.from('appointments')
+          .select('id, student_id, title, description, scheduled_at, status, appointment_type')
+          .order('scheduled_at', { ascending: true }),
       ]);
 
       if (bookingsRes.data) setBookings(bookingsRes.data as any);
       if (assessmentRes.data) setAssessments(assessmentRes.data);
       if (athletesRes.data) setAthletes(athletesRes.data);
+      if (appointmentsRes.data) {
+        const enriched = appointmentsRes.data.map(a => ({
+          ...a,
+          student_name: athletesRes.data?.find(at => at.id === a.student_id)?.name || 'Aluno',
+        }));
+        setAppointments(enriched);
+      }
     } catch (error) {
       console.error('Error fetching agenda data:', error);
     } finally {
@@ -140,6 +162,29 @@ export default function AgendaPage() {
   const getBookingsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return bookings.filter(b => b.gym_classes?.class_datetime?.startsWith(dateStr));
+  };
+
+  const getAppointmentsForDay = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return appointments.filter(a => a.scheduled_at?.startsWith(dateStr));
+  };
+
+  const getAppointmentColor = (type: string | null) => {
+    switch (type) {
+      case 'avaliacao_fisica': return 'bg-purple-400';
+      case 'aula': return 'bg-blue-400';
+      case 'consultoria': return 'bg-green-400';
+      default: return 'bg-primary';
+    }
+  };
+
+  const getAppointmentLabel = (type: string | null) => {
+    switch (type) {
+      case 'avaliacao_fisica': return 'Avaliação';
+      case 'aula': return 'Aula';
+      case 'consultoria': return 'Consultoria';
+      default: return 'Agendamento';
+    }
   };
 
   const openExternalAssessment = () => {
@@ -316,6 +361,8 @@ export default function AgendaPage() {
                 ))}
                 {monthDays.map((day) => {
                   const dayBookings = getBookingsForDay(day);
+                  const dayAppointments = getAppointmentsForDay(day);
+                  const hasEvents = dayBookings.length > 0 || dayAppointments.length > 0;
                   return (
                     <button key={day.toISOString()}
                       className={`aspect-square p-1 rounded-lg border transition-all text-sm
@@ -323,10 +370,13 @@ export default function AgendaPage() {
                         ${!isSameMonth(day, currentDate) ? 'opacity-50' : ''}`}>
                       <div className="flex flex-col items-center justify-center h-full">
                         <span className="font-medium">{format(day, 'd')}</span>
-                        {dayBookings.length > 0 && (
+                        {hasEvents && (
                           <div className="flex gap-0.5 mt-1">
-                            {dayBookings.slice(0, 3).map((_, i) => (
-                              <div key={i} className="w-1 h-1 rounded-full bg-blue-400" />
+                            {dayBookings.slice(0, 2).map((_, i) => (
+                              <div key={`b-${i}`} className="w-1 h-1 rounded-full bg-blue-400" />
+                            ))}
+                            {dayAppointments.slice(0, 2).map((a, i) => (
+                              <div key={`a-${i}`} className={`w-1 h-1 rounded-full ${getAppointmentColor(a.appointment_type)}`} />
                             ))}
                           </div>
                         )}
@@ -336,10 +386,28 @@ export default function AgendaPage() {
                 })}
               </div>
 
-              {bookings.length > 0 && (
+              {/* All Events List */}
+              {(bookings.length > 0 || appointments.length > 0) && (
                 <div className="mt-6 pt-6 border-t">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-4">Próximos Eventos</h3>
                   <div className="space-y-2">
+                    {/* Appointments */}
+                    {appointments.filter(a => a.status !== 'cancelled').slice(0, 5).map((apt) => (
+                      <div key={apt.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                        <div className={`w-10 h-10 rounded-full ${getAppointmentColor(apt.appointment_type)}/20 flex items-center justify-center`}>
+                          <CalendarDays className="w-5 h-5 text-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{apt.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                            {apt.student_name && ` • ${apt.student_name}`}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">{getAppointmentLabel(apt.appointment_type)}</Badge>
+                      </div>
+                    ))}
+                    {/* Bookings */}
                     {bookings.filter(b => b.status === 'confirmed').slice(0, 5).map((booking) => (
                       <div key={booking.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
