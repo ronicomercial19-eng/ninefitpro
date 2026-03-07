@@ -45,15 +45,15 @@ export function FeatureOnboarding({ featureKey }: FeatureOnboardingProps) {
   const [step, setStep] = useState(0);
   const storageKey = `onboarding_${featureKey}_seen`;
 
-  const steps = FEATURE_STEPS[featureKey];
-  if (!steps) return null;
+  const steps = FEATURE_STEPS[featureKey] || [];
 
   useEffect(() => {
+    if (steps.length === 0) return;
     const seen = localStorage.getItem(storageKey);
     if (!seen) {
       setTimeout(() => setIsOpen(true), 800);
     }
-  }, [storageKey]);
+  }, [storageKey, steps.length]);
 
   const handleDismiss = () => {
     localStorage.setItem(storageKey, 'true');

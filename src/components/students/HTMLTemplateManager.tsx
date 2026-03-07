@@ -99,16 +99,17 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
     if (!assignTemplate || !assignAthleteId) { toast.error('Selecione o aluno'); return; }
     setSaving(true);
     try {
-      const { error } = await supabase.from('student_training_assignments').insert({
+      const { error } = await supabase.from('student_training_assignments').insert([{
         student_id: assignAthleteId,
         training_name: assignTemplate.training_name,
         training_type: 'html',
         html_file_url: assignTemplate.html_file_url,
         html_file_path: assignTemplate.html_file_path,
-        training_data: { source: 'template_copy', original_id: assignTemplate.id },
+        training_data: { source: 'template_copy', original_id: assignTemplate.id } as any,
         start_date: new Date().toISOString().split('T')[0],
         is_active: true,
-      });
+        created_by: (await supabase.auth.getUser()).data.user?.id || '',
+      }]);
       if (error) throw error;
       toast.success('Template atribuído ao aluno!');
       setShowAssign(false);

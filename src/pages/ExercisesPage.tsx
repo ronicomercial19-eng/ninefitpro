@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon } from 'lucide-react';
 import { AddExerciseForm } from '@/components/exercises/AddExerciseForm';
+import { Badge } from '@/components/ui/badge';
+import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon } from 'lucide-react';
+import { AddExerciseForm } from '@/components/exercises/AddExerciseForm';
 import { ExerciseVideoPlayer } from '@/components/exercises/ExerciseVideoPlayer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -157,7 +160,9 @@ export default function ExercisesPage() {
       {selectedVideo && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedVideo(null)}>
           <div className="bg-card rounded-lg p-4 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-            <ExerciseVideoPlayer videoUrl={selectedVideo} />
+            <div className="aspect-video">
+              <iframe src={selectedVideo} className="w-full h-full rounded-lg" allowFullScreen title="Exercise Video" />
+            </div>
             <Button variant="outline" className="w-full mt-4" onClick={() => setSelectedVideo(null)}>Fechar</Button>
           </div>
         </div>
