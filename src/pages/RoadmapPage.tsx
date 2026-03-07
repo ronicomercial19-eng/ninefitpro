@@ -39,6 +39,8 @@ const modules: Module[] = [
       { name: "Upload de avaliação PDF", status: "done" },
       { name: "Excluir aluno", status: "done" },
       { name: "Resetar senha do aluno", status: "done" },
+      { name: "Ativar/Desativar aluno", status: "done" },
+      { name: "Alterar senha no perfil do aluno", status: "done" },
     ],
   },
   {
@@ -46,7 +48,10 @@ const modules: Module[] = [
     features: [
       { name: "Upload de treino HTML", status: "done" },
       { name: "Visualização HTML no app aluno", status: "done" },
-      { name: "Biblioteca de exercícios", status: "done" },
+      { name: "Biblioteca de exercícios (Supabase)", status: "done" },
+      { name: "Upload de imagem de exercício", status: "done" },
+      { name: "Vídeos por URL externa", status: "done" },
+      { name: "Template HTML Manager (editar/atribuir)", status: "done" },
       { name: "Super séries (persistência Supabase)", status: "done" },
       { name: "Séries de referência (persistência Supabase)", status: "done" },
       { name: "Geração de treino com IA", status: "in_progress" },
@@ -69,6 +74,7 @@ const modules: Module[] = [
     features: [
       { name: "Calendário mensal admin", status: "done" },
       { name: "Criar agendamento (Avaliação/Aula/Consultoria)", status: "done" },
+      { name: "Agendamento multi-dia (Seg+Qua+Sex)", status: "done" },
       { name: "Visualizar por dia com cores por tipo", status: "done" },
       { name: "Concluir / Cancelar / Marcar falta", status: "done" },
       { name: "Excluir agendamento", status: "done" },
@@ -127,6 +133,8 @@ const modules: Module[] = [
       { name: "Tela de aulas (plano + agendamento + check-in)", status: "done" },
       { name: "Meus agendamentos", status: "done" },
       { name: "Perfil do usuário", status: "done" },
+      { name: "Alterar senha no perfil", status: "done" },
+      { name: "Onboarding contextual por feature", status: "done" },
       { name: "Estatísticas", status: "in_progress" },
       { name: "Dieta", status: "done" },
       { name: "Gamificação (XP/Níveis)", status: "in_progress" },

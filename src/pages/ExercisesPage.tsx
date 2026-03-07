@@ -1,116 +1,63 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Play, Plus, Search, Grid, List } from 'lucide-react';
+import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon } from 'lucide-react';
 import { AddExerciseForm } from '@/components/exercises/AddExerciseForm';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface Exercise {
+  id: string;
+  name: string;
+  target_muscles: string[];
+  equipment: string | null;
+  difficulty_level: string | null;
+  phase: string | null;
+  goal: string | null;
+  image_url: string | null;
+  video_url: string | null;
+  gif_url: string | null;
+  description: string | null;
+}
 
 export default function ExercisesPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [equipmentFilter, setEquipmentFilter] = useState('all');
   const [muscleFilter, setMuscleFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [equipmentFilter, setEquipmentFilter] = useState('all');
+  const [goalFilter, setGoalFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
 
-  const exercises = [
-    {
-      id: 1,
-      name: 'Remada Sentado com Triângulo',
-      type: 'Força',
-      muscle: 'Dorsal',
-      equipment: 'Equipamentos',
-      thumbnail: '/lovable-uploads/1b2f13a6-2280-47a3-ad8d-79c6dbb74994.png',
-      hasVideo: true
-    },
-    {
-      id: 2,
-      name: '1 perna S.L.D.L + elevação do joelho',
-      type: 'Força',
-      muscle: 'Core, Pernas da seguir, Glúteos, Isquiotibiais, Quadriceps',
-      equipment: 'Barra, Haltere',
-      thumbnail: '/lovable-uploads/4849dd0e-4880-4fa7-b874-b549ee92d6d6.png',
-      hasVideo: true
-    },
-    {
-      id: 3,
-      name: '1/2 Agachamento Smith',
-      type: 'Hipertrofia',
-      muscle: 'Core, Glúteos',
-      equipment: 'Smith',
-      thumbnail: '/lovable-uploads/50c7d2be-e22b-4cac-b456-e0a80c7180f6.png',
-      hasVideo: true
-    },
-    {
-      id: 4,
-      name: '3 Pos. Agachamento com Faixa Facial',
-      type: 'Hipertrofia',
-      muscle: 'Core, Deltoides, Glúteos, Isquiotibiais, Quadriceps, Rhom.',
-      equipment: 'Barco, Corpo',
-      thumbnail: '/lovable-uploads/84d10bda-c9d1-45f2-bea0-11a422b00b03.png',
-      hasVideo: true
-    },
-    {
-      id: 5,
-      name: '4 APOIOS EXTENSÃO DE QUADRIL MMI',
-      type: 'Fortalecimento',
-      muscle: 'Core, Glúteos',
-      equipment: 'Corpo',
-      thumbnail: '/lovable-uploads/9457d547-5873-496e-9a50-e6af7215946a.png',
-      hasVideo: true
-    },
-    {
-      id: 6,
-      name: 'Abdominais Oblíquas no Banco Declinado',
-      type: 'Fortalecimento',
-      muscle: 'Abdômen',
-      equipment: 'Banco Declinado',
-      thumbnail: '/lovable-uploads/98b1ae85-067d-447c-bfaf-aedc3a6dc8de.png',
-      hasVideo: true
-    },
-    {
-      id: 7,
-      name: 'Abdominal Canivete Alternado',
-      type: 'Funcional',
-      muscle: 'Abdômen',
-      equipment: 'Corpo',
-      thumbnail: '/lovable-uploads/a5ebd2c5-5df1-46c3-a547-93316a2d1fe5.png',
-      hasVideo: true
-    },
-    {
-      id: 8,
-      name: 'Abdominais Crunch',
-      type: 'Fortalecimento',
-      muscle: 'Abdômen',
-      equipment: 'Colchonete, Corpo',
-      thumbnail: '/lovable-uploads/ae95e72e-72b0-4ac4-9e34-698d640ecfe4.png',
-      hasVideo: true
-    }
-  ];
+  useEffect(() => { fetchExercises(); }, []);
 
-  const filteredExercises = exercises.filter(exercise => {
-    const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || exercise.type === categoryFilter;
-    const matchesEquipment = equipmentFilter === 'all' || exercise.equipment.includes(equipmentFilter);
-    const matchesMuscle = muscleFilter === 'all' || exercise.muscle.includes(muscleFilter);
-    const matchesType = typeFilter === 'all' || exercise.type === typeFilter;
+  const fetchExercises = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('exercises').select('id, name, target_muscles, equipment, difficulty_level, phase, goal, image_url, video_url, gif_url, description').order('name');
+    if (error) { toast.error('Erro ao carregar exercícios'); console.error(error); }
+    else setExercises(data || []);
+    setLoading(false);
+  };
 
-    return matchesSearch && matchesCategory && matchesEquipment && matchesMuscle && matchesType;
+  const allMuscles = [...new Set(exercises.flatMap(e => e.target_muscles || []))].sort();
+  const allEquipment = [...new Set(exercises.map(e => e.equipment).filter(Boolean))].sort();
+  const allGoals = [...new Set(exercises.map(e => e.goal).filter(Boolean))].sort();
+
+  const filtered = exercises.filter(e => {
+    const matchSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchMuscle = muscleFilter === 'all' || (e.target_muscles || []).some(m => m.toLowerCase().includes(muscleFilter.toLowerCase()));
+    const matchEquip = equipmentFilter === 'all' || e.equipment === equipmentFilter;
+    const matchGoal = goalFilter === 'all' || e.goal === goalFilter;
+    return matchSearch && matchMuscle && matchEquip && matchGoal;
   });
 
   if (showAddForm) {
-    return (
-      <AddExerciseForm
-        onSuccess={() => {
-          setShowAddForm(false);
-          // Refresh exercises list
-        }}
-        onCancel={() => setShowAddForm(false)}
-      />
-    );
+    return <AddExerciseForm onSuccess={() => { setShowAddForm(false); fetchExercises(); }} onCancel={() => setShowAddForm(false)} />;
   }
 
   return (
@@ -118,19 +65,8 @@ export default function ExercisesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Exercícios</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="bg-orange-500 text-white border-orange-500 hover:bg-orange-600">
-            Exercícios para casa
-          </Button>
-          <Button className="btn-9fit">
-            <Grid className="w-4 h-4 mr-2" />
-            Biblioteca 9FIT
-          </Button>
-          <Button 
-            className="bg-green-500 hover:bg-green-600"
-            onClick={() => setShowAddForm(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo exercício
+          <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />Novo exercício
           </Button>
         </div>
       </div>
@@ -138,141 +74,94 @@ export default function ExercisesPage() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                <SelectItem value="Força">Força</SelectItem>
-                <SelectItem value="Hipertrofia">Hipertrofia</SelectItem>
-                <SelectItem value="Fortalecimento">Fortalecimento</SelectItem>
-                <SelectItem value="Funcional">Funcional</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Equipamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os equipamentos</SelectItem>
-                <SelectItem value="Barra">Barra</SelectItem>
-                <SelectItem value="Haltere">Haltere</SelectItem>
-                <SelectItem value="Corpo">Corpo</SelectItem>
-                <SelectItem value="Smith">Smith</SelectItem>
-              </SelectContent>
-            </Select>
-
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <Select value={muscleFilter} onValueChange={setMuscleFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Músculo" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Músculo" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os músculos</SelectItem>
-                <SelectItem value="Core">Core</SelectItem>
-                <SelectItem value="Glúteos">Glúteos</SelectItem>
-                <SelectItem value="Abdômen">Abdômen</SelectItem>
-                <SelectItem value="Dorsal">Dorsal</SelectItem>
+                {allMuscles.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
               </SelectContent>
             </Select>
-
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
+            <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+              <SelectTrigger><SelectValue placeholder="Equipamento" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="Força">Força</SelectItem>
-                <SelectItem value="Hipertrofia">Hipertrofia</SelectItem>
-                <SelectItem value="Fortalecimento">Fortalecimento</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+                {allEquipment.map(e => <SelectItem key={e!} value={e!}>{e}</SelectItem>)}
               </SelectContent>
             </Select>
-
+            <Select value={goalFilter} onValueChange={setGoalFilter}>
+              <SelectTrigger><SelectValue placeholder="Objetivo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {allGoals.map(g => <SelectItem key={g!} value={g!}>{g}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Pesquisar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
           </div>
-
-          <div className="bg-orange-500 text-white px-3 py-1 rounded text-sm inline-block">
-            PARA FAZER EM CASA
-          </div>
+          <p className="text-sm text-muted-foreground">{filtered.length} exercício(s) encontrado(s)</p>
         </CardContent>
       </Card>
 
-      {/* View Mode Toggle */}
+      {/* View Toggle */}
       <div className="flex justify-end">
         <div className="flex items-center border rounded-lg">
-          <Button 
-            variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-            size="sm"
-            onClick={() => setViewMode('grid')}
-          >
-            <Grid className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant={viewMode === 'list' ? 'default' : 'ghost'} 
-            size="sm"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="w-4 h-4" />
-          </Button>
+          <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}><Grid className="w-4 h-4" /></Button>
+          <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')}><List className="w-4 h-4" /></Button>
         </div>
       </div>
 
-      {/* Exercises Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExercises.map((exercise) => (
-          <Card key={exercise.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="relative">
-              <img 
-                src={exercise.thumbnail} 
-                alt={exercise.name}
-                className="w-full h-48 object-cover"
-              />
-              {exercise.hasVideo && (
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center">
-                    <Play className="w-8 h-8 text-gray-800 ml-1" />
-                  </div>
-                </div>
-              )}
-            </div>
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-sm mb-2 line-clamp-2">{exercise.name}</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Tipo:</span>
-                  <Badge variant="secondary" className="text-xs">{exercise.type}</Badge>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  <p><span className="font-medium">Músculo:</span> {exercise.muscle}</p>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  <p><span className="font-medium">Equipamento:</span> {exercise.equipment}</p>
-                </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+      ) : (
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-3"}>
+          {filtered.map((exercise) => (
+            <Card key={exercise.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative">
+                {exercise.image_url || exercise.gif_url ? (
+                  <img src={exercise.image_url || exercise.gif_url || ''} alt={exercise.name} className="w-full h-48 object-cover" />
+                ) : (
+                  <div className="w-full h-48 bg-muted flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground" /></div>
+                )}
+                {exercise.video_url && (
+                  <button onClick={() => setSelectedVideo(exercise.video_url)} className="absolute inset-0 bg-black/20 flex items-center justify-center hover:bg-black/30 transition-colors">
+                    <div className="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center"><Play className="w-8 h-8 text-foreground ml-1" /></div>
+                  </button>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-sm mb-2 line-clamp-2">{exercise.name}</h3>
+                <div className="space-y-2">
+                  {exercise.target_muscles?.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {exercise.target_muscles.slice(0, 3).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}
+                    </div>
+                  )}
+                  {exercise.equipment && <p className="text-xs text-muted-foreground"><span className="font-medium">Equipamento:</span> {exercise.equipment}</p>}
+                  {exercise.difficulty_level && <p className="text-xs text-muted-foreground"><span className="font-medium">Nível:</span> {exercise.difficulty_level}</p>}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filteredExercises.length === 0 && (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-foreground mb-2">Nenhum exercício encontrado</h3>
-              <p className="text-muted-foreground">Tente ajustar os filtros ou adicione um novo exercício.</p>
+      {!loading && filtered.length === 0 && (
+        <Card><CardContent className="py-12"><div className="text-center"><h3 className="text-lg font-medium text-foreground mb-2">Nenhum exercício encontrado</h3><p className="text-muted-foreground">Adicione exercícios ou ajuste os filtros.</p></div></CardContent></Card>
+      )}
+
+      {/* Video Player Dialog */}
+      {selectedVideo && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedVideo(null)}>
+          <div className="bg-card rounded-lg p-4 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <div className="aspect-video">
+              <iframe src={selectedVideo} className="w-full h-full rounded-lg" allowFullScreen title="Exercise Video" />
             </div>
-          </CardContent>
-        </Card>
+            <Button variant="outline" className="w-full mt-4" onClick={() => setSelectedVideo(null)}>Fechar</Button>
+          </div>
+        </div>
       )}
     </div>
   );

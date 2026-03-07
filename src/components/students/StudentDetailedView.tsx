@@ -411,6 +411,27 @@ Bons treinos! 🎯`;
                 </AlertDialogContent>
               </AlertDialog>
 
+              {/* Toggle Active/Inactive */}
+              <Button 
+                size="sm" 
+                variant="outline"
+                className={currentStudent.ativo 
+                  ? "border-amber-500/50 text-amber-500 hover:bg-amber-500/10" 
+                  : "border-green-500/50 text-green-500 hover:bg-green-500/10"
+                }
+                onClick={async () => {
+                  try {
+                    const newStatus = !currentStudent.ativo;
+                    const { error } = await supabase.from('athletes').update({ activated: newStatus } as any).eq('id', currentStudent.id);
+                    if (error) throw error;
+                    handleStudentUpdate({ ativo: newStatus });
+                    toast.success(newStatus ? 'Aluno ativado!' : 'Aluno desativado!');
+                  } catch (e: any) { toast.error('Erro: ' + e.message); }
+                }}
+              >
+                {currentStudent.ativo ? 'Desativar' : 'Ativar'} Aluno
+              </Button>
+
               {/* Delete Student */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
