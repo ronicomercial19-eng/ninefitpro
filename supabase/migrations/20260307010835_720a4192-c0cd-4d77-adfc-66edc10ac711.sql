@@ -1,0 +1,1 @@
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS recurrence_pattern jsonb DEFAULT NULL;

@@ -283,6 +283,7 @@ export type Database = {
           duration: number | null
           id: string
           location: string | null
+          recurrence_pattern: Json | null
           scheduled_at: string
           status: Database["public"]["Enums"]["appointment_status"] | null
           student_id: string
@@ -297,6 +298,7 @@ export type Database = {
           duration?: number | null
           id?: string
           location?: string | null
+          recurrence_pattern?: Json | null
           scheduled_at: string
           status?: Database["public"]["Enums"]["appointment_status"] | null
           student_id: string
@@ -311,6 +313,7 @@ export type Database = {
           duration?: number | null
           id?: string
           location?: string | null
+          recurrence_pattern?: Json | null
           scheduled_at?: string
           status?: Database["public"]["Enums"]["appointment_status"] | null
           student_id?: string
