@@ -7,6 +7,7 @@ import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TrainingContentUpload } from "@/components/students/TrainingContentUpload";
+import { HTMLTemplateManager } from "@/components/students/HTMLTemplateManager";
 interface Student {
   id: string;
   nome: string;
@@ -347,7 +348,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </CardContent>
       </Card>
 
-      {/* Séries Fora do Treino (Inativas) */}
+      {/* Inactive trainings section stays */}
       {inactiveTrainings.length > 0 && (
         <Card>
           <CardHeader>
@@ -398,6 +399,9 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
           </CardContent>
         </Card>
       )}
+
+      {/* HTML Template Manager */}
+      <HTMLTemplateManager studentId={student.id} />
 
       {/* Training Content Upload Dialog */}
       <Dialog open={showHTMLUpload} onOpenChange={setShowHTMLUpload}>

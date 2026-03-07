@@ -7,6 +7,7 @@ import { RecoveryMission } from "@/components/9fit/RecoveryMission";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
+import { FeatureOnboarding } from "@/components/onboarding/FeatureOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
@@ -389,7 +390,7 @@ export default function NineFitHub() {
         />
       </div>
 
-      {/* Bottom Navigation */}
+      <FeatureOnboarding featureKey="hub" />
       <BottomNavigation />
     </div>
   );
