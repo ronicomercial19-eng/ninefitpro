@@ -4503,6 +4503,140 @@ export type Database = {
           },
         ]
       }
+      workout_executions: {
+        Row: {
+          athlete_id: string
+          avg_rpe: number | null
+          completed_at: string | null
+          created_at: string
+          day_number: number | null
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          periodization_id: string | null
+          phase_name: string | null
+          rating: number | null
+          started_at: string | null
+          status: string
+          total_volume_kg: number | null
+          week_number: number | null
+          workout_date: string
+        }
+        Insert: {
+          athlete_id: string
+          avg_rpe?: number | null
+          completed_at?: string | null
+          created_at?: string
+          day_number?: number | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          periodization_id?: string | null
+          phase_name?: string | null
+          rating?: number | null
+          started_at?: string | null
+          status?: string
+          total_volume_kg?: number | null
+          week_number?: number | null
+          workout_date?: string
+        }
+        Update: {
+          athlete_id?: string
+          avg_rpe?: number | null
+          completed_at?: string | null
+          created_at?: string
+          day_number?: number | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          periodization_id?: string | null
+          phase_name?: string | null
+          rating?: number | null
+          started_at?: string | null
+          status?: string
+          total_volume_kg?: number | null
+          week_number?: number | null
+          workout_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_exercise_sets: {
+        Row: {
+          actual_reps: number | null
+          actual_weight: number | null
+          completed: boolean | null
+          created_at: string
+          execution_id: string
+          exercise_name: string
+          exercise_order: number
+          id: string
+          notes: string | null
+          planned_reps: string | null
+          planned_weight: number | null
+          rest_seconds: number | null
+          rpe: number | null
+          set_number: number
+          tempo: string | null
+        }
+        Insert: {
+          actual_reps?: number | null
+          actual_weight?: number | null
+          completed?: boolean | null
+          created_at?: string
+          execution_id: string
+          exercise_name: string
+          exercise_order?: number
+          id?: string
+          notes?: string | null
+          planned_reps?: string | null
+          planned_weight?: number | null
+          rest_seconds?: number | null
+          rpe?: number | null
+          set_number: number
+          tempo?: string | null
+        }
+        Update: {
+          actual_reps?: number | null
+          actual_weight?: number | null
+          completed?: boolean | null
+          created_at?: string
+          execution_id?: string
+          exercise_name?: string
+          exercise_order?: number
+          id?: string
+          notes?: string | null
+          planned_reps?: string | null
+          planned_weight?: number | null
+          rest_seconds?: number | null
+          rpe?: number | null
+          set_number?: number
+          tempo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercise_sets_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "workout_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_exercises: {
         Row: {
           created_at: string | null
@@ -5368,6 +5502,39 @@ export type Database = {
           workouts_last_7_days: number | null
         }
         Relationships: []
+      }
+      v_workout_progression: {
+        Row: {
+          athlete_id: string | null
+          avg_rpe: number | null
+          avg_weight: number | null
+          duration_minutes: number | null
+          exercises_count: number | null
+          max_weight: number | null
+          phase_name: string | null
+          rating: number | null
+          sets_completed: number | null
+          total_sets: number | null
+          total_volume_kg: number | null
+          week_number: number | null
+          workout_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
