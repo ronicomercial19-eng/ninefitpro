@@ -88,7 +88,7 @@ interface ClassSchedule {
   is_active: boolean;
 }
 
-const WHATSAPP_SAC = '5511999999999'; // SAC number
+const WHATSAPP_SAC = '5511988328351'; // SAC number
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export default function AulasCreditos() {
@@ -504,7 +504,7 @@ export default function AulasCreditos() {
         </div>
         <div className="mt-4">
           <h2 className="text-3xl font-black text-foreground">Aulas</h2>
-          <p className="text-sm text-muted-foreground">Horário fixo + aulas do mês</p>
+          <p className="text-sm text-muted-foreground">Agende e gerencie suas aulas</p>
         </div>
       </div>
 
@@ -550,33 +550,34 @@ export default function AulasCreditos() {
         </Button>
       </div>
 
-      {/* Agendamento / Horário Fixo */}
-      <div className="px-4 mt-4">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h3 className="text-lg font-bold text-foreground mb-3">Horário Fixo</h3>
-          {fixedSchedule.length > 0 ? (
+      {/* Meus Agendamentos (real data) */}
+      {myAppointments.length > 0 && (
+        <div className="px-4 mt-4">
+          <div className="bg-card border border-border rounded-lg p-4">
+            <h3 className="text-lg font-bold text-foreground mb-3">Próximos Agendamentos</h3>
             <div className="space-y-2">
-              {fixedSchedule.map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="font-bold text-foreground">{s.day}</span>
-                  <span className="text-foreground">{s.time}</span>
+              {myAppointments.slice(0, 5).map((apt) => (
+                <div key={apt.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">{apt.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                  {getAppointmentStatusBadge(apt.status)}
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Nenhum horário fixo detectado ainda.</p>
-          )}
-          
-          <button 
-            onClick={() => setShowVacationDialog(true)}
-            className="w-full mt-3 py-2.5 bg-amber-600/20 border border-amber-600/30 rounded-lg text-amber-500 font-medium text-sm flex items-center justify-center gap-2"
-          >
-            <AlertCircle className="w-4 h-4" />
-            Solicitar troca de horário
-          </button>
+            <button 
+              onClick={() => setShowVacationDialog(true)}
+              className="w-full mt-3 py-2.5 bg-amber-600/20 border border-amber-600/30 rounded-lg text-amber-500 font-medium text-sm flex items-center justify-center gap-2"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Solicitar troca de horário / férias
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Next Class Card */}
       {nextClass && (
@@ -785,28 +786,6 @@ export default function AulasCreditos() {
         </div>
       )}
 
-      {/* Meus Agendamentos */}
-      {myAppointments.length > 0 && (
-        <div className="px-4 mb-6">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Meus Agendamentos</h2>
-          <div className="space-y-2">
-            {myAppointments.map((apt) => (
-              <div key={apt.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground text-sm">{apt.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getAppointmentStatusBadge(apt.status)}
-                  <Badge variant="outline" className="text-xs">{getAppointmentTypeLabel(apt.appointment_type)}</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Bookings Summary */}
       {!selectedDate && (

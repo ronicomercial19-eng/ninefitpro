@@ -124,7 +124,7 @@ export default function NineFitHub() {
         .eq("student_id", athleteId)
         .maybeSingle();
 
-      const availableCredits = (creditsData?.total_credits || 10) - (creditsData?.used_credits || 0);
+      const availableCredits = (creditsData?.total_credits || 0) - (creditsData?.used_credits || 0);
 
       // Fetch last assessment
       const { data: assessmentData } = await supabase
