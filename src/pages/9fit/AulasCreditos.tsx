@@ -88,7 +88,7 @@ interface ClassSchedule {
   is_active: boolean;
 }
 
-const WHATSAPP_SAC = '5511999999999'; // SAC number
+const WHATSAPP_SAC = '5511988328351'; // SAC number
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export default function AulasCreditos() {
