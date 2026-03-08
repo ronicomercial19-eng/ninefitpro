@@ -303,9 +303,18 @@ export default function AulasCreditos() {
 
       // Auto-confirm in-grid dates
       if (inGridDates.length > 0) {
+        // Get the coach_id for this athlete
+        const { data: athleteData } = await supabase
+          .from('athletes')
+          .select('coach_id')
+          .eq('id', athleteId)
+          .single();
+        
+        const teacherId = athleteData?.coach_id || user.id;
+
         const inserts = inGridDates.map(d => ({
           student_id: athleteId,
-          teacher_id: user.id,
+          teacher_id: teacherId,
           title: `Aula - ${athleteName}`,
           scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
           status: 'confirmed' as const,
