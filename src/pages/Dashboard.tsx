@@ -276,6 +276,33 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Expiring Plans Alert */}
+      {stats.expiringPlans.length > 0 && (
+        <Card className="animate-in slide-in-from-bottom duration-500 delay-450 border-l-4 border-l-yellow-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-600">
+              <AlertTriangle className="w-5 h-5" />
+              Vencimentos Próximos ({stats.expiringPlans.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {stats.expiringPlans.map((plan) => (
+                <div key={plan.id} className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-500/10 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium">{plan.name}</p>
+                    <p className="text-xs text-muted-foreground">{plan.email}</p>
+                  </div>
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                    Vence {new Date(plan.data_fim_plano).toLocaleDateString('pt-BR')}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick Actions - Enhanced Micro-interactions */}
       <div className="animate-in slide-in-from-bottom duration-500 delay-500">
         <h3 className="text-2xl font-bold mb-4">Acesso Rápido</h3>
