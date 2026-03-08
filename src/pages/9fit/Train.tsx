@@ -403,10 +403,14 @@ export default function NineFitTrain() {
                 try {
                   await supabase.from("workout_progress").insert({
                     aluno_id: athleteId,
+                    exercise_name: selectedTraining.training_name,
                     training_name: selectedTraining.training_name,
                     completed_at: new Date().toISOString(),
                     calories_burned: 150,
-                  });
+                    sets: 0,
+                    reps: 0,
+                    date: new Date().toISOString().split('T')[0],
+                  } as any);
                   // Award XP
                   const { data: athlete } = await supabase
                     .from("athletes")
