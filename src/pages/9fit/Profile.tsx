@@ -35,6 +35,7 @@ interface AthleteProfile {
 }
 
 const menuItems = [
+  { icon: Utensils, label: "Minha Dieta", path: "/9fit/dieta" },
   { icon: Bell, label: "Notificações", path: "/9fit/settings/notifications" },
   { icon: Shield, label: "Privacidade", path: "/9fit/settings/privacy" },
   { icon: CreditCard, label: "Assinatura", path: "/9fit/premium" },
