@@ -19,6 +19,8 @@ interface UserStats {
   calories: number;
   workouts: number;
   streak: number;
+  totalXP: number;
+  level: number;
 }
 
 interface AthleteProfile {
