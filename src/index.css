@@ -114,6 +114,17 @@
     button, a, [role="button"] {
       min-height: 44px;
     }
+
+    /* Prevent horizontal overflow */
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Global responsive helpers */
+  [data-radix-popper-content-wrapper] {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
   }
 }
 
