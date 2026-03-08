@@ -111,7 +111,7 @@ const modules: Module[] = [
       { name: "Lista de alunos com dados reais", status: "done" },
       { name: "Relatório de check-ins / presença", status: "done" },
       { name: "Gerador de relatórios", status: "done" },
-      { name: "Exportação de dados", status: "pending" },
+      { name: "Exportação de dados", status: "done" },
     ],
   },
   {
