@@ -33,7 +33,7 @@ import Register from "./pages/Register";
 import NineFitLogin from "./pages/9fit/Login";
 import NineFitHub from "./pages/9fit/Hub";
 import NineFitTrain from "./pages/9fit/Train";
-import NineFitAulas from "./pages/9fit/Aulas";
+// NineFitAulas removed - orphan route, replaced by AulasCreditos
 import AulasCreditos from "./pages/9fit/AulasCreditos";
 import NineFitStats from "./pages/9fit/Stats";
 import NineFitProfile from "./pages/9fit/Profile";
