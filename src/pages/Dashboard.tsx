@@ -16,7 +16,8 @@ import {
   Zap,
   Clock,
   CheckCircle,
-  Plus
+  Plus,
+  AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
