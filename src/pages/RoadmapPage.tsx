@@ -119,7 +119,7 @@ const modules: Module[] = [
     features: [
       { name: "Notificação de cadastro WhatsApp", status: "done" },
       { name: "Notificação de novo treino", status: "done" },
-      { name: "Push notifications", status: "pending" },
+      { name: "Push notifications", status: "done" },
       { name: "Notificações in-app", status: "done" },
     ],
   },
