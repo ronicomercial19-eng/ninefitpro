@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, parseISO, isAfter, isBefore, addDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, parseISO, isAfter, isBefore, addDays, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CalendarDays, 
@@ -18,7 +18,10 @@ import {
   Palmtree,
   RefreshCw,
   HelpCircle,
-  ArrowLeft
+  ArrowLeft,
+  MessageCircle,
+  Plus,
+  Send
 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 
 interface GymClass {
@@ -73,6 +77,20 @@ interface FixedSchedule {
   time: string;
 }
 
+interface ClassSchedule {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  max_slots: number;
+  class_name: string;
+  instructor: string | null;
+  is_active: boolean;
+}
+
+const WHATSAPP_SAC = '5511999999999'; // SAC number
+const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
 export default function AulasCreditos() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -86,6 +104,15 @@ export default function AulasCreditos() {
   const [athleteId, setAthleteId] = useState<string | null>(null);
   const [athleteName, setAthleteName] = useState<string>('');
   
+  // Scheduling dialog
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduleSelectedDates, setScheduleSelectedDates] = useState<Date[]>([]);
+  const [scheduleTime, setScheduleTime] = useState('09:00');
+  const [scheduleType, setScheduleType] = useState('aula');
+  const [scheduleNotes, setScheduleNotes] = useState('');
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [classSchedules, setClassSchedules] = useState<ClassSchedule[]>([]);
+
   // Dialogs
   const [showVacationDialog, setShowVacationDialog] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -99,7 +126,6 @@ export default function AulasCreditos() {
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Fixed schedule (from athlete metadata or bookings pattern)
   const [fixedSchedule, setFixedSchedule] = useState<FixedSchedule[]>([]);
 
   useEffect(() => {
@@ -136,7 +162,16 @@ export default function AulasCreditos() {
     fetchCredits();
     fetchMyAppointments();
     fetchFixedSchedule();
+    fetchClassSchedules();
   }, [currentMonth, user, athleteId]);
+
+  const fetchClassSchedules = async () => {
+    const { data } = await supabase
+      .from('class_schedules')
+      .select('*')
+      .eq('is_active', true);
+    if (data) setClassSchedules(data as any);
+  };
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -186,7 +221,6 @@ export default function AulasCreditos() {
 
   const fetchFixedSchedule = async () => {
     if (!athleteId) return;
-    // Derive fixed schedule from confirmed bookings pattern
     const { data } = await supabase
       .from("class_bookings")
       .select("booking_time, class_id, gym_classes(class_datetime)")
@@ -197,23 +231,19 @@ export default function AulasCreditos() {
     
     if (data && data.length > 0) {
       const dayCount: Record<string, { count: number; time: string }> = {};
-      const dayNames = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-      
       data.forEach((b: any) => {
         const dt = b.gym_classes?.class_datetime;
         if (dt) {
           const date = new Date(dt);
-          const dayName = dayNames[date.getDay()];
+          const dayName = DAY_NAMES[date.getDay()];
           const time = format(date, 'HH:mm');
           const key = `${dayName}-${time}`;
           dayCount[key] = { count: (dayCount[key]?.count || 0) + 1, time };
         }
       });
-
       const frequent = Object.entries(dayCount)
         .filter(([_, v]) => v.count >= 2)
         .map(([k, v]) => ({ day: k.split('-')[0], time: v.time }));
-      
       setFixedSchedule(frequent);
     }
   };
@@ -222,6 +252,129 @@ export default function AulasCreditos() {
   const totalCredits = credits?.total_credits || 0;
   const usedCredits = credits?.used_credits || 0;
   const progressPercent = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
+
+  // Check if a date/time is in the class_schedules grid
+  const isInGrid = (date: Date, time: string): ClassSchedule | null => {
+    const dayOfWeek = getDay(date);
+    return classSchedules.find(s => 
+      s.day_of_week === dayOfWeek && 
+      s.start_time <= time + ':00' && 
+      s.end_time >= time + ':00'
+    ) || null;
+  };
+
+  // Count existing appointments for a schedule slot on a given date
+  const countBookingsForSlot = async (date: Date, scheduleId: string): Promise<number> => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const { count } = await supabase
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .gte('scheduled_at', `${dateStr}T00:00:00`)
+      .lte('scheduled_at', `${dateStr}T23:59:59`)
+      .neq('status', 'cancelled');
+    return count || 0;
+  };
+
+  const handleSmartSchedule = async () => {
+    if (!athleteId || !user) { toast.error("Faça login primeiro"); return; }
+    if (scheduleSelectedDates.length === 0) { toast.error("Selecione ao menos um dia"); return; }
+    if (availableCredits < scheduleSelectedDates.length) { toast.error("Créditos insuficientes"); return; }
+
+    setScheduleSaving(true);
+    try {
+      const inGridDates: Date[] = [];
+      const outOfGridDates: Date[] = [];
+
+      // Classify each selected date
+      for (const date of scheduleSelectedDates) {
+        const schedule = isInGrid(date, scheduleTime);
+        if (schedule) {
+          // Check if there are slots available
+          const existing = await countBookingsForSlot(date, schedule.id);
+          if (existing < schedule.max_slots) {
+            inGridDates.push(date);
+          } else {
+            outOfGridDates.push(date);
+          }
+        } else {
+          outOfGridDates.push(date);
+        }
+      }
+
+      // Auto-confirm in-grid dates
+      if (inGridDates.length > 0) {
+        const inserts = inGridDates.map(d => ({
+          student_id: athleteId,
+          teacher_id: user.id,
+          title: `Aula - ${athleteName}`,
+          scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
+          status: 'confirmed' as const,
+          appointment_type: scheduleType,
+          duration: 60,
+          description: scheduleNotes || null,
+        }));
+
+        const { error } = await supabase.from('appointments').insert(inserts as any);
+        if (error) throw error;
+
+        // Debit credits
+        await supabase.from('student_credits').update({
+          used_credits: usedCredits + inGridDates.length
+        }).eq('student_id', athleteId);
+
+        toast.success(`${inGridDates.length} aula(s) confirmada(s) automaticamente!`);
+      }
+
+      // Redirect to WhatsApp for out-of-grid dates
+      if (outOfGridDates.length > 0) {
+        const datesText = outOfGridDates
+          .map(d => format(d, "dd/MM (EEE)", { locale: ptBR }))
+          .join(', ');
+        
+        const msg = encodeURIComponent(
+          `Olá, sou ${athleteName}.\n\nGostaria de agendar aula nos seguintes horários:\n📅 ${datesText}\n⏰ ${scheduleTime}\n\nObrigado!`
+        );
+        
+        toast.info(`${outOfGridDates.length} horário(s) fora da grade. Redirecionando para o WhatsApp...`, { duration: 3000 });
+        
+        // Also create pending appointments for tracking
+        const pendingInserts = outOfGridDates.map(d => ({
+          student_id: athleteId,
+          teacher_id: user.id,
+          title: `Solicitação - ${athleteName}`,
+          scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
+          status: 'scheduled' as const,
+          appointment_type: scheduleType,
+          duration: 60,
+          description: `[VIA WHATSAPP] ${scheduleNotes || ''}`.trim(),
+        }));
+
+        await supabase.from('appointments').insert(pendingInserts as any);
+
+        setTimeout(() => {
+          window.open(`https://wa.me/${WHATSAPP_SAC}?text=${msg}`, '_blank');
+        }, 1000);
+      }
+
+      setShowScheduleDialog(false);
+      setScheduleSelectedDates([]);
+      setScheduleNotes('');
+      fetchMyAppointments();
+      fetchCredits();
+    } catch (error: any) {
+      toast.error('Erro: ' + error.message);
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
+  const toggleScheduleDate = (date: Date) => {
+    setScheduleSelectedDates(prev => {
+      const exists = prev.find(d => isSameDay(d, date));
+      if (exists) return prev.filter(d => !isSameDay(d, date));
+      return [...prev, date];
+    });
+  };
 
   const handleBookClass = async (classId: string, creditsRequired: number = 1) => {
     if (!user) { toast.error("Faça login para agendar"); return; }
@@ -283,11 +436,12 @@ export default function AulasCreditos() {
     if (!athleteId || !vacationStart || !vacationEnd) { toast.error("Preencha as datas"); return; }
     setSubmittingVacation(true);
     try {
-      await supabase.from("vacation_requests").insert({
-        student_id: athleteId, start_date: vacationStart, end_date: vacationEnd,
-        reason: vacationReason || null, status: "pending"
-      });
-      toast.success("Solicitação de férias enviada!");
+      // Send via WhatsApp instead
+      const msg = encodeURIComponent(
+        `Olá, sou ${athleteName}.\n\nGostaria de solicitar férias/troca:\n📅 De: ${vacationStart}\n📅 Até: ${vacationEnd}\n${vacationReason ? `📝 Motivo: ${vacationReason}` : ''}\n\nObrigado!`
+      );
+      window.open(`https://wa.me/${WHATSAPP_SAC}?text=${msg}`, '_blank');
+      toast.success("Redirecionado para WhatsApp!");
       setShowVacationDialog(false); setVacationStart(''); setVacationEnd(''); setVacationReason('');
     } catch { toast.error("Erro ao enviar solicitação"); }
     finally { setSubmittingVacation(false); }
@@ -307,16 +461,6 @@ export default function AulasCreditos() {
     return booking.status;
   };
 
-  const getStatusIcon = (status: string | null) => {
-    switch (status) {
-      case 'checked_in': return <CheckCircle className="w-3.5 h-3.5 text-green-500" />;
-      case 'confirmed': return <div className="w-3 h-3 rounded-full bg-primary" />;
-      case 'cancelled': return <X className="w-3.5 h-3.5 text-destructive" />;
-      default: return null;
-    }
-  };
-
-  // Get the next upcoming class for this student
   const nextClass = classes
     .filter(c => isBooked(c.id) && !hasCheckedIn(c.id) && new Date(c.class_datetime) >= new Date())
     .sort((a, b) => new Date(a.class_datetime).getTime() - new Date(b.class_datetime).getTime())[0];
@@ -334,9 +478,18 @@ export default function AulasCreditos() {
     }
   };
 
+  const getAppointmentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'confirmed': return <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px]">Confirmado</Badge>;
+      case 'scheduled': return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px]">Pendente</Badge>;
+      case 'completed': return <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">Concluído</Badge>;
+      default: return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header - matching reference design */}
+      {/* Header */}
       <div className="px-4 pt-6 pb-2">
         <div className="flex items-center justify-between mb-1">
           <button onClick={() => navigate(-1)} className="p-1">
@@ -385,25 +538,34 @@ export default function AulasCreditos() {
         </div>
       </div>
 
+      {/* Solicitar Agendamento Button */}
+      <div className="px-4 mt-4">
+        <Button 
+          onClick={() => setShowScheduleDialog(true)} 
+          className="w-full py-6 text-base font-bold gap-2"
+          size="lg"
+        >
+          <Plus className="w-5 h-5" />
+          Solicitar Agendamento
+        </Button>
+      </div>
+
       {/* Agendamento / Horário Fixo */}
       <div className="px-4 mt-4">
         <div className="bg-card border border-border rounded-lg p-4">
-          <h3 className="text-lg font-bold text-foreground mb-3">Agendamento</h3>
+          <h3 className="text-lg font-bold text-foreground mb-3">Horário Fixo</h3>
           {fixedSchedule.length > 0 ? (
-            <>
-              <p className="text-sm text-muted-foreground mb-2">Seu horário fixo</p>
-              <div className="space-y-2">
-                {fixedSchedule.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span className="font-bold text-foreground">{s.day}</span>
-                    <span className="text-foreground">{s.time}</span>
-                  </div>
-                ))}
-              </div>
-            </>
+            <div className="space-y-2">
+              {fixedSchedule.map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="font-bold text-foreground">{s.day}</span>
+                  <span className="text-foreground">{s.time}</span>
+                </div>
+              ))}
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Nenhum horário fixo detectado ainda. Agende aulas regularmente para definir.</p>
+            <p className="text-sm text-muted-foreground">Nenhum horário fixo detectado ainda.</p>
           )}
           
           <button 
@@ -416,7 +578,7 @@ export default function AulasCreditos() {
         </div>
       </div>
 
-      {/* Next Class Card - prominent with confirm/reschedule/cancel */}
+      {/* Next Class Card */}
       {nextClass && (
         <div className="px-4 mt-4">
           <div className="flex items-center gap-2 mb-2">
@@ -441,45 +603,29 @@ export default function AulasCreditos() {
             </div>
             
             <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {format(new Date(nextClass.class_datetime), "HH:mm")}
-              </div>
-              <div className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {nextClass.location}
-              </div>
+              <div className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(nextClass.class_datetime), "HH:mm")}</div>
+              <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{nextClass.location}</div>
             </div>
 
-            {/* Action buttons - Confirmar / Reagendar / Cancelar */}
             <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => handleCheckIn(nextClass.id)}
-                disabled={bookingLoading === nextClass.id}
-                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-green-500/50 text-green-500 rounded-lg text-sm font-medium hover:bg-green-500/10 transition-colors"
-              >
+              <button onClick={() => handleCheckIn(nextClass.id)} disabled={bookingLoading === nextClass.id}
+                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-green-500/50 text-green-500 rounded-lg text-sm font-medium hover:bg-green-500/10 transition-colors">
                 {bookingLoading === nextClass.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 Confirmar
               </button>
-              <button
-                onClick={() => handleReschedule(nextClass.id)}
-                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-amber-500/50 text-amber-500 rounded-lg text-sm font-medium hover:bg-amber-500/10 transition-colors"
-              >
+              <button onClick={() => handleReschedule(nextClass.id)}
+                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-amber-500/50 text-amber-500 rounded-lg text-sm font-medium hover:bg-amber-500/10 transition-colors">
                 <RefreshCw className="w-4 h-4" />
                 Reagendar
               </button>
-              <button
-                onClick={() => handleCancelBooking(nextClass.id)}
-                disabled={bookingLoading === nextClass.id}
-                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-destructive/50 text-destructive rounded-lg text-sm font-medium hover:bg-destructive/10 transition-colors"
-              >
+              <button onClick={() => handleCancelBooking(nextClass.id)} disabled={bookingLoading === nextClass.id}
+                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-destructive/50 text-destructive rounded-lg text-sm font-medium hover:bg-destructive/10 transition-colors">
                 <X className="w-4 h-4" />
                 Cancelar
               </button>
             </div>
           </div>
 
-          {/* Legend */}
           <div className="flex flex-wrap gap-3 mt-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Realizada</span>
             <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-primary" /> Agendada</span>
@@ -519,10 +665,11 @@ export default function AulasCreditos() {
             {daysInMonth.map((day) => {
               const hasClasses = hasClassesOnDate(day);
               const isSelected = selectedDate && isSameDay(day, selectedDate);
-              const isToday = isSameDay(day, new Date());
+              const isDayToday = isSameDay(day, new Date());
               const dayClasses = getClassesForDate(day);
               const hasBookedClass = dayClasses.some(c => isBooked(c.id));
               const hasCheckedInClass = dayClasses.some(c => hasCheckedIn(c.id));
+              const hasAppointment = myAppointments.some(a => isSameDay(new Date(a.scheduled_at), day));
 
               return (
                 <button
@@ -530,16 +677,17 @@ export default function AulasCreditos() {
                   onClick={() => setSelectedDate(isSelected ? null : day)}
                   className={`aspect-square flex flex-col items-center justify-center rounded-lg transition-all relative ${
                     isSelected ? "bg-primary text-primary-foreground" :
-                    isToday ? "bg-primary/20 text-primary ring-1 ring-primary" :
-                    hasClasses ? "bg-muted hover:bg-muted/80" : "hover:bg-muted/50"
+                    isDayToday ? "bg-primary/20 text-primary ring-1 ring-primary" :
+                    hasClasses || hasAppointment ? "bg-muted hover:bg-muted/80" : "hover:bg-muted/50"
                   }`}
                 >
                   <span className="text-sm font-medium">{format(day, "d")}</span>
-                  {hasClasses && (
+                  {(hasClasses || hasAppointment) && (
                     <div className="flex gap-0.5 mt-0.5">
                       {hasCheckedInClass && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
                       {hasBookedClass && !hasCheckedInClass && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-primary-foreground" : "bg-primary"}`} />}
-                      {!hasBookedClass && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-primary-foreground/60" : "bg-muted-foreground"}`} />}
+                      {hasAppointment && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                      {!hasBookedClass && !hasAppointment && hasClasses && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-primary-foreground/60" : "bg-muted-foreground"}`} />}
                     </div>
                   )}
                 </button>
@@ -565,6 +713,9 @@ export default function AulasCreditos() {
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <CalendarDays className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhuma aula disponível neste dia</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowScheduleDialog(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Solicitar horário
+              </Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -634,26 +785,6 @@ export default function AulasCreditos() {
         </div>
       )}
 
-      {/* Credit Status Cards - when no credits */}
-      {availableCredits <= 0 && totalCredits > 0 && (
-        <div className="px-4 mb-6">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-card border border-border rounded-lg p-4">
-              <p className="text-xs text-muted-foreground mb-1">Assinatura</p>
-              <p className="font-bold text-foreground text-sm">Sem aulas disponíveis em {format(currentMonth, "MMMM", { locale: ptBR })}</p>
-              <p className="text-xs text-muted-foreground mt-2">Você já utilizou todas as aulas do seu plano.</p>
-              <Button size="sm" variant="destructive" className="mt-3 w-full text-xs">Ver planos</Button>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4">
-              <p className="text-xs text-muted-foreground mb-1">Bloco com saldo 0 / expirado</p>
-              <p className="font-bold text-foreground text-sm">Sem saldo no bloco</p>
-              <p className="text-xs text-muted-foreground mt-2">Seu bloco está zerado ou expirado.</p>
-              <Button size="sm" variant="destructive" className="mt-3 w-full text-xs">Ver planos</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Meus Agendamentos */}
       {myAppointments.length > 0 && (
         <div className="px-4 mb-6">
@@ -667,14 +798,17 @@ export default function AulasCreditos() {
                     {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-xs">{getAppointmentTypeLabel(apt.appointment_type)}</Badge>
+                <div className="flex items-center gap-2">
+                  {getAppointmentStatusBadge(apt.status)}
+                  <Badge variant="outline" className="text-xs">{getAppointmentTypeLabel(apt.appointment_type)}</Badge>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Bookings Summary when no date selected */}
+      {/* Bookings Summary */}
       {!selectedDate && (
         <div className="px-4 mb-6">
           <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Seus Agendamentos de Aula</h2>
@@ -682,7 +816,7 @@ export default function AulasCreditos() {
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <CalendarDays className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhuma aula agendada</p>
-              <p className="text-xs text-muted-foreground mt-1">Selecione uma data para ver aulas disponíveis</p>
+              <p className="text-xs text-muted-foreground mt-1">Use o botão "Solicitar Agendamento" acima</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -711,6 +845,122 @@ export default function AulasCreditos() {
         </div>
       )}
 
+      {/* Schedule Dialog - Smart Scheduling */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5" />
+              Solicitar Agendamento
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Credits info */}
+            <div className="bg-muted rounded-lg p-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Créditos disponíveis</p>
+                <p className="text-xs text-muted-foreground">Cada aula usa 1 crédito</p>
+              </div>
+              <span className="text-2xl font-black text-primary">{availableCredits}</span>
+            </div>
+
+            {/* Type */}
+            <div className="space-y-2">
+              <Label>Tipo</Label>
+              <Select value={scheduleType} onValueChange={setScheduleType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aula">Aula</SelectItem>
+                  <SelectItem value="avaliacao_fisica">Avaliação Física</SelectItem>
+                  <SelectItem value="consultoria">Consultoria</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Time */}
+            <div className="space-y-2">
+              <Label>Horário</Label>
+              <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
+            </div>
+
+            {/* Mini Calendar for selecting days */}
+            <div className="space-y-2">
+              <Label>Selecione os dias ({scheduleSelectedDates.length} selecionados)</Label>
+              <div className="bg-muted rounded-lg p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1"><ChevronLeft className="w-4 h-4" /></button>
+                  <span className="text-sm font-bold capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</span>
+                  <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1"><ChevronRight className="w-4 h-4" /></button>
+                </div>
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {weekDays.map(d => <div key={d} className="text-center text-[10px] font-bold text-muted-foreground">{d}</div>)}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: monthStart.getDay() }).map((_, i) => <div key={`e-${i}`} className="aspect-square" />)}
+                  {daysInMonth.map((day) => {
+                    const isSelectedForSchedule = scheduleSelectedDates.some(d => isSameDay(d, day));
+                    const isPast = isBefore(day, new Date()) && !isSameDay(day, new Date());
+                    const gridMatch = isInGrid(day, scheduleTime);
+                    
+                    return (
+                      <button
+                        key={day.toString()}
+                        onClick={() => !isPast && toggleScheduleDate(day)}
+                        disabled={isPast}
+                        className={`aspect-square flex flex-col items-center justify-center rounded text-xs transition-all ${
+                          isSelectedForSchedule 
+                            ? "bg-primary text-primary-foreground font-bold" 
+                            : isPast 
+                              ? "opacity-30 cursor-not-allowed" 
+                              : gridMatch 
+                                ? "bg-green-500/10 hover:bg-green-500/20 text-foreground" 
+                                : "hover:bg-muted/80 text-foreground"
+                        }`}
+                      >
+                        {format(day, "d")}
+                        {gridMatch && !isSelectedForSchedule && <div className="w-1 h-1 rounded-full bg-green-500 mt-0.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> Na grade</span>
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Selecionado</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label>Observações (opcional)</Label>
+              <Textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder="Ex: Prefiro horário da manhã..." rows={2} />
+            </div>
+
+            {/* Info about logic */}
+            {scheduleSelectedDates.length > 0 && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-400">
+                <p className="font-medium mb-1">ℹ️ Como funciona:</p>
+                <p>• Horários <strong>disponíveis na grade</strong> serão confirmados automaticamente</p>
+                <p>• Horários <strong>fora da grade</strong> serão enviados via WhatsApp para o SAC</p>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleSmartSchedule} 
+              disabled={scheduleSaving || scheduleSelectedDates.length === 0 || availableCredits < scheduleSelectedDates.length}
+              className="w-full gap-2"
+            >
+              {scheduleSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {scheduleSelectedDates.length === 0 
+                ? 'Selecione os dias' 
+                : availableCredits < scheduleSelectedDates.length 
+                  ? 'Créditos insuficientes' 
+                  : `Solicitar ${scheduleSelectedDates.length} aula(s)`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Vacation Dialog */}
       <Dialog open={showVacationDialog} onOpenChange={setShowVacationDialog}>
         <DialogContent>
@@ -726,8 +976,9 @@ export default function AulasCreditos() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowVacationDialog(false)}>Cancelar</Button>
-            <Button onClick={handleSubmitVacation} disabled={submittingVacation}>
-              {submittingVacation && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Enviar
+            <Button onClick={handleSubmitVacation} disabled={submittingVacation} className="gap-2">
+              {submittingVacation ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+              Enviar via WhatsApp
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -737,12 +988,52 @@ export default function AulasCreditos() {
       <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
         <DialogContent>
           <DialogHeader><DialogTitle>Como funciona</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2 text-sm text-muted-foreground">
-            <p><strong className="text-foreground">Horário Fixo:</strong> Seus horários regulares são detectados automaticamente com base nas aulas que você frequenta.</p>
-            <p><strong className="text-foreground">Agendar Aula:</strong> Selecione uma data no calendário, escolha a aula e confirme. Os créditos são debitados automaticamente.</p>
-            <p><strong className="text-foreground">Check-in:</strong> No dia da aula, confirme sua presença clicando em "Confirmar".</p>
-            <p><strong className="text-foreground">Reagendar:</strong> Cancele a aula atual e selecione outro horário.</p>
-            <p><strong className="text-foreground">Férias/Troca:</strong> Solicite uma pausa ou troca de horário fixo.</p>
+          <div className="space-y-4 py-2 text-sm">
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 text-green-500" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Horário Fixo</p>
+                <p className="text-muted-foreground">O sistema detecta automaticamente sua rotina com base nas aulas frequentadas.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <CalendarDays className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Agendar Aula</p>
+                <p className="text-muted-foreground">Selecione dias no calendário. Horários na grade são confirmados automaticamente. Fora da grade, enviamos para o WhatsApp do SAC.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-blue-500" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Check-in</p>
+                <p className="text-muted-foreground">No dia da aula, confirme sua presença clicando em "Confirmar".</p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <RefreshCw className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Reagendar</p>
+                <p className="text-muted-foreground">Cancele a aula atual e selecione outro horário disponível.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <Palmtree className="w-4 h-4 text-purple-500" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Férias / Troca</p>
+                <p className="text-muted-foreground">Solicite pausa ou alteração de horário fixo via WhatsApp.</p>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

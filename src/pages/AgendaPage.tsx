@@ -11,7 +11,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Calendar, CalendarDays, Plus, Clock, Activity, Users,
-  ChevronLeft, ChevronRight, ExternalLink, Check, X, Trash2
+  ChevronLeft, ChevronRight, ExternalLink, Check, X, Trash2,
+  CreditCard, Send, MessageCircle, Bell
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,10 +43,16 @@ export default function AgendaPage() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [appointmentForm, setAppointmentForm] = useState({
     athlete_id: '', appointment_type: '', scheduled_at: '', notes: '', title: '', duration: '60', location: '',
-    // Multi-day fields
     multiDay: false, selectedWeekDays: [] as number[], time: '09:00',
   });
   const [saving, setSaving] = useState(false);
+
+  // Credit management
+  const [showCreditDialog, setShowCreditDialog] = useState(false);
+  const [creditAthleteId, setCreditAthleteId] = useState('');
+  const [creditAmount, setCreditAmount] = useState('');
+  const [currentCredits, setCurrentCredits] = useState<{ total: number; used: number } | null>(null);
+  const [savingCredits, setSavingCredits] = useState(false);
 
   useEffect(() => { if (user) fetchData(); }, [user, currentDate]);
 
@@ -69,6 +76,39 @@ export default function AgendaPage() {
     finally { setLoading(false); }
   };
 
+  // Fetch credits when athlete selected
+  const fetchAthleteCredits = async (athleteId: string) => {
+    const { data } = await supabase
+      .from('student_credits')
+      .select('total_credits, used_credits')
+      .eq('student_id', athleteId)
+      .maybeSingle();
+    setCurrentCredits(data ? { total: data.total_credits, used: data.used_credits } : { total: 0, used: 0 });
+  };
+
+  const handleSendCredits = async () => {
+    if (!creditAthleteId || !creditAmount) { toast.error('Preencha os campos'); return; }
+    const amount = parseInt(creditAmount);
+    if (isNaN(amount) || amount <= 0) { toast.error('Quantidade inválida'); return; }
+
+    setSavingCredits(true);
+    try {
+      const newTotal = (currentCredits?.total || 0) + amount;
+      const { error } = await supabase.from('student_credits').upsert({
+        student_id: creditAthleteId,
+        total_credits: newTotal,
+        used_credits: currentCredits?.used || 0,
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: 'student_id' });
+      
+      if (error) throw error;
+      toast.success(`${amount} créditos enviados!`);
+      setCreditAmount('');
+      fetchAthleteCredits(creditAthleteId);
+    } catch (error: any) { toast.error('Erro: ' + error.message); }
+    finally { setSavingCredits(false); }
+  };
+
   const handleCreateAppointment = async () => {
     if (!appointmentForm.athlete_id || !appointmentForm.appointment_type) { toast.error('Preencha campos obrigatórios'); return; }
     
@@ -79,7 +119,6 @@ export default function AgendaPage() {
     setSaving(true);
     try {
       if (appointmentForm.multiDay && appointmentForm.selectedWeekDays.length > 0) {
-        // Multi-day: generate dates for each selected weekday in the current month
         const monthStart2 = startOfMonth(currentDate);
         const monthEnd2 = endOfMonth(currentDate);
         const allDays = eachDayOfInterval({ start: monthStart2, end: monthEnd2 });
@@ -102,7 +141,6 @@ export default function AgendaPage() {
         if (error) throw error;
         toast.success(`${inserts.length} agendamentos criados!`);
       } else {
-        // Single appointment
         if (!appointmentForm.scheduled_at) { toast.error('Selecione data/hora'); setSaving(false); return; }
         const { error } = await supabase.from('appointments').insert({
           student_id: appointmentForm.athlete_id, teacher_id: user!.id, title: baseTitle,
@@ -165,7 +203,7 @@ export default function AgendaPage() {
     switch (s) { case 'scheduled': return 'Agendado'; case 'confirmed': return 'Confirmado'; case 'completed': return 'Concluído'; case 'cancelled': return 'Cancelado'; case 'no_show': return 'Faltou'; default: return s; }
   };
   const getStatusColor = (s: string) => {
-    switch (s) { case 'scheduled': return 'bg-blue-500/20 text-blue-400'; case 'completed': return 'bg-green-500/20 text-green-500'; case 'cancelled': return 'bg-destructive/20 text-destructive'; case 'no_show': return 'bg-amber-500/20 text-amber-500'; default: return 'bg-muted text-muted-foreground'; }
+    switch (s) { case 'scheduled': return 'bg-blue-500/20 text-blue-400'; case 'confirmed': return 'bg-green-500/20 text-green-500'; case 'completed': return 'bg-green-500/20 text-green-500'; case 'cancelled': return 'bg-destructive/20 text-destructive'; case 'no_show': return 'bg-amber-500/20 text-amber-500'; default: return 'bg-muted text-muted-foreground'; }
   };
 
   const selectedDayBookings = selectedDay ? getBookingsForDay(selectedDay) : [];
@@ -173,12 +211,16 @@ export default function AgendaPage() {
   const totalAppointments = appointments.length;
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
   const completedAppointments = appointments.filter(a => a.status === 'completed').length;
+  const pendingRequests = appointments.filter(a => a.status === 'scheduled' && a.description?.includes('[VIA WHATSAPP]'));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowCreditDialog(true)} className="border-primary/50 text-primary hover:bg-primary/10">
+            <CreditCard className="w-4 h-4 mr-2" />Enviar Créditos
+          </Button>
           <Button variant="outline" onClick={() => window.open('https://nineprogresstracker.lovable.app/', '_blank')} className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10">
             <Activity className="w-4 h-4 mr-2" />Avaliação Física<ExternalLink className="w-3 h-3 ml-2" />
           </Button>
@@ -187,6 +229,83 @@ export default function AgendaPage() {
           </Button>
         </div>
       </div>
+
+      {/* Pending WhatsApp Requests Banner */}
+      {pendingRequests.length > 0 && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-amber-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-foreground">{pendingRequests.length} solicitação(ões) pendente(s)</p>
+                <p className="text-xs text-muted-foreground">Solicitações enviadas via WhatsApp aguardando confirmação</p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-2">
+              {pendingRequests.slice(0, 5).map(req => (
+                <div key={req.id} className="flex items-center justify-between bg-card rounded-lg p-2 border border-amber-500/20">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{req.student_name}</p>
+                    <p className="text-xs text-muted-foreground">{format(new Date(req.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[10px]">
+                      <MessageCircle className="w-3 h-3 mr-1" />WhatsApp
+                    </Badge>
+                    <Button size="sm" variant="outline" className="text-green-500 border-green-500/30 h-7 text-xs" onClick={() => handleUpdateStatus(req.id, 'completed')}>
+                      <Check className="w-3 h-3 mr-1" />Confirmar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Credit Dialog */}
+      <Dialog open={showCreditDialog} onOpenChange={setShowCreditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5" />Enviar Créditos</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Selecionar Aluno</Label>
+              <Select value={creditAthleteId} onValueChange={(v) => { setCreditAthleteId(v); fetchAthleteCredits(v); }}>
+                <SelectTrigger><SelectValue placeholder="Buscar aluno..." /></SelectTrigger>
+                <SelectContent>{athletes.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+
+            {creditAthleteId && currentCredits && (
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-sm text-muted-foreground">Saldo atual</p>
+                <div className="flex items-center gap-4 mt-1">
+                  <div>
+                    <p className="text-2xl font-black text-primary">{currentCredits.total - currentCredits.used}</p>
+                    <p className="text-xs text-muted-foreground">disponíveis</p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <p>Total: {currentCredits.total}</p>
+                    <p>Usados: {currentCredits.used}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Quantidade de Créditos</Label>
+              <Input type="number" min="1" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} placeholder="Ex: 8" />
+            </div>
+
+            <Button onClick={handleSendCredits} disabled={savingCredits || !creditAthleteId || !creditAmount} className="w-full gap-2">
+              {savingCredits ? <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+              Enviar Créditos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* New Appointment Dialog */}
       <Dialog open={showNewAppointment} onOpenChange={setShowNewAppointment}>
@@ -212,7 +331,6 @@ export default function AgendaPage() {
               </Select>
             </div>
 
-            {/* Multi-day toggle */}
             <div className="flex items-center gap-2">
               <Checkbox id="multiDay" checked={appointmentForm.multiDay} onCheckedChange={(c) => setAppointmentForm({ ...appointmentForm, multiDay: !!c })} />
               <Label htmlFor="multiDay" className="text-sm cursor-pointer">Agendar múltiplos dias da semana</Label>
@@ -270,7 +388,7 @@ export default function AgendaPage() {
         <Card className="border-purple-500/30"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center"><Activity className="w-6 h-6 text-purple-400" /></div><div><p className="text-sm text-muted-foreground">Agendamentos</p><p className="text-2xl font-bold text-purple-400">{totalAppointments}</p></div></div></CardContent></Card>
         <Card className="border-blue-500/30"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center"><Users className="w-6 h-6 text-blue-400" /></div><div><p className="text-sm text-muted-foreground">Aulas confirmadas</p><p className="text-2xl font-bold text-blue-400">{confirmedBookings}</p></div></div></CardContent></Card>
         <Card className="border-green-500/30"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center"><Check className="w-6 h-6 text-green-400" /></div><div><p className="text-sm text-muted-foreground">Concluídos</p><p className="text-2xl font-bold text-green-400">{completedAppointments}</p></div></div></CardContent></Card>
-        <Card className="border-primary/30"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center"><Calendar className="w-6 h-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">Hoje</p><p className="text-2xl font-bold text-primary">{getAppointmentsForDay(new Date()).length + getBookingsForDay(new Date()).length}</p></div></div></CardContent></Card>
+        <Card className="border-amber-500/30"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center"><Bell className="w-6 h-6 text-amber-400" /></div><div><p className="text-sm text-muted-foreground">Pendentes WhatsApp</p><p className="text-2xl font-bold text-amber-400">{pendingRequests.length}</p></div></div></CardContent></Card>
       </div>
 
       {/* Legend */}
@@ -278,6 +396,7 @@ export default function AgendaPage() {
         <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-purple-500" /> Avaliação</span>
         <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-blue-500" /> Aula</span>
         <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-green-500" /> Consultoria</span>
+        <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-amber-500" /> Via WhatsApp</span>
       </div>
 
       {/* Calendar */}
@@ -306,6 +425,7 @@ export default function AgendaPage() {
                   const dayAppointments = getAppointmentsForDay(day);
                   const hasEvents = dayBookings.length > 0 || dayAppointments.length > 0;
                   const isSelected = selectedDay && isSameDay(day, selectedDay);
+                  const hasWhatsApp = dayAppointments.some(a => a.description?.includes('[VIA WHATSAPP]'));
                   return (
                     <button key={day.toISOString()} onClick={() => setSelectedDay(isSelected ? null : day)}
                       className={`aspect-square p-1 rounded-lg border transition-all text-sm
@@ -315,7 +435,7 @@ export default function AgendaPage() {
                         <span className="font-medium">{format(day, 'd')}</span>
                         {hasEvents && (
                           <div className="flex gap-0.5 mt-1">
-                            {dayAppointments.slice(0, 3).map((a, i) => <div key={`a-${i}`} className={`w-1.5 h-1.5 rounded-full ${getColor(a.appointment_type)}`} />)}
+                            {dayAppointments.slice(0, 3).map((a, i) => <div key={`a-${i}`} className={`w-1.5 h-1.5 rounded-full ${a.description?.includes('[VIA WHATSAPP]') ? 'bg-amber-500' : getColor(a.appointment_type)}`} />)}
                             {dayBookings.slice(0, 2).map((_, i) => <div key={`b-${i}`} className="w-1.5 h-1.5 rounded-full bg-blue-400" />)}
                           </div>
                         )}
@@ -334,7 +454,7 @@ export default function AgendaPage() {
                   ) : (
                     <div className="space-y-3">
                       {selectedDayAppointments.map((apt) => (
-                        <div key={apt.id} className={`p-4 rounded-lg border ${getBorderColor(apt.appointment_type)} bg-card`}>
+                        <div key={apt.id} className={`p-4 rounded-lg border ${apt.description?.includes('[VIA WHATSAPP]') ? 'border-amber-500/50' : getBorderColor(apt.appointment_type)} bg-card`}>
                           <div className="flex items-start justify-between mb-2">
                             <div>
                               <p className="font-bold text-foreground">{apt.title}</p>
@@ -343,6 +463,11 @@ export default function AgendaPage() {
                               {apt.description && <p className="text-xs text-muted-foreground mt-1">{apt.description}</p>}
                             </div>
                             <div className="flex items-center gap-2">
+                              {apt.description?.includes('[VIA WHATSAPP]') && (
+                                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[10px]">
+                                  <MessageCircle className="w-3 h-3 mr-1" />WhatsApp
+                                </Badge>
+                              )}
                               <Badge className={getStatusColor(apt.status)}>{getStatusLabel(apt.status)}</Badge>
                               <Badge variant="outline">{getLabel(apt.appointment_type)}</Badge>
                             </div>
@@ -395,13 +520,18 @@ export default function AgendaPage() {
                   ) : (
                     <div className="space-y-2">
                       {appointments.filter(a => a.status !== 'cancelled' && new Date(a.scheduled_at) >= new Date()).slice(0, 10).map((apt) => (
-                        <div key={apt.id} className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg border ${getBorderColor(apt.appointment_type)}`}>
+                        <div key={apt.id} className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg border ${apt.description?.includes('[VIA WHATSAPP]') ? 'border-amber-500/30' : getBorderColor(apt.appointment_type)}`}>
                           <div className={`w-10 h-10 rounded-full ${getColor(apt.appointment_type)}/20 flex items-center justify-center`}><CalendarDays className="w-5 h-5 text-foreground" /></div>
                           <div className="flex-1">
                             <p className="font-medium text-foreground">{apt.title}</p>
                             <p className="text-xs text-muted-foreground">{format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })} • {apt.student_name}</p>
                           </div>
                           <div className="flex items-center gap-2">
+                            {apt.description?.includes('[VIA WHATSAPP]') && (
+                              <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[10px]">
+                                <MessageCircle className="w-3 h-3 mr-1" />WA
+                              </Badge>
+                            )}
                             <Badge className={getStatusColor(apt.status)}>{getStatusLabel(apt.status)}</Badge>
                             <Badge variant="outline">{getLabel(apt.appointment_type)}</Badge>
                           </div>
