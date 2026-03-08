@@ -35,11 +35,9 @@ interface AthleteProfile {
 }
 
 const menuItems = [
-  { icon: Utensils, label: "Minha Dieta", path: "/9fit/dieta" },
-  { icon: Bell, label: "Notificações", path: "/9fit/settings/notifications" },
-  { icon: Shield, label: "Privacidade", path: "/9fit/settings/privacy" },
-  { icon: CreditCard, label: "Assinatura", path: "/9fit/premium" },
-  { icon: HelpCircle, label: "Ajuda & Suporte", path: "/9fit/support" },
+  { icon: Utensils, label: "Minha Dieta", action: "navigate", path: "/9fit/dieta" },
+  { icon: Bell, label: "Notificações", action: "navigate", path: "/9fit/mensagens" },
+  { icon: HelpCircle, label: "Ajuda & Suporte", action: "whatsapp" },
 ];
 
 export default function NineFitProfile() {
