@@ -33,6 +33,7 @@ interface DashboardStats {
   upcomingAppointments: number;
   studentsWithoutTraining: number;
   overdueTraining: number;
+  expiringPlans: { id: string; name: string; email: string | null; data_fim_plano: string }[];
 }
 
 export default function Dashboard() {
