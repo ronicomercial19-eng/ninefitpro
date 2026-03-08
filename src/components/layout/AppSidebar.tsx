@@ -52,6 +52,10 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const currentPath = location.pathname;
+  const { profile } = useAuth();
+
+  const displayName = profile?.full_name || 'Professor';
+  const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   const isActive = (path: string) => currentPath === path;
 
