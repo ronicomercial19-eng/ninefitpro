@@ -173,6 +173,7 @@ const App = () => (
             <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />
             <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />
             <Route path="/9fit/mensagens" element={<NineFitLayout><NineFitMensagens /></NineFitLayout>} />
+            <Route path="/9fit/social" element={<NineFitLayout><NineFitSocial /></NineFitLayout>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
