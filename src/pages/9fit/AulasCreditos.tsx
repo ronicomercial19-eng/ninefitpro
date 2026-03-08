@@ -504,7 +504,7 @@ export default function AulasCreditos() {
         </div>
         <div className="mt-4">
           <h2 className="text-3xl font-black text-foreground">Aulas</h2>
-          <p className="text-sm text-muted-foreground">Horário fixo + aulas do mês</p>
+          <p className="text-sm text-muted-foreground">Agende e gerencie suas aulas</p>
         </div>
       </div>
 
