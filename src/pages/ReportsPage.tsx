@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Search, FileText, Plus, Users, CheckCircle } from 'lucide-react';
+import { Download, Search, FileText, Plus, Users, CheckCircle, FileDown } from 'lucide-react';
+import { exportToCSV } from '@/utils/exportUtils';
 import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import { CheckInReport } from '@/components/reports/CheckInReport';
 import { supabase } from '@/integrations/supabase/client';
@@ -85,15 +86,34 @@ export default function ReportsPage() {
         <TabsContent value="alunos" className="space-y-4 mt-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">Todos os alunos</h2>
                   <p className="text-sm text-muted-foreground">Encontrado {filteredData.length} itens</p>
                 </div>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  IMPRIMIR
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => exportToCSV(
+                      filteredData.map(s => ({
+                        Nome: s.name,
+                        Email: s.email || '',
+                        Telefone: s.phone || '',
+                        Objetivo: s.objetivo || '',
+                        Cadastro: new Date(s.created_at).toLocaleDateString('pt-BR')
+                      })),
+                      'alunos-9fitpro'
+                    )}
+                  >
+                    <FileDown className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => window.print()}>
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
               </div>
               <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />

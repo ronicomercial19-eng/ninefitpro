@@ -324,11 +324,11 @@ export default function NineFitTrain() {
       }}>
         <DialogContent className="max-w-[100vw] w-full h-[100vh] p-0 m-0 bg-white rounded-none">
           {/* Custom Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-dark-900 border-b border-dark-700">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between px-4 py-3 bg-background border-b border-border">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               {selectedTraining && getTrainingIcon(selectedTraining)}
-              <div>
-                <DialogTitle className="text-sm font-bold text-foreground">
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-sm font-bold text-foreground truncate">
                   {selectedTraining?.training_name}
                 </DialogTitle>
                 <p className="text-xs text-muted-foreground">
@@ -336,13 +336,13 @@ export default function NineFitTrain() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {selectedTraining?.html_file_url && (
                 <Button 
                   variant="ghost" 
                   size="icon"
                   onClick={() => window.open(selectedTraining.html_file_url, '_blank')}
-                  className="text-foreground hover:bg-dark-700"
+                  className="text-foreground hover:bg-muted"
                   title="Abrir em nova aba"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function NineFitTrain() {
                   setSelectedTraining(null);
                   setHtmlContent(null);
                 }}
-                className="text-foreground hover:bg-dark-700"
+                className="text-foreground hover:bg-muted"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -363,9 +363,9 @@ export default function NineFitTrain() {
           </div>
           
           {/* Content Area - Full Height */}
-          <div className="flex-1 w-full h-[calc(100vh-60px)] bg-white overflow-hidden">
+          <div className="flex-1 w-full h-[calc(100vh-120px)] bg-white overflow-hidden">
             {loadingContent ? (
-              <div className="flex items-center justify-center h-full bg-dark-900">
+              <div className="flex items-center justify-center h-full bg-background">
                 <div className="flex flex-col items-center gap-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">Carregando treino...</p>
@@ -377,7 +377,7 @@ export default function NineFitTrain() {
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 className="w-full h-full border-0"
                 title={selectedTraining?.training_name || "Treino"}
-                style={{ minHeight: 'calc(100vh - 60px)' }}
+                style={{ minHeight: 'calc(100vh - 120px)' }}
               />
             ) : selectedTraining?.html_file_url ? (
               <iframe
@@ -385,13 +385,54 @@ export default function NineFitTrain() {
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 className="w-full h-full border-0"
                 title={selectedTraining.training_name}
-                style={{ minHeight: 'calc(100vh - 60px)' }}
+                style={{ minHeight: 'calc(100vh - 120px)' }}
               />
             ) : (
-              <div className="flex items-center justify-center h-full bg-dark-900">
+              <div className="flex items-center justify-center h-full bg-background">
                 <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
               </div>
             )}
+          </div>
+
+          {/* Complete Workout Button */}
+          <div className="px-4 py-3 bg-background border-t border-border">
+            <Button
+              className="w-full bg-primary text-primary-foreground font-bold"
+              onClick={async () => {
+                if (!athleteId || !selectedTraining) return;
+                try {
+                  await supabase.from("workout_progress").insert({
+                    aluno_id: athleteId,
+                    exercise_name: selectedTraining.training_name,
+                    training_name: selectedTraining.training_name,
+                    completed_at: new Date().toISOString(),
+                    calories_burned: 150,
+                    sets: 0,
+                    reps: 0,
+                    date: new Date().toISOString().split('T')[0],
+                  } as any);
+                  // Award XP
+                  const { data: athlete } = await supabase
+                    .from("athletes")
+                    .select("total_xp, level")
+                    .eq("id", athleteId)
+                    .single();
+                  if (athlete) {
+                    const newXP = (athlete.total_xp || 0) + 100;
+                    const newLevel = Math.floor(newXP / 500) + 1;
+                    await supabase.from("athletes").update({ total_xp: newXP, level: newLevel }).eq("id", athleteId);
+                  }
+                  toast.success("Treino concluído! +100 XP 🔥");
+                  setSelectedTraining(null);
+                  setHtmlContent(null);
+                } catch {
+                  toast.error("Erro ao salvar progresso");
+                }
+              }}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Concluir Treino (+100 XP)
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

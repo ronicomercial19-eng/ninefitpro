@@ -17,14 +17,15 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['src/assets/icon.png', 'src/assets/splash.png'],
       manifest: {
-        name: '9FIT - Plataforma de Treinos',
+        name: '9FIT PRO - Plataforma de Treinos',
         short_name: '9FIT',
         description: 'Plataforma completa de treinamento personalizado',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/student',
+        scope: '/',
+        start_url: '/9fit/hub',
         icons: [
           {
             src: '/src/assets/icon.png',
@@ -41,6 +42,7 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
         runtimeCaching: [

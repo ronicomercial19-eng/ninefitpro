@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { 
   User, Settings, Bell, Shield, CreditCard, HelpCircle, LogOut,
-  ChevronRight, Camera, Flame, Dumbbell, Calendar, Loader2, Edit3, KeyRound, Eye, EyeOff
+  ChevronRight, Camera, Flame, Dumbbell, Calendar, Loader2, Edit3, KeyRound, Eye, EyeOff,
+  Star, Utensils
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,8 @@ interface UserStats {
   calories: number;
   workouts: number;
   streak: number;
+  totalXP: number;
+  level: number;
 }
 
 interface AthleteProfile {
@@ -32,6 +35,7 @@ interface AthleteProfile {
 }
 
 const menuItems = [
+  { icon: Utensils, label: "Minha Dieta", path: "/9fit/dieta" },
   { icon: Bell, label: "Notificações", path: "/9fit/settings/notifications" },
   { icon: Shield, label: "Privacidade", path: "/9fit/settings/privacy" },
   { icon: CreditCard, label: "Assinatura", path: "/9fit/premium" },
@@ -43,7 +47,7 @@ export default function NineFitProfile() {
   const { user, profile, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [athleteProfile, setAthleteProfile] = useState<AthleteProfile | null>(null);
-  const [stats, setStats] = useState<UserStats>({ calories: 0, workouts: 0, streak: 0 });
+  const [stats, setStats] = useState<UserStats>({ calories: 0, workouts: 0, streak: 0, totalXP: 0, level: 1 });
 
   // Password change state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -67,18 +71,21 @@ export default function NineFitProfile() {
 
       if (!error && athleteData) {
         setAthleteProfile(athleteData);
+        
+        // Fetch workout progress
         const { data: progressData } = await supabase
-          .from("progresso_aluno")
+          .from("workout_progress")
           .select("*")
-          .eq("id_aluno", athleteData.id);
+          .eq("aluno_id", athleteData.id);
 
-        if (progressData) {
-          setStats({
-            calories: progressData.length * 250,
-            workouts: progressData.length,
-            streak: Math.min(progressData.length, 7)
-          });
-        }
+        const totalWorkouts = progressData?.length || 0;
+        setStats({
+          calories: totalWorkouts * 150,
+          workouts: totalWorkouts,
+          streak: Math.min(totalWorkouts, 7),
+          totalXP: athleteData.total_xp || 0,
+          level: athleteData.level || 1
+        });
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -167,17 +174,21 @@ export default function NineFitProfile() {
                     </button>
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 flex-wrap">
                     <div>
-                      <p className="text-xl font-black text-primary flex items-center gap-1"><Flame className="w-4 h-4" />{stats.calories.toLocaleString()}</p>
+                      <p className="text-lg font-black text-yellow-500 flex items-center gap-1"><Star className="w-4 h-4" />Lv.{stats.level}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{stats.totalXP} XP</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-primary flex items-center gap-1"><Flame className="w-4 h-4" />{stats.calories.toLocaleString()}</p>
                       <p className="text-[10px] text-muted-foreground uppercase">Calorias</p>
                     </div>
                     <div>
-                      <p className="text-xl font-black text-foreground flex items-center gap-1"><Dumbbell className="w-4 h-4 text-muted-foreground" />{stats.workouts}</p>
+                      <p className="text-lg font-black text-foreground flex items-center gap-1"><Dumbbell className="w-4 h-4 text-muted-foreground" />{stats.workouts}</p>
                       <p className="text-[10px] text-muted-foreground uppercase">Treinos</p>
                     </div>
                     <div>
-                      <p className="text-xl font-black text-foreground flex items-center gap-1"><Calendar className="w-4 h-4 text-muted-foreground" />{stats.streak}</p>
+                      <p className="text-lg font-black text-foreground flex items-center gap-1"><Calendar className="w-4 h-4 text-muted-foreground" />{stats.streak}</p>
                       <p className="text-[10px] text-muted-foreground uppercase">Sequência</p>
                     </div>
                   </div>

@@ -16,7 +16,8 @@ import {
   Zap,
   Clock,
   CheckCircle,
-  Plus
+  Plus,
+  AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,7 @@ interface DashboardStats {
   upcomingAppointments: number;
   studentsWithoutTraining: number;
   overdueTraining: number;
+  expiringPlans: { id: string; name: string; email: string | null; data_fim_plano: string }[];
 }
 
 export default function Dashboard() {
@@ -43,7 +45,8 @@ export default function Dashboard() {
     weeklyWorkouts: 0,
     upcomingAppointments: 0,
     studentsWithoutTraining: 0,
-    overdueTraining: 0
+    overdueTraining: 0,
+    expiringPlans: []
   });
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,20 @@ export default function Dashboard() {
       
       const totalClients = athletesRes.data?.length || 0;
       const activeMembers = athletesRes.data?.filter(s => s.activated)?.length || 0;
+
+      // Fetch expiring plans (alunos with data_fim_plano in next 7 days)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+      const { data: expiringData } = await supabase
+        .from('alunos')
+        .select('id, nome, email, data_fim_plano')
+        .eq('professor_id', currentUser.id)
+        .gte('data_fim_plano', new Date().toISOString().split('T')[0])
+        .lte('data_fim_plano', futureDate.toISOString().split('T')[0]);
+
+      const expiringPlans = (expiringData || []).map(a => ({
+        id: a.id, name: a.nome, email: a.email, data_fim_plano: a.data_fim_plano || ''
+      }));
       
       setStats({
         totalClients,
@@ -80,7 +97,8 @@ export default function Dashboard() {
         weeklyWorkouts: workoutsRes.data?.length || 0,
         upcomingAppointments: appointmentsRes.data?.length || 0,
         studentsWithoutTraining: Math.floor(totalClients * 0.15),
-        overdueTraining: Math.floor(totalClients * 0.05)
+        overdueTraining: Math.floor(totalClients * 0.05),
+        expiringPlans
       });
 
       if (workoutsRes.data) {
@@ -257,6 +275,33 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Expiring Plans Alert */}
+      {stats.expiringPlans.length > 0 && (
+        <Card className="animate-in slide-in-from-bottom duration-500 delay-450 border-l-4 border-l-yellow-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-600">
+              <AlertTriangle className="w-5 h-5" />
+              Vencimentos Próximos ({stats.expiringPlans.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {stats.expiringPlans.map((plan) => (
+                <div key={plan.id} className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-500/10 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium">{plan.name}</p>
+                    <p className="text-xs text-muted-foreground">{plan.email}</p>
+                  </div>
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                    Vence {new Date(plan.data_fim_plano).toLocaleDateString('pt-BR')}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions - Enhanced Micro-interactions */}
       <div className="animate-in slide-in-from-bottom duration-500 delay-500">
