@@ -281,7 +281,7 @@ export default function NineFitHub() {
               </div>
               
               <p className="text-sm text-muted-foreground mb-4">
-                {todayTraining.type} • {todayTraining.exerciseCount} exercícios
+                {todayTraining.type}{todayTraining.exerciseCount > 0 ? ` • ${todayTraining.exerciseCount} exercícios` : ''}
               </p>
               
               <div className="flex items-center gap-4 mb-4">
