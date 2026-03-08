@@ -71,18 +71,21 @@ export default function NineFitProfile() {
 
       if (!error && athleteData) {
         setAthleteProfile(athleteData);
+        
+        // Fetch workout progress
         const { data: progressData } = await supabase
-          .from("progresso_aluno")
+          .from("workout_progress")
           .select("*")
-          .eq("id_aluno", athleteData.id);
+          .eq("aluno_id", athleteData.id);
 
-        if (progressData) {
-          setStats({
-            calories: progressData.length * 250,
-            workouts: progressData.length,
-            streak: Math.min(progressData.length, 7)
-          });
-        }
+        const totalWorkouts = progressData?.length || 0;
+        setStats({
+          calories: totalWorkouts * 150,
+          workouts: totalWorkouts,
+          streak: Math.min(totalWorkouts, 7),
+          totalXP: athleteData.total_xp || 0,
+          level: athleteData.level || 1
+        });
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
