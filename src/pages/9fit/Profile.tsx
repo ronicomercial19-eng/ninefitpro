@@ -47,7 +47,7 @@ export default function NineFitProfile() {
   const { user, profile, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [athleteProfile, setAthleteProfile] = useState<AthleteProfile | null>(null);
-  const [stats, setStats] = useState<UserStats>({ calories: 0, workouts: 0, streak: 0 });
+  const [stats, setStats] = useState<UserStats>({ calories: 0, workouts: 0, streak: 0, totalXP: 0, level: 1 });
 
   // Password change state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
