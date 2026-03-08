@@ -3145,14 +3145,14 @@ export type Database = {
           {
             foreignKeyName: "student_credits_student_id_fkey"
             columns: ["student_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "student_credits_student_id_fkey"
             columns: ["student_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
