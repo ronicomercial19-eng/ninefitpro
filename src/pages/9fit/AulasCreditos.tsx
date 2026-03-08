@@ -786,28 +786,6 @@ export default function AulasCreditos() {
         </div>
       )}
 
-      {/* Meus Agendamentos */}
-      {myAppointments.length > 0 && (
-        <div className="px-4 mb-6">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Meus Agendamentos</h2>
-          <div className="space-y-2">
-            {myAppointments.map((apt) => (
-              <div key={apt.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground text-sm">{apt.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getAppointmentStatusBadge(apt.status)}
-                  <Badge variant="outline" className="text-xs">{getAppointmentTypeLabel(apt.appointment_type)}</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Bookings Summary */}
       {!selectedDate && (
