@@ -22,16 +22,16 @@ const Sales = () => {
     <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/90 backdrop-blur-lg border-b border-gray-800 z-50">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-white">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+          <div className="text-xl sm:text-2xl font-bold text-white shrink-0">
             Fit<span className="text-orange-500">Evolution</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <a href="tel:+5511999999999" className="text-gray-300 hover:text-orange-500 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <a href="tel:+5511999999999" className="hidden sm:inline text-gray-300 hover:text-orange-500 transition-colors text-sm">
               (11) 99999-9999
             </a>
-            <Button onClick={handleStartAssessment} className="bg-orange-500 hover:bg-orange-600 text-black font-medium">
-              Começar Evolução
+            <Button onClick={handleStartAssessment} className="bg-orange-500 hover:bg-orange-600 text-black font-medium text-xs sm:text-sm px-3 sm:px-4">
+              Começar
             </Button>
           </div>
         </div>
