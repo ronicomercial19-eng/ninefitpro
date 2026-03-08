@@ -59,7 +59,6 @@ export default function Dashboard() {
     try {
       setLoading(true);
       
-      // Obter o usuário atual
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
       if (!currentUser) {
@@ -67,37 +66,65 @@ export default function Dashboard() {
         return;
       }
       
-      // Buscar atletas do coach atual
-      const [athletesRes, workoutsRes, appointmentsRes] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Fetch all data in parallel
+      const [athletesRes, workoutsRes, appointmentsRes, activeAssignmentsRes, expiredAssignmentsRes] = await Promise.all([
         supabase.from('athletes').select('id, activated').eq('coach_id', currentUser.id),
         supabase.from('workouts').select('id, status, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('appointments').select('id, scheduled_at').gte('scheduled_at', new Date().toISOString())
+        supabase.from('appointments').select('id, scheduled_at').gte('scheduled_at', new Date().toISOString()),
+        supabase.from('student_training_assignments').select('student_id').eq('is_active', true),
+        supabase.from('student_training_assignments').select('student_id').eq('is_active', true).lt('end_date', today)
       ]);
       
-      const totalClients = athletesRes.data?.length || 0;
-      const activeMembers = athletesRes.data?.filter(s => s.activated)?.length || 0;
+      const allAthletes = athletesRes.data || [];
+      const totalClients = allAthletes.length;
+      const activeMembers = allAthletes.filter(s => s.activated)?.length || 0;
 
-      // Fetch expiring plans (alunos with data_fim_plano in next 7 days)
+      // Real: athletes without any active training assignment
+      const trainingIds = new Set((activeAssignmentsRes.data || []).map(t => t.student_id));
+      const studentsWithoutTraining = allAthletes.filter(a => a.activated && !trainingIds.has(a.id)).length;
+
+      // Real: athletes with expired training assignments
+      const expiredIds = new Set((expiredAssignmentsRes.data || []).map(t => t.student_id));
+      const overdueTraining = expiredIds.size;
+
+      // Fetch expiring assignments (end_date in next 7 days)
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
-      const { data: expiringData } = await supabase
-        .from('alunos')
-        .select('id, nome, email, data_fim_plano')
-        .eq('professor_id', currentUser.id)
-        .gte('data_fim_plano', new Date().toISOString().split('T')[0])
-        .lte('data_fim_plano', futureDate.toISOString().split('T')[0]);
+      const { data: expiringAssignments } = await supabase
+        .from('student_training_assignments')
+        .select('id, student_id, training_name, end_date')
+        .eq('is_active', true)
+        .gte('end_date', today)
+        .lte('end_date', futureDate.toISOString().split('T')[0]);
 
-      const expiringPlans = (expiringData || []).map(a => ({
-        id: a.id, name: a.nome, email: a.email, data_fim_plano: a.data_fim_plano || ''
-      }));
+      // Fetch athlete names for expiring
+      const expiringStudentIds = [...new Set((expiringAssignments || []).map(a => a.student_id))];
+      let expiringPlans: { id: string; name: string; email: string | null; data_fim_plano: string }[] = [];
+      
+      if (expiringStudentIds.length > 0) {
+        const { data: athleteNames } = await supabase
+          .from('athletes')
+          .select('id, name, email')
+          .in('id', expiringStudentIds);
+        
+        const nameMap = new Map((athleteNames || []).map(a => [a.id, a]));
+        expiringPlans = (expiringAssignments || []).map(a => ({
+          id: a.id,
+          name: nameMap.get(a.student_id)?.name || a.training_name,
+          email: nameMap.get(a.student_id)?.email || null,
+          data_fim_plano: a.end_date || ''
+        }));
+      }
       
       setStats({
         totalClients,
         activeMembers,
         weeklyWorkouts: workoutsRes.data?.length || 0,
         upcomingAppointments: appointmentsRes.data?.length || 0,
-        studentsWithoutTraining: Math.floor(totalClients * 0.15),
-        overdueTraining: Math.floor(totalClients * 0.05),
+        studentsWithoutTraining,
+        overdueTraining,
         expiringPlans
       });
 

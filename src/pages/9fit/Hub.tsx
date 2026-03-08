@@ -340,32 +340,7 @@ export default function NineFitHub() {
           </button>
         </div>
         
-        <div className="bg-card border border-border rounded-sm p-4">
-          <div className="flex items-end justify-between h-20 gap-2">
-            {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day, i) => {
-              const value = i < stats.completedWorkouts ? 80 + Math.random() * 20 : Math.random() * 30;
-              const isToday = i === new Date().getDay() - 1;
-              
-              return (
-                <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full flex-1 flex items-end">
-                    <div
-                      className={`w-full rounded-sm transition-all ${
-                        value > 50 ? "bg-primary" : value > 0 ? "bg-primary/40" : "bg-muted"
-                      } ${isToday ? "ring-1 ring-primary ring-offset-1 ring-offset-background" : ""}`}
-                      style={{ height: `${Math.max(value, 5)}%` }}
-                    />
-                  </div>
-                  <span className={`text-[10px] uppercase ${
-                    isToday ? "text-primary font-bold" : "text-muted-foreground"
-                  }`}>
-                    {day}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <WeeklyProgressChart athleteId={athleteId} />
       </div>
 
       {/* Notifications */}
