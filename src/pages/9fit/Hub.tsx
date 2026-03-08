@@ -99,12 +99,17 @@ export default function NineFitHub() {
         const endDateValid = !training.end_date || training.end_date >= today;
         
         if (endDateValid) {
+          // Get real exercise count from training_data if available
+          const trainingDays = (training as any).training_data?.training_days as string[] | undefined;
+          const exerciseCount = (training as any).training_data?.exercise_count || trainingDays?.length || 0;
+          const estimatedDuration = (training as any).training_data?.estimated_duration || 0;
+          
           setTodayTraining({
             id: training.id,
             name: training.training_name,
-            type: training.training_type || "Treino de Força",
-            exerciseCount: 4,
-            estimatedDuration: 45,
+            type: training.training_type || "Treino",
+            exerciseCount,
+            estimatedDuration,
             html_file_url: training.html_file_url
           });
         }
