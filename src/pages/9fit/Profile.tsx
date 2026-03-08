@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { 
   User, Settings, Bell, Shield, CreditCard, HelpCircle, LogOut,
-  ChevronRight, Camera, Flame, Dumbbell, Calendar, Loader2, Edit3, KeyRound, Eye, EyeOff
+  ChevronRight, Camera, Flame, Dumbbell, Calendar, Loader2, Edit3, KeyRound, Eye, EyeOff,
+  Star, Utensils
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
