@@ -11,7 +11,9 @@ import {
   BarChart3, 
   FileText,
   ChevronRight,
-  Map
+  Map,
+  Sparkles,
+  Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
