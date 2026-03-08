@@ -321,7 +321,22 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       athlete_auth_link: {
         Row: {
@@ -1000,6 +1015,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      class_schedules: {
+        Row: {
+          class_name: string | null
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          instructor: string | null
+          is_active: boolean | null
+          max_slots: number | null
+          start_time: string
+        }
+        Insert: {
+          class_name?: string | null
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          instructor?: string | null
+          is_active?: boolean | null
+          max_slots?: number | null
+          start_time: string
+        }
+        Update: {
+          class_name?: string | null
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          instructor?: string | null
+          is_active?: boolean | null
+          max_slots?: number | null
+          start_time?: string
+        }
+        Relationships: []
       }
       daily_workouts: {
         Row: {
