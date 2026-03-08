@@ -101,7 +101,7 @@ const modules: Module[] = [
       { name: "Status de pagamento", status: "done" },
       { name: "Histórico financeiro", status: "done" },
       { name: "Sistema de créditos para aulas", status: "done" },
-      { name: "Alertas de vencimento", status: "pending" },
+      { name: "Alertas de vencimento", status: "done" },
       { name: "Integração gateway (Stripe)", status: "pending" },
     ],
   },
