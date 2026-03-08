@@ -285,18 +285,22 @@ export default function NineFitHub() {
               </p>
               
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-foreground">
-                    ~{todayTraining.estimatedDuration}min
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Flame className="w-4 h-4 text-primary" />
-                  <span className="text-sm text-foreground">
-                    ~150 kcal
-                  </span>
-                </div>
+                {todayTraining.estimatedDuration > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      ~{todayTraining.estimatedDuration}min
+                    </span>
+                  </div>
+                )}
+                {stats.calories > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-foreground">
+                      {stats.calories.toLocaleString()} kcal
+                    </span>
+                  </div>
+                )}
               </div>
               
               <div className="w-full btn-neon py-3 rounded-sm flex items-center justify-center gap-2">
