@@ -550,33 +550,34 @@ export default function AulasCreditos() {
         </Button>
       </div>
 
-      {/* Agendamento / Horário Fixo */}
-      <div className="px-4 mt-4">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h3 className="text-lg font-bold text-foreground mb-3">Horário Fixo</h3>
-          {fixedSchedule.length > 0 ? (
+      {/* Meus Agendamentos (real data) */}
+      {myAppointments.length > 0 && (
+        <div className="px-4 mt-4">
+          <div className="bg-card border border-border rounded-lg p-4">
+            <h3 className="text-lg font-bold text-foreground mb-3">Próximos Agendamentos</h3>
             <div className="space-y-2">
-              {fixedSchedule.map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="font-bold text-foreground">{s.day}</span>
-                  <span className="text-foreground">{s.time}</span>
+              {myAppointments.slice(0, 5).map((apt) => (
+                <div key={apt.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">{apt.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                  {getAppointmentStatusBadge(apt.status)}
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Nenhum horário fixo detectado ainda.</p>
-          )}
-          
-          <button 
-            onClick={() => setShowVacationDialog(true)}
-            className="w-full mt-3 py-2.5 bg-amber-600/20 border border-amber-600/30 rounded-lg text-amber-500 font-medium text-sm flex items-center justify-center gap-2"
-          >
-            <AlertCircle className="w-4 h-4" />
-            Solicitar troca de horário
-          </button>
+            <button 
+              onClick={() => setShowVacationDialog(true)}
+              className="w-full mt-3 py-2.5 bg-amber-600/20 border border-amber-600/30 rounded-lg text-amber-500 font-medium text-sm flex items-center justify-center gap-2"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Solicitar troca de horário / férias
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Next Class Card */}
       {nextClass && (
