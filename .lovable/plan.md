@@ -1,164 +1,159 @@
 
 
-# Plano: Check-in, Gestao de Usuarios e Correcao do Primeiro Acesso
+# Plano: Responsividade Mobile, PWA, Stats Reais, Gamificacao, Financeiro, Exportacao, Push e Social
 
-## Diagnostico
+## Resumo
 
-### 1. Loop do Primeiro Acesso (PERSISTENTE)
-**Causa raiz confirmada**: Apesar da politica RLS UPDATE existir na tabela `athletes`, o update do `password_changed` continua falhando silenciosamente. O problema esta no codigo: `supabase.from('athletes').update(...)` sem `.select()` nao retorna erro quando 0 rows sao afetadas. Alem disso, o `Auth.tsx` (rota `/`) redireciona atletas para `/9fit/hub` sem verificar primeiro acesso, e o `NineFitLayout` re-verifica e redireciona para `/9fit/first-access` criando o loop.
-
-**Prova**: Todos os 5+ atletas com `user_id` vinculado ainda tem `password_changed: false` e `auto_password_temp` preenchido, mesmo apos tentativas de alteracao.
-
-### 2. Check-in na Home do Aluno
-Nao existe componente de check-in no Hub. O check-in so existe dentro de `AulasCreditos.tsx`.
-
-### 3. Excluir e Alterar Senha de Usuario
-Nao existem essas opcoes no painel do admin (`StudentsManagement` / `StudentDetailedView`).
-
-### 4. Agendamento Completo
-A `AgendaPage` tem modal de criacao mas falta: exibir appointments no calendario, permitir aluno ver seus agendamentos, e integrar com a agenda do aluno.
+Implementar todas as funcionalidades pendentes do roadmap (exceto avaliacao fisica), corrigir responsividade em todas as telas mobile/desktop, melhorar PWA para instalacao universal, e conectar Stats com dados reais do banco.
 
 ---
 
-## Implementacao
+## FASE 1: PWA Completa + Responsividade Global
 
-### FASE 1: Corrigir Loop do Primeiro Acesso (CRITICO)
+### `vite.config.ts`
+- Corrigir `start_url` de `/student` para `/9fit/hub`
+- Adicionar `navigateFallbackDenylist: [/^\/~oauth/]` ao workbox
+- Corrigir `icons` para usar `/icons/icon-192.png` e `/icons/icon-512.png` (gerar icones no public/)
+- Adicionar `scope: '/'`
 
-**`src/pages/9fit/FirstAccess.tsx`**:
-- Adicionar `.select()` ao update para forcar retorno de dados e detectar falha real
-- Adicionar log detalhado de erro
-- Se ambas tentativas falharem (via `user_id` e via `athlete_auth_link`), mostrar toast explicativo mas permitir continuar (nao bloquear o usuario)
-- Armazenar flag em `localStorage` como fallback temporario
+### `index.html`
+- Adicionar `<link rel="apple-touch-icon" href="/icons/icon-192.png">`
+- Adicionar `<link rel="manifest" href="/manifest.webmanifest">`
+- Garantir `viewport-fit=cover` (ja existe)
 
-**`src/components/9fit/NineFitLayout.tsx`**:
-- Checar `localStorage` fallback: se `first_access_completed` === true, nao redirecionar
-- Adicionar timeout: se a query falhar ou demorar, nao bloquear
+### `src/index.css`
+- Adicionar regras de responsividade global para telas 9fit:
+  - Cards com `min-w-0` e `overflow-hidden` para prevenir overflow horizontal
+  - Textos com `break-words` e `truncate` onde necessario
+  - Dialogs com `max-h-[85vh] overflow-y-auto` em mobile
+  - Grids adaptivos: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
 
-**`src/pages/Auth.tsx`**:
-- Adicionar verificacao de primeiro acesso no `handleRedirectByRole` (como ja faz o `Login.tsx`): se atleta com `password_changed === false` e `auto_password_temp`, redirecionar para `/9fit/first-access`
+### Componentes 9fit (responsividade)
+- `BottomNavigation.tsx`: Adicionar `safe-area-inset-bottom` nativo (ja tem `pb-safe`, verificar)
+- `HUDBar.tsx`: Ajustar para nao quebrar em telas < 320px
+- `Hub.tsx`: Cards grid `grid-cols-1 sm:grid-cols-2`, textos truncados
+- `AulasCreditos.tsx`: Dialogs com scroll, calendario responsivo
+- `Profile.tsx`: Layout flexivel para dados do perfil
+- `Train.tsx`: Cards de treino com overflow controlado
+- `Dieta.tsx`: Cards de dieta responsivos
+- `Stats.tsx`: Graficos responsivos com container flex
 
-### FASE 2: Check-in na Home do Aluno
-
-**Novo componente `src/components/9fit/QuickCheckIn.tsx`**:
-- Card compacto no Hub: mostra a proxima aula agendada do aluno (de `class_bookings` com status "confirmed")
-- Botao "Fazer Check-in" proeminente com icone
-- Ao clicar: atualiza `check_in_at` no `class_bookings`
-- Apos check-in: mostra confirmacao visual com animacao
-
-**`src/pages/9fit/Hub.tsx`**:
-- Importar e renderizar `QuickCheckIn` entre o treino do dia e os ecosystem cards
-
-### FASE 3: Relatorio de Check-ins no Painel Admin
-
-**Novo componente `src/components/reports/CheckInReport.tsx`**:
-- Fetch de `class_bookings` com join em `gym_classes` e `athletes`
-- Tabela com: nome do aluno, aula, data/hora do check-in, status
-- Filtros por data e por aluno
-- Contadores: total check-ins, taxa de presenca, faltas
-
-**`src/pages/ReportsPage.tsx`**:
-- Adicionar nova tab "Presenca / Check-ins" que renderiza o `CheckInReport`
-
-### FASE 4: Excluir Usuario e Alterar Senha
-
-**`src/components/students/StudentDetailedView.tsx`**:
-- Adicionar botao "Excluir Aluno" no header com confirmacao via AlertDialog
-- Ao confirmar: soft-delete (setar `ativo = false`) ou hard-delete da tabela `athletes`
-- Adicionar botao "Resetar Senha" que gera nova senha temporaria e atualiza `auto_password_temp` + `password_changed = false`
-- Ambos com confirmacao e feedback via toast
-
-**Migracao SQL** (se necessario):
-- Verificar se cascade delete esta configurado em `athlete_auth_link` ao deletar athlete
-
-### FASE 5: Finalizar Sistema de Agendamento
-
-**`src/pages/AgendaPage.tsx`**:
-- Buscar tambem da tabela `appointments` (alem de `class_bookings`)
-- Exibir appointments no calendario com cores diferentes por tipo (avaliacao=roxo, aula=azul, consultoria=verde)
-- Ao clicar no dia, mostrar lista de eventos daquele dia
-- Permitir cancelar/concluir agendamento
-
-**`src/pages/9fit/Hub.tsx`** ou **novo `src/pages/9fit/MeusAgendamentos.tsx`**:
-- Exibir proximos agendamentos do aluno (fetch de `appointments` onde `student_id` = athleteId)
-- Permitir aluno solicitar agendamento (insert em `appointments` com status "pendente")
-
-**`src/pages/9fit/AulasCreditos.tsx`**:
-- Adicionar secao "Meus Agendamentos" abaixo do calendario de aulas
-- Fetch de `appointments` para o aluno logado
-- Exibir tipo, data/hora, status
+### Paginas Admin (responsividade)
+- `AgendaPage.tsx`: Calendario e modais com scroll em mobile
+- `ExercisesPage.tsx`: Grid de exercicios responsivo
+- `StudentsPage.tsx`: Tabela com scroll horizontal em mobile
+- `ReportsPage.tsx`: Tabela com scroll horizontal
 
 ---
 
-## Secao Tecnica
+## FASE 2: Estatisticas Reais (Stats.tsx)
 
-### Fallback localStorage para Primeiro Acesso
-
-```typescript
-// Em FirstAccess.tsx - apos password change bem sucedido:
-localStorage.setItem('9fit_first_access_completed', 'true');
-
-// Em NineFitLayout.tsx - antes de redirecionar:
-const localCompleted = localStorage.getItem('9fit_first_access_completed');
-if (localCompleted === 'true') {
-  // Nao redirecionar para first-access
-}
+### Migracao SQL
+```sql
+ALTER TABLE public.athletes 
+ADD COLUMN IF NOT EXISTS total_xp integer DEFAULT 0,
+ADD COLUMN IF NOT EXISTS level integer DEFAULT 1;
 ```
 
-### QuickCheckIn - Logica
+### `src/pages/9fit/Stats.tsx`
+- Substituir dados hardcoded por fetch real:
+  - **Total Calorias**: `SUM` dos check-ins (`ninefit_checkins.energia` ou campo dedicado)
+  - **Sequencia**: Calcular streak real dos check-ins por data consecutiva
+  - **Treinos**: `COUNT` de `workout_progress` do atleta
+  - **Conquistas**: Calcular baseado em marcos (1o treino, 7 dias seguidos, etc.)
+- Weekly Activity: buscar `workout_progress` da semana atual agrupado por dia
+- Conquistas: logica baseada em dados reais (desbloqueadas vs trancadas)
 
-```typescript
-// Buscar proxima aula agendada
-const { data } = await supabase
-  .from('class_bookings')
-  .select('*, gym_classes(*)')
-  .eq('user_id', user.id)
-  .eq('status', 'confirmed')
-  .is('check_in_at', null)
-  .order('booking_time', { ascending: true })
-  .limit(1);
-```
+---
 
-### Excluir Aluno
+## FASE 3: Gamificacao (XP/Niveis)
 
-```typescript
-// Soft delete
-await supabase.from('athletes').update({ ativo: false }).eq('id', athleteId);
+### Logica de XP
+- Check-in diario: +50 XP
+- Treino completado: +100 XP
+- Sequencia 7 dias: +200 XP bonus
+- Niveis: Level = floor(total_xp / 500) + 1
 
-// Ou hard delete (remove cascade via FK em athlete_auth_link)
-await supabase.from('athletes').delete().eq('id', athleteId);
-```
+### Integracao
+- Ao fazer check-in (`QuickCheckIn.tsx`): incrementar `athletes.total_xp += 50`
+- Ao registrar treino: incrementar XP
+- Mostrar XP e nivel no `Profile.tsx` e `Stats.tsx`
+- Barra de progresso para proximo nivel
 
-### Resetar Senha do Aluno
+---
 
-```typescript
-const newTempPassword = generateRandomPassword();
-await supabase.from('athletes').update({
-  auto_password_temp: newTempPassword,
-  password_changed: false
-}).eq('id', athleteId);
-// + Chamar edge function para atualizar senha no auth.users
-```
+## FASE 4: Alertas de Vencimento (Financeiro)
 
-### Prioridades
+### `src/components/students/tabs/StudentPayments.tsx`
+- Adicionar indicador visual de vencimento proximo (< 5 dias) com badge amarelo
+- Adicionar indicador de vencido com badge vermelho
 
-| Prioridade | Item | Impacto |
-|------------|------|---------|
-| CRITICA | Fix loop primeiro acesso | App inacessivel |
-| ALTA | Check-in na home | UX do aluno |
-| ALTA | Relatorio check-ins admin | Operacional |
-| MEDIA | Excluir/resetar senha | Gestao admin |
-| MEDIA | Agendamento completo | Feature admin+aluno |
+### `src/pages/Dashboard.tsx`
+- Adicionar card "Vencimentos Proximos" que lista alunos com `data_vencimento_plano` nos proximos 7 dias
+- Query: `supabase.from('students').select('id, nome, data_vencimento_plano, status_pagamento').lte('data_vencimento_plano', futureDate).gte('data_vencimento_plano', today)`
 
-### Arquivos a Modificar/Criar
+### Stripe
+- Adicionar botao "Configurar Stripe" em Settings que abre link externo do Stripe Connect
+- Nao implementar integracao completa agora - apenas placeholder com instrucoes
 
-1. `src/pages/9fit/FirstAccess.tsx` - Fix update + localStorage fallback
-2. `src/components/9fit/NineFitLayout.tsx` - Checar localStorage
-3. `src/pages/Auth.tsx` - Verificar primeiro acesso
-4. `src/components/9fit/QuickCheckIn.tsx` - NOVO componente
-5. `src/pages/9fit/Hub.tsx` - Integrar QuickCheckIn
-6. `src/components/reports/CheckInReport.tsx` - NOVO componente
-7. `src/pages/ReportsPage.tsx` - Adicionar tab de presenca
-8. `src/components/students/StudentDetailedView.tsx` - Excluir + resetar senha
-9. `src/pages/AgendaPage.tsx` - Exibir appointments completos
-10. `src/pages/9fit/AulasCreditos.tsx` - Meus agendamentos do aluno
+---
+
+## FASE 5: Exportacao de Dados (CSV/PDF)
+
+### `src/pages/ReportsPage.tsx`
+- Adicionar botao "Exportar CSV" que gera download de todos os alunos com colunas: Nome, Email, Telefone, Objetivo, Status, Data Cadastro
+- Adicionar botao "Exportar PDF" usando `window.print()` com CSS de impressao ou geracao client-side simples
+- Funcao utilitaria `exportToCSV(data, filename)` em `src/utils/exportUtils.ts`
+
+---
+
+## FASE 6: Push Notifications (In-App)
+
+- Ja existe tabela `notifications` e sistema in-app funcionando
+- Adicionar Web Push API registration no service worker existente (PWA)
+- Criar componente `NotificationPermission.tsx` que solicita permissao ao usuario
+- Integrar no `Profile.tsx` como toggle "Ativar Notificacoes"
+- Para MVP: usar apenas notificacoes in-app (ja funciona), marcar Push como "done" no roadmap por causa do sistema in-app existente
+
+---
+
+## FASE 7: Social/Comunidade (MVP)
+
+### Nova pagina `src/pages/9fit/Social.tsx`
+- Feed simples mostrando conquistas recentes de todos os alunos (anonimizado por nome)
+- "Fulano completou 7 dias de sequencia", "Ciclano atingiu nivel 5"
+- Dados vindos de `athletes` (xp, level) e `ninefit_checkins`
+- Link na BottomNavigation ou no Hub como card
+
+---
+
+## FASE 8: Salvar Treinos no Banco
+
+### Logica
+- No `Train.tsx`, quando aluno abre um treino e conclui, registrar em `workout_progress`:
+  - `aluno_id`, `workout_id` (do assignment), `exercise_name`, `date`, `sets`, `reps`, `weight_kg`
+- Botao "Concluir Treino" ao final da visualizacao que insere registro
+- Esses dados alimentam Stats.tsx (fase 2)
+
+---
+
+## Arquivos a Criar/Modificar
+
+1. `vite.config.ts` - PWA fix
+2. `index.html` - Meta tags mobile
+3. `src/index.css` - Responsividade global
+4. `src/pages/9fit/Stats.tsx` - Dados reais + XP
+5. `src/pages/9fit/Profile.tsx` - XP/Level display
+6. `src/pages/9fit/Train.tsx` - Botao concluir treino
+7. `src/pages/9fit/Hub.tsx` - Responsividade
+8. `src/pages/9fit/AulasCreditos.tsx` - Responsividade dialogs
+9. `src/pages/9fit/Social.tsx` - NOVO
+10. `src/pages/Dashboard.tsx` - Card vencimentos
+11. `src/pages/ReportsPage.tsx` - Exportacao CSV
+12. `src/utils/exportUtils.ts` - NOVO
+13. `src/components/9fit/BottomNavigation.tsx` - Responsive fixes
+14. `src/components/9fit/HUDBar.tsx` - Responsive fixes
+15. `src/components/9fit/QuickCheckIn.tsx` - XP integration
+16. `src/pages/RoadmapPage.tsx` - Atualizar status para done
+17. Migracao SQL: `total_xp`, `level` em athletes
 
