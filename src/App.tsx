@@ -107,6 +107,20 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
+            <Route path="/app/assistente-ia" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <AIChatPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/analise-ia" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <AIAnalysisPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
             <Route path="/app/estatisticas" element={
               <PrivateRoute>
                 <AppLayout>
