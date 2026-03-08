@@ -116,11 +116,11 @@ export function AppSidebar() {
         <div className="mt-auto p-4 border-t border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium">RT</span>
+             <span className="text-sm font-medium">{initials}</span>
             </div>
             {!collapsed && (
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Rony Trainer</p>
+                <p className="text-sm font-medium text-foreground">{displayName}</p>
                 <p className="text-xs text-muted-foreground">Professor</p>
               </div>
             )}

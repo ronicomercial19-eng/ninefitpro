@@ -401,6 +401,24 @@ export default function NineFitTrain() {
               onClick={async () => {
                 if (!athleteId || !selectedTraining) return;
                 try {
+                  const todayDate = new Date().toISOString().split('T')[0];
+                  
+                  // Check if already completed today for this training
+                  const { data: existing } = await supabase
+                    .from("workout_progress")
+                    .select("id")
+                    .eq("aluno_id", athleteId)
+                    .eq("training_name", selectedTraining.training_name)
+                    .eq("date", todayDate)
+                    .maybeSingle();
+
+                  if (existing) {
+                    toast.info("Você já concluiu este treino hoje! 💪");
+                    setSelectedTraining(null);
+                    setHtmlContent(null);
+                    return;
+                  }
+
                   await supabase.from("workout_progress").insert({
                     aluno_id: athleteId,
                     exercise_name: selectedTraining.training_name,
@@ -409,7 +427,7 @@ export default function NineFitTrain() {
                     calories_burned: 150,
                     sets: 0,
                     reps: 0,
-                    date: new Date().toISOString().split('T')[0],
+                    date: todayDate,
                   } as any);
                   // Award XP
                   const { data: athlete } = await supabase

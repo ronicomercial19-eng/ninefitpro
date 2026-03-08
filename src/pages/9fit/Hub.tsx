@@ -6,6 +6,7 @@ import { EcosystemStatusCards } from "@/components/9fit/EcosystemStatusCards";
 import { RecoveryMission } from "@/components/9fit/RecoveryMission";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
+import { WeeklyProgressChart } from "@/components/9fit/WeeklyProgressChart";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
 import { FeatureOnboarding } from "@/components/onboarding/FeatureOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
