@@ -232,6 +232,21 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Responsive card overflow prevention */
+  .card-responsive {
+    @apply min-w-0 overflow-hidden;
+  }
+
+  .text-responsive {
+    @apply break-words;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 }
 
 /* Keyframes */
