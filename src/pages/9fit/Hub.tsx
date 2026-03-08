@@ -219,9 +219,13 @@ export default function NineFitHub() {
     setIsLoading(false);
   };
 
-  const calculateStreak = (progressData: any[]) => {
-    return progressData.length;
-  };
+  // Weekly progress data from workout_progress
+  const weeklyProgressData = useMemo(() => {
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const days = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), "yyyy-MM-dd"));
+    // We'll calculate this from stats - completedWorkouts already counts unique dates
+    return days;
+  }, []);
 
   const handleStartTraining = () => {
     navigate("/9fit/train");
