@@ -161,19 +161,39 @@ export default function NineFitHub() {
         }
       });
 
-      // Fetch workout progress for stats
+      // Fetch workout progress for stats (unified source: workout_progress)
       const { data: progressData } = await supabase
-        .from("progresso_aluno")
+        .from("workout_progress")
         .select("*")
-        .eq("id_aluno", athleteId)
-        .order("data_registro", { ascending: false })
-        .limit(7);
+        .eq("aluno_id", athleteId)
+        .order("completed_at", { ascending: false })
+        .limit(30);
 
       if (progressData) {
+        // Calculate real stats
+        const totalCalories = progressData.reduce((sum, p) => sum + ((p as any).calories_burned || 0), 0);
+        const uniqueDates = new Set(progressData.map(p => (p as any).date));
+        
+        // Calculate real streak
+        let streak = 0;
+        const sortedDates = [...uniqueDates].sort().reverse();
+        const todayStr = format(new Date(), "yyyy-MM-dd");
+        for (let i = 0; i < sortedDates.length; i++) {
+          const expectedDate = format(addDays(new Date(), -i), "yyyy-MM-dd");
+          // Allow today or yesterday as start
+          if (i === 0 && sortedDates[0] !== todayStr && sortedDates[0] !== format(addDays(new Date(), -1), "yyyy-MM-dd")) break;
+          if (sortedDates[i] === expectedDate || (i === 0 && sortedDates[0] === format(addDays(new Date(), -1), "yyyy-MM-dd"))) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+
         setStats(prev => ({
           ...prev,
-          completedWorkouts: progressData.length,
-          streak: calculateStreak(progressData)
+          calories: totalCalories,
+          completedWorkouts: uniqueDates.size,
+          streak
         }));
       }
 
