@@ -54,8 +54,8 @@ const modules: Module[] = [
       { name: "Template HTML Manager (editar/atribuir)", status: "done" },
       { name: "Super séries (persistência Supabase)", status: "done" },
       { name: "Séries de referência (persistência Supabase)", status: "done" },
-      { name: "Geração de treino com IA", status: "in_progress" },
-      { name: "Periodização automática", status: "pending" },
+      { name: "Geração de treino com IA", status: "done" },
+      { name: "Periodização automática", status: "done" },
     ],
   },
   {
