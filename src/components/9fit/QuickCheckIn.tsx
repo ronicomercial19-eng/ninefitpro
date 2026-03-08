@@ -60,7 +60,26 @@ export function QuickCheckIn() {
         .eq("id", nextClass.bookingId);
 
       if (error) throw error;
-      toast.success("Check-in realizado! ✅");
+      
+      // Award XP for check-in
+      if (user) {
+        const { data: athlete } = await supabase
+          .from("athletes")
+          .select("id, total_xp, level")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (athlete) {
+          const newXP = (athlete.total_xp || 0) + 50;
+          const newLevel = Math.floor(newXP / 500) + 1;
+          await supabase.from("athletes").update({ 
+            total_xp: newXP, 
+            level: newLevel 
+          }).eq("id", athlete.id);
+        }
+      }
+
+      toast.success("Check-in realizado! +50 XP ✅");
       setNextClass(prev => prev ? { ...prev, checkedIn: true } : null);
     } catch {
       toast.error("Erro no check-in");

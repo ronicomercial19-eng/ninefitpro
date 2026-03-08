@@ -174,17 +174,21 @@ export default function NineFitProfile() {
                     </button>
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 flex-wrap">
                     <div>
-                      <p className="text-xl font-black text-primary flex items-center gap-1"><Flame className="w-4 h-4" />{stats.calories.toLocaleString()}</p>
+                      <p className="text-lg font-black text-yellow-500 flex items-center gap-1"><Star className="w-4 h-4" />Lv.{stats.level}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{stats.totalXP} XP</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-primary flex items-center gap-1"><Flame className="w-4 h-4" />{stats.calories.toLocaleString()}</p>
                       <p className="text-[10px] text-muted-foreground uppercase">Calorias</p>
                     </div>
                     <div>
-                      <p className="text-xl font-black text-foreground flex items-center gap-1"><Dumbbell className="w-4 h-4 text-muted-foreground" />{stats.workouts}</p>
+                      <p className="text-lg font-black text-foreground flex items-center gap-1"><Dumbbell className="w-4 h-4 text-muted-foreground" />{stats.workouts}</p>
                       <p className="text-[10px] text-muted-foreground uppercase">Treinos</p>
                     </div>
                     <div>
-                      <p className="text-xl font-black text-foreground flex items-center gap-1"><Calendar className="w-4 h-4 text-muted-foreground" />{stats.streak}</p>
+                      <p className="text-lg font-black text-foreground flex items-center gap-1"><Calendar className="w-4 h-4 text-muted-foreground" />{stats.streak}</p>
                       <p className="text-[10px] text-muted-foreground uppercase">Sequência</p>
                     </div>
                   </div>
