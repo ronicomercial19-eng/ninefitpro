@@ -76,6 +76,20 @@ export default function Dashboard() {
       
       const totalClients = athletesRes.data?.length || 0;
       const activeMembers = athletesRes.data?.filter(s => s.activated)?.length || 0;
+
+      // Fetch expiring plans (alunos with data_fim_plano in next 7 days)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+      const { data: expiringData } = await supabase
+        .from('alunos')
+        .select('id, nome, email, data_fim_plano')
+        .eq('professor_id', currentUser.id)
+        .gte('data_fim_plano', new Date().toISOString().split('T')[0])
+        .lte('data_fim_plano', futureDate.toISOString().split('T')[0]);
+
+      const expiringPlans = (expiringData || []).map(a => ({
+        id: a.id, name: a.nome, email: a.email, data_fim_plano: a.data_fim_plano || ''
+      }));
       
       setStats({
         totalClients,
@@ -83,7 +97,8 @@ export default function Dashboard() {
         weeklyWorkouts: workoutsRes.data?.length || 0,
         upcomingAppointments: appointmentsRes.data?.length || 0,
         studentsWithoutTraining: Math.floor(totalClients * 0.15),
-        overdueTraining: Math.floor(totalClients * 0.05)
+        overdueTraining: Math.floor(totalClients * 0.05),
+        expiringPlans
       });
 
       if (workoutsRes.data) {
