@@ -11,7 +11,9 @@ import {
   BarChart3, 
   FileText,
   ChevronRight,
-  Map
+  Map,
+  Sparkles,
+  Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -36,6 +38,8 @@ const menuItems = [
   { title: 'Super séries', url: '/app/super-series', icon: Zap },
   { title: 'Séries de referência', url: '/app/series-referencia', icon: BookOpen },
   { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
+  { title: 'Assistente IA', url: '/app/assistente-ia', icon: Sparkles },
+  { title: 'Análise IA', url: '/app/analise-ia', icon: Brain },
   { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
   { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
   { title: 'Roadmap', url: '/app/roadmap', icon: Map },

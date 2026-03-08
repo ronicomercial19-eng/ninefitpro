@@ -8,6 +8,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AgendaPage from "./pages/AgendaPage";
 import AITrainingPage from "./pages/AITrainingPage";
+import AIChatPage from "./pages/AIChatPage";
+import AIAnalysisPage from "./pages/AIAnalysisPage";
 import Assessment from "./pages/Assessment";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -102,6 +104,20 @@ const App = () => (
               <PrivateRoute>
                 <AppLayout>
                   <AITrainingPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/assistente-ia" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <AIChatPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/analise-ia" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <AIAnalysisPage />
                 </AppLayout>
               </PrivateRoute>
             } />
