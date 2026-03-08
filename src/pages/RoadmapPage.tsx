@@ -144,10 +144,10 @@ const modules: Module[] = [
   {
     id: "ai", title: "Inteligência Artificial", icon: Sparkles, color: "text-pink-500",
     features: [
-      { name: "Geração de treino com IA", status: "in_progress" },
-      { name: "Análise de progresso", status: "pending" },
-      { name: "Recomendações personalizadas", status: "pending" },
-      { name: "Chat assistente", status: "pending" },
+      { name: "Geração de treino com IA", status: "done" },
+      { name: "Análise de progresso", status: "done" },
+      { name: "Recomendações personalizadas", status: "done" },
+      { name: "Chat assistente", status: "done" },
     ],
   },
 ];
