@@ -446,6 +446,7 @@ export type Database = {
           injuries_limitations: string | null
           invitation_sent: boolean | null
           invitation_token: string | null
+          level: number | null
           metadata: Json | null
           name: string
           nivel: string | null
@@ -459,6 +460,7 @@ export type Database = {
           restricoes: Json | null
           session_duration: string | null
           sessions_per_week: number | null
+          total_xp: number | null
           training_environment: string | null
           training_level: string | null
           updated_at: string
@@ -482,6 +484,7 @@ export type Database = {
           injuries_limitations?: string | null
           invitation_sent?: boolean | null
           invitation_token?: string | null
+          level?: number | null
           metadata?: Json | null
           name: string
           nivel?: string | null
@@ -495,6 +498,7 @@ export type Database = {
           restricoes?: Json | null
           session_duration?: string | null
           sessions_per_week?: number | null
+          total_xp?: number | null
           training_environment?: string | null
           training_level?: string | null
           updated_at?: string
@@ -518,6 +522,7 @@ export type Database = {
           injuries_limitations?: string | null
           invitation_sent?: boolean | null
           invitation_token?: string | null
+          level?: number | null
           metadata?: Json | null
           name?: string
           nivel?: string | null
@@ -531,6 +536,7 @@ export type Database = {
           restricoes?: Json | null
           session_duration?: string | null
           sessions_per_week?: number | null
+          total_xp?: number | null
           training_environment?: string | null
           training_level?: string | null
           updated_at?: string
@@ -4771,40 +4777,52 @@ export type Database = {
       workout_progress: {
         Row: {
           aluno_id: string
+          calories_burned: number | null
+          completed_at: string | null
           created_at: string | null
           date: string
+          duration_minutes: number | null
           exercise_name: string
           id: string
           notes: string | null
           reps: number
           rpe: number | null
           sets: number
+          training_name: string | null
           weight_kg: number | null
           workout_id: string | null
         }
         Insert: {
           aluno_id: string
+          calories_burned?: number | null
+          completed_at?: string | null
           created_at?: string | null
           date?: string
+          duration_minutes?: number | null
           exercise_name: string
           id?: string
           notes?: string | null
           reps: number
           rpe?: number | null
           sets: number
+          training_name?: string | null
           weight_kg?: number | null
           workout_id?: string | null
         }
         Update: {
           aluno_id?: string
+          calories_burned?: number | null
+          completed_at?: string | null
           created_at?: string | null
           date?: string
+          duration_minutes?: number | null
           exercise_name?: string
           id?: string
           notes?: string | null
           reps?: number
           rpe?: number | null
           sets?: number
+          training_name?: string | null
           weight_kg?: number | null
           workout_id?: string | null
         }
