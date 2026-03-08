@@ -45,7 +45,8 @@ export default function Dashboard() {
     weeklyWorkouts: 0,
     upcomingAppointments: 0,
     studentsWithoutTraining: 0,
-    overdueTraining: 0
+    overdueTraining: 0,
+    expiringPlans: []
   });
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
