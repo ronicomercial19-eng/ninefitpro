@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -51,6 +52,10 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const currentPath = location.pathname;
+  const { profile } = useAuth();
+
+  const displayName = profile?.full_name || 'Professor';
+  const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   const isActive = (path: string) => currentPath === path;
 
@@ -111,11 +116,11 @@ export function AppSidebar() {
         <div className="mt-auto p-4 border-t border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium">RT</span>
+             <span className="text-sm font-medium">{initials}</span>
             </div>
             {!collapsed && (
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Rony Trainer</p>
+                <p className="text-sm font-medium text-foreground">{displayName}</p>
                 <p className="text-xs text-muted-foreground">Professor</p>
               </div>
             )}

@@ -35,11 +35,9 @@ interface AthleteProfile {
 }
 
 const menuItems = [
-  { icon: Utensils, label: "Minha Dieta", path: "/9fit/dieta" },
-  { icon: Bell, label: "Notificações", path: "/9fit/settings/notifications" },
-  { icon: Shield, label: "Privacidade", path: "/9fit/settings/privacy" },
-  { icon: CreditCard, label: "Assinatura", path: "/9fit/premium" },
-  { icon: HelpCircle, label: "Ajuda & Suporte", path: "/9fit/support" },
+  { icon: Utensils, label: "Minha Dieta", action: "navigate", path: "/9fit/dieta" },
+  { icon: Bell, label: "Notificações", action: "navigate", path: "/9fit/mensagens" },
+  { icon: HelpCircle, label: "Ajuda & Suporte", action: "whatsapp" },
 ];
 
 export default function NineFitProfile() {
@@ -254,7 +252,10 @@ export default function NineFitProfile() {
             <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Configurações</h3>
             <div className="bg-card border border-border rounded-sm overflow-hidden divide-y divide-border">
               {menuItems.map((item) => (
-                <button key={item.label} onClick={() => toast.info("Em breve!")} className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors">
+                <button key={item.label} onClick={() => {
+                  if (item.action === 'navigate' && item.path) navigate(item.path);
+                  else if (item.action === 'whatsapp') window.open('https://wa.me/5511988328351?text=Ol%C3%A1%2C%20preciso%20de%20ajuda!', '_blank');
+                }} className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors">
                   <item.icon className="w-5 h-5 text-muted-foreground" />
                   <span className="flex-1 text-left text-sm font-medium text-foreground">{item.label}</span>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />

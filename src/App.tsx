@@ -33,7 +33,7 @@ import Register from "./pages/Register";
 import NineFitLogin from "./pages/9fit/Login";
 import NineFitHub from "./pages/9fit/Hub";
 import NineFitTrain from "./pages/9fit/Train";
-import NineFitAulas from "./pages/9fit/Aulas";
+// NineFitAulas removed - orphan route, replaced by AulasCreditos
 import AulasCreditos from "./pages/9fit/AulasCreditos";
 import NineFitStats from "./pages/9fit/Stats";
 import NineFitProfile from "./pages/9fit/Profile";
@@ -167,7 +167,7 @@ const App = () => (
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
-            <Route path="/9fit/aulas" element={<NineFitLayout><NineFitAulas /></NineFitLayout>} />
+            {/* Orphan route /9fit/aulas removed - use /9fit/aulas-creditos */}
             <Route path="/9fit/aulas-creditos" element={<NineFitLayout><AulasCreditos /></NineFitLayout>} />
             <Route path="/9fit/stats" element={<NineFitLayout><NineFitStats /></NineFitLayout>} />
             <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />

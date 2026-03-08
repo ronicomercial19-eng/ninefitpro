@@ -1,141 +1,164 @@
 
 
-# Plano de Implementacao Completa - Auditoria e Correcoes
+# Plano: Check-in, Gestao de Usuarios e Correcao do Primeiro Acesso
 
-## Problemas Identificados
+## Diagnostico
 
-### CRITICOS (Bloqueiam funcionalidade)
+### 1. Loop do Primeiro Acesso (PERSISTENTE)
+**Causa raiz confirmada**: Apesar da politica RLS UPDATE existir na tabela `athletes`, o update do `password_changed` continua falhando silenciosamente. O problema esta no codigo: `supabase.from('athletes').update(...)` sem `.select()` nao retorna erro quando 0 rows sao afetadas. Alem disso, o `Auth.tsx` (rota `/`) redireciona atletas para `/9fit/hub` sem verificar primeiro acesso, e o `NineFitLayout` re-verifica e redireciona para `/9fit/first-access` criando o loop.
 
-1. **Dashboard com dados falsos** (Dashboard.tsx:99-100): `studentsWithoutTraining` e `overdueTraining` usam `Math.floor(totalClients * 0.15)` em vez de queries reais
-2. **Hub com dados hardcoded** (Hub.tsx:106-107): `exerciseCount: 4` e `estimatedDuration: 45` sao fixos, `~150 kcal` hardcoded na linha 269
-3. **AulasCreditos teacher_id errado** (AulasCreditos.tsx:309): `teacher_id: user.id` atribui o ID do ALUNO como teacher
-4. **Rota orfã `/9fit/aulas`**: Duplicada com `/9fit/aulas-creditos`, nao linkada em nenhum lugar
+**Prova**: Todos os 5+ atletas com `user_id` vinculado ainda tem `password_changed: false` e `auto_password_temp` preenchido, mesmo apos tentativas de alteracao.
 
-### ALTOS (UX quebrada)
+### 2. Check-in na Home do Aluno
+Nao existe componente de check-in no Hub. O check-in so existe dentro de `AulasCreditos.tsx`.
 
-5. **Profile.tsx - 4 links mortos**: Notificacoes, Privacidade, Assinatura, Suporte mostram `toast.info("Em breve!")` mas prometem navegacao
-6. **AppSidebar.tsx - nome hardcoded**: "Rony Trainer" (linha 118) deveria usar dados do perfil autenticado
-7. **AuthContext.tsx - `.single()` no fetchStudentProfile** (linha 146 do original): Retorna erro 406 para admins que nao tem perfil em `students`
-8. **Progresso duplicado**: Hub usa `progresso_aluno` (linha 161), Stats/Train usam `workout_progress` - dados inconsistentes
-9. **Weekly Progress no Hub** (linhas 312-334): Dados randomicos com `Math.random()` em vez de dados reais
+### 3. Excluir e Alterar Senha de Usuario
+Nao existem essas opcoes no painel do admin (`StudentsManagement` / `StudentDetailedView`).
 
-### MEDIOS (Melhorias)
-
-10. **Edit3 button no Profile** (linha 172-174): Botao de editar perfil sem funcionalidade
-11. **Camera button no Profile** (linha 161-163): Upload de foto sem implementacao
-12. **RecoveryMission**: Sempre visivel quando nao tem treino, sem persistencia de conclusao
+### 4. Agendamento Completo
+A `AgendaPage` tem modal de criacao mas falta: exibir appointments no calendario, permitir aluno ver seus agendamentos, e integrar com a agenda do aluno.
 
 ---
 
-## Implementacao por Arquivo
+## Implementacao
 
-### FASE 1: Correcoes Criticas de Dados
+### FASE 1: Corrigir Loop do Primeiro Acesso (CRITICO)
 
-**`src/pages/Dashboard.tsx`**
-- Substituir `Math.floor(totalClients * 0.15)` por query real: contar athletes sem `student_training_assignments` ativo
-- Substituir `Math.floor(totalClients * 0.05)` por query real: contar assignments com `end_date < today`
-- Mudar `expiringPlans` de `alunos` para `athletes` (tabela correta)
+**`src/pages/9fit/FirstAccess.tsx`**:
+- Adicionar `.select()` ao update para forcar retorno de dados e detectar falha real
+- Adicionar log detalhado de erro
+- Se ambas tentativas falharem (via `user_id` e via `athlete_auth_link`), mostrar toast explicativo mas permitir continuar (nao bloquear o usuario)
+- Armazenar flag em `localStorage` como fallback temporario
 
-**`src/pages/9fit/Hub.tsx`**
-- Remover hardcoded `exerciseCount: 4`, `estimatedDuration: 45`, `~150 kcal`
-- Substituir `progresso_aluno` por `workout_progress` para consistencia
-- Weekly Progress: usar dados reais de `workout_progress` da semana (mesma logica do Stats.tsx)
+**`src/components/9fit/NineFitLayout.tsx`**:
+- Checar `localStorage` fallback: se `first_access_completed` === true, nao redirecionar
+- Adicionar timeout: se a query falhar ou demorar, nao bloquear
 
-**`src/pages/9fit/AulasCreditos.tsx`**
-- Corrigir `teacher_id: user.id` para buscar o `coach_id` do atleta primeiro
+**`src/pages/Auth.tsx`**:
+- Adicionar verificacao de primeiro acesso no `handleRedirectByRole` (como ja faz o `Login.tsx`): se atleta com `password_changed === false` e `auto_password_temp`, redirecionar para `/9fit/first-access`
 
-### FASE 2: Correcoes de Navegacao e Auth
+### FASE 2: Check-in na Home do Aluno
 
-**`src/App.tsx`**
-- Remover rota orfã `/9fit/aulas` (linha 170)
+**Novo componente `src/components/9fit/QuickCheckIn.tsx`**:
+- Card compacto no Hub: mostra a proxima aula agendada do aluno (de `class_bookings` com status "confirmed")
+- Botao "Fazer Check-in" proeminente com icone
+- Ao clicar: atualiza `check_in_at` no `class_bookings`
+- Apos check-in: mostra confirmacao visual com animacao
 
-**`src/contexts/AuthContext.tsx`**
-- Mudar `fetchStudentProfile` de `.single()` para `.maybeSingle()` (ja esta correto no codigo atual - confirmar)
+**`src/pages/9fit/Hub.tsx`**:
+- Importar e renderizar `QuickCheckIn` entre o treino do dia e os ecosystem cards
 
-**`src/components/layout/AppSidebar.tsx`**
-- Importar `useAuth` e substituir "Rony Trainer" / "RT" por `profile?.full_name` e iniciais dinamicas
+### FASE 3: Relatorio de Check-ins no Painel Admin
 
-**`src/pages/9fit/Profile.tsx`**
-- Substituir `menuItems` com links mortos por opcoes funcionais:
-  - "Minha Dieta" -> `/9fit/dieta` (ja funciona)
-  - "Notificacoes" -> remover ou apontar para `/9fit/mensagens`
-  - "Privacidade" -> remover (nao existe pagina)
-  - "Assinatura" -> remover (nao existe pagina)
-  - "Ajuda & Suporte" -> link WhatsApp ou `/suporte`
-- Botao Edit3: abrir dialog de edicao de nome/telefone
-- Botao Camera: implementar upload de foto via storage bucket
+**Novo componente `src/components/reports/CheckInReport.tsx`**:
+- Fetch de `class_bookings` com join em `gym_classes` e `athletes`
+- Tabela com: nome do aluno, aula, data/hora do check-in, status
+- Filtros por data e por aluno
+- Contadores: total check-ins, taxa de presenca, faltas
 
-### FASE 3: Consistencia de Dados
+**`src/pages/ReportsPage.tsx`**:
+- Adicionar nova tab "Presenca / Check-ins" que renderiza o `CheckInReport`
 
-**`src/pages/9fit/Hub.tsx`** (continuacao)
-- Unificar fonte de dados: usar `workout_progress` em todo lugar
-- Calcular streak real (copiar logica do Stats.tsx)
-- Calorias: somar `calories_burned` de `workout_progress`
+### FASE 4: Excluir Usuario e Alterar Senha
 
-**`src/pages/9fit/Train.tsx`**
-- Verificar se ja existe `workout_progress` para hoje antes de permitir "Concluir Treino" (evitar duplicatas)
+**`src/components/students/StudentDetailedView.tsx`**:
+- Adicionar botao "Excluir Aluno" no header com confirmacao via AlertDialog
+- Ao confirmar: soft-delete (setar `ativo = false`) ou hard-delete da tabela `athletes`
+- Adicionar botao "Resetar Senha" que gera nova senha temporaria e atualiza `auto_password_temp` + `password_changed = false`
+- Ambos com confirmacao e feedback via toast
 
-### FASE 4: Melhorias UX
+**Migracao SQL** (se necessario):
+- Verificar se cascade delete esta configurado em `athlete_auth_link` ao deletar athlete
 
-**`src/components/9fit/BottomNavigation.tsx`**
-- Verificar se `pb-safe` funciona (pode precisar de `env(safe-area-inset-bottom)` explicito)
+### FASE 5: Finalizar Sistema de Agendamento
 
-**`src/pages/9fit/Profile.tsx`**
-- Adicionar upload real de avatar usando bucket `assessments` (publico)
+**`src/pages/AgendaPage.tsx`**:
+- Buscar tambem da tabela `appointments` (alem de `class_bookings`)
+- Exibir appointments no calendario com cores diferentes por tipo (avaliacao=roxo, aula=azul, consultoria=verde)
+- Ao clicar no dia, mostrar lista de eventos daquele dia
+- Permitir cancelar/concluir agendamento
+
+**`src/pages/9fit/Hub.tsx`** ou **novo `src/pages/9fit/MeusAgendamentos.tsx`**:
+- Exibir proximos agendamentos do aluno (fetch de `appointments` onde `student_id` = athleteId)
+- Permitir aluno solicitar agendamento (insert em `appointments` com status "pendente")
+
+**`src/pages/9fit/AulasCreditos.tsx`**:
+- Adicionar secao "Meus Agendamentos" abaixo do calendario de aulas
+- Fetch de `appointments` para o aluno logado
+- Exibir tipo, data/hora, status
 
 ---
 
 ## Secao Tecnica
 
-### Dashboard - Queries Reais
+### Fallback localStorage para Primeiro Acesso
 
 ```typescript
-// Alunos sem treino ativo
-const { count: withoutTraining } = await supabase
-  .from('athletes')
-  .select('id', { count: 'exact', head: true })
-  .eq('coach_id', currentUser.id)
-  .eq('activated', true)
-  .not('id', 'in', 
-    supabase.from('student_training_assignments')
-      .select('student_id')
-      .eq('is_active', true)
-  );
-// Nota: Supabase JS nao suporta subqueries, entao buscar IDs primeiro
+// Em FirstAccess.tsx - apos password change bem sucedido:
+localStorage.setItem('9fit_first_access_completed', 'true');
+
+// Em NineFitLayout.tsx - antes de redirecionar:
+const localCompleted = localStorage.getItem('9fit_first_access_completed');
+if (localCompleted === 'true') {
+  // Nao redirecionar para first-access
+}
 ```
 
-Alternativa pratica:
-```typescript
-const { data: allAthletes } = await supabase.from('athletes').select('id').eq('coach_id', currentUser.id).eq('activated', true);
-const { data: withTraining } = await supabase.from('student_training_assignments').select('student_id').eq('is_active', true);
-const trainingIds = new Set(withTraining?.map(t => t.student_id));
-const withoutTraining = allAthletes?.filter(a => !trainingIds.has(a.id)).length || 0;
-```
-
-### AulasCreditos - Fix teacher_id
+### QuickCheckIn - Logica
 
 ```typescript
-// Buscar coach_id do atleta
-const { data: athleteData } = await supabase
-  .from('athletes')
-  .select('coach_id')
-  .eq('id', athleteId)
-  .single();
-
-// Usar athleteData.coach_id como teacher_id
+// Buscar proxima aula agendada
+const { data } = await supabase
+  .from('class_bookings')
+  .select('*, gym_classes(*)')
+  .eq('user_id', user.id)
+  .eq('status', 'confirmed')
+  .is('check_in_at', null)
+  .order('booking_time', { ascending: true })
+  .limit(1);
 ```
 
-### Arquivos a Modificar
+### Excluir Aluno
 
-| # | Arquivo | Mudanca |
-|---|---------|---------|
-| 1 | `src/pages/Dashboard.tsx` | Queries reais para stats, migrar de `alunos` para `athletes` |
-| 2 | `src/pages/9fit/Hub.tsx` | Remover hardcoded, unificar workout_progress, weekly real |
-| 3 | `src/pages/9fit/AulasCreditos.tsx` | Fix teacher_id |
-| 4 | `src/App.tsx` | Remover rota `/9fit/aulas` |
-| 5 | `src/components/layout/AppSidebar.tsx` | Nome dinamico do perfil |
-| 6 | `src/pages/9fit/Profile.tsx` | Fix links mortos, edit profile, upload foto |
-| 7 | `src/pages/9fit/Train.tsx` | Prevenir duplicata de workout_progress |
+```typescript
+// Soft delete
+await supabase.from('athletes').update({ ativo: false }).eq('id', athleteId);
 
-Total: 7 arquivos, 0 migracoes SQL necessarias.
+// Ou hard delete (remove cascade via FK em athlete_auth_link)
+await supabase.from('athletes').delete().eq('id', athleteId);
+```
+
+### Resetar Senha do Aluno
+
+```typescript
+const newTempPassword = generateRandomPassword();
+await supabase.from('athletes').update({
+  auto_password_temp: newTempPassword,
+  password_changed: false
+}).eq('id', athleteId);
+// + Chamar edge function para atualizar senha no auth.users
+```
+
+### Prioridades
+
+| Prioridade | Item | Impacto |
+|------------|------|---------|
+| CRITICA | Fix loop primeiro acesso | App inacessivel |
+| ALTA | Check-in na home | UX do aluno |
+| ALTA | Relatorio check-ins admin | Operacional |
+| MEDIA | Excluir/resetar senha | Gestao admin |
+| MEDIA | Agendamento completo | Feature admin+aluno |
+
+### Arquivos a Modificar/Criar
+
+1. `src/pages/9fit/FirstAccess.tsx` - Fix update + localStorage fallback
+2. `src/components/9fit/NineFitLayout.tsx` - Checar localStorage
+3. `src/pages/Auth.tsx` - Verificar primeiro acesso
+4. `src/components/9fit/QuickCheckIn.tsx` - NOVO componente
+5. `src/pages/9fit/Hub.tsx` - Integrar QuickCheckIn
+6. `src/components/reports/CheckInReport.tsx` - NOVO componente
+7. `src/pages/ReportsPage.tsx` - Adicionar tab de presenca
+8. `src/components/students/StudentDetailedView.tsx` - Excluir + resetar senha
+9. `src/pages/AgendaPage.tsx` - Exibir appointments completos
+10. `src/pages/9fit/AulasCreditos.tsx` - Meus agendamentos do aluno
 

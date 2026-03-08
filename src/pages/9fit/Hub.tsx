@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { HUDBar } from "@/components/9fit/HUDBar";
 import { MissionCard } from "@/components/9fit/MissionCard";
@@ -6,6 +6,7 @@ import { EcosystemStatusCards } from "@/components/9fit/EcosystemStatusCards";
 import { RecoveryMission } from "@/components/9fit/RecoveryMission";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
+import { WeeklyProgressChart } from "@/components/9fit/WeeklyProgressChart";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
 import { FeatureOnboarding } from "@/components/onboarding/FeatureOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +20,7 @@ import {
   Clock,
   Play
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TodayTraining {
@@ -99,12 +100,17 @@ export default function NineFitHub() {
         const endDateValid = !training.end_date || training.end_date >= today;
         
         if (endDateValid) {
+          // Get real exercise count from training_data if available
+          const trainingDays = (training as any).training_data?.training_days as string[] | undefined;
+          const exerciseCount = (training as any).training_data?.exercise_count || trainingDays?.length || 0;
+          const estimatedDuration = (training as any).training_data?.estimated_duration || 0;
+          
           setTodayTraining({
             id: training.id,
             name: training.training_name,
-            type: training.training_type || "Treino de Força",
-            exerciseCount: 4,
-            estimatedDuration: 45,
+            type: training.training_type || "Treino",
+            exerciseCount,
+            estimatedDuration,
             html_file_url: training.html_file_url
           });
         }
@@ -156,19 +162,39 @@ export default function NineFitHub() {
         }
       });
 
-      // Fetch workout progress for stats
+      // Fetch workout progress for stats (unified source: workout_progress)
       const { data: progressData } = await supabase
-        .from("progresso_aluno")
+        .from("workout_progress")
         .select("*")
-        .eq("id_aluno", athleteId)
-        .order("data_registro", { ascending: false })
-        .limit(7);
+        .eq("aluno_id", athleteId)
+        .order("completed_at", { ascending: false })
+        .limit(30);
 
       if (progressData) {
+        // Calculate real stats
+        const totalCalories = progressData.reduce((sum, p) => sum + ((p as any).calories_burned || 0), 0);
+        const uniqueDates = new Set(progressData.map(p => (p as any).date));
+        
+        // Calculate real streak
+        let streak = 0;
+        const sortedDates = [...uniqueDates].sort().reverse();
+        const todayStr = format(new Date(), "yyyy-MM-dd");
+        for (let i = 0; i < sortedDates.length; i++) {
+          const expectedDate = format(addDays(new Date(), -i), "yyyy-MM-dd");
+          // Allow today or yesterday as start
+          if (i === 0 && sortedDates[0] !== todayStr && sortedDates[0] !== format(addDays(new Date(), -1), "yyyy-MM-dd")) break;
+          if (sortedDates[i] === expectedDate || (i === 0 && sortedDates[0] === format(addDays(new Date(), -1), "yyyy-MM-dd"))) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+
         setStats(prev => ({
           ...prev,
-          completedWorkouts: progressData.length,
-          streak: calculateStreak(progressData)
+          calories: totalCalories,
+          completedWorkouts: uniqueDates.size,
+          streak
         }));
       }
 
@@ -194,9 +220,13 @@ export default function NineFitHub() {
     setIsLoading(false);
   };
 
-  const calculateStreak = (progressData: any[]) => {
-    return progressData.length;
-  };
+  // Weekly progress data from workout_progress
+  const weeklyProgressData = useMemo(() => {
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const days = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), "yyyy-MM-dd"));
+    // We'll calculate this from stats - completedWorkouts already counts unique dates
+    return days;
+  }, []);
 
   const handleStartTraining = () => {
     navigate("/9fit/train");
@@ -252,22 +282,26 @@ export default function NineFitHub() {
               </div>
               
               <p className="text-sm text-muted-foreground mb-4">
-                {todayTraining.type} • {todayTraining.exerciseCount} exercícios
+                {todayTraining.type}{todayTraining.exerciseCount > 0 ? ` • ${todayTraining.exerciseCount} exercícios` : ''}
               </p>
               
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-foreground">
-                    ~{todayTraining.estimatedDuration}min
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Flame className="w-4 h-4 text-primary" />
-                  <span className="text-sm text-foreground">
-                    ~150 kcal
-                  </span>
-                </div>
+                {todayTraining.estimatedDuration > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      ~{todayTraining.estimatedDuration}min
+                    </span>
+                  </div>
+                )}
+                {stats.calories > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-foreground">
+                      {stats.calories.toLocaleString()} kcal
+                    </span>
+                  </div>
+                )}
               </div>
               
               <div className="w-full btn-neon py-3 rounded-sm flex items-center justify-center gap-2">
@@ -307,32 +341,7 @@ export default function NineFitHub() {
           </button>
         </div>
         
-        <div className="bg-card border border-border rounded-sm p-4">
-          <div className="flex items-end justify-between h-20 gap-2">
-            {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day, i) => {
-              const value = i < stats.completedWorkouts ? 80 + Math.random() * 20 : Math.random() * 30;
-              const isToday = i === new Date().getDay() - 1;
-              
-              return (
-                <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full flex-1 flex items-end">
-                    <div
-                      className={`w-full rounded-sm transition-all ${
-                        value > 50 ? "bg-primary" : value > 0 ? "bg-primary/40" : "bg-muted"
-                      } ${isToday ? "ring-1 ring-primary ring-offset-1 ring-offset-background" : ""}`}
-                      style={{ height: `${Math.max(value, 5)}%` }}
-                    />
-                  </div>
-                  <span className={`text-[10px] uppercase ${
-                    isToday ? "text-primary font-bold" : "text-muted-foreground"
-                  }`}>
-                    {day}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <WeeklyProgressChart athleteId={athleteId} />
       </div>
 
       {/* Notifications */}
