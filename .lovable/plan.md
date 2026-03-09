@@ -1,164 +1,404 @@
 
 
-# Plano: Check-in, Gestao de Usuarios e Correcao do Primeiro Acesso
-
-## Diagnostico
-
-### 1. Loop do Primeiro Acesso (PERSISTENTE)
-**Causa raiz confirmada**: Apesar da politica RLS UPDATE existir na tabela `athletes`, o update do `password_changed` continua falhando silenciosamente. O problema esta no codigo: `supabase.from('athletes').update(...)` sem `.select()` nao retorna erro quando 0 rows sao afetadas. Alem disso, o `Auth.tsx` (rota `/`) redireciona atletas para `/9fit/hub` sem verificar primeiro acesso, e o `NineFitLayout` re-verifica e redireciona para `/9fit/first-access` criando o loop.
-
-**Prova**: Todos os 5+ atletas com `user_id` vinculado ainda tem `password_changed: false` e `auto_password_temp` preenchido, mesmo apos tentativas de alteracao.
-
-### 2. Check-in na Home do Aluno
-Nao existe componente de check-in no Hub. O check-in so existe dentro de `AulasCreditos.tsx`.
-
-### 3. Excluir e Alterar Senha de Usuario
-Nao existem essas opcoes no painel do admin (`StudentsManagement` / `StudentDetailedView`).
-
-### 4. Agendamento Completo
-A `AgendaPage` tem modal de criacao mas falta: exibir appointments no calendario, permitir aluno ver seus agendamentos, e integrar com a agenda do aluno.
+# Auditoria Arquitetural Completa - Ecossistema 9FIT PRO
 
 ---
 
-## Implementacao
+## ETAPA 1 - AUDITORIA DO ESTADO ATUAL
 
-### FASE 1: Corrigir Loop do Primeiro Acesso (CRITICO)
+### 1.1 Estrutura do Frontend
 
-**`src/pages/9fit/FirstAccess.tsx`**:
-- Adicionar `.select()` ao update para forcar retorno de dados e detectar falha real
-- Adicionar log detalhado de erro
-- Se ambas tentativas falharem (via `user_id` e via `athlete_auth_link`), mostrar toast explicativo mas permitir continuar (nao bloquear o usuario)
-- Armazenar flag em `localStorage` como fallback temporario
+```text
+src/
+  pages/
+    9fit/         -- App do Aluno (Hub, Train, Stats, Profile, Dieta, AulasCreditos, Mensagens, Social)
+    *.tsx          -- App do Coach/Admin (Dashboard, Students, Exercises, AI, Reports, Settings)
+  components/
+    9fit/          -- Componentes exclusivos do aluno
+    students/      -- Gestao de alunos (coach side)
+    ai-training/   -- IA de treino
+    assessment/    -- Avaliacoes
+    layout/        -- Sidebar, AppLayout
+    auth/          -- PrivateRoute
+    ui/            -- shadcn/ui
+  contexts/        -- AuthContext (unico)
+  hooks/           -- 4 hooks
+  services/        -- 1 servico (exerciseVideoService)
+  integrations/    -- Supabase client + types
+```
 
-**`src/components/9fit/NineFitLayout.tsx`**:
-- Checar `localStorage` fallback: se `first_access_completed` === true, nao redirecionar
-- Adicionar timeout: se a query falhar ou demorar, nao bloquear
+**Problema estrutural:** Sem camada de servicos. Queries Supabase espalhadas diretamente em 42+ componentes/paginas. Zero abstraction layer.
 
-**`src/pages/Auth.tsx`**:
-- Adicionar verificacao de primeiro acesso no `handleRedirectByRole` (como ja faz o `Login.tsx`): se atleta com `password_changed === false` e `auto_password_temp`, redirecionar para `/9fit/first-access`
+### 1.2 Inventario Completo de Tabelas (62 tabelas)
 
-### FASE 2: Check-in na Home do Aluno
+Organizadas por dominio:
 
-**Novo componente `src/components/9fit/QuickCheckIn.tsx`**:
-- Card compacto no Hub: mostra a proxima aula agendada do aluno (de `class_bookings` com status "confirmed")
-- Botao "Fazer Check-in" proeminente com icone
-- Ao clicar: atualiza `check_in_at` no `class_bookings`
-- Apos check-in: mostra confirmacao visual com animacao
+**USERS (identidade/auth):**
+- `profiles` -- Perfil do usuario autenticado (coach/admin)
+- `user_roles` -- Roles (app_role enum)
+- `athlete_auth_link` -- Link athlete <-> auth.users
+- `user_profiles` -- Perfil fitness do usuario (questionario)
+- `student_profiles` -- Perfil do aluno (legacy, referencia students)
+- `user_plans` -- Planos de assinatura
+- `user_credits` -- Creditos do usuario
+- `user_achievements` -- Conquistas/gamificacao
 
-**`src/pages/9fit/Hub.tsx`**:
-- Importar e renderizar `QuickCheckIn` entre o treino do dia e os ecosystem cards
+**ATHLETES (entidade canonica do aluno):**
+- `athletes` -- **CANONICO** - Tabela principal do aluno
+- `alunos` -- **LEGACY/DEPRECATED** - Duplica athletes, ainda referenciada por FK
+- `students` -- **LEGACY** - Outra tabela de alunos, referenciada por student_measurements, student_photos, etc
+- `estudantes` -- **LEGACY** - Mais uma tabela de alunos (pt-BR)
+- `student_invitations` -- Convites para alunos
+- `student_credits` -- Creditos de aula (referencia athletes)
 
-### FASE 3: Relatorio de Check-ins no Painel Admin
+**TRAINING (treino):**
+- `student_training_assignments` -- **CANONICO** - Atribuicao de treino (referencia athletes)
+- `exercises` -- Biblioteca de exercicios
+- `exercise_library` -- Outra biblioteca de exercicios (legacy)
+- `exercicios_novos` -- Mais uma (legacy pt-BR)
+- `workout_templates` -- Templates de treino
+- `workouts` -- Workouts vinculados a periodizacao (referencia students)
+- `workouts_new` -- Novos workouts (template-based)
+- `workout_assignments_new` -- Atribuicoes novas
+- `workout_exercises` -- Exercicios do workout
+- `workout_exercises_new` -- Exercicios novos
+- `workout_program_exercises` -- Exercicios de programa
+- `training_programs` -- Programas de treino
+- `programs` -- Programas (Base44 sync)
+- `program_workouts` -- Link programa-workout
+- `workout_progress` -- **CANONICO** - Progresso do treino (referencia alunos!)
+- `workout_executions` -- Execucoes detalhadas (referencia athletes)
+- `workout_exercise_sets` -- Sets de execucao
+- `workout_schedules` -- Agendamento de treinos
+- `daily_workouts` -- Workouts diarios
+- `workout_program_models` -- Modelos de programa
+- `historico_treinos_realizados` -- Historico (legacy, referencia alunos)
+- `exercise_logs` -- Logs de exercicio
+- `user_workout_logs` -- Logs de workout do usuario
+- `user_program_progress` -- Progresso em programas
+- `strength_records` -- Records de forca
+- `super_sets` / `supersets` -- Super series (2 tabelas!)
+- `reference_series` -- Series referencia
+- `estruturas_de_treinamento` -- Estruturas de treino (legacy)
+- `modelos_de_treino` -- Modelos de treino (legacy)
 
-**Novo componente `src/components/reports/CheckInReport.tsx`**:
-- Fetch de `class_bookings` com join em `gym_classes` e `athletes`
-- Tabela com: nome do aluno, aula, data/hora do check-in, status
-- Filtros por data e por aluno
-- Contadores: total check-ins, taxa de presenca, faltas
+**PERIODIZATION:**
+- `periodization_models` -- **CANONICO** - Modelos de periodizacao
+- `periodizations` -- Periodizacoes criadas
+- `periodization_plans` -- Planos de periodizacao
+- `periodization_variations` -- Variacoes
+- `periodization_history` -- Historico de mudancas
+- `athlete_periodizations` -- Atribuicao athlete-periodizacao
+- `aluno_periodizacao` -- Atribuicao (legacy, referencia athletes)
+- `saved_periodizations` -- Periodizacoes salvas (referencia alunos!)
+- `periodizacoes_novas` -- Legacy
+- `training_phases` -- Fases de treino
+- `weekly_structures` -- Estruturas semanais
+- `training_structures` -- Estruturas de treino
+- `uploads_periodizacao` -- Uploads (referencia estudantes)
+- `planos_de_treino_gerados` -- Planos gerados (referencia estudantes)
+- `planos_treino_aluno` -- Planos do aluno (referencia alunos)
+- `generated_workout_plans` -- Planos gerados (EN)
+- `profile_periodization_matches` -- Match perfil-periodizacao
 
-**`src/pages/ReportsPage.tsx`**:
-- Adicionar nova tab "Presenca / Check-ins" que renderiza o `CheckInReport`
+**ASSESSMENTS:**
+- `avaliacoes_unificadas` -- **CANONICO** - Avaliacoes (referencia alunos)
+- `avaliacoes` -- Legacy
+- `avaliacoes_fisicas` -- Legacy
+- `historico_avaliacoes` -- Legacy historico
+- `physical_assessments` -- Avaliacoes fisicas (EN)
+- `student_measurements` -- Medidas (referencia students)
+- `student_photos` -- Fotos (referencia students)
+- `student_pdf_assessments` -- PDFs
+- `student_anamnesis` -- Anamnese (referencia students)
+- `user_metrics` -- Metricas do usuario
 
-### FASE 4: Excluir Usuario e Alterar Senha
+**CLASSES/SCHEDULING:**
+- `gym_classes` -- Aulas
+- `class_bookings` -- Reservas
+- `class_schedules` -- Grade de horarios
+- `appointments` -- Agendamentos
+- `vacation_requests` -- Ferias (referencia athletes)
+- `vacation_freeze_requests` -- Congelamento
 
-**`src/components/students/StudentDetailedView.tsx`**:
-- Adicionar botao "Excluir Aluno" no header com confirmacao via AlertDialog
-- Ao confirmar: soft-delete (setar `ativo = false`) ou hard-delete da tabela `athletes`
-- Adicionar botao "Resetar Senha" que gera nova senha temporaria e atualiza `auto_password_temp` + `password_changed = false`
-- Ambos com confirmacao e feedback via toast
+**DIET:**
+- `student_diet_assignments` -- Dietas (referencia athletes)
 
-**Migracao SQL** (se necessario):
-- Verificar se cascade delete esta configurado em `athlete_auth_link` ao deletar athlete
+**COMMERCE:**
+- `payments` -- Pagamentos
+- `products` -- Produtos
+- `planos` -- Planos de assinatura
 
-### FASE 5: Finalizar Sistema de Agendamento
+**SOCIAL/ENGAGEMENT:**
+- `posts` -- Posts
+- `ninefit_checkins` -- Check-ins
+- `ninefit_reports` -- Relatorios
+- `notifications` -- Notificacoes
+- `questionnaires` -- Questionarios
+- `questionnaire_responses` -- Respostas
 
-**`src/pages/AgendaPage.tsx`**:
-- Buscar tambem da tabela `appointments` (alem de `class_bookings`)
-- Exibir appointments no calendario com cores diferentes por tipo (avaliacao=roxo, aula=azul, consultoria=verde)
-- Ao clicar no dia, mostrar lista de eventos daquele dia
-- Permitir cancelar/concluir agendamento
+**SYSTEM:**
+- `system_events` -- Eventos do sistema
+- `system_health` -- Saude do sistema
+- `audit_log` -- Log de auditoria
+- `logs_sincronizacao` -- Logs de sync
+- `ambiente_config` -- Config do ambiente
+- `real_time_analytics` -- Analytics
+- `student_activity_history` -- Historico de atividades (referencia students)
+- `link_de_video` -- Links de video
 
-**`src/pages/9fit/Hub.tsx`** ou **novo `src/pages/9fit/MeusAgendamentos.tsx`**:
-- Exibir proximos agendamentos do aluno (fetch de `appointments` onde `student_id` = athleteId)
-- Permitir aluno solicitar agendamento (insert em `appointments` com status "pendente")
+**VIEWS:**
+- `v_students_canonical` -- View canonica de alunos
+- `v_assessments_canonical` -- View canonica de avaliacoes
+- `v_assignments_canonical` -- View canonica de atribuicoes
+- `v_periodizations_canonical` -- View canonica de periodizacoes
+- `v_periodizations_catalog` -- Catalogo de periodizacoes
+- `v_system_health` -- Saude do sistema
+- `v_workout_progression` -- Progressao de treinos
 
-**`src/pages/9fit/AulasCreditos.tsx`**:
-- Adicionar secao "Meus Agendamentos" abaixo do calendario de aulas
-- Fetch de `appointments` para o aluno logado
-- Exibir tipo, data/hora, status
+### 1.3 Edge Functions (8)
+- `ai-coach` -- Coach IA
+- `create-athlete-user` -- Criar usuario do atleta
+- `get-base44-nutrition-plans` -- Sync nutricao Base44
+- `get-base44-training-plans` -- Sync treino Base44
+- `send-student-welcome` -- Email de boas-vindas
+- `sync-classes` -- Sync aulas
+- `sync-exercises` -- Sync exercicios
+- `sync-workout-programs` -- Sync programas
+
+### 1.4 Storage Buckets (5)
+- `exercicios` (privado), `plans-pdfs` (privado), `assessments` (publico), `training-html-files` (publico), `diet-html-files` (publico)
 
 ---
 
-## Secao Tecnica
+## ETAPA 2 - PROBLEMAS CRITICOS IDENTIFICADOS
 
-### Fallback localStorage para Primeiro Acesso
+### 2.1 Fragmentacao de Entidades (RISCO ALTO)
 
+O dominio "aluno" esta espalhado em **4 tabelas separadas**:
+
+| Tabela | FK ativas | Situacao |
+|--------|-----------|----------|
+| `athletes` | student_training_assignments, student_credits, student_diet_assignments, vacation_requests, workout_executions, athlete_periodizations, aluno_periodizacao | **CANONICO** |
+| `alunos` | workout_progress, progresso_aluno, avaliacoes_unificadas, planos_treino_aluno, saved_periodizations, historico_treinos_realizados | **LEGACY - AINDA COM FKs ATIVAS** |
+| `students` | student_measurements, student_photos, student_anamnesis, student_activity_history, workouts | **LEGACY - AINDA COM FKs ATIVAS** |
+| `estudantes` | planos_de_treino_gerados, uploads_periodizacao | **LEGACY** |
+
+**Risco:** `workout_progress.aluno_id` referencia `alunos.id`, nao `athletes.id`. O Hub/Stats usam `workout_progress` com o `athleteId` do contexto, mas a FK aponta para `alunos`. Isso funciona apenas se os IDs coincidirem entre tabelas.
+
+### 2.2 Duplicacao de Exercicios (3 tabelas)
+- `exercises` -- Tabela principal com dados do Base44
+- `exercise_library` -- Segunda biblioteca
+- `exercicios_novos` -- Terceira (pt-BR)
+
+### 2.3 Duplicacao de Super Series (2 tabelas)
+- `super_sets` e `supersets` -- Mesma funcao, schemas diferentes
+
+### 2.4 Inconsistencia de Idioma
+- Tabelas misturam PT-BR (`alunos`, `exercicios_novos`, `planos_treino_aluno`) com EN (`athletes`, `exercises`, `workout_progress`)
+- Colunas misturam (`aluno_id` em tabela EN, `coach_id` em tabela PT)
+
+### 2.5 Ausencia de Service Layer
+- 42+ arquivos fazem queries diretas ao Supabase
+- Zero reutilizacao de logica de acesso a dados
+- Impossivel trocar backend sem reescrever cada componente
+
+### 2.6 Edge Functions sem Versionamento de API
+- Todas as functions usam paths diretos sem `/v1/`
+- Sem contrato de API padronizado
+
+---
+
+## ETAPA 3 - ESTRUTURA DE DADOS RECOMENDADA
+
+### Dominios Canonicos
+
+```text
+DOMAIN: users
+  Canonical: profiles, user_roles
+  Support: athlete_auth_link
+
+DOMAIN: athletes  
+  Canonical: athletes
+  Deprecated: alunos, students, estudantes
+  
+DOMAIN: training
+  Canonical: exercises, student_training_assignments, workout_executions, workout_exercise_sets
+  Templates: workout_templates, training_programs
+  Deprecated: exercise_library, exercicios_novos, workouts, workouts_new, workout_exercises, workout_exercises_new, estruturas_de_treinamento, modelos_de_treino
+
+DOMAIN: progress
+  Canonical: workout_progress (NEEDS FK MIGRATION to athletes)
+  Deprecated: progresso_aluno, historico_treinos_realizados, user_workout_logs, user_program_progress
+
+DOMAIN: assessments
+  Canonical: avaliacoes_unificadas (NEEDS FK MIGRATION to athletes)
+  Support: student_measurements (NEEDS FK MIGRATION), student_photos (NEEDS FK MIGRATION)
+  Deprecated: avaliacoes, avaliacoes_fisicas, historico_avaliacoes, physical_assessments
+
+DOMAIN: periodization
+  Canonical: periodization_models, athlete_periodizations, training_phases, weekly_structures
+  Deprecated: periodizacoes_novas, aluno_periodizacao, planos_treino_aluno, planos_de_treino_gerados
+
+DOMAIN: scheduling
+  Canonical: appointments, gym_classes, class_bookings, student_credits
+  Support: vacation_requests
+  Deprecated: class_schedules (removed from app), vacation_freeze_requests
+
+DOMAIN: content
+  Canonical: student_diet_assignments, posts, notifications
+  Support: questionnaires, questionnaire_responses
+
+DOMAIN: commerce
+  Canonical: payments, products
+  Deprecated: planos (sem uso ativo)
+
+DOMAIN: analytics
+  Canonical: system_events, audit_log, ninefit_checkins, ninefit_reports
+  Deprecated: real_time_analytics, logs_sincronizacao
+```
+
+---
+
+## ETAPA 4 - AJUSTES NECESSARIOS (Priorizados)
+
+### PRIORIDADE 1 - FK Migration (Sem quebrar dados)
+
+Estas alteracoes criam NOVAS FKs apontando para `athletes` mantendo as antigas:
+
+1. **`workout_progress.aluno_id`** -- Atualmente FK para `alunos`. Adicionar nova coluna `athlete_id` referenciando `athletes`, popular com dados existentes, criar view de compatibilidade.
+
+2. **`avaliacoes_unificadas.aluno_id`** -- Mesma situacao. Adicionar `athlete_id`.
+
+3. **`student_measurements.student_id`** -- FK para `students`. Adicionar `athlete_id` referenciando `athletes`.
+
+4. **`student_photos.student_id`** -- FK para `students`. Adicionar `athlete_id`.
+
+5. **`student_anamnesis.student_id`** -- FK para `students`. Adicionar `athlete_id`.
+
+6. **`student_activity_history.student_id`** -- FK para `students`. Adicionar `athlete_id`.
+
+### PRIORIDADE 2 - Service Layer
+
+Criar camada de servicos para centralizar acesso a dados:
+
+```text
+src/services/
+  athletes.service.ts      -- CRUD athletes, busca por coach
+  training.service.ts      -- Assignments, progress, executions
+  assessments.service.ts   -- Avaliacoes, medidas, fotos
+  scheduling.service.ts    -- Aulas, bookings, credits
+  auth.service.ts          -- Login, roles, profile
+  periodization.service.ts -- Models, assignments, phases
+  analytics.service.ts     -- Events, checkins, reports
+```
+
+Cada servico expoe funcoes tipadas que encapsulam queries Supabase. Componentes importam do servico, nunca do client diretamente.
+
+### PRIORIDADE 3 - Padronizacao de Edge Functions
+
+Adicionar prefixo de versao e contrato consistente:
+
+```text
+Atual:                          Proposto:
+/sync-workout-programs    ->    /api/v1/sync/workout-programs
+/sync-exercises           ->    /api/v1/sync/exercises
+/sync-classes             ->    /api/v1/sync/classes
+/create-athlete-user      ->    /api/v1/athletes/create-user
+/send-student-welcome     ->    /api/v1/notifications/welcome
+/ai-coach                 ->    /api/v1/ai/coach
+/get-base44-*             ->    /api/v1/integrations/base44/*
+```
+
+Resposta padronizada:
 ```typescript
-// Em FirstAccess.tsx - apos password change bem sucedido:
-localStorage.setItem('9fit_first_access_completed', 'true');
-
-// Em NineFitLayout.tsx - antes de redirecionar:
-const localCompleted = localStorage.getItem('9fit_first_access_completed');
-if (localCompleted === 'true') {
-  // Nao redirecionar para first-access
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: { code: string; message: string };
+  metadata?: { timestamp: string; version: string };
 }
 ```
 
-### QuickCheckIn - Logica
+### PRIORIDADE 4 - Limpeza de Duplicacoes
+
+| Acao | Tabela a Deprecar | Canonica |
+|------|-------------------|----------|
+| Merge | `exercise_library` + `exercicios_novos` | `exercises` |
+| Merge | `super_sets` | `supersets` |
+| Deprecar | `progresso_aluno` | `workout_progress` |
+| Deprecar | `historico_treinos_realizados` | `workout_executions` |
+| Deprecar | `avaliacoes` + `avaliacoes_fisicas` + `historico_avaliacoes` | `avaliacoes_unificadas` |
+
+---
+
+## ETAPA 5 - APIs PADRONIZADAS
+
+### Edge Functions (Contrato v1)
+
+| Endpoint | Metodo | Descricao | Auth |
+|----------|--------|-----------|------|
+| `/api/v1/athletes` | GET | Listar atletas do coach | trainer+ |
+| `/api/v1/athletes/create-user` | POST | Criar auth para atleta | trainer+ |
+| `/api/v1/sync/exercises` | POST | Sync exercicios Base44 | trainer+ |
+| `/api/v1/sync/classes` | POST | Sync aulas Base44 | trainer+ |
+| `/api/v1/sync/programs` | POST | Sync programas Base44 | trainer+ |
+| `/api/v1/integrations/base44/training` | GET | Buscar treinos Base44 | trainer+ |
+| `/api/v1/integrations/base44/nutrition` | GET | Buscar nutricao Base44 | trainer+ |
+| `/api/v1/notifications/welcome` | POST | Enviar email boas-vindas | trainer+ |
+| `/api/v1/ai/coach` | POST | Consulta ao coach IA | authenticated |
+
+### Client-Side Service API (TypeScript)
 
 ```typescript
-// Buscar proxima aula agendada
-const { data } = await supabase
-  .from('class_bookings')
-  .select('*, gym_classes(*)')
-  .eq('user_id', user.id)
-  .eq('status', 'confirmed')
-  .is('check_in_at', null)
-  .order('booking_time', { ascending: true })
-  .limit(1);
+// Exemplo de contrato padronizado
+interface AthleteService {
+  list(coachId: string): Promise<Athlete[]>;
+  getById(id: string): Promise<Athlete>;
+  create(data: CreateAthleteDTO): Promise<Athlete>;
+  update(id: string, data: UpdateAthleteDTO): Promise<Athlete>;
+  getProgress(athleteId: string, dateRange?: DateRange): Promise<WorkoutProgress[]>;
+  getAssignments(athleteId: string, active?: boolean): Promise<TrainingAssignment[]>;
+}
 ```
 
-### Excluir Aluno
+---
 
-```typescript
-// Soft delete
-await supabase.from('athletes').update({ ativo: false }).eq('id', athleteId);
+## ETAPA 6 - MELHORIAS ARQUITETURAIS
 
-// Ou hard delete (remove cascade via FK em athlete_auth_link)
-await supabase.from('athletes').delete().eq('id', athleteId);
-```
+1. **Service Layer Pattern** -- Abstraction entre componentes e Supabase
+2. **React Query Integration** -- Ja instalado, mas sub-utilizado. Servicos devem retornar query keys padronizados
+3. **Modular Route Config** -- Extrair rotas de App.tsx para config separada por modulo
+4. **Shared Types Package** -- Centralizar DTOs e interfaces em `src/types/` por dominio
+5. **Event-Driven Communication** -- Usar `system_events` + Supabase Realtime para comunicacao entre modulos
+6. **Feature Flags** -- Usar `ambiente_config` como feature flag store para habilitar/desabilitar modulos por tenant
 
-### Resetar Senha do Aluno
+---
 
-```typescript
-const newTempPassword = generateRandomPassword();
-await supabase.from('athletes').update({
-  auto_password_temp: newTempPassword,
-  password_changed: false
-}).eq('id', athleteId);
-// + Chamar edge function para atualizar senha no auth.users
-```
+## ETAPA 7 - RISCOS TECNICOS
 
-### Prioridades
+| # | Risco | Severidade | Mitigacao |
+|---|-------|------------|-----------|
+| 1 | FKs de `workout_progress` apontam para `alunos` (deprecated), nao `athletes` | CRITICO | Migration com coluna dual + view |
+| 2 | 4 tabelas de aluno com IDs potencialmente divergentes | CRITICO | Auditoria de IDs + migration |
+| 3 | 42+ arquivos com queries diretas -- impossivel trocar backend | ALTO | Service layer |
+| 4 | Edge functions sem versionamento -- breaking changes afetam todos | ALTO | Prefixo /api/v1/ |
+| 5 | `student_measurements/photos/anamnesis` referenciam `students`, nao `athletes` | ALTO | FK migration |
+| 6 | 3 tabelas de exercicios -- dados possivelmente desincronizados | MEDIO | Consolidar em `exercises` |
+| 7 | Enum `app_role` com 7 valores, `user_role` com 3 -- sobreposicao confusa | MEDIO | Unificar em `app_role` |
+| 8 | Idioma misto PT/EN nas tabelas e colunas | BAIXO | Padronizar novos em EN, manter legacy |
+| 9 | `profiles.role` (user_role enum) vs `user_roles.role` (app_role enum) -- dual role system | MEDIO | Canonical = user_roles |
+| 10 | 48 migrations -- schema complexo, risco de conflitos futuros | BAIXO | Squash migrations periodicamente |
 
-| Prioridade | Item | Impacto |
-|------------|------|---------|
-| CRITICA | Fix loop primeiro acesso | App inacessivel |
-| ALTA | Check-in na home | UX do aluno |
-| ALTA | Relatorio check-ins admin | Operacional |
-| MEDIA | Excluir/resetar senha | Gestao admin |
-| MEDIA | Agendamento completo | Feature admin+aluno |
+---
 
-### Arquivos a Modificar/Criar
+## RESUMO EXECUTIVO
 
-1. `src/pages/9fit/FirstAccess.tsx` - Fix update + localStorage fallback
-2. `src/components/9fit/NineFitLayout.tsx` - Checar localStorage
-3. `src/pages/Auth.tsx` - Verificar primeiro acesso
-4. `src/components/9fit/QuickCheckIn.tsx` - NOVO componente
-5. `src/pages/9fit/Hub.tsx` - Integrar QuickCheckIn
-6. `src/components/reports/CheckInReport.tsx` - NOVO componente
-7. `src/pages/ReportsPage.tsx` - Adicionar tab de presenca
-8. `src/components/students/StudentDetailedView.tsx` - Excluir + resetar senha
-9. `src/pages/AgendaPage.tsx` - Exibir appointments completos
-10. `src/pages/9fit/AulasCreditos.tsx` - Meus agendamentos do aluno
+O sistema 9FIT PRO possui infraestrutura funcional com Supabase, auth compartilhada, e event system operacional. Os principais bloqueios para integracao com o ecossistema sao:
+
+1. **Fragmentacao de dados** -- 4 tabelas de aluno com FKs cruzadas impedem queries consistentes
+2. **Acoplamento direto** -- Queries Supabase espalhadas em 42+ arquivos impossibilitam modularizacao
+3. **Ausencia de API contract** -- Edge functions sem versionamento ou resposta padronizada
+
+A estrategia recomendada e incremental: (1) Service layer primeiro, (2) FK migration com compatibilidade retroativa, (3) padronizacao de APIs. Nenhuma tabela sera removida -- apenas novas colunas e views de compatibilidade.
 
