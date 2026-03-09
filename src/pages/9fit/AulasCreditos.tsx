@@ -928,7 +928,7 @@ export default function AulasCreditos() {
               </div>
               <div>
                 <p className="font-bold text-foreground">Agendar Aula</p>
-                <p className="text-muted-foreground">Selecione dias no calendário. Horários na grade são confirmados automaticamente. Fora da grade, enviamos para o WhatsApp do SAC.</p>
+                <p className="text-muted-foreground">Selecione dias e horário no calendário. Todos os agendamentos são confirmados automaticamente.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">
