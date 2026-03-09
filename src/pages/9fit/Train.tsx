@@ -322,10 +322,10 @@ export default function NineFitTrain() {
         setSelectedTraining(null);
         setHtmlContent(null);
       }}>
-        <DialogContent className="max-w-[100vw] w-full h-[100vh] p-0 m-0 bg-white rounded-none">
+        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-white rounded-none border-none">
           {/* Custom Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-background border-b border-border">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center justify-between px-3 py-2 bg-background border-b border-border flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               {selectedTraining && getTrainingIcon(selectedTraining)}
               <div className="min-w-0 flex-1">
                 <DialogTitle className="text-sm font-bold text-foreground truncate">
@@ -336,13 +336,13 @@ export default function NineFitTrain() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {selectedTraining?.html_file_url && (
                 <Button 
                   variant="ghost" 
                   size="icon"
                   onClick={() => window.open(selectedTraining.html_file_url, '_blank')}
-                  className="text-foreground hover:bg-muted"
+                  className="text-foreground hover:bg-muted h-8 w-8"
                   title="Abrir em nova aba"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -355,15 +355,15 @@ export default function NineFitTrain() {
                   setSelectedTraining(null);
                   setHtmlContent(null);
                 }}
-                className="text-foreground hover:bg-muted"
+                className="text-foreground hover:bg-muted h-8 w-8"
               >
                 <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
           
-          {/* Content Area - Full Height */}
-          <div className="flex-1 w-full h-[calc(100vh-120px)] bg-white overflow-hidden">
+          {/* Content Area - Full Height with mobile viewport fix */}
+          <div className="flex-1 w-full bg-white overflow-hidden" style={{ height: 'calc(100dvh - 100px)' }}>
             {loadingContent ? (
               <div className="flex items-center justify-center h-full bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -373,11 +373,11 @@ export default function NineFitTrain() {
               </div>
             ) : htmlContent ? (
               <iframe
-                srcDoc={htmlContent}
+                srcDoc={injectMobileViewport(htmlContent)}
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 className="w-full h-full border-0"
                 title={selectedTraining?.training_name || "Treino"}
-                style={{ minHeight: 'calc(100vh - 120px)' }}
+                style={{ width: '100%', height: '100%' }}
               />
             ) : selectedTraining?.html_file_url ? (
               <iframe
@@ -385,7 +385,7 @@ export default function NineFitTrain() {
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 className="w-full h-full border-0"
                 title={selectedTraining.training_name}
-                style={{ minHeight: 'calc(100vh - 120px)' }}
+                style={{ width: '100%', height: '100%' }}
               />
             ) : (
               <div className="flex items-center justify-center h-full bg-background">
