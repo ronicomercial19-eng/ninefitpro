@@ -162,7 +162,7 @@ export default function AulasCreditos() {
     fetchCredits();
     fetchMyAppointments();
     fetchFixedSchedule();
-    fetchClassSchedules();
+    
   }, [currentMonth, user, athleteId]);
 
   const fetchClassSchedules = async () => {
