@@ -111,7 +111,7 @@ export default function AulasCreditos() {
   const [scheduleType, setScheduleType] = useState('aula');
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [scheduleSaving, setScheduleSaving] = useState(false);
-  const [classSchedules, setClassSchedules] = useState<ClassSchedule[]>([]);
+  
 
   // Dialogs
   const [showVacationDialog, setShowVacationDialog] = useState(false);
