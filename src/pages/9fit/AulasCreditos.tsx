@@ -253,28 +253,6 @@ export default function AulasCreditos() {
   const usedCredits = credits?.used_credits || 0;
   const progressPercent = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
 
-  // Check if a date/time is in the class_schedules grid
-  const isInGrid = (date: Date, time: string): ClassSchedule | null => {
-    const dayOfWeek = getDay(date);
-    return classSchedules.find(s => 
-      s.day_of_week === dayOfWeek && 
-      s.start_time <= time + ':00' && 
-      s.end_time >= time + ':00'
-    ) || null;
-  };
-
-  // Count existing appointments for a schedule slot on a given date
-  const countBookingsForSlot = async (date: Date, scheduleId: string): Promise<number> => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const { count } = await supabase
-      .from('appointments')
-      .select('id', { count: 'exact', head: true })
-      .gte('scheduled_at', `${dateStr}T00:00:00`)
-      .lte('scheduled_at', `${dateStr}T23:59:59`)
-      .neq('status', 'cancelled');
-    return count || 0;
-  };
-
   const handleSmartSchedule = async () => {
     if (!athleteId || !user) { toast.error("Faça login primeiro"); return; }
     if (scheduleSelectedDates.length === 0) { toast.error("Selecione ao menos um dia"); return; }
@@ -282,95 +260,36 @@ export default function AulasCreditos() {
 
     setScheduleSaving(true);
     try {
-      const inGridDates: Date[] = [];
-      const outOfGridDates: Date[] = [];
+      // Get the coach_id for this athlete
+      const { data: athleteData } = await supabase
+        .from('athletes')
+        .select('coach_id')
+        .eq('id', athleteId)
+        .single();
+      
+      const teacherId = athleteData?.coach_id || user.id;
 
-      // Classify each selected date
-      for (const date of scheduleSelectedDates) {
-        const schedule = isInGrid(date, scheduleTime);
-        if (schedule) {
-          // Check if there are slots available
-          const existing = await countBookingsForSlot(date, schedule.id);
-          if (existing < schedule.max_slots) {
-            inGridDates.push(date);
-          } else {
-            outOfGridDates.push(date);
-          }
-        } else {
-          outOfGridDates.push(date);
-        }
-      }
+      // All dates are directly confirmed — no grid check
+      const inserts = scheduleSelectedDates.map(d => ({
+        student_id: athleteId,
+        teacher_id: teacherId,
+        title: `${scheduleType === 'aula' ? 'Aula' : scheduleType === 'avaliacao_fisica' ? 'Avaliação' : 'Consultoria'} - ${athleteName}`,
+        scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
+        status: 'confirmed' as const,
+        appointment_type: scheduleType,
+        duration: 60,
+        description: scheduleNotes || null,
+      }));
 
-      // Auto-confirm in-grid dates
-      if (inGridDates.length > 0) {
-        // Get the coach_id for this athlete
-        const { data: athleteData } = await supabase
-          .from('athletes')
-          .select('coach_id')
-          .eq('id', athleteId)
-          .single();
-        
-        const teacherId = athleteData?.coach_id || user.id;
+      const { error } = await supabase.from('appointments').insert(inserts as any);
+      if (error) throw error;
 
-        const inserts = inGridDates.map(d => ({
-          student_id: athleteId,
-          teacher_id: teacherId,
-          title: `Aula - ${athleteName}`,
-          scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
-          status: 'confirmed' as const,
-          appointment_type: scheduleType,
-          duration: 60,
-          description: scheduleNotes || null,
-        }));
+      // Debit credits
+      await supabase.from('student_credits').update({
+        used_credits: usedCredits + scheduleSelectedDates.length
+      }).eq('student_id', athleteId);
 
-        const { error } = await supabase.from('appointments').insert(inserts as any);
-        if (error) throw error;
-
-        // Debit credits
-        await supabase.from('student_credits').update({
-          used_credits: usedCredits + inGridDates.length
-        }).eq('student_id', athleteId);
-
-        toast.success(`${inGridDates.length} aula(s) confirmada(s) automaticamente!`);
-      }
-
-      // Redirect to WhatsApp for out-of-grid dates
-      if (outOfGridDates.length > 0) {
-        const datesText = outOfGridDates
-          .map(d => format(d, "dd/MM (EEE)", { locale: ptBR }))
-          .join(', ');
-        
-        const msg = encodeURIComponent(
-          `Olá, sou ${athleteName}.\n\nGostaria de agendar aula nos seguintes horários:\n📅 ${datesText}\n⏰ ${scheduleTime}\n\nObrigado!`
-        );
-        
-        toast.info(`${outOfGridDates.length} horário(s) fora da grade. Redirecionando para o WhatsApp...`, { duration: 3000 });
-        
-        // Also create pending appointments for tracking
-        const { data: athleteForPending } = await supabase
-          .from('athletes')
-          .select('coach_id')
-          .eq('id', athleteId)
-          .single();
-        const pendingTeacherId = athleteForPending?.coach_id || user.id;
-
-        const pendingInserts = outOfGridDates.map(d => ({
-          student_id: athleteId,
-          teacher_id: pendingTeacherId,
-          title: `Solicitação - ${athleteName}`,
-          scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
-          status: 'scheduled' as const,
-          appointment_type: scheduleType,
-          duration: 60,
-          description: `[VIA WHATSAPP] ${scheduleNotes || ''}`.trim(),
-        }));
-
-        await supabase.from('appointments').insert(pendingInserts as any);
-
-        setTimeout(() => {
-          window.open(`https://wa.me/${WHATSAPP_SAC}?text=${msg}`, '_blank');
-        }, 1000);
-      }
+      toast.success(`${scheduleSelectedDates.length} agendamento(s) confirmado(s)!`);
 
       setShowScheduleDialog(false);
       setScheduleSelectedDates([]);
