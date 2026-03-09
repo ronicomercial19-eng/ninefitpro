@@ -195,7 +195,7 @@ export async function createMeasurement(
   try {
     const { data, error } = await supabase
       .from('student_measurements')
-      .insert(measurement)
+      .insert(measurement as any)
       .select()
       .single();
 
