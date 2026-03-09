@@ -814,7 +814,6 @@ export default function AulasCreditos() {
                   {daysInMonth.map((day) => {
                     const isSelectedForSchedule = scheduleSelectedDates.some(d => isSameDay(d, day));
                     const isPast = isBefore(day, new Date()) && !isSameDay(day, new Date());
-                    const gridMatch = isInGrid(day, scheduleTime);
                     
                     return (
                       <button
@@ -826,19 +825,15 @@ export default function AulasCreditos() {
                             ? "bg-primary text-primary-foreground font-bold" 
                             : isPast 
                               ? "opacity-30 cursor-not-allowed" 
-                              : gridMatch 
-                                ? "bg-green-500/10 hover:bg-green-500/20 text-foreground" 
-                                : "hover:bg-muted/80 text-foreground"
+                              : "hover:bg-muted/80 text-foreground"
                         }`}
                       >
                         {format(day, "d")}
-                        {gridMatch && !isSelectedForSchedule && <div className="w-1 h-1 rounded-full bg-green-500 mt-0.5" />}
                       </button>
                     );
                   })}
                 </div>
                 <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> Na grade</span>
                   <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Selecionado</span>
                 </div>
               </div>
