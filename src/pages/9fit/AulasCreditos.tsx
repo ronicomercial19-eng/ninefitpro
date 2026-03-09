@@ -845,12 +845,10 @@ export default function AulasCreditos() {
               <Textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder="Ex: Prefiro horário da manhã..." rows={2} />
             </div>
 
-            {/* Info about logic */}
             {scheduleSelectedDates.length > 0 && (
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-400">
-                <p className="font-medium mb-1">ℹ️ Como funciona:</p>
-                <p>• Horários <strong>disponíveis na grade</strong> serão confirmados automaticamente</p>
-                <p>• Horários <strong>fora da grade</strong> serão enviados via WhatsApp para o SAC</p>
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs text-primary">
+                <p className="font-medium mb-1">✅ Agendamento livre</p>
+                <p>Todos os horários selecionados serão confirmados automaticamente.</p>
               </div>
             )}
 
