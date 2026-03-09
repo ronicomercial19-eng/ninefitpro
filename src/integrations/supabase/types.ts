@@ -2081,6 +2081,84 @@ export type Database = {
           },
         ]
       }
+      periodization_annual_plans: {
+        Row: {
+          annual_goal: string | null
+          assessment_snapshot: Json | null
+          athlete_id: string
+          coach_id: string
+          created_at: string
+          dominant_profile: Json | null
+          flags: Json | null
+          id: string
+          macrocycles: Json | null
+          master_rules: Json | null
+          mesocycles: Json | null
+          micro_rules: Json | null
+          output_json: Json | null
+          running_distance: string | null
+          scores: Json | null
+          selected_model_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          annual_goal?: string | null
+          assessment_snapshot?: Json | null
+          athlete_id: string
+          coach_id: string
+          created_at?: string
+          dominant_profile?: Json | null
+          flags?: Json | null
+          id?: string
+          macrocycles?: Json | null
+          master_rules?: Json | null
+          mesocycles?: Json | null
+          micro_rules?: Json | null
+          output_json?: Json | null
+          running_distance?: string | null
+          scores?: Json | null
+          selected_model_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_goal?: string | null
+          assessment_snapshot?: Json | null
+          athlete_id?: string
+          coach_id?: string
+          created_at?: string
+          dominant_profile?: Json | null
+          flags?: Json | null
+          id?: string
+          macrocycles?: Json | null
+          master_rules?: Json | null
+          mesocycles?: Json | null
+          micro_rules?: Json | null
+          output_json?: Json | null
+          running_distance?: string | null
+          scores?: Json | null
+          selected_model_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       periodization_history: {
         Row: {
           change_description: string | null
@@ -3110,6 +3188,188 @@ export type Database = {
             columns: ["user_profile_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_treino_macro_rules: {
+        Row: {
+          aluno_id: string
+          carga_inicial_percent: number | null
+          created_at: string
+          deload_planned: boolean
+          density_control: boolean
+          descanso_acessorios: string | null
+          descanso_compostos: string | null
+          descanso_core: string | null
+          id: string
+          macro_number: number
+          macro_objetivo: string
+          professor_id: string
+          progression_type: string
+          reps_range: string
+          rpe_target: number
+          status: string
+          updated_at: string
+          volume_locked: boolean
+          weekly_frequency: number
+        }
+        Insert: {
+          aluno_id: string
+          carga_inicial_percent?: number | null
+          created_at?: string
+          deload_planned?: boolean
+          density_control?: boolean
+          descanso_acessorios?: string | null
+          descanso_compostos?: string | null
+          descanso_core?: string | null
+          id?: string
+          macro_number: number
+          macro_objetivo?: string
+          professor_id: string
+          progression_type?: string
+          reps_range?: string
+          rpe_target?: number
+          status?: string
+          updated_at?: string
+          volume_locked?: boolean
+          weekly_frequency?: number
+        }
+        Update: {
+          aluno_id?: string
+          carga_inicial_percent?: number | null
+          created_at?: string
+          deload_planned?: boolean
+          density_control?: boolean
+          descanso_acessorios?: string | null
+          descanso_compostos?: string | null
+          descanso_core?: string | null
+          id?: string
+          macro_number?: number
+          macro_objetivo?: string
+          professor_id?: string
+          progression_type?: string
+          reps_range?: string
+          rpe_target?: number
+          status?: string
+          updated_at?: string
+          volume_locked?: boolean
+          weekly_frequency?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_treino_muscle_volume: {
+        Row: {
+          created_at: string
+          distribution_json: Json | null
+          id: string
+          is_emphasis: boolean
+          macro_rules_id: string
+          muscle_group: string
+          weekly_sets: number
+        }
+        Insert: {
+          created_at?: string
+          distribution_json?: Json | null
+          id?: string
+          is_emphasis?: boolean
+          macro_rules_id: string
+          muscle_group: string
+          weekly_sets?: number
+        }
+        Update: {
+          created_at?: string
+          distribution_json?: Json | null
+          id?: string
+          is_emphasis?: boolean
+          macro_rules_id?: string
+          muscle_group?: string
+          weekly_sets?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_treino_muscle_volume_macro_rules_id_fkey"
+            columns: ["macro_rules_id"]
+            isOneToOne: false
+            referencedRelation: "smart_treino_macro_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_treino_profiles: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          dominant_profile: Database["public"]["Enums"]["athlete_profile_type"]
+          gargalos_tecnicos: string[] | null
+          id: string
+          modalidade_principal: string | null
+          professor_id: string
+          riscos_estruturais: string[] | null
+          score_global: number | null
+          secondary_profile:
+            | Database["public"]["Enums"]["athlete_profile_type"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          dominant_profile?: Database["public"]["Enums"]["athlete_profile_type"]
+          gargalos_tecnicos?: string[] | null
+          id?: string
+          modalidade_principal?: string | null
+          professor_id: string
+          riscos_estruturais?: string[] | null
+          score_global?: number | null
+          secondary_profile?:
+            | Database["public"]["Enums"]["athlete_profile_type"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          dominant_profile?: Database["public"]["Enums"]["athlete_profile_type"]
+          gargalos_tecnicos?: string[] | null
+          id?: string
+          modalidade_principal?: string | null
+          professor_id?: string
+          riscos_estruturais?: string[] | null
+          score_global?: number | null
+          secondary_profile?:
+            | Database["public"]["Enums"]["athlete_profile_type"]
+            | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
         ]
@@ -6004,6 +6264,16 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
+      athlete_profile_type:
+        | "forca_mmss"
+        | "forca_mmii"
+        | "resistencia_mmss"
+        | "resistencia_mmii"
+        | "core_estabilidade"
+        | "mobilidade"
+        | "potencia"
+        | "cardio"
+        | "equilibrado"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       entity_status: "active" | "inactive" | "pending" | "archived" | "deleted"
       event_type:
@@ -6181,6 +6451,17 @@ export const Constants = {
         "in_progress",
         "completed",
         "cancelled",
+      ],
+      athlete_profile_type: [
+        "forca_mmss",
+        "forca_mmii",
+        "resistencia_mmss",
+        "resistencia_mmii",
+        "core_estabilidade",
+        "mobilidade",
+        "potencia",
+        "cardio",
+        "equilibrado",
       ],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       entity_status: ["active", "inactive", "pending", "archived", "deleted"],
