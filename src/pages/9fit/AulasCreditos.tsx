@@ -868,18 +868,35 @@ export default function AulasCreditos() {
         </DialogContent>
       </Dialog>
 
-      {/* Vacation Dialog */}
+      {/* Reschedule / Vacation Dialog */}
       <Dialog open={showVacationDialog} onOpenChange={setShowVacationDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Palmtree className="w-5 h-5" />Solicitar Férias / Troca</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><RefreshCw className="w-5 h-5" />Solicitar Troca de Horário / Férias</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Select appointments to reschedule */}
+            {myAppointments.length > 0 && (
+              <div className="space-y-2">
+                <Label>Selecione a(s) aula(s) para trocar (opcional)</Label>
+                <div className="max-h-40 overflow-y-auto space-y-1 bg-muted rounded-lg p-2">
+                  {myAppointments.map((apt) => (
+                    <label key={apt.id} className="flex items-center gap-2 p-2 rounded hover:bg-background cursor-pointer text-sm">
+                      <input type="checkbox" className="accent-primary" value={apt.id} />
+                      <span className="text-foreground">{apt.title}</span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {format(new Date(apt.scheduled_at), "dd/MM HH:mm")}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Data Início</Label><Input type="date" value={vacationStart} onChange={(e) => setVacationStart(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Data Fim</Label><Input type="date" value={vacationEnd} onChange={(e) => setVacationEnd(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Nova Data Início</Label><Input type="date" value={vacationStart} onChange={(e) => setVacationStart(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Nova Data Fim</Label><Input type="date" value={vacationEnd} onChange={(e) => setVacationEnd(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>Motivo (opcional)</Label><Textarea value={vacationReason} onChange={(e) => setVacationReason(e.target.value)} placeholder="Ex: Viagem..." rows={3} /></div>
+            <div className="space-y-2"><Label>Motivo / Novo horário desejado</Label><Textarea value={vacationReason} onChange={(e) => setVacationReason(e.target.value)} placeholder="Ex: Gostaria de trocar para terças às 10h..." rows={3} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowVacationDialog(false)}>Cancelar</Button>
