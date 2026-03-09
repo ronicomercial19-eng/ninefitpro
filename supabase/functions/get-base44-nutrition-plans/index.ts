@@ -7,20 +7,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+function apiResponse(data: any, status = 200) {
+  return new Response(JSON.stringify({
+    success: status < 400,
+    ...(status < 400 ? { data } : { error: data }),
+    metadata: { timestamp: new Date().toISOString(), version: 'v1' }
+  }), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
+
+function apiError(code: string, message: string, status = 500) {
+  return apiResponse({ code, message }, status);
+}
+
 const BASE44_API_KEY = Deno.env.get('BASE44_API_KEY');
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
-  // Auth check - require authenticated user
   const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
+  if (!authHeader?.startsWith('Bearer ')) return apiError('UNAUTHORIZED', 'Missing authorization', 401);
 
   const authClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -28,11 +33,7 @@ serve(async (req) => {
     { global: { headers: { Authorization: authHeader } } }
   );
   const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace('Bearer ', ''));
-  if (claimsError || !claimsData?.claims) {
-    return new Response(JSON.stringify({ error: 'Invalid token' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
+  if (claimsError || !claimsData?.claims) return apiError('INVALID_TOKEN', 'Invalid token', 401);
 
   try {
     const { userEmail } = await req.json();
@@ -43,20 +44,13 @@ serve(async (req) => {
       headers: { 'api_key': BASE44_API_KEY!, 'Content-Type': 'application/json' }
     });
 
-    if (!response.ok) {
-      throw new Error(`Base44 API error: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Base44 API error: ${response.status}`);
 
     const nutritionPlans = await response.json();
     const activePlans = nutritionPlans.filter((plan: any) => plan.is_active === true);
 
-    return new Response(JSON.stringify({ success: true, plans: activePlans }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ plans: activePlans, count: activePlans.length });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage, success: false }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return apiError('FETCH_ERROR', error instanceof Error ? error.message : 'Unknown error', 500);
   }
 });

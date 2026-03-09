@@ -2,8 +2,21 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+/** Standardized API response */
+function apiResponse(data: any, status = 200) {
+  return new Response(JSON.stringify({
+    success: status < 400,
+    ...(status < 400 ? { data } : { error: data }),
+    metadata: { timestamp: new Date().toISOString(), version: 'v1' }
+  }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
+function apiError(code: string, message: string, status = 500) {
+  return apiResponse({ code, message }, status);
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -11,7 +24,7 @@ serve(async (req) => {
   try {
     const { type, data, messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'LOVABLE_API_KEY not configured', 500);
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -98,10 +111,7 @@ Seja profissional, direto e baseado em evidências científicas. Responda em por
       }
 
       default:
-        return new Response(JSON.stringify({ error: "Tipo inválido" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return apiError('INVALID_TYPE', `Tipo inválido: ${type}`, 400);
     }
 
     const aiMessages = [
@@ -115,32 +125,14 @@ Seja profissional, direto e baseado em evidências científicas. Responda em por
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: aiMessages,
-        stream,
-      }),
+      body: JSON.stringify({ model: "google/gemini-3-flash-preview", messages: aiMessages, stream }),
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos no workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (response.status === 429) return apiError('RATE_LIMITED', 'Limite de requisições excedido. Tente novamente em alguns instantes.', 429);
+      if (response.status === 402) return apiError('CREDITS_EXHAUSTED', 'Créditos de IA esgotados. Adicione créditos no workspace.', 402);
+      console.error("AI gateway error:", response.status, await response.text());
+      return apiError('AI_SERVICE_ERROR', 'Erro no serviço de IA', 500);
     }
 
     if (stream) {
@@ -152,14 +144,9 @@ Seja profissional, direto e baseado em evidências científicas. Responda em por
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
 
-    return new Response(JSON.stringify({ content }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return apiResponse({ content });
   } catch (e) {
     console.error("ai-coach error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return apiError('INTERNAL_ERROR', e instanceof Error ? e.message : 'Erro desconhecido', 500);
   }
 });
