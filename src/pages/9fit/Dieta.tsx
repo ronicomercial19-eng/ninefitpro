@@ -87,6 +87,25 @@ function EmptyDieta() {
   );
 }
 
+// Inject mobile viewport meta tag into HTML content
+function injectMobileViewport(html: string): string {
+  const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">';
+  const mobileStyles = `<style>
+    * { box-sizing: border-box; }
+    body { max-width: 100vw !important; overflow-x: hidden !important; margin: 0; padding: 8px; }
+    table { width: 100% !important; max-width: 100vw !important; table-layout: fixed !important; font-size: 12px !important; }
+    td, th { word-wrap: break-word !important; overflow-wrap: break-word !important; padding: 4px !important; }
+    img { max-width: 100% !important; height: auto !important; }
+  </style>`;
+  
+  if (html.includes('<head>')) {
+    return html.replace('<head>', `<head>${viewportTag}${mobileStyles}`);
+  } else if (html.includes('<html')) {
+    return html.replace(/<html([^>]*)>/i, `<html$1><head>${viewportTag}${mobileStyles}</head>`);
+  }
+  return `<!DOCTYPE html><html><head>${viewportTag}${mobileStyles}</head><body>${html}</body></html>`;
+}
+
 export default function NineFitDieta() {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -360,31 +379,31 @@ export default function NineFitDieta() {
 
       {/* Fullscreen Diet Viewer Dialog */}
       <Dialog open={!!selectedDiet} onOpenChange={() => setSelectedDiet(null)}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full p-0 overflow-hidden">
+        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-white rounded-none border-none">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-background">
-            <div>
-              <h3 className="font-bold text-lg">{selectedDiet?.diet_name}</h3>
-              <p className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between p-3 border-b bg-background flex-shrink-0">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-sm truncate">{selectedDiet?.diet_name}</h3>
+              <p className="text-xs text-muted-foreground">
                 {selectedDiet?.diet_type === 'link' ? 'Link externo' : 'Plano alimentar'}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {selectedDiet?.diet_type === 'link' && selectedDiet.diet_file_url && (
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="ghost" size="icon" className="h-8 w-8">
                   <a 
                     href={selectedDiet.diet_file_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Abrir em Nova Aba
+                    <ExternalLink className="w-4 h-4" />
                   </a>
                 </Button>
               )}
               <Button 
                 variant="ghost" 
                 size="icon"
+                className="h-8 w-8"
                 onClick={() => setSelectedDiet(null)}
               >
                 <X className="w-5 h-5" />
@@ -393,7 +412,7 @@ export default function NineFitDieta() {
           </div>
           
           {/* Content */}
-          <div className="flex-1 overflow-auto h-[calc(95vh-80px)]">
+          <div className="flex-1 overflow-auto" style={{ height: 'calc(100dvh - 60px)' }}>
             {loadingContent ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -403,8 +422,7 @@ export default function NineFitDieta() {
                 <Globe className="w-20 h-20 text-muted-foreground mb-6" />
                 <h3 className="text-xl font-bold mb-2">Link Externo</h3>
                 <p className="text-muted-foreground mb-6 max-w-md">
-                  Este plano alimentar está hospedado em um link externo. 
-                  Clique no botão abaixo para visualizar.
+                  Este plano alimentar está hospedado em um link externo.
                 </p>
                 <Button asChild size="lg">
                   <a 
@@ -419,7 +437,7 @@ export default function NineFitDieta() {
               </div>
             ) : (
               <iframe
-                srcDoc={dietContent}
+                srcDoc={injectMobileViewport(dietContent)}
                 className="w-full h-full border-0"
                 sandbox="allow-same-origin"
                 title="Plano Alimentar"

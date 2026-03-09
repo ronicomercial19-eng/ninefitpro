@@ -77,16 +77,6 @@ interface FixedSchedule {
   time: string;
 }
 
-interface ClassSchedule {
-  id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  max_slots: number;
-  class_name: string;
-  instructor: string | null;
-  is_active: boolean;
-}
 
 const WHATSAPP_SAC = '5511988328351'; // SAC number
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -111,7 +101,7 @@ export default function AulasCreditos() {
   const [scheduleType, setScheduleType] = useState('aula');
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [scheduleSaving, setScheduleSaving] = useState(false);
-  const [classSchedules, setClassSchedules] = useState<ClassSchedule[]>([]);
+  
 
   // Dialogs
   const [showVacationDialog, setShowVacationDialog] = useState(false);
@@ -162,16 +152,9 @@ export default function AulasCreditos() {
     fetchCredits();
     fetchMyAppointments();
     fetchFixedSchedule();
-    fetchClassSchedules();
+    
   }, [currentMonth, user, athleteId]);
 
-  const fetchClassSchedules = async () => {
-    const { data } = await supabase
-      .from('class_schedules')
-      .select('*')
-      .eq('is_active', true);
-    if (data) setClassSchedules(data as any);
-  };
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -253,28 +236,6 @@ export default function AulasCreditos() {
   const usedCredits = credits?.used_credits || 0;
   const progressPercent = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
 
-  // Check if a date/time is in the class_schedules grid
-  const isInGrid = (date: Date, time: string): ClassSchedule | null => {
-    const dayOfWeek = getDay(date);
-    return classSchedules.find(s => 
-      s.day_of_week === dayOfWeek && 
-      s.start_time <= time + ':00' && 
-      s.end_time >= time + ':00'
-    ) || null;
-  };
-
-  // Count existing appointments for a schedule slot on a given date
-  const countBookingsForSlot = async (date: Date, scheduleId: string): Promise<number> => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const { count } = await supabase
-      .from('appointments')
-      .select('id', { count: 'exact', head: true })
-      .gte('scheduled_at', `${dateStr}T00:00:00`)
-      .lte('scheduled_at', `${dateStr}T23:59:59`)
-      .neq('status', 'cancelled');
-    return count || 0;
-  };
-
   const handleSmartSchedule = async () => {
     if (!athleteId || !user) { toast.error("Faça login primeiro"); return; }
     if (scheduleSelectedDates.length === 0) { toast.error("Selecione ao menos um dia"); return; }
@@ -282,95 +243,36 @@ export default function AulasCreditos() {
 
     setScheduleSaving(true);
     try {
-      const inGridDates: Date[] = [];
-      const outOfGridDates: Date[] = [];
+      // Get the coach_id for this athlete
+      const { data: athleteData } = await supabase
+        .from('athletes')
+        .select('coach_id')
+        .eq('id', athleteId)
+        .single();
+      
+      const teacherId = athleteData?.coach_id || user.id;
 
-      // Classify each selected date
-      for (const date of scheduleSelectedDates) {
-        const schedule = isInGrid(date, scheduleTime);
-        if (schedule) {
-          // Check if there are slots available
-          const existing = await countBookingsForSlot(date, schedule.id);
-          if (existing < schedule.max_slots) {
-            inGridDates.push(date);
-          } else {
-            outOfGridDates.push(date);
-          }
-        } else {
-          outOfGridDates.push(date);
-        }
-      }
+      // All dates are directly confirmed — no grid check
+      const inserts = scheduleSelectedDates.map(d => ({
+        student_id: athleteId,
+        teacher_id: teacherId,
+        title: `${scheduleType === 'aula' ? 'Aula' : scheduleType === 'avaliacao_fisica' ? 'Avaliação' : 'Consultoria'} - ${athleteName}`,
+        scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
+        status: 'confirmed' as const,
+        appointment_type: scheduleType,
+        duration: 60,
+        description: scheduleNotes || null,
+      }));
 
-      // Auto-confirm in-grid dates
-      if (inGridDates.length > 0) {
-        // Get the coach_id for this athlete
-        const { data: athleteData } = await supabase
-          .from('athletes')
-          .select('coach_id')
-          .eq('id', athleteId)
-          .single();
-        
-        const teacherId = athleteData?.coach_id || user.id;
+      const { error } = await supabase.from('appointments').insert(inserts as any);
+      if (error) throw error;
 
-        const inserts = inGridDates.map(d => ({
-          student_id: athleteId,
-          teacher_id: teacherId,
-          title: `Aula - ${athleteName}`,
-          scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
-          status: 'confirmed' as const,
-          appointment_type: scheduleType,
-          duration: 60,
-          description: scheduleNotes || null,
-        }));
+      // Debit credits
+      await supabase.from('student_credits').update({
+        used_credits: usedCredits + scheduleSelectedDates.length
+      }).eq('student_id', athleteId);
 
-        const { error } = await supabase.from('appointments').insert(inserts as any);
-        if (error) throw error;
-
-        // Debit credits
-        await supabase.from('student_credits').update({
-          used_credits: usedCredits + inGridDates.length
-        }).eq('student_id', athleteId);
-
-        toast.success(`${inGridDates.length} aula(s) confirmada(s) automaticamente!`);
-      }
-
-      // Redirect to WhatsApp for out-of-grid dates
-      if (outOfGridDates.length > 0) {
-        const datesText = outOfGridDates
-          .map(d => format(d, "dd/MM (EEE)", { locale: ptBR }))
-          .join(', ');
-        
-        const msg = encodeURIComponent(
-          `Olá, sou ${athleteName}.\n\nGostaria de agendar aula nos seguintes horários:\n📅 ${datesText}\n⏰ ${scheduleTime}\n\nObrigado!`
-        );
-        
-        toast.info(`${outOfGridDates.length} horário(s) fora da grade. Redirecionando para o WhatsApp...`, { duration: 3000 });
-        
-        // Also create pending appointments for tracking
-        const { data: athleteForPending } = await supabase
-          .from('athletes')
-          .select('coach_id')
-          .eq('id', athleteId)
-          .single();
-        const pendingTeacherId = athleteForPending?.coach_id || user.id;
-
-        const pendingInserts = outOfGridDates.map(d => ({
-          student_id: athleteId,
-          teacher_id: pendingTeacherId,
-          title: `Solicitação - ${athleteName}`,
-          scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
-          status: 'scheduled' as const,
-          appointment_type: scheduleType,
-          duration: 60,
-          description: `[VIA WHATSAPP] ${scheduleNotes || ''}`.trim(),
-        }));
-
-        await supabase.from('appointments').insert(pendingInserts as any);
-
-        setTimeout(() => {
-          window.open(`https://wa.me/${WHATSAPP_SAC}?text=${msg}`, '_blank');
-        }, 1000);
-      }
+      toast.success(`${scheduleSelectedDates.length} agendamento(s) confirmado(s)!`);
 
       setShowScheduleDialog(false);
       setScheduleSelectedDates([]);
@@ -895,7 +797,6 @@ export default function AulasCreditos() {
                   {daysInMonth.map((day) => {
                     const isSelectedForSchedule = scheduleSelectedDates.some(d => isSameDay(d, day));
                     const isPast = isBefore(day, new Date()) && !isSameDay(day, new Date());
-                    const gridMatch = isInGrid(day, scheduleTime);
                     
                     return (
                       <button
@@ -907,19 +808,15 @@ export default function AulasCreditos() {
                             ? "bg-primary text-primary-foreground font-bold" 
                             : isPast 
                               ? "opacity-30 cursor-not-allowed" 
-                              : gridMatch 
-                                ? "bg-green-500/10 hover:bg-green-500/20 text-foreground" 
-                                : "hover:bg-muted/80 text-foreground"
+                              : "hover:bg-muted/80 text-foreground"
                         }`}
                       >
                         {format(day, "d")}
-                        {gridMatch && !isSelectedForSchedule && <div className="w-1 h-1 rounded-full bg-green-500 mt-0.5" />}
                       </button>
                     );
                   })}
                 </div>
                 <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> Na grade</span>
                   <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Selecionado</span>
                 </div>
               </div>
@@ -931,12 +828,10 @@ export default function AulasCreditos() {
               <Textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder="Ex: Prefiro horário da manhã..." rows={2} />
             </div>
 
-            {/* Info about logic */}
             {scheduleSelectedDates.length > 0 && (
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-400">
-                <p className="font-medium mb-1">ℹ️ Como funciona:</p>
-                <p>• Horários <strong>disponíveis na grade</strong> serão confirmados automaticamente</p>
-                <p>• Horários <strong>fora da grade</strong> serão enviados via WhatsApp para o SAC</p>
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs text-primary">
+                <p className="font-medium mb-1">✅ Agendamento livre</p>
+                <p>Todos os horários selecionados serão confirmados automaticamente.</p>
               </div>
             )}
 
@@ -956,18 +851,35 @@ export default function AulasCreditos() {
         </DialogContent>
       </Dialog>
 
-      {/* Vacation Dialog */}
+      {/* Reschedule / Vacation Dialog */}
       <Dialog open={showVacationDialog} onOpenChange={setShowVacationDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Palmtree className="w-5 h-5" />Solicitar Férias / Troca</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><RefreshCw className="w-5 h-5" />Solicitar Troca de Horário / Férias</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Select appointments to reschedule */}
+            {myAppointments.length > 0 && (
+              <div className="space-y-2">
+                <Label>Selecione a(s) aula(s) para trocar (opcional)</Label>
+                <div className="max-h-40 overflow-y-auto space-y-1 bg-muted rounded-lg p-2">
+                  {myAppointments.map((apt) => (
+                    <label key={apt.id} className="flex items-center gap-2 p-2 rounded hover:bg-background cursor-pointer text-sm">
+                      <input type="checkbox" className="accent-primary" value={apt.id} />
+                      <span className="text-foreground">{apt.title}</span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {format(new Date(apt.scheduled_at), "dd/MM HH:mm")}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Data Início</Label><Input type="date" value={vacationStart} onChange={(e) => setVacationStart(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Data Fim</Label><Input type="date" value={vacationEnd} onChange={(e) => setVacationEnd(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Nova Data Início</Label><Input type="date" value={vacationStart} onChange={(e) => setVacationStart(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Nova Data Fim</Label><Input type="date" value={vacationEnd} onChange={(e) => setVacationEnd(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>Motivo (opcional)</Label><Textarea value={vacationReason} onChange={(e) => setVacationReason(e.target.value)} placeholder="Ex: Viagem..." rows={3} /></div>
+            <div className="space-y-2"><Label>Motivo / Novo horário desejado</Label><Textarea value={vacationReason} onChange={(e) => setVacationReason(e.target.value)} placeholder="Ex: Gostaria de trocar para terças às 10h..." rows={3} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowVacationDialog(false)}>Cancelar</Button>
@@ -999,7 +911,7 @@ export default function AulasCreditos() {
               </div>
               <div>
                 <p className="font-bold text-foreground">Agendar Aula</p>
-                <p className="text-muted-foreground">Selecione dias no calendário. Horários na grade são confirmados automaticamente. Fora da grade, enviamos para o WhatsApp do SAC.</p>
+                <p className="text-muted-foreground">Selecione dias e horário no calendário. Todos os agendamentos são confirmados automaticamente.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">

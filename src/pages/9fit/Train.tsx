@@ -23,6 +23,28 @@ interface TrainingAssignment {
   training_data?: any;
 }
 
+// Inject mobile viewport meta tag into HTML content for proper rendering
+function injectMobileViewport(html: string): string {
+  const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">';
+  const mobileStyles = `<style>
+    * { box-sizing: border-box; }
+    body { max-width: 100vw !important; overflow-x: hidden !important; margin: 0; padding: 8px; }
+    table { width: 100% !important; max-width: 100vw !important; table-layout: fixed !important; font-size: 12px !important; }
+    td, th { word-wrap: break-word !important; overflow-wrap: break-word !important; padding: 4px !important; }
+    img { max-width: 100% !important; height: auto !important; }
+    pre { white-space: pre-wrap !important; word-break: break-all !important; }
+  </style>`;
+  
+  if (html.includes('<head>')) {
+    return html.replace('<head>', `<head>${viewportTag}${mobileStyles}`);
+  } else if (html.includes('<HEAD>')) {
+    return html.replace('<HEAD>', `<HEAD>${viewportTag}${mobileStyles}`);
+  } else if (html.includes('<html')) {
+    return html.replace(/<html([^>]*)>/i, `<html$1><head>${viewportTag}${mobileStyles}</head>`);
+  }
+  return `<!DOCTYPE html><html><head>${viewportTag}${mobileStyles}</head><body>${html}</body></html>`;
+}
+
 export default function NineFitTrain() {
   const { athleteId, loading: athleteLoading } = useAthleteId();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -322,10 +344,10 @@ export default function NineFitTrain() {
         setSelectedTraining(null);
         setHtmlContent(null);
       }}>
-        <DialogContent className="max-w-[100vw] w-full h-[100vh] p-0 m-0 bg-white rounded-none">
+        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-white rounded-none border-none">
           {/* Custom Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-background border-b border-border">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center justify-between px-3 py-2 bg-background border-b border-border flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               {selectedTraining && getTrainingIcon(selectedTraining)}
               <div className="min-w-0 flex-1">
                 <DialogTitle className="text-sm font-bold text-foreground truncate">
@@ -336,13 +358,13 @@ export default function NineFitTrain() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {selectedTraining?.html_file_url && (
                 <Button 
                   variant="ghost" 
                   size="icon"
                   onClick={() => window.open(selectedTraining.html_file_url, '_blank')}
-                  className="text-foreground hover:bg-muted"
+                  className="text-foreground hover:bg-muted h-8 w-8"
                   title="Abrir em nova aba"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -355,15 +377,15 @@ export default function NineFitTrain() {
                   setSelectedTraining(null);
                   setHtmlContent(null);
                 }}
-                className="text-foreground hover:bg-muted"
+                className="text-foreground hover:bg-muted h-8 w-8"
               >
                 <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
           
-          {/* Content Area - Full Height */}
-          <div className="flex-1 w-full h-[calc(100vh-120px)] bg-white overflow-hidden">
+          {/* Content Area - Full Height with mobile viewport fix */}
+          <div className="flex-1 w-full bg-white overflow-hidden" style={{ height: 'calc(100dvh - 100px)' }}>
             {loadingContent ? (
               <div className="flex items-center justify-center h-full bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -373,11 +395,11 @@ export default function NineFitTrain() {
               </div>
             ) : htmlContent ? (
               <iframe
-                srcDoc={htmlContent}
+                srcDoc={injectMobileViewport(htmlContent)}
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 className="w-full h-full border-0"
                 title={selectedTraining?.training_name || "Treino"}
-                style={{ minHeight: 'calc(100vh - 120px)' }}
+                style={{ width: '100%', height: '100%' }}
               />
             ) : selectedTraining?.html_file_url ? (
               <iframe
@@ -385,7 +407,7 @@ export default function NineFitTrain() {
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 className="w-full h-full border-0"
                 title={selectedTraining.training_name}
-                style={{ minHeight: 'calc(100vh - 120px)' }}
+                style={{ width: '100%', height: '100%' }}
               />
             ) : (
               <div className="flex items-center justify-center h-full bg-background">
