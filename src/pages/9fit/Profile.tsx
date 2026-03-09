@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { 
-  User, Settings, Bell, Shield, CreditCard, HelpCircle, LogOut,
+  User, Settings, Bell, CreditCard, HelpCircle, LogOut,
   ChevronRight, Camera, Flame, Dumbbell, Calendar, Loader2, Edit3, KeyRound, Eye, EyeOff,
-  Star, Utensils
+  Star, Utensils, Target, Wallet
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface UserStats {
   calories: number;
@@ -34,6 +36,20 @@ interface AthleteProfile {
   nivel?: string;
 }
 
+interface PeriodizationInfo {
+  id: string;
+  model_id: string;
+  status: string;
+  match_percentage: number | null;
+  notes: string | null;
+}
+
+interface PaymentInfo {
+  total_credits: number;
+  used_credits: number;
+  expires_at: string | null;
+}
+
 const menuItems = [
   { icon: Utensils, label: "Minha Dieta", action: "navigate", path: "/9fit/dieta" },
   { icon: Bell, label: "Notificações", action: "navigate", path: "/9fit/mensagens" },
@@ -46,6 +62,8 @@ export default function NineFitProfile() {
   const [loading, setLoading] = useState(true);
   const [athleteProfile, setAthleteProfile] = useState<AthleteProfile | null>(null);
   const [stats, setStats] = useState<UserStats>({ calories: 0, workouts: 0, streak: 0, totalXP: 0, level: 1 });
+  const [periodization, setPeriodization] = useState<PeriodizationInfo | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
 
   // Password change state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -70,13 +88,14 @@ export default function NineFitProfile() {
       if (!error && athleteData) {
         setAthleteProfile(athleteData);
         
-        // Fetch workout progress
-        const { data: progressData } = await supabase
-          .from("workout_progress")
-          .select("*")
-          .eq("aluno_id", athleteData.id);
+        // Fetch workout progress, periodization, credits in parallel
+        const [progressRes, periodRes, creditsRes] = await Promise.all([
+          supabase.from("workout_progress").select("*").eq("aluno_id", athleteData.id),
+          supabase.from("athlete_periodizations").select("id, periodization_model_id, status, match_percentage, notes").eq("athlete_id", athleteData.id).eq("status", "active").maybeSingle(),
+          supabase.from("student_credits").select("total_credits, used_credits, expires_at").eq("student_id", athleteData.id).maybeSingle(),
+        ]);
 
-        const totalWorkouts = progressData?.length || 0;
+        const totalWorkouts = progressRes.data?.length || 0;
         setStats({
           calories: totalWorkouts * 150,
           workouts: totalWorkouts,
@@ -84,6 +103,20 @@ export default function NineFitProfile() {
           totalXP: athleteData.total_xp || 0,
           level: athleteData.level || 1
         });
+
+        if (periodRes.data) {
+          setPeriodization({
+            id: periodRes.data.id,
+            model_id: periodRes.data.periodization_model_id,
+            status: periodRes.data.status || 'active',
+            match_percentage: periodRes.data.match_percentage,
+            notes: periodRes.data.notes,
+          });
+        }
+
+        if (creditsRes.data) {
+          setPaymentInfo(creditsRes.data);
+        }
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -97,24 +130,15 @@ export default function NineFitProfile() {
   };
 
   const handleChangePassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("As senhas não coincidem");
-      return;
-    }
+    if (!newPassword || newPassword.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres"); return; }
+    if (newPassword !== confirmPassword) { toast.error("As senhas não coincidem"); return; }
     setChangingPassword(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-
-      // Also update athlete record
       if (athleteProfile) {
         await supabase.from('athletes').update({ password_changed: true, auto_password_temp: null }).eq('id', athleteProfile.id);
       }
-
       toast.success("Senha alterada com sucesso!");
       setShowPasswordDialog(false);
       setNewPassword('');
@@ -128,6 +152,8 @@ export default function NineFitProfile() {
 
   const displayName = athleteProfile?.name || profile?.full_name || user?.email?.split("@")[0] || "Usuário";
   const displayEmail = user?.email || "";
+  const availableCredits = paymentInfo ? paymentInfo.total_credits - paymentInfo.used_credits : 0;
+  const creditPercent = paymentInfo && paymentInfo.total_credits > 0 ? (paymentInfo.used_credits / paymentInfo.total_credits) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -199,6 +225,85 @@ export default function NineFitProfile() {
             </div>
           </div>
 
+          {/* Meu Planejamento */}
+          <div className="px-4 mb-6">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+              <Target className="w-4 h-4 text-primary" />
+              Meu Planejamento
+            </h3>
+            <div className="bg-card border border-border rounded-sm overflow-hidden">
+              {periodization ? (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Periodização Ativa</p>
+                      <p className="text-xs text-muted-foreground">Compatibilidade: {periodization.match_percentage || 0}%</p>
+                    </div>
+                    <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Ativo</Badge>
+                  </div>
+                  {periodization.match_percentage && (
+                    <Progress value={periodization.match_percentage} className="h-2" />
+                  )}
+                  {periodization.notes && (
+                    <p className="text-xs text-muted-foreground">{periodization.notes}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="p-4 text-center">
+                  <Target className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhuma periodização ativa</p>
+                  <p className="text-xs text-muted-foreground">Seu professor irá definir seu planejamento</p>
+                </div>
+              )}
+              {athleteProfile?.objetivo && (
+                <div className="border-t border-border p-4 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Objetivo</span>
+                  <span className="text-sm font-medium text-primary capitalize">{athleteProfile.objetivo}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Pagamentos / Créditos */}
+          <div className="px-4 mb-6">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-primary" />
+              Pagamentos
+            </h3>
+            <div className="bg-card border border-border rounded-sm overflow-hidden">
+              {paymentInfo ? (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Créditos de Aula</p>
+                      <p className="text-xs text-muted-foreground">
+                        {paymentInfo.used_credits}/{paymentInfo.total_credits} usados
+                      </p>
+                    </div>
+                    <span className="text-2xl font-black text-primary">{availableCredits}</span>
+                  </div>
+                  <Progress value={creditPercent} className="h-2" />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Restantes: {availableCredits}</span>
+                    {paymentInfo.expires_at && (
+                      <span>Expira: {new Date(paymentInfo.expires_at).toLocaleDateString('pt-BR')}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-xs text-green-500 font-medium">Plano Ativo</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center">
+                  <CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhum plano ativo</p>
+                  <p className="text-xs text-muted-foreground">Entre em contato com seu professor</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Personal Info */}
           {athleteProfile && (
             <div className="px-4 mb-6">
@@ -216,12 +321,6 @@ export default function NineFitProfile() {
                     <span className="text-sm font-medium text-foreground">{athleteProfile.altura_cm} cm</span>
                   </div>
                 )}
-                {athleteProfile.objetivo && (
-                  <div className="flex items-center justify-between p-4">
-                    <span className="text-sm text-muted-foreground">Objetivo</span>
-                    <span className="text-sm font-medium text-primary capitalize">{athleteProfile.objetivo}</span>
-                  </div>
-                )}
                 {athleteProfile.nivel && (
                   <div className="flex items-center justify-between p-4">
                     <span className="text-sm text-muted-foreground">Nível</span>
@@ -232,14 +331,11 @@ export default function NineFitProfile() {
             </div>
           )}
 
-          {/* Security - Change Password */}
+          {/* Security */}
           <div className="px-4 mb-6">
             <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Segurança</h3>
             <div className="bg-card border border-border rounded-sm overflow-hidden">
-              <button
-                onClick={() => setShowPasswordDialog(true)}
-                className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors"
-              >
+              <button onClick={() => setShowPasswordDialog(true)} className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors">
                 <KeyRound className="w-5 h-5 text-muted-foreground" />
                 <span className="flex-1 text-left text-sm font-medium text-foreground">Alterar Senha</span>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -275,7 +371,7 @@ export default function NineFitProfile() {
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">9FIT PRO v2.0.0</p>
       </div>
 
-      {/* Password Change Dialog */}
+      {/* Password Dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent>
           <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="w-5 h-5" />Alterar Senha</DialogTitle></DialogHeader>

@@ -1,27 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, parseISO, isAfter, isBefore, addDays, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, parseISO, isAfter, isBefore, addDays, getDay, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
-  CalendarDays, 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
-  MapPin, 
-  Users, 
-  Check, 
-  X, 
-  Loader2, 
-  CreditCard,
-  CheckCircle,
-  AlertCircle,
-  Calendar,
-  Palmtree,
-  RefreshCw,
-  HelpCircle,
-  ArrowLeft,
-  MessageCircle,
-  Plus,
-  Send
+  CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users, Check, X, Loader2,
+  CreditCard, CheckCircle, AlertCircle, Calendar, Palmtree, RefreshCw, HelpCircle,
+  ArrowLeft, MessageCircle, Plus, Send
 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,8 +60,7 @@ interface FixedSchedule {
   time: string;
 }
 
-
-const WHATSAPP_SAC = '5511988328351'; // SAC number
+const WHATSAPP_SAC = '5511988328351';
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export default function AulasCreditos() {
@@ -101,7 +83,13 @@ export default function AulasCreditos() {
   const [scheduleType, setScheduleType] = useState('aula');
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [scheduleSaving, setScheduleSaving] = useState(false);
-  
+
+  // Cancel request dialog
+  const [showCancelRequestDialog, setShowCancelRequestDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [cancelTargetType, setCancelTargetType] = useState<'booking' | 'appointment'>('booking');
+  const [submittingCancel, setSubmittingCancel] = useState(false);
 
   // Dialogs
   const [showVacationDialog, setShowVacationDialog] = useState(false);
@@ -152,9 +140,7 @@ export default function AulasCreditos() {
     fetchCredits();
     fetchMyAppointments();
     fetchFixedSchedule();
-    
   }, [currentMonth, user, athleteId]);
-
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -203,11 +189,11 @@ export default function AulasCreditos() {
   };
 
   const fetchFixedSchedule = async () => {
-    if (!athleteId) return;
+    if (!athleteId || !user) return;
     const { data } = await supabase
       .from("class_bookings")
       .select("booking_time, class_id, gym_classes(class_datetime)")
-      .or(`user_id.eq.${user?.id},user_email.eq.${user?.email}`)
+      .or(`user_id.eq.${user.id},user_email.eq.${user.email}`)
       .eq("status", "confirmed")
       .order("booking_time", { ascending: false })
       .limit(20);
@@ -236,14 +222,13 @@ export default function AulasCreditos() {
   const usedCredits = credits?.used_credits || 0;
   const progressPercent = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
 
+  // ===== SCHEDULING: Does NOT deduct credits - credits are deducted on check-in =====
   const handleSmartSchedule = async () => {
     if (!athleteId || !user) { toast.error("Faça login primeiro"); return; }
     if (scheduleSelectedDates.length === 0) { toast.error("Selecione ao menos um dia"); return; }
-    if (availableCredits < scheduleSelectedDates.length) { toast.error("Créditos insuficientes"); return; }
 
     setScheduleSaving(true);
     try {
-      // Get the coach_id for this athlete
       const { data: athleteData } = await supabase
         .from('athletes')
         .select('coach_id')
@@ -252,35 +237,27 @@ export default function AulasCreditos() {
       
       const teacherId = athleteData?.coach_id || user.id;
 
-      // All dates are directly confirmed — no grid check
       const inserts = scheduleSelectedDates.map(d => ({
         student_id: athleteId,
         teacher_id: teacherId,
         title: `${scheduleType === 'aula' ? 'Aula' : scheduleType === 'avaliacao_fisica' ? 'Avaliação' : 'Consultoria'} - ${athleteName}`,
         scheduled_at: `${format(d, 'yyyy-MM-dd')}T${scheduleTime}:00`,
-        status: 'confirmed' as const,
+        status: 'scheduled' as const,
         appointment_type: scheduleType,
         duration: 60,
         description: scheduleNotes || null,
       }));
 
-      const { error } = await supabase.from('appointments').insert(inserts as any);
+      const { error } = await supabase.from('appointments').insert(inserts);
       if (error) throw error;
 
-      // Debit credits
-      await supabase.from('student_credits').update({
-        used_credits: usedCredits + scheduleSelectedDates.length
-      }).eq('student_id', athleteId);
-
-      toast.success(`${scheduleSelectedDates.length} agendamento(s) confirmado(s)!`);
-
+      toast.success(`${scheduleSelectedDates.length} agendamento(s) solicitado(s)!`);
       setShowScheduleDialog(false);
       setScheduleSelectedDates([]);
       setScheduleNotes('');
       fetchMyAppointments();
-      fetchCredits();
     } catch (error: any) {
-      toast.error('Erro: ' + error.message);
+      toast.error('Erro ao solicitar: ' + error.message);
     } finally {
       setScheduleSaving(false);
     }
@@ -294,9 +271,9 @@ export default function AulasCreditos() {
     });
   };
 
+  // ===== BOOK CLASS (from grid) - no credit deduction =====
   const handleBookClass = async (classId: string, creditsRequired: number = 1) => {
     if (!user) { toast.error("Faça login para agendar"); return; }
-    if (creditsRequired > availableCredits) { toast.error("Créditos insuficientes"); return; }
     setBookingLoading(classId);
     try {
       const { error } = await supabase.from("class_bookings").insert({
@@ -304,57 +281,139 @@ export default function AulasCreditos() {
         status: "confirmed", booking_time: new Date().toISOString(), credits_used: creditsRequired
       });
       if (error) throw error;
-      if (athleteId) {
-        await supabase.from("student_credits").update({ 
-          used_credits: (credits?.used_credits || 0) + creditsRequired 
-        }).eq("student_id", athleteId);
-      }
-      toast.success("Aula agendada!");
-      fetchBookings(); fetchCredits();
+      toast.success("Aula agendada! Crédito será descontado no check-in.");
+      fetchBookings();
     } catch { toast.error("Erro ao agendar"); }
     finally { setBookingLoading(null); }
   };
 
+  // ===== CHECK-IN: Deducts 1 credit =====
+  const handleCheckIn = async (classId: string) => {
+    const booking = bookings.find((b) => b.class_id === classId && b.status === "confirmed");
+    if (!booking) return;
+
+    // Check available credits
+    if (availableCredits < 1) {
+      toast.error("Créditos insuficientes para check-in");
+      return;
+    }
+
+    setBookingLoading(classId);
+    try {
+      await supabase.from("class_bookings").update({ check_in_at: new Date().toISOString() }).eq("id", booking.id);
+      
+      // Deduct 1 credit on check-in
+      if (athleteId) {
+        await supabase.from("student_credits").update({ 
+          used_credits: (credits?.used_credits || 0) + 1 
+        }).eq("student_id", athleteId);
+      }
+
+      toast.success("Check-in realizado! 1 crédito descontado.");
+      fetchBookings();
+      fetchCredits();
+    } catch { toast.error("Erro no check-in"); }
+    finally { setBookingLoading(null); }
+  };
+
+  // ===== CANCEL BOOKING: Only before check-in, with 12h rule =====
   const handleCancelBooking = async (classId: string) => {
     const booking = bookings.find((b) => b.class_id === classId && b.status === "confirmed");
     if (!booking) return;
+
+    // If already checked in, cancel only via request
+    if (booking.check_in_at) {
+      setCancelTargetId(booking.id);
+      setCancelTargetType('booking');
+      setShowCancelRequestDialog(true);
+      return;
+    }
+
+    // Check 12h rule
+    const gymClass = classes.find(c => c.id === classId);
+    if (gymClass) {
+      const classTime = new Date(gymClass.class_datetime);
+      const hoursUntil = differenceInHours(classTime, new Date());
+      
+      if (hoursUntil < 12) {
+        // Cannot cancel, only reschedule up to 6h before
+        if (hoursUntil < 6) {
+          toast.error("Não é possível cancelar ou reagendar com menos de 6h de antecedência. Solicite via app.");
+          setCancelTargetId(booking.id);
+          setCancelTargetType('booking');
+          setShowCancelRequestDialog(true);
+          return;
+        }
+        toast.error("Cancelamento não permitido com menos de 12h. Você pode reagendar até 6h antes.");
+        return;
+      }
+    }
+
     setBookingLoading(classId);
     try {
       await supabase.from("class_bookings").update({ 
         status: "cancelled", cancelled_at: new Date().toISOString() 
       }).eq("id", booking.id);
-      if (athleteId && booking.credits_used) {
-        await supabase.from("student_credits").update({ 
-          used_credits: Math.max(0, (credits?.used_credits || 0) - booking.credits_used)
-        }).eq("student_id", athleteId);
-      }
-      toast.success("Cancelado"); fetchBookings(); fetchCredits();
+      
+      toast.success("Aula cancelada");
+      fetchBookings();
     } catch { toast.error("Erro ao cancelar"); }
     finally { setBookingLoading(null); }
   };
 
-  const handleCheckIn = async (classId: string) => {
+  // ===== RESCHEDULE: Only up to 6h before confirmed class =====
+  const handleReschedule = async (classId: string) => {
+    const gymClass = classes.find(c => c.id === classId);
+    if (gymClass) {
+      const classTime = new Date(gymClass.class_datetime);
+      const hoursUntil = differenceInHours(classTime, new Date());
+      
+      if (hoursUntil < 6) {
+        toast.error("Reagendamento não permitido com menos de 6h de antecedência.");
+        setCancelTargetId(bookings.find(b => b.class_id === classId)?.id || null);
+        setCancelTargetType('booking');
+        setShowCancelRequestDialog(true);
+        return;
+      }
+    }
+
+    // Cancel current and open schedule dialog
     const booking = bookings.find((b) => b.class_id === classId && b.status === "confirmed");
-    if (!booking) return;
-    setBookingLoading(classId);
-    try {
-      await supabase.from("class_bookings").update({ check_in_at: new Date().toISOString() }).eq("id", booking.id);
-      toast.success("Check-in realizado!");
-      fetchBookings();
-    } catch { toast.error("Erro no check-in"); }
-    finally { setBookingLoading(null); }
+    if (booking && !booking.check_in_at) {
+      setBookingLoading(classId);
+      try {
+        await supabase.from("class_bookings").update({ 
+          status: "cancelled", cancelled_at: new Date().toISOString() 
+        }).eq("id", booking.id);
+        toast.info("Aula cancelada. Selecione um novo horário.");
+        fetchBookings();
+      } catch { toast.error("Erro ao reagendar"); }
+      finally { setBookingLoading(null); }
+    }
+    setShowScheduleDialog(true);
   };
 
-  const handleReschedule = async (classId: string) => {
-    toast.info("Selecione outro horário no calendário para reagendar");
-    handleCancelBooking(classId);
+  // ===== CANCEL REQUEST (post check-in or outside time window) =====
+  const handleSubmitCancelRequest = async () => {
+    if (!cancelReason.trim()) { toast.error("Informe o motivo do cancelamento"); return; }
+    setSubmittingCancel(true);
+    try {
+      const msg = encodeURIComponent(
+        `Olá, sou ${athleteName}.\n\n🚫 Solicito cancelamento:\n📝 Motivo: ${cancelReason}\n📅 ID: ${cancelTargetId}\n\nAguardo retorno.`
+      );
+      window.open(`https://wa.me/${WHATSAPP_SAC}?text=${msg}`, '_blank');
+      toast.success("Solicitação enviada via WhatsApp");
+      setShowCancelRequestDialog(false);
+      setCancelReason('');
+      setCancelTargetId(null);
+    } catch { toast.error("Erro ao enviar solicitação"); }
+    finally { setSubmittingCancel(false); }
   };
 
   const handleSubmitVacation = async () => {
     if (!athleteId || !vacationStart || !vacationEnd) { toast.error("Preencha as datas"); return; }
     setSubmittingVacation(true);
     try {
-      // Send via WhatsApp instead
       const msg = encodeURIComponent(
         `Olá, sou ${athleteName}.\n\nGostaria de solicitar férias/troca:\n📅 De: ${vacationStart}\n📅 Até: ${vacationEnd}\n${vacationReason ? `📝 Motivo: ${vacationReason}` : ''}\n\nObrigado!`
       );
@@ -370,13 +429,14 @@ export default function AulasCreditos() {
   const getClassesForDate = (date: Date) => classes.filter((c) => isSameDay(new Date(c.class_datetime), date));
   const hasClassesOnDate = (date: Date) => classes.some((c) => isSameDay(new Date(c.class_datetime), date));
 
-  const getBookingStatus = (classId: string) => {
-    const booking = bookings.find(b => b.class_id === classId);
-    if (!booking) return null;
-    if (booking.check_in_at) return 'checked_in';
-    if (booking.status === 'confirmed') return 'confirmed';
-    if (booking.status === 'cancelled') return 'cancelled';
-    return booking.status;
+  const canCancelClass = (gymClass: GymClass) => {
+    const classTime = new Date(gymClass.class_datetime);
+    return differenceInHours(classTime, new Date()) >= 12;
+  };
+
+  const canRescheduleClass = (gymClass: GymClass) => {
+    const classTime = new Date(gymClass.class_datetime);
+    return differenceInHours(classTime, new Date()) >= 6;
   };
 
   const nextClass = classes
@@ -386,15 +446,6 @@ export default function AulasCreditos() {
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   const currentMonthName = format(currentMonth, "MMMM/yyyy", { locale: ptBR });
   const monthPeriod = `${format(monthStart, "dd/MM")} – ${format(monthEnd, "dd/MM")}`;
-
-  const getAppointmentTypeLabel = (type: string | null) => {
-    switch (type) {
-      case 'avaliacao_fisica': return 'Avaliação';
-      case 'aula': return 'Aula';
-      case 'consultoria': return 'Consultoria';
-      default: return 'Agendamento';
-    }
-  };
 
   const getAppointmentStatusBadge = (status: string) => {
     switch (status) {
@@ -444,15 +495,19 @@ export default function AulasCreditos() {
               </p>
               <Progress value={progressPercent} className="h-2 mt-1" />
             </div>
-            <Button variant="outline" size="sm" className="ml-4 text-xs" onClick={() => setSelectedDate(null)}>
-              Ver extrato
-            </Button>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-            <span className="text-sm text-green-500 font-medium">Status: Ativo</span>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-sm text-green-500 font-medium">Status: Ativo</span>
+            </div>
+            <span className="text-sm font-bold text-primary">{availableCredits} créditos restantes</span>
           </div>
+
+          <p className="text-[10px] text-muted-foreground mt-2">
+            ⚡ Créditos são descontados no check-in da aula
+          </p>
         </div>
       </div>
 
@@ -468,23 +523,31 @@ export default function AulasCreditos() {
         </Button>
       </div>
 
-      {/* Meus Agendamentos (real data) */}
+      {/* Meus Agendamentos */}
       {myAppointments.length > 0 && (
         <div className="px-4 mt-4">
           <div className="bg-card border border-border rounded-lg p-4">
             <h3 className="text-lg font-bold text-foreground mb-3">Próximos Agendamentos</h3>
             <div className="space-y-2">
-              {myAppointments.slice(0, 5).map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{apt.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(apt.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                    </p>
+              {myAppointments.slice(0, 5).map((apt) => {
+                const aptTime = new Date(apt.scheduled_at);
+                const hoursUntil = differenceInHours(aptTime, new Date());
+                
+                return (
+                  <div key={apt.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div>
+                      <p className="font-medium text-foreground text-sm">{apt.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(aptTime, "dd/MM 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                      {hoursUntil < 12 && hoursUntil > 0 && (
+                        <p className="text-[10px] text-amber-500">⚠️ Confirmação obrigatória</p>
+                      )}
+                    </div>
+                    {getAppointmentStatusBadge(apt.status)}
                   </div>
-                  {getAppointmentStatusBadge(apt.status)}
-                </div>
-              ))}
+                );
+              })}
             </div>
             <button 
               onClick={() => setShowVacationDialog(true)}
@@ -527,29 +590,41 @@ export default function AulasCreditos() {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => handleCheckIn(nextClass.id)} disabled={bookingLoading === nextClass.id}
-                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-green-500/50 text-green-500 rounded-lg text-sm font-medium hover:bg-green-500/10 transition-colors">
+              <button onClick={() => handleCheckIn(nextClass.id)} disabled={bookingLoading === nextClass.id || availableCredits < 1}
+                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-green-500/50 text-green-500 rounded-lg text-sm font-medium hover:bg-green-500/10 transition-colors disabled:opacity-50">
                 {bookingLoading === nextClass.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                Confirmar
+                Check-in
               </button>
-              <button onClick={() => handleReschedule(nextClass.id)}
-                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-amber-500/50 text-amber-500 rounded-lg text-sm font-medium hover:bg-amber-500/10 transition-colors">
-                <RefreshCw className="w-4 h-4" />
-                Reagendar
-              </button>
-              <button onClick={() => handleCancelBooking(nextClass.id)} disabled={bookingLoading === nextClass.id}
-                className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-destructive/50 text-destructive rounded-lg text-sm font-medium hover:bg-destructive/10 transition-colors">
-                <X className="w-4 h-4" />
-                Cancelar
-              </button>
+              {canRescheduleClass(nextClass) ? (
+                <button onClick={() => handleReschedule(nextClass.id)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-amber-500/50 text-amber-500 rounded-lg text-sm font-medium hover:bg-amber-500/10 transition-colors">
+                  <RefreshCw className="w-4 h-4" />
+                  Reagendar
+                </button>
+              ) : (
+                <button disabled className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-border text-muted-foreground rounded-lg text-sm font-medium opacity-50">
+                  <RefreshCw className="w-4 h-4" />
+                  Reagendar
+                </button>
+              )}
+              {canCancelClass(nextClass) ? (
+                <button onClick={() => handleCancelBooking(nextClass.id)} disabled={bookingLoading === nextClass.id}
+                  className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-destructive/50 text-destructive rounded-lg text-sm font-medium hover:bg-destructive/10 transition-colors">
+                  <X className="w-4 h-4" />
+                  Cancelar
+                </button>
+              ) : (
+                <button onClick={() => { setCancelTargetId(bookings.find(b => b.class_id === nextClass.id)?.id || null); setCancelTargetType('booking'); setShowCancelRequestDialog(true); }}
+                  className="flex items-center justify-center gap-1.5 py-2.5 bg-card border border-amber-500/50 text-amber-500 rounded-lg text-sm font-medium hover:bg-amber-500/10 transition-colors">
+                  <MessageCircle className="w-4 h-4" />
+                  Solicitar
+                </button>
+              )}
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-3 mt-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Realizada</span>
-            <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-primary" /> Agendada</span>
-            <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3 text-amber-500" /> Reagendada</span>
-            <span className="flex items-center gap-1"><X className="w-3 h-3 text-destructive" /> Falta</span>
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              Cancelar até 12h antes • Reagendar até 6h antes • Check-in desconta 1 crédito
+            </p>
           </div>
         </div>
       )}
@@ -631,7 +706,7 @@ export default function AulasCreditos() {
           ) : getClassesForDate(selectedDate).length === 0 ? (
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <CalendarDays className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhuma aula disponível neste dia</p>
+              <p className="text-sm text-muted-foreground">Nenhuma aula na grade neste dia</p>
               <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowScheduleDialog(true)}>
                 <Plus className="w-4 h-4 mr-1" /> Solicitar horário
               </Button>
@@ -642,7 +717,6 @@ export default function AulasCreditos() {
                 const booked = isBooked(gymClass.id);
                 const checkedIn = hasCheckedIn(gymClass.id);
                 const isLoadingClass = bookingLoading === gymClass.id;
-                const creditsNeeded = gymClass.credits_required || 1;
 
                 return (
                   <div key={gymClass.id} className={`bg-card border rounded-lg p-4 transition-all ${
@@ -667,32 +741,46 @@ export default function AulasCreditos() {
                       <div className="flex items-center gap-1"><Users className="w-3 h-3" />{gymClass.available_slots} vagas</div>
                     </div>
 
-                    {booked ? (
+                    {checkedIn ? (
+                      /* After check-in: cancel only via request */
+                      <button onClick={() => { setCancelTargetId(bookings.find(b => b.class_id === gymClass.id)?.id || null); setCancelTargetType('booking'); setShowCancelRequestDialog(true); }}
+                        className="w-full flex items-center justify-center gap-2 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-lg text-xs font-medium">
+                        <MessageCircle className="w-3 h-3" /> Solicitar cancelamento
+                      </button>
+                    ) : booked ? (
                       <div className="grid grid-cols-3 gap-2">
-                        {!checkedIn && (
-                          <button onClick={() => handleCheckIn(gymClass.id)} disabled={isLoadingClass}
-                            className="flex items-center justify-center gap-1 py-2 bg-green-500/10 border border-green-500/30 text-green-500 rounded-lg text-xs font-medium">
-                            {isLoadingClass ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Check-in
-                          </button>
-                        )}
-                        {!checkedIn && (
+                        <button onClick={() => handleCheckIn(gymClass.id)} disabled={isLoadingClass || availableCredits < 1}
+                          className="flex items-center justify-center gap-1 py-2 bg-green-500/10 border border-green-500/30 text-green-500 rounded-lg text-xs font-medium disabled:opacity-50">
+                          {isLoadingClass ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Check-in
+                        </button>
+                        {canRescheduleClass(gymClass) ? (
                           <button onClick={() => handleReschedule(gymClass.id)}
                             className="flex items-center justify-center gap-1 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-lg text-xs font-medium">
                             <RefreshCw className="w-3 h-3" /> Reagendar
                           </button>
+                        ) : (
+                          <button disabled className="flex items-center justify-center gap-1 py-2 bg-muted border border-border text-muted-foreground rounded-lg text-xs font-medium opacity-50">
+                            <RefreshCw className="w-3 h-3" /> Reagendar
+                          </button>
                         )}
-                        <button onClick={() => handleCancelBooking(gymClass.id)} disabled={isLoadingClass || checkedIn}
-                          className="flex items-center justify-center gap-1 py-2 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg text-xs font-medium disabled:opacity-50">
-                          <X className="w-3 h-3" /> Cancelar
-                        </button>
+                        {canCancelClass(gymClass) ? (
+                          <button onClick={() => handleCancelBooking(gymClass.id)} disabled={isLoadingClass}
+                            className="flex items-center justify-center gap-1 py-2 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg text-xs font-medium">
+                            <X className="w-3 h-3" /> Cancelar
+                          </button>
+                        ) : (
+                          <button onClick={() => { setCancelTargetId(bookings.find(b => b.class_id === gymClass.id)?.id || null); setCancelTargetType('booking'); setShowCancelRequestDialog(true); }}
+                            className="flex items-center justify-center gap-1 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-lg text-xs font-medium">
+                            <MessageCircle className="w-3 h-3" /> Solicitar
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      <button onClick={() => handleBookClass(gymClass.id, creditsNeeded)}
-                        disabled={isLoadingClass || gymClass.available_slots === 0 || creditsNeeded > availableCredits}
+                      <button onClick={() => handleBookClass(gymClass.id, gymClass.credits_required || 1)}
+                        disabled={isLoadingClass || gymClass.available_slots === 0}
                         className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
                         {isLoadingClass ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                          creditsNeeded > availableCredits ? <><AlertCircle className="w-4 h-4" /> Créditos insuficientes</> :
-                          <><Check className="w-4 h-4" /> Agendar ({creditsNeeded} crédito{creditsNeeded > 1 ? 's' : ''})</>
+                          <><Check className="w-4 h-4" /> Agendar</>
                         }
                       </button>
                     )}
@@ -703,7 +791,6 @@ export default function AulasCreditos() {
           )}
         </div>
       )}
-
 
       {/* Bookings Summary */}
       {!selectedDate && (
@@ -730,7 +817,7 @@ export default function AulasCreditos() {
                     </div>
                     <div className="flex items-center gap-2">
                       {booking.check_in_at && <Badge variant="outline" className="text-green-500 border-green-500/30"><CheckCircle className="w-3 h-3 mr-1" />Check-in</Badge>}
-                      {!booking.check_in_at && (
+                      {!booking.check_in_at && canCancelClass(gymClass) && (
                         <button onClick={() => handleCancelBooking(gymClass.id)} className="text-destructive hover:text-destructive/80"><X className="w-5 h-5" /></button>
                       )}
                     </div>
@@ -742,7 +829,7 @@ export default function AulasCreditos() {
         </div>
       )}
 
-      {/* Schedule Dialog - Smart Scheduling */}
+      {/* Schedule Dialog */}
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -752,16 +839,14 @@ export default function AulasCreditos() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            {/* Credits info */}
             <div className="bg-muted rounded-lg p-3 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">Créditos disponíveis</p>
-                <p className="text-xs text-muted-foreground">Cada aula usa 1 crédito</p>
+                <p className="text-xs text-muted-foreground">Descontados no check-in</p>
               </div>
               <span className="text-2xl font-black text-primary">{availableCredits}</span>
             </div>
 
-            {/* Type */}
             <div className="space-y-2">
               <Label>Tipo</Label>
               <Select value={scheduleType} onValueChange={setScheduleType}>
@@ -774,13 +859,11 @@ export default function AulasCreditos() {
               </Select>
             </div>
 
-            {/* Time */}
             <div className="space-y-2">
               <Label>Horário</Label>
               <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
             </div>
 
-            {/* Mini Calendar for selecting days */}
             <div className="space-y-2">
               <Label>Selecione os dias ({scheduleSelectedDates.length} selecionados)</Label>
               <div className="bg-muted rounded-lg p-3">
@@ -816,13 +899,9 @@ export default function AulasCreditos() {
                     );
                   })}
                 </div>
-                <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Selecionado</span>
-                </div>
               </div>
             </div>
 
-            {/* Notes */}
             <div className="space-y-2">
               <Label>Observações (opcional)</Label>
               <Textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder="Ex: Prefiro horário da manhã..." rows={2} />
@@ -830,35 +909,58 @@ export default function AulasCreditos() {
 
             {scheduleSelectedDates.length > 0 && (
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs text-primary">
-                <p className="font-medium mb-1">✅ Agendamento livre</p>
-                <p>Todos os horários selecionados serão confirmados automaticamente.</p>
+                <p className="font-medium mb-1">📋 Agendamento livre</p>
+                <p>Solicitação será enviada para confirmação. Créditos descontados no check-in.</p>
               </div>
             )}
 
             <Button 
               onClick={handleSmartSchedule} 
-              disabled={scheduleSaving || scheduleSelectedDates.length === 0 || availableCredits < scheduleSelectedDates.length}
+              disabled={scheduleSaving || scheduleSelectedDates.length === 0}
               className="w-full gap-2"
             >
               {scheduleSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               {scheduleSelectedDates.length === 0 
                 ? 'Selecione os dias' 
-                : availableCredits < scheduleSelectedDates.length 
-                  ? 'Créditos insuficientes' 
-                  : `Solicitar ${scheduleSelectedDates.length} aula(s)`}
+                : `Solicitar ${scheduleSelectedDates.length} aula(s)`}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Reschedule / Vacation Dialog */}
+      {/* Cancel Request Dialog (post check-in or outside time window) */}
+      <Dialog open={showCancelRequestDialog} onOpenChange={setShowCancelRequestDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><MessageCircle className="w-5 h-5" />Solicitar Cancelamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-500">
+              <p className="font-medium">⚠️ Cancelamento fora do prazo</p>
+              <p>Cancelamentos após check-in ou com menos de 12h de antecedência devem ser solicitados com motivo.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Motivo do cancelamento *</Label>
+              <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Explique o motivo..." rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCancelRequestDialog(false)}>Voltar</Button>
+            <Button onClick={handleSubmitCancelRequest} disabled={submittingCancel || !cancelReason.trim()} className="gap-2">
+              {submittingCancel ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+              Enviar Solicitação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vacation Dialog */}
       <Dialog open={showVacationDialog} onOpenChange={setShowVacationDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><RefreshCw className="w-5 h-5" />Solicitar Troca de Horário / Férias</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><RefreshCw className="w-5 h-5" />Solicitar Troca / Férias</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Select appointments to reschedule */}
             {myAppointments.length > 0 && (
               <div className="space-y-2">
                 <Label>Selecione a(s) aula(s) para trocar (opcional)</Label>
@@ -891,36 +993,36 @@ export default function AulasCreditos() {
         </DialogContent>
       </Dialog>
 
-      {/* How it works Dialog */}
+      {/* How it works */}
       <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
         <DialogContent>
           <DialogHeader><DialogTitle>Como funciona</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2 text-sm">
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 text-green-500" />
-              </div>
-              <div>
-                <p className="font-bold text-foreground">Horário Fixo</p>
-                <p className="text-muted-foreground">O sistema detecta automaticamente sua rotina com base nas aulas frequentadas.</p>
-              </div>
-            </div>
-            <div className="flex gap-3 items-start">
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <CalendarDays className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="font-bold text-foreground">Agendar Aula</p>
-                <p className="text-muted-foreground">Selecione dias e horário no calendário. Todos os agendamentos são confirmados automaticamente.</p>
+                <p className="font-bold text-foreground">Solicitar Agendamento</p>
+                <p className="text-muted-foreground">Selecione dias e horário. Agendamentos livres com ou sem aula na grade.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-4 h-4 text-blue-500" />
+              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <Check className="w-4 h-4 text-green-500" />
               </div>
               <div>
-                <p className="font-bold text-foreground">Check-in</p>
-                <p className="text-muted-foreground">No dia da aula, confirme sua presença clicando em "Confirmar".</p>
+                <p className="font-bold text-foreground">Check-in = 1 crédito</p>
+                <p className="text-muted-foreground">No dia da aula, faça check-in. Isso desconta 1 crédito automaticamente.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
+                <X className="w-4 h-4 text-destructive" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Cancelamento</p>
+                <p className="text-muted-foreground">Cancelar até 12h antes da aula. Após esse prazo, apenas via solicitação.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">
@@ -928,17 +1030,17 @@ export default function AulasCreditos() {
                 <RefreshCw className="w-4 h-4 text-amber-500" />
               </div>
               <div>
-                <p className="font-bold text-foreground">Reagendar</p>
-                <p className="text-muted-foreground">Cancele a aula atual e selecione outro horário disponível.</p>
+                <p className="font-bold text-foreground">Reagendamento</p>
+                <p className="text-muted-foreground">Reagendar até 6h antes da aula confirmada.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">
               <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <Palmtree className="w-4 h-4 text-purple-500" />
+                <MessageCircle className="w-4 h-4 text-purple-500" />
               </div>
               <div>
-                <p className="font-bold text-foreground">Férias / Troca</p>
-                <p className="text-muted-foreground">Solicite pausa ou alteração de horário fixo via WhatsApp.</p>
+                <p className="font-bold text-foreground">Após Check-in</p>
+                <p className="text-muted-foreground">Cancelamento somente via solicitação com envio do motivo.</p>
               </div>
             </div>
           </div>
