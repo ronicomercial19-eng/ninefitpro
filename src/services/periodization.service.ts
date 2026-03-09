@@ -105,11 +105,13 @@ export async function updatePeriodizationStatus(
 
 export async function getTrainingPhases(modelId: string): Promise<ApiResponse<any[]>> {
   try {
-    const { data, error } = await (supabase
+    // @ts-ignore - deep type instantiation workaround for training_phases
+    const result = await supabase
       .from('training_phases')
       .select('*')
-      .eq('periodization_model_id', modelId) as any);
+      .eq('periodization_model_id', modelId);
 
+    const { data, error } = result as { data: any[] | null; error: any };
     if (error) return { success: false, error: { code: 'FETCH_ERROR', message: error.message } };
     const sorted = (data ?? []).sort((a: any, b: any) => (a.phase_order ?? 0) - (b.phase_order ?? 0));
     return { success: true, data: sorted, metadata: { timestamp: new Date().toISOString(), version: 'v1', count: sorted.length } };
