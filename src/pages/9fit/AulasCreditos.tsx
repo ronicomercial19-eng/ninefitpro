@@ -165,13 +165,6 @@ export default function AulasCreditos() {
     
   }, [currentMonth, user, athleteId]);
 
-  const fetchClassSchedules = async () => {
-    const { data } = await supabase
-      .from('class_schedules')
-      .select('*')
-      .eq('is_active', true);
-    if (data) setClassSchedules(data as any);
-  };
 
   const fetchClasses = async () => {
     setLoading(true);
