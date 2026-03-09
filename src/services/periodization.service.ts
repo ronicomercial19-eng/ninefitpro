@@ -105,14 +105,14 @@ export async function updatePeriodizationStatus(
 
 export async function getTrainingPhases(modelId: string): Promise<ApiResponse<any[]>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('training_phases')
       .select('*')
-      .eq('periodization_model_id', modelId)
-      .order('phase_order' as any, { ascending: true });
+      .eq('periodization_model_id', modelId) as any);
 
     if (error) return { success: false, error: { code: 'FETCH_ERROR', message: error.message } };
-    return { success: true, data: data ?? [], metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 } };
+    const sorted = (data ?? []).sort((a: any, b: any) => (a.phase_order ?? 0) - (b.phase_order ?? 0));
+    return { success: true, data: sorted, metadata: { timestamp: new Date().toISOString(), version: 'v1', count: sorted.length } };
   } catch (err: any) {
     return { success: false, error: { code: 'UNEXPECTED_ERROR', message: err.message } };
   }
