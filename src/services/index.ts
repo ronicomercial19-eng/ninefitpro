@@ -25,6 +25,18 @@ export { schedulingQueryKeys } from './scheduling.service';
 export * from './assessments.service';
 export { assessmentQueryKeys } from './assessments.service';
 
+// Auth
+export * from './auth.service';
+export { authQueryKeys } from './auth.service';
+
+// Periodization
+export * from './periodization.service';
+export { periodizationQueryKeys } from './periodization.service';
+
+// Analytics
+export * from './analytics.service';
+export { analyticsQueryKeys } from './analytics.service';
+
 // Re-export types
 export type { 
   ApiResponse, 
@@ -42,12 +54,18 @@ import * as athletesService from './athletes.service';
 import * as trainingService from './training.service';
 import * as schedulingService from './scheduling.service';
 import * as assessmentsService from './assessments.service';
+import * as authService from './auth.service';
+import * as periodizationService from './periodization.service';
+import * as analyticsService from './analytics.service';
 
 export const services = {
   athletes: athletesService,
   training: trainingService,
   scheduling: schedulingService,
   assessments: assessmentsService,
+  auth: authService,
+  periodization: periodizationService,
+  analytics: analyticsService,
 };
 
 /**
@@ -58,4 +76,7 @@ export const queryKeys = {
   training: trainingService.trainingQueryKeys,
   scheduling: schedulingService.schedulingQueryKeys,
   assessments: assessmentsService.assessmentQueryKeys,
+  auth: authService.authQueryKeys,
+  periodization: periodizationService.periodizationQueryKeys,
+  analytics: analyticsService.analyticsQueryKeys,
 };
