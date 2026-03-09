@@ -844,12 +844,18 @@ export type Database = {
           avaliacao_exames: string | null
           avaliador_cref: string | null
           avaliador_nome: string | null
+          cardio_bpm_max: number | null
+          cardio_bpm_repouso: number | null
+          cardio_sprint_vel: number | null
           circunferencia_braco: number | null
           circunferencia_cintura: number | null
           circunferencia_coxa: number | null
           circunferencia_panturrilha: number | null
           circunferencia_peitoral: number | null
           circunferencia_quadril: number | null
+          core_prancha_seg: number | null
+          core_side_plank_dir_seg: number | null
+          core_side_plank_esq_seg: number | null
           created_at: string
           dados_adicionais: Json | null
           data_avaliacao: string
@@ -862,6 +868,7 @@ export type Database = {
           dobra_suprailiaca: number | null
           dobra_triceps: number | null
           exames: Json | null
+          flags_inteligentes: Json | null
           gordura_corporal: number | null
           id: string
           id_externo: string | null
@@ -869,6 +876,10 @@ export type Database = {
           massa_gorda: number | null
           massa_magra: number | null
           massa_muscular: number | null
+          mob_ombro: number | null
+          mob_overhead_squat: number | null
+          mob_quadril: number | null
+          mob_tornozelo: number | null
           observacoes: string | null
           origem: string
           peso: number | null
@@ -881,6 +892,12 @@ export type Database = {
           rml_elevacao_p: number | null
           rml_flexao: number | null
           rml_pull: number | null
+          score_cardio: number | null
+          score_core: number | null
+          score_forca: number | null
+          score_global: number | null
+          score_mobilidade: number | null
+          score_resistencia: number | null
           sincronizado: boolean | null
           taxa_metabolica: number | null
           updated_at: string
@@ -893,12 +910,18 @@ export type Database = {
           avaliacao_exames?: string | null
           avaliador_cref?: string | null
           avaliador_nome?: string | null
+          cardio_bpm_max?: number | null
+          cardio_bpm_repouso?: number | null
+          cardio_sprint_vel?: number | null
           circunferencia_braco?: number | null
           circunferencia_cintura?: number | null
           circunferencia_coxa?: number | null
           circunferencia_panturrilha?: number | null
           circunferencia_peitoral?: number | null
           circunferencia_quadril?: number | null
+          core_prancha_seg?: number | null
+          core_side_plank_dir_seg?: number | null
+          core_side_plank_esq_seg?: number | null
           created_at?: string
           dados_adicionais?: Json | null
           data_avaliacao?: string
@@ -911,6 +934,7 @@ export type Database = {
           dobra_suprailiaca?: number | null
           dobra_triceps?: number | null
           exames?: Json | null
+          flags_inteligentes?: Json | null
           gordura_corporal?: number | null
           id?: string
           id_externo?: string | null
@@ -918,6 +942,10 @@ export type Database = {
           massa_gorda?: number | null
           massa_magra?: number | null
           massa_muscular?: number | null
+          mob_ombro?: number | null
+          mob_overhead_squat?: number | null
+          mob_quadril?: number | null
+          mob_tornozelo?: number | null
           observacoes?: string | null
           origem: string
           peso?: number | null
@@ -930,6 +958,12 @@ export type Database = {
           rml_elevacao_p?: number | null
           rml_flexao?: number | null
           rml_pull?: number | null
+          score_cardio?: number | null
+          score_core?: number | null
+          score_forca?: number | null
+          score_global?: number | null
+          score_mobilidade?: number | null
+          score_resistencia?: number | null
           sincronizado?: boolean | null
           taxa_metabolica?: number | null
           updated_at?: string
@@ -942,12 +976,18 @@ export type Database = {
           avaliacao_exames?: string | null
           avaliador_cref?: string | null
           avaliador_nome?: string | null
+          cardio_bpm_max?: number | null
+          cardio_bpm_repouso?: number | null
+          cardio_sprint_vel?: number | null
           circunferencia_braco?: number | null
           circunferencia_cintura?: number | null
           circunferencia_coxa?: number | null
           circunferencia_panturrilha?: number | null
           circunferencia_peitoral?: number | null
           circunferencia_quadril?: number | null
+          core_prancha_seg?: number | null
+          core_side_plank_dir_seg?: number | null
+          core_side_plank_esq_seg?: number | null
           created_at?: string
           dados_adicionais?: Json | null
           data_avaliacao?: string
@@ -960,6 +1000,7 @@ export type Database = {
           dobra_suprailiaca?: number | null
           dobra_triceps?: number | null
           exames?: Json | null
+          flags_inteligentes?: Json | null
           gordura_corporal?: number | null
           id?: string
           id_externo?: string | null
@@ -967,6 +1008,10 @@ export type Database = {
           massa_gorda?: number | null
           massa_magra?: number | null
           massa_muscular?: number | null
+          mob_ombro?: number | null
+          mob_overhead_squat?: number | null
+          mob_quadril?: number | null
+          mob_tornozelo?: number | null
           observacoes?: string | null
           origem?: string
           peso?: number | null
@@ -979,6 +1024,12 @@ export type Database = {
           rml_elevacao_p?: number | null
           rml_flexao?: number | null
           rml_pull?: number | null
+          score_cardio?: number | null
+          score_core?: number | null
+          score_forca?: number | null
+          score_global?: number | null
+          score_mobilidade?: number | null
+          score_resistencia?: number | null
           sincronizado?: boolean | null
           taxa_metabolica?: number | null
           updated_at?: string

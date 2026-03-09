@@ -10,17 +10,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface Exercise {
-  id: string;
-  name: string;
-  target_muscles: string[];
-  equipment: string | null;
-  difficulty_level: string | null;
-  phase: string | null;
-  goal: string | null;
-  image_url: string | null;
-  video_url: string | null;
-  gif_url: string | null;
-  description: string | null;
+  id: string; name: string; target_muscles: string[]; equipment: string | null;
+  difficulty_level: string | null; phase: string | null; goal: string | null;
+  image_url: string | null; video_url: string | null; gif_url: string | null; description: string | null;
 }
 
 export default function ExercisesPage() {
@@ -38,7 +30,10 @@ export default function ExercisesPage() {
 
   const fetchExercises = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('exercises').select('id, name, target_muscles, equipment, difficulty_level, phase, goal, image_url, video_url, gif_url, description').order('name');
+    // Uses canonical 'exercises' table (consolidated from exercise_library + exercicios_novos)
+    const { data, error } = await supabase.from('exercises')
+      .select('id, name, target_muscles, equipment, difficulty_level, phase, goal, image_url, video_url, gif_url, description')
+      .order('name');
     if (error) { toast.error('Erro ao carregar exercícios'); console.error(error); }
     else setExercises(data || []);
     setLoading(false);
@@ -56,45 +51,29 @@ export default function ExercisesPage() {
     return matchSearch && matchMuscle && matchEquip && matchGoal;
   });
 
-  if (showAddForm) {
-    return <AddExerciseForm onSuccess={() => { setShowAddForm(false); fetchExercises(); }} onCancel={() => setShowAddForm(false)} />;
-  }
+  if (showAddForm) return <AddExerciseForm onSuccess={() => { setShowAddForm(false); fetchExercises(); }} onCancel={() => setShowAddForm(false)} />;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Exercícios</h1>
-        <div className="flex items-center gap-2">
-          <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}>
-            <Plus className="w-4 h-4 mr-2" />Novo exercício
-          </Button>
-        </div>
+        <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo exercício</Button>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <Select value={muscleFilter} onValueChange={setMuscleFilter}>
               <SelectTrigger><SelectValue placeholder="Músculo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os músculos</SelectItem>
-                {allMuscles.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
+              <SelectContent><SelectItem value="all">Todos os músculos</SelectItem>{allMuscles.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
               <SelectTrigger><SelectValue placeholder="Equipamento" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {allEquipment.map(e => <SelectItem key={e!} value={e!}>{e}</SelectItem>)}
-              </SelectContent>
+              <SelectContent><SelectItem value="all">Todos</SelectItem>{allEquipment.map(e => <SelectItem key={e!} value={e!}>{e}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={goalFilter} onValueChange={setGoalFilter}>
               <SelectTrigger><SelectValue placeholder="Objetivo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {allGoals.map(g => <SelectItem key={g!} value={g!}>{g}</SelectItem>)}
-              </SelectContent>
+              <SelectContent><SelectItem value="all">Todos</SelectItem>{allGoals.map(g => <SelectItem key={g!} value={g!}>{g}</SelectItem>)}</SelectContent>
             </Select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -105,7 +84,6 @@ export default function ExercisesPage() {
         </CardContent>
       </Card>
 
-      {/* View Toggle */}
       <div className="flex justify-end">
         <div className="flex items-center border rounded-lg">
           <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}><Grid className="w-4 h-4" /></Button>
@@ -134,11 +112,7 @@ export default function ExercisesPage() {
               <CardContent className="p-4">
                 <h3 className="font-semibold text-sm mb-2 line-clamp-2">{exercise.name}</h3>
                 <div className="space-y-2">
-                  {exercise.target_muscles?.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {exercise.target_muscles.slice(0, 3).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}
-                    </div>
-                  )}
+                  {exercise.target_muscles?.length > 0 && <div className="flex flex-wrap gap-1">{exercise.target_muscles.slice(0, 3).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}</div>}
                   {exercise.equipment && <p className="text-xs text-muted-foreground"><span className="font-medium">Equipamento:</span> {exercise.equipment}</p>}
                   {exercise.difficulty_level && <p className="text-xs text-muted-foreground"><span className="font-medium">Nível:</span> {exercise.difficulty_level}</p>}
                 </div>
@@ -152,13 +126,10 @@ export default function ExercisesPage() {
         <Card><CardContent className="py-12"><div className="text-center"><h3 className="text-lg font-medium text-foreground mb-2">Nenhum exercício encontrado</h3><p className="text-muted-foreground">Adicione exercícios ou ajuste os filtros.</p></div></CardContent></Card>
       )}
 
-      {/* Video Player Dialog */}
       {selectedVideo && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedVideo(null)}>
           <div className="bg-card rounded-lg p-4 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-            <div className="aspect-video">
-              <iframe src={selectedVideo} className="w-full h-full rounded-lg" allowFullScreen title="Exercise Video" />
-            </div>
+            <div className="aspect-video"><iframe src={selectedVideo} className="w-full h-full rounded-lg" allowFullScreen title="Exercise Video" /></div>
             <Button variant="outline" className="w-full mt-4" onClick={() => setSelectedVideo(null)}>Fechar</Button>
           </div>
         </div>
