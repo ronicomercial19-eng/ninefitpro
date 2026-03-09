@@ -87,6 +87,25 @@ function EmptyDieta() {
   );
 }
 
+// Inject mobile viewport meta tag into HTML content
+function injectMobileViewport(html: string): string {
+  const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">';
+  const mobileStyles = `<style>
+    * { box-sizing: border-box; }
+    body { max-width: 100vw !important; overflow-x: hidden !important; margin: 0; padding: 8px; }
+    table { width: 100% !important; max-width: 100vw !important; table-layout: fixed !important; font-size: 12px !important; }
+    td, th { word-wrap: break-word !important; overflow-wrap: break-word !important; padding: 4px !important; }
+    img { max-width: 100% !important; height: auto !important; }
+  </style>`;
+  
+  if (html.includes('<head>')) {
+    return html.replace('<head>', `<head>${viewportTag}${mobileStyles}`);
+  } else if (html.includes('<html')) {
+    return html.replace(/<html([^>]*)>/i, `<html$1><head>${viewportTag}${mobileStyles}</head>`);
+  }
+  return `<!DOCTYPE html><html><head>${viewportTag}${mobileStyles}</head><body>${html}</body></html>`;
+}
+
 export default function NineFitDieta() {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
