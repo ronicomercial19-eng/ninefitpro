@@ -77,16 +77,6 @@ interface FixedSchedule {
   time: string;
 }
 
-interface ClassSchedule {
-  id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  max_slots: number;
-  class_name: string;
-  instructor: string | null;
-  is_active: boolean;
-}
 
 const WHATSAPP_SAC = '5511988328351'; // SAC number
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
