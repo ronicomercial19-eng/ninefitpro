@@ -8,8 +8,12 @@ import type { ApiResponse, DateRange } from '@/types/domains';
 
 // ==================== SYSTEM EVENTS ====================
 
+type EventType = 'approved' | 'assigned' | 'completed' | 'created' | 'deleted' | 'notified' | 'rejected' | 'started' | 'updated' | 'viewed';
+type CheckinTipo = 'mensal' | 'semanal' | 'trimestral';
+type ReportTipo = 'diagnostico' | 'evolutivo' | 'trimestral';
+
 export async function logSystemEvent(event: {
-  event_type: string;
+  event_type: EventType;
   entity_type: string;
   entity_id: string;
   target_id?: string;
@@ -36,7 +40,7 @@ export async function logSystemEvent(event: {
 }
 
 export async function getSystemEvents(options?: {
-  entityType?: string; eventType?: string; limit?: number; dateRange?: DateRange;
+  entityType?: string; eventType?: EventType; limit?: number; dateRange?: DateRange;
 }): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
@@ -65,7 +69,7 @@ export async function getSystemEvents(options?: {
 // ==================== CHECKINS ====================
 
 export async function getAthleteCheckins(
-  athleteId: string, options?: { tipo?: string; limit?: number }
+  athleteId: string, options?: { tipo?: CheckinTipo; limit?: number }
 ): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
@@ -88,7 +92,7 @@ export async function getAthleteCheckins(
 export async function createCheckin(checkin: {
   aluno_id: string;
   professor_id: string;
-  tipo?: string;
+  tipo?: CheckinTipo;
   sono?: number;
   energia?: number;
   dor?: number;
@@ -99,7 +103,7 @@ export async function createCheckin(checkin: {
   try {
     const { data, error } = await supabase
       .from('ninefit_checkins')
-      .insert(checkin)
+      .insert(checkin as any)
       .select()
       .single();
 
@@ -113,7 +117,7 @@ export async function createCheckin(checkin: {
 // ==================== REPORTS ====================
 
 export async function getAthleteReports(
-  athleteId: string, options?: { tipo?: string; limit?: number }
+  athleteId: string, options?: { tipo?: ReportTipo; limit?: number }
 ): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
@@ -145,7 +149,7 @@ export async function getNotifications(
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (options?.unreadOnly) query = query.eq('read', false);
+    if (options?.unreadOnly) query = query.eq('is_read', false);
     if (options?.limit) query = query.limit(options.limit);
 
     const { data, error } = await query;
@@ -160,7 +164,7 @@ export async function markNotificationRead(notificationId: string): Promise<ApiR
   try {
     const { data, error } = await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('id', notificationId)
       .select()
       .single();

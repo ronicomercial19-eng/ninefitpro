@@ -44,7 +44,7 @@ export async function getAthletePeriodizations(athleteId: string): Promise<ApiRe
   try {
     const { data, error } = await supabase
       .from('athlete_periodizations')
-      .select('*, periodization_models:periodization_model_id(*)')
+      .select('*')
       .eq('athlete_id', athleteId)
       .order('assigned_at', { ascending: false });
 
@@ -107,7 +107,7 @@ export async function getTrainingPhases(modelId: string): Promise<ApiResponse<an
   try {
     const { data, error } = await supabase
       .from('training_phases')
-      .select('*, weekly_structures(*)')
+      .select('*')
       .eq('periodization_model_id', modelId)
       .order('phase_order', { ascending: true });
 
