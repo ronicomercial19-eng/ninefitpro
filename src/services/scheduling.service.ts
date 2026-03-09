@@ -4,21 +4,14 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { 
-  GymClass, 
-  ClassBooking, 
-  Appointment, 
-  StudentCredits,
-  ApiResponse,
-  DateRange 
-} from '@/types/domains';
+import type { ApiResponse, DateRange } from '@/types/domains';
 
 // ==================== GYM CLASSES ====================
 
 export async function getUpcomingClasses(options?: { 
   limit?: number; 
   classType?: string 
-}): Promise<ApiResponse<GymClass[]>> {
+}): Promise<ApiResponse<any[]>> {
   try {
     const now = new Date().toISOString();
     
@@ -48,7 +41,7 @@ export async function getUpcomingClasses(options?: {
 
     return {
       success: true,
-      data: data as GymClass[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -59,7 +52,7 @@ export async function getUpcomingClasses(options?: {
   }
 }
 
-export async function getClassById(id: string): Promise<ApiResponse<GymClass>> {
+export async function getClassById(id: string): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('gym_classes')
@@ -76,7 +69,7 @@ export async function getClassById(id: string): Promise<ApiResponse<GymClass>> {
 
     return {
       success: true,
-      data: data as GymClass,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -92,7 +85,7 @@ export async function getClassById(id: string): Promise<ApiResponse<GymClass>> {
 export async function getBookingsByUser(
   userEmail: string,
   options?: { status?: string; upcoming?: boolean }
-): Promise<ApiResponse<(ClassBooking & { gym_classes: GymClass })[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('class_bookings')
@@ -119,7 +112,7 @@ export async function getBookingsByUser(
 
     return {
       success: true,
-      data: data as any[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -134,7 +127,7 @@ export async function createBooking(
   classId: string,
   userEmail: string,
   userId?: string
-): Promise<ApiResponse<ClassBooking>> {
+): Promise<ApiResponse<any>> {
   try {
     // Check available slots
     const { data: gymClass, error: classError } = await supabase
@@ -186,7 +179,7 @@ export async function createBooking(
 
     return {
       success: true,
-      data: data as ClassBooking,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -200,7 +193,7 @@ export async function createBooking(
 export async function cancelBooking(
   bookingId: string,
   reason?: string
-): Promise<ApiResponse<ClassBooking>> {
+): Promise<ApiResponse<any>> {
   try {
     const { data: booking, error: fetchError } = await supabase
       .from('class_bookings')
@@ -240,14 +233,25 @@ export async function cancelBooking(
       };
     }
 
-    // Restore slot
+    // Restore slot - manual increment since rpc may not exist
     if (booking.class_id) {
-      await supabase.rpc('increment_class_slots', { class_id: booking.class_id });
+      const { data: currentClass } = await supabase
+        .from('gym_classes')
+        .select('available_slots')
+        .eq('id', booking.class_id)
+        .single();
+      
+      if (currentClass) {
+        await supabase
+          .from('gym_classes')
+          .update({ available_slots: currentClass.available_slots + 1 })
+          .eq('id', booking.class_id);
+      }
     }
 
     return {
       success: true,
-      data: data as ClassBooking,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -258,7 +262,7 @@ export async function cancelBooking(
   }
 }
 
-export async function checkInBooking(bookingId: string): Promise<ApiResponse<ClassBooking>> {
+export async function checkInBooking(bookingId: string): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('class_bookings')
@@ -278,7 +282,7 @@ export async function checkInBooking(bookingId: string): Promise<ApiResponse<Cla
 
     return {
       success: true,
-      data: data as ClassBooking,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -294,7 +298,7 @@ export async function checkInBooking(bookingId: string): Promise<ApiResponse<Cla
 export async function getAppointmentsByAthlete(
   athleteId: string,
   options?: { status?: string; upcoming?: boolean }
-): Promise<ApiResponse<Appointment[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('appointments')
@@ -321,7 +325,7 @@ export async function getAppointmentsByAthlete(
 
     return {
       success: true,
-      data: data as Appointment[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -335,7 +339,7 @@ export async function getAppointmentsByAthlete(
 export async function getAppointmentsByTeacher(
   teacherId: string,
   dateRange?: DateRange
-): Promise<ApiResponse<(Appointment & { athletes: { id: string; name: string } })[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('appointments')
@@ -360,7 +364,7 @@ export async function getAppointmentsByTeacher(
 
     return {
       success: true,
-      data: data as any[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -371,9 +375,17 @@ export async function getAppointmentsByTeacher(
   }
 }
 
-export async function createAppointment(
-  appointment: Omit<Appointment, 'id' | 'created_at' | 'updated_at'>
-): Promise<ApiResponse<Appointment>> {
+export async function createAppointment(appointment: {
+  student_id: string;
+  teacher_id: string;
+  title: string;
+  description?: string;
+  appointment_type?: string;
+  scheduled_at: string;
+  duration?: number;
+  location?: string;
+  status?: string;
+}): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('appointments')
@@ -390,7 +402,7 @@ export async function createAppointment(
 
     return {
       success: true,
-      data: data as Appointment,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -403,8 +415,8 @@ export async function createAppointment(
 
 export async function updateAppointmentStatus(
   id: string,
-  status: Appointment['status']
-): Promise<ApiResponse<Appointment>> {
+  status: string
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('appointments')
@@ -422,7 +434,7 @@ export async function updateAppointmentStatus(
 
     return {
       success: true,
-      data: data as Appointment,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -435,7 +447,7 @@ export async function updateAppointmentStatus(
 
 // ==================== STUDENT CREDITS ====================
 
-export async function getAthleteCredits(athleteId: string): Promise<ApiResponse<StudentCredits>> {
+export async function getAthleteCredits(athleteId: string): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('student_credits')
@@ -470,7 +482,7 @@ export async function getAthleteCredits(athleteId: string): Promise<ApiResponse<
 
     return {
       success: true,
-      data: data as StudentCredits,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -484,7 +496,7 @@ export async function getAthleteCredits(athleteId: string): Promise<ApiResponse<
 export async function useCredits(
   athleteId: string, 
   amount: number
-): Promise<ApiResponse<StudentCredits>> {
+): Promise<ApiResponse<any>> {
   try {
     const creditsResult = await getAthleteCredits(athleteId);
     if (!creditsResult.success || !creditsResult.data) {
@@ -521,7 +533,7 @@ export async function useCredits(
 
     return {
       success: true,
-      data: data as StudentCredits,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {

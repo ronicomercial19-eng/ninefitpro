@@ -4,17 +4,11 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { 
-  TrainingAssignment, 
-  WorkoutProgress, 
-  WorkoutExecution,
-  ApiResponse,
-  DateRange 
-} from '@/types/domains';
+import type { ApiResponse, DateRange } from '@/types/domains';
 
 // ==================== TRAINING ASSIGNMENTS ====================
 
-export async function getActiveAssignments(athleteId: string): Promise<ApiResponse<TrainingAssignment[]>> {
+export async function getActiveAssignments(athleteId: string): Promise<ApiResponse<any[]>> {
   try {
     const now = new Date().toISOString();
     
@@ -35,7 +29,7 @@ export async function getActiveAssignments(athleteId: string): Promise<ApiRespon
 
     return {
       success: true,
-      data: data as TrainingAssignment[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -49,7 +43,7 @@ export async function getActiveAssignments(athleteId: string): Promise<ApiRespon
 export async function getAllAssignments(
   athleteId: string, 
   options?: { status?: string; limit?: number }
-): Promise<ApiResponse<TrainingAssignment[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('student_training_assignments')
@@ -76,7 +70,7 @@ export async function getAllAssignments(
 
     return {
       success: true,
-      data: data as TrainingAssignment[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -87,7 +81,7 @@ export async function getAllAssignments(
   }
 }
 
-export async function getAssignmentsByCoach(coachId: string): Promise<ApiResponse<TrainingAssignment[]>> {
+export async function getAssignmentsByCoach(coachId: string): Promise<ApiResponse<any[]>> {
   try {
     const { data, error } = await supabase
       .from('student_training_assignments')
@@ -104,7 +98,7 @@ export async function getAssignmentsByCoach(coachId: string): Promise<ApiRespons
 
     return {
       success: true,
-      data: data as any[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -115,9 +109,21 @@ export async function getAssignmentsByCoach(coachId: string): Promise<ApiRespons
   }
 }
 
-export async function createAssignment(
-  assignment: Omit<TrainingAssignment, 'id' | 'created_at' | 'updated_at'>
-): Promise<ApiResponse<TrainingAssignment>> {
+export async function createAssignment(assignment: {
+  athlete_id: string;
+  coach_id: string;
+  title: string;
+  description?: string;
+  content_type: string;
+  content_url?: string;
+  html_content?: string;
+  file_path?: string;
+  week_number?: number;
+  day_number?: number;
+  status?: string;
+  starts_at?: string;
+  expires_at?: string;
+}): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('student_training_assignments')
@@ -134,7 +140,7 @@ export async function createAssignment(
 
     return {
       success: true,
-      data: data as TrainingAssignment,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -147,8 +153,8 @@ export async function createAssignment(
 
 export async function updateAssignment(
   id: string, 
-  updates: Partial<TrainingAssignment>
-): Promise<ApiResponse<TrainingAssignment>> {
+  updates: Record<string, any>
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('student_training_assignments')
@@ -166,7 +172,7 @@ export async function updateAssignment(
 
     return {
       success: true,
-      data: data as TrainingAssignment,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -182,18 +188,18 @@ export async function updateAssignment(
 export async function getWorkoutProgress(
   athleteId: string, 
   dateRange?: DateRange
-): Promise<ApiResponse<WorkoutProgress[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('workout_progress')
       .select('*')
       .eq('aluno_id', athleteId) // Using legacy FK for now
-      .order('workout_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (dateRange) {
       const from = typeof dateRange.from === 'string' ? dateRange.from : dateRange.from.toISOString();
       const to = typeof dateRange.to === 'string' ? dateRange.to : dateRange.to.toISOString();
-      query = query.gte('workout_date', from).lte('workout_date', to);
+      query = query.gte('created_at', from).lte('created_at', to);
     }
 
     const { data, error } = await query;
@@ -207,7 +213,7 @@ export async function getWorkoutProgress(
 
     return {
       success: true,
-      data: data as WorkoutProgress[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -219,8 +225,8 @@ export async function getWorkoutProgress(
 }
 
 export async function logWorkoutProgress(
-  progress: Omit<WorkoutProgress, 'id' | 'created_at'>
-): Promise<ApiResponse<WorkoutProgress>> {
+  progress: Record<string, any>
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('workout_progress')
@@ -237,7 +243,7 @@ export async function logWorkoutProgress(
 
     return {
       success: true,
-      data: data as WorkoutProgress,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -253,7 +259,7 @@ export async function logWorkoutProgress(
 export async function getWorkoutExecutions(
   athleteId: string,
   options?: { status?: string; limit?: number; dateRange?: DateRange }
-): Promise<ApiResponse<WorkoutExecution[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('workout_executions')
@@ -290,7 +296,7 @@ export async function getWorkoutExecutions(
 
     return {
       success: true,
-      data: data as any[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -305,7 +311,7 @@ export async function startWorkoutExecution(
   athleteId: string,
   assignmentId?: string,
   templateId?: string
-): Promise<ApiResponse<WorkoutExecution>> {
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('workout_executions')
@@ -328,7 +334,7 @@ export async function startWorkoutExecution(
 
     return {
       success: true,
-      data: data as WorkoutExecution,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -342,7 +348,7 @@ export async function startWorkoutExecution(
 export async function completeWorkoutExecution(
   executionId: string,
   summary?: { duration_minutes?: number; total_volume_kg?: number; avg_rpe?: number; notes?: string }
-): Promise<ApiResponse<WorkoutExecution>> {
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('workout_executions')
@@ -364,7 +370,7 @@ export async function completeWorkoutExecution(
 
     return {
       success: true,
-      data: data as WorkoutExecution,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {

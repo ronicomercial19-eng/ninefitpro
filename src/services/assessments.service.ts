@@ -4,19 +4,14 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { 
-  Assessment, 
-  StudentMeasurement,
-  ApiResponse,
-  DateRange 
-} from '@/types/domains';
+import type { ApiResponse, DateRange } from '@/types/domains';
 
 // ==================== ASSESSMENTS ====================
 
 export async function getAssessmentsByAthlete(
   athleteId: string,
   options?: { limit?: number; dateRange?: DateRange }
-): Promise<ApiResponse<Assessment[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('avaliacoes_unificadas')
@@ -49,7 +44,7 @@ export async function getAssessmentsByAthlete(
 
     return {
       success: true,
-      data: data as Assessment[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -60,7 +55,7 @@ export async function getAssessmentsByAthlete(
   }
 }
 
-export async function getLatestAssessment(athleteId: string): Promise<ApiResponse<Assessment | null>> {
+export async function getLatestAssessment(athleteId: string): Promise<ApiResponse<any | null>> {
   try {
     const { data, error } = await supabase
       .from('avaliacoes_unificadas')
@@ -79,7 +74,7 @@ export async function getLatestAssessment(athleteId: string): Promise<ApiRespons
 
     return {
       success: true,
-      data: data as Assessment | null,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -91,8 +86,8 @@ export async function getLatestAssessment(athleteId: string): Promise<ApiRespons
 }
 
 export async function createAssessment(
-  assessment: Partial<Assessment> & { aluno_id: string; origem: string }
-): Promise<ApiResponse<Assessment>> {
+  assessment: Record<string, any> & { aluno_id: string; origem: string }
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('avaliacoes_unificadas')
@@ -112,7 +107,7 @@ export async function createAssessment(
 
     return {
       success: true,
-      data: data as Assessment,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -125,8 +120,8 @@ export async function createAssessment(
 
 export async function updateAssessment(
   id: string,
-  updates: Partial<Assessment>
-): Promise<ApiResponse<Assessment>> {
+  updates: Record<string, any>
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('avaliacoes_unificadas')
@@ -144,7 +139,7 @@ export async function updateAssessment(
 
     return {
       success: true,
-      data: data as Assessment,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -160,7 +155,7 @@ export async function updateAssessment(
 export async function getMeasurementsByStudent(
   studentId: string,
   options?: { limit?: number }
-): Promise<ApiResponse<StudentMeasurement[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('student_measurements')
@@ -183,7 +178,7 @@ export async function getMeasurementsByStudent(
 
     return {
       success: true,
-      data: data as StudentMeasurement[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -195,8 +190,8 @@ export async function getMeasurementsByStudent(
 }
 
 export async function createMeasurement(
-  measurement: Omit<StudentMeasurement, 'id' | 'created_at'>
-): Promise<ApiResponse<StudentMeasurement>> {
+  measurement: Record<string, any>
+): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('student_measurements')
@@ -213,7 +208,7 @@ export async function createMeasurement(
 
     return {
       success: true,
-      data: data as StudentMeasurement,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -226,27 +221,16 @@ export async function createMeasurement(
 
 // ==================== STUDENT PHOTOS ====================
 
-export interface StudentPhoto {
-  id: string;
-  student_id: string;
-  athlete_id?: string;
-  photo_url: string;
-  photo_type: string | null;
-  taken_at: string | null;
-  notes: string | null;
-  created_at: string;
-}
-
 export async function getPhotosByStudent(
   studentId: string,
   options?: { photoType?: string; limit?: number }
-): Promise<ApiResponse<StudentPhoto[]>> {
+): Promise<ApiResponse<any[]>> {
   try {
     let query = supabase
       .from('student_photos')
       .select('*')
       .eq('student_id', studentId)
-      .order('taken_at', { ascending: false });
+      .order('taken_date', { ascending: false });
 
     if (options?.photoType) {
       query = query.eq('photo_type', options.photoType);
@@ -267,7 +251,7 @@ export async function getPhotosByStudent(
 
     return {
       success: true,
-      data: data as StudentPhoto[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -282,7 +266,7 @@ export async function uploadPhoto(
   studentId: string,
   file: File,
   photoType?: string
-): Promise<ApiResponse<StudentPhoto>> {
+): Promise<ApiResponse<any>> {
   try {
     // Upload to storage
     const fileName = `${studentId}/${Date.now()}_${file.name}`;
@@ -309,7 +293,7 @@ export async function uploadPhoto(
         student_id: studentId,
         photo_url: urlData.publicUrl,
         photo_type: photoType,
-        taken_at: new Date().toISOString()
+        taken_date: new Date().toISOString().split('T')[0]
       })
       .select()
       .single();
@@ -323,7 +307,7 @@ export async function uploadPhoto(
 
     return {
       success: true,
-      data: data as StudentPhoto,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -339,8 +323,8 @@ export async function uploadPhoto(
 export async function getProgressComparison(
   athleteId: string
 ): Promise<ApiResponse<{
-  latest: Assessment | null;
-  previous: Assessment | null;
+  latest: any | null;
+  previous: any | null;
   changes: Record<string, { value: number; change: number; changePercent: number }>;
 }>> {
   try {
@@ -358,8 +342,8 @@ export async function getProgressComparison(
       };
     }
 
-    const latest = data?.[0] as Assessment | null;
-    const previous = data?.[1] as Assessment | null;
+    const latest = data?.[0] ?? null;
+    const previous = data?.[1] ?? null;
 
     const changes: Record<string, { value: number; change: number; changePercent: number }> = {};
 
@@ -370,8 +354,8 @@ export async function getProgressComparison(
       ];
 
       for (const metric of metrics) {
-        const latestVal = (latest as any)[metric];
-        const prevVal = (previous as any)[metric];
+        const latestVal = latest[metric];
+        const prevVal = previous[metric];
         
         if (latestVal != null && prevVal != null) {
           const change = latestVal - prevVal;

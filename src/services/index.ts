@@ -3,10 +3,10 @@
  * Centralized exports for all domain services
  * 
  * Usage:
- * import { athleteService, trainingService } from '@/services';
+ * import { services, queryKeys } from '@/services';
  * 
  * Or import specific functions:
- * import { getAthleteById } from '@/services/athletes.service';
+ * import { getAthleteById, listAthletesByCoach } from '@/services/athletes.service';
  */
 
 // Athletes
@@ -25,29 +25,14 @@ export { schedulingQueryKeys } from './scheduling.service';
 export * from './assessments.service';
 export { assessmentQueryKeys } from './assessments.service';
 
-// Re-export types for convenience
-export type {
-  Athlete,
-  CreateAthleteDTO,
+// Re-export types
+export type { 
+  ApiResponse, 
+  PaginatedResponse, 
+  DateRange, 
+  CreateAthleteDTO, 
   UpdateAthleteDTO,
-  Exercise,
-  TrainingAssignment,
-  WorkoutProgress,
-  WorkoutExecution,
-  Assessment,
-  StudentMeasurement,
-  GymClass,
-  ClassBooking,
-  Appointment,
-  StudentCredits,
-  PeriodizationModel,
-  AthletePeriodization,
-  DietAssignment,
-  SystemEvent,
-  CheckIn,
-  ApiResponse,
-  PaginatedResponse,
-  DateRange,
+  AppointmentStatus 
 } from '@/types/domains';
 
 /**

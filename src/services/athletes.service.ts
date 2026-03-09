@@ -5,17 +5,11 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { 
-  Athlete, 
-  CreateAthleteDTO, 
-  UpdateAthleteDTO, 
-  ApiResponse,
-  DateRange 
-} from '@/types/domains';
+import type { ApiResponse, CreateAthleteDTO, UpdateAthleteDTO } from '@/types/domains';
 
 // ==================== ATHLETES CRUD ====================
 
-export async function listAthletesByCoach(coachId: string): Promise<ApiResponse<Athlete[]>> {
+export async function listAthletesByCoach(coachId: string): Promise<ApiResponse<any[]>> {
   try {
     const { data, error } = await supabase
       .from('athletes')
@@ -32,7 +26,7 @@ export async function listAthletesByCoach(coachId: string): Promise<ApiResponse<
 
     return {
       success: true,
-      data: data as Athlete[],
+      data: data ?? [],
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -43,7 +37,7 @@ export async function listAthletesByCoach(coachId: string): Promise<ApiResponse<
   }
 }
 
-export async function getAthleteById(id: string): Promise<ApiResponse<Athlete>> {
+export async function getAthleteById(id: string): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('athletes')
@@ -60,7 +54,7 @@ export async function getAthleteById(id: string): Promise<ApiResponse<Athlete>> 
 
     return {
       success: true,
-      data: data as Athlete,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -71,7 +65,7 @@ export async function getAthleteById(id: string): Promise<ApiResponse<Athlete>> 
   }
 }
 
-export async function getAthleteByUserId(userId: string): Promise<ApiResponse<Athlete>> {
+export async function getAthleteByUserId(userId: string): Promise<ApiResponse<any>> {
   try {
     // Try direct user_id first
     let { data, error } = await supabase
@@ -109,7 +103,7 @@ export async function getAthleteByUserId(userId: string): Promise<ApiResponse<At
 
     return {
       success: true,
-      data: data as Athlete,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -120,7 +114,7 @@ export async function getAthleteByUserId(userId: string): Promise<ApiResponse<At
   }
 }
 
-export async function getAthleteByEmail(email: string): Promise<ApiResponse<Athlete>> {
+export async function getAthleteByEmail(email: string): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('athletes')
@@ -137,7 +131,7 @@ export async function getAthleteByEmail(email: string): Promise<ApiResponse<Athl
 
     return {
       success: true,
-      data: data as Athlete,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -148,7 +142,7 @@ export async function getAthleteByEmail(email: string): Promise<ApiResponse<Athl
   }
 }
 
-export async function createAthlete(dto: CreateAthleteDTO): Promise<ApiResponse<Athlete>> {
+export async function createAthlete(dto: CreateAthleteDTO): Promise<ApiResponse<any>> {
   try {
     const { data, error } = await supabase
       .from('athletes')
@@ -182,7 +176,7 @@ export async function createAthlete(dto: CreateAthleteDTO): Promise<ApiResponse<
 
     return {
       success: true,
-      data: data as Athlete,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -193,15 +187,16 @@ export async function createAthlete(dto: CreateAthleteDTO): Promise<ApiResponse<
   }
 }
 
-export async function updateAthlete(id: string, dto: UpdateAthleteDTO): Promise<ApiResponse<Athlete>> {
+export async function updateAthlete(id: string, dto: UpdateAthleteDTO): Promise<ApiResponse<any>> {
   try {
+    const updatePayload: Record<string, any> = { ...dto };
+    if (dto.email) {
+      updatePayload.email = dto.email.toLowerCase().trim();
+    }
+
     const { data, error } = await supabase
       .from('athletes')
-      .update({
-        ...dto,
-        email: dto.email?.toLowerCase().trim(),
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
@@ -215,7 +210,7 @@ export async function updateAthlete(id: string, dto: UpdateAthleteDTO): Promise<
 
     return {
       success: true,
-      data: data as Athlete,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -258,12 +253,11 @@ export async function activateAthlete(
   id: string, 
   userId: string, 
   markPasswordChanged?: boolean
-): Promise<ApiResponse<Athlete>> {
+): Promise<ApiResponse<any>> {
   try {
-    const updateData: Partial<Athlete> = {
+    const updateData: Record<string, any> = {
       user_id: userId,
-      activated: true,
-      updated_at: new Date().toISOString()
+      activated: true
     };
 
     if (markPasswordChanged) {
@@ -292,7 +286,7 @@ export async function activateAthlete(
 
     return {
       success: true,
-      data: data as Athlete,
+      data,
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
@@ -320,21 +314,21 @@ export async function getAthleteStats(athleteId: string): Promise<ApiResponse<{
       .eq('id', athleteId)
       .single();
 
-    // Get workout progress stats
+    // Get workout progress stats - using aluno_id (legacy FK)
     const { data: progress } = await supabase
       .from('workout_progress')
-      .select('id, workout_date, calories_burned')
-      .eq('aluno_id', athleteId) // Using legacy FK for now
-      .order('workout_date', { ascending: false });
+      .select('*')
+      .eq('aluno_id', athleteId)
+      .order('created_at', { ascending: false });
 
     const totalWorkouts = progress?.length ?? 0;
-    const totalCalories = progress?.reduce((sum, p) => sum + (p.calories_burned ?? 0), 0) ?? 0;
+    const totalCalories = progress?.reduce((sum, p) => sum + (p.calorias_queimadas ?? 0), 0) ?? 0;
 
     // Calculate streak
     let currentStreak = 0;
     if (progress && progress.length > 0) {
       const today = new Date();
-      const dates = progress.map(p => new Date(p.workout_date).toDateString());
+      const dates = progress.map(p => new Date(p.created_at).toDateString());
       
       for (let i = 0; i < 7; i++) {
         const checkDate = new Date(today);
