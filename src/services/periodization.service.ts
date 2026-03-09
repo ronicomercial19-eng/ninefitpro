@@ -109,7 +109,7 @@ export async function getTrainingPhases(modelId: string): Promise<ApiResponse<an
       .from('training_phases')
       .select('*')
       .eq('periodization_model_id', modelId)
-      .order('phase_order', { ascending: true });
+      .order('phase_order' as any, { ascending: true });
 
     if (error) return { success: false, error: { code: 'FETCH_ERROR', message: error.message } };
     return { success: true, data: data ?? [], metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 } };
