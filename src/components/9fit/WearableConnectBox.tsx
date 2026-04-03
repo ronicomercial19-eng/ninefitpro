@@ -40,7 +40,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
   };
 
   const handleHeartRate = useCallback((event: Event) => {
-    const value = (event.target as BluetoothRemoteGATTCharacteristic).value;
+    const value = (event.target as any).value;
     if (!value) return;
     const flags = value.getUint8(0);
     const is16Bit = flags & 0x01;
