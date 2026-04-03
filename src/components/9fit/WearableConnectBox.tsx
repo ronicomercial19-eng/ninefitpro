@@ -15,8 +15,8 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
   const [bpm, setBpm] = useState(0);
   const [zone, setZone] = useState("");
   const [error, setError] = useState("");
-  const deviceRef = useRef<BluetoothDevice | null>(null);
-  const charRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+  const deviceRef = useRef<any>(null);
+  const charRef = useRef<any>(null);
   const bpmHistoryRef = useRef<number[]>([]);
   const startTimeRef = useRef<number>(0);
 
