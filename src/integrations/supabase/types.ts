@@ -3205,12 +3205,17 @@ export type Database = {
           id: string
           macro_number: number
           macro_objetivo: string
+          model_name: string | null
+          pillar: string | null
           professor_id: string
           progression_type: string
+          protocol_code: string | null
+          protocol_name: string | null
           reps_range: string
           rpe_target: number
           status: string
           updated_at: string
+          variation_name: string | null
           volume_locked: boolean
           weekly_frequency: number
         }
@@ -3226,12 +3231,17 @@ export type Database = {
           id?: string
           macro_number: number
           macro_objetivo?: string
+          model_name?: string | null
+          pillar?: string | null
           professor_id: string
           progression_type?: string
+          protocol_code?: string | null
+          protocol_name?: string | null
           reps_range?: string
           rpe_target?: number
           status?: string
           updated_at?: string
+          variation_name?: string | null
           volume_locked?: boolean
           weekly_frequency?: number
         }
@@ -3247,12 +3257,17 @@ export type Database = {
           id?: string
           macro_number?: number
           macro_objetivo?: string
+          model_name?: string | null
+          pillar?: string | null
           professor_id?: string
           progression_type?: string
+          protocol_code?: string | null
+          protocol_name?: string | null
           reps_range?: string
           rpe_target?: number
           status?: string
           updated_at?: string
+          variation_name?: string | null
           volume_locked?: boolean
           weekly_frequency?: number
         }
@@ -3373,6 +3388,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      smart_treino_protocols: {
+        Row: {
+          block_9_template: Json
+          block_integration: string
+          block_neural: string
+          block_reset: string
+          created_at: string
+          id: string
+          model_description: string
+          model_id: number
+          pillar: string
+          pillar_label: string
+          protocol_axis: string
+          protocol_id: number
+          protocol_name: string
+          recommended_for: string[]
+          rpe_range: string
+          variation_focus: string
+          variation_id: number
+          variation_name: string
+        }
+        Insert: {
+          block_9_template?: Json
+          block_integration?: string
+          block_neural?: string
+          block_reset?: string
+          created_at?: string
+          id: string
+          model_description: string
+          model_id: number
+          pillar: string
+          pillar_label: string
+          protocol_axis: string
+          protocol_id: number
+          protocol_name: string
+          recommended_for?: string[]
+          rpe_range?: string
+          variation_focus: string
+          variation_id: number
+          variation_name: string
+        }
+        Update: {
+          block_9_template?: Json
+          block_integration?: string
+          block_neural?: string
+          block_reset?: string
+          created_at?: string
+          id?: string
+          model_description?: string
+          model_id?: number
+          pillar?: string
+          pillar_label?: string
+          protocol_axis?: string
+          protocol_id?: number
+          protocol_name?: string
+          recommended_for?: string[]
+          rpe_range?: string
+          variation_focus?: string
+          variation_id?: number
+          variation_name?: string
+        }
+        Relationships: []
       }
       strength_records: {
         Row: {
