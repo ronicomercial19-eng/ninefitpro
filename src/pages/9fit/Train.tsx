@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink, Heart, Droplets, PersonStanding } from "lucide-react";
+import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink, Heart, Droplets, PersonStanding, Clock, Zap } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
 import { RecoveryMission } from "@/components/9fit/RecoveryMission";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import { PostWorkoutModal } from "@/components/9fit/PostWorkoutModal";
+import { WearableConnectBox } from "@/components/9fit/WearableConnectBox";
 
 interface TrainingAssignment {
   id: string;
