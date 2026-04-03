@@ -2007,6 +2007,57 @@ export type Database = {
         }
         Relationships: []
       }
+      nutrition_logs: {
+        Row: {
+          athlete_id: string
+          calories: number | null
+          carbs: number | null
+          created_at: string | null
+          date: string
+          fat: number | null
+          id: string
+          meal_name: string
+          protein: number | null
+        }
+        Insert: {
+          athlete_id: string
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string | null
+          date?: string
+          fat?: number | null
+          id?: string
+          meal_name: string
+          protein?: number | null
+        }
+        Update: {
+          athlete_id?: string
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string | null
+          date?: string
+          fat?: number | null
+          id?: string
+          meal_name?: string
+          protein?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -4499,6 +4550,48 @@ export type Database = {
           user_email?: string
         }
         Relationships: []
+      }
+      user_memory: {
+        Row: {
+          athlete_id: string
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_metrics: {
         Row: {

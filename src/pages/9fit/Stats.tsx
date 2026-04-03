@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Flame, Dumbbell, Trophy, Calendar, Loader2, Star } from "lucide-react";
+import { Flame, Dumbbell, Trophy, Calendar, Loader2, Star, TrendingUp, Target } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { format, subDays, startOfWeek, addDays } from "date-fns";
 import { getAthleteStats, getAthleteById } from '@/services/athletes.service';
 import { getWorkoutProgress } from '@/services/training.service';
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeekDay { day: string; value: number; calories: number; }
 interface Achievement { id: string; name: string; description: string; unlocked: boolean; }
@@ -15,6 +16,7 @@ export default function NineFitStats() {
   const [stats, setStats] = useState({ totalCalories: 0, streak: 0, totalWorkouts: 0, totalXP: 0, level: 1 });
   const [weeklyData, setWeeklyData] = useState<WeekDay[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [prediction, setPrediction] = useState<string | null>(null);
 
   useEffect(() => {
     if (!athleteLoading && athleteId) fetchStats(athleteId);
@@ -52,6 +54,39 @@ export default function NineFitStats() {
 
       setWeeklyData(weekly);
       setAchievements(achs);
+
+      // Prediction: fetch weight measurements
+      const { data: measurements } = await supabase
+        .from("student_measurements")
+        .select("peso_kg, measurement_date")
+        .eq("student_id", id)
+        .not("peso_kg", "is", null)
+        .order("measurement_date", { ascending: true })
+        .limit(10);
+
+      if (measurements && measurements.length >= 3) {
+        const points = measurements.map((m, i) => ({ x: i, y: m.peso_kg! }));
+        const n = points.length;
+        const sumX = points.reduce((s, p) => s + p.x, 0);
+        const sumY = points.reduce((s, p) => s + p.y, 0);
+        const sumXY = points.reduce((s, p) => s + p.x * p.y, 0);
+        const sumX2 = points.reduce((s, p) => s + p.x * p.x, 0);
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        
+        if (Math.abs(slope) > 0.01) {
+          const avgInterval = measurements.length > 1 
+            ? (new Date(measurements[measurements.length - 1].measurement_date).getTime() - new Date(measurements[0].measurement_date).getTime()) / (measurements.length - 1) / (1000 * 60 * 60 * 24)
+            : 7;
+          const currentWeight = measurements[measurements.length - 1].peso_kg;
+          const weeklyChange = Math.abs(slope * (7 / Math.max(avgInterval, 1)));
+          const direction = slope < 0 ? "perdendo" : "ganhando";
+          setPrediction(`${direction} ~${weeklyChange.toFixed(1)}kg/semana. Peso atual: ${currentWeight}kg`);
+        } else {
+          setPrediction("Peso estável. Continue mantendo a consistência!");
+        }
+      } else {
+        setPrediction(null);
+      }
     } catch (e) { console.error("Error:", e); }
     finally { setLoading(false); }
   };
@@ -83,6 +118,19 @@ export default function NineFitStats() {
           </div>
         </div>
       </div>
+
+      {/* Prediction Card */}
+      {prediction && (
+        <div className="px-4 mb-6">
+          <div className="bg-primary/10 border border-primary/30 rounded-sm p-4 flex items-start gap-3">
+            <TrendingUp className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-foreground">Previsão de Resultados</p>
+              <p className="text-xs text-muted-foreground mt-1">Neste ritmo, você está {prediction}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 px-4 mb-8">
         {statCards.map((stat) => (

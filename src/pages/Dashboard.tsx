@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Dumbbell, TrendingUp, Calendar, BarChart3, BookOpen, ArrowRight, Activity, Target, Zap, Clock, Plus, AlertTriangle } from "lucide-react";
+import { Users, Dumbbell, TrendingUp, Calendar, BarChart3, BookOpen, ArrowRight, Activity, Target, Zap, Clock, Plus, AlertTriangle, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
@@ -20,6 +20,7 @@ interface DashboardStats {
   studentsWithoutTraining: number;
   overdueTraining: number;
   expiringPlans: { id: string; name: string; email: string | null; data_fim_plano: string }[];
+  rpeAlerts: { name: string; avgRpe: number; type: "high" | "low" }[];
 }
 
 export default function Dashboard() {
@@ -27,7 +28,7 @@ export default function Dashboard() {
   const { user, profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0, activeMembers: 0, weeklyWorkouts: 0, upcomingAppointments: 0,
-    studentsWithoutTraining: 0, overdueTraining: 0, expiringPlans: []
+    studentsWithoutTraining: 0, overdueTraining: 0, expiringPlans: [], rpeAlerts: []
   });
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +61,6 @@ export default function Dashboard() {
       const studentsWithoutTraining = allAthletes.filter((a: any) => a.activated && !trainingIds.has(a.id)).length;
       const overdueTraining = new Set((expiredAssignmentsRes.data || []).map((t: any) => t.student_id)).size;
 
-      // Expiring assignments
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
       const { data: expiringAssignments } = await supabase
@@ -80,7 +80,33 @@ export default function Dashboard() {
         }));
       }
 
-      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans });
+      // RPE Alerts - check workout_progress for high/low RPE averages
+      const rpeAlerts: DashboardStats['rpeAlerts'] = [];
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { data: recentProgress } = await supabase
+        .from('workout_progress')
+        .select('aluno_id, rpe')
+        .not('rpe', 'is', null)
+        .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+
+      if (recentProgress && recentProgress.length > 0) {
+        const byAthlete = new Map<string, number[]>();
+        recentProgress.forEach((p: any) => {
+          const arr = byAthlete.get(p.aluno_id) || [];
+          arr.push(p.rpe);
+          byAthlete.set(p.aluno_id, arr);
+        });
+        
+        const athleteNameMap = new Map(allAthletes.map((a: any) => [a.id, a.name]));
+        byAthlete.forEach((rpes, athleteId) => {
+          const avg = rpes.reduce((a, b) => a + b, 0) / rpes.length;
+          if (avg > 8) rpeAlerts.push({ name: athleteNameMap.get(athleteId) || 'Aluno', avgRpe: Math.round(avg * 10) / 10, type: 'high' });
+          else if (avg < 4) rpeAlerts.push({ name: athleteNameMap.get(athleteId) || 'Aluno', avgRpe: Math.round(avg * 10) / 10, type: 'low' });
+        });
+      }
+
+      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans, rpeAlerts });
       if (workoutsRes.data) setRecentActivities(workoutsRes.data.slice(0, 4));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -142,6 +168,25 @@ export default function Dashboard() {
                   <div key={plan.id} className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-500/10 rounded-lg">
                     <div><p className="text-sm font-medium">{plan.name}</p><p className="text-xs text-muted-foreground">{plan.email}</p></div>
                     <Badge variant="outline" className="text-yellow-600 border-yellow-600">Vence {new Date(plan.data_fim_plano).toLocaleDateString('pt-BR')}</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* RPE Alerts */}
+        {stats.rpeAlerts.length > 0 && (
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><Heart className="w-5 h-5" />Alertas de RPE ({stats.rpeAlerts.length})</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {stats.rpeAlerts.map((alert, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-500/10 rounded-lg">
+                    <div><p className="text-sm font-medium">{alert.name}</p><p className="text-xs text-muted-foreground">RPE médio: {alert.avgRpe}</p></div>
+                    <Badge variant="outline" className={alert.type === 'high' ? "text-red-600 border-red-600" : "text-yellow-600 border-yellow-600"}>
+                      {alert.type === 'high' ? '⚠️ Sobrecarga' : '⚡ Baixa intensidade'}
+                    </Badge>
                   </div>
                 ))}
               </div>

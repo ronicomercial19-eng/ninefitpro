@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink, Heart, Droplets, PersonStanding } from "lucide-react";
+import { ChevronRight, Dumbbell, FileText, Eye, Loader2, Play, Globe, Code2, X, ExternalLink, Heart, Droplets, PersonStanding, Clock, Zap } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
 import { RecoveryMission } from "@/components/9fit/RecoveryMission";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import { PostWorkoutModal } from "@/components/9fit/PostWorkoutModal";
+import { WearableConnectBox } from "@/components/9fit/WearableConnectBox";
 
 interface TrainingAssignment {
   id: string;
@@ -53,6 +56,8 @@ export default function NineFitTrain() {
   const [selectedTraining, setSelectedTraining] = useState<TrainingAssignment | null>(null);
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [showPSEModal, setShowPSEModal] = useState(false);
+  const [completingTraining, setCompletingTraining] = useState<TrainingAssignment | null>(null);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -385,7 +390,12 @@ export default function NineFitTrain() {
           </div>
           
           {/* Content Area - Full Height with mobile viewport fix */}
-          <div className="flex-1 w-full bg-white overflow-hidden" style={{ height: 'calc(100dvh - 100px)' }}>
+          <div className="flex-1 w-full bg-white overflow-hidden" style={{ height: 'calc(100dvh - 160px)' }}>
+            {/* Wearable Connect Box */}
+            <div className="px-3 py-2 bg-background">
+              <WearableConnectBox isWorkoutActive={!!selectedTraining} />
+            </div>
+
             {loadingContent ? (
               <div className="flex items-center justify-center h-full bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -419,63 +429,34 @@ export default function NineFitTrain() {
           {/* Complete Workout Button */}
           <div className="px-4 py-3 bg-background border-t border-border">
             <Button
-              className="w-full bg-primary text-primary-foreground font-bold"
-              onClick={async () => {
+              className="w-full bg-primary text-primary-foreground font-bold py-6 text-base"
+              onClick={() => {
                 if (!athleteId || !selectedTraining) return;
-                try {
-                  const todayDate = new Date().toISOString().split('T')[0];
-                  
-                  // Check if already completed today for this training
-                  const { data: existing } = await supabase
-                    .from("workout_progress")
-                    .select("id")
-                    .eq("aluno_id", athleteId)
-                    .eq("training_name", selectedTraining.training_name)
-                    .eq("date", todayDate)
-                    .maybeSingle();
-
-                  if (existing) {
-                    toast.info("Você já concluiu este treino hoje! 💪");
-                    setSelectedTraining(null);
-                    setHtmlContent(null);
-                    return;
-                  }
-
-                  await supabase.from("workout_progress").insert({
-                    aluno_id: athleteId,
-                    exercise_name: selectedTraining.training_name,
-                    training_name: selectedTraining.training_name,
-                    completed_at: new Date().toISOString(),
-                    calories_burned: 150,
-                    sets: 0,
-                    reps: 0,
-                    date: todayDate,
-                  } as any);
-                  // Award XP
-                  const { data: athlete } = await supabase
-                    .from("athletes")
-                    .select("total_xp, level")
-                    .eq("id", athleteId)
-                    .single();
-                  if (athlete) {
-                    const newXP = (athlete.total_xp || 0) + 100;
-                    const newLevel = Math.floor(newXP / 500) + 1;
-                    await supabase.from("athletes").update({ total_xp: newXP, level: newLevel }).eq("id", athleteId);
-                  }
-                  toast.success("Treino concluído! +100 XP 🔥");
-                  setSelectedTraining(null);
-                  setHtmlContent(null);
-                } catch {
-                  toast.error("Erro ao salvar progresso");
-                }
+                setCompletingTraining(selectedTraining);
+                setSelectedTraining(null);
+                setHtmlContent(null);
+                setShowPSEModal(true);
               }}
             >
-              <Play className="w-4 h-4 mr-2" />
-              Concluir Treino (+100 XP)
+              <Zap className="w-5 h-5 mr-2" />
+              Concluir Treino
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Post-Workout PSE Modal */}
+      {completingTraining && athleteId && (
+        <PostWorkoutModal
+          open={showPSEModal}
+          onClose={() => {
+            setShowPSEModal(false);
+            setCompletingTraining(null);
+          }}
+          athleteId={athleteId}
+          trainingName={completingTraining.training_name}
+        />
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigation />
