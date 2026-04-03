@@ -20,6 +20,7 @@ interface DashboardStats {
   studentsWithoutTraining: number;
   overdueTraining: number;
   expiringPlans: { id: string; name: string; email: string | null; data_fim_plano: string }[];
+  rpeAlerts: { name: string; avgRpe: number; type: "high" | "low" }[];
 }
 
 export default function Dashboard() {
@@ -27,7 +28,7 @@ export default function Dashboard() {
   const { user, profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0, activeMembers: 0, weeklyWorkouts: 0, upcomingAppointments: 0,
-    studentsWithoutTraining: 0, overdueTraining: 0, expiringPlans: []
+    studentsWithoutTraining: 0, overdueTraining: 0, expiringPlans: [], rpeAlerts: []
   });
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
