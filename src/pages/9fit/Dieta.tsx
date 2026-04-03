@@ -125,64 +125,38 @@ export default function NineFitDieta() {
   const [todayMeals, setTodayMeals] = useState<any[]>([]);
   const caloriesGoal = 2500;
 
+  const fetchNutritionLogs = async (aid: string) => {
+    const today = format(currentDate, "yyyy-MM-dd");
+    const { data } = await supabase
+      .from("nutrition_logs")
+      .select("*")
+      .eq("athlete_id", aid)
+      .eq("date", today)
+      .order("created_at", { ascending: true });
+    
+    const meals = data || [];
+    setTodayMeals(meals);
+    setConsumed({
+      calories: meals.reduce((s: number, m: any) => s + (m.calories || 0), 0),
+      protein: meals.reduce((s: number, m: any) => s + (m.protein || 0), 0),
+      carbs: meals.reduce((s: number, m: any) => s + (m.carbs || 0), 0),
+      fat: meals.reduce((s: number, m: any) => s + (m.fat || 0), 0),
+    });
+  };
+
+  const deleteMeal = async (id: string) => {
+    await supabase.from("nutrition_logs").delete().eq("id", id);
+    if (athleteId) fetchNutritionLogs(athleteId);
+    toast.success("Refeição removida");
+  };
+
   // Fetch assigned diets from database
   useEffect(() => {
     const fetchAssignedDiets = async () => {
-      if (!user) return;
+      if (!athleteId) { setLoading(false); return; }
       
       setLoading(true);
-      
       try {
-        // First, find the athlete record for this user
-        let athleteId: string | null = null;
-        
-        // Try direct lookup via user_id
-        const { data: athleteData } = await supabase
-          .from('athletes')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (athleteData) {
-          athleteId = athleteData.id;
-        }
-        
-        // Fallback: Try athlete_auth_link
-        if (!athleteId) {
-          const { data: linkData } = await supabase
-            .from('athlete_auth_link')
-            .select('athlete_id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (linkData) {
-            athleteId = linkData.athlete_id;
-          }
-        }
-        
-        // Fallback: Try by email
-        if (!athleteId && user.email) {
-          const { data: emailData } = await supabase
-            .from('athletes')
-            .select('id')
-            .eq('email', user.email)
-            .maybeSingle();
-          
-          if (emailData) {
-            athleteId = emailData.id;
-          }
-        }
-        
-        if (!athleteId) {
-          console.log('No athlete found for user');
-          setAssignedDiets([]);
-          setLoading(false);
-          return;
-        }
-        
-        console.log('Found athlete ID:', athleteId);
-        
-        // Fetch ALL active diet assignments for this student
         const { data: diets, error } = await supabase
           .from('student_diet_assignments')
           .select('*')
@@ -192,21 +166,17 @@ export default function NineFitDieta() {
         
         if (error) throw error;
         
-        // Filter by date client-side for more reliable results
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
         const validDiets = (diets || []).filter(diet => {
           const startDate = parseISO(diet.start_date);
           const endDate = diet.end_date ? parseISO(diet.end_date) : null;
-          
           const startValid = isBefore(startDate, today) || isEqual(startDate, today);
           const endValid = !endDate || isAfter(endDate, today) || isEqual(endDate, today);
-          
           return startValid && endValid;
         });
         
-        console.log('Found diets:', validDiets.length);
         setAssignedDiets(validDiets);
       } catch (error) {
         console.error('Error fetching diets:', error);
@@ -217,7 +187,12 @@ export default function NineFitDieta() {
     };
 
     fetchAssignedDiets();
-  }, [user]);
+  }, [athleteId]);
+
+  // Fetch nutrition logs when date changes
+  useEffect(() => {
+    if (athleteId) fetchNutritionLogs(athleteId);
+  }, [athleteId, currentDate]);
 
   // Open diet viewer
   const handleOpenDiet = async (diet: DietAssignment) => {
