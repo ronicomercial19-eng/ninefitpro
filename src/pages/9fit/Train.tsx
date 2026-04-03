@@ -56,6 +56,8 @@ export default function NineFitTrain() {
   const [selectedTraining, setSelectedTraining] = useState<TrainingAssignment | null>(null);
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [showPSEModal, setShowPSEModal] = useState(false);
+  const [completingTraining, setCompletingTraining] = useState<TrainingAssignment | null>(null);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
