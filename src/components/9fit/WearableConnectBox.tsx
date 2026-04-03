@@ -62,7 +62,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
     setError("");
 
     try {
-      const device = await navigator.bluetooth.requestDevice({
+      const device = await (navigator as any).bluetooth.requestDevice({
         filters: [{ services: ["heart_rate"] }],
         optionalServices: ["heart_rate"],
       });
