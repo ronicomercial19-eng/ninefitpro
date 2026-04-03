@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/** Standardized API response */
 function apiResponse(data: any, status = 200) {
   return new Response(JSON.stringify({
     success: status < 400,
@@ -21,8 +21,34 @@ function apiError(code: string, message: string, status = 500) {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // === AUTH: Require authenticated user ===
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return apiError('UNAUTHORIZED', 'Missing authorization', 401);
+
+  const authClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+  if (claimsError || !claimsData?.claims) return apiError('INVALID_TOKEN', 'Invalid token', 401);
+
   try {
-    const { type, data, messages } = await req.json();
+    const body = await req.json();
+    const { type, data, messages } = body;
+
+    // Input validation
+    if (!type || typeof type !== 'string') return apiError('INVALID_INPUT', 'Field "type" is required', 400);
+    const allowedTypes = ['generate_training', 'analyze_progress', 'recommendations', 'chat'];
+    if (!allowedTypes.includes(type)) return apiError('INVALID_TYPE', `Tipo inválido: ${type}`, 400);
+
+    if (type === 'chat' && (!Array.isArray(messages) || messages.length === 0)) {
+      return apiError('INVALID_INPUT', 'Field "messages" is required for chat type', 400);
+    }
+    if (type !== 'chat' && (!data || typeof data !== 'object')) {
+      return apiError('INVALID_INPUT', 'Field "data" is required', 400);
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'LOVABLE_API_KEY not configured', 500);
 
@@ -41,21 +67,21 @@ Responda APENAS com o HTML do treino, sem explicações extras fora do HTML.`;
         
         const d = data;
         userPrompt = `Gere um treino personalizado com os seguintes dados:
-- Nome: ${d.studentName}
-- Idade: ${d.age} anos, Gênero: ${d.gender || 'não informado'}
-- Objetivo principal: ${d.primaryGoal}
-- Nível: ${d.experienceLevel}
-- Frequência: ${d.weeklyFrequency}x por semana
-- Duração da sessão: ${d.sessionDuration} minutos
-- Ambiente: ${d.trainingEnvironment || 'academia'}
-- Equipamentos: ${d.availableEquipment?.join(', ') || 'todos disponíveis'}
-- Histórico: ${d.trainingHistory || 'não informado'}
-- Lesões/Restrições: ${d.injuries || 'nenhuma'} / ${d.restrictions || 'nenhuma'}
-- Condições de saúde: ${d.healthConditions || 'nenhuma'}
-- Estilo preferido: ${d.trainingStyle || 'tradicional'}
-- Exercícios preferidos: ${d.preferredExercises || 'sem preferência'}
-- Exercícios a evitar: ${d.avoidedExercises || 'nenhum'}
-- Observações: ${d.additionalNotes || 'nenhuma'}`;
+- Nome: ${String(d.studentName || '').slice(0, 100)}
+- Idade: ${String(d.age || '').slice(0, 5)} anos, Gênero: ${String(d.gender || 'não informado').slice(0, 20)}
+- Objetivo principal: ${String(d.primaryGoal || '').slice(0, 100)}
+- Nível: ${String(d.experienceLevel || '').slice(0, 50)}
+- Frequência: ${String(d.weeklyFrequency || '').slice(0, 5)}x por semana
+- Duração da sessão: ${String(d.sessionDuration || '').slice(0, 10)} minutos
+- Ambiente: ${String(d.trainingEnvironment || 'academia').slice(0, 50)}
+- Equipamentos: ${Array.isArray(d.availableEquipment) ? d.availableEquipment.map((e: any) => String(e).slice(0, 50)).join(', ') : 'todos disponíveis'}
+- Histórico: ${String(d.trainingHistory || 'não informado').slice(0, 500)}
+- Lesões/Restrições: ${String(d.injuries || 'nenhuma').slice(0, 500)} / ${String(d.restrictions || 'nenhuma').slice(0, 500)}
+- Condições de saúde: ${String(d.healthConditions || 'nenhuma').slice(0, 500)}
+- Estilo preferido: ${String(d.trainingStyle || 'tradicional').slice(0, 50)}
+- Exercícios preferidos: ${String(d.preferredExercises || 'sem preferência').slice(0, 500)}
+- Exercícios a evitar: ${String(d.avoidedExercises || 'nenhum').slice(0, 500)}
+- Observações: ${String(d.additionalNotes || 'nenhuma').slice(0, 500)}`;
         break;
       }
 
@@ -66,12 +92,12 @@ Use tags h3, h4, ul, li, strong, em. Seja específico e baseado nos dados.`;
         
         const p = data;
         userPrompt = `Analise o progresso deste aluno:
-- Nome: ${p.name}
-- Avaliações: ${JSON.stringify(p.assessments || [])}
-- Check-ins recentes: ${JSON.stringify(p.checkins || [])}
-- Treinos realizados: ${p.workoutsCompleted || 0}
-- Frequência média: ${p.avgFrequency || 'N/A'}
-- Objetivo: ${p.goal || 'não definido'}`;
+- Nome: ${String(p.name || '').slice(0, 100)}
+- Avaliações: ${JSON.stringify(p.assessments || []).slice(0, 2000)}
+- Check-ins recentes: ${JSON.stringify(p.checkins || []).slice(0, 2000)}
+- Treinos realizados: ${String(p.workoutsCompleted || 0).slice(0, 10)}
+- Frequência média: ${String(p.avgFrequency || 'N/A').slice(0, 20)}
+- Objetivo: ${String(p.goal || 'não definido').slice(0, 100)}`;
         break;
       }
 
@@ -87,13 +113,13 @@ Gere entre 4 e 6 recomendações. Responda APENAS com o JSON, sem markdown.`;
 
         const r = data;
         userPrompt = `Gere recomendações para este aluno:
-- Nome: ${r.name}
-- Objetivo: ${r.goal || 'hipertrofia'}
-- Nível: ${r.level || 'intermediário'}
-- Frequência: ${r.frequency || 3}x/semana
-- Lesões: ${r.injuries || 'nenhuma'}
-- Check-in recente (sono/energia/dor): ${r.lastCheckin || 'sem dados'}
-- Tendência de peso: ${r.weightTrend || 'estável'}`;
+- Nome: ${String(r.name || '').slice(0, 100)}
+- Objetivo: ${String(r.goal || 'hipertrofia').slice(0, 100)}
+- Nível: ${String(r.level || 'intermediário').slice(0, 50)}
+- Frequência: ${String(r.frequency || 3)}x/semana
+- Lesões: ${String(r.injuries || 'nenhuma').slice(0, 500)}
+- Check-in recente (sono/energia/dor): ${String(r.lastCheckin || 'sem dados').slice(0, 200)}
+- Tendência de peso: ${String(r.weightTrend || 'estável').slice(0, 50)}`;
         break;
       }
 
@@ -109,14 +135,19 @@ Você ajuda professores com:
 Seja profissional, direto e baseado em evidências científicas. Responda em português brasileiro.`;
         break;
       }
-
-      default:
-        return apiError('INVALID_TYPE', `Tipo inválido: ${type}`, 400);
     }
+
+    // Sanitize chat messages
+    const sanitizedMessages = type === "chat"
+      ? messages.slice(0, 50).map((m: any) => ({
+          role: ['user', 'assistant', 'system'].includes(m.role) ? m.role : 'user',
+          content: String(m.content || '').slice(0, 4000),
+        }))
+      : [{ role: "user", content: userPrompt }];
 
     const aiMessages = [
       { role: "system", content: systemPrompt },
-      ...(type === "chat" ? messages : [{ role: "user", content: userPrompt }]),
+      ...sanitizedMessages,
     ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -131,7 +162,7 @@ Seja profissional, direto e baseado em evidências científicas. Responda em por
     if (!response.ok) {
       if (response.status === 429) return apiError('RATE_LIMITED', 'Limite de requisições excedido. Tente novamente em alguns instantes.', 429);
       if (response.status === 402) return apiError('CREDITS_EXHAUSTED', 'Créditos de IA esgotados. Adicione créditos no workspace.', 402);
-      console.error("AI gateway error:", response.status, await response.text());
+      console.error("AI gateway error:", response.status);
       return apiError('AI_SERVICE_ERROR', 'Erro no serviço de IA', 500);
     }
 
@@ -147,6 +178,6 @@ Seja profissional, direto e baseado em evidências científicas. Responda em por
     return apiResponse({ content });
   } catch (e) {
     console.error("ai-coach error:", e);
-    return apiError('INTERNAL_ERROR', e instanceof Error ? e.message : 'Erro desconhecido', 500);
+    return apiError('INTERNAL_ERROR', 'Erro interno do servidor', 500);
   }
 });

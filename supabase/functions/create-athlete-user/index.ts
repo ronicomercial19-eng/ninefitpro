@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/** Standardized API response */
 function apiResponse(data: any, status = 200) {
   return new Response(JSON.stringify({
     success: status < 400,
@@ -26,7 +25,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Auth check - require trainer role
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return apiError('UNAUTHORIZED', 'Missing authorization header', 401);
 
@@ -52,20 +50,38 @@ serve(async (req) => {
       return apiError('MISSING_FIELDS', 'Missing required fields: athleteId, email, password', 400);
     }
 
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const trimmedEmail = email.trim().toLowerCase();
-    
-    if (!emailRegex.test(trimmedEmail)) {
-      return apiError('INVALID_EMAIL', `Invalid email format: "${email}"`, 400);
+    const trimmedEmail = String(email).trim().toLowerCase();
+    if (!emailRegex.test(trimmedEmail) || trimmedEmail.length > 255) {
+      return apiError('INVALID_EMAIL', 'Invalid email format', 400);
     }
 
-    console.log("Creating auth user for:", { athleteId, email: trimmedEmail, name });
+    // Validate name
+    const safeName = name ? String(name).trim().slice(0, 100) : undefined;
+    if (safeName !== undefined && safeName.length < 2) {
+      return apiError('INVALID_NAME', 'Name must be at least 2 characters', 400);
+    }
+
+    // Validate password length
+    const safePassword = String(password);
+    if (safePassword.length < 8 || safePassword.length > 72) {
+      return apiError('INVALID_PASSWORD', 'Password must be between 8 and 72 characters', 400);
+    }
+
+    // Validate athleteId is UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(String(athleteId))) {
+      return apiError('INVALID_ATHLETE_ID', 'Invalid athlete ID format', 400);
+    }
+
+    console.log("Creating auth user for athlete:", athleteId);
 
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: trimmedEmail,
-      password,
+      password: safePassword,
       email_confirm: true,
-      user_metadata: { full_name: name, athlete_id: athleteId, user_type: "athlete" },
+      user_metadata: { full_name: safeName, athlete_id: athleteId, user_type: "athlete" },
     });
 
     if (createError) {
@@ -81,7 +97,7 @@ serve(async (req) => {
           return apiResponse({ userId: existingUser.id, message: "User already exists, linked to athlete", linked: true });
         }
       }
-      return apiError('CREATE_USER_ERROR', createError.message, 400);
+      return apiError('CREATE_USER_ERROR', 'Failed to create user account', 400);
     }
 
     if (!userData?.user) return apiError('CREATE_FAILED', 'Failed to create user', 500);
@@ -92,7 +108,7 @@ serve(async (req) => {
     if (linkError) console.error("Error linking athlete:", linkError);
 
     await supabaseAdmin.from("athletes").update({
-      auto_password_temp: password, password_changed: false,
+      password_changed: false,
       activated: true, user_id: userData.user.id,
       metadata: { email: trimmedEmail }
     }).eq("id", athleteId);
@@ -100,6 +116,6 @@ serve(async (req) => {
     return apiResponse({ userId: userData.user.id, message: "User created successfully" });
   } catch (error: any) {
     console.error("Error:", error);
-    return apiError('INTERNAL_ERROR', error.message, 400);
+    return apiError('INTERNAL_ERROR', 'Internal server error', 500);
   }
 });
