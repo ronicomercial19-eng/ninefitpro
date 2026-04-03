@@ -58,14 +58,14 @@ export default function NineFitStats() {
       // Prediction: fetch weight measurements
       const { data: measurements } = await supabase
         .from("student_measurements")
-        .select("weight, measured_at")
+        .select("peso_kg, measurement_date")
         .eq("student_id", id)
-        .not("weight", "is", null)
-        .order("measured_at", { ascending: true })
+        .not("peso_kg", "is", null)
+        .order("measurement_date", { ascending: true })
         .limit(10);
 
       if (measurements && measurements.length >= 3) {
-        const points = measurements.map((m: any, i: number) => ({ x: i, y: m.weight }));
+        const points = measurements.map((m, i) => ({ x: i, y: m.peso_kg! }));
         const n = points.length;
         const sumX = points.reduce((s, p) => s + p.x, 0);
         const sumY = points.reduce((s, p) => s + p.y, 0);
@@ -75,10 +75,10 @@ export default function NineFitStats() {
         
         if (Math.abs(slope) > 0.01) {
           const avgInterval = measurements.length > 1 
-            ? (new Date(measurements[measurements.length - 1].measured_at).getTime() - new Date(measurements[0].measured_at).getTime()) / (measurements.length - 1) / (1000 * 60 * 60 * 24)
+            ? (new Date(measurements[measurements.length - 1].measurement_date).getTime() - new Date(measurements[0].measurement_date).getTime()) / (measurements.length - 1) / (1000 * 60 * 60 * 24)
             : 7;
-          const currentWeight = measurements[measurements.length - 1].weight;
-          const weeklyChange = Math.abs(slope * (7 / avgInterval));
+          const currentWeight = measurements[measurements.length - 1].peso_kg;
+          const weeklyChange = Math.abs(slope * (7 / Math.max(avgInterval, 1)));
           const direction = slope < 0 ? "perdendo" : "ganhando";
           setPrediction(`${direction} ~${weeklyChange.toFixed(1)}kg/semana. Peso atual: ${currentWeight}kg`);
         } else {
