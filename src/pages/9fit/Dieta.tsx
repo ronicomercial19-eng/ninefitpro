@@ -338,17 +338,66 @@ export default function NineFitDieta() {
             </div>
           </div>
 
-          {/* Quick Macros Section (placeholder for future) */}
-          <div className="bg-card border border-border rounded-sm p-4 opacity-50">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+          {/* Daily Nutrition Tracking */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <Flame className="w-4 h-4 text-primary" />
                 Acompanhamento Diário
               </h2>
-              <Badge variant="secondary">Em breve</Badge>
+              <Button size="sm" variant="outline" onClick={() => setShowLogForm(true)} className="border-primary text-primary hover:bg-primary/10">
+                <Plus className="w-3 h-3 mr-1" />Registrar
+              </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Registre suas refeições e acompanhe seus macros diariamente.
-            </p>
+
+            {/* Calorie Progress Bar */}
+            <div className="bg-card border border-border rounded-sm p-4 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">Calorias</span>
+                <span className="text-sm font-bold text-foreground">{consumed.calories} / {caloriesGoal} kcal</span>
+              </div>
+              <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500" 
+                  style={{ width: `${Math.min(100, (consumed.calories / caloriesGoal) * 100)}%` }} 
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Proteína</p>
+                  <p className="text-sm font-bold text-foreground">{consumed.protein}g</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Carbs</p>
+                  <p className="text-sm font-bold text-foreground">{consumed.carbs}g</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Gordura</p>
+                  <p className="text-sm font-bold text-foreground">{consumed.fat}g</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Today's meals */}
+            {todayMeals.length > 0 ? (
+              <div className="space-y-2">
+                {todayMeals.map((meal) => (
+                  <div key={meal.id} className="bg-card border border-border rounded-sm p-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{meal.meal_name}</p>
+                      <p className="text-[10px] text-muted-foreground">{meal.calories} kcal • P:{meal.protein}g C:{meal.carbs}g G:{meal.fat}g</p>
+                    </div>
+                    <button onClick={() => deleteMeal(meal.id)} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-card border border-border rounded-sm p-4 text-center">
+                <p className="text-xs text-muted-foreground">Nenhuma refeição registrada hoje</p>
+              </div>
+            )}
           </div>
         </div>
       )}
