@@ -111,21 +111,19 @@ function injectMobileViewport(html: string): string {
 
 export default function NineFitDieta() {
   const { user } = useAuth();
+  const { athleteId, loading: athleteLoading } = useAthleteId();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [assignedDiets, setAssignedDiets] = useState<DietAssignment[]>([]);
   const [selectedDiet, setSelectedDiet] = useState<DietAssignment | null>(null);
   const [dietContent, setDietContent] = useState<string>('');
   const [loadingContent, setLoadingContent] = useState(false);
+  const [showLogForm, setShowLogForm] = useState(false);
   
-  // Mock nutrition tracking (keep for future feature)
-  const [plan, setPlan] = useState<NutritionPlan | null>(null);
-  const [consumed, setConsumed] = useState({
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fat: 0
-  });
+  // Real nutrition tracking from nutrition_logs
+  const [consumed, setConsumed] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+  const [todayMeals, setTodayMeals] = useState<any[]>([]);
+  const caloriesGoal = 2500;
 
   // Fetch assigned diets from database
   useEffect(() => {
