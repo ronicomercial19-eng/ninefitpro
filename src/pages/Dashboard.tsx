@@ -81,7 +81,7 @@ export default function Dashboard() {
         }));
       }
 
-      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans });
+      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans, rpeAlerts: [] });
       if (workoutsRes.data) setRecentActivities(workoutsRes.data.slice(0, 4));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
