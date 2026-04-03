@@ -61,7 +61,6 @@ export default function Dashboard() {
       const studentsWithoutTraining = allAthletes.filter((a: any) => a.activated && !trainingIds.has(a.id)).length;
       const overdueTraining = new Set((expiredAssignmentsRes.data || []).map((t: any) => t.student_id)).size;
 
-      // Expiring assignments
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
       const { data: expiringAssignments } = await supabase
@@ -81,7 +80,33 @@ export default function Dashboard() {
         }));
       }
 
-      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans, rpeAlerts: [] });
+      // RPE Alerts - check workout_progress for high/low RPE averages
+      const rpeAlerts: DashboardStats['rpeAlerts'] = [];
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { data: recentProgress } = await supabase
+        .from('workout_progress')
+        .select('aluno_id, rpe')
+        .not('rpe', 'is', null)
+        .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+
+      if (recentProgress && recentProgress.length > 0) {
+        const byAthlete = new Map<string, number[]>();
+        recentProgress.forEach((p: any) => {
+          const arr = byAthlete.get(p.aluno_id) || [];
+          arr.push(p.rpe);
+          byAthlete.set(p.aluno_id, arr);
+        });
+        
+        const athleteNameMap = new Map(allAthletes.map((a: any) => [a.id, a.name]));
+        byAthlete.forEach((rpes, athleteId) => {
+          const avg = rpes.reduce((a, b) => a + b, 0) / rpes.length;
+          if (avg > 8) rpeAlerts.push({ name: athleteNameMap.get(athleteId) || 'Aluno', avgRpe: Math.round(avg * 10) / 10, type: 'high' });
+          else if (avg < 4) rpeAlerts.push({ name: athleteNameMap.get(athleteId) || 'Aluno', avgRpe: Math.round(avg * 10) / 10, type: 'low' });
+        });
+      }
+
+      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans, rpeAlerts });
       if (workoutsRes.data) setRecentActivities(workoutsRes.data.slice(0, 4));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
