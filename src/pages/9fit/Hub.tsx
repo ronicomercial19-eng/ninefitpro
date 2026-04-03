@@ -200,17 +200,46 @@ export default function NineFitHub() {
     }
   };
 
+  // Dynamic greeting based on time of day
+  const hour = new Date().getHours();
+  const getGreeting = () => {
+    if (hour < 12) return { text: "Bom dia", subtitle: "Hora de treinar! Energia máxima pela manhã 💪", tip: "Hidrate-se bem antes do treino" };
+    if (hour < 18) return { text: "Boa tarde", subtitle: "Mantenha o foco! Verifique suas aulas agendadas 🏋️", tip: "Lembre-se de se hidratar" };
+    return { text: "Boa noite", subtitle: "Hora de recuperar! Descanse bem para amanhã 🌙", tip: "Boa recuperação = melhor performance" };
+  };
+  const greeting = getGreeting();
+
+  // Check if user needs habit recovery (>2 days without training)
+  const needsRecovery = stats.streak === 0 && stats.completedWorkouts > 0;
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <HUDBar calories={stats.calories} caloriesGoal={stats.caloriesGoal} streak={stats.streak} />
 
-      {/* Welcome */}
+      {/* Welcome - Dynamic */}
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold text-foreground">Olá, {userName}!</h1>
+        <h1 className="text-2xl font-bold text-foreground">{greeting.text}, {userName}!</h1>
         <p className="text-sm text-muted-foreground capitalize">
           {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
         </p>
+        <p className="text-xs text-primary mt-1">{greeting.tip}</p>
       </div>
+
+      {/* Habit Recovery Card */}
+      {needsRecovery && (
+        <div className="px-4 mb-4">
+          <div className="bg-primary/10 border border-primary/30 rounded-sm p-4 flex items-center gap-3">
+            <Flame className="w-6 h-6 text-primary flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-foreground">Recuperação de Hábito</p>
+              <p className="text-xs text-muted-foreground">Faz alguns dias! Que tal um treino rápido?</p>
+            </div>
+            <button onClick={handleStartTraining} className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-sm">
+              IR
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Today's Training */}
       <div className="px-4 mb-6">
