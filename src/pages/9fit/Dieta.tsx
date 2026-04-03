@@ -17,15 +17,18 @@ import {
   Globe,
   FileText,
   X,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { NutritionLogForm } from "@/components/9fit/NutritionLogForm";
 
 interface DietAssignment {
   id: string;
