@@ -390,7 +390,12 @@ export default function NineFitTrain() {
           </div>
           
           {/* Content Area - Full Height with mobile viewport fix */}
-          <div className="flex-1 w-full bg-white overflow-hidden" style={{ height: 'calc(100dvh - 100px)' }}>
+          <div className="flex-1 w-full bg-white overflow-hidden" style={{ height: 'calc(100dvh - 160px)' }}>
+            {/* Wearable Connect Box */}
+            <div className="px-3 py-2 bg-background">
+              <WearableConnectBox isWorkoutActive={!!selectedTraining} />
+            </div>
+
             {loadingContent ? (
               <div className="flex items-center justify-center h-full bg-background">
                 <div className="flex flex-col items-center gap-4">
