@@ -53,7 +53,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
   }, [onHeartRateUpdate]);
 
   const connect = async () => {
-    if (!navigator.bluetooth) {
+    if (!(navigator as any).bluetooth) {
       setError("Bluetooth não suportado neste dispositivo");
       return;
     }
