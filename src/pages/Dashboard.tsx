@@ -175,6 +175,25 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {/* RPE Alerts */}
+        {stats.rpeAlerts.length > 0 && (
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><Heart className="w-5 h-5" />Alertas de RPE ({stats.rpeAlerts.length})</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {stats.rpeAlerts.map((alert, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-500/10 rounded-lg">
+                    <div><p className="text-sm font-medium">{alert.name}</p><p className="text-xs text-muted-foreground">RPE médio: {alert.avgRpe}</p></div>
+                    <Badge variant="outline" className={alert.type === 'high' ? "text-red-600 border-red-600" : "text-yellow-600 border-yellow-600"}>
+                      {alert.type === 'high' ? '⚠️ Sobrecarga' : '⚡ Baixa intensidade'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div>
           <h3 className="text-2xl font-bold mb-4">Acesso Rápido</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
