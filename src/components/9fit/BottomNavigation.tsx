@@ -1,11 +1,12 @@
-import { Home, Dumbbell, User, CalendarCheck } from "lucide-react";
+import { Home, Dumbbell, User, BarChart3, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
-  { icon: Home, label: "Início", path: "/9fit/hub" },
-  { icon: Dumbbell, label: "Treinos", path: "/9fit/train" },
-  { icon: CalendarCheck, label: "Aulas", path: "/9fit/aulas-creditos" },
-  { icon: User, label: "Perfil", path: "/9fit/profile" },
+  { icon: Home, label: "OS", path: "/9fit/hub" },
+  { icon: Dumbbell, label: "Train", path: "/9fit/train" },
+  { icon: Users, label: "Social", path: "/9fit/social" },
+  { icon: BarChart3, label: "Data", path: "/9fit/stats" },
+  { icon: User, label: "ID", path: "/9fit/profile" },
 ];
 
 export function BottomNavigation() {
@@ -23,14 +24,14 @@ export function BottomNavigation() {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`flex flex-col items-center justify-center gap-1 w-16 h-full transition-all duration-200 relative ${
+              className={`flex flex-col items-center justify-center gap-1 w-14 h-full transition-all duration-200 relative ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Icon className={`w-5 h-5 ${isActive ? "animate-scale-in" : ""}`} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-[9px] font-black uppercase tracking-widest">
                 {label}
               </span>
               {isActive && (
