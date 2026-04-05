@@ -1,0 +1,277 @@
+import { useState, useEffect, useRef } from "react";
+import { 
+  ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
+  ChevronRight, Timer, Dumbbell, X, Zap, Trophy,
+  FileText, Globe, Code2, ExternalLink, Loader2
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { WearableConnectBox } from "./WearableConnectBox";
+import { PostWorkoutModal } from "./PostWorkoutModal";
+
+interface TrainingAssignment {
+  id: string;
+  training_name: string;
+  training_description?: string;
+  start_date: string;
+  end_date?: string;
+  is_active: boolean;
+  training_type?: string;
+  html_file_url?: string;
+  training_data?: any;
+}
+
+interface WorkoutExecutionProps {
+  training: TrainingAssignment;
+  athleteId: string;
+  onFinish: () => void;
+  onBack: () => void;
+}
+
+function injectMobileViewport(html: string): string {
+  const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">';
+  const mobileStyles = `<style>
+    * { box-sizing: border-box; }
+    body { max-width: 100vw !important; overflow-x: hidden !important; margin: 0; padding: 8px; }
+    table { width: 100% !important; max-width: 100vw !important; table-layout: fixed !important; font-size: 12px !important; }
+    td, th { word-wrap: break-word !important; overflow-wrap: break-word !important; padding: 4px !important; }
+    img { max-width: 100% !important; height: auto !important; }
+  </style>`;
+  
+  if (html.includes('<head>')) {
+    return html.replace('<head>', `<head>${viewportTag}${mobileStyles}`);
+  } else if (html.includes('<html')) {
+    return html.replace(/<html([^>]*)>/i, `<html$1><head>${viewportTag}${mobileStyles}</head>`);
+  }
+  return `<!DOCTYPE html><html><head>${viewportTag}${mobileStyles}</head><body>${html}</body></html>`;
+}
+
+export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
+  // Timer state
+  const [timerSeconds, setTimerSeconds] = useState(60);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerInitial, setTimerInitial] = useState(60);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Workout timer (total time)
+  const [workoutSeconds, setWorkoutSeconds] = useState(0);
+  const workoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Weight tracking
+  const [currentWeight, setCurrentWeight] = useState(20);
+
+  // HTML content
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
+
+  // PSE Modal
+  const [showPSE, setShowPSE] = useState(false);
+
+  // Start workout timer
+  useEffect(() => {
+    workoutTimerRef.current = setInterval(() => {
+      setWorkoutSeconds(s => s + 1);
+    }, 1000);
+    return () => {
+      if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+    };
+  }, []);
+
+  // Rest timer
+  useEffect(() => {
+    if (timerRunning && timerSeconds > 0) {
+      timerRef.current = setInterval(() => {
+        setTimerSeconds(s => {
+          if (s <= 1) {
+            setTimerRunning(false);
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [timerRunning, timerSeconds]);
+
+  // Load HTML content
+  useEffect(() => {
+    if (training.html_file_url && training.training_type !== 'link') {
+      setLoadingContent(true);
+      fetch(training.html_file_url)
+        .then(r => r.text())
+        .then(text => {
+          if (text.startsWith('<html') || text.startsWith('<!DOCTYPE') || text.startsWith('<HTML')) {
+            setHtmlContent(text);
+          } else if (text.includes('&lt;html')) {
+            setHtmlContent(text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+          } else {
+            setHtmlContent(`<!DOCTYPE html><html><body>${text}</body></html>`);
+          }
+        })
+        .catch(() => setHtmlContent(null))
+        .finally(() => setLoadingContent(false));
+    }
+  }, [training]);
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const handleFinishWorkout = () => {
+    if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+    setShowPSE(true);
+  };
+
+  const handlePSEClose = () => {
+    setShowPSE(false);
+    onFinish();
+  };
+
+  // For link training, open in new tab
+  if (training.training_type === 'link' && training.html_file_url) {
+    window.open(training.html_file_url, '_blank');
+    onBack();
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border flex-shrink-0">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center">
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
+        <div className="text-center">
+          <p className="text-xs text-primary font-bold uppercase tracking-widest">Em Execução</p>
+          <p className="text-sm font-bold text-foreground truncate max-w-[200px]">{training.training_name}</p>
+        </div>
+        <div className="flex items-center gap-1 text-primary">
+          <Timer className="w-4 h-4" />
+          <span className="text-sm font-mono font-bold">{formatTime(workoutSeconds)}</span>
+        </div>
+      </div>
+
+      {/* Wearable */}
+      <div className="px-4 py-2 flex-shrink-0">
+        <WearableConnectBox isWorkoutActive={true} />
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 overflow-hidden">
+        {loadingContent ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : htmlContent ? (
+          <iframe
+            srcDoc={injectMobileViewport(htmlContent)}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            className="w-full h-full border-0"
+            title={training.training_name}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Controls */}
+      <div className="flex-shrink-0 bg-card border-t border-border">
+        {/* Rest Timer */}
+        <div className="px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Timer className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">Descanso</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setTimerSeconds(timerInitial); setTimerRunning(false); }}
+                className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center"
+              >
+                <RotateCcw className="w-3 h-3 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => setTimerRunning(!timerRunning)}
+                className={`w-8 h-8 rounded-sm flex items-center justify-center ${
+                  timerRunning ? "bg-primary/20 text-primary" : "bg-primary text-primary-foreground"
+                }`}
+              >
+                {timerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </button>
+              <span className={`text-lg font-mono font-black w-16 text-center ${
+                timerSeconds === 0 ? "text-primary animate-pulse" : "text-foreground"
+              }`}>
+                {formatTime(timerSeconds)}
+              </span>
+            </div>
+          </div>
+          {/* Quick timer presets */}
+          <div className="flex gap-2 mt-2">
+            {[30, 45, 60, 90, 120].map(s => (
+              <button
+                key={s}
+                onClick={() => { setTimerInitial(s); setTimerSeconds(s); setTimerRunning(false); }}
+                className={`text-[10px] px-2 py-1 rounded-sm border transition-colors ${
+                  timerInitial === s 
+                    ? "bg-primary/20 border-primary/50 text-primary" 
+                    : "bg-muted border-border text-muted-foreground hover:border-primary/30"
+                }`}
+              >
+                {s}s
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Weight Control */}
+        <div className="px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> Carga Atual
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentWeight(w => Math.max(0, w - 2.5))}
+                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center hover:bg-destructive/20 transition-colors"
+              >
+                <Minus className="w-4 h-4 text-foreground" />
+              </button>
+              <span className="text-2xl font-black text-foreground w-20 text-center">
+                {currentWeight}<span className="text-sm text-muted-foreground ml-1">kg</span>
+              </span>
+              <button
+                onClick={() => setCurrentWeight(w => w + 2.5)}
+                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center hover:bg-primary/20 transition-colors"
+              >
+                <Plus className="w-4 h-4 text-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Finish Button */}
+        <div className="px-4 py-3">
+          <Button
+            onClick={handleFinishWorkout}
+            className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base"
+          >
+            <Zap className="w-5 h-5 mr-2" />
+            Concluir Treino
+          </Button>
+        </div>
+      </div>
+
+      {/* PSE Modal */}
+      <PostWorkoutModal
+        open={showPSE}
+        onClose={handlePSEClose}
+        athleteId={athleteId}
+        trainingName={training.training_name}
+      />
+    </div>
+  );
+}
