@@ -2149,6 +2149,7 @@ export type Database = {
           output_json: Json | null
           running_distance: string | null
           scores: Json | null
+          selected_chief_id: string | null
           selected_model_id: string | null
           status: string
           updated_at: string
@@ -2169,6 +2170,7 @@ export type Database = {
           output_json?: Json | null
           running_distance?: string | null
           scores?: Json | null
+          selected_chief_id?: string | null
           selected_model_id?: string | null
           status?: string
           updated_at?: string
@@ -2189,6 +2191,7 @@ export type Database = {
           output_json?: Json | null
           running_distance?: string | null
           scores?: Json | null
+          selected_chief_id?: string | null
           selected_model_id?: string | null
           status?: string
           updated_at?: string
@@ -3447,6 +3450,7 @@ export type Database = {
           block_neural: string
           block_reset: string
           created_at: string
+          goal_tags: string[] | null
           id: string
           model_description: string
           model_id: number
@@ -3467,6 +3471,7 @@ export type Database = {
           block_neural?: string
           block_reset?: string
           created_at?: string
+          goal_tags?: string[] | null
           id: string
           model_description: string
           model_id: number
@@ -3487,6 +3492,7 @@ export type Database = {
           block_neural?: string
           block_reset?: string
           created_at?: string
+          goal_tags?: string[] | null
           id?: string
           model_description?: string
           model_id?: number
