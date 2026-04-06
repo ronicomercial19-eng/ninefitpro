@@ -1,103 +1,65 @@
 
 
-# Plano de Implementacao - Fix RLS + Workout Elite + UI/UX Update
+# Plano de Implementacao - Fix IA + API Exercicios + Componentes Admin
 
-## Problema Critico: RLS no Appointments
+## 1. Fix: Analise IA e Recomendacoes falham
 
-A policy atual verifica `student_id = auth.uid()` mas `student_id` e um `athletes.id` (UUID diferente de `auth.uid()`). O aluno nunca consegue inserir porque nao ha policy de INSERT, e o SELECT tambem falha pela mesma razao.
+**Problema:** `AIAnalysisPage.tsx` e `AIChatPage.tsx` nao processam corretamente a resposta da edge function `ai-coach`.
 
-**Fix:** Criar policies que fazem JOIN com `athletes.user_id`:
-```sql
--- DROP policies existentes
--- CREATE: Students can view own appointments
--- USING (student_id IN (SELECT id FROM athletes WHERE user_id = auth.uid()))
--- CREATE: Students can insert own appointments
--- WITH CHECK (student_id IN (SELECT id FROM athletes WHERE user_id = auth.uid()))
-```
+A edge function retorna `{ success, data: { content }, metadata }`. Quando chamado via `supabase.functions.invoke()`, o resultado chega como `result.data` = `{ success, data: { content }, metadata }`. O codigo atual faz `result?.content` mas deveria fazer `result?.data?.content`.
 
----
+No `AIChatPage.tsx`, o chat usa `fetch()` diretamente com `Authorization: Bearer ANON_KEY` - isso falhara porque a edge function agora requer JWT de usuario autenticado (fix de seguranca anterior). Precisa usar o token de sessao do usuario.
 
-## Implementacao do Workout Elite (3 componentes novos)
+**Fix:**
+- `AIAnalysisPage.tsx`: Corrigir acesso `result?.data?.content` em ambos `runAnalysis` e `runRecommendations`
+- `AIChatPage.tsx`: Usar `(await supabase.auth.getSession()).data.session?.access_token` no header Authorization
 
-### WorkoutHome.tsx
-- Dashboard "Meu Protocolo" com:
-  - Progress tracking (data inicio, treinos realizados)
-  - Nivel de suporte (slider)
-  - Cards dos proximos treinos
-  - Botao "Iniciar Treino" em destaque
+## 2. Integracao API Biblioteca de Exercicios 9FIT
 
-### WorkoutOverview.tsx
-- Lista tecnica dos exercicios antes de iniciar
-- Cada exercicio com codigo alfanumerico, series, reps, preview de midia
-- Botao "INICIAR TREINO" no final
+**API Externa:** `https://id-preview--532c9940-31b6-4987-968f-fd292029beee.lovable.app/api/exercises.json`
 
-### WorkoutExecution.tsx
-- Interface de execucao com:
-  - Area de video/GIF do exercicio (usa ExerciseVideoPlayer existente)
-  - Smart Timer com play/pause/reset
-  - Controle de carga (+/-) por serie
-  - Metricas: series, reps, descanso, cadencia
-  - Navegacao entre exercicios
-  - Modal de conclusao com XP + tempo + PSE (integra PostWorkoutModal)
+Retorna: `{ id, name, category, subcategory, youtubeId }`
 
-### Integracao no Train.tsx
-- Refatorar Train.tsx para usar fluxo: `HOME → OVERVIEW → EXECUTION`
-- Tab "Meu Protocolo" vs "Explorar"
-- Quando aluno tem assignments, mostra WorkoutHome
-- Ao clicar em treino, mostra WorkoutOverview
-- Ao iniciar, entra em WorkoutExecution
+**Implementacao:**
+- Criar Edge Function `sync-exercise-library` que:
+  - Busca exercicios da API externa
+  - Para cada exercicio, faz upsert na tabela `exercises` mapeando:
+    - `name` -> `name`
+    - `category` -> `equipment` ou novo campo
+    - `subcategory` -> `target_muscles[0]`
+    - `youtubeId` -> `video_url` (formato `https://youtube.com/embed/{youtubeId}`)
+    - `external_video_id` -> `youtubeId`
+    - `gif_url` -> thumbnail `https://img.youtube.com/vi/{youtubeId}/mqdefault.jpg`
+  
+- Na `ExercisesPage.tsx`: Adicionar botao "Sincronizar Biblioteca 9FIT" que chama a edge function
+- Na montagem de treino do aluno: professor seleciona exercicios do catalogo e o video do YouTube e reproduzido para o aluno
 
----
+## 3. Assistente IA Dual (Admin + Aluno)
 
-## UI/UX Update Global
+**Admin (AIChatPage.tsx):** Ja funciona como assistente do professor para ajuste, facilitacao. Corrigir auth (item 1) e manter papel de ajudar o prof a monitorar, recomendar, corrigir.
 
-### BottomNavigation
-- 5 tabs: OS (Hub) | Train | Social | Data (Stats) | ID (Perfil)
-- Icones atualizados, labels em uppercase
+**Aluno (Hub/Train):** Manter funcionalidade existente de Fit360 Copilot que ja ajuda, corrige, monitora o aluno.
 
-### Hub.tsx
-- Treino do Dia com destaque visual (border neon, botao grande)
-- Cards reorganizados com hierarquia clara
-- Social feed compacto horizontal (Gym Rats style)
+## 4. Placeholder SmartTreino no Sidebar
 
-### Dieta.tsx
-- Barra de calorias no topo
-- Lista de refeicoes do dia
-- FAB "+" para registrar
+Substituir rotas `super-series` e `series-referencia` por um unico item "SmartTreino" no sidebar que abre componente placeholder com mensagem "Conecte a API do SmartTreino para ativar".
 
-### Train.tsx (completo refactor)
-- Cards de treino inteiros clicaveis
-- Badges: tempo estimado, nivel, status
-- Transicao para WorkoutHome/Overview/Execution
+## 5. Componentes Placeholder: SmartPeriodizer e FitCopilot
 
-### Profile.tsx
-- Manter funcionalidades atuais
-- Melhorar cards visuais
+Criar 2 novas paginas placeholder no painel admin:
+- `/app/smart-periodizer` -> componente com card informativo "SmartPeriodizer - Conecte a API para ativar periodizacao inteligente"
+- `/app/fit-copilot` -> componente com card informativo "FitCopilot - Conecte a API para ativar o copiloto de treino"
 
----
-
-## Atualizacao Painel Admin
-
-### Dashboard.tsx
-- Card "Alertas RPE" (ja parcialmente implementado)
-- Card de treinos executados com detalhes de carga/RPE
-
-### StudentDetailedView.tsx
-- Visualizar workout_executions do aluno
-- Ver historico de cargas e RPE
-
----
+Adicionar rotas em `App.tsx` e itens no `AppSidebar.tsx`.
 
 ## Ordem de Execucao
 
 | # | Tarefa | Tipo |
 |---|--------|------|
-| 1 | Fix RLS appointments | Migration SQL |
-| 2 | Criar WorkoutHome + WorkoutOverview + WorkoutExecution | 3 componentes novos |
-| 3 | Refatorar Train.tsx com fluxo elite | Edit |
-| 4 | Atualizar BottomNavigation (5 tabs) | Edit |
-| 5 | Atualizar Hub.tsx UI/UX | Edit |
-| 6 | Atualizar Dieta.tsx UI/UX | Edit |
+| 1 | Fix auth e response parsing no AIAnalysisPage e AIChatPage | Edit 2 arquivos |
+| 2 | Criar edge function sync-exercise-library + botao sync | Edge Function + Edit |
+| 3 | Substituir SuperSeries/SeriesRef por SmartTreino placeholder | Edit Sidebar + App.tsx |
+| 4 | Criar placeholders SmartPeriodizer e FitCopilot | 2 paginas novas + rotas |
 
-**Total:** 1 migration, 3 componentes novos, 4 arquivos editados
+**Total:** 1 Edge Function nova, 2 paginas novas, 4 arquivos editados
 
