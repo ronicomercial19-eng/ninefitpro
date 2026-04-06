@@ -71,7 +71,7 @@ export default function AIAnalysisPage() {
         },
       });
       if (error) throw error;
-      setAnalysisHtml(result?.content || '<p>Sem dados suficientes para análise.</p>');
+      setAnalysisHtml(result?.data?.content || '<p>Sem dados suficientes para análise.</p>');
       toast.success('Análise gerada!');
     } catch (err: any) {
       toast.error(err.message || 'Erro na análise');
