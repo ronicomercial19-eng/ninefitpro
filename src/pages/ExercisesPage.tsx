@@ -25,6 +25,21 @@ export default function ExercisesPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncLibrary = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-exercise-library');
+      if (error) throw error;
+      toast.success(`Sincronizado! ${data?.data?.synced || 0} exercícios importados.`);
+      fetchExercises();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao sincronizar');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => { fetchExercises(); }, []);
 
