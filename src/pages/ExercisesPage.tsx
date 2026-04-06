@@ -72,6 +72,10 @@ export default function ExercisesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Exercícios</h1>
+        <Button variant="outline" onClick={syncLibrary} disabled={syncing}>
+          {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          Sincronizar Biblioteca 9FIT
+        </Button>
         <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo exercício</Button>
       </div>
 

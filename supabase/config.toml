@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.ai-coach]
 verify_jwt = false
+
+[functions.sync-exercise-library]
+verify_jwt = false
