@@ -7,14 +7,15 @@ import {
   Users, 
   Dumbbell, 
   Zap, 
-  BookOpen, 
   Bot, 
   BarChart3, 
   FileText,
   ChevronRight,
   Map,
   Sparkles,
-  Brain
+  Brain,
+  CalendarClock,
+  Cpu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -22,7 +23,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -36,8 +36,9 @@ const menuItems = [
   { title: 'Agenda', url: '/app/agenda', icon: Calendar },
   { title: 'Alunos', url: '/app/alunos', icon: Users },
   { title: 'Exercícios', url: '/app/exercicios', icon: Dumbbell },
-  { title: 'Super séries', url: '/app/super-series', icon: Zap },
-  { title: 'Séries de referência', url: '/app/series-referencia', icon: BookOpen },
+  { title: 'SmartTreino', url: '/app/smart-treino', icon: Zap },
+  { title: 'SmartPeriodizer', url: '/app/smart-periodizer', icon: CalendarClock },
+  { title: 'FitCopilot', url: '/app/fit-copilot', icon: Cpu },
   { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
   { title: 'Assistente IA', url: '/app/assistente-ia', icon: Sparkles },
   { title: 'Análise IA', url: '/app/analise-ia', icon: Brain },

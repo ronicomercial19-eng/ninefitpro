@@ -104,6 +104,27 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
+            <Route path="/app/smart-treino" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <SmartTreinoPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/smart-periodizer" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <SmartPeriodizer />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/fit-copilot" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <FitCopilotPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
             <Route path="/app/treino-ia" element={
               <PrivateRoute>
                 <AppLayout>
