@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { AddExerciseForm } from '@/components/exercises/AddExerciseForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -25,6 +25,21 @@ export default function ExercisesPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncLibrary = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-exercise-library');
+      if (error) throw error;
+      toast.success(`Sincronizado! ${data?.data?.synced || 0} exercícios importados.`);
+      fetchExercises();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao sincronizar');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => { fetchExercises(); }, []);
 
@@ -57,6 +72,10 @@ export default function ExercisesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Exercícios</h1>
+        <Button variant="outline" onClick={syncLibrary} disabled={syncing}>
+          {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          Sincronizar Biblioteca 9FIT
+        </Button>
         <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo exercício</Button>
       </div>
 

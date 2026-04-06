@@ -23,6 +23,9 @@ import StatisticsPage from "./pages/StatisticsPage";
 import StudentsPage from "./pages/StudentsPage";
 import SuperSetsPage from "./pages/SuperSetsPage";
 import Support from "./pages/Support";
+import SmartTreinoPage from "./pages/SmartTreinoPage";
+import SmartPeriodizer from "./pages/SmartPeriodizer";
+import FitCopilotPage from "./pages/FitCopilotPage";
 import WhatsAppRedirect from "./pages/WhatsAppRedirect";
 import RoadmapPage from "./pages/RoadmapPage";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -98,6 +101,27 @@ const App = () => (
               <PrivateRoute>
                 <AppLayout>
                   <ReferenceSeriesPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/smart-treino" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <SmartTreinoPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/smart-periodizer" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <SmartPeriodizer />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/fit-copilot" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <FitCopilotPage />
                 </AppLayout>
               </PrivateRoute>
             } />
