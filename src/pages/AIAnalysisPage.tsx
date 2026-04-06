@@ -102,7 +102,7 @@ export default function AIAnalysisPage() {
       });
       if (error) throw error;
 
-      const content = result?.content || '{}';
+      const content = result?.data?.content || '{}';
       try {
         const parsed = JSON.parse(content);
         setRecommendations(parsed.recommendations || []);
