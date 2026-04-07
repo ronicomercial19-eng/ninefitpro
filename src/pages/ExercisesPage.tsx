@@ -32,10 +32,16 @@ export default function ExercisesPage() {
     try {
       const { data, error } = await supabase.functions.invoke('sync-exercise-library');
       if (error) throw error;
-      toast.success(`Sincronizado! ${data?.data?.synced || 0} exercícios importados.`);
+      if (data?.success === false) {
+        toast.error(data?.hint || data?.error || 'API da biblioteca indisponível');
+        return;
+      }
+      const synced = data?.data?.synced || 0;
+      const errors = data?.data?.errors || 0;
+      toast.success(`Sincronizado! ${synced} exercícios importados${errors > 0 ? `, ${errors} erros` : ''}.`);
       fetchExercises();
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao sincronizar');
+      toast.error(err.message || 'Erro ao sincronizar. Verifique se está logado.');
     } finally {
       setSyncing(false);
     }
