@@ -15,6 +15,15 @@ interface Exercise {
   image_url: string | null; video_url: string | null; gif_url: string | null; description: string | null;
 }
 
+async function getFunctionErrorMessage(err: any) {
+  if (err?.context && typeof err.context.json === 'function') {
+    const payload = await err.context.json().catch(() => null);
+    return payload?.hint || payload?.error || payload?.message || err.message;
+  }
+
+  return err?.message || 'Erro ao sincronizar a biblioteca';
+}
+
 export default function ExercisesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('all');
@@ -30,7 +39,21 @@ export default function ExercisesPage() {
   const syncLibrary = async () => {
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-exercise-library');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('sync-exercise-library', {
+        body: {},
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
       if (error) throw error;
       if (data?.success === false) {
         toast.error(data?.hint || data?.error || 'API da biblioteca indisponível');
@@ -41,7 +64,7 @@ export default function ExercisesPage() {
       toast.success(`Sincronizado! ${synced} exercícios importados${errors > 0 ? `, ${errors} erros` : ''}.`);
       fetchExercises();
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao sincronizar. Verifique se está logado.');
+      toast.error(await getFunctionErrorMessage(err));
     } finally {
       setSyncing(false);
     }

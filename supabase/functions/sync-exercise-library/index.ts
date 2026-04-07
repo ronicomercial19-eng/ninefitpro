@@ -6,52 +6,166 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Possible API URLs to try (published URL first, then preview)
 const API_URLS = [
-  "https://532c9940-31b6-4987-968f-fd292029beee.lovable.app/api/exercises.json",
-  "https://id-preview--532c9940-31b6-4987-968f-fd292029beee.lovable.app/api/exercises.json",
+  "https://vrbhljmsakruoejctclg.supabase.co/functions/v1/sync-exercise-library",
+  "https://bibliteoca9fit.lovable.app/api/exercises.json",
 ];
 
-async function fetchExercisesFromAPI(): Promise<any[] | null> {
-  for (const url of API_URLS) {
+type LibraryExercise = {
+  id?: number | string;
+  name?: string;
+  category?: string;
+  subcategory?: string;
+  youtubeId?: string;
+  youtube_id?: string;
+};
+
+type FetchResult = {
+  exercises: LibraryExercise[];
+  source: string;
+};
+
+function normalizeLibraryPayload(payload: unknown): LibraryExercise[] {
+  if (Array.isArray(payload)) return payload as LibraryExercise[];
+  if (payload && typeof payload === "object" && Array.isArray((payload as { exercises?: unknown[] }).exercises)) {
+    return (payload as { exercises: LibraryExercise[] }).exercises;
+  }
+  return [];
+}
+
+async function fetchExercisesFromAPI(req: Request): Promise<FetchResult | null> {
+  const requestUrl = new URL(req.url);
+  const category = requestUrl.searchParams.get("category");
+  const subcategory = requestUrl.searchParams.get("subcategory");
+
+  for (const baseUrl of API_URLS) {
     try {
-      console.log(`Trying API: ${url}`);
-      const resp = await fetch(url, { 
-        headers: { "Accept": "application/json" },
-        signal: AbortSignal.timeout(10000),
+      const url = new URL(baseUrl);
+      if (category) url.searchParams.set("category", category);
+      if (subcategory) url.searchParams.set("subcategory", subcategory);
+
+      console.log(`Trying API: ${url.toString()}`);
+      const resp = await fetch(url.toString(), {
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "9FIT-PRO-SYNC/1.0",
+        },
+        signal: AbortSignal.timeout(15000),
       });
-      if (!resp.ok) { console.log(`API ${url} returned ${resp.status}`); continue; }
-      const contentType = resp.headers.get("content-type") || "";
-      if (!contentType.includes("json")) { 
-        console.log(`API ${url} returned non-JSON content-type: ${contentType}`); 
-        continue; 
+      if (!resp.ok) {
+        console.log(`API ${url.toString()} returned ${resp.status}`);
+        continue;
       }
-      const data = await resp.json();
-      if (Array.isArray(data) && data.length > 0) {
-        console.log(`Successfully fetched ${data.length} exercises from ${url}`);
-        return data;
+
+      const contentType = resp.headers.get("content-type") || "";
+      if (!contentType.includes("json")) {
+        console.log(`API ${url.toString()} returned non-JSON content-type: ${contentType}`);
+        continue;
+      }
+
+      const payload = await resp.json();
+      const exercises = normalizeLibraryPayload(payload);
+      if (exercises.length > 0) {
+        console.log(`Successfully fetched ${exercises.length} exercises from ${url.toString()}`);
+        return { exercises, source: url.toString() };
       }
     } catch (e) {
-      console.log(`Failed to fetch from ${url}: ${e.message}`);
+      console.log(`Failed to fetch from ${baseUrl}: ${e.message}`);
     }
   }
   return null;
 }
 
 // Accept optional exercises array in request body as fallback
-async function getExercisesFromBody(req: Request): Promise<any[] | null> {
+async function getExercisesFromBody(req: Request): Promise<FetchResult | null> {
   try {
     const body = await req.clone().json();
-    if (body?.exercises && Array.isArray(body.exercises)) return body.exercises;
+    if (body?.exercises && Array.isArray(body.exercises)) {
+      return { exercises: body.exercises as LibraryExercise[], source: "request-body" };
+    }
+
     if (body?.api_url) {
-      const resp = await fetch(body.api_url, { headers: { "Accept": "application/json" } });
+      const resp = await fetch(body.api_url, {
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "9FIT-PRO-SYNC/1.0",
+        },
+        signal: AbortSignal.timeout(15000),
+      });
+
       if (resp.ok) {
-        const data = await resp.json();
-        if (Array.isArray(data)) return data;
+        const payload = await resp.json();
+        const exercises = normalizeLibraryPayload(payload);
+        if (exercises.length > 0) {
+          return { exercises, source: body.api_url };
+        }
       }
     }
   } catch { /* no body or invalid */ }
   return null;
+}
+
+function mapExerciseToRow(exercise: LibraryExercise, userId: string) {
+  const name = String(exercise.name || "").trim().slice(0, 255);
+  const category = String(exercise.category || "").trim();
+  const subcategory = String(exercise.subcategory || "").trim();
+  const youtubeId = String(exercise.youtubeId || exercise.youtube_id || "").trim();
+
+  if (!name) return null;
+
+  return {
+    name,
+    target_muscles: [subcategory || category || "Geral"],
+    equipment: category.slice(0, 100) || null,
+    video_url: youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : null,
+    external_video_id: youtubeId || null,
+    gif_url: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : null,
+    description: [
+      category ? `Categoria: ${category}` : null,
+      subcategory ? `Subcategoria: ${subcategory}` : null,
+    ].filter(Boolean).join(" | ") || null,
+    created_by: userId,
+  };
+}
+
+async function upsertInBatches(supabaseAdmin: ReturnType<typeof createClient>, rows: ReturnType<typeof mapExerciseToRow>[]) {
+  let synced = 0;
+  let errors = 0;
+  const errorDetails: string[] = [];
+  const validRows = rows.filter(Boolean);
+  const chunkSize = 100;
+
+  for (let i = 0; i < validRows.length; i += chunkSize) {
+    const chunk = validRows.slice(i, i + chunkSize);
+    const { error } = await supabaseAdmin.from("exercises").upsert(chunk, {
+      onConflict: "name",
+      ignoreDuplicates: false,
+    });
+
+    if (!error) {
+      synced += chunk.length;
+      continue;
+    }
+
+    console.error(`Batch upsert failed for chunk starting at ${i}:`, error.message);
+
+    for (const row of chunk) {
+      const { error: rowError } = await supabaseAdmin.from("exercises").upsert(row, {
+        onConflict: "name",
+        ignoreDuplicates: false,
+      });
+
+      if (rowError) {
+        errors++;
+        errorDetails.push(`${row.name}: ${rowError.message}`);
+        console.error(`Error syncing ${row.name}:`, rowError.message);
+      } else {
+        synced++;
+      }
+    }
+  }
+
+  return { synced, errors, errorDetails };
 }
 
 serve(async (req) => {
@@ -85,54 +199,27 @@ serve(async (req) => {
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   try {
-    // Try API first, then request body
-    let exercises = await fetchExercisesFromAPI();
-    if (!exercises) {
+    let result = await fetchExercisesFromAPI(req);
+    if (!result) {
       console.log("API unavailable, trying request body...");
-      exercises = await getExercisesFromBody(req);
+      result = await getExercisesFromBody(req);
     }
 
-    if (!exercises || exercises.length === 0) {
+    if (!result || result.exercises.length === 0) {
       return new Response(JSON.stringify({
         success: false,
-        error: "Biblioteca 9FIT indisponível. Publique o projeto da biblioteca ou envie os exercícios no body: { exercises: [...] }",
-        hint: "A URL da API da biblioteca precisa estar publicada (não preview). Publique o projeto no Lovable e tente novamente.",
+        error: "Biblioteca 9FIT indisponível. Não foi possível obter os exercícios pelas URLs públicas configuradas.",
+        hint: "Verifique a edge pública da biblioteca ou envie os exercícios no body: { exercises: [...] }.",
       }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    let synced = 0;
-    let errors = 0;
-    const errorDetails: string[] = [];
-
-    for (const ex of exercises) {
-      const youtubeId = ex.youtubeId || ex.youtube_id || "";
-      const videoUrl = youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : null;
-      const thumbUrl = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : null;
-
-      const { error } = await supabaseAdmin.from("exercises").upsert({
-        name: String(ex.name || "").slice(0, 255),
-        target_muscles: [String(ex.subcategory || ex.category || "Geral")],
-        equipment: String(ex.category || "").slice(0, 100) || null,
-        video_url: videoUrl,
-        external_video_id: youtubeId || null,
-        gif_url: thumbUrl,
-        description: `Categoria: ${ex.category || ""} | Subcategoria: ${ex.subcategory || ""}`,
-        created_by: userId,
-      }, { onConflict: "name", ignoreDuplicates: false });
-
-      if (error) {
-        errors++;
-        errorDetails.push(`${ex.name}: ${error.message}`);
-        console.error(`Error syncing ${ex.name}:`, error.message);
-      } else {
-        synced++;
-      }
-    }
+    const rows = result.exercises.map((exercise) => mapExerciseToRow(exercise, userId));
+    const { synced, errors, errorDetails } = await upsertInBatches(supabaseAdmin, rows);
 
     return new Response(JSON.stringify({
       success: true,
-      data: { total: exercises.length, synced, errors, errorDetails: errorDetails.slice(0, 5) },
-      metadata: { timestamp: new Date().toISOString(), source: "api" },
+      data: { total: result.exercises.length, synced, errors, errorDetails: errorDetails.slice(0, 5) },
+      metadata: { timestamp: new Date().toISOString(), source: result.source },
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (e) {
