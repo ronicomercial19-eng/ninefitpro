@@ -177,6 +177,13 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         
         <div className="flex gap-2">
           <Button 
+            onClick={() => setShowCreateWorkout(true)}
+            variant="outline"
+          >
+            <Wrench className="w-4 h-4 mr-2" />
+            Criar Treino
+          </Button>
+          <Button 
             onClick={() => setShowHTMLUpload(true)}
             className="bg-primary hover:bg-primary/90"
           >
