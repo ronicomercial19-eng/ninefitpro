@@ -427,6 +427,21 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </DialogContent>
       </Dialog>
 
+      {/* Create Structured Workout Dialog */}
+      <Dialog open={showCreateWorkout} onOpenChange={setShowCreateWorkout}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <CreateWorkoutForm
+            studentId={student.id}
+            studentName={student.nome}
+            onSuccess={() => {
+              setShowCreateWorkout(false);
+              fetchTrainings();
+            }}
+            onCancel={() => setShowCreateWorkout(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* HTML Training Viewer Dialog */}
       <Dialog 
         open={!!selectedHTMLTraining} 
