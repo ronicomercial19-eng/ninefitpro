@@ -37,6 +37,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHTMLUpload, setShowHTMLUpload] = useState(false);
+  const [showCreateWorkout, setShowCreateWorkout] = useState(false);
   const [selectedHTMLTraining, setSelectedHTMLTraining] = useState<TrainingAssignment | null>(null);
 
   useEffect(() => {
