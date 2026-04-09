@@ -15,14 +15,7 @@ interface Exercise {
   image_url: string | null; video_url: string | null; gif_url: string | null; description: string | null;
 }
 
-async function getFunctionErrorMessage(err: any) {
-  if (err?.context && typeof err.context.json === 'function') {
-    const payload = await err.context.json().catch(() => null);
-    return payload?.hint || payload?.error || payload?.message || err.message;
-  }
-
-  return err?.message || 'Erro ao sincronizar a biblioteca';
-}
+const LIBRARY_URL = "https://bibliteoca9fit.lovable.app/api/exercises.json";
 
 export default function ExercisesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,17 +34,30 @@ export default function ExercisesPage() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
+      if (!accessToken) { toast.error('Sessão expirada. Faça login novamente.'); return; }
 
-      if (!accessToken) {
-        toast.error('Sessão expirada. Faça login novamente.');
-        return;
+      // Frontend fallback: fetch exercises directly from public API
+      let libraryExercises: any[] = [];
+      try {
+        const resp = await fetch(LIBRARY_URL, {
+          headers: { "Accept": "application/json" },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (resp.ok) {
+          const ct = resp.headers.get("content-type") || "";
+          if (ct.includes("json")) {
+            const payload = await resp.json();
+            libraryExercises = Array.isArray(payload) ? payload : (payload?.exercises || []);
+          }
+        }
+      } catch (e) {
+        console.log("Frontend fetch failed, edge function will try:", e);
       }
 
+      // Send exercises in body so edge function doesn't need to fetch
       const { data, error } = await supabase.functions.invoke('sync-exercise-library', {
-        body: {},
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        body: libraryExercises.length > 0 ? { exercises: libraryExercises } : {},
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (error) throw error;
@@ -64,7 +70,8 @@ export default function ExercisesPage() {
       toast.success(`Sincronizado! ${synced} exercícios importados${errors > 0 ? `, ${errors} erros` : ''}.`);
       fetchExercises();
     } catch (err: any) {
-      toast.error(await getFunctionErrorMessage(err));
+      const msg = err?.message || 'Erro ao sincronizar';
+      toast.error(msg);
     } finally {
       setSyncing(false);
     }
@@ -74,7 +81,6 @@ export default function ExercisesPage() {
 
   const fetchExercises = async () => {
     setLoading(true);
-    // Uses canonical 'exercises' table (consolidated from exercise_library + exercicios_novos)
     const { data, error } = await supabase.from('exercises')
       .select('id, name, target_muscles, equipment, difficulty_level, phase, goal, image_url, video_url, gif_url, description')
       .order('name');
@@ -99,13 +105,15 @@ export default function ExercisesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-3xl font-bold text-foreground">Exercícios</h1>
-        <Button variant="outline" onClick={syncLibrary} disabled={syncing}>
-          {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          Sincronizar Biblioteca 9FIT
-        </Button>
-        <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo exercício</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={syncLibrary} disabled={syncing}>
+            {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Sincronizar Biblioteca 9FIT
+          </Button>
+          <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo exercício</Button>
+        </div>
       </div>
 
       <Card>
@@ -162,7 +170,6 @@ export default function ExercisesPage() {
                 <div className="space-y-2">
                   {exercise.target_muscles?.length > 0 && <div className="flex flex-wrap gap-1">{exercise.target_muscles.slice(0, 3).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}</div>}
                   {exercise.equipment && <p className="text-xs text-muted-foreground"><span className="font-medium">Equipamento:</span> {exercise.equipment}</p>}
-                  {exercise.difficulty_level && <p className="text-xs text-muted-foreground"><span className="font-medium">Nível:</span> {exercise.difficulty_level}</p>}
                 </div>
               </CardContent>
             </Card>

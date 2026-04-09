@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
-  ChevronRight, Timer, Dumbbell, X, Zap, Trophy,
-  FileText, Globe, Code2, ExternalLink, Loader2
+  ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
+  Loader2, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
 
@@ -47,34 +47,41 @@ function injectMobileViewport(html: string): string {
 }
 
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
+  const exercises = training.training_data?.exercises || [];
+  const isStructured = exercises.length > 0;
+
+  // Current exercise index (for structured workouts)
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const currentExercise = exercises[currentIdx];
+
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerInitial, setTimerInitial] = useState(60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Workout timer (total time)
+  // Workout timer
   const [workoutSeconds, setWorkoutSeconds] = useState(0);
   const workoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Weight tracking
-  const [currentWeight, setCurrentWeight] = useState(20);
+  // Weight tracking per exercise
+  const [weights, setWeights] = useState<Record<number, number>>({});
+  const [completedSets, setCompletedSets] = useState<Record<string, boolean[]>>({});
 
-  // HTML content
+  // HTML content (for html-type trainings)
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
   // PSE Modal
   const [showPSE, setShowPSE] = useState(false);
 
+  // Video modal
+  const [showVideo, setShowVideo] = useState(false);
+
   // Start workout timer
   useEffect(() => {
-    workoutTimerRef.current = setInterval(() => {
-      setWorkoutSeconds(s => s + 1);
-    }, 1000);
-    return () => {
-      if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
-    };
+    workoutTimerRef.current = setInterval(() => setWorkoutSeconds(s => s + 1), 1000);
+    return () => { if (workoutTimerRef.current) clearInterval(workoutTimerRef.current); };
   }, []);
 
   // Rest timer
@@ -82,10 +89,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (timerRunning && timerSeconds > 0) {
       timerRef.current = setInterval(() => {
         setTimerSeconds(s => {
-          if (s <= 1) {
-            setTimerRunning(false);
-            return 0;
-          }
+          if (s <= 1) { setTimerRunning(false); return 0; }
           return s - 1;
         });
       }, 1000);
@@ -93,17 +97,23 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [timerRunning, timerSeconds]);
 
-  // Load HTML content
+  // Set rest timer from exercise prescription
   useEffect(() => {
-    if (training.html_file_url && training.training_type !== 'link') {
+    if (isStructured && currentExercise?.rest_seconds) {
+      setTimerInitial(currentExercise.rest_seconds);
+      setTimerSeconds(currentExercise.rest_seconds);
+    }
+  }, [currentIdx]);
+
+  // Load HTML content for html-type
+  useEffect(() => {
+    if (!isStructured && training.html_file_url && training.training_type !== 'link') {
       setLoadingContent(true);
       fetch(training.html_file_url)
         .then(r => r.text())
         .then(text => {
           if (text.startsWith('<html') || text.startsWith('<!DOCTYPE') || text.startsWith('<HTML')) {
             setHtmlContent(text);
-          } else if (text.includes('&lt;html')) {
-            setHtmlContent(text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
           } else {
             setHtmlContent(`<!DOCTYPE html><html><body>${text}</body></html>`);
           }
@@ -119,17 +129,24 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const currentWeight = weights[currentIdx] ?? 20;
+  const setWeight = (v: number) => setWeights(prev => ({ ...prev, [currentIdx]: v }));
+
+  const toggleSet = (exerciseIdx: number, setIdx: number) => {
+    const key = `${exerciseIdx}`;
+    setCompletedSets(prev => {
+      const sets = [...(prev[key] || Array(exercises[exerciseIdx]?.sets || 3).fill(false))];
+      sets[setIdx] = !sets[setIdx];
+      return { ...prev, [key]: sets };
+    });
+  };
+
   const handleFinishWorkout = () => {
     if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
     setShowPSE(true);
   };
 
-  const handlePSEClose = () => {
-    setShowPSE(false);
-    onFinish();
-  };
-
-  // For link training, open in new tab
+  // For link training
   if (training.training_type === 'link' && training.html_file_url) {
     window.open(training.html_file_url, '_blank');
     onBack();
@@ -159,20 +176,144 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-hidden">
-        {loadingContent ? (
-          <div className="flex items-center justify-center h-full">
+      <div className="flex-1 overflow-auto px-4 pb-4">
+        {isStructured ? (
+          /* Structured Exercise View */
+          <div className="space-y-4">
+            {/* Exercise Navigation */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
+                disabled={currentIdx === 0}
+                className="w-8 h-8 bg-muted rounded flex items-center justify-center disabled:opacity-30"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                Exercício {currentIdx + 1} de {exercises.length}
+              </p>
+              <button
+                onClick={() => setCurrentIdx(i => Math.min(exercises.length - 1, i + 1))}
+                disabled={currentIdx === exercises.length - 1}
+                className="w-8 h-8 bg-muted rounded flex items-center justify-center disabled:opacity-30"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Current Exercise Card */}
+            {currentExercise && (
+              <div className="bg-card border border-border rounded-lg overflow-hidden">
+                {/* Video/Image */}
+                {currentExercise.video_url ? (
+                  <div className="aspect-video bg-black">
+                    <iframe
+                      src={currentExercise.video_url}
+                      className="w-full h-full border-0"
+                      allowFullScreen
+                      title={currentExercise.name}
+                    />
+                  </div>
+                ) : currentExercise.gif_url ? (
+                  <img src={currentExercise.gif_url} alt="" className="w-full h-48 object-cover" />
+                ) : null}
+
+                <div className="p-4 space-y-3">
+                  <div>
+                    <h3 className="text-lg font-black text-foreground">{currentExercise.name}</h3>
+                    {currentExercise.target_muscles?.length > 0 && (
+                      <div className="flex gap-1 mt-1">
+                        {currentExercise.target_muscles.map((m: string) => (
+                          <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Prescription */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-muted/50 rounded p-2 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Séries</p>
+                      <p className="text-xl font-black text-foreground">{currentExercise.sets}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded p-2 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Reps</p>
+                      <p className="text-xl font-black text-foreground">{currentExercise.reps}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded p-2 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Tempo</p>
+                      <p className="text-xl font-black text-foreground">{currentExercise.tempo || "—"}</p>
+                    </div>
+                  </div>
+
+                  {/* Set Tracking */}
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Séries completadas</p>
+                    <div className="flex gap-2">
+                      {Array.from({ length: currentExercise.sets || 3 }).map((_, i) => {
+                        const done = completedSets[`${currentIdx}`]?.[i] || false;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => toggleSet(currentIdx, i)}
+                            className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center font-bold text-sm transition-all ${
+                              done
+                                ? "bg-primary border-primary text-primary-foreground"
+                                : "border-border text-muted-foreground hover:border-primary/50"
+                            }`}
+                          >
+                            {done ? <Check className="w-4 h-4" /> : i + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {currentExercise.notes && (
+                    <p className="text-xs text-muted-foreground italic bg-muted/30 p-2 rounded">
+                      📝 {currentExercise.notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Exercise List Mini */}
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Todos os exercícios</p>
+              {exercises.map((ex: any, idx: number) => {
+                const allDone = (completedSets[`${idx}`] || []).length > 0 &&
+                  (completedSets[`${idx}`] || []).every(Boolean);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIdx(idx)}
+                    className={`w-full flex items-center gap-2 p-2 rounded text-left text-sm transition-colors ${
+                      idx === currentIdx ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                    } ${allDone ? "line-through opacity-60" : ""}`}
+                  >
+                    <span className="w-5 text-xs font-bold">{idx + 1}.</span>
+                    <span className="flex-1 truncate">{ex.name}</span>
+                    <span className="text-xs">{ex.sets}x{ex.reps}</span>
+                    {allDone && <Check className="w-3 h-3 text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : loadingContent ? (
+          <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : htmlContent ? (
           <iframe
             srcDoc={injectMobileViewport(htmlContent)}
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-            className="w-full h-full border-0"
+            className="w-full h-[60vh] border-0 rounded-lg"
             title={training.training_name}
           />
         ) : (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
           </div>
         )}
@@ -188,18 +329,14 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
               <span className="text-xs text-muted-foreground uppercase tracking-wider">Descanso</span>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => { setTimerSeconds(timerInitial); setTimerRunning(false); }}
-                className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center"
-              >
+              <button onClick={() => { setTimerSeconds(timerInitial); setTimerRunning(false); }}
+                className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center">
                 <RotateCcw className="w-3 h-3 text-muted-foreground" />
               </button>
-              <button
-                onClick={() => setTimerRunning(!timerRunning)}
+              <button onClick={() => setTimerRunning(!timerRunning)}
                 className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                   timerRunning ? "bg-primary/20 text-primary" : "bg-primary text-primary-foreground"
-                }`}
-              >
+                }`}>
                 {timerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               </button>
               <span className={`text-lg font-mono font-black w-16 text-center ${
@@ -209,18 +346,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
               </span>
             </div>
           </div>
-          {/* Quick timer presets */}
           <div className="flex gap-2 mt-2">
             {[30, 45, 60, 90, 120].map(s => (
-              <button
-                key={s}
-                onClick={() => { setTimerInitial(s); setTimerSeconds(s); setTimerRunning(false); }}
+              <button key={s} onClick={() => { setTimerInitial(s); setTimerSeconds(s); setTimerRunning(false); }}
                 className={`text-[10px] px-2 py-1 rounded-sm border transition-colors ${
-                  timerInitial === s 
-                    ? "bg-primary/20 border-primary/50 text-primary" 
-                    : "bg-muted border-border text-muted-foreground hover:border-primary/30"
-                }`}
-              >
+                  timerInitial === s ? "bg-primary/20 border-primary/50 text-primary" : "bg-muted border-border text-muted-foreground"
+                }`}>
                 {s}s
               </button>
             ))}
@@ -234,44 +365,33 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
               <Dumbbell className="w-4 h-4" /> Carga Atual
             </span>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCurrentWeight(w => Math.max(0, w - 2.5))}
-                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center hover:bg-destructive/20 transition-colors"
-              >
+              <button onClick={() => setWeight(Math.max(0, currentWeight - 2.5))}
+                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
                 <Minus className="w-4 h-4 text-foreground" />
               </button>
               <span className="text-2xl font-black text-foreground w-20 text-center">
                 {currentWeight}<span className="text-sm text-muted-foreground ml-1">kg</span>
               </span>
-              <button
-                onClick={() => setCurrentWeight(w => w + 2.5)}
-                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center hover:bg-primary/20 transition-colors"
-              >
+              <button onClick={() => setWeight(currentWeight + 2.5)}
+                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
                 <Plus className="w-4 h-4 text-foreground" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Finish Button */}
+        {/* Finish */}
         <div className="px-4 py-3">
-          <Button
-            onClick={handleFinishWorkout}
-            className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base"
-          >
+          <Button onClick={handleFinishWorkout}
+            className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">
             <Zap className="w-5 h-5 mr-2" />
             Concluir Treino
           </Button>
         </div>
       </div>
 
-      {/* PSE Modal */}
-      <PostWorkoutModal
-        open={showPSE}
-        onClose={handlePSEClose}
-        athleteId={athleteId}
-        trainingName={training.training_name}
-      />
+      <PostWorkoutModal open={showPSE} onClose={() => { setShowPSE(false); onFinish(); }}
+        athleteId={athleteId} trainingName={training.training_name} />
     </div>
   );
 }
