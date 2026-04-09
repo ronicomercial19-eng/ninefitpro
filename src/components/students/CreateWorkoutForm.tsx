@@ -155,7 +155,7 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
 
       const { error } = await supabase.from("student_training_assignments").insert({
         student_id: studentId,
-        coach_id: coachId,
+        created_by: coachId || "",
         training_name: name.trim(),
         training_description: description.trim() || null,
         training_type: "structured",
