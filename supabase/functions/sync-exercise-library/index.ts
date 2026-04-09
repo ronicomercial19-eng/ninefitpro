@@ -6,10 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const API_URLS = [
-  "https://vrbhljmsakruoejctclg.supabase.co/functions/v1/sync-exercise-library",
-  "https://bibliteoca9fit.lovable.app/api/exercises.json",
-];
+const API_URL = "https://bibliteoca9fit.lovable.app/api/exercises.json";
 
 type LibraryExercise = {
   id?: number | string;
@@ -20,89 +17,12 @@ type LibraryExercise = {
   youtube_id?: string;
 };
 
-type FetchResult = {
-  exercises: LibraryExercise[];
-  source: string;
-};
-
 function normalizeLibraryPayload(payload: unknown): LibraryExercise[] {
   if (Array.isArray(payload)) return payload as LibraryExercise[];
-  if (payload && typeof payload === "object" && Array.isArray((payload as { exercises?: unknown[] }).exercises)) {
-    return (payload as { exercises: LibraryExercise[] }).exercises;
+  if (payload && typeof payload === "object" && Array.isArray((payload as any).exercises)) {
+    return (payload as any).exercises;
   }
   return [];
-}
-
-async function fetchExercisesFromAPI(req: Request): Promise<FetchResult | null> {
-  const requestUrl = new URL(req.url);
-  const category = requestUrl.searchParams.get("category");
-  const subcategory = requestUrl.searchParams.get("subcategory");
-
-  for (const baseUrl of API_URLS) {
-    try {
-      const url = new URL(baseUrl);
-      if (category) url.searchParams.set("category", category);
-      if (subcategory) url.searchParams.set("subcategory", subcategory);
-
-      console.log(`Trying API: ${url.toString()}`);
-      const resp = await fetch(url.toString(), {
-        headers: {
-          "Accept": "application/json",
-          "User-Agent": "9FIT-PRO-SYNC/1.0",
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!resp.ok) {
-        console.log(`API ${url.toString()} returned ${resp.status}`);
-        continue;
-      }
-
-      const contentType = resp.headers.get("content-type") || "";
-      if (!contentType.includes("json")) {
-        console.log(`API ${url.toString()} returned non-JSON content-type: ${contentType}`);
-        continue;
-      }
-
-      const payload = await resp.json();
-      const exercises = normalizeLibraryPayload(payload);
-      if (exercises.length > 0) {
-        console.log(`Successfully fetched ${exercises.length} exercises from ${url.toString()}`);
-        return { exercises, source: url.toString() };
-      }
-    } catch (e) {
-      console.log(`Failed to fetch from ${baseUrl}: ${e.message}`);
-    }
-  }
-  return null;
-}
-
-// Accept optional exercises array in request body as fallback
-async function getExercisesFromBody(req: Request): Promise<FetchResult | null> {
-  try {
-    const body = await req.clone().json();
-    if (body?.exercises && Array.isArray(body.exercises)) {
-      return { exercises: body.exercises as LibraryExercise[], source: "request-body" };
-    }
-
-    if (body?.api_url) {
-      const resp = await fetch(body.api_url, {
-        headers: {
-          "Accept": "application/json",
-          "User-Agent": "9FIT-PRO-SYNC/1.0",
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (resp.ok) {
-        const payload = await resp.json();
-        const exercises = normalizeLibraryPayload(payload);
-        if (exercises.length > 0) {
-          return { exercises, source: body.api_url };
-        }
-      }
-    }
-  } catch { /* no body or invalid */ }
-  return null;
 }
 
 function mapExerciseToRow(exercise: LibraryExercise, userId: string) {
@@ -128,46 +48,6 @@ function mapExerciseToRow(exercise: LibraryExercise, userId: string) {
   };
 }
 
-async function upsertInBatches(supabaseAdmin: ReturnType<typeof createClient>, rows: ReturnType<typeof mapExerciseToRow>[]) {
-  let synced = 0;
-  let errors = 0;
-  const errorDetails: string[] = [];
-  const validRows = rows.filter(Boolean);
-  const chunkSize = 100;
-
-  for (let i = 0; i < validRows.length; i += chunkSize) {
-    const chunk = validRows.slice(i, i + chunkSize);
-    const { error } = await supabaseAdmin.from("exercises").upsert(chunk, {
-      onConflict: "name",
-      ignoreDuplicates: false,
-    });
-
-    if (!error) {
-      synced += chunk.length;
-      continue;
-    }
-
-    console.error(`Batch upsert failed for chunk starting at ${i}:`, error.message);
-
-    for (const row of chunk) {
-      const { error: rowError } = await supabaseAdmin.from("exercises").upsert(row, {
-        onConflict: "name",
-        ignoreDuplicates: false,
-      });
-
-      if (rowError) {
-        errors++;
-        errorDetails.push(`${row.name}: ${rowError.message}`);
-        console.error(`Error syncing ${row.name}:`, rowError.message);
-      } else {
-        synced++;
-      }
-    }
-  }
-
-  return { synced, errors, errorDetails };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -183,43 +63,104 @@ serve(async (req) => {
     });
   }
 
-  const token = authHeader.replace("Bearer ", "");
   const authClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
-  if (claimsError || !claimsData?.claims) {
+  // Use getUser() instead of getClaims() which doesn't exist
+  const { data: userData, error: userError } = await authClient.auth.getUser();
+  if (userError || !userData?.user) {
+    console.error("Auth error:", userError?.message);
     return new Response(JSON.stringify({ success: false, error: "Invalid or expired token" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const userId = claimsData.claims.sub as string;
+  const userId = userData.user.id;
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   try {
-    let result = await fetchExercisesFromAPI(req);
-    if (!result) {
-      console.log("API unavailable, trying request body...");
-      result = await getExercisesFromBody(req);
+    let exercises: LibraryExercise[] = [];
+    let source = "unknown";
+
+    // 1. Try request body first (frontend fallback)
+    try {
+      const body = await req.clone().json();
+      if (body?.exercises && Array.isArray(body.exercises) && body.exercises.length > 0) {
+        exercises = body.exercises;
+        source = "request-body";
+        console.log(`Got ${exercises.length} exercises from request body`);
+      }
+    } catch { /* no body */ }
+
+    // 2. If no body data, try API
+    if (exercises.length === 0) {
+      try {
+        console.log(`Fetching from API: ${API_URL}`);
+        const resp = await fetch(API_URL, {
+          headers: { "Accept": "application/json", "User-Agent": "9FIT-PRO-SYNC/1.0" },
+          signal: AbortSignal.timeout(15000),
+        });
+        
+        if (resp.ok) {
+          const contentType = resp.headers.get("content-type") || "";
+          if (contentType.includes("json")) {
+            const payload = await resp.json();
+            exercises = normalizeLibraryPayload(payload);
+            source = API_URL;
+            console.log(`Fetched ${exercises.length} exercises from API`);
+          } else {
+            console.log(`API returned non-JSON: ${contentType}`);
+          }
+        } else {
+          console.log(`API returned ${resp.status}`);
+        }
+      } catch (e) {
+        console.log(`API fetch failed: ${e.message}`);
+      }
     }
 
-    if (!result || result.exercises.length === 0) {
+    if (exercises.length === 0) {
       return new Response(JSON.stringify({
         success: false,
-        error: "Biblioteca 9FIT indisponível. Não foi possível obter os exercícios pelas URLs públicas configuradas.",
-        hint: "Verifique a edge pública da biblioteca ou envie os exercícios no body: { exercises: [...] }.",
+        error: "Não foi possível obter exercícios da biblioteca.",
+        hint: "Envie os exercícios no body: { exercises: [...] }",
       }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const rows = result.exercises.map((exercise) => mapExerciseToRow(exercise, userId));
-    const { synced, errors, errorDetails } = await upsertInBatches(supabaseAdmin, rows);
+    // Map and upsert
+    const rows = exercises.map(e => mapExerciseToRow(e, userId)).filter(Boolean);
+    let synced = 0;
+    let errors = 0;
+    const errorDetails: string[] = [];
+    const chunkSize = 100;
+
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+      const { error } = await supabaseAdmin.from("exercises").upsert(chunk, {
+        onConflict: "name",
+        ignoreDuplicates: false,
+      });
+
+      if (!error) {
+        synced += chunk.length;
+      } else {
+        console.error(`Batch error at ${i}:`, error.message);
+        // Fallback: insert one by one
+        for (const row of chunk) {
+          const { error: rowErr } = await supabaseAdmin.from("exercises").upsert(row, {
+            onConflict: "name", ignoreDuplicates: false,
+          });
+          if (rowErr) { errors++; errorDetails.push(`${(row as any).name}: ${rowErr.message}`); }
+          else { synced++; }
+        }
+      }
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      data: { total: result.exercises.length, synced, errors, errorDetails: errorDetails.slice(0, 5) },
-      metadata: { timestamp: new Date().toISOString(), source: result.source },
+      data: { total: exercises.length, synced, errors, errorDetails: errorDetails.slice(0, 5) },
+      metadata: { timestamp: new Date().toISOString(), source },
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (e) {
