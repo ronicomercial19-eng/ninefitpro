@@ -1,65 +1,68 @@
 
 
-# Plano de Implementacao - Fix IA + API Exercicios + Componentes Admin
+# Plano: Finalizar Pendencias Criticas
 
-## 1. Fix: Analise IA e Recomendacoes falham
+## Problemas Identificados
 
-**Problema:** `AIAnalysisPage.tsx` e `AIChatPage.tsx` nao processam corretamente a resposta da edge function `ai-coach`.
+### 1. Sync Biblioteca - 2 bugs criticos
+- **`getClaims()` nao existe** no Supabase JS SDK. A edge function usa `authClient.auth.getClaims(token)` que falha com erro, retornando 401. Fix: usar `authClient.auth.getUser()` que e o metodo correto.
+- **Sem UNIQUE index em `exercises.name`**: O upsert usa `onConflict: "name"` mas nao ha unique constraint. Fix: criar migration adicionando unique index.
 
-A edge function retorna `{ success, data: { content }, metadata }`. Quando chamado via `supabase.functions.invoke()`, o resultado chega como `result.data` = `{ success, data: { content }, metadata }`. O codigo atual faz `result?.content` mas deveria fazer `result?.data?.content`.
+### 2. Appointments RLS - Funcional mas professor precisa de INSERT
+As policies atuais estao corretas para o aluno. Porem o `teacher_id` no INSERT e populado com `coach_id` do athlete, nao com `auth.uid()` do professor. A policy "Teachers can manage" usa `teacher_id = auth.uid()`, entao quando o aluno insere com `teacher_id = coach_id`, funciona. MAS: preciso verificar se o INSERT do aluno esta falhando porque o `teacher_id` precisa ser UUID valido de `auth.users`. Se coach_id nao for um auth.uid(), o INSERT funciona mas o professor nao ve. **Correcao**: Garantir que o INSERT do aluno na AulasCreditos use corretamente o `coach_id` como `teacher_id`.
 
-No `AIChatPage.tsx`, o chat usa `fetch()` diretamente com `Authorization: Bearer ANON_KEY` - isso falhara porque a edge function agora requer JWT de usuario autenticado (fix de seguranca anterior). Precisa usar o token de sessao do usuario.
+### 3. Criar Treino pelo Professor - Componente nao existe
+`CreateWorkoutForm` nao existe no projeto. Precisa ser criado e integrado em `StudentTraining.tsx`.
 
-**Fix:**
-- `AIAnalysisPage.tsx`: Corrigir acesso `result?.data?.content` em ambos `runAnalysis` e `runRecommendations`
-- `AIChatPage.tsx`: Usar `(await supabase.auth.getSession()).data.session?.access_token` no header Authorization
+### 4. Train View - Sem exercise cards
+`WorkoutOverview` e `WorkoutExecution` nao renderizam exercicios estruturados do `training_data`. Mostram apenas texto generico.
 
-## 2. Integracao API Biblioteca de Exercicios 9FIT
+---
 
-**API Externa:** `https://id-preview--532c9940-31b6-4987-968f-fd292029beee.lovable.app/api/exercises.json`
+## Execucao
 
-Retorna: `{ id, name, category, subcategory, youtubeId }`
+### Fase 1: Migration SQL
+```sql
+-- Unique index para upsert funcionar
+CREATE UNIQUE INDEX IF NOT EXISTS exercises_name_unique ON public.exercises (name);
+```
 
-**Implementacao:**
-- Criar Edge Function `sync-exercise-library` que:
-  - Busca exercicios da API externa
-  - Para cada exercicio, faz upsert na tabela `exercises` mapeando:
-    - `name` -> `name`
-    - `category` -> `equipment` ou novo campo
-    - `subcategory` -> `target_muscles[0]`
-    - `youtubeId` -> `video_url` (formato `https://youtube.com/embed/{youtubeId}`)
-    - `external_video_id` -> `youtubeId`
-    - `gif_url` -> thumbnail `https://img.youtube.com/vi/{youtubeId}/mqdefault.jpg`
-  
-- Na `ExercisesPage.tsx`: Adicionar botao "Sincronizar Biblioteca 9FIT" que chama a edge function
-- Na montagem de treino do aluno: professor seleciona exercicios do catalogo e o video do YouTube e reproduzido para o aluno
+### Fase 2: Fix Edge Function `sync-exercise-library`
+- Substituir `authClient.auth.getClaims(token)` por `authClient.auth.getUser()` 
+- `userId = userData.user.id`
+- Adicionar fallback: se API `bibliteoca9fit.lovable.app` retornar HTML, tentar fetch direto no frontend e enviar no body
 
-## 3. Assistente IA Dual (Admin + Aluno)
+### Fase 3: Fix `ExercisesPage.tsx` - Fallback frontend
+- Antes de chamar a edge function, fazer fetch direto de `https://bibliteoca9fit.lovable.app/api/exercises.json`
+- Se obtiver JSON valido, enviar no body da chamada da edge function como `{ exercises: [...] }`
+- Isso garante que mesmo se a edge function nao conseguir buscar, os dados chegam
 
-**Admin (AIChatPage.tsx):** Ja funciona como assistente do professor para ajuste, facilitacao. Corrigir auth (item 1) e manter papel de ajudar o prof a monitorar, recomendar, corrigir.
+### Fase 4: Criar `CreateWorkoutForm.tsx`
+Componente multi-step para professor:
+1. Metadados (nome, descricao, dias da semana, duracao)
+2. Selecao de exercicios da tabela `exercises` com busca/filtro
+3. Prescricao (series, reps, descanso, cadencia) por exercicio
+4. Salvar como `student_training_assignments` com `training_type: 'structured'` e `training_data` JSONB contendo array de exercicios
 
-**Aluno (Hub/Train):** Manter funcionalidade existente de Fit360 Copilot que ja ajuda, corrige, monitora o aluno.
+Integrar botao "Criar Treino" ao lado de "Atribuir Treino" em `StudentTraining.tsx`.
 
-## 4. Placeholder SmartTreino no Sidebar
+### Fase 5: Renderizar exercicios no app do aluno
+- **WorkoutOverview**: Se `training_data.exercises` existe, renderizar lista de exercicios com nome, series, reps, thumbnail do YouTube
+- **WorkoutExecution**: Se `training_data.exercises` existe, renderizar cards interativos por exercicio (em vez de iframe HTML vazio) com video embed, campos de carga, e botao proximo exercicio
 
-Substituir rotas `super-series` e `series-referencia` por um unico item "SmartTreino" no sidebar que abre componente placeholder com mensagem "Conecte a API do SmartTreino para ativar".
+### Fase 6: Deploy edge function
 
-## 5. Componentes Placeholder: SmartPeriodizer e FitCopilot
+---
 
-Criar 2 novas paginas placeholder no painel admin:
-- `/app/smart-periodizer` -> componente com card informativo "SmartPeriodizer - Conecte a API para ativar periodizacao inteligente"
-- `/app/fit-copilot` -> componente com card informativo "FitCopilot - Conecte a API para ativar o copiloto de treino"
+## Arquivos Modificados
 
-Adicionar rotas em `App.tsx` e itens no `AppSidebar.tsx`.
-
-## Ordem de Execucao
-
-| # | Tarefa | Tipo |
-|---|--------|------|
-| 1 | Fix auth e response parsing no AIAnalysisPage e AIChatPage | Edit 2 arquivos |
-| 2 | Criar edge function sync-exercise-library + botao sync | Edge Function + Edit |
-| 3 | Substituir SuperSeries/SeriesRef por SmartTreino placeholder | Edit Sidebar + App.tsx |
-| 4 | Criar placeholders SmartPeriodizer e FitCopilot | 2 paginas novas + rotas |
-
-**Total:** 1 Edge Function nova, 2 paginas novas, 4 arquivos editados
+| Arquivo | Acao |
+|---------|------|
+| Migration SQL | Unique index em exercises.name |
+| `supabase/functions/sync-exercise-library/index.ts` | Fix getClaims -> getUser |
+| `src/pages/ExercisesPage.tsx` | Fallback fetch frontend |
+| `src/components/students/CreateWorkoutForm.tsx` | NOVO - formulario multi-step |
+| `src/components/students/tabs/StudentTraining.tsx` | Integrar botao Criar Treino |
+| `src/components/9fit/WorkoutOverview.tsx` | Renderizar exercise cards |
+| `src/components/9fit/WorkoutExecution.tsx` | Renderizar exercise cards interativos |
 
