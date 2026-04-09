@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles, Globe, Code2 } from "lucide-react";
+import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles, Globe, Code2, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TrainingContentUpload } from "@/components/students/TrainingContentUpload";
 import { HTMLTemplateManager } from "@/components/students/HTMLTemplateManager";
+import { CreateWorkoutForm } from "@/components/students/CreateWorkoutForm";
 interface Student {
   id: string;
   nome: string;
