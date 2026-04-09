@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS exercises_name_unique ON public.exercises (name);
