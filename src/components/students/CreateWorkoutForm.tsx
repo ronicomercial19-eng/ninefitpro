@@ -81,17 +81,20 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
     const { data } = await supabase
       .from("exercises")
       .select("id, name, target_muscles, equipment, gif_url, video_url, external_video_id")
-      .order("name");
+      .order("name")
+      .limit(2000);
     setExercises(data || []);
     setLoadingExercises(false);
   };
 
   const allMuscles = [...new Set(exercises.flatMap(e => e.target_muscles || []))].sort();
+  const allCategories = [...new Set(exercises.map(e => e.equipment).filter(Boolean) as string[])].sort();
 
   const filtered = exercises.filter(e => {
     const matchSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchMuscle = muscleFilter === "all" || (e.target_muscles || []).some(m => m.toLowerCase().includes(muscleFilter.toLowerCase()));
-    return matchSearch && matchMuscle;
+    const matchCat = categoryFilter === "all" || e.equipment === categoryFilter;
+    return matchSearch && matchMuscle && matchCat;
   });
 
   const toggleDay = (day: string) => {
