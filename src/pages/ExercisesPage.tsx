@@ -83,7 +83,8 @@ export default function ExercisesPage() {
     setLoading(true);
     const { data, error } = await supabase.from('exercises')
       .select('id, name, target_muscles, equipment, difficulty_level, phase, goal, image_url, video_url, gif_url, description')
-      .order('name');
+      .order('name')
+      .limit(2000);
     if (error) { toast.error('Erro ao carregar exercícios'); console.error(error); }
     else setExercises(data || []);
     setLoading(false);
