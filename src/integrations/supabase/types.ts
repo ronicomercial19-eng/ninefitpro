@@ -282,6 +282,36 @@ export type Database = {
           },
         ]
       }
+      api_access_logs: {
+        Row: {
+          api_key_hash: string | null
+          athlete_id: string | null
+          created_at: string | null
+          endpoint: string
+          id: string
+          request_metadata: Json | null
+          response_status: number | null
+        }
+        Insert: {
+          api_key_hash?: string | null
+          athlete_id?: string | null
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          request_metadata?: Json | null
+          response_status?: number | null
+        }
+        Update: {
+          api_key_hash?: string | null
+          athlete_id?: string | null
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          request_metadata?: Json | null
+          response_status?: number | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_type: string | null
@@ -383,6 +413,7 @@ export type Database = {
       }
       athlete_periodizations: {
         Row: {
+          annual_plan_id: string | null
           assigned_at: string | null
           assigned_by: string | null
           athlete_id: string | null
@@ -395,6 +426,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          annual_plan_id?: string | null
           assigned_at?: string | null
           assigned_by?: string | null
           athlete_id?: string | null
@@ -407,6 +439,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          annual_plan_id?: string | null
           assigned_at?: string | null
           assigned_by?: string | null
           athlete_id?: string | null
@@ -419,6 +452,13 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_periodizations_annual_plan_id_fkey"
+            columns: ["annual_plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_annual_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_periodizations_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -4019,6 +4059,7 @@ export type Database = {
       }
       student_training_assignments: {
         Row: {
+          content_type: string | null
           created_at: string | null
           created_by: string
           end_date: string | null
@@ -4026,6 +4067,8 @@ export type Database = {
           html_file_url: string | null
           id: string
           is_active: boolean | null
+          periodization_file_url: string | null
+          periodization_html: string | null
           start_date: string
           student_id: string
           training_data: Json
@@ -4035,6 +4078,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          content_type?: string | null
           created_at?: string | null
           created_by: string
           end_date?: string | null
@@ -4042,6 +4086,8 @@ export type Database = {
           html_file_url?: string | null
           id?: string
           is_active?: boolean | null
+          periodization_file_url?: string | null
+          periodization_html?: string | null
           start_date?: string
           student_id: string
           training_data?: Json
@@ -4051,6 +4097,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          content_type?: string | null
           created_at?: string | null
           created_by?: string
           end_date?: string | null
@@ -4058,6 +4105,8 @@ export type Database = {
           html_file_url?: string | null
           id?: string
           is_active?: boolean | null
+          periodization_file_url?: string | null
+          periodization_html?: string | null
           start_date?: string
           student_id?: string
           training_data?: Json
@@ -4307,6 +4356,33 @@ export type Database = {
         }
         Relationships: []
       }
+      templates: {
+        Row: {
+          content: Json | null
+          created_at: string
+          created_by: string | null
+          id: string
+          type: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          type?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          type?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       training_phases: {
         Row: {
           created_at: string | null
@@ -4527,6 +4603,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_assessments: {
+        Row: {
+          created_at: string
+          file_url: string
+          id: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          id?: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          id?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           created_at: string | null
@@ -4554,6 +4654,30 @@ export type Database = {
           total_credits?: number | null
           updated_at?: string | null
           user_email?: string
+        }
+        Relationships: []
+      }
+      user_interactions: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          type?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -5267,11 +5391,14 @@ export type Database = {
           id: string
           load_percentage: string | null
           notes: string | null
+          observations: Json | null
+          override_locked: boolean | null
           reps_range: string
           rest_seconds: number
           rpe_target: number | null
           sets: number
           tempo: string | null
+          training_day: number | null
         }
         Insert: {
           created_at?: string | null
@@ -5281,11 +5408,14 @@ export type Database = {
           id?: string
           load_percentage?: string | null
           notes?: string | null
+          observations?: Json | null
+          override_locked?: boolean | null
           reps_range: string
           rest_seconds: number
           rpe_target?: number | null
           sets: number
           tempo?: string | null
+          training_day?: number | null
         }
         Update: {
           created_at?: string | null
@@ -5295,11 +5425,14 @@ export type Database = {
           id?: string
           load_percentage?: string | null
           notes?: string | null
+          observations?: Json | null
+          override_locked?: boolean | null
           reps_range?: string
           rest_seconds?: number
           rpe_target?: number | null
           sets?: number
           tempo?: string | null
+          training_day?: number | null
         }
         Relationships: [
           {
