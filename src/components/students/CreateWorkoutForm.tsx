@@ -242,20 +242,46 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
       {/* Step 2: Exercise Selection */}
       {step === 2 && (
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
+          <div className="flex flex-col gap-2">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar exercício..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
-            <select
-              value={muscleFilter}
-              onChange={e => setMuscleFilter(e.target.value)}
-              className="bg-background border border-input rounded-md px-3 text-sm"
-            >
-              <option value="all">Todos</option>
-              {allMuscles.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className="flex-1 bg-background border border-input rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">Todas categorias</option>
+                {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select
+                value={muscleFilter}
+                onChange={e => setMuscleFilter(e.target.value)}
+                className="flex-1 bg-background border border-input rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">Todos músculos</option>
+                {allMuscles.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">{filtered.length} de {exercises.length} exercícios da biblioteca</p>
           </div>
+
+          {/* Preview Modal */}
+          {previewVideoId && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewVideoId(null)}>
+              <div className="w-full max-w-2xl aspect-video" onClick={e => e.stopPropagation()}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${previewVideoId}?autoplay=1`}
+                  className="w-full h-full rounded-lg"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+                <Button variant="outline" size="sm" className="mt-2" onClick={() => setPreviewVideoId(null)}>Fechar</Button>
+              </div>
+            </div>
+          )}
 
           {/* Selected count */}
           {prescribed.length > 0 && (
