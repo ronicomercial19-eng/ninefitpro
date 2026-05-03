@@ -132,7 +132,7 @@ export async function getTrainingActive(userId: string): Promise<TrainingActive 
 
 export async function getNutritionDaily(userId: string): Promise<NutritionDaily> {
   const today = new Date().toISOString().slice(0, 10);
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("nutrition_logs")
     .select("kcal, protein, carbs, fats")
     .eq("user_id", userId)
