@@ -65,7 +65,9 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [muscleFilter, setMuscleFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [loadingExercises, setLoadingExercises] = useState(true);
+  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null);
 
   // Step 3: Prescription
   const [prescribed, setPrescribed] = useState<PrescribedExercise[]>([]);
