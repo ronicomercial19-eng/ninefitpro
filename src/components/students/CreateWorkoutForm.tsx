@@ -323,6 +323,15 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
                         ))}
                       </div>
                     </div>
+                    {exercise.external_video_id && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setPreviewVideoId(exercise.external_video_id!); }}
+                        className="p-1.5 rounded hover:bg-primary/10 text-primary flex-shrink-0"
+                        title="Ver vídeo"
+                      >
+                        ▶
+                      </button>
+                    )}
                     {isSelected ? (
                       <Check className="w-5 h-5 text-primary flex-shrink-0" />
                     ) : (
