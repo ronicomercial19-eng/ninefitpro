@@ -82,13 +82,13 @@ async function getAthleteIdForUser(userId: string): Promise<string | null> {
 export async function getUserProfile(userId: string): Promise<UserProfile> {
   const { data: athlete } = await supabase
     .from("athletes")
-    .select("name, avatar_url")
+    .select("name")
     .eq("user_id", userId)
-    .maybeSingle();
+    .maybeSingle() as { data: { name?: string } | null };
 
   return {
     name: athlete?.name || "Atleta",
-    avatarUrl: athlete?.avatar_url || "",
+    avatarUrl: "",
     level: 2,
     healthScore: 87,
     recoveryStatus: "Pronto para treinar",
