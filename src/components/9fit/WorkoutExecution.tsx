@@ -227,13 +227,16 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                 <div className="p-4 space-y-3">
                   <div>
                     <h3 className="text-lg font-black text-foreground">{currentExercise.name}</h3>
-                    {currentExercise.target_muscles?.length > 0 && (
-                      <div className="flex gap-1 mt-1">
-                        {currentExercise.target_muscles.map((m: string) => (
-                          <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex gap-1 mt-1 flex-wrap">
+                      {currentExercise.target_muscles?.map((m: string) => (
+                        <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>
+                      ))}
+                      {currentExercise.override_locked && (
+                        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                          🔒 Bloqueado pelo Prof.
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   {/* Prescription */}
