@@ -410,8 +410,20 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </Card>
       )}
 
+      {/* Sovereign Override Panel */}
+      <SovereignOverridePanel studentId={student.id} />
+
       {/* HTML Template Manager */}
       <HTMLTemplateManager studentId={student.id} />
+
+      {/* Periodization Dialog */}
+      <PeriodizationAssignDialog
+        open={showPeriodization}
+        onOpenChange={setShowPeriodization}
+        studentId={student.id}
+        studentName={student.nome}
+        onSuccess={fetchTrainings}
+      />
 
       {/* Training Content Upload Dialog */}
       <Dialog open={showHTMLUpload} onOpenChange={setShowHTMLUpload}>
