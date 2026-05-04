@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles, Globe, Code2, Wrench } from "lucide-react";
+import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles, Globe, Code2, Wrench, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TrainingContentUpload } from "@/components/students/TrainingContentUpload";
 import { HTMLTemplateManager } from "@/components/students/HTMLTemplateManager";
 import { CreateWorkoutForm } from "@/components/students/CreateWorkoutForm";
+import { PeriodizationAssignDialog } from "@/components/students/PeriodizationAssignDialog";
+import { SovereignOverridePanel } from "@/components/students/SovereignOverridePanel";
 interface Student {
   id: string;
   nome: string;
@@ -38,6 +40,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   const [loading, setLoading] = useState(true);
   const [showHTMLUpload, setShowHTMLUpload] = useState(false);
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
+  const [showPeriodization, setShowPeriodization] = useState(false);
   const [selectedHTMLTraining, setSelectedHTMLTraining] = useState<TrainingAssignment | null>(null);
 
   useEffect(() => {
@@ -175,18 +178,16 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
           <h2 className="text-xl font-semibold">Treino do Aluno</h2>
         </div>
         
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => setShowCreateWorkout(true)}
-            variant="outline"
-          >
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={() => setShowCreateWorkout(true)} variant="outline">
             <Wrench className="w-4 h-4 mr-2" />
             Criar Treino
           </Button>
-          <Button 
-            onClick={() => setShowHTMLUpload(true)}
-            className="bg-primary hover:bg-primary/90"
-          >
+          <Button onClick={() => setShowPeriodization(true)} variant="outline">
+            <Target className="w-4 h-4 mr-2" />
+            Atribuir Periodização
+          </Button>
+          <Button onClick={() => setShowHTMLUpload(true)} className="bg-primary hover:bg-primary/90">
             <Plus className="w-4 h-4 mr-2" />
             Atribuir Treino
           </Button>
