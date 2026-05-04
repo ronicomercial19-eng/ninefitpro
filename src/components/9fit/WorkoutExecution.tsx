@@ -46,8 +46,14 @@ function injectMobileViewport(html: string): string {
   return `<!DOCTYPE html><html><head>${viewportTag}${mobileStyles}</head><body>${html}</body></html>`;
 }
 
+const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
-  const exercises = training.training_data?.exercises || [];
+  const allExercises = training.training_data?.exercises || [];
+  const todayKey = WEEKDAY_KEYS[new Date().getDay()];
+  // Filter exercises for today; fallback to all if none for today
+  const todayExercises = allExercises.filter((e: any) => e.training_day === todayKey);
+  const exercises = todayExercises.length > 0 ? todayExercises : allExercises;
   const isStructured = exercises.length > 0;
 
   // Current exercise index (for structured workouts)
