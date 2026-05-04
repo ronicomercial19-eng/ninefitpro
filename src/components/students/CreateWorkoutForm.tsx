@@ -32,6 +32,7 @@ interface PrescribedExercise {
   rest_seconds: number;
   tempo: string;
   notes: string;
+  training_day: string;
 }
 
 interface CreateWorkoutFormProps {
@@ -60,6 +61,12 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
   const [description, setDescription] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [duration, setDuration] = useState(45);
+
+  // Protocol block
+  const [protocolObjective, setProtocolObjective] = useState("hipertrofia");
+  const [protocolMethod, setProtocolMethod] = useState("linear");
+  const [protocolObservations, setProtocolObservations] = useState("");
+  const [weeklyFrequency, setWeeklyFrequency] = useState(4);
 
   // Step 2: Exercise selection
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -118,6 +125,7 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
       rest_seconds: 60,
       tempo: "2-0-2",
       notes: "",
+      training_day: selectedDays[0] || "segunda",
     }]);
   };
 
@@ -139,6 +147,12 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
       const coachId = session.session?.user?.id;
 
       const trainingData = {
+        protocol: {
+          objective: protocolObjective,
+          method: protocolMethod,
+          observations: protocolObservations,
+          weekly_frequency: weeklyFrequency,
+        },
         exercises: prescribed.map((p, idx) => ({
           order: idx + 1,
           exercise_id: p.exercise_id,
@@ -152,6 +166,8 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
           rest_seconds: p.rest_seconds,
           tempo: p.tempo,
           notes: p.notes,
+          training_day: (p as any).training_day || selectedDays[0] || "segunda",
+          override_locked: false,
         })),
         training_days: selectedDays,
         estimated_duration: duration,
@@ -232,6 +248,59 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
           <div>
             <label className="text-sm font-medium">Duração estimada (min)</label>
             <Input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} min={10} max={180} />
+          </div>
+
+          {/* Protocol Block */}
+          <div className="border rounded-md p-3 bg-muted/30 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary">📋 Protocolo</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Objetivo</label>
+                <select
+                  value={protocolObjective}
+                  onChange={e => setProtocolObjective(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm"
+                >
+                  <option value="hipertrofia">Hipertrofia</option>
+                  <option value="forca">Força</option>
+                  <option value="resistencia">Resistência</option>
+                  <option value="performance">Performance</option>
+                  <option value="reabilitacao">Reabilitação</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Método</label>
+                <select
+                  value={protocolMethod}
+                  onChange={e => setProtocolMethod(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm"
+                >
+                  <option value="linear">Linear</option>
+                  <option value="ondulatorio">Ondulatório</option>
+                  <option value="conjugado">Conjugado</option>
+                  <option value="blocos">Blocos</option>
+                  <option value="livre">Livre</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Frequência semanal</label>
+              <Input
+                type="number" min={1} max={7}
+                value={weeklyFrequency}
+                onChange={e => setWeeklyFrequency(Number(e.target.value))}
+                className="h-8"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Observações estruturadas</label>
+              <Textarea
+                value={protocolObservations}
+                onChange={e => setProtocolObservations(e.target.value)}
+                placeholder="Ex: progressão de carga 2.5kg/semana; deload na 4ª semana..."
+                rows={2}
+              />
+            </div>
           </div>
           <Button onClick={() => setStep(2)} disabled={!name.trim()} className="w-full">
             Próximo: Selecionar Exercícios <ArrowRight className="w-4 h-4 ml-2" />
@@ -403,12 +472,25 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
                       />
                     </div>
                   </div>
-                  <div className="mt-2">
-                    <Input
-                      value={p.notes}
-                      onChange={e => updateExercise(idx, "notes", e.target.value)}
-                      placeholder="Observações (opcional)" className="h-8 text-xs"
-                    />
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase">Dia de treino</label>
+                      <select
+                        value={p.training_day}
+                        onChange={e => updateExercise(idx, "training_day", e.target.value)}
+                        className="w-full h-8 bg-background border border-input rounded-md px-2 text-xs"
+                      >
+                        {WEEKDAYS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase">Observações</label>
+                      <Input
+                        value={p.notes}
+                        onChange={e => updateExercise(idx, "notes", e.target.value)}
+                        placeholder="(opcional)" className="h-8 text-xs"
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>

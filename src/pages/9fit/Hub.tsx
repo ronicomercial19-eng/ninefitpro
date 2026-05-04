@@ -8,6 +8,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { SkeletonCard } from "@/components/9fit/SkeletonCard";
 import { WeeklyProgressChart } from "@/components/9fit/WeeklyProgressChart";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
+import { HomeFeed } from "@/components/9fit/HomeFeed";
 import { FeatureOnboarding } from "@/components/onboarding/FeatureOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -287,6 +288,9 @@ export default function NineFitHub() {
           <RecoveryMission onComplete={handleRecoveryComplete} />
         )}
       </div>
+
+      {/* Dynamic Home Feed (contextual: manhã/treino/noite) */}
+      <HomeFeed stats={stats} hasTraining={!!todayTraining} />
 
       {/* Quick Check-in */}
       <div className="px-4 mb-4">

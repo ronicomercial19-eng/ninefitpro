@@ -11,6 +11,7 @@ import { Line } from 'react-chartjs-2';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PhysicalAssessmentPDF } from "../PhysicalAssessmentPDF";
+import { StudentAssessmentsUpload } from "../StudentAssessmentsUpload";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -453,6 +454,8 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
           </div>
         </CardContent>
       </Card>
+
+      <StudentAssessmentsUpload studentId={studentId} />
         </div>
       </TabsContent>
 

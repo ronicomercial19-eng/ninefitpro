@@ -73,6 +73,56 @@ export type Database = {
           },
         ]
       }
+      aluno_score_composite: {
+        Row: {
+          active_sources: string[]
+          aluno_id: string
+          churn_risk: string
+          last_calculated_at: string
+          score_fitpro: number
+          score_manual: number
+          score_normalized: number
+          score_periodizer: number
+          score_wearables: number
+          stagnation_flag: boolean
+          updated_at: string
+        }
+        Insert: {
+          active_sources?: string[]
+          aluno_id: string
+          churn_risk?: string
+          last_calculated_at?: string
+          score_fitpro?: number
+          score_manual?: number
+          score_normalized?: number
+          score_periodizer?: number
+          score_wearables?: number
+          stagnation_flag?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active_sources?: string[]
+          aluno_id?: string
+          churn_risk?: string
+          last_calculated_at?: string
+          score_fitpro?: number
+          score_manual?: number
+          score_normalized?: number
+          score_periodizer?: number
+          score_wearables?: number
+          stagnation_flag?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aluno_score_composite_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alunos: {
         Row: {
           altura_cm: number | null
@@ -3549,6 +3599,44 @@ export type Database = {
         }
         Relationships: []
       }
+      source_sync_logs: {
+        Row: {
+          aluno_id: string
+          error: string | null
+          id: string
+          payload: Json
+          processed: boolean
+          source: string
+          synced_at: string
+        }
+        Insert: {
+          aluno_id: string
+          error?: string | null
+          id?: string
+          payload?: Json
+          processed?: boolean
+          source: string
+          synced_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          error?: string | null
+          id?: string
+          payload?: Json
+          processed?: boolean
+          source?: string
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_sync_logs_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strength_records: {
         Row: {
           created_at: string
@@ -6548,6 +6636,10 @@ export type Database = {
           periodization_model_id: string
           title: string
         }[]
+      }
+      recalculate_composite_score: {
+        Args: { p_aluno_id: string }
+        Returns: undefined
       }
       salvar_avaliacao: {
         Args: { p_dados: Json; p_estudante_id: string }
