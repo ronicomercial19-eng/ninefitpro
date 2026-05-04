@@ -247,6 +247,59 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
             <label className="text-sm font-medium">Duração estimada (min)</label>
             <Input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} min={10} max={180} />
           </div>
+
+          {/* Protocol Block */}
+          <div className="border rounded-md p-3 bg-muted/30 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary">📋 Protocolo</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Objetivo</label>
+                <select
+                  value={protocolObjective}
+                  onChange={e => setProtocolObjective(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm"
+                >
+                  <option value="hipertrofia">Hipertrofia</option>
+                  <option value="forca">Força</option>
+                  <option value="resistencia">Resistência</option>
+                  <option value="performance">Performance</option>
+                  <option value="reabilitacao">Reabilitação</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Método</label>
+                <select
+                  value={protocolMethod}
+                  onChange={e => setProtocolMethod(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-sm"
+                >
+                  <option value="linear">Linear</option>
+                  <option value="ondulatorio">Ondulatório</option>
+                  <option value="conjugado">Conjugado</option>
+                  <option value="blocos">Blocos</option>
+                  <option value="livre">Livre</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Frequência semanal</label>
+              <Input
+                type="number" min={1} max={7}
+                value={weeklyFrequency}
+                onChange={e => setWeeklyFrequency(Number(e.target.value))}
+                className="h-8"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Observações estruturadas</label>
+              <Textarea
+                value={protocolObservations}
+                onChange={e => setProtocolObservations(e.target.value)}
+                placeholder="Ex: progressão de carga 2.5kg/semana; deload na 4ª semana..."
+                rows={2}
+              />
+            </div>
+          </div>
           <Button onClick={() => setStep(2)} disabled={!name.trim()} className="w-full">
             Próximo: Selecionar Exercícios <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
