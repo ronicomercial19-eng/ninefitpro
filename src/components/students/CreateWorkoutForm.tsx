@@ -472,12 +472,25 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
                       />
                     </div>
                   </div>
-                  <div className="mt-2">
-                    <Input
-                      value={p.notes}
-                      onChange={e => updateExercise(idx, "notes", e.target.value)}
-                      placeholder="Observações (opcional)" className="h-8 text-xs"
-                    />
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase">Dia de treino</label>
+                      <select
+                        value={p.training_day}
+                        onChange={e => updateExercise(idx, "training_day", e.target.value)}
+                        className="w-full h-8 bg-background border border-input rounded-md px-2 text-xs"
+                      >
+                        {WEEKDAYS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase">Observações</label>
+                      <Input
+                        value={p.notes}
+                        onChange={e => updateExercise(idx, "notes", e.target.value)}
+                        placeholder="(opcional)" className="h-8 text-xs"
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
