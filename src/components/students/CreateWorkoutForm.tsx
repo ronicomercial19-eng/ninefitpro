@@ -32,6 +32,7 @@ interface PrescribedExercise {
   rest_seconds: number;
   tempo: string;
   notes: string;
+  training_day: string;
 }
 
 interface CreateWorkoutFormProps {
@@ -124,6 +125,7 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
       rest_seconds: 60,
       tempo: "2-0-2",
       notes: "",
+      training_day: selectedDays[0] || "segunda",
     }]);
   };
 
