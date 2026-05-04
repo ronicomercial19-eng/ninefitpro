@@ -61,6 +61,12 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [duration, setDuration] = useState(45);
 
+  // Protocol block
+  const [protocolObjective, setProtocolObjective] = useState("hipertrofia");
+  const [protocolMethod, setProtocolMethod] = useState("linear");
+  const [protocolObservations, setProtocolObservations] = useState("");
+  const [weeklyFrequency, setWeeklyFrequency] = useState(4);
+
   // Step 2: Exercise selection
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -139,6 +145,12 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
       const coachId = session.session?.user?.id;
 
       const trainingData = {
+        protocol: {
+          objective: protocolObjective,
+          method: protocolMethod,
+          observations: protocolObservations,
+          weekly_frequency: weeklyFrequency,
+        },
         exercises: prescribed.map((p, idx) => ({
           order: idx + 1,
           exercise_id: p.exercise_id,
@@ -152,6 +164,8 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
           rest_seconds: p.rest_seconds,
           tempo: p.tempo,
           notes: p.notes,
+          training_day: (p as any).training_day || selectedDays[0] || "segunda",
+          override_locked: false,
         })),
         training_days: selectedDays,
         estimated_duration: duration,
