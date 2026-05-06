@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { getAthleteByUserId, getAthleteByEmail } from '@/services/athletes.service';
 import { getUserRole } from '@/services/auth.service';
+import { mirrorEvent } from '@/services/intelligenceHub.service';
 
 interface Profile {
   id: string;
@@ -145,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: error.message };
+      mirrorEvent('login', { mode: 'legacy' }, null, email);
       return {};
     } catch (error: any) { return { error: error.message || 'Erro no login' }; }
     finally { setLoading(false); }
@@ -164,7 +166,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    try { mirrorEvent('logout', {}, null, user?.email ?? null); } catch {}
     await supabase.auth.signOut();
+    try {
+      localStorage.removeItem('ninefit_token');
+      localStorage.removeItem('ninefit_user_id');
+      sessionStorage.removeItem('ninefit_redirect_attempted');
+    } catch {}
     setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null);
   };
 
