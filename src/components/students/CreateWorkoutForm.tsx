@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { mirrorEvent } from "@/services/intelligenceHub.service";
 
 interface Exercise {
   id: string;
@@ -187,6 +188,11 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
 
       if (error) throw error;
       toast.success("Treino criado com sucesso!");
+      mirrorEvent("workout_assigned", {
+        athlete_id: studentId,
+        training_type: "structured",
+        exercise_count: prescribed.length,
+      }, studentId);
       onSuccess();
     } catch (err: any) {
       console.error(err);

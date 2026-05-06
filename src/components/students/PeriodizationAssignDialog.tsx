@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Upload, Code2, BookOpen, Loader2 } from "lucide-react";
+import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -93,6 +94,7 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
       );
       if (error) throw error;
       toast.success("Periodização (PDF) atribuída!");
+      mirrorEvent("periodization_assigned", { athlete_id: studentId, content_type: "pdf" }, studentId);
       reset();
       onSuccess();
       onOpenChange(false);
@@ -120,6 +122,7 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
       );
       if (error) throw error;
       toast.success("Periodização (HTML) atribuída!");
+      mirrorEvent("periodization_assigned", { athlete_id: studentId, content_type: "html" }, studentId);
       reset();
       onSuccess();
       onOpenChange(false);
@@ -153,6 +156,7 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
       );
       if (error) throw error;
       toast.success("Periodização atribuída a partir de modelo!");
+      mirrorEvent("periodization_assigned", { athlete_id: studentId, content_type: "model", model_id: selectedModel }, studentId);
       reset();
       onSuccess();
       onOpenChange(false);

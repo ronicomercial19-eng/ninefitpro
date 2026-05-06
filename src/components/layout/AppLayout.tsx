@@ -58,6 +58,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
+              <div className="hidden md:flex items-center gap-2 mr-2">
+                <div className="w-7 h-7 rounded bg-[#E8571A] flex items-center justify-center text-white font-display text-sm">9</div>
+                <span className="font-display text-base tracking-tight">9FIT · 9FIT PRO</span>
+              </div>
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => (

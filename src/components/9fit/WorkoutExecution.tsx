@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
+import { mirrorEvent } from "@/services/intelligenceHub.service";
 
 interface TrainingAssignment {
   id: string;
@@ -149,6 +150,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   const handleFinishWorkout = () => {
     if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+    mirrorEvent("workout_completed", {
+      training_id: training.id,
+      training_name: training.training_name,
+      duration_seconds: workoutSeconds,
+    });
     setShowPSE(true);
   };
 

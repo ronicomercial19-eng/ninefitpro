@@ -201,6 +201,17 @@ const Auth = () => {
           </p>
         </div>
 
+        {/* Portal Soberano (banner discreto) */}
+        <div className="mb-4 text-center text-xs text-muted-foreground">
+          Acesso unificado pelo{' '}
+          <a
+            href="https://ninelogin.lovable.app"
+            className="font-display text-[#E8571A] hover:underline"
+          >
+            Portal 9FIT
+          </a>
+        </div>
+
         {/* Auth Card */}
         <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-6 shadow-2xl shadow-primary/5">
           <Tabs defaultValue="login" className="w-full">
