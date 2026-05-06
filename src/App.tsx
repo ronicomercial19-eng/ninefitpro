@@ -46,6 +46,7 @@ import NineFitMensagens from "./pages/9fit/Mensagens";
 import NineFitFirstAccess from "./pages/9fit/FirstAccess";
 import NineFitSocial from "./pages/9fit/Social";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
+import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SovereignBootstrap>
           <Routes>
             {/* Public Routes - Login is the main entry point */}
             <Route path="/" element={<Auth />} />
@@ -201,6 +203,7 @@ const App = () => (
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </SovereignBootstrap>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
