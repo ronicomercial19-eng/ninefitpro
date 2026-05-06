@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 9FIT Sovereign — Utilitários de tipografia/cor adicionais */
+@layer utilities {
+  .font-display { font-family: 'Syne', 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+  .font-data { font-family: 'DM Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .text-ninefit-orange { color: #E8571A; }
+  .bg-ninefit-orange { background-color: #E8571A; }
+  .border-ninefit-orange { border-color: #E8571A; }
+}
+
 /* 9FIT Design System - Dark Mode Futuristic with Neon Accents */
 
 @layer base {
