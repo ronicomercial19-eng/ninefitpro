@@ -42,3 +42,6 @@ verify_jwt = false
 
 [functions.sync-exercise-library]
 verify_jwt = false
+
+[functions.intelligence-hub-sync]
+verify_jwt = false
