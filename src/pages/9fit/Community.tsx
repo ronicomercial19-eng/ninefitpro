@@ -123,7 +123,7 @@ export default function NineFitCommunity() {
         ))}
       </div>
 
-      {open && <EcosystemFrame url={open.url} title={open.name || open.title} onBack={() => setOpen(null)} />}
+      {open && <EcosystemFrame url={open.url} title={open.title} onBack={() => setOpen(null)} />}
       <BottomNavigation />
     </div>
   );
