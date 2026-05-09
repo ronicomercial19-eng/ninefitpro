@@ -45,6 +45,8 @@ import NineFitDieta from "./pages/9fit/Dieta";
 import NineFitMensagens from "./pages/9fit/Mensagens";
 import NineFitFirstAccess from "./pages/9fit/FirstAccess";
 import NineFitSocial from "./pages/9fit/Social";
+import NineFitCommunity from "./pages/9fit/Community";
+import NineFitStaff from "./pages/9fit/Staff";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
@@ -200,7 +202,9 @@ const App = () => (
             <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />
             <Route path="/9fit/mensagens" element={<NineFitLayout><NineFitMensagens /></NineFitLayout>} />
             <Route path="/9fit/social" element={<NineFitLayout><NineFitSocial /></NineFitLayout>} />
-            
+            <Route path="/9fit/community" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
+            <Route path="/9fit/staff" element={<NineFitLayout><NineFitStaff /></NineFitLayout>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
           </SovereignBootstrap>
