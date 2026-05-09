@@ -5,10 +5,35 @@
 /* 9FIT Sovereign — Utilitários de tipografia/cor adicionais */
 @layer utilities {
   .font-display { font-family: 'Syne', 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
-  .font-data { font-family: 'DM Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .font-data { font-family: 'DM Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
   .text-ninefit-orange { color: #E8571A; }
   .bg-ninefit-orange { background-color: #E8571A; }
   .border-ninefit-orange { border-color: #E8571A; }
+
+  /* 9FIT Premium — depth, glass, glow, motion */
+  .glass-card {
+    background: rgba(20, 20, 20, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .glow-context-train { box-shadow: 0 0 28px hsla(var(--neon-400) / 0.35); }
+  .glow-context-premium { box-shadow: 0 0 28px hsla(45 100% 55% / 0.30); }
+  .glow-context-ai { box-shadow: 0 0 28px hsla(190 100% 55% / 0.30); }
+  .glow-context-mission { box-shadow: 0 0 28px hsla(0 100% 55% / 0.30); }
+  .hover-magnetic {
+    transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;
+  }
+  .hover-magnetic:hover { transform: translateY(-2px) scale(1.02); }
+  .bento-grid > *:first-child { grid-row: span 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hover-magnetic { transition: none; }
+    .hover-magnetic:hover { transform: none; }
+  }
 }
 
 /* 9FIT Design System - Dark Mode Futuristic with Neon Accents */
