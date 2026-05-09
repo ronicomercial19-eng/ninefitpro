@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Play, Plus, Search, Grid, List, Loader2, Image as ImageIcon, RefreshCw, Send, Sparkles } from 'lucide-react';
 import { AddExerciseForm } from '@/components/exercises/AddExerciseForm';
+import { LibraryAssignDialog } from '@/components/students/LibraryAssignDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,6 +15,12 @@ interface Exercise {
   id: string; name: string; target_muscles: string[]; equipment: string | null;
   difficulty_level: string | null; phase: string | null; goal: string | null;
   image_url: string | null; video_url: string | null; gif_url: string | null; description: string | null;
+}
+
+interface LibItem {
+  id: string; external_id: string; type: string; slug: string | null; name: string;
+  category: string | null; subcategory: string | null;
+  thumbnail_url: string | null; player_url: string | null;
 }
 
 const LIBRARY_URL = "https://bibliteoca9fit.lovable.app/api/exercises.json";
@@ -28,6 +36,42 @@ export default function ExercisesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [libItems, setLibItems] = useState<LibItem[]>([]);
+  const [libLoading, setLibLoading] = useState(false);
+  const [libType, setLibType] = useState<string>('infoproduto');
+  const [assignTarget, setAssignTarget] = useState<LibItem | null>(null);
+
+  const fetchLibrary = async (type: string) => {
+    setLibLoading(true);
+    const { data, error } = await supabase.from('library_items')
+      .select('id, external_id, type, slug, name, category, subcategory, thumbnail_url, player_url')
+      .eq('type', type).order('name').limit(500);
+    if (error) toast.error('Erro ao carregar biblioteca');
+    else setLibItems((data as any) || []);
+    setLibLoading(false);
+  };
+
+  useEffect(() => { fetchLibrary(libType); }, [libType]);
+
+  const syncFullLibrary = async () => {
+    setSyncing(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) { toast.error('Sessão expirada'); return; }
+      const { data, error } = await supabase.functions.invoke('sync-library-full', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (error) throw error;
+      if (data?.success === false) { toast.error(data?.error || 'Falha'); return; }
+      const d = data?.data || {};
+      toast.success(`Biblioteca completa: ${d.synced || 0} itens sincronizados`);
+      fetchLibrary(libType);
+      fetchExercises();
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro');
+    } finally { setSyncing(false); }
+  };
 
   const syncLibrary = async () => {
     setSyncing(true);
