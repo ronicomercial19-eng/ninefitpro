@@ -148,83 +148,137 @@ export default function ExercisesPage() {
 
   if (showAddForm) return <AddExerciseForm onSuccess={() => { setShowAddForm(false); fetchExercises(); }} onCancel={() => setShowAddForm(false)} />;
 
+  const libTypes = [
+    { v: 'infoproduto', l: 'Infoprodutos' },
+    { v: 'protocolo', l: 'Protocolos' },
+    { v: 'ebook', l: 'Ebooks' },
+    { v: 'sistema', l: 'Sistemas' },
+    { v: 'app', l: 'Apps' },
+    { v: 'video', l: 'Vídeos' },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1 className="text-3xl font-bold text-foreground">Exercícios</h1>
-        <div className="flex gap-2">
+        <h1 className="text-3xl font-display uppercase tracking-tight text-foreground">Biblioteca 9FIT</h1>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={syncFullLibrary} disabled={syncing}>
+            {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+            Sincronizar Biblioteca Completa
+          </Button>
           <Button variant="outline" onClick={syncLibrary} disabled={syncing}>
             {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Sincronizar Biblioteca 9FIT
+            Sincronizar Exercícios
           </Button>
-          <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo exercício</Button>
+          <Button className="bg-green-500 hover:bg-green-600" onClick={() => setShowAddForm(true)}><Plus className="w-4 h-4 mr-2" />Novo</Button>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <Select value={muscleFilter} onValueChange={setMuscleFilter}>
-              <SelectTrigger><SelectValue placeholder="Músculo" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todos os músculos</SelectItem>{allMuscles.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
-              <SelectTrigger><SelectValue placeholder="Equipamento" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todos</SelectItem>{allEquipment.map(e => <SelectItem key={e!} value={e!}>{e}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={goalFilter} onValueChange={setGoalFilter}>
-              <SelectTrigger><SelectValue placeholder="Objetivo" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todos</SelectItem>{allGoals.map(g => <SelectItem key={g!} value={g!}>{g}</SelectItem>)}</SelectContent>
-            </Select>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">{filtered.length} exercício(s) encontrado(s)</p>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="exercises" className="w-full">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="exercises">Exercícios</TabsTrigger>
+          {libTypes.map(t => <TabsTrigger key={t.v} value={t.v}>{t.l}</TabsTrigger>)}
+        </TabsList>
 
-      <div className="flex justify-end">
-        <div className="flex items-center border rounded-lg">
-          <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}><Grid className="w-4 h-4" /></Button>
-          <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')}><List className="w-4 h-4" /></Button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-      ) : (
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-3"}>
-          {filtered.map((exercise) => (
-            <Card key={exercise.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative">
-                {exercise.image_url || exercise.gif_url ? (
-                  <img src={exercise.image_url || exercise.gif_url || ''} alt={exercise.name} className="w-full h-48 object-cover" />
-                ) : (
-                  <div className="w-full h-48 bg-muted flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground" /></div>
-                )}
-                {exercise.video_url && (
-                  <button onClick={() => setSelectedVideo(exercise.video_url)} className="absolute inset-0 bg-black/20 flex items-center justify-center hover:bg-black/30 transition-colors">
-                    <div className="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center"><Play className="w-8 h-8 text-foreground ml-1" /></div>
-                  </button>
-                )}
-              </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-sm mb-2 line-clamp-2">{exercise.name}</h3>
-                <div className="space-y-2">
-                  {exercise.target_muscles?.length > 0 && <div className="flex flex-wrap gap-1">{exercise.target_muscles.slice(0, 3).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}</div>}
-                  {exercise.equipment && <p className="text-xs text-muted-foreground"><span className="font-medium">Equipamento:</span> {exercise.equipment}</p>}
+        <TabsContent value="exercises" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <Select value={muscleFilter} onValueChange={setMuscleFilter}>
+                  <SelectTrigger><SelectValue placeholder="Músculo" /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">Todos os músculos</SelectItem>{allMuscles.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                  <SelectTrigger><SelectValue placeholder="Equipamento" /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">Todos</SelectItem>{allEquipment.map(e => <SelectItem key={e!} value={e!}>{e}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={goalFilter} onValueChange={setGoalFilter}>
+                  <SelectTrigger><SelectValue placeholder="Objetivo" /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">Todos</SelectItem>{allGoals.map(g => <SelectItem key={g!} value={g!}>{g}</SelectItem>)}</SelectContent>
+                </Select>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </div>
+              <p className="text-sm text-muted-foreground font-data">{filtered.length} exercício(s)</p>
+            </CardContent>
+          </Card>
 
-      {!loading && filtered.length === 0 && (
-        <Card><CardContent className="py-12"><div className="text-center"><h3 className="text-lg font-medium text-foreground mb-2">Nenhum exercício encontrado</h3><p className="text-muted-foreground">Adicione exercícios ou ajuste os filtros.</p></div></CardContent></Card>
-      )}
+          {loading ? (
+            <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((exercise) => (
+                <Card key={exercise.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative">
+                    {exercise.image_url || exercise.gif_url ? (
+                      <img src={exercise.image_url || exercise.gif_url || ''} alt={exercise.name} className="w-full h-48 object-cover" />
+                    ) : (
+                      <div className="w-full h-48 bg-muted flex items-center justify-center"><ImageIcon className="w-12 h-12 text-muted-foreground" /></div>
+                    )}
+                    {exercise.video_url && (
+                      <button onClick={() => setSelectedVideo(exercise.video_url)} className="absolute inset-0 bg-black/20 flex items-center justify-center hover:bg-black/30 transition-colors">
+                        <div className="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center"><Play className="w-8 h-8 text-foreground ml-1" /></div>
+                      </button>
+                    )}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm mb-2 line-clamp-2">{exercise.name}</h3>
+                    <div className="space-y-2 mb-3">
+                      {exercise.target_muscles?.length > 0 && <div className="flex flex-wrap gap-1">{exercise.target_muscles.slice(0, 3).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}</div>}
+                    </div>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => setAssignTarget({
+                      id: exercise.id, external_id: exercise.id, type: 'exercise', slug: null,
+                      name: exercise.name, category: null, subcategory: null,
+                      thumbnail_url: exercise.image_url, player_url: exercise.video_url,
+                    })}>
+                      <Send className="w-3 h-3 mr-2" /> Atribuir a aluno
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {libTypes.map(t => (
+          <TabsContent key={t.v} value={t.v} className="space-y-4 mt-4">
+            {libLoading && libType === t.v ? (
+              <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+            ) : (
+              <>
+                {libType !== t.v && <Button variant="ghost" onClick={() => { setLibType(t.v); fetchLibrary(t.v); }}>Carregar {t.l}</Button>}
+                <p className="text-sm text-muted-foreground font-data">{libItems.filter(i => i.type === t.v).length} {t.l.toLowerCase()}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {libItems.filter(i => i.type === t.v).map(item => (
+                    <Card key={item.id} className="overflow-hidden">
+                      <div className="aspect-video bg-muted flex items-center justify-center">
+                        {item.thumbnail_url ? <img src={item.thumbnail_url} alt={item.name} className="w-full h-full object-cover" /> : <Sparkles className="w-10 h-10 text-muted-foreground" />}
+                      </div>
+                      <CardContent className="p-4">
+                        <Badge variant="secondary" className="mb-2 uppercase text-[10px]">{item.type}</Badge>
+                        <h3 className="font-semibold text-sm mb-2 line-clamp-2">{item.name}</h3>
+                        {item.category && <p className="text-xs text-muted-foreground mb-3">{item.category}</p>}
+                        <Button size="sm" className="w-full" onClick={() => setAssignTarget(item)}>
+                          <Send className="w-3 h-3 mr-2" /> Atribuir a aluno
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {libItems.filter(i => i.type === t.v).length === 0 && (
+                    <Card className="md:col-span-2 lg:col-span-3"><CardContent className="py-10 text-center text-sm text-muted-foreground">
+                      Nenhum item. Clique em "Sincronizar Biblioteca Completa".
+                    </CardContent></Card>
+                  )}
+                </div>
+              </>
+            )}
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      <LibraryAssignDialog open={!!assignTarget} onOpenChange={(v) => !v && setAssignTarget(null)} item={assignTarget} />
 
       {selectedVideo && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedVideo(null)}>
