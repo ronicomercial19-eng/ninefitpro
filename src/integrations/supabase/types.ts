@@ -1820,6 +1820,54 @@ export type Database = {
           },
         ]
       }
+      library_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          external_id: string
+          id: string
+          name: string
+          payload: Json
+          player_url: string | null
+          slug: string | null
+          subcategory: string | null
+          synced_at: string
+          thumbnail_url: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          external_id: string
+          id?: string
+          name: string
+          payload?: Json
+          player_url?: string | null
+          slug?: string | null
+          subcategory?: string | null
+          synced_at?: string
+          thumbnail_url?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          external_id?: string
+          id?: string
+          name?: string
+          payload?: Json
+          player_url?: string | null
+          slug?: string | null
+          subcategory?: string | null
+          synced_at?: string
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       link_de_video: {
         Row: {
           created_at: string
@@ -3932,6 +3980,69 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      student_library_assignments: {
+        Row: {
+          access_url: string | null
+          assigned_at: string
+          assigned_by: string | null
+          athlete_id: string
+          content_ref: string
+          content_title: string | null
+          content_type: string
+          created_at: string
+          download_url: string | null
+          id: string
+          notes: string | null
+          player_url: string | null
+          thumbnail_url: string | null
+        }
+        Insert: {
+          access_url?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          athlete_id: string
+          content_ref: string
+          content_title?: string | null
+          content_type: string
+          created_at?: string
+          download_url?: string | null
+          id?: string
+          notes?: string | null
+          player_url?: string | null
+          thumbnail_url?: string | null
+        }
+        Update: {
+          access_url?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          athlete_id?: string
+          content_ref?: string
+          content_title?: string | null
+          content_type?: string
+          created_at?: string
+          download_url?: string | null
+          id?: string
+          notes?: string | null
+          player_url?: string | null
+          thumbnail_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_measurements: {
         Row: {
