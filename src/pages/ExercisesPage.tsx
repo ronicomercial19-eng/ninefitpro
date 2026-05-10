@@ -174,7 +174,7 @@ export default function ExercisesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="exercises" className="w-full">
+      <Tabs defaultValue="exercises" className="w-full" onValueChange={(v) => { if (v !== 'exercises') { setLibType(v); fetchLibrary(v); } }}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="exercises">Exercícios</TabsTrigger>
           {libTypes.map(t => <TabsTrigger key={t.v} value={t.v}>{t.l}</TabsTrigger>)}
