@@ -174,7 +174,7 @@ export default function ExercisesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="exercises" className="w-full">
+      <Tabs defaultValue="exercises" className="w-full" onValueChange={(v) => { if (v !== 'exercises') { setLibType(v); fetchLibrary(v); } }}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="exercises">Exercícios</TabsTrigger>
           {libTypes.map(t => <TabsTrigger key={t.v} value={t.v}>{t.l}</TabsTrigger>)}
@@ -248,7 +248,6 @@ export default function ExercisesPage() {
               <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
             ) : (
               <>
-                {libType !== t.v && <Button variant="ghost" onClick={() => { setLibType(t.v); fetchLibrary(t.v); }}>Carregar {t.l}</Button>}
                 <p className="text-sm text-muted-foreground font-data">{libItems.filter(i => i.type === t.v).length} {t.l.toLowerCase()}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {libItems.filter(i => i.type === t.v).map(item => (
