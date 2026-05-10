@@ -6696,6 +6696,13 @@ export type Database = {
         Returns: Json
       }
       current_user_email: { Args: never; Returns: string }
+      ensure_current_user_profile: {
+        Args: never
+        Returns: {
+          profile_ready: boolean
+          role: string
+        }[]
+      }
       generate_invitation_token: { Args: never; Returns: string }
       gerar_modelo_treino: {
         Args: {
