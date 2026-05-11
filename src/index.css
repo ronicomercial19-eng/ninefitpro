@@ -20,6 +20,48 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
       0 8px 24px rgba(0, 0, 0, 0.35);
   }
+
+  /* Hardware/Luxury — Mission Control */
+  .glass-mission {
+    background: linear-gradient(135deg, rgba(8,8,8,0.85) 0%, rgba(0,0,0,0.92) 100%);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid hsla(20, 100%, 50%, 0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      inset 0 0 32px hsla(20, 100%, 50%, 0.04),
+      0 12px 40px rgba(0,0,0,0.55);
+  }
+  .glass-mission-active {
+    border-color: hsla(20, 100%, 50%, 0.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      inset 0 0 40px hsla(20, 100%, 50%, 0.10),
+      0 0 32px hsla(20, 100%, 50%, 0.35),
+      0 12px 40px rgba(0,0,0,0.6);
+  }
+  .text-editorial {
+    font-family: 'Syne', 'Inter', system-ui, sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+    line-height: 0.9;
+  }
+  .text-massive {
+    font-family: 'Syne', 'Inter', system-ui, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 0.85;
+  }
+  .gradient-mission {
+    background: radial-gradient(circle at top right, hsla(20,100%,50%,0.22), transparent 60%),
+                radial-gradient(circle at bottom left, hsla(20,100%,50%,0.08), transparent 50%),
+                #000;
+  }
+  .border-mission {
+    border: 1px solid hsla(20, 100%, 50%, 0.25);
+  }
   .glow-context-train { box-shadow: 0 0 28px hsla(var(--neon-400) / 0.35); }
   .glow-context-premium { box-shadow: 0 0 28px hsla(45 100% 55% / 0.30); }
   .glow-context-ai { box-shadow: 0 0 28px hsla(190 100% 55% / 0.30); }

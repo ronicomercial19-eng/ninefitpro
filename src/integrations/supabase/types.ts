@@ -558,12 +558,14 @@ export type Database = {
           restricoes: Json | null
           session_duration: string | null
           sessions_per_week: number | null
+          sync_score: number | null
           total_xp: number | null
           training_environment: string | null
           training_level: string | null
           updated_at: string
           user_id: string | null
           weekly_frequency: number | null
+          xp_total: number | null
         }
         Insert: {
           activated?: boolean | null
@@ -597,12 +599,14 @@ export type Database = {
           restricoes?: Json | null
           session_duration?: string | null
           sessions_per_week?: number | null
+          sync_score?: number | null
           total_xp?: number | null
           training_environment?: string | null
           training_level?: string | null
           updated_at?: string
           user_id?: string | null
           weekly_frequency?: number | null
+          xp_total?: number | null
         }
         Update: {
           activated?: boolean | null
@@ -636,12 +640,14 @@ export type Database = {
           restricoes?: Json | null
           session_duration?: string | null
           sessions_per_week?: number | null
+          sync_score?: number | null
           total_xp?: number | null
           training_environment?: string | null
           training_level?: string | null
           updated_at?: string
           user_id?: string | null
           weekly_frequency?: number | null
+          xp_total?: number | null
         }
         Relationships: [
           {
@@ -1231,6 +1237,42 @@ export type Database = {
           is_active?: boolean | null
           max_slots?: number | null
           start_time?: string
+        }
+        Relationships: []
+      }
+      daily_tasks: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          task_date: string
+          task_key: string
+          title: string
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          task_date?: string
+          task_key: string
+          title: string
+          user_id: string
+          xp_reward?: number
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          task_date?: string
+          task_key?: string
+          title?: string
+          user_id?: string
+          xp_reward?: number
         }
         Relationships: []
       }
@@ -1910,6 +1952,33 @@ export type Database = {
           id?: string
           status?: string
           tipo?: string
+        }
+        Relationships: []
+      }
+      master_registry: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          source?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -3327,6 +3396,36 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ron_memory: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          user_id: string
+          value?: Json
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
         }
         Relationships: []
       }
