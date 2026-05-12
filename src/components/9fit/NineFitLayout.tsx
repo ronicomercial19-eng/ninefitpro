@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { NineFitTopBar } from "./NineFitTopBar";
 
 interface NineFitLayoutProps {
   children: React.ReactNode;
