@@ -1,65 +1,141 @@
 import { useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { EcosystemFrame } from "@/components/9fit/EcosystemFrame";
-import { Bot, Users, Calendar, MessageSquare } from "lucide-react";
+import { Users, Calendar, MessageSquare, Bot, Shield, Phone, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const RON_URL = "https://9ron.base44.app";
+const STAFF_LIST = [
+  { name: "Ron Souza", role: "Master Coach", status: "online", avatar: "RS" },
+  { name: "Dr. Marina", role: "Bio-Hacking", status: "online", avatar: "DM" },
+  { name: "Carla Lima", role: "Nutricionista", status: "offline", avatar: "CL" },
+];
 
 export default function NineFitStaff() {
-  const [openRon, setOpenRon] = useState(false);
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="px-4 pt-6 pb-4">
-        <p className="text-[10px] font-data uppercase tracking-[0.3em] text-muted-foreground">9FIT ·</p>
-        <h1 className="text-3xl font-display uppercase tracking-tighter text-foreground">STAFF</h1>
-        <p className="text-xs text-muted-foreground mt-1">Assistente · Profissionais · Suporte</p>
+    <div className="min-h-screen gradient-mission pb-28">
+      <div className="px-4 pt-6 pb-3">
+        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // STAFF</p>
+        <h1 className="text-massive text-3xl text-foreground mt-1">SUPPORT ELITE</h1>
+        <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">
+          Tempo médio · 4 min
+        </p>
       </div>
 
-      {/* O Ron — destaque */}
+      {/* Tabs */}
+      <div className="px-4 mb-4">
+        <div className="glass-mission rounded-full p-1 flex gap-1">
+          {[
+            { k: "team", l: "Equipe" },
+            { k: "support", l: "Suporte" },
+            { k: "schedule", l: "Agendar" },
+          ].map((t) => (
+            <button
+              key={t.k}
+              onClick={() => setTab(t.k as any)}
+              className={`flex-1 py-2 rounded-full text-[10px] font-display uppercase tracking-widest transition-all ${
+                tab === t.k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {t.l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* RON CTA — internal route */}
       <button
-        onClick={() => setOpenRon(true)}
-        className="mx-4 mb-4 w-[calc(100%-2rem)] glass-card rounded-lg p-6 text-left hover-magnetic glow-context-ai"
+        onClick={() => navigate("/9fit/ron")}
+        className="mx-4 mb-4 w-[calc(100%-2rem)] glass-mission glass-mission-active rounded-xl p-4 text-left flex items-center gap-3"
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[10px] font-data uppercase tracking-[0.3em] text-cyan-400">O DIFERENCIAL SUPREMO</p>
-            <h2 className="text-2xl font-display italic uppercase tracking-tight text-foreground mt-1">
-              O Ron
-            </h2>
-            <p className="text-xs text-muted-foreground mt-2">
-              Assistente técnico digital · acesso direto autenticado
-            </p>
-          </div>
-          <div className="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center glow-context-ai">
-            <Bot className="w-7 h-7 text-cyan-400" />
-          </div>
+        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+          <Bot className="w-6 h-6 text-primary" />
         </div>
-        <div className="mt-4 inline-flex items-center gap-2 text-xs font-display uppercase tracking-widest text-cyan-400">
-          Conversar com o Ron →
+        <div className="flex-1">
+          <p className="text-[9px] font-data tracking-[0.3em] text-primary/80">ASSISTENTE NEURAL</p>
+          <p className="text-editorial text-base text-foreground">O RON</p>
+          <p className="text-[10px] text-muted-foreground">Disponível 24/7 · memória persistente</p>
         </div>
+        <ChevronRight className="w-5 h-5 text-primary" />
       </button>
 
-      {/* Quick actions */}
-      <div className="px-4 grid grid-cols-2 gap-3 mb-4">
-        <button className="glass-card rounded-lg p-4 text-left hover-magnetic">
-          <Users className="w-6 h-6 text-primary mb-2" />
-          <p className="text-sm font-display uppercase">Profissionais</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Coaches conectados</p>
-        </button>
-        <button className="glass-card rounded-lg p-4 text-left hover-magnetic">
-          <Calendar className="w-6 h-6 text-primary mb-2" />
-          <p className="text-sm font-display uppercase">Agendar</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Sessão presencial</p>
-        </button>
-        <button className="glass-card rounded-lg p-4 text-left hover-magnetic col-span-2">
-          <MessageSquare className="w-6 h-6 text-primary mb-2" />
-          <p className="text-sm font-display uppercase">Suporte Humano</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Atendimento direto da 9FIT</p>
-        </button>
-      </div>
+      {tab === "team" && (
+        <div className="px-4 space-y-2">
+          {STAFF_LIST.map((s) => (
+            <div key={s.name} className="glass-mission rounded-xl p-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-xs font-display text-primary">
+                {s.avatar}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-display uppercase text-foreground">{s.name}</p>
+                <p className="text-[10px] text-muted-foreground">{s.role}</p>
+              </div>
+              <span className={`text-[9px] font-data uppercase tracking-widest ${s.status === "online" ? "text-primary" : "text-muted-foreground"}`}>
+                {s.status}
+              </span>
+              <button
+                onClick={() => navigate("/9fit/mensagens")}
+                className="text-primary hover:text-primary/80"
+                aria-label="Mensagem"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {openRon && <EcosystemFrame url={RON_URL} title="O Ron" onBack={() => setOpenRon(false)} />}
+      {tab === "support" && (
+        <div className="px-4 space-y-2">
+          <button onClick={() => navigate("/9fit/mensagens")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <MessageSquare className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">Chat de Suporte</p>
+              <p className="text-[10px] text-muted-foreground">Resposta em até 4 min</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <a href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer" className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <Phone className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">WhatsApp Elite</p>
+              <p className="text-[10px] text-muted-foreground">Atendimento humano</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </a>
+          <button className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <Shield className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">PrimePass · Concierge</p>
+              <p className="text-[10px] text-muted-foreground">Exclusivo membros Elite</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+      )}
+
+      {tab === "schedule" && (
+        <div className="px-4 space-y-2">
+          <button onClick={() => navigate("/9fit/aulas-creditos")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">Aulas & Créditos</p>
+              <p className="text-[10px] text-muted-foreground">Reservar sessão presencial</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <button className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <Users className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">Avaliação Física</p>
+              <p className="text-[10px] text-muted-foreground">Agendar com Master Coach</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+      )}
+
       <BottomNavigation />
     </div>
   );
