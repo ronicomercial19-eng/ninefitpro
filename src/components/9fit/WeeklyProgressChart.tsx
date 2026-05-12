@@ -14,20 +14,43 @@ export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
     const fetchWeek = async () => {
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const weekEnd = addDays(weekStart, 6);
-      const { data } = await supabase
+      const map: Record<string, number> = {};
+
+      // 1) workout_progress (legacy)
+      const { data: wp } = await supabase
         .from("workout_progress")
         .select("date, calories_burned")
-        .eq("aluno_id", athleteId)
+        .or(`aluno_id.eq.${athleteId},athlete_id.eq.${athleteId}`)
         .gte("date", format(weekStart, "yyyy-MM-dd"))
         .lte("date", format(weekEnd, "yyyy-MM-dd"));
-
-      const map: Record<string, number> = {};
-      (data || []).forEach((d: any) => {
+      (wp || []).forEach((d: any) => {
         map[d.date] = (map[d.date] || 0) + (d.calories_burned || 1);
       });
+
+      // 2) workout_executions completed (canonical)
+      const { data: ex } = await supabase
+        .from("workout_executions")
+        .select("completed_at, status")
+        .eq("athlete_id", athleteId)
+        .eq("status", "completed")
+        .gte("completed_at", format(weekStart, "yyyy-MM-dd"))
+        .lte("completed_at", format(addDays(weekEnd, 1), "yyyy-MM-dd"));
+      (ex || []).forEach((d: any) => {
+        if (!d.completed_at) return;
+        const key = d.completed_at.slice(0, 10);
+        map[key] = (map[key] || 0) + 1;
+      });
+
       setWeekData(map);
     };
     fetchWeek();
+
+    // realtime: re-fetch on execution updates
+    const ch = supabase
+      .channel(`weekly-${athleteId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` }, fetchWeek)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [athleteId]);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
