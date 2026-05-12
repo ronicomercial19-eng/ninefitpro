@@ -128,16 +128,41 @@ export default function NineFitTrain() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen gradient-mission pb-28">
       {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-foreground">
-          {flow === "HOME" ? "Meus Treinos" : "Visão Geral"}
+      <div className="px-4 pt-6 pb-3">
+        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // TRAIN</p>
+        <h1 className="text-massive text-3xl text-foreground mt-1">
+          {flow === "HOME" ? "MEUS TREINOS" : "VISÃO GERAL"}
         </h1>
-        <p className="text-xs text-primary uppercase tracking-widest mt-1 font-bold">
-          9FIT PRO Training System
-        </p>
       </div>
+
+      {/* Internal sub-tabs */}
+      {flow === "HOME" && (
+        <div className="px-4 mb-3">
+          <div className="glass-mission rounded-full p-1 flex gap-1">
+            {[
+              { k: "train", l: "Train", I: DumbIcon },
+              { k: "protocol", l: "Protocol", I: Target },
+              { k: "healthflix", l: "HealthFlix", I: Film },
+            ].map(({ k, l, I }) => (
+              <button
+                key={k}
+                onClick={() => {
+                  if (k === "healthflix") navigate("/9fit/healthflix");
+                  else setSubTab(k as any);
+                }}
+                className={`flex-1 py-2 rounded-full text-[10px] font-display uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${
+                  subTab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                }`}
+              >
+                <I className="w-3.5 h-3.5" />
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="px-4">
         {loading || athleteLoading ? (
@@ -151,6 +176,8 @@ export default function NineFitTrain() {
             onBack={handleBack}
             onStart={handleStartExecution}
           />
+        ) : subTab === "protocol" ? (
+          <DailyProtocol />
         ) : (
           <WorkoutHome
             trainings={trainings}
