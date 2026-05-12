@@ -30,9 +30,11 @@ type WorkoutFlow = "HOME" | "OVERVIEW" | "EXECUTION";
 
 export default function NineFitTrain() {
   const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
+  const navigate = useNavigate();
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
+  const [subTab, setSubTab] = useState<"train" | "protocol" | "healthflix">("train");
 
   // Workout flow state
   const [flow, setFlow] = useState<WorkoutFlow>("HOME");
