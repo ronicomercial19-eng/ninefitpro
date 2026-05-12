@@ -83,5 +83,10 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <NineFitTopBar />
+      {children}
+    </>
+  );
 }
