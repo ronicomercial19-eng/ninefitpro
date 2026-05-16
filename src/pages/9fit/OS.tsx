@@ -15,8 +15,7 @@ export default function NineFitOS() {
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // OS</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">DASHBOARD PESSOAL</h1>
+        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // ID CARD</p>
       </div>
 
       <div className="px-4 mb-4">

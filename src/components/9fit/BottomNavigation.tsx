@@ -1,4 +1,4 @@
-import { Cpu, Dumbbell, LayoutGrid, Users, ShoppingBag } from "lucide-react";
+import { Cpu, Dumbbell, LayoutGrid, Users, Globe2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
@@ -6,7 +6,7 @@ const navItems = [
   { icon: Dumbbell, label: "TRAIN", path: "/9fit/train" },
   { icon: LayoutGrid, label: "HUB", path: "/9fit/hub", center: true },
   { icon: Users, label: "STAFF", path: "/9fit/staff" },
-  { icon: ShoppingBag, label: "STORE", path: "/9fit/store" },
+  { icon: Globe2, label: "COMMUNITY", path: "/9fit/community" },
 ];
 
 export function BottomNavigation() {

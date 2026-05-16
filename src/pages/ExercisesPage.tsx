@@ -43,15 +43,28 @@ export default function ExercisesPage() {
 
   const fetchLibrary = async (type: string) => {
     setLibLoading(true);
-    const { data, error } = await supabase.from('library_items')
-      .select('id, external_id, type, slug, name, category, subcategory, thumbnail_url, player_url')
-      .eq('type', type).order('name').limit(500);
+    const { data, error, count } = await supabase.from('library_items')
+      .select('id, external_id, type, slug, name, category, subcategory, thumbnail_url, player_url', { count: 'exact' })
+      .eq('type', type).order('name').limit(2000);
     if (error) toast.error('Erro ao carregar biblioteca');
-    else setLibItems((data as any) || []);
+    else {
+      setLibItems((data as any) || []);
+      if ((count ?? 0) > (data?.length ?? 0)) {
+        toast.info(`Mostrando ${data?.length}/${count} itens. Sincronize para atualizar.`);
+      }
+    }
     setLibLoading(false);
   };
 
-  useEffect(() => { fetchLibrary(libType); }, [libType]);
+  useEffect(() => {
+    fetchLibrary(libType);
+    // Realtime: invalidate on library changes
+    const ch = supabase
+      .channel('library_items-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'library_items' }, () => fetchLibrary(libType))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [libType]);
 
   const syncFullLibrary = async () => {
     setSyncing(true);
