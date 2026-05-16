@@ -7,6 +7,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PersonalIDCard } from "@/components/9fit/PersonalIDCard";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { ModuleGrid } from "@/components/9fit/ModuleGrid";
+import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { WeeklyProgressChart } from "@/components/9fit/WeeklyProgressChart";
 import { Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
@@ -89,6 +90,11 @@ export default function NineFitHub() {
 
       <div className="px-4 mb-4">
         <DailyProtocol />
+      </div>
+
+      <div className="px-4 mb-4">
+        <p className="text-[10px] font-data tracking-[0.3em] text-muted-foreground mb-2">DESTAQUES</p>
+        <HubSequentialCarousel />
       </div>
 
       <div className="px-4 mb-4">
