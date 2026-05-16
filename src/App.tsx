@@ -53,8 +53,11 @@ import NineFitRon from "./pages/9fit/Ron";
 import NineFitHealthFlix from "./pages/9fit/HealthFlix";
 import NineFitPrimePass from "./pages/9fit/PrimePass";
 import NineFitPlace from "./pages/9fit/Place";
+import NineFitHabitFlow from "./pages/9fit/HabitFlow";
+import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
 import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
+import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
