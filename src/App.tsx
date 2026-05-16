@@ -53,6 +53,8 @@ import NineFitRon from "./pages/9fit/Ron";
 import NineFitHealthFlix from "./pages/9fit/HealthFlix";
 import NineFitPrimePass from "./pages/9fit/PrimePass";
 import NineFitPlace from "./pages/9fit/Place";
+import PosturaProPage from "./pages/admin/PosturaProPage";
+import NexusPage from "./pages/admin/NexusPage";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
@@ -188,6 +190,34 @@ const App = () => (
               <PrivateRoute>
                 <AppLayout>
                   <SettingsPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/healthflix" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <NineFitHealthFlix />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/postura-pro" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <PosturaProPage />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/ron" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <NineFitRon />
+                </AppLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/app/nexus" element={
+              <PrivateRoute>
+                <AppLayout>
+                  <NexusPage />
                 </AppLayout>
               </PrivateRoute>
             } />

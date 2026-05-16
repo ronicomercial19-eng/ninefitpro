@@ -15,7 +15,10 @@ import {
   Sparkles,
   Brain,
   CalendarClock,
-  Cpu
+  Cpu,
+  Film,
+  Activity,
+  Atom
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -42,6 +45,10 @@ const menuItems = [
   { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
   { title: 'Assistente IA', url: '/app/assistente-ia', icon: Sparkles },
   { title: 'Análise IA', url: '/app/analise-ia', icon: Brain },
+  { title: 'HealthFlix', url: '/app/healthflix', icon: Film },
+  { title: 'Postura Pro', url: '/app/postura-pro', icon: Activity },
+  { title: 'RON', url: '/app/ron', icon: Bot },
+  { title: 'NEXUS', url: '/app/nexus', icon: Atom },
   { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
   { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
   { title: 'Roadmap', url: '/app/roadmap', icon: Map },

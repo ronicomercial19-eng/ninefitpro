@@ -1,35 +1,85 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { Users, Calendar, MessageSquare, Bot, Shield, Phone, ChevronRight } from "lucide-react";
+import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethoscope, Apple } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-const STAFF_LIST = [
-  { name: "Ron Souza", role: "Master Coach", status: "online", avatar: "RS" },
-  { name: "Dr. Marina", role: "Bio-Hacking", status: "online", avatar: "DM" },
-  { name: "Carla Lima", role: "Nutricionista", status: "offline", avatar: "CL" },
-];
+type Pro = {
+  user_id: string;
+  full_name: string;
+  role: string;
+  avatar_url?: string | null;
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Master Coach",
+  super_admin: "Master Coach",
+  trainer: "Personal Trainer",
+  professor: "Professor",
+  nutritionist: "Nutricionista",
+};
+
+const SERVICES_BY_ROLE: Record<string, { key: string; name: string; desc: string; icon: any }[]> = {
+  default: [
+    { key: "consultoria", name: "Consultoria 1:1", desc: "30 min · vídeo-chamada", icon: Briefcase },
+    { key: "avaliacao", name: "Avaliação Física", desc: "Postural + bioimpedância", icon: Stethoscope },
+    { key: "aula", name: "Aula Presencial", desc: "Sessão de 50 min", icon: Calendar },
+  ],
+  nutritionist: [
+    { key: "plano", name: "Plano Alimentar", desc: "Personalizado · 4 semanas", icon: Apple },
+    { key: "consultoria", name: "Consultoria Nutri", desc: "45 min · vídeo-chamada", icon: Briefcase },
+  ],
+};
 
 export default function NineFitStaff() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
+  const [pros, setPros] = useState<Pro[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Pro | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, role, avatar_url")
+        .in("role", ["admin", "professor"] as any)
+        .eq("is_active", true)
+        .limit(40);
+      if (error) {
+        console.error(error);
+      } else {
+        setPros((data as any) || []);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const services = selected ? (SERVICES_BY_ROLE[selected.role] || SERVICES_BY_ROLE.default) : [];
+
+  const bookService = (svcKey: string) => {
+    if (!selected) return;
+    toast.success(`Agendando ${svcKey} com ${selected.full_name}...`);
+    setSelected(null);
+    navigate("/9fit/aulas-creditos");
+  };
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // STAFF</p>
         <h1 className="text-massive text-3xl text-foreground mt-1">SUPPORT ELITE</h1>
-        <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">
-          Tempo médio · 4 min
-        </p>
+        <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">Equipe · Serviços · Agendamento</p>
       </div>
 
-      {/* Tabs */}
       <div className="px-4 mb-4">
         <div className="glass-mission rounded-full p-1 flex gap-1">
           {[
             { k: "team", l: "Equipe" },
+            { k: "schedule", l: "Agenda" },
             { k: "support", l: "Suporte" },
-            { k: "schedule", l: "Agendar" },
           ].map((t) => (
             <button
               key={t.k}
@@ -44,7 +94,6 @@ export default function NineFitStaff() {
         </div>
       </div>
 
-      {/* RON CTA — internal route */}
       <button
         onClick={() => navigate("/9fit/ron")}
         className="mx-4 mb-4 w-[calc(100%-2rem)] glass-mission glass-mission-active rounded-xl p-4 text-left flex items-center gap-3"
@@ -62,27 +111,53 @@ export default function NineFitStaff() {
 
       {tab === "team" && (
         <div className="px-4 space-y-2">
-          {STAFF_LIST.map((s) => (
-            <div key={s.name} className="glass-mission rounded-xl p-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-xs font-display text-primary">
-                {s.avatar}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-display uppercase text-foreground">{s.name}</p>
-                <p className="text-[10px] text-muted-foreground">{s.role}</p>
-              </div>
-              <span className={`text-[9px] font-data uppercase tracking-widest ${s.status === "online" ? "text-primary" : "text-muted-foreground"}`}>
-                {s.status}
-              </span>
-              <button
-                onClick={() => navigate("/9fit/mensagens")}
-                className="text-primary hover:text-primary/80"
-                aria-label="Mensagem"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </button>
+          {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
+          {!loading && pros.length === 0 && (
+            <div className="glass-mission rounded-xl p-6 text-center text-xs text-muted-foreground">
+              Nenhum profissional ativo no momento.
             </div>
+          )}
+          {pros.map((p) => (
+            <button
+              key={p.user_id}
+              onClick={() => setSelected(p)}
+              className="w-full glass-mission rounded-xl p-3 flex items-center gap-3 text-left hover:bg-primary/5 transition"
+            >
+              <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center text-sm font-display text-primary overflow-hidden">
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt={p.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  (p.full_name || "?").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-display uppercase text-foreground truncate">{p.full_name}</p>
+                <p className="text-[10px] text-muted-foreground">{ROLE_LABEL[p.role] || p.role}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-primary" />
+            </button>
           ))}
+        </div>
+      )}
+
+      {tab === "schedule" && (
+        <div className="px-4 space-y-2">
+          <button onClick={() => navigate("/9fit/aulas-creditos")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">Minha Agenda</p>
+              <p className="text-[10px] text-muted-foreground">Aulas, créditos e reservas</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <button onClick={() => setTab("team")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <Users className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">Agendar com um profissional</p>
+              <p className="text-[10px] text-muted-foreground">Escolha na aba Equipe</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
       )}
 
@@ -96,45 +171,42 @@ export default function NineFitStaff() {
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
-          <a href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer" className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
-            <Phone className="w-5 h-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-display uppercase">WhatsApp Elite</p>
-              <p className="text-[10px] text-muted-foreground">Atendimento humano</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </a>
-          <button className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
-            <Shield className="w-5 h-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-display uppercase">PrimePass · Concierge</p>
-              <p className="text-[10px] text-muted-foreground">Exclusivo membros Elite</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
         </div>
       )}
 
-      {tab === "schedule" && (
-        <div className="px-4 space-y-2">
-          <button onClick={() => navigate("/9fit/aulas-creditos")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-display uppercase">Aulas & Créditos</p>
-              <p className="text-[10px] text-muted-foreground">Reservar sessão presencial</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <button className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
-            <Users className="w-5 h-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-display uppercase">Avaliação Física</p>
-              <p className="text-[10px] text-muted-foreground">Agendar com Master Coach</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-      )}
+      {/* Sheet: serviços do profissional */}
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent side="bottom" className="bg-card border-primary/30 rounded-t-2xl">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="font-display uppercase tracking-wider">{selected.full_name}</SheetTitle>
+                <SheetDescription className="text-xs uppercase tracking-widest text-primary/80">
+                  {ROLE_LABEL[selected.role] || selected.role} · Serviços disponíveis
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {services.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => bookService(s.key)}
+                    className="w-full p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/40 transition flex items-center gap-3 text-left"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                      <s.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-display uppercase">{s.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-primary" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <BottomNavigation />
     </div>
