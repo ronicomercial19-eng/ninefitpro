@@ -141,7 +141,7 @@ export function HubSequentialCarousel() {
             animate={{ x: 0, opacity: 1, scale: 1 }}
             exit={{ x: -60, opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.5, delay: 0.08, type: "spring", stiffness: 160, damping: 18 }}
-            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 drop-shadow-[0_12px_28px_rgba(255,107,0,0.55)]"
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 drop-shadow-[0_12px_28px_rgba(255,107,0,0.55)] scale-75 origin-center"
             aria-label={`Abrir ${m.label}`}
           >
             <m.Front />
