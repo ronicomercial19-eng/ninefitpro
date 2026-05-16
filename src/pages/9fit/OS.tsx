@@ -29,7 +29,7 @@ export default function NineFitOS() {
       <div className="px-4 grid grid-cols-3 gap-3">
         <Tile icon={Activity} label="Saúde" onClick={() => navigate("/9fit/stats")} />
         <Tile icon={Calendar} label="Agenda" onClick={() => navigate("/9fit/aulas-creditos")} />
-        <Tile icon={Target} label="Metas" onClick={() => navigate("/9fit/profile")} />
+        <Tile icon={Target} label="Metas" onClick={() => navigate("/9fit/habit-flow")} />
       </div>
 
       <BottomNavigation />

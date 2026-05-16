@@ -53,8 +53,11 @@ import NineFitRon from "./pages/9fit/Ron";
 import NineFitHealthFlix from "./pages/9fit/HealthFlix";
 import NineFitPrimePass from "./pages/9fit/PrimePass";
 import NineFitPlace from "./pages/9fit/Place";
+import NineFitHabitFlow from "./pages/9fit/HabitFlow";
+import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
 import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
+import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
@@ -196,7 +199,7 @@ const App = () => (
             <Route path="/app/healthflix" element={
               <PrivateRoute>
                 <AppLayout>
-                  <NineFitHealthFlix />
+                  <HealthFlixAdminPage />
                 </AppLayout>
               </PrivateRoute>
             } />
@@ -246,6 +249,8 @@ const App = () => (
             <Route path="/9fit/healthflix" element={<NineFitLayout><NineFitHealthFlix /></NineFitLayout>} />
             <Route path="/9fit/primepass" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/place" element={<NineFitLayout><NineFitPlace /></NineFitLayout>} />
+            <Route path="/9fit/habit-flow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
+            <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

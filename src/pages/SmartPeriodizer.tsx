@@ -1,7 +1,6 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Calendar } from 'lucide-react';
+import { ApiConnectorCard } from '@/components/admin/ApiConnectorCard';
 
 export default function SmartPeriodizer() {
   return (
@@ -12,25 +11,16 @@ export default function SmartPeriodizer() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">SmartPeriodizer</h1>
-          <p className="text-sm text-muted-foreground">Periodização inteligente automatizada</p>
+          <p className="text-sm text-muted-foreground">Periodização inteligente via API</p>
         </div>
       </div>
-
-      <Card className="border-dashed border-2">
-        <CardContent className="py-16 text-center space-y-4">
-          <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mx-auto">
-            <Calendar className="w-10 h-10 text-muted-foreground" />
-          </div>
-          <h3 className="text-xl font-semibold">Conecte a API para ativar</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            O SmartPeriodizer gera periodizações automatizadas baseadas no perfil do aluno,
-            ajustando volume, intensidade e recuperação de forma inteligente.
-          </p>
-          <Button variant="outline" disabled>
-            <ExternalLink className="w-4 h-4 mr-2" /> Configurar API
-          </Button>
-        </CardContent>
-      </Card>
+      <ApiConnectorCard
+        moduleKey="smart_periodizer"
+        title="SmartPeriodizer API"
+        description="Conecte para gerar periodizações automatizadas (volume, intensidade, recuperação)."
+        icon={Calendar}
+        endpointPlaceholder="https://api.smartperiodizer.example.com/v1"
+      />
     </div>
   );
 }
