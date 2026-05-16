@@ -74,11 +74,13 @@ const PlayFront = () => (
 );
 
 const MODULES: ModuleDef[] = [
-  { id: "stats",  label: "Performance",    display: "STATS",  style: "outline-orange", route: "/9fit/stats",      Front: StatsFront },
-  { id: "habit",  label: "Daily Protocol", display: "HABIT",  style: "solid-white",    route: "/9fit/os",         Front: HabitFront },
-  { id: "tribos", label: "Comunidade",     display: "TRIBOS", style: "outline-white",  route: "/9fit/community",  Front: TribosFront },
-  { id: "intell", label: "SmartTreino",    display: "INTELL", style: "solid-white",    route: "/9fit/train",      Front: IntelFront },
-  { id: "play",   label: "HealthFlix",     display: "PLAY",   style: "outline-orange", route: "/9fit/healthflix", Front: PlayFront },
+  { id: "stats",  label: "Performance",    display: "STATS",  style: "outline-orange", route: "/9fit/stats",         Front: StatsFront },
+  { id: "habit",  label: "Daily Protocol", display: "HABIT",  style: "solid-white",    route: "/9fit/os",            Front: HabitFront },
+  { id: "tribos", label: "Comunidade",     display: "TRIBOS", style: "outline-white",  route: "/9fit/community",     Front: TribosFront },
+  { id: "intell", label: "SmartTreino",    display: "INTELL", style: "solid-white",    route: "/9fit/train",         Front: IntelFront },
+  { id: "play",   label: "HealthFlix",     display: "PLAY",   style: "outline-orange", route: "/9fit/healthflix",    Front: PlayFront },
+  { id: "elite",  label: "Bio-Hacking",    display: "ELITE",  style: "solid-orange",   route: "/9fit/elite-bio",     Front: IntelFront },
+  { id: "habits", label: "Habit Flow",     display: "FLOW",   style: "outline-white",  route: "/9fit/habit-flow",    Front: HabitFront },
 ];
 
 const AUTO_MS = 4000;
