@@ -29,8 +29,7 @@ export function PersonalIDCard({ name, level, classTier, syncScore, streak, tota
           <div className="absolute inset-0 gradient-mission opacity-50 pointer-events-none" />
           <div className="relative flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-data tracking-[0.3em] text-primary/80">FIT OS // ID-CARD</p>
-              <h2 className="text-editorial text-3xl text-foreground mt-1">{name}</h2>
+              <h2 className="text-editorial text-3xl text-foreground">{name}</h2>
               <p className="text-[10px] font-data text-muted-foreground mt-0.5">
                 LV.{level} • CLASS {classTier.toUpperCase()}
               </p>
