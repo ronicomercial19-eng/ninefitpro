@@ -124,14 +124,17 @@ export function DailyProtocol() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30"
+            className="space-y-3"
           >
-            <Sparkles className="w-5 h-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-display text-foreground uppercase tracking-wide">Protocolo Completo</p>
-              <p className="text-[10px] text-muted-foreground">Volte amanhã para a próxima sequência.</p>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-display text-foreground uppercase tracking-wide">Protocolo Completo</p>
+                <p className="text-[10px] text-muted-foreground">Veja seu progresso linear da semana abaixo.</p>
+              </div>
+              <span className="text-[10px] font-data text-primary">+{done * 25} XP</span>
             </div>
-            <span className="text-[10px] font-data text-primary">+{done * 25} XP</span>
+            <ProgressLine tasks={tasks} />
           </motion.div>
         ) : (
           <motion.button
@@ -145,8 +148,8 @@ export function DailyProtocol() {
             whileTap={{ scale: 0.985 }}
             className="w-full flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-white/[0.03] hover:bg-primary/10 transition-colors text-left"
           >
-            <div className="w-6 h-6 rounded-md flex items-center justify-center border border-primary/60 group-hover:bg-primary">
-              <Check className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100" />
+            <div className="w-6 h-6 rounded-md flex items-center justify-center border border-primary/60">
+              <Check className="w-3.5 h-3.5 text-primary opacity-0" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] font-data tracking-[0.25em] text-primary/80">
@@ -161,7 +164,6 @@ export function DailyProtocol() {
         )}
       </AnimatePresence>
 
-      {/* Mini history dots */}
       <div className="flex gap-1.5 mt-3 justify-center">
         {tasks.map((t) => (
           <span
@@ -172,6 +174,33 @@ export function DailyProtocol() {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function ProgressLine({ tasks }: { tasks: Task[] }) {
+  // points 0..1 across the day's tasks
+  const points = tasks.map((t, i) => ({
+    x: (i / Math.max(1, tasks.length - 1)) * 100,
+    y: ((tasks.slice(0, i + 1).filter(x => x.completed).length) / tasks.length) * 100,
+  }));
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${100 - p.y}`).join(" ");
+  return (
+    <div className="rounded-lg bg-black/30 border border-white/5 p-3">
+      <p className="text-[10px] font-data tracking-widest text-muted-foreground mb-2">PROGRESSO DO DIA</p>
+      <svg viewBox="0 0 100 100" className="w-full h-20" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="dpFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="hsl(20 100% 50%)" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="hsl(20 100% 50%)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={`${path} L 100 100 L 0 100 Z`} fill="url(#dpFill)" />
+        <path d={path} stroke="hsl(20 100% 50%)" strokeWidth="1.5" fill="none" />
+        {points.map((p, i) => (
+          <circle key={i} cx={p.x} cy={100 - p.y} r="1.6" fill="hsl(20 100% 50%)" />
+        ))}
+      </svg>
     </div>
   );
 }
