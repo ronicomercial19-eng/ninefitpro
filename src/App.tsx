@@ -199,7 +199,7 @@ const App = () => (
             <Route path="/app/healthflix" element={
               <PrivateRoute>
                 <AppLayout>
-                  <NineFitHealthFlix />
+                  <HealthFlixAdminPage />
                 </AppLayout>
               </PrivateRoute>
             } />
