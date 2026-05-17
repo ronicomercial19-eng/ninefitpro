@@ -11,6 +11,7 @@ import { MetricsDisplay } from "@/components/analytics/MetricsDisplay";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { listAthletesByCoach } from '@/services/athletes.service';
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 interface DashboardStats {
   totalClients: number;
