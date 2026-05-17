@@ -36,6 +36,11 @@ export default function Dashboard() {
 
   useEffect(() => { fetchDashboardData(); }, [user]);
 
+  // Mission Control realtime — auto-refresh when athletes / workouts / events change
+  useRealtimeTable({ table: "athletes", filter: user?.id ? `coach_id=eq.${user.id}` : undefined, enabled: !!user?.id }, () => fetchDashboardData());
+  useRealtimeTable({ table: "workout_executions", enabled: !!user?.id }, () => fetchDashboardData());
+  useRealtimeTable({ table: "master_registry", enabled: !!user?.id }, () => fetchDashboardData());
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
