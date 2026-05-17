@@ -152,48 +152,53 @@ export default function NineFitDieta() {
   };
 
   // Fetch assigned diets from database
-  useEffect(() => {
-    const fetchAssignedDiets = async () => {
-      if (!athleteId) { setLoading(false); return; }
-      
-      setLoading(true);
-      try {
-        const { data: diets, error } = await supabase
-          .from('student_diet_assignments')
-          .select('*')
-          .eq('student_id', athleteId)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const validDiets = (diets || []).filter(diet => {
-          const startDate = parseISO(diet.start_date);
-          const endDate = diet.end_date ? parseISO(diet.end_date) : null;
-          const startValid = isBefore(startDate, today) || isEqual(startDate, today);
-          const endValid = !endDate || isAfter(endDate, today) || isEqual(endDate, today);
-          return startValid && endValid;
-        });
-        
-        setAssignedDiets(validDiets);
-      } catch (error) {
-        console.error('Error fetching diets:', error);
-        toast.error('Erro ao carregar planos alimentares');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchAssignedDiets = async () => {
+    if (!athleteId) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const { data: diets, error } = await supabase
+        .from('student_diet_assignments')
+        .select('*')
+        .eq('student_id', athleteId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const validDiets = (diets || []).filter(diet => {
+        const startDate = parseISO(diet.start_date);
+        const endDate = diet.end_date ? parseISO(diet.end_date) : null;
+        const startValid = isBefore(startDate, today) || isEqual(startDate, today);
+        const endValid = !endDate || isAfter(endDate, today) || isEqual(endDate, today);
+        return startValid && endValid;
+      });
+      setAssignedDiets(validDiets);
+    } catch (error) {
+      console.error('Error fetching diets:', error);
+      toast.error('Erro ao carregar planos alimentares');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchAssignedDiets();
-  }, [athleteId]);
+  useEffect(() => { fetchAssignedDiets(); }, [athleteId]);
+
+  // Realtime: re-fetch when diet assignments change for this student
+  useRealtimeTable(
+    { table: "student_diet_assignments", filter: athleteId ? `student_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
+    () => fetchAssignedDiets(),
+  );
 
   // Fetch nutrition logs when date changes
   useEffect(() => {
     if (athleteId) fetchNutritionLogs(athleteId);
   }, [athleteId, currentDate]);
+
+  // Realtime: refresh logs when nutrition_logs change
+  useRealtimeTable(
+    { table: "nutrition_logs", filter: athleteId ? `user_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
+    () => { if (athleteId) fetchNutritionLogs(athleteId); },
+  );
 
   // Open diet viewer
   const handleOpenDiet = async (diet: DietAssignment) => {
