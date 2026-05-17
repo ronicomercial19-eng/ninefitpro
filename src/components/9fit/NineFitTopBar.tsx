@@ -1,8 +1,32 @@
 import { Bell, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 export function NineFitTopBar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [unread, setUnread] = useState(0);
+
+  const refresh = async () => {
+    if (!user?.id) return;
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false);
+    setUnread(count ?? 0);
+  };
+
+  useEffect(() => { refresh(); }, [user?.id]);
+
+  useRealtimeTable(
+    { table: "notifications", filter: user?.id ? `user_id=eq.${user.id}` : undefined, enabled: !!user?.id },
+    () => refresh(),
+  );
+
   return (
     <div className="sticky top-0 z-30 pt-safe bg-background/70 backdrop-blur-xl border-b border-white/5">
       <div className="flex items-center justify-between px-4 h-12">
@@ -28,7 +52,11 @@ export function NineFitTopBar() {
           aria-label="Notificações"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary glow-neon" />
+          {unread > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center glow-neon">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
         </button>
       </div>
     </div>
