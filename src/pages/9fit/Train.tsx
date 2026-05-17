@@ -50,6 +50,24 @@ export default function NineFitTrain() {
     }
   }, [athleteId, athleteLoading]);
 
+  // Realtime: novos treinos/atualizações entram sozinhos
+  useRealtimeTable(
+    {
+      table: "student_training_assignments",
+      filter: athleteId ? `student_id=eq.${athleteId}` : undefined,
+      enabled: !!athleteId,
+    },
+    () => { if (athleteId) { fetchTrainings(athleteId); fetchCompletedCount(athleteId); } },
+  );
+  useRealtimeTable(
+    {
+      table: "workout_executions",
+      filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined,
+      enabled: !!athleteId,
+    },
+    () => { if (athleteId) fetchCompletedCount(athleteId); },
+  );
+
   const fetchTrainings = async (aid: string) => {
     try {
       const { data, error } = await supabase
