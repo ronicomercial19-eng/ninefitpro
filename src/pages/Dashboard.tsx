@@ -11,6 +11,7 @@ import { MetricsDisplay } from "@/components/analytics/MetricsDisplay";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { listAthletesByCoach } from '@/services/athletes.service';
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 interface DashboardStats {
   totalClients: number;
@@ -34,6 +35,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchDashboardData(); }, [user]);
+
+  // Mission Control realtime — auto-refresh when athletes / workouts / events change
+  useRealtimeTable({ table: "athletes", filter: user?.id ? `coach_id=eq.${user.id}` : undefined, enabled: !!user?.id }, () => fetchDashboardData());
+  useRealtimeTable({ table: "workout_executions", enabled: !!user?.id }, () => fetchDashboardData());
+  useRealtimeTable({ table: "master_registry", enabled: !!user?.id }, () => fetchDashboardData());
 
   const fetchDashboardData = async () => {
     try {

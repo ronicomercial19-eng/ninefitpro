@@ -33,31 +33,38 @@ Deno.serve(async (req) => {
     const payload = await resp.json();
     const items: any[] = payload?.items || [];
 
-    let synced = 0, errors = 0;
+    // Build all rows up-front (no row-count cap)
+    const rows: any[] = [];
+    let skipped = 0;
     for (const it of items) {
       const type = String(it.type || "").toLowerCase();
       const external_id = String(it.id ?? it.slug ?? it.external_id ?? "").trim();
       const name = it.name || it.title || "Sem nome";
-      if (!type || !external_id) { errors++; continue; }
-
-      const row = {
+      if (!type || !external_id) { skipped++; continue; }
+      rows.push({
         external_id,
         type,
         slug: it.slug || null,
         name,
         category: it.category || null,
         subcategory: it.subcategory || null,
-        thumbnail_url: it.thumbnailUrl || it.coverUrl || null,
-        player_url: it.playerUrl || it.videoUrl || it.detailUrl || null,
+        thumbnail_url: it.thumbnailUrl || it.coverUrl || it.image || null,
+        player_url: it.playerUrl || it.videoUrl || it.detailUrl || it.url || null,
         payload: it,
         synced_at: new Date().toISOString(),
-      };
+      });
+    }
 
+    // Batched upsert (500/chunk) — no upper bound on total rows
+    const CHUNK = 500;
+    let synced = 0, errors = skipped;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const chunk = rows.slice(i, i + CHUNK);
       const { error } = await supabase
         .from("library_items")
-        .upsert(row, { onConflict: "type,external_id" });
-      if (error) { errors++; console.error("upsert", external_id, error.message); }
-      else synced++;
+        .upsert(chunk, { onConflict: "type,external_id" });
+      if (error) { errors += chunk.length; console.error("upsert chunk", i, error.message); }
+      else synced += chunk.length;
     }
 
     return new Response(
