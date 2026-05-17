@@ -12,6 +12,7 @@ import { WorkoutOverview } from "@/components/9fit/WorkoutOverview";
 import { WorkoutExecution } from "@/components/9fit/WorkoutExecution";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Film, Dumbbell as DumbIcon, Target } from "lucide-react";
 
 interface TrainingAssignment {
@@ -48,6 +49,24 @@ export default function NineFitTrain() {
       setLoading(false);
     }
   }, [athleteId, athleteLoading]);
+
+  // Realtime: novos treinos/atualizações entram sozinhos
+  useRealtimeTable(
+    {
+      table: "student_training_assignments",
+      filter: athleteId ? `student_id=eq.${athleteId}` : undefined,
+      enabled: !!athleteId,
+    },
+    () => { if (athleteId) { fetchTrainings(athleteId); fetchCompletedCount(athleteId); } },
+  );
+  useRealtimeTable(
+    {
+      table: "workout_executions",
+      filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined,
+      enabled: !!athleteId,
+    },
+    () => { if (athleteId) fetchCompletedCount(athleteId); },
+  );
 
   const fetchTrainings = async (aid: string) => {
     try {

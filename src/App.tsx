@@ -48,11 +48,9 @@ import NineFitSocial from "./pages/9fit/Social";
 import NineFitCommunity from "./pages/9fit/Community";
 import NineFitStaff from "./pages/9fit/Staff";
 import NineFitOS from "./pages/9fit/OS";
-import NineFitStore from "./pages/9fit/Store";
 import NineFitRon from "./pages/9fit/Ron";
 import NineFitHealthFlix from "./pages/9fit/HealthFlix";
 import NineFitPrimePass from "./pages/9fit/PrimePass";
-import NineFitPlace from "./pages/9fit/Place";
 import NineFitHabitFlow from "./pages/9fit/HabitFlow";
 import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
 import PosturaProPage from "./pages/admin/PosturaProPage";
@@ -244,11 +242,9 @@ const App = () => (
             <Route path="/9fit/community" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
             <Route path="/9fit/staff" element={<NineFitLayout><NineFitStaff /></NineFitLayout>} />
             <Route path="/9fit/os" element={<NineFitLayout><NineFitOS /></NineFitLayout>} />
-            <Route path="/9fit/store" element={<NineFitLayout><NineFitStore /></NineFitLayout>} />
             <Route path="/9fit/ron" element={<NineFitLayout><NineFitRon /></NineFitLayout>} />
             <Route path="/9fit/healthflix" element={<NineFitLayout><NineFitHealthFlix /></NineFitLayout>} />
             <Route path="/9fit/primepass" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
-            <Route path="/9fit/place" element={<NineFitLayout><NineFitPlace /></NineFitLayout>} />
             <Route path="/9fit/habit-flow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
             <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
 
