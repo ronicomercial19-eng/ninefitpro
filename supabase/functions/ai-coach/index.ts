@@ -58,29 +58,42 @@ serve(async (req) => {
 
     switch (type) {
       case "generate_training": {
-        systemPrompt = `Você é um personal trainer especialista em prescrição de exercícios. 
-Gere um plano de treino completo em HTML formatado com as seguintes tags: h3, h4, ul, li, strong, em, table, tr, td, th.
-O treino deve ser detalhado com: nome do exercício, séries, repetições, carga sugerida (% de RM ou RPE), tempo de descanso.
-Organize por dias da semana. Inclua aquecimento e volta à calma.
-Use cores e formatação HTML profissional. NÃO use markdown, apenas HTML puro.
-Responda APENAS com o HTML do treino, sem explicações extras fora do HTML.`;
-        
+        // Pull a catalog of available exercises (with videos) so the AI prescribes from the real library
+        let catalogText = "";
+        try {
+          const { data: lib } = await authClient
+            .from("library_items")
+            .select("name, category, subcategory, thumbnail_url, player_url")
+            .eq("type", "exercise")
+            .not("player_url", "is", null)
+            .limit(120);
+          if (lib && lib.length) {
+            catalogText = "\n\nCATÁLOGO DE EXERCÍCIOS DISPONÍVEIS (use APENAS estes nomes; cada item tem vídeo):\n" +
+              lib.map((e: any) => `• ${e.name}${e.category ? ` [${e.category}]` : ""}`).join("\n");
+          }
+        } catch (_) { /* catalog optional */ }
+
+        systemPrompt = `Você é um personal trainer especialista em prescrição de exercícios.
+Gere um plano de treino completo em HTML formatado com as tags: h3, h4, ul, li, strong, em, table, tr, td, th.
+Inclua para cada exercício: nome (igual ao catálogo), séries, repetições, carga (% RM ou RPE), descanso.
+Organize por dias da semana, com aquecimento e volta à calma.
+NÃO use markdown — apenas HTML puro. Responda APENAS com o HTML.${catalogText}`;
+
         const d = data;
-        userPrompt = `Gere um treino personalizado com os seguintes dados:
+        userPrompt = `Gere um treino personalizado:
 - Nome: ${String(d.studentName || '').slice(0, 100)}
-- Idade: ${String(d.age || '').slice(0, 5)} anos, Gênero: ${String(d.gender || 'não informado').slice(0, 20)}
-- Objetivo principal: ${String(d.primaryGoal || '').slice(0, 100)}
+- Idade: ${String(d.age || '').slice(0, 5)} | Gênero: ${String(d.gender || 'não informado').slice(0, 20)}
+- Objetivo: ${String(d.primaryGoal || '').slice(0, 100)}
 - Nível: ${String(d.experienceLevel || '').slice(0, 50)}
-- Frequência: ${String(d.weeklyFrequency || '').slice(0, 5)}x por semana
-- Duração da sessão: ${String(d.sessionDuration || '').slice(0, 10)} minutos
+- Frequência: ${String(d.weeklyFrequency || '').slice(0, 5)}x/sem | Sessão: ${String(d.sessionDuration || '').slice(0, 10)} min
 - Ambiente: ${String(d.trainingEnvironment || 'academia').slice(0, 50)}
-- Equipamentos: ${Array.isArray(d.availableEquipment) ? d.availableEquipment.map((e: any) => String(e).slice(0, 50)).join(', ') : 'todos disponíveis'}
+- Equipamentos: ${Array.isArray(d.availableEquipment) ? d.availableEquipment.map((e: any) => String(e).slice(0, 50)).join(', ') : 'todos'}
 - Histórico: ${String(d.trainingHistory || 'não informado').slice(0, 500)}
 - Lesões/Restrições: ${String(d.injuries || 'nenhuma').slice(0, 500)} / ${String(d.restrictions || 'nenhuma').slice(0, 500)}
-- Condições de saúde: ${String(d.healthConditions || 'nenhuma').slice(0, 500)}
-- Estilo preferido: ${String(d.trainingStyle || 'tradicional').slice(0, 50)}
-- Exercícios preferidos: ${String(d.preferredExercises || 'sem preferência').slice(0, 500)}
-- Exercícios a evitar: ${String(d.avoidedExercises || 'nenhum').slice(0, 500)}
+- Saúde: ${String(d.healthConditions || 'nenhuma').slice(0, 500)}
+- Estilo: ${String(d.trainingStyle || 'tradicional').slice(0, 50)}
+- Preferidos: ${String(d.preferredExercises || 'sem preferência').slice(0, 500)}
+- Evitar: ${String(d.avoidedExercises || 'nenhum').slice(0, 500)}
 - Observações: ${String(d.additionalNotes || 'nenhuma').slice(0, 500)}`;
         break;
       }
