@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import {
   ResponsiveContainer,
   RadarChart,
@@ -18,66 +20,112 @@ interface WeeklyProgressChartProps {
   athleteId: string | null;
 }
 
+interface Metrics {
+  trainingByDate: Record<string, number>;
+  nutritionByDate: Record<string, number>;
+  sleepAvg: number;
+  mobilityAvg: number;
+  hydrationAvg: number;
+}
+
 export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
-  const [weekData, setWeekData] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    if (!athleteId) return;
-    const fetchWeek = async () => {
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-      const weekEnd = addDays(weekStart, 6);
-      const map: Record<string, number> = {};
-
-      const { data: wp } = await supabase
-        .from("workout_progress")
-        .select("date, calories_burned")
-        .or(`aluno_id.eq.${athleteId},athlete_id.eq.${athleteId}`)
-        .gte("date", format(weekStart, "yyyy-MM-dd"))
-        .lte("date", format(weekEnd, "yyyy-MM-dd"));
-      (wp || []).forEach((d: any) => {
-        map[d.date] = (map[d.date] || 0) + (d.calories_burned || 1);
-      });
-
-      const { data: ex } = await supabase
-        .from("workout_executions")
-        .select("completed_at, status")
-        .eq("athlete_id", athleteId)
-        .eq("status", "completed")
-        .gte("completed_at", format(weekStart, "yyyy-MM-dd"))
-        .lte("completed_at", format(addDays(weekEnd, 1), "yyyy-MM-dd"));
-      (ex || []).forEach((d: any) => {
-        if (!d.completed_at) return;
-        const key = d.completed_at.slice(0, 10);
-        map[key] = (map[key] || 0) + 1;
-      });
-
-      setWeekData(map);
-    };
-    fetchWeek();
-
-    const ch = supabase
-      .channel(`weekly-${athleteId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` }, fetchWeek)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [athleteId]);
+  const { user } = useAuth();
+  const [m, setM] = useState<Metrics>({
+    trainingByDate: {},
+    nutritionByDate: {},
+    sleepAvg: 0,
+    mobilityAvg: 0,
+    hydrationAvg: 0,
+  });
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const weekStartStr = format(weekStart, "yyyy-MM-dd");
+  const weekEndStr = format(addDays(weekStart, 7), "yyyy-MM-dd");
 
+  const refetch = useCallback(async () => {
+    if (!athleteId) return;
+    const training: Record<string, number> = {};
+    const nutrition: Record<string, number> = {};
+
+    const { data: ex } = await supabase
+      .from("workout_executions")
+      .select("completed_at, status")
+      .eq("athlete_id", athleteId)
+      .eq("status", "completed")
+      .gte("completed_at", weekStartStr)
+      .lte("completed_at", weekEndStr);
+    (ex || []).forEach((d: any) => {
+      if (!d.completed_at) return;
+      const key = d.completed_at.slice(0, 10);
+      training[key] = (training[key] || 0) + 1;
+    });
+
+    const { data: nut } = await supabase
+      .from("nutrition_logs")
+      .select("logged_at")
+      .eq("athlete_id", athleteId)
+      .gte("logged_at", weekStartStr)
+      .lte("logged_at", weekEndStr);
+    (nut || []).forEach((d: any) => {
+      if (!d.logged_at) return;
+      const key = d.logged_at.slice(0, 10);
+      nutrition[key] = (nutrition[key] || 0) + 1;
+    });
+
+    // Master registry derivado: sono / mobilidade / hidratação
+    let sleepAvg = 0, mobilityAvg = 0, hydrationAvg = 0;
+    if (user?.id) {
+      const { data: events } = await supabase
+        .from("master_registry" as any)
+        .select("event_type, payload, created_at")
+        .eq("user_id", user.id)
+        .gte("created_at", `${weekStartStr}T00:00:00Z`)
+        .lte("created_at", `${weekEndStr}T23:59:59Z`);
+      const arr = (events as any[]) || [];
+      const score = (type: string, field: string) => {
+        const vals = arr.filter((e) => e.event_type === type).map((e) => Number(e.payload?.[field] ?? 0)).filter((n) => n > 0);
+        if (!vals.length) return 0;
+        return Math.round(Math.min(100, vals.reduce((s, v) => s + v, 0) / vals.length));
+      };
+      sleepAvg = score("sleep_log", "score");
+      mobilityAvg = score("mobility_log", "score");
+      hydrationAvg = score("hydration_log", "score");
+    }
+
+    setM({ trainingByDate: training, nutritionByDate: nutrition, sleepAvg, mobilityAvg, hydrationAvg });
+  }, [athleteId, user?.id, weekStartStr, weekEndStr]);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  useRealtimeTable(
+    { table: "workout_executions", filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
+    refetch,
+  );
+  useRealtimeTable(
+    { table: "nutrition_logs", filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
+    refetch,
+  );
+  useRealtimeTable(
+    { table: "master_registry", filter: user?.id ? `user_id=eq.${user.id}` : undefined, enabled: !!user?.id },
+    refetch,
+  );
+
+  const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   const lineData = days.map((day, i) => {
     const dateStr = format(addDays(weekStart, i), "yyyy-MM-dd");
-    return { day, xp: weekData[dateStr] ? 25 + (weekData[dateStr] * 25) : 0 };
+    const sessions = m.trainingByDate[dateStr] || 0;
+    return { day, xp: sessions * 50 };
   });
   const totalXP = lineData.reduce((s, d) => s + d.xp, 0);
-  const sessions = Object.keys(weekData).length;
+  const sessions = Object.values(m.trainingByDate).reduce((s, v) => s + v, 0);
+  const meals = Object.values(m.nutritionByDate).reduce((s, v) => s + v, 0);
 
   const radarData = [
-    { metric: "Treino",    value: Math.min(100, sessions * 18) },
-    { metric: "Nutrição",  value: 70 },
-    { metric: "Sono",      value: 78 },
-    { metric: "Mobilidade",value: 62 },
-    { metric: "Hidratação",value: 84 },
+    { metric: "Treino",     value: Math.min(100, sessions * 18) },
+    { metric: "Nutrição",   value: Math.min(100, meals * 6) },
+    { metric: "Sono",       value: m.sleepAvg },
+    { metric: "Mobilidade", value: m.mobilityAvg },
+    { metric: "Hidratação", value: m.hydrationAvg },
   ];
 
   const orange = "hsl(20, 100%, 50%)";
