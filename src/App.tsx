@@ -242,11 +242,9 @@ const App = () => (
             <Route path="/9fit/community" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
             <Route path="/9fit/staff" element={<NineFitLayout><NineFitStaff /></NineFitLayout>} />
             <Route path="/9fit/os" element={<NineFitLayout><NineFitOS /></NineFitLayout>} />
-            <Route path="/9fit/store" element={<NineFitLayout><NineFitStore /></NineFitLayout>} />
             <Route path="/9fit/ron" element={<NineFitLayout><NineFitRon /></NineFitLayout>} />
             <Route path="/9fit/healthflix" element={<NineFitLayout><NineFitHealthFlix /></NineFitLayout>} />
             <Route path="/9fit/primepass" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
-            <Route path="/9fit/place" element={<NineFitLayout><NineFitPlace /></NineFitLayout>} />
             <Route path="/9fit/habit-flow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
             <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
 
