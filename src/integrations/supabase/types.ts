@@ -81,6 +81,13 @@ export type Database = {
             foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -447,6 +454,13 @@ export type Database = {
             foreignKeyName: "appointments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -478,6 +492,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "athlete_auth_link_athlete_id_fkey"
@@ -542,6 +563,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "athlete_periodizations_athlete_id_fkey"
@@ -1171,6 +1199,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
@@ -2287,6 +2322,13 @@ export type Database = {
             foreignKeyName: "nutrition_logs_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -2437,6 +2479,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
@@ -2938,6 +2987,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "fk_plans_athlete"
@@ -3601,6 +3657,13 @@ export type Database = {
             foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -3697,6 +3760,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
@@ -3893,6 +3963,13 @@ export type Database = {
             foreignKeyName: "student_activity_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_activity_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -3948,6 +4025,13 @@ export type Database = {
             foreignKeyName: "student_anamnesis_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_anamnesis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -3995,6 +4079,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "student_credits_student_id_fkey"
@@ -4061,6 +4152,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "student_diet_assignments_student_id_fkey"
@@ -4165,6 +4263,13 @@ export type Database = {
             foreignKeyName: "student_library_assignments_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -4235,6 +4340,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_measurements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "student_measurements_athlete_id_fkey"
@@ -4323,6 +4435,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_photos_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "student_photos_athlete_id_fkey"
@@ -4447,6 +4566,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_training_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "student_training_assignments_student_id_fkey"
@@ -5043,6 +5169,13 @@ export type Database = {
             foreignKeyName: "user_memory_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -5486,6 +5619,13 @@ export type Database = {
             foreignKeyName: "vacation_requests_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -5635,6 +5775,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "workout_executions_athlete_id_fkey"
@@ -6061,6 +6208,13 @@ export type Database = {
             foreignKeyName: "workout_progress_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -6283,6 +6437,63 @@ export type Database = {
       }
     }
     Views: {
+      dashboard_students_overview: {
+        Row: {
+          activated: boolean | null
+          active_diets: number | null
+          active_trainings: number | null
+          athlete_id: string | null
+          churn_risk: string | null
+          coach_id: string | null
+          created_at: string | null
+          email: string | null
+          experience_level: string | null
+          last_workout_at: string | null
+          level: number | null
+          name: string | null
+          primary_goal: string | null
+          score_normalized: number | null
+          total_xp: number | null
+          workouts_completed: number | null
+        }
+        Insert: {
+          activated?: boolean | null
+          active_diets?: never
+          active_trainings?: never
+          athlete_id?: string | null
+          churn_risk?: never
+          coach_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          experience_level?: string | null
+          last_workout_at?: never
+          level?: number | null
+          name?: string | null
+          primary_goal?: string | null
+          score_normalized?: never
+          total_xp?: number | null
+          workouts_completed?: never
+        }
+        Update: {
+          activated?: boolean | null
+          active_diets?: never
+          active_trainings?: never
+          athlete_id?: string | null
+          churn_risk?: never
+          coach_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          experience_level?: string | null
+          last_workout_at?: never
+          level?: number | null
+          name?: string | null
+          primary_goal?: string | null
+          score_normalized?: never
+          total_xp?: number | null
+          workouts_completed?: never
+        }
+        Relationships: []
+      }
       v_assignments_canonical: {
         Row: {
           assigned_at: string | null
@@ -6327,6 +6538,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "athlete_periodizations_athlete_id_fkey"
@@ -6637,6 +6855,13 @@ export type Database = {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -6734,6 +6959,13 @@ export type Database = {
             foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "v_students_canonical"
             referencedColumns: ["id"]
           },
@@ -6773,6 +7005,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "workout_progress_athlete_id_fkey"
