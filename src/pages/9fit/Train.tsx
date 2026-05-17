@@ -12,6 +12,7 @@ import { WorkoutOverview } from "@/components/9fit/WorkoutOverview";
 import { WorkoutExecution } from "@/components/9fit/WorkoutExecution";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Film, Dumbbell as DumbIcon, Target } from "lucide-react";
 
 interface TrainingAssignment {
