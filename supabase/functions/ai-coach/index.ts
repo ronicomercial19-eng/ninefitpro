@@ -21,7 +21,6 @@ function apiError(code: string, message: string, status = 500) {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // === AUTH: Require authenticated user ===
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return apiError('UNAUTHORIZED', 'Missing authorization', 401);
 
@@ -35,133 +34,118 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { type, data, messages } = body;
+    // Accept both legacy { type } and new { mode }; both keys work.
+    const mode: string = body.mode || body.type || "chat";
+    const data = body.data;
+    const message: string | undefined = body.message;
+    const history: any[] = Array.isArray(body.history) ? body.history : [];
+    const userId: string | undefined = body.userId;
+    const messages: any[] = Array.isArray(body.messages) ? body.messages : [];
 
-    // Input validation
-    if (!type || typeof type !== 'string') return apiError('INVALID_INPUT', 'Field "type" is required', 400);
-    const allowedTypes = ['generate_training', 'analyze_progress', 'recommendations', 'chat'];
-    if (!allowedTypes.includes(type)) return apiError('INVALID_TYPE', `Tipo inválido: ${type}`, 400);
-
-    if (type === 'chat' && (!Array.isArray(messages) || messages.length === 0)) {
-      return apiError('INVALID_INPUT', 'Field "messages" is required for chat type', 400);
-    }
-    if (type !== 'chat' && (!data || typeof data !== 'object')) {
-      return apiError('INVALID_INPUT', 'Field "data" is required', 400);
-    }
+    const allowed = ['generate_training', 'train', 'analyze_progress', 'analyze', 'recommendations', 'recommend', 'chat'];
+    if (!allowed.includes(mode)) return apiError('INVALID_MODE', `Modo inválido: ${mode}`, 400);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'LOVABLE_API_KEY not configured', 500);
 
     let systemPrompt = "";
     let userPrompt = "";
-    let stream = false;
+    let chatMessages: any[] = [];
 
-    switch (type) {
-      case "generate_training": {
-        // Pull a catalog of available exercises (with videos) so the AI prescribes from the real library
-        let catalogText = "";
+    if (mode === "chat") {
+      // Build live context for RON
+      let ctx = "";
+      if (userId) {
         try {
-          const { data: lib } = await authClient
-            .from("library_items")
-            .select("name, category, subcategory, thumbnail_url, player_url")
-            .eq("type", "exercise")
-            .not("player_url", "is", null)
-            .limit(120);
-          if (lib && lib.length) {
-            catalogText = "\n\nCATÁLOGO DE EXERCÍCIOS DISPONÍVEIS (use APENAS estes nomes; cada item tem vídeo):\n" +
-              lib.map((e: any) => `• ${e.name}${e.category ? ` [${e.category}]` : ""}`).join("\n");
+          const { data: ath } = await authClient
+            .from("athletes")
+            .select("id, name, level, xp_total, total_xp, sync_score")
+            .or(`user_id.eq.${userId}`)
+            .maybeSingle();
+          if (ath) {
+            ctx += `\nAluno: ${ath.name} • Nível ${ath.level || 1} • Sync ${ath.sync_score || 0} • XP ${ath.xp_total || ath.total_xp || 0}.`;
           }
-        } catch (_) { /* catalog optional */ }
-
-        systemPrompt = `Você é um personal trainer especialista em prescrição de exercícios.
-Gere um plano de treino completo em HTML formatado com as tags: h3, h4, ul, li, strong, em, table, tr, td, th.
-Inclua para cada exercício: nome (igual ao catálogo), séries, repetições, carga (% RM ou RPE), descanso.
-Organize por dias da semana, com aquecimento e volta à calma.
-NÃO use markdown — apenas HTML puro. Responda APENAS com o HTML.${catalogText}`;
-
-        const d = data;
-        userPrompt = `Gere um treino personalizado:
-- Nome: ${String(d.studentName || '').slice(0, 100)}
-- Idade: ${String(d.age || '').slice(0, 5)} | Gênero: ${String(d.gender || 'não informado').slice(0, 20)}
-- Objetivo: ${String(d.primaryGoal || '').slice(0, 100)}
-- Nível: ${String(d.experienceLevel || '').slice(0, 50)}
-- Frequência: ${String(d.weeklyFrequency || '').slice(0, 5)}x/sem | Sessão: ${String(d.sessionDuration || '').slice(0, 10)} min
-- Ambiente: ${String(d.trainingEnvironment || 'academia').slice(0, 50)}
-- Equipamentos: ${Array.isArray(d.availableEquipment) ? d.availableEquipment.map((e: any) => String(e).slice(0, 50)).join(', ') : 'todos'}
-- Histórico: ${String(d.trainingHistory || 'não informado').slice(0, 500)}
-- Lesões/Restrições: ${String(d.injuries || 'nenhuma').slice(0, 500)} / ${String(d.restrictions || 'nenhuma').slice(0, 500)}
-- Saúde: ${String(d.healthConditions || 'nenhuma').slice(0, 500)}
-- Estilo: ${String(d.trainingStyle || 'tradicional').slice(0, 50)}
-- Preferidos: ${String(d.preferredExercises || 'sem preferência').slice(0, 500)}
-- Evitar: ${String(d.avoidedExercises || 'nenhum').slice(0, 500)}
-- Observações: ${String(d.additionalNotes || 'nenhuma').slice(0, 500)}`;
-        break;
+          const { data: lastReg } = await authClient
+            .from("master_registry")
+            .select("event_type, created_at, payload")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(5);
+          if (lastReg?.length) {
+            ctx += `\nÚltimos eventos: ${lastReg.map((r: any) => r.event_type).join(", ")}.`;
+          }
+        } catch (_) { /* context optional */ }
       }
 
-      case "analyze_progress": {
-        systemPrompt = `Você é um analista de performance esportiva. Analise os dados do aluno e forneça insights detalhados.
-Responda em HTML formatado com seções claras: Resumo, Pontos Fortes, Áreas de Melhoria, Tendências, e Recomendações.
-Use tags h3, h4, ul, li, strong, em. Seja específico e baseado nos dados.`;
-        
-        const p = data;
-        userPrompt = `Analise o progresso deste aluno:
-- Nome: ${String(p.name || '').slice(0, 100)}
-- Avaliações: ${JSON.stringify(p.assessments || []).slice(0, 2000)}
-- Check-ins recentes: ${JSON.stringify(p.checkins || []).slice(0, 2000)}
-- Treinos realizados: ${String(p.workoutsCompleted || 0).slice(0, 10)}
-- Frequência média: ${String(p.avgFrequency || 'N/A').slice(0, 20)}
-- Objetivo: ${String(p.goal || 'não definido').slice(0, 100)}`;
-        break;
-      }
+      systemPrompt = `Você é o RON — Neural Coach do 9FIT.
+Tom: direto, conciso, motivador, baseado em ciência. Português brasileiro.
+Responda em no máximo 3 parágrafos curtos. Use frases de impacto.
+Quando tiver dados do aluno, referencie Sync, XP, streak ou hábitos recentes.
+${ctx}`;
 
-      case "recommendations": {
-        systemPrompt = `Você é um consultor fitness especializado. Com base nos dados do aluno, gere recomendações personalizadas.
-Responda em JSON com a seguinte estrutura:
-{
-  "recommendations": [
-    { "category": "treino|nutrição|recuperação|mindset", "title": "título curto", "description": "descrição detalhada", "priority": "alta|média|baixa", "icon": "dumbbell|apple|moon|brain" }
-  ]
-}
-Gere entre 4 e 6 recomendações. Responda APENAS com o JSON, sem markdown.`;
-
-        const r = data;
-        userPrompt = `Gere recomendações para este aluno:
-- Nome: ${String(r.name || '').slice(0, 100)}
-- Objetivo: ${String(r.goal || 'hipertrofia').slice(0, 100)}
-- Nível: ${String(r.level || 'intermediário').slice(0, 50)}
-- Frequência: ${String(r.frequency || 3)}x/semana
-- Lesões: ${String(r.injuries || 'nenhuma').slice(0, 500)}
-- Check-in recente (sono/energia/dor): ${String(r.lastCheckin || 'sem dados').slice(0, 200)}
-- Tendência de peso: ${String(r.weightTrend || 'estável').slice(0, 50)}`;
-        break;
-      }
-
-      case "chat": {
-        stream = true;
-        systemPrompt = `Você é o Assistente IA do 9FIT PRO, uma plataforma de gestão de treinos para personal trainers.
-Você ajuda professores com:
-- Prescrição de exercícios e periodização
-- Análise de progresso de alunos
-- Estratégias de nutrição esportiva
-- Gestão de negócios fitness
-- Dúvidas sobre fisiologia do exercício
-Seja profissional, direto e baseado em evidências científicas. Responda em português brasileiro.`;
-        break;
-      }
-    }
-
-    // Sanitize chat messages
-    const sanitizedMessages = type === "chat"
-      ? messages.slice(0, 50).map((m: any) => ({
+      // Build messages: prefer explicit `messages[]`, fall back to history + message
+      if (messages.length > 0) {
+        chatMessages = messages.slice(-30).map((m: any) => ({
           role: ['user', 'assistant', 'system'].includes(m.role) ? m.role : 'user',
           content: String(m.content || '').slice(0, 4000),
-        }))
-      : [{ role: "user", content: userPrompt }];
+        }));
+      } else {
+        chatMessages = history.slice(-20).map((m: any) => ({
+          role: ['user', 'assistant', 'system'].includes(m.role) ? m.role : 'user',
+          content: String(m.content || '').slice(0, 4000),
+        }));
+        if (message) {
+          // Special opener handshake
+          const finalMsg = message === '__open__'
+            ? 'Diga olá em uma frase, citando algo do meu progresso recente se houver contexto.'
+            : String(message).slice(0, 4000);
+          chatMessages.push({ role: 'user', content: finalMsg });
+        }
+      }
 
-    const aiMessages = [
-      { role: "system", content: systemPrompt },
-      ...sanitizedMessages,
-    ];
+      if (chatMessages.length === 0) return apiError('INVALID_INPUT', 'message ou messages obrigatório', 400);
+    } else if (mode === 'generate_training' || mode === 'train') {
+      let catalogText = "";
+      try {
+        const { data: lib } = await authClient
+          .from("library_items")
+          .select("name, category")
+          .eq("type", "exercise")
+          .not("player_url", "is", null)
+          .limit(120);
+        if (lib?.length) {
+          catalogText = "\n\nCATÁLOGO (use APENAS estes nomes):\n" +
+            lib.map((e: any) => `• ${e.name}${e.category ? ` [${e.category}]` : ""}`).join("\n");
+        }
+      } catch (_) {}
+      systemPrompt = `Você é um personal trainer especialista. Gere treino em HTML puro (h3, h4, ul, li, strong, table, tr, td, th). Sem markdown. APENAS HTML.${catalogText}`;
+      const d = data || {};
+      userPrompt = `Gere treino:
+- Nome: ${String(d.studentName || '').slice(0, 100)}
+- Idade: ${String(d.age || '')} | Gênero: ${String(d.gender || 'NI')}
+- Objetivo: ${String(d.primaryGoal || '').slice(0, 100)}
+- Nível: ${String(d.experienceLevel || '').slice(0, 50)}
+- Frequência: ${String(d.weeklyFrequency || '')}x/sem | Duração: ${String(d.sessionDuration || '')}min
+- Ambiente: ${String(d.trainingEnvironment || 'academia').slice(0, 50)}
+- Equipamentos: ${Array.isArray(d.availableEquipment) ? d.availableEquipment.join(', ') : 'todos'}
+- Lesões: ${String(d.injuries || 'nenhuma').slice(0, 500)}`;
+      chatMessages = [{ role: 'user', content: userPrompt }];
+    } else if (mode === 'analyze_progress' || mode === 'analyze') {
+      systemPrompt = `Analista de performance. HTML formatado: Resumo, Pontos Fortes, Áreas de Melhoria, Tendências, Recomendações. Use h3, h4, ul, li, strong.`;
+      const p = data || {};
+      userPrompt = `Analise: Nome: ${String(p.name || '')} | Treinos: ${p.workoutsCompleted || 0} | Objetivo: ${String(p.goal || '')} | Dados: ${JSON.stringify(p).slice(0, 2000)}`;
+      chatMessages = [{ role: 'user', content: userPrompt }];
+    } else {
+      systemPrompt = `Consultor fitness. JSON: {"recommendations":[{"category":"...","title":"...","description":"...","priority":"alta|média|baixa","icon":"dumbbell|apple|moon|brain"}]}. 4-6 itens. APENAS JSON.`;
+      const r = data || {};
+      userPrompt = `Aluno: ${String(r.name || '')} | Objetivo: ${String(r.goal || '')} | Nível: ${String(r.level || '')} | Lesões: ${String(r.injuries || '')}`;
+      chatMessages = [{ role: 'user', content: userPrompt }];
+    }
+
+    const aiBody = {
+      model: "google/gemini-3-flash-preview",
+      messages: [{ role: "system", content: systemPrompt }, ...chatMessages],
+    };
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -169,28 +153,22 @@ Seja profissional, direto e baseado em evidências científicas. Responda em por
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ model: "google/gemini-3-flash-preview", messages: aiMessages, stream }),
+      body: JSON.stringify(aiBody),
     });
 
     if (!response.ok) {
-      if (response.status === 429) return apiError('RATE_LIMITED', 'Limite de requisições excedido. Tente novamente em alguns instantes.', 429);
-      if (response.status === 402) return apiError('CREDITS_EXHAUSTED', 'Créditos de IA esgotados. Adicione créditos no workspace.', 402);
-      console.error("AI gateway error:", response.status);
-      return apiError('AI_SERVICE_ERROR', 'Erro no serviço de IA', 500);
-    }
-
-    if (stream) {
-      return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+      const txt = await response.text().catch(() => '');
+      console.error("AI gateway error:", response.status, txt.slice(0, 400));
+      if (response.status === 429) return apiError('RATE_LIMITED', 'Limite excedido. Tente novamente.', 429);
+      if (response.status === 402) return apiError('CREDITS_EXHAUSTED', 'Créditos de IA esgotados.', 402);
+      return apiError('AI_SERVICE_ERROR', `IA indisponível (${response.status})`, 500);
     }
 
     const result = await response.json();
-    const content = result.choices?.[0]?.message?.content || "";
-
+    const content = result.choices?.[0]?.message?.content || "Sem resposta da IA.";
     return apiResponse({ content });
-  } catch (e) {
-    console.error("ai-coach error:", e);
-    return apiError('INTERNAL_ERROR', 'Erro interno do servidor', 500);
+  } catch (e: any) {
+    console.error("ai-coach error:", e?.message, e?.stack);
+    return apiError('INTERNAL_ERROR', e?.message || 'Erro interno', 500);
   }
 });

@@ -2,393 +2,332 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 9FIT Sovereign — Utilitários de tipografia/cor adicionais */
-@layer utilities {
-  .font-display { font-family: 'Syne', 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
-  .font-data { font-family: 'DM Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-  .text-ninefit-orange { color: #E8571A; }
-  .bg-ninefit-orange { background-color: #E8571A; }
-  .border-ninefit-orange { border-color: #E8571A; }
-
-  /* 9FIT Premium — depth, glass, glow, motion */
-  .glass-card {
-    background: rgba(20, 20, 20, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 8px 24px rgba(0, 0, 0, 0.35);
-  }
-
-  /* Hardware/Luxury — Mission Control */
-  .glass-mission {
-    background: linear-gradient(135deg, rgba(8,8,8,0.85) 0%, rgba(0,0,0,0.92) 100%);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    border: 1px solid hsla(20, 100%, 50%, 0.18);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.04),
-      inset 0 0 32px hsla(20, 100%, 50%, 0.04),
-      0 12px 40px rgba(0,0,0,0.55);
-  }
-  .glass-mission-active {
-    border-color: hsla(20, 100%, 50%, 0.55);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.06),
-      inset 0 0 40px hsla(20, 100%, 50%, 0.10),
-      0 0 32px hsla(20, 100%, 50%, 0.35),
-      0 12px 40px rgba(0,0,0,0.6);
-  }
-  .text-editorial {
-    font-family: 'Syne', 'Inter', system-ui, sans-serif;
-    font-weight: 900;
-    font-style: italic;
-    letter-spacing: -0.035em;
-    text-transform: uppercase;
-    line-height: 0.9;
-  }
-  .text-massive {
-    font-family: 'Syne', 'Inter', system-ui, sans-serif;
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    line-height: 0.85;
-  }
-  .gradient-mission {
-    background: radial-gradient(circle at top right, hsla(20,100%,50%,0.22), transparent 60%),
-                radial-gradient(circle at bottom left, hsla(20,100%,50%,0.08), transparent 50%),
-                #000;
-  }
-  .border-mission {
-    border: 1px solid hsla(20, 100%, 50%, 0.25);
-  }
-  .glow-context-train { box-shadow: 0 0 28px hsla(var(--neon-400) / 0.35); }
-  .glow-context-premium { box-shadow: 0 0 28px hsla(45 100% 55% / 0.30); }
-  .glow-context-ai { box-shadow: 0 0 28px hsla(190 100% 55% / 0.30); }
-  .glow-context-mission { box-shadow: 0 0 28px hsla(0 100% 55% / 0.30); }
-  .hover-magnetic {
-    transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;
-  }
-  .hover-magnetic:hover { transform: translateY(-2px) scale(1.02); }
-  .bento-grid > *:first-child { grid-row: span 1; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hover-magnetic { transition: none; }
-    .hover-magnetic:hover { transform: none; }
-  }
-}
-
-/* 9FIT Design System - Dark Mode Futuristic with Neon Accents */
+/* ============================================
+   9FIT — Premium Neural Minimalist
+   Apple Fitness + WHOOP + Oura inspiration
+   ============================================ */
 
 @layer base {
   :root {
-    /* 9FIT Neon Colors */
-    --neon-400: 20 100% 50%;        /* #FF5500 - Primary Neon */
-    --neon-500: 20 100% 45%;        /* Darker neon */
-    --neon-300: 20 100% 60%;        /* Lighter neon */
-    
-    /* Dark Palette */
-    --dark-900: 0 0% 0%;            /* #000000 - Pure Black */
-    --dark-800: 0 0% 12%;           /* #1F1F1F - Card Background */
-    --dark-700: 0 0% 16%;           /* #2A2A2A - Borders */
-    --dark-600: 0 0% 20%;           /* #333333 */
-    
-    /* Gray Scale */
-    --gray-600: 0 0% 30%;           /* #4B5563 */
-    --gray-500: 0 0% 42%;           /* #6B7280 */
-    --gray-400: 0 0% 61%;           /* #9CA3AF */
-    --gray-300: 0 0% 80%;           /* #CCCCCC */
-    
-    /* System Colors - Dark Mode Default */
-    --background: var(--dark-900);
-    --foreground: 0 0% 100%;        /* White text */
+    /* Core palette — HSL */
+    --background: 240 5% 5%;             /* #0B0B0D */
+    --foreground: 0 0% 98%;
 
-    --card: var(--dark-800);
-    --card-foreground: 0 0% 100%;
+    --card: 240 4% 9%;                   /* #141416 */
+    --card-foreground: 0 0% 98%;
 
-    --popover: var(--dark-800);
-    --popover-foreground: 0 0% 100%;
+    --elevated: 240 4% 12%;              /* #1C1C1F */
 
-    --primary: var(--neon-400);
-    --primary-foreground: 0 0% 0%;  /* Black on neon */
+    --popover: 240 4% 9%;
+    --popover-foreground: 0 0% 98%;
 
-    --secondary: var(--dark-700);
-    --secondary-foreground: 0 0% 100%;
+    --primary: 18 87% 52%;               /* #F05C1A — restrito */
+    --primary-foreground: 0 0% 100%;
 
-    --muted: var(--dark-700);
-    --muted-foreground: var(--gray-400);
+    --secondary: 240 4% 14%;
+    --secondary-foreground: 0 0% 98%;
 
-    --accent: var(--neon-400);
-    --accent-foreground: 0 0% 0%;
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 4% 56%;      /* #8A8A8E */
+    --subtle: 240 4% 38%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --accent: 18 87% 52%;
+    --accent-foreground: 0 0% 100%;
 
-    --border: var(--dark-700);
-    --input: var(--dark-700);
-    --ring: var(--neon-400);
+    --neural: 213 90% 65%;               /* #4DA3FF — uso IA/RON */
 
-    --radius: 0.25rem;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
 
-    /* 9FIT Custom Tokens */
-    --glow-neon: 0 0 15px hsla(var(--neon-400) / 0.5);
-    --glow-soft: 0 0 80px hsla(var(--neon-400) / 0.05);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --border: 0 0% 100%;                 /* used with opacity utilities */
+    --input: 240 4% 14%;
+    --ring: 18 87% 52%;
 
-    --sidebar-background: var(--dark-800);
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: var(--neon-400);
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: var(--dark-700);
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: var(--dark-700);
-    --sidebar-ring: var(--neon-400);
+    --radius: 0.875rem;
+
+    /* Legacy aliases — kept so old className references resolve cleanly */
+    --neon-400: 18 87% 52%;
+    --neon-500: 18 87% 48%;
+    --neon-300: 18 87% 58%;
+    --dark-900: 240 5% 5%;
+    --dark-800: 240 4% 9%;
+    --dark-700: 240 4% 14%;
+    --dark-600: 240 4% 18%;
+    --gray-600: 0 0% 30%;
+    --gray-500: 240 4% 42%;
+    --gray-400: 240 4% 56%;
+    --gray-300: 0 0% 80%;
+
+    --glow-neon: 0 0 0 1px hsl(18 87% 52% / 0.25);
+    --glow-soft: 0 4px 24px -8px rgba(0,0,0,0.5);
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 240 4% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 18 87% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 14%;
+    --sidebar-ring: 18 87% 52%;
   }
 
-  /* Light mode override (rarely used in 9FIT) */
   .light {
     --background: 0 0% 98%;
-    --foreground: 0 0% 8%;
+    --foreground: 240 6% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
+    --card-foreground: 240 6% 10%;
+    --elevated: 0 0% 100%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
-    --primary: var(--neon-400);
+    --popover-foreground: 240 6% 10%;
+    --primary: 18 87% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 8%;
-    --muted: 0 0% 96%;
-    --muted-foreground: var(--gray-500);
-    --accent: var(--neon-400);
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 5% 40%;
+    --accent: 18 87% 52%;
     --accent-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
+    --border: 240 6% 10%;
+    --input: 240 5% 92%;
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
+  * { @apply border-border/10; }
+
+  html { scroll-behavior: smooth; }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
-  
-  /* Mobile Optimizations */
+
   @media (max-width: 768px) {
-    .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-    
-    button, a, [role="button"] {
-      min-height: 44px;
-    }
-
-    /* Prevent horizontal overflow */
-    .overflow-x-auto {
-      -webkit-overflow-scrolling: touch;
-    }
+    .container { padding-left: 1rem; padding-right: 1rem; }
+    button, a, [role="button"] { min-height: 44px; }
+    .overflow-x-auto { -webkit-overflow-scrolling: touch; }
   }
 
-  /* Global responsive helpers */
   [data-radix-popper-content-wrapper] {
     max-height: 85vh !important;
     overflow-y: auto !important;
   }
 }
 
-@layer components {
-  /* 9FIT Button Variants */
-  .btn-neon {
-    @apply bg-primary text-primary-foreground font-bold uppercase tracking-wide;
-    @apply hover:opacity-90 disabled:opacity-50;
-    @apply transition-all duration-300;
-  }
-  
-  .btn-neon-outline {
-    @apply border border-primary text-primary bg-transparent;
-    @apply hover:bg-primary hover:text-primary-foreground;
-    @apply font-bold uppercase tracking-wide;
-    @apply transition-all duration-300;
-  }
-  
-  .btn-ghost {
-    @apply text-primary hover:text-foreground bg-transparent;
-    @apply font-bold uppercase tracking-wide;
-    @apply transition-all duration-300;
-  }
-
-  /* 9FIT Cards */
-  .card-9fit {
-    @apply bg-card border border-border rounded-sm p-6;
-    @apply hover:border-foreground/20 transition-all duration-300;
-  }
-
-  /* 9FIT Input */
-  .input-9fit {
-    @apply bg-card border border-border rounded-sm;
-    @apply focus:border-primary focus:outline-none;
-    @apply text-foreground placeholder:text-muted-foreground;
-    @apply transition-all duration-300;
-  }
-
-  /* Glow Effects */
-  .glow-neon {
-    box-shadow: var(--glow-neon);
-  }
-  
-  .glow-soft {
-    box-shadow: var(--glow-soft);
-  }
-
-  /* Animation Classes */
-  .animate-fade-in {
-    animation: fadeIn 0.6s ease-out forwards;
-  }
-  
-  .animate-slide-up {
-    animation: slideUp 0.8s ease-out forwards;
-  }
-  
-  .animate-pulse-slow {
-    animation: pulseSlow 2s ease-in-out infinite;
-  }
-
-  .animate-spin-slow {
-    animation: spin 3s linear infinite;
-  }
-
-  .animate-shimmer {
-    animation: shimmer 1.5s infinite;
-    background: linear-gradient(90deg, 
-      hsl(var(--dark-800)) 0%, 
-      hsl(var(--dark-700)) 50%, 
-      hsl(var(--dark-800)) 100%
-    );
-    background-size: 200% 100%;
-  }
-
-  /* Text Utilities */
-  .text-gradient-neon {
-    background: linear-gradient(135deg, hsl(var(--neon-300)), hsl(var(--neon-400)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Title Style */
-  .title-9fit {
-    @apply font-black italic tracking-tighter uppercase;
-  }
-  
-  /* Label Style */
-  .label-9fit {
-    @apply text-xs font-bold uppercase tracking-widest;
-  }
-}
-
+/* ============================================
+   Premium utilities — clean surfaces
+   ============================================ */
 @layer utilities {
-  .transition-smooth {
-    transition: var(--transition-smooth);
+  .surface-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(0 0% 100% / 0.05);
+    border-radius: var(--radius);
   }
-  
-  /* Glass Effect */
+  .surface-elevated {
+    background: hsl(var(--elevated));
+    border: 1px solid hsl(0 0% 100% / 0.06);
+    border-radius: var(--radius);
+  }
+
+  .text-display {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .text-hero {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+  }
+  .text-label {
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+  }
+  .text-data {
+    font-family: 'JetBrains Mono', 'DM Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+  .font-display {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+  }
+  .font-data {
+    font-family: 'JetBrains Mono', 'DM Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-ninefit-orange { color: hsl(var(--primary)); }
+  .bg-ninefit-orange { background-color: hsl(var(--primary)); }
+  .border-ninefit-orange { border-color: hsl(var(--primary)); }
+
+  /* ============================================
+     LEGACY ALIASES — premium remap
+     Old cyber/neon class names still used across
+     the project map to clean neutral surfaces so
+     no component needs to change to look premium.
+     ============================================ */
+  .glass-card,
+  .glass-mission {
+    background: hsl(var(--card));
+    border: 1px solid hsl(0 0% 100% / 0.05);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    backdrop-filter: none;
+  }
+  .glass-mission-active {
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.18);
+  }
+  .gradient-mission {
+    background: hsl(var(--background));
+  }
+  .border-mission {
+    border: 1px solid hsl(0 0% 100% / 0.06);
+  }
+  .text-editorial,
+  .text-massive {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    text-transform: none;
+    font-style: normal;
+  }
+  .glow-neon,
+  .glow-soft,
+  .glow-context-train,
+  .glow-context-premium,
+  .glow-context-ai,
+  .glow-context-mission {
+    box-shadow: none;
+  }
+  .text-gradient-neon {
+    color: hsl(var(--primary));
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+  .hover-magnetic {
+    transition: transform .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .hover-magnetic:hover { transform: translateY(-1px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hover-magnetic { transition: none; }
+    .hover-magnetic:hover { transform: none; }
+  }
+
+  /* Glass — premium subtle */
   .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(0 0% 100% / 0.06);
   }
 
-  /* Safe area padding for mobile */
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-  
-  .pt-safe {
-    padding-top: env(safe-area-inset-top, 0);
-  }
+  .transition-smooth { transition: var(--transition-smooth); }
 
-  /* Responsive card overflow prevention */
-  .card-responsive {
-    @apply min-w-0 overflow-hidden;
-  }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0); }
+  .pt-safe { padding-top: env(safe-area-inset-top, 0); }
 
+  .card-responsive { @apply min-w-0 overflow-hidden; }
   .text-responsive {
     @apply break-words;
     overflow-wrap: break-word;
     word-break: break-word;
   }
+
+  /* Premium ring tinted by primary, very subtle */
+  .ring-primary-soft { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.25); }
+  .ring-neural-soft { box-shadow: 0 0 0 1px hsl(var(--neural) / 0.3); }
 }
 
-/* Keyframes */
+@layer components {
+  /* 9FIT Button Variants */
+  .btn-neon {
+    @apply bg-primary text-primary-foreground font-semibold;
+    @apply hover:opacity-90 disabled:opacity-50;
+    @apply transition-all duration-200 rounded-lg;
+  }
+  .btn-neon-outline {
+    @apply border border-primary/40 text-primary bg-transparent;
+    @apply hover:bg-primary/10;
+    @apply font-semibold rounded-lg transition-all duration-200;
+  }
+  .btn-ghost {
+    @apply text-foreground/80 hover:text-foreground bg-transparent;
+    @apply font-medium transition-all duration-200;
+  }
+
+  .card-9fit {
+    @apply bg-card border border-white/5 rounded-xl p-5;
+    @apply hover:border-white/10 transition-all duration-200;
+  }
+
+  .input-9fit {
+    @apply bg-card border border-white/8 rounded-lg;
+    @apply focus:border-primary/60 focus:outline-none;
+    @apply text-foreground placeholder:text-muted-foreground;
+    @apply transition-all duration-200;
+  }
+
+  .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+  .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
+  .animate-pulse-slow { animation: pulseSlow 2.4s ease-in-out infinite; }
+  .animate-spin-slow { animation: spin 3s linear infinite; }
+  .animate-shimmer {
+    animation: shimmer 1.6s infinite;
+    background: linear-gradient(90deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--elevated)) 50%,
+      hsl(var(--card)) 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  .title-9fit {
+    @apply font-display tracking-tight;
+    text-transform: none;
+    font-style: normal;
+  }
+  .label-9fit {
+    @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+}
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes pulseSlow {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
-
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
-
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Custom scrollbar - 9FIT Style */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--neon-400) / 0.3);
+  background: hsl(0 0% 100% / 0.08);
   border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--neon-400) / 0.5);
+  background: hsl(0 0% 100% / 0.16);
 }
