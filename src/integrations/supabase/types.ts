@@ -4457,6 +4457,7 @@ export type Database = {
           assigned_at: string
           assigned_by: string | null
           athlete_id: string
+          completed_at: string | null
           content_ref: string
           content_title: string | null
           content_type: string
@@ -4465,6 +4466,8 @@ export type Database = {
           id: string
           notes: string | null
           player_url: string | null
+          progress_pct: number | null
+          status: string | null
           thumbnail_url: string | null
         }
         Insert: {
@@ -4472,6 +4475,7 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string | null
           athlete_id: string
+          completed_at?: string | null
           content_ref: string
           content_title?: string | null
           content_type: string
@@ -4480,6 +4484,8 @@ export type Database = {
           id?: string
           notes?: string | null
           player_url?: string | null
+          progress_pct?: number | null
+          status?: string | null
           thumbnail_url?: string | null
         }
         Update: {
@@ -4487,6 +4493,7 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string | null
           athlete_id?: string
+          completed_at?: string | null
           content_ref?: string
           content_title?: string | null
           content_type?: string
@@ -4495,6 +4502,8 @@ export type Database = {
           id?: string
           notes?: string | null
           player_url?: string | null
+          progress_pct?: number | null
+          status?: string | null
           thumbnail_url?: string | null
         }
         Relationships: [
