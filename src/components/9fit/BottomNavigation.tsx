@@ -15,7 +15,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="fixed bottom-3 left-3 right-3 z-40 pb-safe">
-      <div className="mx-auto max-w-md glass-mission rounded-full">
+      <div className="mx-auto max-w-md surface-elevated rounded-full backdrop-blur-xl bg-card/90">
         <div className="flex items-center justify-around h-16 px-2">
           {navItems.map(({ icon: Icon, label, path, center }) => {
             const isActive =
@@ -25,24 +25,24 @@ export function BottomNavigation() {
               <button
                 key={path}
                 onClick={() => navigate(path)}
-                className={`flex flex-col items-center justify-center gap-0.5 px-3 h-full transition-all duration-300 relative ${
-                  isActive ? "text-primary scale-110" : "text-muted-foreground hover:text-foreground"
+                className={`flex flex-col items-center justify-center gap-0.5 px-3 h-full transition-colors relative ${
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {center ? (
-                  <div className={`w-11 h-11 -mt-4 rounded-full flex items-center justify-center transition-all ${
+                  <div className={`w-12 h-12 -mt-5 rounded-full flex items-center justify-center transition-all ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-[0_0_24px_hsla(20,100%,50%,0.6)]"
-                      : "bg-card border border-primary/30 text-primary"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-elevated border border-white/10 text-foreground"
                   }`}>
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-5 h-5" strokeWidth={2.4} />
                   </div>
                 ) : (
-                  <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_8px_hsl(var(--neon-400))]" : ""}`} />
+                  <Icon className="w-5 h-5" strokeWidth={2.2} />
                 )}
-                <span className="text-[9px] font-display uppercase tracking-[0.2em] mt-0.5">{label}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-[0.14em] mt-0.5">{label}</span>
                 {isActive && !center && (
-                  <div className="absolute -top-1 w-1 h-1 rounded-full bg-primary glow-neon" />
+                  <div className="absolute -top-1 w-1 h-1 rounded-full bg-primary" />
                 )}
               </button>
             );
