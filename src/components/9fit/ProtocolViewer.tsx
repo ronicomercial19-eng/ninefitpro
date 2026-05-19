@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Check, ExternalLink, ArrowLeft, FileText, Video, Globe } from "lucide-react";
@@ -43,8 +43,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  // Fetch html content if content_ref looks like html assignment
-  useState(() => {
+  useEffect(() => {
     (async () => {
       const url = assignment.access_url || assignment.player_url || assignment.download_url;
       if (assignment.content_type === 'html' || (url && /\.html?$/i.test(url))) {
@@ -58,7 +57,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
       }
       setLoaded(true);
     })();
-  });
+  }, [assignment.id]);
 
   const markDone = async () => {
     if (marking) return;
