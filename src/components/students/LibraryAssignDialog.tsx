@@ -10,12 +10,13 @@ import { Loader2 } from "lucide-react";
 
 interface LibraryItem {
   id?: string;
-  external_id: string;
+  external_id?: string;
   type: string;
   slug?: string | null;
   name: string;
   thumbnail_url?: string | null;
   player_url?: string | null;
+  payload?: any;
 }
 
 interface Athlete { id: string; name: string; email?: string | null; }
@@ -45,18 +46,30 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
     }
     setLoading(true);
     try {
-      const content_ref = item.slug || item.external_id;
+      const p = item.payload || {};
+      const content_ref = item.slug || item.external_id || p.id || p.slug || item.name;
+
+      // Prefer real image thumbnails over page URLs
+      const thumb = p.thumbnailUrl || p.thumbnail_url || (item.thumbnail_url && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail_url) ? item.thumbnail_url : null) || null;
+
+      const player_url = p.playerUrl || p.executarUrl || item.player_url || null;
+      const access_url = p.episodeUrl || p.accessUrl || p.access_url || null;
+      const download_url = p.downloadUrl || p.download_url || p.pdfUrl || null;
+
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("student_library_assignments").insert({
         athlete_id: athleteId,
         content_type: item.type,
         content_ref,
         content_title: item.name,
-        thumbnail_url: item.thumbnail_url || null,
-        player_url: item.player_url || null,
+        thumbnail_url: thumb,
+        player_url,
+        access_url,
+        download_url,
+        payload: p,
         notes: notes || null,
         assigned_by: user?.id,
-      });
+      } as any);
       if (error) throw error;
       toast.success(`${item.name} atribuído!`);
       onOpenChange(false);

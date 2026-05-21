@@ -55,7 +55,7 @@ export function ModuleGrid({ priorityKey, recommendedKeys }: { priorityKey?: str
                     transition={{ delay: i * 0.04, duration: 0.3 }}
                     whileTap={{ scale: 0.97 }}
                     className={`group relative glass-mission rounded-xl p-3 flex items-center gap-3 text-left overflow-hidden ${
-                      recommended ? "ring-1 ring-primary/60 shadow-[0_0_24px_-6px_hsla(20,100%,50%,0.5)]" : ""
+                      recommended ? "ring-1 ring-primary/60 " : ""
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors ${

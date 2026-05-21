@@ -20,7 +20,7 @@ const StatsFront = () => (
         initial={{ height: 4 }}
         animate={{ height: `${h}%` }}
         transition={{ delay: i * 0.05, duration: 0.4 }}
-        className="w-3 rounded-t bg-gradient-to-t from-primary to-primary/40 shadow-[0_0_12px_hsla(20,100%,50%,0.6)]"
+        className="w-3 rounded-t bg-gradient-to-t from-primary to-primary/40 "
       />
     ))}
   </div>
@@ -57,7 +57,7 @@ const IntelFront = () => (
   <motion.div
     animate={{ scale: [1, 1.05, 1] }}
     transition={{ duration: 2, repeat: Infinity }}
-    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/40 via-primary/15 to-transparent backdrop-blur-sm border border-primary/40 flex items-center justify-center shadow-[0_0_32px_-4px_hsla(20,100%,50%,0.7)]"
+    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/40 via-primary/15 to-transparent backdrop-blur-sm border border-primary/40 flex items-center justify-center "
   >
     <Brain className="w-10 h-10 text-primary" />
   </motion.div>

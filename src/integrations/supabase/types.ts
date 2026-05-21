@@ -4465,6 +4465,7 @@ export type Database = {
           download_url: string | null
           id: string
           notes: string | null
+          payload: Json | null
           player_url: string | null
           progress_pct: number | null
           status: string | null
@@ -4483,6 +4484,7 @@ export type Database = {
           download_url?: string | null
           id?: string
           notes?: string | null
+          payload?: Json | null
           player_url?: string | null
           progress_pct?: number | null
           status?: string | null
@@ -4501,6 +4503,7 @@ export type Database = {
           download_url?: string | null
           id?: string
           notes?: string | null
+          payload?: Json | null
           player_url?: string | null
           progress_pct?: number | null
           status?: string | null

@@ -44,7 +44,7 @@ export default function ExercisesPage() {
   const fetchLibrary = async (type: string) => {
     setLibLoading(true);
     const { data, error, count } = await supabase.from('library_items')
-      .select('id, external_id, type, slug, name, category, subcategory, thumbnail_url, player_url', { count: 'exact' })
+      .select('id, external_id, type, slug, name, category, subcategory, thumbnail_url, player_url, payload', { count: 'exact' })
       .eq('type', type).order('name').limit(2000);
     if (error) toast.error('Erro ao carregar biblioteca');
     else {
