@@ -3,11 +3,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { NineFitTopBar } from "./NineFitTopBar";
+import { RonBubble } from "./RonBubble";
 
 interface NineFitLayoutProps {
   children: React.ReactNode;
 }
 
+/**
+ * Guard de rotas /9fit/*  — ordem canônica:
+ *  1. Não autenticado            → /9fit/login
+ *  2. first_access pendente      → /9fit/first-access
+ *  3. onboarding pendente (atl.) → /9fit/onboarding
+ *  4. Liberado                   → renderiza
+ */
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,50 +25,84 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/9fit/login");
         return;
       }
 
-      // Check localStorage fallback first
-      const localCompleted = localStorage.getItem('9fit_first_access_completed');
-      
-      if (localCompleted !== 'true') {
-        // Check if this is first access (needs password change)
+      const path = location.pathname;
+      const onFirstAccess = path.includes('first-access');
+      const onOnboarding  = path.includes('onboarding');
+
+      // --- 1. First-access gate ---
+      const localCompleted = localStorage.getItem('9fit_first_access_completed') === 'true';
+      let firstAccessDone = localCompleted;
+
+      if (!firstAccessDone) {
         try {
-          const { data: athlete } = await supabase
-            .from('athletes')
-            .select('password_changed, auto_password_temp')
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_access_completed')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
-          // Only redirect if we confirmed athlete exists AND hasn't changed password
-          if (athlete && athlete.password_changed === false && athlete.auto_password_temp !== null) {
-            if (!location.pathname.includes('first-access')) {
-              navigate("/9fit/first-access");
-              return;
-            }
+          if (profile?.first_access_completed === true) {
+            firstAccessDone = true;
+          } else {
+            const { data: athlete } = await supabase
+              .from('athletes')
+              .select('password_changed, auto_password_temp')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            // Sem registro de athlete (coach/admin) → liberado
+            // Athlete com senha já trocada → liberado
+            firstAccessDone = !athlete || athlete.password_changed === true || athlete.auto_password_temp === null;
           }
-        } catch (error) {
-          // Continue if check fails - don't block access
-          console.log('First access check:', error);
+        } catch (e) {
+          console.log('[NineFitLayout] first-access check:', e);
+          firstAccessDone = true; // fail-open para não travar
         }
       }
-      
+
+      if (!firstAccessDone && !onFirstAccess) {
+        navigate("/9fit/first-access");
+        return;
+      }
+      if (firstAccessDone && onFirstAccess) {
+        navigate("/9fit/hub");
+        return;
+      }
+
+      // --- 2. Onboarding gate (apenas atletas) ---
+      if (firstAccessDone && !onFirstAccess && !onOnboarding) {
+        try {
+          const { data: athlete } = await supabase
+            .from('athletes')
+            .select('onboarding_completed_at')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          if (athlete && !athlete.onboarding_completed_at) {
+            navigate("/9fit/onboarding");
+            return;
+          }
+        } catch (e) {
+          console.log('[NineFitLayout] onboarding check:', e);
+        }
+      }
+
       setIsAuthenticated(true);
       setIsLoading(false);
     };
 
     checkAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
           navigate("/9fit/login");
         }
-      }
+      },
     );
 
     return () => subscription.unsubscribe();
@@ -79,14 +121,18 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
+
+  // Não monta TopBar/RonBubble nas telas isoladas (onboarding/first-access)
+  const isOnboardingFlow =
+    location.pathname.includes('onboarding') ||
+    location.pathname.includes('first-access');
 
   return (
     <>
-      <NineFitTopBar />
+      {!isOnboardingFlow && <NineFitTopBar />}
       {children}
+      {!isOnboardingFlow && <RonBubble />}
     </>
   );
 }
