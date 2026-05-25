@@ -62,6 +62,14 @@
     --glow-soft: 0 4px 24px -8px rgba(0,0,0,0.5);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Premium tokens — glass + halo + elevated shadow */
+    --glass: 0 0% 100% / 0.04;
+    --glass-border: 0 0% 100% / 0.08;
+    --halo-primary: radial-gradient(circle, hsl(18 87% 52% / 0.22) 0%, transparent 70%);
+    --halo-neural: radial-gradient(circle, hsl(213 90% 65% / 0.18) 0%, transparent 70%);
+    --shadow-elevated: 0 24px 48px -16px hsl(0 0% 0% / 0.6);
+    --shadow-card: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
+
     --sidebar-background: 240 4% 9%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 18 87% 52%;
