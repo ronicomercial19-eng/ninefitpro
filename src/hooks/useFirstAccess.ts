@@ -5,59 +5,71 @@ interface UseFirstAccessResult {
   isFirstAccess: boolean;
   isLoading: boolean;
   athleteId: string | null;
+  markCompleted: () => Promise<void>;
 }
 
+/**
+ * Detecta se o usuário ainda precisa concluir o fluxo de primeiro acesso
+ * (troca obrigatória de senha). Resolve o bug do loop pós-troca de senha
+ * persistindo o estado no profile via RPC SECURITY DEFINER.
+ */
 export function useFirstAccess(): UseFirstAccessResult {
   const [isFirstAccess, setIsFirstAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [athleteId, setAthleteId] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkFirstAccess = async () => {
+    const check = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
+        if (!user) { setIsLoading(false); return; }
 
-        // Check if user is linked to an athlete
-        const { data: link } = await supabase
-          .from('athlete_auth_link')
-          .select('athlete_id')
+        // 1) Profile gate — fonte de verdade canônica
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_access_completed')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (!link) {
-          // Not an athlete, no first access flow needed
+        if (profile?.first_access_completed === true) {
+          setIsFirstAccess(false);
           setIsLoading(false);
           return;
         }
 
-        setAthleteId(link.athlete_id);
-
-        // Check if password has been changed
+        // 2) Atleta com senha temporária pendente?
         const { data: athlete } = await supabase
           .from('athletes')
-          .select('password_changed, auto_password_temp')
-          .eq('id', link.athlete_id)
-          .single();
+          .select('id, password_changed, auto_password_temp')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        // If password_changed is false and there's a temp password, it's first access
-        const needsFirstAccess = athlete?.password_changed === false && 
-                                  athlete?.auto_password_temp !== null;
-        
-        setIsFirstAccess(needsFirstAccess);
-      } catch (error) {
-        console.error('Error checking first access:', error);
+        if (athlete) {
+          setAthleteId(athlete.id);
+          const needs = athlete.password_changed === false && athlete.auto_password_temp !== null;
+          setIsFirstAccess(needs);
+        } else {
+          // Coach/admin sem registro de atleta — não precisa do fluxo
+          setIsFirstAccess(false);
+        }
+      } catch (e) {
+        console.error('[useFirstAccess]', e);
       } finally {
         setIsLoading(false);
       }
     };
-
-    checkFirstAccess();
+    check();
   }, []);
 
-  return { isFirstAccess, isLoading, athleteId };
+  const markCompleted = async () => {
+    try {
+      await supabase.rpc('complete_first_access' as any);
+      await supabase.auth.refreshSession();
+      setIsFirstAccess(false);
+    } catch (e) {
+      console.error('[useFirstAccess.markCompleted]', e);
+    }
+  };
+
+  return { isFirstAccess, isLoading, athleteId, markCompleted };
 }
