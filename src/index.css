@@ -136,6 +136,19 @@
     border: 1px solid hsl(0 0% 100% / 0.06);
     border-radius: var(--radius);
   }
+  .glass-surface {
+    background: hsl(var(--glass));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--glass-border));
+    border-radius: 1.25rem;
+  }
+  .shadow-elevated { box-shadow: var(--shadow-elevated); }
+  .shadow-card-premium { box-shadow: var(--shadow-card); }
+  .halo-primary::before {
+    content: ''; position: absolute; inset: -40%;
+    background: var(--halo-primary); pointer-events: none; z-index: 0;
+  }
 
   .text-display {
     font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
