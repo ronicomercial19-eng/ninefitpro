@@ -604,6 +604,7 @@ export type Database = {
           name: string
           nivel: string | null
           objetivo: string | null
+          onboarding_completed_at: string | null
           password_changed: boolean | null
           perfil_classificado: Json | null
           peso_kg: number | null
@@ -645,6 +646,7 @@ export type Database = {
           name: string
           nivel?: string | null
           objetivo?: string | null
+          onboarding_completed_at?: string | null
           password_changed?: boolean | null
           perfil_classificado?: Json | null
           peso_kg?: number | null
@@ -686,6 +688,7 @@ export type Database = {
           name?: string
           nivel?: string | null
           objetivo?: string | null
+          onboarding_completed_at?: string | null
           password_changed?: boolean | null
           perfil_classificado?: Json | null
           peso_kg?: number | null
@@ -3317,6 +3320,7 @@ export type Database = {
           created_at: string | null
           date_of_birth: string | null
           email: string
+          first_access_completed: boolean
           first_name: string | null
           full_name: string | null
           id: string
@@ -3336,6 +3340,7 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           email: string
+          first_access_completed?: boolean
           first_name?: string | null
           full_name?: string | null
           id?: string
@@ -3355,6 +3360,7 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           email?: string
+          first_access_completed?: boolean
           first_name?: string | null
           full_name?: string | null
           id?: string
@@ -4470,6 +4476,7 @@ export type Database = {
           progress_pct: number | null
           status: string | null
           thumbnail_url: string | null
+          weekly_schedule: Json
         }
         Insert: {
           access_url?: string | null
@@ -4489,6 +4496,7 @@ export type Database = {
           progress_pct?: number | null
           status?: string | null
           thumbnail_url?: string | null
+          weekly_schedule?: Json
         }
         Update: {
           access_url?: string | null
@@ -4508,6 +4516,7 @@ export type Database = {
           progress_pct?: number | null
           status?: string | null
           thumbnail_url?: string | null
+          weekly_schedule?: Json
         }
         Relationships: [
           {
@@ -7400,6 +7409,8 @@ export type Database = {
         }
         Returns: number
       }
+      complete_first_access: { Args: never; Returns: undefined }
+      complete_onboarding: { Args: { p_payload?: Json }; Returns: undefined }
       create_athlete_auth_user: {
         Args: {
           p_athlete_id: string

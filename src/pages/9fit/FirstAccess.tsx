@@ -64,56 +64,24 @@ export default function FirstAccess() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
-      // Update password_changed flag in athletes table
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Try update via user_id directly first (most reliable with RLS)
-        const { data: updateData, error: updateError } = await supabase
-          .from('athletes')
-          .update({ password_changed: true, auto_password_temp: null })
-          .eq('user_id', user.id)
-          .select('id');
+      // Marca first-access concluído de forma autoritativa (SECURITY DEFINER)
+      // Resolve o loop pós-troca de senha para coaches externos.
+      const { error: rpcError } = await supabase.rpc('complete_first_access' as any);
+      if (rpcError) console.error('[FirstAccess] RPC error:', rpcError);
 
-        console.log('[FirstAccess] Update via user_id:', { updateData, updateError });
+      // Refresh session para propagar claims atualizados
+      await supabase.auth.refreshSession();
 
-        if (updateError || !updateData || updateData.length === 0) {
-          // Fallback: try via athlete_auth_link
-          const { data: link } = await supabase
-            .from('athlete_auth_link')
-            .select('athlete_id')
-            .eq('user_id', user.id)
-            .single();
-
-          if (link) {
-            const { data: fallbackData, error: fallbackError } = await supabase
-              .from('athletes')
-              .update({ password_changed: true, auto_password_temp: null })
-              .eq('id', link.athlete_id)
-              .select('id');
-            
-            console.log('[FirstAccess] Fallback update:', { fallbackData, fallbackError });
-            
-            if (fallbackError || !fallbackData || fallbackData.length === 0) {
-              console.error('[FirstAccess] Both update attempts failed');
-            }
-          }
-        }
-      }
-
-      // Always set localStorage fallback to prevent loop
+      // Fallback local — caminho de cinto-e-suspensório
       localStorage.setItem('9fit_first_access_completed', 'true');
 
       toast({
         title: "Senha alterada!",
         description: "Sua nova senha foi salva com sucesso",
       });
-      
       setStep('tour-training');
     } catch (error: any) {
       toast({

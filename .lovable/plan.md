@@ -1,224 +1,776 @@
+## Plano Final Consolidado — Waves 3→7 (RON proativo + First-Access fix + Onboarding obrigatório + Infoproduto semanal + Refino visual premium)
 
-# 9FIT ELITE — Plano Consolidado v2 (expandido com novos anexos)
-
-## Respostas confirmadas (perguntas anteriores)
-
-1. **Reskin global irreversível** — APROVADO. Sobrescrever tokens, remover `glow-neon` / `gradient-mission` / `glass-mission-active` / sombras saturadas. Direção: **Apple Fitness + WHOOP + Oura + Neural OS**. Sem flag de coexistência.
-2. **Bottom nav** — manter `OS / TRAIN / HUB / STAFF / COMMUNITY`. **Comunidade incorporada como extensão do app** (não iframe puro): rota interna `/9fit/community` que monta a SPA externa (`https://ninefit-community-flow.lovable.app`) dentro do shell do 9FIT (mesma top/bottom nav, mesmo header de identidade, deep-link funcional).
-3. **Ordem** — seguir 6 ondas sequenciais como descrito. Reportar bugs ao final de cada onda.
+Aplico tudo do `9fit_3.zip` (HubView, OSView, OnboardingFlow, ProtocolViewer/DailyProtocol, DigitalIDCard, BottomNav, PremiumView) e dos anexos visuais (C9, C11, C13, C14, helicóptero glass, VitalFit) como **referência de UX/UI**, expandindo o que já existe sem reescrever do zero. Hierarquia mantida: graphite `#0D0D0D`, accent `#FF5500`, neural `#3B82F6`, success `#22C55E`. Tipografia: Sora/Chakra (display) + Inter (body).
 
 ---
 
-## Novos insumos absorvidos
+### Wave 3 — RON Proativo + AI Coach fix
 
-### Do `9FIT_UX_Design-3.docx` (Modo Rony · Vazio com Peso)
-- **Hierarquia visual** : 1 elemento vence cada tela. Sync Score OU Nome — não os dois com mesmo peso.
-- **Vazio com peso**: substituir todos os estados zero por copy de inteligência:
-  - "Nenhum treino atribuído" → **"O sistema ainda não te conhece."**
-  - "Nenhum profissional ativo" → **"RON disponível. Humanos: a caminho."**
-  - "Sugestões aleatórias" → **"Sistema calibrado. Próxima janela: 18h."**
-- **RON com silêncio intencional** : bolha pulsa 1s antes de falar. Abre sem boas-vindas. Já agiu antes de informar.
-- **Gamificação invisível** : XP some da superfície, vira motor interno. Sync Score é dado técnico, não badge.
-- **Onboarding** : 1 pergunta por tela, RON como entrevistador, sem formulário, sem skip, encerra com "Seu sistema está online".
+`**src/pages/9fit/Ron.tsx` + `src/pages/FitCopilotPage.tsx`:**
 
-### Do `9FIT_ELITE_Roadmap_Executivo_1.docx`
-- **Gap P0** : bug de roteamento pós-troca de senha (usuário trava antes do Daily Protocol). Bloqueia 2 professores externos pagantes.
-- **Onboarding obrigatório** ≤60s — Daily Protocol como primeira tela utilizável.
-- **Avaliação RML dentro do app** (hoje em Notes do iPhone) — tela de Avaliação Inicial + evolução em gráfico no Dashboard Pessoal.
-- **Streak punitivo** : notificação 23h "Seus N dias estão em risco".
-- **Share automático** : Sync>75% → card 9:16 para Stories.
-- **Daily Protocol contextualizado** : cada item com 1 frase do porquê ("Hoje é híbrido porque dormiu bem e Sync 68%").
+- Parser ajustado: `result.data?.data?.content ?? result.data?.content ?? result.content`.
+- Sempre enviar JWT no header: `Authorization: Bearer ${session.access_token}`.
 
-### Referências visuais (uploads PNG)
-- Cards glassmórficos flutuantes (Water/Heart/Calories/Blood Pressure) com **anéis de progresso laranja sobre fundo grafite**.
-- "Ask Anything" — chat AI com chips de sugestão (Cardio / Nutrition / Supplements / Weight Loss / Muscle Gain / Meal Plans) e bolha de mic central elevada — referência direta para **RON**.
-- Scan Meal full-bleed com cantos de mira — referência para **NutriScan** futuro.
-- Header com avatar circular + "Hello, [Nome]" + ícones de ação à direita — referência para **NineFitTopBar**.
+**Novo hook `src/hooks/useProactiveRon.ts`:**
 
-### Do `9fit-ecosystem---staff-container-3.zip`
-- Container Vite/React isolado (`src/App.tsx`, `src/main.tsx`, `src/index.css`). Será montado dentro de `/9fit/staff` como módulo embarcado (mesmo padrão de Community), com integração ao `appointments_v2` + `staff_credits` existentes.
+- Lê `sync_score`, `last_workout_at`, `streak_dias`, hora local.
+- Dispara mensagens contextuais com bubble pulsante 1s antes do texto:
+  - 07h + Sync<60 → "Seu sistema acordou abaixo da média. Vamos calibrar?"
+  - 17h + treino pendente → "Ainda dá tempo. 35 min é tudo que você precisa hoje."
+  - 21h sem mobility → "Recuperação é parte do protocolo."
+  - 23h + streak em risco → "Faltam 47 min para preservar sua sequência."
+
+**Novo componente `src/components/9fit/RonBubble.tsx`:**
+
+- Bubble flutuante canto inferior direito, acima do BottomNav.
+- Avatar circular RON + texto + CTA "Conversar" → abre `/9fit/ron`.
+- Dismissable, reaparece no próximo trigger.
+- Montado em `NineFitLayout`.
+
+**Edge function `smart-notifications`:** adicionar mesmos 4 triggers para envio push/WhatsApp em background (cron já existe).
 
 ---
 
-## ONDA 0 — Auditoria & Pré-flight (sem código)
+### Wave 4 — Login First-Access Fix (P0)
 
-- Validar logs `ai-coach` e secret `LOVABLE_API_KEY`.
-- Confirmar RLS de `student_library_assignments` e `athletes.user_id` (já validado — atletas têm `user_id`, RLS OK; bug do infoproduto é de **payload incompleto na atribuição** + **viewer pobre**, não RLS).
-- Extrair Staff container v3 para `/tmp/staff3/` (feito).
+**Migration:** RPC `complete_first_access()` SECURITY DEFINER que marca `profiles.first_access_completed = true` e bypassa RLS.
 
----
+`**src/hooks/useFirstAccess.ts`:** após `supabase.auth.updateUser({ password })`, chamar:
 
-## ONDA 1 — Design System "Premium Neural Minimalista" (mata o cyber)
-
-### `src/index.css` + `tailwind.config.ts`
-- Paleta HSL final (alinhada às refs Apple/WHOOP):
-  - `--background 240 5% 5%` · `--card 240 4% 9%` · `--elevated 240 4% 12%`
-  - `--primary 18 87% 52%` (uso restrito a CTA, Sync, Streak, anel de progresso)
-  - `--neural 213 90% 65%` (apenas RON/IA)
-  - `--muted-foreground 240 4% 56%` · `--subtle 240 4% 38%`
-  - `--border 0 0% 100% / 0.05`
-- Tipografia: **Satoshi (display) + Inter (body)**. Pesos 400–900. `text-display`, `text-label`, `text-hero`, `text-data` (tabular).
-- Utilitários: `surface-card`, `surface-elevated`, `ring-primary-soft`, `glass` (blur 12px, border 1px white/6%).
-- Remover globalmente: `glow-*`, `gradient-mission`, `glass-mission-active` com box-shadow neon, `shadow-[0_0_24px_...]`, `text-massive italic`, `animate-pulse` em labels.
-
-### Reskin de componentes-âncora (sem mudar lógica)
-`PersonalIDCard`, `DailyProtocol`, `SyncScoreRing`, `StreakBadge`, `WeeklyRadar`, `HubPredictiveTip`, `HubSequentialCarousel`, `NineFitTopBar`, `BottomNavigation`, `HUDBar`, `WeeklyProgressChart`, `HomeFeed`, cards de OS/Train/Ron/Staff.
-
----
-
-## ONDA 2 — Entrega real do Infoproduto/Protocolo (bug crítico)
-
-### Diagnóstico confirmado
-DB tem 9 atribuições reais (`9Calisthenics`, `9Fight`, `9Integrated`, …). RLS OK. **Bug real**:
-1. `LibraryAssignDialog` só persiste `player_url` e `thumbnail_url` — ignora `access_url`, `download_url` e o `payload` rico da `library_items`.
-2. `ProtocolViewer` cai num card pobre "Abrir conteúdo externo" para tipo `infoproduto` — usuário não vê capa, módulos, estrutura, CTA primário.
-3. Entry point no Hub é discreto (1 linha) — aluno não percebe.
-
-### Migration
-- `student_library_assignments` += `access_url text`, `download_url text`, `payload jsonb` (idempotente).
-- Index em `(athlete_id, completed_at)`.
-
-### Frontend
-- `LibraryAssignDialog`: gravar `access_url`, `download_url` e snapshot do `payload`.
-- `ExercisesPage`: passar objeto completo de `library_items` (incluindo `payload`) ao dialog.
-- `ProtocolViewer` reescrito com **modo Infoproduto**:
-  - Hero com `thumbnail_url`, título, duração, módulos.
-  - Seções `Estrutura` (payload.structure), `Diretrizes` (payload.guidelines), `Conteúdo` (videosIncluded/pdfIncluded).
-  - CTA primário grande **"ABRIR PLAYER"** → iframe inline com `allow-fullscreen` + sandbox.
-  - CTA secundário "Abrir em nova aba" (fallback obrigatório p/ X-Frame-Options).
-  - Botão "Marcar concluído" → `progress_pct=100`, `completed_at=now()`, `master_registry { event_type:'protocol_completed' }`.
-- `Hub`: card "Seu Protocolo" promovido — capa do item ativo mais recente, sempre visível quando ≥1 ativo. Tile "Biblioteca" quando zero (vazio com peso: "Seu coach ainda não atribuiu conteúdo. RON está observando.").
-
----
-
-## ONDA 3 — RON Neural funcional + proatividade contextual
-
-- Validar `LOVABLE_API_KEY` (criar via `ai_gateway--enable` se faltar). Fallback `GEMINI_API_KEY`.
-- `ai-coach` unificado em `google/gemini-3-flash-preview` com 4 modos isolados: `chat` (RON), `train`, `analyze`, `recommend`.
-- **Proatividade** (do Roadmap Executivo):
-  - `IF Sync<60 AND hora=7h` → "Fernanda, você dormiu 6h ontem. Hoje é dia leve."
-  - `IF Treino=não iniciado AND hora=17h` → "Seu treino demora 35min. Começar agora ou 18h?"
-  - `IF Mobilidade=não feita AND hora=21h` → "Recuperação é tão importante. 10min comigo?"
-- **Silêncio de design** (do UX v3): `Ron.tsx` exibe bolha pulsando 1s antes do primeiro token. Abre sem "Olá, sou o RON". Já agiu, informa depois.
-- `FitCopilotPage`: apenas `train`/`analyze`. Nunca `chat`.
-
----
-
-## ONDA 4 — HUB Premium (ordem canônica + vazio com peso)
-
-Ordem fixa em `Hub.tsx`:
-1. Saudação editorial (Chakra/Satoshi, peso 900, tracking -0.04em) — **único elemento dominante na primeira dobra; Sync Score recua em peso**.
-2. **PersonalIDCard** minimalista.
-3. **DailyProtocol contextualizado** : cada item com 1 frase do porquê + tempo + recompensa silenciosa (XP invisível).
-4. **SyncScoreRing** com comparativo semanal (`↑ +4% — você está melhorando`).
-5. **StreakBadge** : número grande + 🔥; badge "EM RISCO" se >20h sem check-in. Notificação 23h.
-6. **WeeklyRadar 5D** : laranja semana atual vs cinza semana passada. Abaixo, 1 linha fria: "Ponto fraco desta semana: Sono."
-7. **HubPredictiveTip** : 1 frase do RON.
-8. **ProtocolCard** : capa + título + CTA "Continuar".
-9. **HubSequentialCarousel** : módulos.
-
-Substituir TODOS os estados zero por copy de inteligência (tabela do UX v3).
-
-Share automático: `ShareCard` 9:16 + `html-to-image` quando Sync>75% OU Daily completo.
-
----
-
-## ONDA 5 — Fluxos de borda (Auth, Onboarding, RML, Staff, Community)
-
-### Fix P0 — bug de roteamento pós-senha
-- `Login.tsx` + `useFirstAccess`: após `supabase.auth.updateUser({password})`, aguardar `onAuthStateChange` antes de redirecionar. Forçar refresh do JWT.
-- Teste: criar conta nova, trocar senha, validar entrada direta no Daily Protocol.
-
-### Onboarding obrigatório (≤60s, RON como entrevistador)
-- `Onboarding.tsx` reescrito: 1 pergunta por tela, sem skip, sem scroll.
-  1. Nome.
-  2. Objetivo principal (perder gordura / ganhar massa / performance / saúde).
-  3. Personal trainer? (sim / não, quero / não, prefiro sozinho).
-  4. Estado atual (iniciante / base / treinado).
-  5. Tempo disponível (30 / 60 / +60 min).
-- Tela final: progress bar 3s real + "Seu sistema está online. RON já sabe o que você precisa."
-- Concluir → gera Daily Protocol inicial via `ai-coach mode=recommend` → Hub.
-
-### Avaliação RML inicial (Gap 3)
-- Nova tela `/9fit/assessment/initial` capturando RML (postura, mobilidade, dor, lesões prévias).
-- Persiste em `physical_assessments` com tipo `rml_initial`.
-- Dashboard Pessoal: gráfico `RML inicial vs atual` (Recharts line).
-
-### Staff Container v3
-- Portar `/tmp/staff3/src/App.tsx` → `src/pages/9fit/Staff.tsx` mantendo shell 9FIT.
-- Estados zero: "RON disponível. Humanos: a caminho." (vs "Nenhum profissional ativo").
-- Trainer online → nome + foto + "Online agora". Offline → "Última análise: ontem".
-- Integração: `appointments_v2` + `staff_credits` (já existem).
-
-### Community incorporada
-- `/9fit/community` carrega o app externo `ninefit-community-flow.lovable.app` em iframe full-bleed dentro do shell 9FIT (mesma top/bottom nav). PostMessage handshake para sincronizar usuário e tema.
-- Estado tribo: "Você está em 3º lugar esta semana." (sem ranking global por padrão).
-
-### Treino
-- Vídeo inline em `WorkoutExecution.tsx` (já garantido por external URL rule).
-- "Concluir set" → `progress-sync` → Sync recalcula em tempo real.
-
-### Cleanup
-- Sweep `rg` por `glow-`, `shadow-\[0_0_`, `text-massive`, `animate-pulse` em labels, `italic font-black uppercase tracking-widest text-\[8px\]`. Remover/substituir por utilitários premium.
-- Deletar componentes sem referência após reskin.
-
----
-
-## ONDA 6 — Notificações & Engajamento (smart-notifications cron)
-
-- **23h** : streak em risco (`STREAK em risco. N dias.`).
-- **Manhã** (7h) : "Seu Daily Protocol está pronto."
-- **Pós-treino** : pedir RPE 1-10.
-- **Sync<60 às 7h** : trigger proativo do RON.
-- Web Push via PWA (já configurado, sem novo provider).
-
----
-
-## Fluxo do usuário (atualizado)
-
-```
-Login
-  └─ FirstAccess? ──sim──> Onboarding 60s (RON entrevistador) ──> Avaliação RML inicial ──> Daily Inicial ──┐
-                  └──não──────────────────────────────────────────────────────────────────────────────────────┤
-                                                                                                              ▼
-                                                                                                             HUB
-                                            ┌──────────┬────────────┬────────────┬────────────┬─────────────┤
-                                            ▼          ▼            ▼            ▼            ▼             ▼
-                                    Daily Protocol  Sync Score   Streak      Radar 5D    Protocolo      Módulos
-                                       │              │             │            │            │
-                                       ▼              ▼             ▼            ▼            ▼
-                                  progress-sync ──► master_registry ◄──── protocol_completed
-                                                          │
-                                                          ▼
-                                              Sync recalc + XP invisível + Streak + Share trigger (>75%)
+```ts
+await supabase.auth.refreshSession();
+await supabase.rpc('complete_first_access');
 ```
 
----
+`**src/contexts/AuthContext.tsx`:** ordem de redirecionamento:
 
-## Critérios de DONE
+1. Não autenticado → `/9fit/login`
+2. `first_access_completed=false` → `/9fit/first-access`
+3. `onboarding_completed_at IS NULL` (athletes) → `/9fit/onboarding`
+4. Senão → `/9fit/hub`
 
-| # | Critério | Validação |
-|---|---|---|
-| 1 | Zero `glow-*` / `gradient-mission` no DOM | `rg` retorna 0 |
-| 2 | Infoproduto atribuído renderiza com capa + módulos + CTA "ABRIR PLAYER" | atribuir 9Calisthenics → `/9fit/protocolo` mostra hero completo |
-| 3 | RON responde <5s com contexto e proatividade | `/9fit/ron` abre com mensagem contextual |
-| 4 | Hub segue ordem ID→Daily→Sync→Radar→Tip→Protocolo→Módulos | visual check |
-| 5 | Login pós-troca-de-senha entra direto no Daily Protocol | conta nova manual |
-| 6 | Onboarding ≤60s, não pulável, RML inicial capturado | fluxo manual |
-| 7 | Sync Score recalcula realtime | marcar Daily → ring atualiza |
-| 8 | Estados zero usam copy de inteligência (tabela UX v3) | grep + visual |
-| 9 | Staff container v3 montado em `/9fit/staff` | navegação |
-| 10 | Community embarcada com shell 9FIT | navegação |
-| 11 | Share automático aparece em Sync>75% | dispara overlay |
-| 12 | Notificação 23h se streak em risco | edge function cron |
+Resolve o loop dos 2 coaches externos travados.
 
 ---
 
-## Fora de escopo (mantém atual)
+### Wave 5 — Onboarding Obrigatório "Vazio com Peso"
 
-SmartPeriodizer, PosturaPro, HealthFlix sync, Nexus, Elite BioHacking, Habit Flow — apenas reskin visual da Onda 1.
+`**src/pages/9fit/Onboarding.tsx**` reescrito seguindo `OnboardingFlow.tsx` do zip:
+
+- 1 pergunta por tela, RON como entrevistador (avatar + bubble esquerda).
+- Barra de progresso fina topo (1px, accent).
+- Sem botão "pular", botão "Continuar" só ativo quando resposta válida.
+- Sequência (≤60s):
+  1. Nome
+  2. Objetivo (4 chips: Hipertrofia / Emagrecimento / Performance / Saúde)
+  3. Frequência semanal (slider 2–7)
+  4. Restrição alimentar (chips multi)
+  5. Wearable (opcional, skip explícito)
+  6. Tela final: "Seu sistema está online."
+- Persiste em `athletes` (já existe) + `master_registry` event `onboarding_completed` + `athletes.onboarding_completed_at = now()`.
+
+`**src/components/auth/PrivateRoute.tsx`:** bloqueia qualquer `/9fit/*` exceto `/9fit/onboarding` enquanto `onboarding_completed_at IS NULL`.
+
+`**src/components/9fit/EmptyState.tsx**` refatorado — copy "Vazio com peso" aplicado globalmente:
+
+- `<EmptyState variant="no-coach" />` → "O sistema ainda não te conhece"
+- `variant="no-protocol"` → "Nenhum protocolo atribuído. Explore a biblioteca."
+- `variant="ron-only"` → "RON disponível. Humanos: a caminho."
+- `variant="no-data"` → "Sem dados ainda. RON está observando."
+- Layout: ícone outlined grande centralizado, copy display 2xl, CTA único accent.
+
+Substituir todos placeholders cinza atuais (Hub, OS, Train, Social, Stats, Aulas) por `<EmptyState>` apropriado.
 
 ---
 
-## Status das perguntas
-Todas respondidas e gravadas acima. Pronto para executar Onda 0 → 6 em sequência ao receber **APROVAR**.
+### Wave 6 — Infoproduto com Planner Semanal
+
+**Migration:**
+
+```sql
+ALTER TABLE student_library_assignments
+  ADD COLUMN IF NOT EXISTS weekly_schedule jsonb DEFAULT '{}'::jsonb;
+```
+
+Estrutura: `{ "mon": ["module_id_1"], "tue": [...], ... "sun": [...] }`.
+
+**Novo `src/components/9fit/ProtocolWeeklyPlanner.tsx`:**
+
+- Grid 7 colunas (Seg–Dom) com header de dia.
+- Lista de módulos do `payload.modules` à esquerda como chips arrastáveis.
+- Drag-and-drop com `@dnd-kit/core` (já no projeto) — arrasta módulo → dia.
+- Botão "Organizar automaticamente" → distribui módulos respeitando `frequência semanal` do onboarding.
+- Salva em `weekly_schedule` com debounce 500ms via `supabase.update`.
+- Indicador de módulos concluídos (checkbox no chip).
+
+`**src/components/9fit/ProtocolViewer.tsx`:** adicionar seção `<ProtocolWeeklyPlanner>` abaixo de "Estrutura" para tipo `infoproduto`.
+
+`**src/components/9fit/DailyProtocol.tsx`:** lê `weekly_schedule` do dia atual (todos os infoprodutos ativos) e exibe módulos como itens do protocolo diário com "Por quê:" contextual extraído de `payload.modules[].why` ou auto-gerado por RON.
+
+**Hub:** card "Seu Protocolo" sempre visível quando ≥1 ativo, com mini-preview do planner do dia.
+
+Marcar módulo concluído → atualiza `payload.completed_modules[]` e recalcula `progress_pct = completed/total * 100`.
+
+---
+
+### Wave 7 — Refino Visual Premium (anexos C9/C11/C13/C14/helicóptero/VitalFit)
+
+Mantém paleta, adiciona profundidade premium **sem reintroduzir cyber/neon**.
+
+**Tokens em `src/index.css`:**
+
+```css
+--glass: 0 0% 100% / 0.04;
+--glass-border: 0 0% 100% / 0.08;
+--halo-primary: radial-gradient(circle, hsl(18 87% 52% / 0.22) 0%, transparent 70%);
+--halo-neural: radial-gradient(circle, hsl(213 90% 65% / 0.18) 0%, transparent 70%);
+--shadow-elevated: 0 24px 48px -16px hsl(0 0% 0% / 0.6);
+--shadow-card: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
+```
+
+Utilitário `.glass-surface`: `bg-[hsl(var(--glass))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-2xl`.
+
+**Componentes refinados (estrutura mantida, visual elevado):**
+
+1. `**NineFitTopBar**` — avatar circular esquerda + saudação editorial "Hi, {nome}" + data discreta + ícone calendário (ref C13/VitalFit).
+2. `**PersonalIDCard**` — hero full-bleed com imagem fitness B&W de fundo + overlay gradient pesado + número grande do Sync Score "90%" estilo display 6xl com accent orange (ref VitalFit).
+3. `**SyncScoreRing**` — gauge semi-circular accent orange (ref C14 yellow), número 75 ao centro display 4xl, label "Activity Score" abaixo, 2 estrelas pequenas.
+4. `**DailyProtocol**` — cards `.glass-surface`, ícone lucide à esquerda em pill accent, título semibold, "Por quê:" em muted itálico abaixo, checkbox quadrado preenchido accent.
+5. **NOVO `src/components/9fit/HubFloatingMetrics.tsx**` — 4 mini-cards glass (Water/Heart/Calories/HRV) em grid 2×2 com mini progress ring orange à esquerda do número (ref C13 metric pills + helicóptero glass). Renderizado entre SyncScoreRing e Streak.
+6. `**src/pages/9fit/Ron.tsx**` — full-bleed dark, waveform animado quando ouvindo (canvas 60fps, barras orange), 3 chips de sugestão ("Treino de hoje", "Como melhorar Sync?", "Plano semanal"), bubble grande do RON estilo conversational (ref C9).
+7. `**ProtocolViewer` hero** — `aspect-[3/4]` em mobile, `aspect-[16/9]` em desktop, gradient pesado embaixo, título display 4xl, badge categoria + dificuldade pequena em accent (ref C11 "Strength Workouts").
+8. `**BottomNavigation**` — 5 tabs: `OS · Train · HUB (central elevado pill orange) · Social · Perfil`. Ícones lucide thin, label `text-[9px] tracking-[0.18em] uppercase`. Hub central: pill 56px com elevação `-translate-y-2` e shadow accent suave.
+9. `**EmptyState**` — full-bleed centralizado, ícone outlined 64px muted, copy display 2xl, sub-copy muted, CTA único pill accent.
+10. **Cards de módulos** (Train, Aulas, Healthflix) — thumbnail full-width arredondado, badge categoria accent pill canto sup-esq (ref C11), título sobreposto bottom + meta "20min · Upper Body".  
+11. 9FIT ELITE — MASTER IMPLEMENTATION DOSSIER
+  ## Full Architecture + UX System + Elite Protocol Engine + Premium UI Refinement
+  Aplicar tudo do ecossistema atual sem reescrever do zero.  
+  Expandir estrutura existente usando os anexos visuais como referência:
+  - VitalFit
+  - C9
+  - C11
+  - C13
+  - C14
+  - Helicopter Glass UI
+  - MuseFit
+  - HubView
+  - OSView
+  - PremiumView
+  - OnboardingFlow
+  - ProtocolViewer
+  - DailyProtocol
+  - DigitalIDCard
+  - BottomNav
+  O objetivo NÃO é criar mais um app fitness.  
+  O objetivo é transformar o 9FIT em um Sistema Operacional Biológico.
+  ---
+  # DIRETRIZ CENTRAL DE UX
+  ---
+  O usuário NÃO deve sentir que está navegando em:
+  - listas
+  - menus comuns
+  - catálogo de funcionalidades
+  - dashboard tradicional
+  O sistema deve parecer:
+  - vivo
+  - responsivo
+  - inteligente
+  - editorial
+  - cinematográfico
+  - personalizado
+  - premium
+  Cada tela deve transmitir:
+  "o sistema está observando meu estado atual"
+  Não usar:
+  - grids secos
+  - caixas isoladas
+  - cards genéricos
+  - neon cyber exagerado
+  - excesso de glow
+  - cara de template SaaS
+  A interface precisa parecer:
+  - Apple Health + WHOOP + Oura + Netflix Editorial + Jarvis
+  ---
+  # DESIGN SYSTEM GLOBAL
+  ---
+  ## Paleta
+  Background:
+  - #0D0D0D
+  - #111111
+  - #171717
+  Accent:
+  - #FF5500
+  Neural:
+  - #3B82F6
+  Success:
+  - #22C55E
+  Muted:
+  - rgba(255,255,255,0.55)
+  Glass:
+  - rgba(255,255,255,0.04)
+  Glass Border:
+  - rgba(255,255,255,0.08)
+  ---
+  ## Tipografia
+  Display:
+  - Sora
+  - Chakra Petch
+  Body:
+  - Inter
+  Hierarquia:
+  Hero:
+  - 52-72px
+  - weight 700
+  - tracking negativo
+  Cards:
+  - 18-24px
+  Meta:
+  - 12-14px uppercase tracking wide
+  ---
+  ## Tokens
+  Adicionar em src/index.css:
+  :root {  
+  --glass: 0 0% 100% / 0.04;  
+  --glass-border: 0 0% 100% / 0.08;
+  --halo-primary:  
+  radial-gradient(circle,  
+  hsl(18 87% 52% / 0.22) 0%,  
+  transparent 70%);
+  --halo-neural:  
+  radial-gradient(circle,  
+  hsl(213 90% 65% / 0.18) 0%,  
+  transparent 70%);
+  --shadow-elevated:  
+  0 24px 48px -16px hsl(0 0% 0% / 0.6);
+  --shadow-card:  
+  0 8px 24px -8px hsl(0 0% 0% / 0.4);  
+  }
+  ---
+  ## Utility
+  .glass-surface {  
+  background: hsl(var(--glass));  
+  backdrop-filter: blur(24px);  
+  border: 1px solid hsl(var(--glass-border));  
+  border-radius: 24px;  
+  }
+  ---
+  # CORE UX PRINCIPLES
+  ---
+  ## 1. Vazio com Peso
+  Nunca mostrar:
+  - “Nenhum dado”
+  - “Empty”
+  - “Nothing here”
+  Substituir por:
+  - “O sistema ainda não te conhece.”
+  - “RON está observando seus padrões.”
+  - “Nenhum protocolo atribuído ainda.”
+  - “Seu núcleo neural ainda está calibrando.”
+  ---
+  ## 2. Sensação de Sistema Vivo
+  Toda tela precisa reagir:
+  - ao horário
+  - ao estado do usuário
+  - ao Sync Score
+  - ao streak
+  - ao treino pendente
+  - ao sono
+  - ao protocolo ativo
+  Exemplo:
+  07h + sync baixo:  
+  “Seu sistema acordou abaixo da média.”
+  23h + streak em risco:  
+  “Faltam 47 minutos para preservar sua sequência.”
+  ---
+  ## 3. Sem Menus Mortos
+  Não usar:
+  - lista vertical simples
+  - cards secos
+  - caixas sem contexto
+  Tudo precisa parecer:
+  - contextual
+  - editorial
+  - cinematográfico
+  ---
+  # ESTRUTURA DO ECOSSISTEMA
+  ---
+  ## HUB CENTRAL
+  O Hub NÃO é dashboard.
+  O Hub é:
+  “Estado atual do organismo.”
+  ---
+  ## Ordem visual do Hub
+  1. TopBar Editorial
+  2. Hero Sync Score
+  3. Floating Metrics
+  4. RON Insight
+  5. Daily Protocol
+  6. Active Vertical
+  7. Progressão Neural
+  8. Recovery State
+  9. Streak
+  10. Ecosystem Modules
+  ---
+  # TOPBAR
+  ---
+  src/components/9fit/NineFitTopBar.tsx
+  Estrutura:
+  - avatar circular esquerda
+  - “Hi, {nome}”
+  - data discreta
+  - ícone calendário
+  Referência:
+  - C13
+  - VitalFit
+  ---
+  # HERO — PERSONAL ID CARD
+  ---
+  src/components/9fit/PersonalIDCard.tsx
+  Tela full bleed.
+  Background:
+  - imagem fitness B&W
+  - overlay gradient pesado
+  Centro:
+  Sync Score gigante:
+  - 90%
+  - display 6xl
+  - accent orange
+  Sub:
+  - “Seu organismo está operando acima da média.”
+  Ações:
+  - Ver protocolo
+  - Abrir RON
+  ---
+  # HUB FLOATING METRICS
+  ---
+  src/components/9fit/HubFloatingMetrics.tsx
+  Grid 2x2.
+  Cards glass:
+  - Water
+  - Calories
+  - Heart
+  - HRV
+  Cada card:
+  - mini progress ring
+  - número grande
+  - label pequena
+  Referência:
+  - C13
+  - Helicopter Glass
+  ---
+  # SYNC SCORE RING
+  ---
+  src/components/9fit/SyncScoreRing.tsx
+  Gauge semicircular.
+  Accent orange.
+  Centro:
+  - score
+  - label Activity Score
+  - estrelas pequenas
+  Estados:
+  90+:
+  - “Elite State”
+  75-89:
+  - “Operação Estável”
+  60-74:
+  - “Sistema sobrecarregado”
+  <60:
+  - “Recuperação necessária”
+  ---
+  # RON — AI CORE
+  ---
+  RON não é chatbot.
+  RON é:
+  - coach
+  - observador
+  - sistema operacional neural
+  - copiloto biológico
+  ---
+  ## Página
+  src/pages/9fit/Ron.tsx
+  Estrutura:
+  - full bleed dark
+  - waveform animado
+  - conversational bubbles
+  - chips rápidos
+  Chips:
+  - Treino de hoje
+  - Melhorar Sync
+  - Plano semanal
+  - Ajustar recuperação
+  ---
+  ## Hook Proativo
+  src/hooks/useProactiveRon.ts
+  Lê:
+  - sync_score
+  - streak_dias
+  - hora local
+  - last_workout_at
+  Triggers:
+  07h + sync<60  
+  “Seu sistema acordou abaixo da média.”
+  17h + treino pendente  
+  “Ainda dá tempo. 35 minutos mudam seu estado.”
+  21h sem mobility  
+  “Recuperação é parte do protocolo.”
+  23h streak em risco  
+  “Seu streak está em risco.”
+  ---
+  ## RON Bubble
+  src/components/9fit/RonBubble.tsx
+  - floating
+  - canto inferior direito
+  - acima do BottomNav
+  - dismissable
+  Ação:
+  - abrir /9fit/ron
+  ---
+  # ONBOARDING
+  ---
+  O onboarding precisa parecer:
+  “RON entrevistando o usuário.”
+  ---
+  ## Estrutura
+  1 pergunta por tela.
+  Sem forms grandes.
+  Sem múltiplos inputs.
+  ---
+  ## Sequência
+  1. Nome
+  2. Objetivo
+  3. Frequência semanal
+  4. Restrição alimentar
+  5. Wearable
+  6. Tela final
+  ---
+  ## Tela Final
+  “Seu sistema está online.”
+  ---
+  # 9FIT ELITE — ESTRUTURA
+  ---
+  O Elite não vende tecnologia futurista.
+  Vende:
+  - protocolos aplicáveis
+  - biohacking natural
+  - regulação fisiológica
+  - performance real
+  ---
+  # VERTICALS
+  ---
+  # 1. 9FIT BIO
+  ## Produto
+  Protocolos Bioadaptativos.
+  ---
+  ## O que entrega
+  Interpretação de exames.
+  Ajuste:
+  - treino
+  - recuperação
+  - intensidade
+  - cardio
+  - sono
+  ---
+  ## Resultado percebido
+  “O treino começa a fazer sentido para o meu organismo.”
+  ---
+  ## Estrutura de UX
+  Tela inicial:
+  - fundo escuro editorial
+  - exames flutuando em glass
+  - headline:
+  “Seu corpo não responde igual ao dos outros.”
+  CTA:
+  - Enviar exames
+  ---
+  ## Motor lógico
+  Exemplos:
+  Pressão alta:
+  - mais cardio zona 2
+  - menos estímulo simpático
+  Testosterona baixa:
+  - treino curto e intenso
+  - gordura boa
+  - menos volume
+  Diabetes:
+  - musculação
+  - caminhadas pós-prandiais
+  ---
+  # 2. 9FIT KITCHEN
+  ---
+  ## Produto
+  Protocolos Nutricionais Neurofisiológicos.
+  ---
+  ## O que entrega
+  Não é contador de calorias.
+  Não é diário alimentar.
+  Não exige preencher refeições.
+  Entrega:
+  - protocolos alimentares
+  - guias metabólicos
+  - stacks naturais
+  - alimentação orientada por objetivo
+  ---
+  ## Protocolos
+  - Desinflamar
+  - Melhorar sono
+  - Aumentar testosterona
+  - Melhorar foco
+  - Reduzir compulsão
+  - Recuperar SNC
+  ---
+  ## Insights
+  - azeite → aumento agudo hormonal
+  - temperos → biohack neural
+  - proteína + gordura → estabilidade
+  - refeições noturnas → recuperação
+  ---
+  ## Resultado percebido
+  “Estou usando comida como ferramenta de performance.”
+  ---
+  # 3. 9FIT RECOVERY
+  ---
+  ## Produto
+  Protocolos de Reset Neural.
+  ---
+  ## O que entrega
+  Regulação:
+  - dopamina
+  - hiperatividade
+  - raiva
+  - ansiedade
+  - sistema nervoso
+  ---
+  ## Protocolos
+  ### Estado acelerado
+  - corrida BPM guiada
+  - música específica
+  - respiração
+  - zona 2
+  ---
+  ### Raiva/agressividade
+  - tiros aláticos
+  - sprint 20-25km/h
+  - boxe agressivo
+  - descarga simpática
+  ---
+  ### Reset profundo
+  - praia
+  - água gelada salgada
+  - água doce gelada
+  - grounding
+  - outdoor
+  ---
+  ## Resultado percebido
+  “Meu cérebro desacelerou.”
+  ---
+  # DAILY PROTOCOL
+  ---
+  src/components/9fit/DailyProtocol.tsx
+  Não usar checklist seca.
+  Cada item precisa explicar:
+  “Por quê isso existe.”
+  ---
+  ## Estrutura do card
+  - ícone accent
+  - título
+  - duração
+  - “Por quê:” em itálico
+  - checkbox premium
+  ---
+  # PROTOCOL VIEWER
+  ---
+  src/components/9fit/ProtocolViewer.tsx
+  Hero:
+  - editorial
+  - imagem full bleed
+  - overlay pesado
+  - categoria
+  - dificuldade
+  - CTA iniciar
+  ---
+  # PLANNER SEMANAL
+  ---
+  src/components/9fit/ProtocolWeeklyPlanner.tsx
+  Grid 7 colunas.
+  Drag-and-drop.
+  Módulos arrastáveis.
+  Botão:  
+  “Organizar automaticamente.”
+  ---
+  # SOCIAL
+  ---
+  O Social NÃO deve parecer feed comum.
+  Deve parecer:
+  - elite club
+  - performance journal
+  - conquistas neurais
+  ---
+  ## Mostrar
+  - streaks
+  - recovery
+  - PRs
+  - protocolos concluídos
+  - evolução
+  ---
+  # BOTTOM NAVIGATION
+  ---
+  5 tabs:
+  - OS
+  - Train
+  - HUB
+  - Social
+  - Perfil
+  Hub:
+  - central elevado
+  - pill orange
+  - glow suave
+  ---
+  # EMPTY STATES
+  ---
+  src/components/9fit/EmptyState.tsx
+  Variantes:
+  no-coach:  
+  “O sistema ainda não te conhece.”
+  no-protocol:  
+  “Nenhum protocolo atribuído.”
+  ron-only:  
+  “RON disponível. Humanos: a caminho.”
+  no-data:  
+  “RON está observando.”
+  ---
+  # BANCO DE DADOS
+  ---
+  ## Tabelas principais
+  users  
+  profiles  
+  athletes  
+  workouts  
+  protocols  
+  protocol_modules  
+  student_library_assignments  
+  progress_logs  
+  achievements  
+  subscriptions  
+  recovery_sessions  
+  bio_markers  
+  wearable_data
+  ---
+  # MIGRATIONS
+  ---
+  ALTER TABLE student_library_assignments  
+  ADD COLUMN IF NOT EXISTS weekly_schedule jsonb DEFAULT '{}'::jsonb;
+  ---
+  ## RPC
+  complete_first_access()
+  SECURITY DEFINER.
+  Marca:
+  profiles.first_access_completed = true
+  ---
+  # AUTH FLOW
+  ---
+  Ordem:
+  Não autenticado:  
+  → /9fit/login
+  first_access_completed=false:  
+  → /9fit/first-access
+  onboarding_completed_at IS NULL:  
+  → /9fit/onboarding
+  Else:  
+  → /9fit/hub
+  ---
+  # MICROSTATES
+  ---
+  Toda tela precisa:
+  - loading
+  - partial loading
+  - skeleton
+  - empty
+  - processing
+  - success
+  - recovery
+  - retry
+  ---
+  # MOTION
+  ---
+  Animações:
+  - suaves
+  - editoriais
+  - cinematic easing
+  - blur transitions
+  - opacity transitions
+  Não usar:
+  - pulse neon exagerado
+  - glow cyberpunk
+  - motion agressiva
+  ---
+  # FINAL EXPERIENCE
+  ---
+  O usuário deve sentir:
+  “isso não é um aplicativo.”
+  “é um sistema acompanhando meu organismo.”
+  ---
+  # RESULTADO FINAL
+  ---
+  O FitPro/9FIT deve parecer:
+  - inteligente
+  - vivo
+  - premium
+  - editorial
+  - humano
+  - fisiológico
+  - exclusivo
+  E NÃO:
+  - SaaS fitness comum
+  - catálogo de treino
+  - dashboard genérico
+  - app de academia
+  ---
+  # STATUS FINAL ESPERADO
+  ---
+  DONE:
+  ✓ Onboarding obrigatório em ≤60s  
+  ✓ RON proativo funcional  
+  ✓ Hub contextual e vivo  
+  ✓ Planner semanal drag-and-drop  
+  ✓ Protocolos Elite estruturados  
+  ✓ Daily Protocol contextual  
+  ✓ Empty states editoriais  
+  ✓ BottomNav premium  
+  ✓ Glass surfaces refinadas  
+  ✓ Zero neon residual  
+  ✓ UX cinematográfica  
+  ✓ Sistema operacional biológico completo
+
+**Sweep final de cyber/neon residual:**
+
+```bash
+rg -l "shadow-\[0_0_|glow-|animate-pulse.*neon|text-cyan|text-fuchsia|drop-shadow-\[0_0|border-primary/40 shadow"
+```
+
+Neutralizar em: `ModuleGrid`, `HubSequentialCarousel`, `EcosystemStatusCards`, `WorkoutHome`, `MissionCard`, `RecoveryMission`, `LiveClassCard`, `TribeCard`.
+
+---
+
+### Ordem de Execução (10 passos)
+
+```text
+1. Migration: weekly_schedule + RPC complete_first_access
+2. Wave 4: useFirstAccess + AuthContext routing (desbloqueia coaches)
+3. Wave 5: Onboarding obrigatório + EmptyState refatorado + PrivateRoute guard
+4. Wave 3: Parser RON fix + useProactiveRon + RonBubble + smart-notifications triggers
+5. Wave 6 (DB): leitura weekly_schedule no DailyProtocol
+6. Wave 6 (UI): ProtocolWeeklyPlanner + integração ProtocolViewer + Hub card
+7. Wave 7 (tokens): index.css glass/halo/shadow tokens
+8. Wave 7 (componentes): TopBar, IDCard, SyncRing, DailyProtocol, HubFloatingMetrics,
+   Ron page, ProtocolViewer hero, BottomNav, cards de módulo
+9. Wave 7 (sweep): remover cyber/neon residual
+10. Validação: console logs limpos, fluxo first-access → onboarding → hub → infoproduto 11. reforço textual para tudo que deve ser entregue complementamente funcional. 
+```
+
+1
+
+### DONE
+
+- Coaches externos logam sem loop · Onboarding força ≤60s · Hub mostra módulos do infoproduto do dia · Planner semanal funcional com drag-and-drop · RON proativo dispara 4 triggers · Zero classes neon/cyber residuais · Todas zero-states com copy "Vazio com peso" · BottomNav 5 tabs com HUB central elevado · Glass surfaces + halo accent aplicados ao Hub · ProtocolViewer com hero editorial full-bleed.
+
+**Aprovar para executar todas as ondas em sequência.**
