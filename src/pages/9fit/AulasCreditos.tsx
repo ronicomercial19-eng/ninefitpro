@@ -180,7 +180,7 @@ export default function AulasCreditos() {
     try {
       const { error } = await supabase
         .from("appointments")
-        .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+        .update({ status: "confirmed" as any, confirmed_at: new Date().toISOString() })
         .eq("id", a.id);
       if (error) throw error;
       toast.success("Presença confirmada");
