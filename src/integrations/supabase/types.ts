@@ -399,11 +399,13 @@ export type Database = {
       appointments: {
         Row: {
           appointment_type: string | null
+          confirmed_at: string | null
           created_at: string | null
           description: string | null
           duration: number | null
           id: string
           location: string | null
+          notes: string | null
           recurrence_pattern: Json | null
           scheduled_at: string
           status: Database["public"]["Enums"]["appointment_status"] | null
@@ -414,11 +416,13 @@ export type Database = {
         }
         Insert: {
           appointment_type?: string | null
+          confirmed_at?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
           id?: string
           location?: string | null
+          notes?: string | null
           recurrence_pattern?: Json | null
           scheduled_at: string
           status?: Database["public"]["Enums"]["appointment_status"] | null
@@ -429,11 +433,13 @@ export type Database = {
         }
         Update: {
           appointment_type?: string | null
+          confirmed_at?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
           id?: string
           location?: string | null
+          notes?: string | null
           recurrence_pattern?: Json | null
           scheduled_at?: string
           status?: Database["public"]["Enums"]["appointment_status"] | null
@@ -5539,7 +5545,10 @@ export type Database = {
       }
       user_plans: {
         Row: {
+          classes_per_month: number | null
           created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
           expires_at: string | null
           features: Json | null
           id: string
@@ -5551,7 +5560,10 @@ export type Database = {
           user_email: string
         }
         Insert: {
+          classes_per_month?: number | null
           created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
           expires_at?: string | null
           features?: Json | null
           id?: string
@@ -5563,7 +5575,10 @@ export type Database = {
           user_email: string
         }
         Update: {
+          classes_per_month?: number | null
           created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
           expires_at?: string | null
           features?: Json | null
           id?: string
@@ -7493,6 +7508,7 @@ export type Database = {
         Args: { p_aluno_id: string }
         Returns: undefined
       }
+      reconcile_appointments_for_user: { Args: never; Returns: undefined }
       salvar_avaliacao: {
         Args: { p_dados: Json; p_estudante_id: string }
         Returns: {
