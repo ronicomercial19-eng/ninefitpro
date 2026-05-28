@@ -112,31 +112,32 @@ export default function NineFitRon() {
   };
 
   return (
-    <div className="min-h-screen gradient-mission pb-28 flex flex-col">
-      <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // O RON</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">NEURAL ASSISTANT</h1>
+    <div className="min-h-screen bg-background pb-28 flex flex-col">
+      <div className="px-5 pt-8 pb-3">
+        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT · RON</p>
+        <h1 className="text-display text-3xl text-foreground mt-1">Copiloto biológico</h1>
+        <p className="text-xs text-muted-foreground mt-1">Observando. Aprendendo. Contextual.</p>
       </div>
 
-      <div className="px-4 mb-4">
-        <div className="relative h-40 glass-mission rounded-xl overflow-hidden flex items-center justify-center">
-          <motion.div
-            className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/70 to-primary/20 blur-md"
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+      <div className="px-5 mb-4">
+        <div className="relative h-32 rounded-2xl overflow-hidden flex items-center justify-center border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl">
+          <div
+            className="absolute inset-0 opacity-60"
+            style={{ background: "var(--halo-primary)" }}
+            aria-hidden
           />
-          <Sparkles className="absolute bottom-2 right-3 w-3.5 h-3.5 text-primary/60" />
+          <RonWaveform active={sending} size={56} />
         </div>
       </div>
 
-      <div className="flex-1 px-4 space-y-2 overflow-y-auto">
+      <div className="flex-1 px-5 space-y-3 overflow-y-auto">
         {messages.map((m, i) => (
           <div
             key={m.id ?? i}
-            className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+            className={`max-w-[78%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
               m.role === "user"
                 ? "ml-auto bg-primary text-primary-foreground"
-                : "mr-auto glass-mission text-foreground"
+                : "mr-auto bg-white/[0.04] border-l-2 border-primary/50 text-foreground"
             }`}
           >
             {m.content}
@@ -145,13 +146,24 @@ export default function NineFitRon() {
         <div ref={endRef} />
       </div>
 
-      <div className="px-4 pt-3 pb-2 sticky bottom-20">
-        <div className="flex items-center gap-2 glass-mission rounded-full p-1.5">
+      <div className="px-5 pt-2 sticky bottom-20 bg-background/80 backdrop-blur-md">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => setInput(s)}
+              className="shrink-0 text-[11px] tracking-wide px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 rounded-full p-1.5 border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Fale com o RON..."
+            placeholder="Pergunte ao RON..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none px-3"
           />
           <button
