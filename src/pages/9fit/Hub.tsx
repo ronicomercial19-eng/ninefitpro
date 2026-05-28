@@ -85,74 +85,65 @@ export default function NineFitHub() {
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      <div className="px-4 pt-6 pb-3">
-        <p className="text-label">9FIT • HUB</p>
-        <h1 className="text-display text-3xl mt-1">Olá, {name}.</h1>
-      </div>
+      {/* 1. HERO SYNC — full bleed B&W + halo */}
+      <HeroSyncSection
+        name={name}
+        syncScore={card.syncScore}
+        breakdown={breakdown}
+        lastUpdate="agora"
+      />
 
-      {/* 1. ID CARD */}
-      <div className="px-4 mb-3">
-        <PersonalIDCard
-          name={name}
-          level={card.level}
-          classTier={card.classTier}
-          syncScore={card.syncScore}
-          streak={card.streak}
-          totalXP={card.totalXP}
-        />
-      </div>
+      {/* 2. FLOATING METRICS — glass sensors */}
+      <HubFloatingMetrics />
 
-      {/* 2. DAILY PROTOCOL */}
-      <div className="px-4 mb-3">
-        <DailyProtocol />
-      </div>
-
-      {/* 3. SYNC SCORE RING */}
-      <div className="px-4 mb-3">
-        <SyncScoreRing score={card.syncScore} breakdown={breakdown} />
-      </div>
-
-      {/* 4. STREAK + RADAR */}
-      <div className="px-4 mb-3 space-y-3">
-        <StreakBadge streak={card.streak} />
-        <WeeklyRadar current={breakdown} />
-      </div>
-
-      {/* 5. PREDICTIVE TIP */}
-      <div className="px-4 mb-3">
+      {/* 3. RON INSIGHT */}
+      <div className="px-4 mt-8">
         <HubPredictiveTip tip={insight} context="Toque para conversar com o RON" />
       </div>
 
-      {/* 6. PROTOCOL CARD (if any active) */}
+      {/* 4. DAILY PROTOCOL — premium fisiológico */}
+      <div className="px-4 mt-8">
+        <DailyProtocol />
+      </div>
+
+      {/* 5. RADAR 5D 3D */}
+      <div className="px-4 mt-8">
+        <WeeklyRadar3D current={breakdown} />
+      </div>
+
+      {/* 6. PROTOCOL ACTIVE */}
       {protocolCount > 0 && (
-        <div className="px-4 mb-3">
+        <div className="px-4 mt-6">
           <button
             onClick={() => navigate("/9fit/protocolo")}
-            className="w-full surface-card p-4 flex items-center gap-3 hover:border-primary/30 transition-colors text-left"
+            className="w-full rounded-2xl p-4 flex items-center gap-3 border border-white/[0.06] bg-white/[0.04] backdrop-blur-xl hover:border-primary/30 transition-colors text-left"
           >
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <Library className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
               <p className="text-label">SEU PROTOCOLO</p>
-              <p className="text-sm font-semibold">{protocolCount} conteúdo{protocolCount > 1 ? "s" : ""} ativo{protocolCount > 1 ? "s" : ""}</p>
+              <p className="text-sm font-semibold">
+                {protocolCount} conteúdo{protocolCount > 1 ? "s" : ""} ativo
+                {protocolCount > 1 ? "s" : ""}
+              </p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
       )}
 
-      {/* 7. MODULES */}
-      <div className="px-4 mb-3">
-        <p className="text-label mb-2">MÓDULOS</p>
+      {/* 7. ECOSYSTEM MODULES */}
+      <div className="px-4 mt-8">
+        <p className="text-label mb-3">ECOSSISTEMA</p>
         <HubSequentialCarousel />
       </div>
 
-      {/* 9PASS */}
-      <div className="px-4 mb-4">
+      {/* 8. 9PASS */}
+      <div className="px-4 mt-6">
         <button
           onClick={() => navigate("/9fit/primepass")}
-          className="w-full surface-card p-4 flex items-center gap-3 hover:border-primary/30 transition-colors text-left"
+          className="w-full rounded-2xl p-4 flex items-center gap-3 border border-white/[0.06] bg-white/[0.04] backdrop-blur-xl hover:border-primary/30 transition-colors text-left"
         >
           <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
             <Crown className="w-5 h-5 text-primary" />
@@ -165,6 +156,7 @@ export default function NineFitHub() {
         </button>
       </div>
 
+      <RonBubble />
       <BottomNavigation />
     </div>
   );
