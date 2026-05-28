@@ -1,10 +1,17 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { RonWaveform } from "@/components/9fit/RonWaveform";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
-import { motion } from "framer-motion";
-import { Send, Sparkles } from "lucide-react";
+import { Send } from "lucide-react";
+
+const SUGGESTIONS = [
+  "Como está meu recovery?",
+  "Próximo treino recomendado",
+  "Análise da semana",
+  "O que meu HRV indica?",
+];
 
 interface Msg {
   id?: string;
