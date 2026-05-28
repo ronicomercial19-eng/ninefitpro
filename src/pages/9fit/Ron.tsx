@@ -93,7 +93,7 @@ export default function NineFitRon() {
       const content =
         (data as any)?.data?.content ||
         (data as any)?.content ||
-        "Sinal instável. Tente novamente.";
+        "Aguardando mais sinais do seu corpo.";
       setMessages((p) => {
         const out = [...p];
         out[out.length - 1] = { role: "assistant", content };
@@ -103,7 +103,7 @@ export default function NineFitRon() {
     } catch {
       setMessages((p) => {
         const out = [...p];
-        out[out.length - 1] = { role: "assistant", content: "Falha temporária no núcleo neural." };
+        out[out.length - 1] = { role: "assistant", content: "Sistema recalibrando. Tente em alguns instantes." };
         return out;
       });
     } finally {
