@@ -3,13 +3,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { PersonalIDCard } from "@/components/9fit/PersonalIDCard";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
-import { SyncScoreRing } from "@/components/9fit/SyncScoreRing";
-import { StreakBadge } from "@/components/9fit/StreakBadge";
-import { WeeklyRadar } from "@/components/9fit/WeeklyRadar";
+import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
+import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
+import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 import { HubPredictiveTip } from "@/components/9fit/HubPredictiveTip";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
+import { RonBubble } from "@/components/9fit/RonBubble";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 
