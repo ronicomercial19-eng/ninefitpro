@@ -30,15 +30,18 @@ export function BottomNavigation() {
                 }`}
               >
                 {center ? (
-                  <div className={`w-12 h-12 -mt-5 rounded-full flex items-center justify-center transition-all ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-elevated border border-white/10 text-foreground"
-                  }`}>
-                    <Icon className="w-5 h-5" strokeWidth={2.4} />
+                  <div
+                    className={`w-14 h-14 -mt-7 rounded-full flex items-center justify-center transition-all ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-elevated border border-white/10 text-foreground"
+                    }`}
+                    style={{ boxShadow: "0 0 24px -4px hsl(var(--primary) / 0.4)" }}
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={1.8} />
                   </div>
                 ) : (
-                  <Icon className="w-5 h-5" strokeWidth={2.2} />
+                  <Icon className="w-5 h-5" strokeWidth={1.8} />
                 )}
                 <span className="text-[9px] font-semibold uppercase tracking-[0.14em] mt-0.5">{label}</span>
                 {isActive && !center && (
