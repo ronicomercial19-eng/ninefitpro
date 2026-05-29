@@ -238,7 +238,38 @@ export function DailyProtocol() {
             </motion.div>
           );
         })}
+
+        {state === 'power' && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-5 border border-emerald-500/30 bg-emerald-500/[0.04] backdrop-blur-xl"
+          >
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 border border-emerald-500/30">
+                <POWER_BONUS.Icon className="w-6 h-6 text-emerald-400" strokeWidth={1.6} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-display text-base text-foreground">
+                    {POWER_BONUS.title} <span className="text-[9px] tracking-[0.2em] uppercase text-emerald-400/80">OPCIONAL</span>
+                  </h3>
+                  <span className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground font-data">
+                    {POWER_BONUS.duration}
+                  </span>
+                </div>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-emerald-400/70 font-data mb-1.5">
+                  POR QUÊ
+                </p>
+                <p className="text-[13px] text-muted-foreground italic leading-relaxed">
+                  {POWER_BONUS.why}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
+
   );
 }
