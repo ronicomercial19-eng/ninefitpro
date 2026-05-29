@@ -62,7 +62,7 @@ export function inferUserState(signals: StateSignals): StateResult {
   }
 
   // Power Mode
-  if (score > 7.5 && consistency >= 60 && sentiment !== 'negative') {
+  if (score > 7.5 && consistency >= 60) {
     return { state: 'power', reasoning: 'Sync alto + boa consistência.', confidence: 0.85 };
   }
   if (score > 8 && trend === 'up') {
