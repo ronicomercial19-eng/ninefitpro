@@ -23,7 +23,9 @@ export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
-  const { state, reasoning } = useUserState();
+  const { state, reasoning, invalidate } = useUserState();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+
 
 
 
