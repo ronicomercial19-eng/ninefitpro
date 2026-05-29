@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Brain, Dumbbell, Apple, Wind, Check } from "lucide-react";
+import { Brain, Dumbbell, Apple, Wind, Check, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useUserState } from "@/hooks/useUserState";
+
 
 interface Task {
   id: string;
@@ -44,11 +46,22 @@ const DEFAULT_TASKS = [
   },
 ] as const;
 
+// Desafio extra opcional para Power Mode
+const POWER_BONUS = {
+  key: "power_bonus",
+  title: "Bloco Extra",
+  duration: "12 min",
+  Icon: Flame,
+  why: "Sinais indicam capacidade de absorver mais carga hoje. Bloco extra opcional para aproveitar a janela hormonal.",
+} as const;
+
 export function DailyProtocol() {
   const { user } = useAuth();
+  const { state, invalidate } = useUserState();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!user?.id) return;
@@ -118,17 +131,38 @@ export function DailyProtocol() {
         })
         .then(() => {});
     }
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: true } : t)));
+    const newTasks = tasks.map((t) => (t.id === task.id ? { ...t, completed: true } : t));
+    setTasks(newTasks);
     toast.success(`Protocolo registrado · +${task.xp_reward} XP`, { duration: 1600 });
     setWorking(null);
+
+    // CLOSE LOOP: ao completar todos → grava sync_score_log + dispara RON
+    const allDone = newTasks.every((t) => t.completed);
+    if (allDone && user?.id) {
+      const avgScore = state === 'power' ? 8.2 : state === 'low' ? 5.5 : 7;
+      await supabase.from('sync_score_logs' as any).insert({
+        user_id: user.id,
+        score: avgScore,
+        feedback_text: `Daily Protocol completo (${newTasks.length} intervenções).`,
+        source: 'daily_protocol_complete',
+      });
+      invalidate();
+      window.dispatchEvent(new CustomEvent('9fit:protocol_completed', { detail: { score: avgScore, state } }));
+    }
   };
+
 
   if (loading) {
     return <div className="h-48 rounded-2xl bg-white/[0.04] animate-pulse" />;
   }
 
-  const done = tasks.filter((t) => t.completed).length;
-  const total = tasks.length;
+  // Adaptive filtering: Low Mode = subset (Neural + Recovery), Power = + bonus
+  let displayTasks = tasks;
+  if (state === 'low') {
+    displayTasks = tasks.filter((t) => t.task_key === 'neural_prep' || t.task_key === 'recovery');
+  }
+  const done = displayTasks.filter((t) => t.completed).length;
+  const total = displayTasks.length + (state === 'power' ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -136,9 +170,11 @@ export function DailyProtocol() {
         <div>
           <p className="text-[10px] tracking-[0.3em] uppercase text-primary/80 font-data">
             DAILY PROTOCOL
+            {state === 'low' && <span className="ml-2 text-amber-400/80">· VERSÃO LEVE</span>}
+            {state === 'power' && <span className="ml-2 text-emerald-400/80">· MODO PEAK</span>}
           </p>
           <h2 className="text-display text-xl text-foreground mt-1">
-            Intervenções fisiológicas do dia
+            {state === 'low' ? 'Recuperação prioritária hoje' : 'Intervenções fisiológicas do dia'}
           </h2>
         </div>
         <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-data">
@@ -147,7 +183,7 @@ export function DailyProtocol() {
       </div>
 
       <div className="space-y-3">
-        {tasks.map((task, idx) => {
+        {displayTasks.map((task, idx) => {
           const def = DEFAULT_TASKS.find((d) => d.key === task.task_key) ?? DEFAULT_TASKS[idx];
           const Icon = def.Icon;
           return (
@@ -202,7 +238,38 @@ export function DailyProtocol() {
             </motion.div>
           );
         })}
+
+        {state === 'power' && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-5 border border-emerald-500/30 bg-emerald-500/[0.04] backdrop-blur-xl"
+          >
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 border border-emerald-500/30">
+                <POWER_BONUS.Icon className="w-6 h-6 text-emerald-400" strokeWidth={1.6} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-display text-base text-foreground">
+                    {POWER_BONUS.title} <span className="text-[9px] tracking-[0.2em] uppercase text-emerald-400/80">OPCIONAL</span>
+                  </h3>
+                  <span className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground font-data">
+                    {POWER_BONUS.duration}
+                  </span>
+                </div>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-emerald-400/70 font-data mb-1.5">
+                  POR QUÊ
+                </p>
+                <p className="text-[13px] text-muted-foreground italic leading-relaxed">
+                  {POWER_BONUS.why}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
+
   );
 }

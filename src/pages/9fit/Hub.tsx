@@ -11,16 +11,21 @@ import { HubPredictiveTip } from "@/components/9fit/HubPredictiveTip";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { RonBubble } from "@/components/9fit/RonBubble";
 import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
+import { QuickMoodInput } from "@/components/9fit/QuickMoodInput";
+import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
 import { useUserState } from "@/hooks/useUserState";
 import { STATE_INSIGHT, STATE_LABEL, STATE_COLOR } from "@/services/adaptiveState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 
+
 export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
-  const { state, reasoning } = useUserState();
+  const { state, reasoning, invalidate } = useUserState();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+
 
 
 
@@ -81,6 +86,29 @@ export default function NineFitHub() {
     })();
   }, [athleteId, user?.id]);
 
+  // Paywall D7+ para usuários não-premium + escuta close-loop do protocolo
+  useEffect(() => {
+    if (!user?.id) return;
+    const createdAt = new Date(user.created_at || Date.now()).getTime();
+    const daysIn = (Date.now() - createdAt) / 86_400_000;
+    const lastShown = Number(localStorage.getItem('9fit_paywall_hub_last') || 0);
+    const cooldownOk = Date.now() - lastShown > 3 * 86_400_000;
+    if (daysIn >= 7 && cooldownOk) {
+      const t = setTimeout(() => {
+        setPaywallOpen(true);
+        localStorage.setItem('9fit_paywall_hub_last', String(Date.now()));
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [user?.id, user?.created_at]);
+
+  useEffect(() => {
+    const onComplete = () => invalidate();
+    window.addEventListener('9fit:protocol_completed', onComplete);
+    return () => window.removeEventListener('9fit:protocol_completed', onComplete);
+  }, [invalidate]);
+
+
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
 
   // Insight adaptativo: prioriza estado inferido (Power/Low/Balanced).
@@ -100,6 +128,11 @@ export default function NineFitHub() {
 
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics />
+
+      {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
+      <QuickMoodInput onLogged={invalidate} />
+
+
 
       {/* 3. RON INSIGHT + state badge */}
       <div className="px-4 mt-8">
@@ -178,6 +211,15 @@ export default function NineFitHub() {
 
       <RonBubble />
       <BottomNavigation />
+
+      <ContextualPaywall
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        context="hub_upsell"
+        headline={`${name}, seu sistema está pronto para o próximo nível.`}
+        subline="7 dias grátis no PRIME · cancele quando quiser"
+      />
+
     </div>
   );
 }
