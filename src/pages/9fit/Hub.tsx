@@ -86,6 +86,29 @@ export default function NineFitHub() {
     })();
   }, [athleteId, user?.id]);
 
+  // Paywall D7+ para usuários não-premium + escuta close-loop do protocolo
+  useEffect(() => {
+    if (!user?.id) return;
+    const createdAt = new Date(user.created_at || Date.now()).getTime();
+    const daysIn = (Date.now() - createdAt) / 86_400_000;
+    const lastShown = Number(localStorage.getItem('9fit_paywall_hub_last') || 0);
+    const cooldownOk = Date.now() - lastShown > 3 * 86_400_000;
+    if (daysIn >= 7 && cooldownOk) {
+      const t = setTimeout(() => {
+        setPaywallOpen(true);
+        localStorage.setItem('9fit_paywall_hub_last', String(Date.now()));
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [user?.id, user?.created_at]);
+
+  useEffect(() => {
+    const onComplete = () => invalidate();
+    window.addEventListener('9fit:protocol_completed', onComplete);
+    return () => window.removeEventListener('9fit:protocol_completed', onComplete);
+  }, [invalidate]);
+
+
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
 
   // Insight adaptativo: prioriza estado inferido (Power/Low/Balanced).
