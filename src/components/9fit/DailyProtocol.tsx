@@ -136,7 +136,7 @@ export function DailyProtocol() {
     toast.success(`Protocolo registrado · +${task.xp_reward} XP`, { duration: 1600 });
     setWorking(null);
 
-    // CLOSE LOOP: ao completar todos → grava sync_score_log + dispara RON
+    // CLOSE LOOP: ao completar todos → grava sync_score_log + dispara RON + auto-navega
     const allDone = newTasks.every((t) => t.completed);
     if (allDone && user?.id) {
       const avgScore = state === 'power' ? 8.2 : state === 'low' ? 5.5 : 7;
@@ -148,6 +148,10 @@ export function DailyProtocol() {
       });
       invalidate();
       window.dispatchEvent(new CustomEvent('9fit:protocol_completed', { detail: { score: avgScore, state } }));
+      // Auto-abre RON após pequeno delay para usuário absorver o toast
+      setTimeout(() => {
+        window.location.assign(`/9fit/ron?auto=1&context=protocol_complete&state=${state}`);
+      }, 1400);
     }
   };
 
