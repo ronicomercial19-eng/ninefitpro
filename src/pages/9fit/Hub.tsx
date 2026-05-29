@@ -13,6 +13,7 @@ import { RonBubble } from "@/components/9fit/RonBubble";
 import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
 import { QuickMoodInput } from "@/components/9fit/QuickMoodInput";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
+import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { useUserState } from "@/hooks/useUserState";
 import { STATE_INSIGHT, STATE_LABEL, STATE_COLOR } from "@/services/adaptiveState";
 import { useNavigate } from "react-router-dom";
@@ -158,6 +159,19 @@ export default function NineFitHub() {
       <div className="px-4 mt-8">
         <DailyProtocol />
       </div>
+
+      {/* 4.5 UPSELL — após protocolo (mais alta intenção) */}
+      <div className="px-4 mt-6">
+        <UpsellBanner
+          context="hub_upsell"
+          storageKey="hub_after_protocol"
+          variant="amber"
+          headline="Desbloqueie protocolos premium e RON v9 completo"
+          cta="Testar 7 dias grátis"
+        />
+      </div>
+
+
 
       {/* 5. RADAR 5D 3D */}
       <div className="px-4 mt-8">
