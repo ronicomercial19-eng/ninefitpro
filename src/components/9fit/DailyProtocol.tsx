@@ -156,8 +156,13 @@ export function DailyProtocol() {
     return <div className="h-48 rounded-2xl bg-white/[0.04] animate-pulse" />;
   }
 
-  const done = tasks.filter((t) => t.completed).length;
-  const total = tasks.length;
+  // Adaptive filtering: Low Mode = subset (Neural + Recovery), Power = + bonus
+  let displayTasks = tasks;
+  if (state === 'low') {
+    displayTasks = tasks.filter((t) => t.task_key === 'neural_prep' || t.task_key === 'recovery');
+  }
+  const done = displayTasks.filter((t) => t.completed).length;
+  const total = displayTasks.length + (state === 'power' ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -165,9 +170,11 @@ export function DailyProtocol() {
         <div>
           <p className="text-[10px] tracking-[0.3em] uppercase text-primary/80 font-data">
             DAILY PROTOCOL
+            {state === 'low' && <span className="ml-2 text-amber-400/80">· VERSÃO LEVE</span>}
+            {state === 'power' && <span className="ml-2 text-emerald-400/80">· MODO PEAK</span>}
           </p>
           <h2 className="text-display text-xl text-foreground mt-1">
-            Intervenções fisiológicas do dia
+            {state === 'low' ? 'Recuperação prioritária hoje' : 'Intervenções fisiológicas do dia'}
           </h2>
         </div>
         <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-data">
@@ -176,7 +183,7 @@ export function DailyProtocol() {
       </div>
 
       <div className="space-y-3">
-        {tasks.map((task, idx) => {
+        {displayTasks.map((task, idx) => {
           const def = DEFAULT_TASKS.find((d) => d.key === task.task_key) ?? DEFAULT_TASKS[idx];
           const Icon = def.Icon;
           return (
