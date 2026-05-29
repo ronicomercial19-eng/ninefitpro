@@ -10,6 +10,9 @@ import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 import { HubPredictiveTip } from "@/components/9fit/HubPredictiveTip";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { RonBubble } from "@/components/9fit/RonBubble";
+import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
+import { useUserState } from "@/hooks/useUserState";
+import { STATE_INSIGHT, STATE_LABEL, STATE_COLOR } from "@/services/adaptiveState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 
