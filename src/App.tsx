@@ -54,6 +54,7 @@ import NineFitPrimePass from "./pages/9fit/PrimePass";
 import NineFitHabitFlow from "./pages/9fit/HabitFlow";
 import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
 import NineFitProtocolo from "./pages/9fit/Protocolo";
+import NineFitPlans from "./pages/9fit/Plans";
 import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
 import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
