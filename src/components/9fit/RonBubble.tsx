@@ -43,7 +43,15 @@ export function RonBubble() {
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
               </motion.div>
               <div className="flex-1 min-w-0">
-                <p className="text-[9px] tracking-[0.25em] uppercase text-primary/80 font-semibold mb-0.5">RON</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-[9px] tracking-[0.25em] uppercase text-primary/80 font-semibold">RON</p>
+                  <span
+                    className="text-[8px] tracking-[0.2em] uppercase font-bold px-1.5 py-px rounded"
+                    style={{ color: STATE_COLOR[state], background: STATE_COLOR[state] + '15' }}
+                  >
+                    {STATE_LABEL[state]}
+                  </span>
+                </div>
                 <p className="text-[13px] text-foreground leading-snug mb-2">{tip.text}</p>
                 <button
                   onClick={() => { dismiss(tip.id); navigate('/9fit/ron'); }}
