@@ -25,10 +25,14 @@ interface Msg {
 
 export default function NineFitRon() {
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const { state } = useUserState();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const autoCtx = params.get("context");
+  const autoTriggered = params.get("auto") === "1";
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,8 +54,21 @@ export default function NineFitRon() {
       } else {
         setMessages(hist);
       }
+
+      // Auto-mensagem contextual quando vier de close-loop
+      if (autoTriggered) {
+        const insights = STATE_INSIGHT[state];
+        const insight = insights[0];
+        const intro =
+          autoCtx === "protocol_complete"
+            ? `Protocolo concluído. Modo ${STATE_LABEL[state]} detectado — ${insight} Quer que eu ajuste o plano de amanhã?`
+            : autoCtx === "hub_card"
+            ? `Você entrou em modo ${STATE_LABEL[state]}. ${insight} Por onde começamos?`
+            : `Estou aqui. O que precisa agora?`;
+        setMessages((p) => [...p, { role: "assistant", content: intro }]);
+      }
     })();
-  }, [user?.id]);
+  }, [user?.id, autoTriggered, autoCtx, state]);
 
   // Realtime: novas mensagens entram sozinhas
   useRealtimeTable(
