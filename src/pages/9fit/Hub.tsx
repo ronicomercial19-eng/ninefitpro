@@ -211,6 +211,15 @@ export default function NineFitHub() {
 
       <RonBubble />
       <BottomNavigation />
+
+      <ContextualPaywall
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        context="hub_upsell"
+        headline={`${name}, seu sistema está pronto para o próximo nível.`}
+        subline="7 dias grátis no PRIME · cancele quando quiser"
+      />
+
     </div>
   );
 }
