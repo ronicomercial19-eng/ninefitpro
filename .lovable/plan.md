@@ -1,191 +1,155 @@
-# Plano de Implementação — Próxima Rodada Completa
+# Wave 19 — Consolidação Final FitPro 9.0
 
-Consolida todas as pendências dos anexos (RON v9, NeuroCore Adaptive, Core Loop Intelligence, Plano de Ativação FitPro, Dossiê Monetização 9.0) + pendências passadas (RON proactive, first-access fix, empty states com peso, onboarding obrigatório).
+Plano consolida 4 frentes prioritárias para elevar o app ao nível 9.0. Reaproveita infra já criada (Waves 13-18: `subscription_plans`, `monetization_events`, `activation_events`, `adaptiveState.ts`, `useUserState`, `ContextualPaywall`, `RonBubble`).
 
-## Wave 13 — Fix First-Access + Empty States com Peso
+---
 
-- **First-Access loop fix:** `useFirstAccess` + `NineFitLayout` já chamam `complete_first_access` RPC. Adicionar `refreshSession()` + invalidar cache local no `FirstAccess.tsx` após submit, forçar `navigate('/9fit/hub', { replace: true })` e setar `localStorage['9fit_first_access_completed']='true'` antes do redirect para impedir loop em race condition.
-- **Onboarding obrigatório:** já guardado em `NineFitLayout` via `athletes.onboarding_completed_at`. Bloquear botão "Pular" no `Onboarding.tsx` (forçar conclusão de campos mínimos: objetivo, frequência semanal, experiência).
-- **EmptyState copy com peso:** revisar `EmptyState.tsx` + todos os usos (Hub/Train/Aulas/Stats) substituindo placeholders genéricos por copy observacional + CTA single-action (ex.: "Seu radar ainda não tem leitura. Faça o primeiro Daily Protocol e o sistema começa a te ler.").
+## 1. MONETIZAÇÃO 9.0
 
-## Wave 14 — RON v9: Memória + Contexto + Adaptive State
+### 1.1 Refinar `src/pages/9fit/Plans.tsx`
 
-### 14.1 Database (migration única)
+- 3 cards lado a lado: **STARTER (Grátis) | PRO | PRIME** (badge "Recomendado" no PRIME).
+- Toggle Mensal/Anual com selo de economia (`Economize 25%`) em destaque.
+- Reescrever copy de features para **linguagem de outcome** (ex: "Treinos que evoluem com você" em vez de "AI Coach v9").
+- Seção **Prova Social** (3 depoimentos curtos + métricas: "+12mil atletas").
+- **FAQ** com 5 perguntas (cancelamento, trial, suporte, troca de plano, pagamento).
+- Visual: dark luxury + glassmorphism + neon accents (amber para PRIME, cyan para PRO).
 
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
+### 1.2 Refinar `ContextualPaywall.tsx`
 
-CREATE TABLE public.ron_long_term_memories (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  memory_type TEXT NOT NULL CHECK (memory_type IN
-    ('fact','preference','injury','goal','insight','adaptation','session_summary','limitation')),
-  content TEXT NOT NULL,
-  embedding VECTOR(1536),
-  importance_score FLOAT DEFAULT 0.7,
-  last_accessed TIMESTAMPTZ DEFAULT now(),
-  source TEXT,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-CREATE INDEX ron_mem_user_idx ON public.ron_long_term_memories(user_id, importance_score DESC);
-CREATE INDEX ron_mem_embed_idx ON public.ron_long_term_memories
-  USING hnsw (embedding vector_cosine_ops);
+- Subheadline dinâmica baseada em `context`:
+  - `post_assessment` → "Com base na sua avaliação de {data}, o PRIME foi feito para você."
+  - `feature_locked` → "Esta feature faz parte do PRIME."
+  - `hub_upsell` → "Acelere seus resultados em 7 dias."
+- Mostrar apenas **PRO + PRIME** (PRIME destacado com glow).
+- Microcopy de confiança: "7 dias grátis • Cancele em 1 clique • Sem fidelidade".
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.ron_long_term_memories TO authenticated;
-GRANT ALL ON public.ron_long_term_memories TO service_role;
-ALTER TABLE public.ron_long_term_memories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "own_memories" ON public.ron_long_term_memories
-  FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+### 1.3 Novo: `src/components/9fit/UpsellBanner.tsx`
 
--- Sync Score histórico para inferência de tendência
-CREATE TABLE public.sync_score_logs (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  score NUMERIC(4,2) NOT NULL,
-  feedback_text TEXT,
-  inferred_state TEXT CHECK (inferred_state IN ('power','low','balanced')),
-  consistency_pct NUMERIC,
-  source TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
--- GRANTs + RLS análogos (user_id = auth.uid())
-```
+- Banner glassmorphism reutilizável (compacto, dismissable, 24h cooldown via localStorage).
+- Props: `context`, `headline`, `cta`, `icon`.
+- Integrar em: `Train.tsx` (topo), `Hub.tsx` (após Daily Protocol), `Stats.tsx` (após gráfico).
 
-### 14.2 Adaptive State Engine (frontend util)
+---
 
-`src/services/adaptiveState.ts` — função `inferUserState({ syncScore, trend, recentConsistency, feedbackText }) → 'power'|'low'|'balanced'` aplicando as regras do anexo NeuroCore v2 (Power >7.5 + consistência boa; Low <5.5 ou queda 3 dias; Balanced senão). Retorna também `reasoning` (string curta) para debug e display.
+## 2. CORE LOOP + RON ADAPTATIVO
 
-Hook `useUserState()` busca últimos 5 `sync_score_logs` + chama engine + cacheia 5min.
+### 2.1 RON auto-abertura pós-protocolo
 
-### 14.3 Context Builder + RON Edge Function refactor
+- No `DailyProtocol.tsx`, ao disparar `9fit:protocol_completed`, navegar para `/9fit/ron?auto=1&context=protocol_complete`.
+- `Ron.tsx` lê query param e abre conversa automática com mensagem inicial do estado atual.
 
-Refatorar `supabase/functions/ai-coach/index.ts` (modo `chat`):
+### 2.2 Refinar `RonBubble.tsx` por estado
 
-- Buscar contexto: profile, atleta, programa ativo, últimos treinos (`treinos_realizados`), última avaliação, últimos 5 sync_scores, top-8 memórias relevantes (busca híbrida: similaridade vetorial 70% + recência 20% + importância 10%).
-- Embedding via Lovable AI Gateway (text-embedding-3-small por custo).
-- Montar prompt com seções `<PERFIL>`, `<CONTEXTO_ATUAL>`, `<ESTADO_INFERIDO>`, `<MEMÓRIAS>`, `<INSTRUÇÕES_RON>` — instruções variam por estado (Power = direto/desafiador, Low = curto/empático, Balanced = equilibrado).
-- Pós-resposta: chamar LLM em modo extração para identificar novas memórias (fact/preference/injury/goal) e inserir em `ron_long_term_memories` com embedding.
+- **Power**: bolha verde, waveform amplitude alta, mensagens 2-3 linhas, tom desafiador.
+- **Low**: bolha âmbar, waveform suave, mensagens 1 linha, tom empático.
+- **Balanced**: bolha neutra, equilíbrio.
+- Mostrar badge de estado ao lado do nome RON.
 
-### 14.4 RON Proactive Trigger
+### 2.3 Hub: card RON & PRESENÇA inteligente
 
-`useProactiveRon` já existe; estender:
+- Em `Hub.tsx`, substituir card RON atual por componente que:
+  - Mostra estado inferido + Sync Score
+  - Mostra **insight do dia** (de `STATE_INSIGHT`)
+  - CTA: "Conversar com RON" → abre RON com contexto pré-carregado
 
-- Trigger automático ao concluir Daily Protocol (event `protocol_completed`).
-- Buscar estado via `useUserState`, abrir `RonBubble` em modo expandido com mensagem inicial pré-gerada referenciando o estado e o último feedback.
-- Persistir o feedback do RON em `ai_insights` para influenciar Hub do dia seguinte.
+### 2.4 Daily Protocol adaptativo (já parcialmente feito)
 
-### 14.5 UI RON adaptive
+- Validar: Low mostra versão leve; Power adiciona bloco extra; Balanced versão padrão.
+- Adicionar **insight contextual** no topo da lista.
 
-`RonBubble.tsx` + `Ron.tsx`:
+---
 
-- Badge de estado (`Power`/`Low`/`Balanced`) com cor (verde/âmbar/neutro).
-- Waveform reage à amplitude do estado (Power = mais ampla, Low = comprimida).
-- Suggestion chips dinâmicas por estado.
+## 3. ATIVAÇÃO — Wizard de Onboarding
 
-## Wave 15 — Core Loop Fechado
+### 3.1 Refatorar `src/pages/9fit/Onboarding.tsx`
 
-- **Hub adaptativo:** `HeroSyncSection` + `HubFloatingMetrics` leem `useUserState`. Insight headline muda por estado (3 variantes por estado).
-- **Daily Protocol adaptativo:** em Low Mode, exibir versão reduzida (subset de cards + chip "Versão leve recomendada hoje"); em Power Mode, exibir desafio extra opcional.
-- **"Como você se sente?":** input quick-emoji (5 níveis) no Hub topo → grava em `sync_score_logs` com `source='hub_mood'` → re-infere estado imediatamente → atualiza RON insight inline.
-- **Loop closing:** ao terminar Daily Protocol → grava sync_score_log com média dos checks → abre RonBubble com feedback contextual → salva insight em `ai_insights` → próximo render do Hub puxa esse insight como headline.
+Wizard 6 passos com progress bar no topo:
 
-## Wave 16 — Ativação FitPro (Onboarding Wizard 9.0)
+1. **Objetivo principal** (emagrecer / hipertrofia / performance / saúde)
+2. **Dados essenciais** (nome, idade, peso, altura, foto opcional)
+3. **Frequência + experiência** (dias/semana, nível)
+4. **Avaliação inicial** (rápida 5 perguntas OU "Pular para completa depois")
+5. **Preview do plano** (chamar `ai-coach` mode `train`, mostrar resumo da semana 1)
+6. **Primeira ação** (CTA: "Iniciar treino agora" → `/9fit/train`)
 
-Refatorar `Onboarding.tsx` em wizard de 5-6 passos com `react-hook-form` + barra de progresso:
+- Bloquear "Pular" nos passos 1-3 (campos obrigatórios validados com `react-hook-form`).
+- Marcar `activation_events` ao final do passo 5 (`first_plan`) e passo 2 (`profile_complete`).
 
-1. Boas-vindas + objetivo principal (Performance/Longevidade/Composição/Força)
-2. Dados essenciais (idade, peso, altura, freq. semanal) com tooltip "porquê"
-3. Avaliação rápida 3-5min OU "Pular com smart defaults" + flag p/ recovery mission
-4. **Preview instantâneo do plano da semana 1** (gerado via ai-coach mode `train` usando dados do wizard)
-5. Primeira ação concreta (CTA "Iniciar Treino de Ativação" ou agendar)
-6. Tour rápido (TRAIN/HUB/Progress) + ativa streak/XP
+### 3.2 Barra de Ativação no Hub
 
-### Activation Tracking
+- Refinar `ActivationMissionCard.tsx`:
+  - Progress bar com 0/6 etapas + percentual
+  - Lista das 6 missões com check ✓ / pendente
+  - "Próxima missão" destacada com CTA direto
+  - Auto-hide quando `percent === 100`
 
-```sql
-CREATE TABLE public.activation_events (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  event_key TEXT NOT NULL,  -- profile_complete | first_assessment | first_plan | first_workout | hub_engagement | streak_7d
-  completed_at TIMESTAMPTZ DEFAULT now(),
-  metadata JSONB DEFAULT '{}'
-);
--- unique(user_id, event_key); GRANTs + RLS auth.uid()
-```
+### 3.3 Gamificação inicial
 
-`useActivationProgress()` hook → retorna `{ completed: N, total: 6, percent, nextMission }`. Card de progresso visível no Hub durante 14 dias após signup.
+- `useActivationProgress`: ao marcar evento, conceder XP bônus via `gamification_events` (50 XP por missão).
+- Streak começa no dia 1 (já existe `StreakBadge.tsx`, validar integração).
 
-### Missões/Badges de Ativação
+---
 
-Componente `ActivationMissionCard` visível no Hub. Ao completar → toast XP + check verde.
+## 4. SOVEREIGN COMMAND CORE (NEXO) — opcional escopo reduzido
 
-## Wave 17 — Monetização 9.0
+> O prompt SCC pressupõe tabelas que **não verifiquei se já existem** no Supabase (`core_tasks`, `agent_executions`, `squad_handoffs`, etc.). Antes de implementar, preciso confirmar com o usuário (ver perguntas abaixo).
 
-### 17.1 Tabela de planos
+Se tabelas existirem:
 
-```sql
-CREATE TABLE public.subscription_plans (
-  id TEXT PRIMARY KEY,  -- starter | pro | prime
-  name TEXT NOT NULL,
-  tagline TEXT,
-  price_monthly NUMERIC,
-  price_yearly NUMERIC,
-  features JSONB DEFAULT '[]',
-  is_recommended BOOLEAN DEFAULT false,
-  display_order INT
-);
-GRANT SELECT ON public.subscription_plans TO anon, authenticated;
--- seed 3 tiers: Starter, PRO, PRIME
+- `src/services/scc/sccService.ts` (5 funções listadas)
+- `src/hooks/useSovereignCore.ts`
+- `src/components/NexoSoberano/CoreDashboard.tsx` (rota admin `/admin/nexo`)
+- `TaskCard.tsx` reutilizável
+- Toast pós-avaliação: "EPSILON está gerando seu plano…"
 
-CREATE TABLE public.monetization_events (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID,
-  event_type TEXT NOT NULL,  -- view_paywall | select_plan | start_trial | convert
-  plan_id TEXT,
-  context TEXT,  -- post_assessment | hub_upsell | dedicated_screen
-  metadata JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
+---
 
-### 17.2 Telas
+## Arquivos a criar/editar
 
-- `src/pages/9fit/Plans.tsx` — dark luxury, 3 cards (mobile-first), destaque PRIME, toggle mensal/anual com badge "economize 2 meses", FAQ + prova social.
-- `src/components/9fit/ContextualPaywall.tsx` — modal glassmorphism com headline dinâmica ("Com base na sua avaliação de X..."), 2 opções (PRO/PRIME), CTA 7 dias trial.
-- **Triggers:**
-  - Pós-avaliação 360 → abre `ContextualPaywall` (1x por 7 dias).
-  - Tentativa de acessar feature premium → paywall contextual.
-  - Hub: banner upsell discreto em `EcosystemStatusCards` para usuários free após D7.
+**Novos:**
 
-### 17.3 Tracking
+- `src/components/9fit/UpsellBanner.tsx`
+- `src/components/9fit/HubRonCard.tsx` (substitui card RON atual)
+- (Se SCC aprovado) `src/services/scc/sccService.ts`, `src/hooks/useSovereignCore.ts`, `src/components/NexoSoberano/CoreDashboard.tsx`, `TaskCard.tsx`
 
-Helper `trackMonetizationEvent(type, plan, context)` chamado em todos os pontos.
+**Refatorados:**
 
-## Wave 18 — Edge Functions & Validação
+- `src/pages/9fit/Plans.tsx` — 3 tiers + anual + social proof + FAQ
+- `src/components/9fit/ContextualPaywall.tsx` — copy dinâmica
+- `src/pages/9fit/Onboarding.tsx` — wizard 6 passos com validação
+- `src/components/9fit/ActivationMissionCard.tsx` — progress bar 0/6
+- `src/components/9fit/RonBubble.tsx` — variações visuais por estado
+- `src/pages/9fit/Ron.tsx` — auto-abertura via query param
+- `src/pages/9fit/Hub.tsx` — UpsellBanner + HubRonCard
+- `src/pages/9fit/Train.tsx`, `src/pages/9fit/Stats.tsx` — UpsellBanner integrado
+- `src/components/9fit/DailyProtocol.tsx` — insight contextual + navegação para RON
 
-- `supabase/functions/ai-coach/index.ts` — refactor com Context Builder + memory extraction.
-- `supabase/functions/embeddings/index.ts` (novo) — endpoint para gerar embeddings via Lovable AI.
-- Validar com `supabase--linter` após cada migration.
-- Tornar tudo idempotente (`ON CONFLICT DO NOTHING` em seeds).
+**Migrações:**
 
-## Ordem de Execução
+- Nenhuma nova migração obrigatória (infra já existe). Apenas seed/update de `subscription_plans` se precisar ajustar features text.
 
-1. Migration única (Wave 14.1 + 16 + 17.1) — tabelas + grants + RLS + pgvector
-2. Edge function ai-coach refactor + nova embeddings
-3. Wave 13 (fixes rápidos)
-4. Wave 14.2–14.5 (Adaptive State + RON UI)
-5. Wave 15 (Core Loop closing)
-6. Wave 16 (Onboarding wizard + activation tracking)
-7. Wave 17 (Plans + Paywall)
-8. Validação final
+---
 
-## Detalhes Técnicos
+## Perguntas antes de implementar
 
-- **Stack:** Vite + React 18 + TS + Tailwind + shadcn + Supabase + pgvector + Lovable AI (Gemini/text-embedding-3-small) + Framer Motion + three.js (já instalado).
-- **Memória/perfil histórico:** `profile_history` já existe (Wave 12). RON usa para retomar contexto.
-- **Identidade:** continua `athletes` como canônica; RON busca via `useAthleteId`.
-- **Sem rótulos neuro:** estados são Power/Low/Balanced apenas.
-- **Idempotência:** todas migrations com `IF NOT EXISTS` / `ON CONFLICT`.
-
-Aprove para eu executar tudo em sequência.  
+1. **Sovereign Core (NEXO):** As tabelas `core_tasks`, `agent_executions`, `squad_handoffs`, `decisions` e as RPCs `scc_create_task` etc. **já existem** no Supabase? Devo implementar a frente 4 ou pular para focar em monetização + onboarding? s
+2. **"Corrigir telas do print":** Você não anexou o print. Quer enviar a captura ou pular essa correção?
+3. **Escopo desta rodada:** Implemento as 4 frentes de uma vez (grande), ou prefere começar por **Monetização (1) + Onboarding Wizard (3)** primeiro e RON adaptativo (2) em seguida?  
+  
+RESPOSTAS :   
+**1. Sovereign Core (NEXO):**  
+**Pular a frente 4 por enquanto.**  
+Não implemente nada relacionado a Sovereign Core, NEXO, core_tasks, agent_executions etc. Foco total nas frentes 1 (Monetização), 2 (RON + Core Loop) e 3 (Ativação/Onboarding).
+  **2. Corrigir telas do print:**  
+  Sim, já enviei as duas telas.
+  - **Tela 1 (Sync Score 0):** Tornar mais acolhedora, motivadora e menos fria. Melhorar o texto e adicionar CTA claro.
+  - **Tela 2 (Hub):** Melhorar visual do card de Ativação 0/6 (progress bar + checklist), card do RON Insight e hierarquia geral.
+  **3. Escopo desta rodada:**  
+  **Comece com foco e ordem clara:**
+  **Prioridade 1 (fazer primeiro):**
+  - Monetização 9.0 completa (Tela de Planos + Paywall Contextual + UpsellBanner)
+  **Prioridade 2:**
+  - Melhorias no Hub (card RON & PRESENÇA, card Ativação 0/6, ajustes de UI/UX)
+  **Prioridade 3:**
+  - RON Adaptativo + ajustes na tela de calibração
