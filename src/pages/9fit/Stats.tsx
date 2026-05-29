@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Flame, Dumbbell, Trophy, Calendar, Loader2, Star, TrendingUp, Target } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { format, subDays, startOfWeek, addDays } from "date-fns";
 import { getAthleteStats, getAthleteById } from '@/services/athletes.service';
@@ -157,6 +158,17 @@ export default function NineFitStats() {
           </div>
         </div>
       </div>
+
+      <div className="px-4 mb-6">
+        <UpsellBanner
+          context="hub_upsell"
+          storageKey="stats_after_chart"
+          variant="amber"
+          headline="Previsões precisas e relatórios avançados no PRIME"
+          cta="Testar 7 dias grátis"
+        />
+      </div>
+
 
       <div className="px-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-4">Conquistas</h2>

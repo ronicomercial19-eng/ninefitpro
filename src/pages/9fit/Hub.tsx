@@ -7,7 +7,7 @@ import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
 import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
 import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
-import { HubPredictiveTip } from "@/components/9fit/HubPredictiveTip";
+import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { RonBubble } from "@/components/9fit/RonBubble";
 import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
@@ -15,7 +15,6 @@ import { QuickMoodInput } from "@/components/9fit/QuickMoodInput";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
 import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { useUserState } from "@/hooks/useUserState";
-import { STATE_INSIGHT, STATE_LABEL, STATE_COLOR } from "@/services/adaptiveState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 
@@ -24,7 +23,7 @@ export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
-  const { state, reasoning, invalidate } = useUserState();
+  const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
 
 
@@ -112,11 +111,6 @@ export default function NineFitHub() {
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
 
-  // Insight adaptativo: prioriza estado inferido (Power/Low/Balanced).
-  const stateInsights = STATE_INSIGHT[state];
-  const insight = stateInsights[card.syncScore % stateInsights.length] ||
-    `Sync ${card.syncScore}. ${reasoning}`;
-
   return (
     <div className="min-h-screen bg-background pb-28">
       {/* 1. HERO SYNC — full bleed B&W + halo */}
@@ -133,20 +127,9 @@ export default function NineFitHub() {
       {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
       <QuickMoodInput onLogged={invalidate} />
 
-
-
-      {/* 3. RON INSIGHT + state badge */}
+      {/* 3. RON & PRESENÇA — card inteligente substitui tip simples */}
       <div className="px-4 mt-8">
-        <div className="flex items-center gap-2 mb-2">
-          <span
-            className="text-[9px] tracking-[0.3em] uppercase font-bold px-2 py-0.5 rounded-full border"
-            style={{ color: STATE_COLOR[state], borderColor: STATE_COLOR[state] + '40' }}
-          >
-            {STATE_LABEL[state]}
-          </span>
-          <span className="text-[10px] text-muted-foreground">{reasoning}</span>
-        </div>
-        <HubPredictiveTip tip={insight} context="Toque para conversar com o RON" />
+        <HubRonCard syncScore={card.syncScore} name={name} />
       </div>
 
       {/* 3.5 ATIVAÇÃO 14d */}

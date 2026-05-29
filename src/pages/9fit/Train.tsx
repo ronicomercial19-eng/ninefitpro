@@ -11,6 +11,7 @@ import { WorkoutHome } from "@/components/9fit/WorkoutHome";
 import { WorkoutOverview } from "@/components/9fit/WorkoutOverview";
 import { WorkoutExecution } from "@/components/9fit/WorkoutExecution";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
+import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Film, Dumbbell as DumbIcon, Target } from "lucide-react";
@@ -155,6 +156,18 @@ export default function NineFitTrain() {
           {flow === "HOME" ? "MEUS TREINOS" : "VISÃO GERAL"}
         </h1>
       </div>
+
+      {/* Upsell contextual no topo de Train */}
+      <div className="px-4 mb-3">
+        <UpsellBanner
+          context="feature_locked"
+          storageKey="train_top"
+          variant="cyan"
+          headline="IA personaliza cada treino em tempo real no PRIME"
+          cta="Ativar 7 dias grátis"
+        />
+      </div>
+
 
       {/* Internal sub-tabs */}
       {flow === "HOME" && (
