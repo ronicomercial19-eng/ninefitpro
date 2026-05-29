@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Brain, Dumbbell, Apple, Wind, Check } from "lucide-react";
+import { Brain, Dumbbell, Apple, Wind, Check, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useUserState } from "@/hooks/useUserState";
+
 
 interface Task {
   id: string;
