@@ -131,10 +131,26 @@ export function DailyProtocol() {
         })
         .then(() => {});
     }
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: true } : t)));
+    const newTasks = tasks.map((t) => (t.id === task.id ? { ...t, completed: true } : t));
+    setTasks(newTasks);
     toast.success(`Protocolo registrado · +${task.xp_reward} XP`, { duration: 1600 });
     setWorking(null);
+
+    // CLOSE LOOP: ao completar todos → grava sync_score_log + dispara RON
+    const allDone = newTasks.every((t) => t.completed);
+    if (allDone && user?.id) {
+      const avgScore = state === 'power' ? 8.2 : state === 'low' ? 5.5 : 7;
+      await supabase.from('sync_score_logs' as any).insert({
+        user_id: user.id,
+        score: avgScore,
+        feedback_text: `Daily Protocol completo (${newTasks.length} intervenções).`,
+        source: 'daily_protocol_complete',
+      });
+      invalidate();
+      window.dispatchEvent(new CustomEvent('9fit:protocol_completed', { detail: { score: avgScore, state } }));
+    }
   };
+
 
   if (loading) {
     return <div className="h-48 rounded-2xl bg-white/[0.04] animate-pulse" />;
