@@ -83,11 +83,10 @@ export default function NineFitHub() {
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
 
-  const insight = card.syncScore >= 75
-    ? `Sync ${card.syncScore} — consistência excelente. Mantenha o ritmo.`
-    : card.syncScore >= 50
-    ? `Sync ${card.syncScore}. Priorize sono e nutrição esta semana.`
-    : `Sync ${card.syncScore}. Comece pelo Daily Protocol agora.`;
+  // Insight adaptativo: prioriza estado inferido (Power/Low/Balanced).
+  const stateInsights = STATE_INSIGHT[state];
+  const insight = stateInsights[card.syncScore % stateInsights.length] ||
+    `Sync ${card.syncScore}. ${reasoning}`;
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -102,10 +101,25 @@ export default function NineFitHub() {
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics />
 
-      {/* 3. RON INSIGHT */}
+      {/* 3. RON INSIGHT + state badge */}
       <div className="px-4 mt-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="text-[9px] tracking-[0.3em] uppercase font-bold px-2 py-0.5 rounded-full border"
+            style={{ color: STATE_COLOR[state], borderColor: STATE_COLOR[state] + '40' }}
+          >
+            {STATE_LABEL[state]}
+          </span>
+          <span className="text-[10px] text-muted-foreground">{reasoning}</span>
+        </div>
         <HubPredictiveTip tip={insight} context="Toque para conversar com o RON" />
       </div>
+
+      {/* 3.5 ATIVAÇÃO 14d */}
+      <div className="px-4 mt-6">
+        <ActivationMissionCard />
+      </div>
+
 
       {/* 4. DAILY PROTOCOL — premium fisiológico */}
       <div className="px-4 mt-8">
