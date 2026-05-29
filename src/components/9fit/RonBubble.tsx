@@ -2,14 +2,18 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
 import { useProactiveRon } from '@/hooks/useProactiveRon';
+import { useUserState } from '@/hooks/useUserState';
+import { STATE_LABEL, STATE_COLOR } from '@/services/adaptiveState';
 
 /**
  * Bubble flutuante do RON proativo — canto inferior direito, acima do BottomNav.
  * Dismissable (persistido por dia em localStorage via useProactiveRon).
+ * Exibe badge de estado adaptativo (Power/Low/Balanced).
  */
 export function RonBubble() {
   const navigate = useNavigate();
   const { tip, dismiss } = useProactiveRon();
+  const { state } = useUserState();
 
   return (
     <AnimatePresence>
