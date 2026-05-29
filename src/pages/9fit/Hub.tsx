@@ -19,7 +19,10 @@ import { Crown, ChevronRight, Library } from "lucide-react";
 export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
+  const navigate = useNavigate();
   const { state, reasoning } = useUserState();
+
+
 
   const [card, setCard] = useState({ level: 1, classTier: "Diamante", syncScore: 0, streak: 0, totalXP: 0 });
   const [breakdown, setBreakdown] = useState({ treino: 0, nutri: 0, sono: 0, mob: 0, hidr: 0 });
