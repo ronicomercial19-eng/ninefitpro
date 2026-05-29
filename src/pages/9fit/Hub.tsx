@@ -129,6 +129,11 @@ export default function NineFitHub() {
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics />
 
+      {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
+      <QuickMoodInput onLogged={invalidate} />
+
+
+
       {/* 3. RON INSIGHT + state badge */}
       <div className="px-4 mt-8">
         <div className="flex items-center gap-2 mb-2">
