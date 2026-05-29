@@ -46,11 +46,22 @@ const DEFAULT_TASKS = [
   },
 ] as const;
 
+// Desafio extra opcional para Power Mode
+const POWER_BONUS = {
+  key: "power_bonus",
+  title: "Bloco Extra",
+  duration: "12 min",
+  Icon: Flame,
+  why: "Sinais indicam capacidade de absorver mais carga hoje. Bloco extra opcional para aproveitar a janela hormonal.",
+} as const;
+
 export function DailyProtocol() {
   const { user } = useAuth();
+  const { state, invalidate } = useUserState();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!user?.id) return;
