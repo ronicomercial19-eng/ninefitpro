@@ -1,9 +1,12 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { RonWaveform } from "@/components/9fit/RonWaveform";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { useUserState } from "@/hooks/useUserState";
+import { STATE_INSIGHT, STATE_LABEL } from "@/services/adaptiveState";
 import { Send } from "lucide-react";
 
 const SUGGESTIONS = [
