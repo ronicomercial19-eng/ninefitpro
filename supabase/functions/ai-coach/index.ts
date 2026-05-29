@@ -53,35 +53,79 @@ serve(async (req) => {
     let chatMessages: any[] = [];
 
     if (mode === "chat") {
-      // Build live context for RON
+      // Build live context for RON (v9: profile + sync logs + state + memories)
       let ctx = "";
+      let inferredState = "balanced";
       if (userId) {
         try {
           const { data: ath } = await authClient
             .from("athletes")
-            .select("id, name, level, xp_total, total_xp, sync_score")
+            .select("id, name, level, xp_total, total_xp, sync_score, preferred_goal")
             .or(`user_id.eq.${userId}`)
             .maybeSingle();
           if (ath) {
-            ctx += `\nAluno: ${ath.name} • Nível ${ath.level || 1} • Sync ${ath.sync_score || 0} • XP ${ath.xp_total || ath.total_xp || 0}.`;
+            ctx += `\n<PERFIL>${ath.name} • Nível ${ath.level || 1} • Sync ${ath.sync_score || 0} • XP ${ath.xp_total || ath.total_xp || 0} • Objetivo ${ath.preferred_goal || 'NI'}</PERFIL>`;
           }
+
+          // Sync score history → infer state
+          const { data: scoreLogs } = await authClient
+            .from("sync_score_logs")
+            .select("score, feedback_text, created_at")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(5);
+          if (scoreLogs?.length) {
+            const scores = scoreLogs.map((l: any) => Number(l.score));
+            const latest = scores[0];
+            const feedback = scoreLogs[0]?.feedback_text || "";
+            const trendDown = scores.length >= 3 && scores[2] - scores[0] > 1;
+            const negativeKw = /(cansad|exaust|fadiga|dor |estafad|lesion)/i.test(feedback);
+            if (negativeKw || (trendDown && latest < 6) || latest < 5.5) inferredState = "low";
+            else if (latest > 7.5) inferredState = "power";
+            ctx += `\n<ESTADO_INFERIDO>${inferredState.toUpperCase()} (sync atual: ${latest}, últimos: ${scores.join(',')})</ESTADO_INFERIDO>`;
+            if (feedback) ctx += `\n<ULTIMO_FEEDBACK>${feedback.slice(0, 200)}</ULTIMO_FEEDBACK>`;
+          }
+
+          // Top memories (sem embedding ainda — apenas top por importância + recência)
+          const { data: mems } = await authClient
+            .from("ron_long_term_memories")
+            .select("memory_type, content, importance_score")
+            .eq("user_id", userId)
+            .order("importance_score", { ascending: false })
+            .limit(8);
+          if (mems?.length) {
+            ctx += `\n<MEMORIAS>\n${mems.map((m: any) => `[${m.memory_type}] ${m.content}`).join("\n")}\n</MEMORIAS>`;
+          }
+
           const { data: lastReg } = await authClient
             .from("master_registry")
-            .select("event_type, created_at, payload")
+            .select("event_type, created_at")
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .limit(5);
           if (lastReg?.length) {
-            ctx += `\nÚltimos eventos: ${lastReg.map((r: any) => r.event_type).join(", ")}.`;
+            ctx += `\n<EVENTOS_RECENTES>${lastReg.map((r: any) => r.event_type).join(", ")}</EVENTOS_RECENTES>`;
           }
         } catch (_) { /* context optional */ }
       }
 
-      systemPrompt = `Você é o RON — Neural Coach do 9FIT.
-Tom: direto, conciso, motivador, baseado em ciência. Português brasileiro.
-Responda em no máximo 3 parágrafos curtos. Use frases de impacto.
-Quando tiver dados do aluno, referencie Sync, XP, streak ou hábitos recentes.
-${ctx}`;
+      const stateInstructions: Record<string, string> = {
+        power: "Tom direto, desafiador e energético. Respostas médio-longas. Foco em progressão.",
+        low:   "Tom curto, empático e acolhedor. Respostas concisas. Priorize recuperação e consistência pequena.",
+        balanced: "Tom equilibrado e claro. Respostas normais. Foco em execução.",
+      };
+
+      systemPrompt = `Você é o RON — Neural Coach do 9FIT, Layer 2 de Inteligência.
+${stateInstructions[inferredState]}
+Português brasileiro. Use o contexto abaixo em TODAS as respostas. Quando citar dados, seja específico.
+NUNCA invente dados que não estão no contexto.
+${ctx}
+
+<INSTRUÇÕES_RON>
+- Referencie Sync Score, estado e feedbacks anteriores quando relevante.
+- Se identificar nova preferência, lesão, meta ou fato do usuário, mencione brevemente que vai lembrar disso.
+- Adapte tom conforme estado inferido acima.
+</INSTRUÇÕES_RON>`;
 
       // Build messages: prefer explicit `messages[]`, fall back to history + message
       if (messages.length > 0) {

@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_events: {
+        Row: {
+          completed_at: string | null
+          event_key: string
+          id: number
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          event_key: string
+          id?: number
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          event_key?: string
+          id?: number
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_chat_messages: {
         Row: {
           content: string
@@ -2449,6 +2473,36 @@ export type Database = {
         }
         Relationships: []
       }
+      monetization_events: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          event_type: string
+          id: number
+          metadata: Json | null
+          plan_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string | null
+          event_type: string
+          id?: number
+          metadata?: Json | null
+          plan_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string | null
+          event_type?: string
+          id?: number
+          metadata?: Json | null
+          plan_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ninefit_checkins: {
         Row: {
           alimentacao: number | null
@@ -4063,6 +4117,45 @@ export type Database = {
           },
         ]
       }
+      ron_long_term_memories: {
+        Row: {
+          content: string
+          created_at: string | null
+          embedding: string | null
+          id: number
+          importance_score: number | null
+          last_accessed: string | null
+          memory_type: string
+          metadata: Json | null
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: number
+          importance_score?: number | null
+          last_accessed?: string | null
+          memory_type: string
+          metadata?: Json | null
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: number
+          importance_score?: number | null
+          last_accessed?: string | null
+          memory_type?: string
+          metadata?: Json | null
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ron_memory: {
         Row: {
           confidence: number | null
@@ -5341,6 +5434,42 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          features: Json | null
+          id: string
+          is_recommended: boolean | null
+          name: string
+          price_monthly: number | null
+          price_yearly: number | null
+          tagline: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          features?: Json | null
+          id: string
+          is_recommended?: boolean | null
+          name: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          tagline?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          features?: Json | null
+          id?: string
+          is_recommended?: boolean | null
+          name?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          tagline?: string | null
+        }
+        Relationships: []
+      }
       super_sets: {
         Row: {
           created_at: string | null
@@ -5410,6 +5539,42 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sync_score_logs: {
+        Row: {
+          consistency_pct: number | null
+          created_at: string | null
+          feedback_text: string | null
+          id: number
+          inferred_state: string | null
+          metadata: Json | null
+          score: number
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          consistency_pct?: number | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: number
+          inferred_state?: string | null
+          metadata?: Json | null
+          score: number
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          consistency_pct?: number | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: number
+          inferred_state?: string | null
+          metadata?: Json | null
+          score?: number
+          source?: string | null
+          user_id?: string
         }
         Relationships: []
       }

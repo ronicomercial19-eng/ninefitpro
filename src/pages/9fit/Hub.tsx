@@ -10,6 +10,9 @@ import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 import { HubPredictiveTip } from "@/components/9fit/HubPredictiveTip";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { RonBubble } from "@/components/9fit/RonBubble";
+import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
+import { useUserState } from "@/hooks/useUserState";
+import { STATE_INSIGHT, STATE_LABEL, STATE_COLOR } from "@/services/adaptiveState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 
@@ -17,6 +20,9 @@ export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
+  const { state, reasoning } = useUserState();
+
+
 
   const [card, setCard] = useState({ level: 1, classTier: "Diamante", syncScore: 0, streak: 0, totalXP: 0 });
   const [breakdown, setBreakdown] = useState({ treino: 0, nutri: 0, sono: 0, mob: 0, hidr: 0 });
@@ -77,11 +83,10 @@ export default function NineFitHub() {
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
 
-  const insight = card.syncScore >= 75
-    ? `Sync ${card.syncScore} — consistência excelente. Mantenha o ritmo.`
-    : card.syncScore >= 50
-    ? `Sync ${card.syncScore}. Priorize sono e nutrição esta semana.`
-    : `Sync ${card.syncScore}. Comece pelo Daily Protocol agora.`;
+  // Insight adaptativo: prioriza estado inferido (Power/Low/Balanced).
+  const stateInsights = STATE_INSIGHT[state];
+  const insight = stateInsights[card.syncScore % stateInsights.length] ||
+    `Sync ${card.syncScore}. ${reasoning}`;
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -96,10 +101,25 @@ export default function NineFitHub() {
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics />
 
-      {/* 3. RON INSIGHT */}
+      {/* 3. RON INSIGHT + state badge */}
       <div className="px-4 mt-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="text-[9px] tracking-[0.3em] uppercase font-bold px-2 py-0.5 rounded-full border"
+            style={{ color: STATE_COLOR[state], borderColor: STATE_COLOR[state] + '40' }}
+          >
+            {STATE_LABEL[state]}
+          </span>
+          <span className="text-[10px] text-muted-foreground">{reasoning}</span>
+        </div>
         <HubPredictiveTip tip={insight} context="Toque para conversar com o RON" />
       </div>
+
+      {/* 3.5 ATIVAÇÃO 14d */}
+      <div className="px-4 mt-6">
+        <ActivationMissionCard />
+      </div>
+
 
       {/* 4. DAILY PROTOCOL — premium fisiológico */}
       <div className="px-4 mt-8">
