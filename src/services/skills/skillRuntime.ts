@@ -37,17 +37,18 @@ export async function loadActiveSkillsFor(_userId: string): Promise<ActiveSkill[
 }
 
 export async function buildSkillContext(userId: string, moduleContext = "general"): Promise<SkillContext> {
-  const [{ data: athlete }, skills] = await Promise.all([
-    supabase.from("athletes").select("id, level, objective, experience_level").eq("user_id", userId).maybeSingle(),
+  const [{ data: athleteRaw }, skills] = await Promise.all([
+    supabase.from("athletes").select("id, level, experience_level").eq("user_id", userId).maybeSingle(),
     loadActiveSkillsFor(userId),
   ]);
+  const athlete = athleteRaw as any;
 
   let bio: SkillContext["bio"] = {};
   if (athlete?.id) {
     const [{ data: hrv }, { data: sleep }, { data: rec }] = await Promise.all([
-      supabase.from("bio_hrv_logs").select("hrv_ms").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("bio_sleep_logs").select("duration_min").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("bio_recovery_state").select("score").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("bio_hrv_logs" as any).select("hrv_ms").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("bio_sleep_logs" as any).select("duration_min").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("bio_recovery_state" as any).select("score").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     bio = { hrv: (hrv as any)?.hrv_ms ?? null, sleep: (sleep as any)?.duration_min ?? null, recovery: (rec as any)?.score ?? null };
   }
@@ -55,7 +56,7 @@ export async function buildSkillContext(userId: string, moduleContext = "general
   return {
     userId,
     athleteId: athlete?.id,
-    profile: athlete ? { level: (athlete as any).level, objective: (athlete as any).objective, experience: (athlete as any).experience_level } : undefined,
+    profile: athlete ? { level: athlete.level, experience: athlete.experience_level } : undefined,
     bio,
     activeSkills: skills,
     moduleContext,
