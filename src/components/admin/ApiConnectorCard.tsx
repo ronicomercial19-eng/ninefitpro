@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Cpu, Plug, RefreshCw, CheckCircle2, KeyRound } from "lucide-react";
+import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   moduleKey: string;
@@ -14,12 +15,15 @@ interface Props {
   icon?: React.ComponentType<{ className?: string }>;
   endpointPlaceholder?: string;
   docsUrl?: string;
+  provider?: string;
+  authMode?: "none" | "apikey" | "oauth" | "iframe_sso";
   onSync?: (apiKey: string, endpoint?: string) => Promise<void> | void;
 }
 
 /**
- * Generic UI to register an external API key + endpoint for an integration module.
- * Persists in localStorage (`9fit.api.${moduleKey}`) and exposes a sync action.
+ * Registra / atualiza um connector na tabela `api_connectors`.
+ * Secret nunca é exposto: persistimos apenas `secret_ref` (chave lógica)
+ * e o último resumo em `config.apikey_hint`.
  */
 export function ApiConnectorCard({
   moduleKey,
@@ -28,36 +32,71 @@ export function ApiConnectorCard({
   icon: Icon = Plug,
   endpointPlaceholder,
   docsUrl,
+  provider,
+  authMode = "apikey",
   onSync,
 }: Props) {
-  const storageKey = `9fit.api.${moduleKey}`;
   const [apiKey, setApiKey] = useState("");
   const [endpoint, setEndpoint] = useState("");
+  const [iframeUrl, setIframeUrl] = useState("");
   const [connected, setConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        const p = JSON.parse(raw);
-        setApiKey(p.apiKey || "");
-        setEndpoint(p.endpoint || "");
-        setConnected(!!p.apiKey);
-        setLastSync(p.lastSync || null);
-      }
-    } catch {}
-  }, [storageKey]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [moduleKey]);
 
-  const save = () => {
-    if (!apiKey.trim()) { toast.error("Informe a API Key"); return; }
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({ apiKey, endpoint, lastSync, savedAt: new Date().toISOString() })
-    );
-    setConnected(true);
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("api_connectors")
+      .select("*")
+      .eq("key", moduleKey)
+      .maybeSingle();
+    if (data) {
+      setEndpoint(data.endpoint ?? "");
+      setIframeUrl(data.iframe_url ?? "");
+      setConnected(data.status === "active");
+      setUpdatedAt(data.updated_at);
+      // never re-show secret; only hint
+      const hint = (data.config as any)?.apikey_hint;
+      if (hint) setApiKey(`••••${hint}`);
+    }
+    setLoading(false);
+  }
+
+  const save = async () => {
+    const clean = apiKey.startsWith("••••") ? null : apiKey.trim();
+    if (authMode === "apikey" && !clean && !connected) {
+      toast.error("Informe a API Key"); return;
+    }
+    const hint = clean ? clean.slice(-4) : (apiKey.startsWith("••••") ? apiKey.slice(-4) : null);
+    const payload: any = {
+      key: moduleKey,
+      provider: provider ?? moduleKey,
+      auth_mode: authMode,
+      endpoint: endpoint || null,
+      iframe_url: iframeUrl || null,
+      status: "active",
+      secret_ref: clean ? `${moduleKey}:${Date.now()}` : undefined,
+      config: { apikey_hint: hint },
+    };
+    const { error } = await supabase
+      .from("api_connectors")
+      .upsert(payload, { onConflict: "key" });
+    if (error) { toast.error(error.message); return; }
     toast.success(`${title} conectado`);
+    setConnected(true);
+    if (clean) setApiKey(`••••${hint}`);
+    load();
+  };
+
+  const disconnect = async () => {
+    await supabase.from("api_connectors").update({ status: "inactive" }).eq("key", moduleKey);
+    setConnected(false);
+    setApiKey("");
+    toast.info("Desconectado");
+    load();
   };
 
   const sync = async () => {
@@ -65,21 +104,14 @@ export function ApiConnectorCard({
     setSyncing(true);
     try {
       if (onSync) await onSync(apiKey, endpoint || undefined);
-      const ts = new Date().toISOString();
-      setLastSync(ts);
-      localStorage.setItem(storageKey, JSON.stringify({ apiKey, endpoint, lastSync: ts }));
+      await supabase.from("api_connectors")
+        .update({ config: { apikey_hint: apiKey.slice(-4), last_sync: new Date().toISOString() } })
+        .eq("key", moduleKey);
       toast.success("Sincronizado");
+      load();
     } catch (e: any) {
       toast.error(e?.message || "Falha na sincronização");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const disconnect = () => {
-    localStorage.removeItem(storageKey);
-    setApiKey(""); setEndpoint(""); setConnected(false); setLastSync(null);
-    toast.info("Desconectado");
+    } finally { setSyncing(false); }
   };
 
   return (
@@ -95,37 +127,41 @@ export function ApiConnectorCard({
               <p className="text-xs text-muted-foreground max-w-md">{description}</p>
             </div>
           </div>
-          {connected ? (
+          {loading ? (
+            <Badge variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Carregando</Badge>
+          ) : connected ? (
             <Badge className="bg-primary/15 text-primary border-primary/30">
               <CheckCircle2 className="w-3 h-3 mr-1" /> Conectado
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              Aguardando API
-            </Badge>
+            <Badge variant="outline" className="text-muted-foreground">Aguardando API</Badge>
           )}
         </div>
 
         <div className="grid gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest flex items-center gap-1.5">
-              <KeyRound className="w-3 h-3" /> API Key
-            </Label>
-            <Input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-..."
-            />
-          </div>
+          {authMode === "apikey" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-widest flex items-center gap-1.5">
+                <KeyRound className="w-3 h-3" /> API Key
+              </Label>
+              <Input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-..."
+              />
+            </div>
+          )}
           {endpointPlaceholder && (
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-widest">Endpoint</Label>
-              <Input
-                value={endpoint}
-                onChange={(e) => setEndpoint(e.target.value)}
-                placeholder={endpointPlaceholder}
-              />
+              <Input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder={endpointPlaceholder} />
+            </div>
+          )}
+          {authMode === "iframe_sso" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-widest">Iframe URL</Label>
+              <Input value={iframeUrl} onChange={(e) => setIframeUrl(e.target.value)} placeholder="https://..." />
             </div>
           )}
         </div>
@@ -140,25 +176,18 @@ export function ApiConnectorCard({
             Sincronizar
           </Button>
           {connected && (
-            <Button variant="ghost" onClick={disconnect} className="text-muted-foreground">
-              Desconectar
-            </Button>
+            <Button variant="ghost" onClick={disconnect} className="text-muted-foreground">Desconectar</Button>
           )}
           {docsUrl && (
-            <a
-              href={docsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-primary underline ml-auto"
-            >
+            <a href={docsUrl} target="_blank" rel="noreferrer" className="text-xs text-primary underline ml-auto">
               Docs da API
             </a>
           )}
         </div>
 
-        {lastSync && (
+        {updatedAt && (
           <p className="text-[10px] font-mono text-muted-foreground">
-            Última sincronização: {new Date(lastSync).toLocaleString("pt-BR")}
+            Atualizado: {new Date(updatedAt).toLocaleString("pt-BR")}
           </p>
         )}
       </CardContent>
