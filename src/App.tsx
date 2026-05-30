@@ -55,6 +55,8 @@ import NineFitHabitFlow from "./pages/9fit/HabitFlow";
 import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
 import NineFitProtocolo from "./pages/9fit/Protocolo";
 import NineFitPlans from "./pages/9fit/Plans";
+import NineFitPrime from "./pages/9fit/Prime";
+import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
 import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
 import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
@@ -69,6 +71,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <MissionCompleteOverlay />
         <BrowserRouter>
           <SovereignBootstrap>
           <Routes>
@@ -251,6 +254,7 @@ const App = () => (
             <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
             <Route path="/9fit/protocolo" element={<NineFitLayout><NineFitProtocolo /></NineFitLayout>} />
             <Route path="/9fit/planos" element={<NineFitLayout><NineFitPlans /></NineFitLayout>} />
+            <Route path="/9fit/prime" element={<NineFitLayout><NineFitPrime /></NineFitLayout>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
