@@ -38,14 +38,17 @@ export function ActivationMissionCard() {
       {/* Halo accent */}
       <div className="absolute -top-16 -right-16 w-40 h-40 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative flex items-center justify-between mb-3">
+      <button
+        onClick={() => navigate('/9fit/ativacao')}
+        className="relative w-full flex items-center justify-between mb-3 text-left"
+      >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
             <Rocket className="w-4 h-4 text-primary" />
           </div>
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-primary font-black leading-none">Sua ativação</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Primeiros 14 dias</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Ver todas as missões →</p>
           </div>
         </div>
         <div className="text-right">
@@ -54,7 +57,7 @@ export function ActivationMissionCard() {
           </p>
           <p className="text-[9px] tracking-wider uppercase text-muted-foreground mt-1">{percent}% completo</p>
         </div>
-      </div>
+      </button>
 
       {/* Progress bar */}
       <div className="relative h-2 bg-white/[0.06] rounded-full overflow-hidden mb-4">

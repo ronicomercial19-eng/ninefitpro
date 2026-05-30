@@ -49,6 +49,8 @@ const menuItems = [
   { title: 'Postura Pro', url: '/app/postura-pro', icon: Activity },
   { title: 'RON', url: '/app/ron', icon: Bot },
   { title: 'NEXUS', url: '/app/nexus', icon: Atom },
+  { title: 'Skills', url: '/app/skills', icon: Brain },
+  { title: 'Monetização', url: '/app/monetizacao', icon: Sparkles },
   { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
   { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
   { title: 'Roadmap', url: '/app/roadmap', icon: Map },

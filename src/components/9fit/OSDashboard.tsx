@@ -9,6 +9,8 @@ import { RecommendationCard } from './RecommendationCard';
 import { EcosystemGrid } from './EcosystemGrid';
 import { DynamicOffers } from './DynamicOffers';
 import { QuickCheckIn } from './QuickCheckIn';
+import { ActivationMissionCard } from './ActivationMissionCard';
+import { ActiveSkillsBadge } from './ActiveSkillsBadge';
 import { awardXP } from '@/services/engrenagem/gamificationEngine';
 import { toast } from 'sonner';
 
@@ -61,6 +63,12 @@ export function OSDashboard() {
         streak={streak}
         classTier={totalXp > 2000 ? 'Elite' : 'Diamante'}
       />
+
+      {/* Card de ativação (link para /9fit/ativacao) */}
+      <ActivationMissionCard />
+
+      {/* Inteligência ativa (skills) */}
+      <ActiveSkillsBadge />
 
       {/* Check-in da próxima aula → abre fluxo Staff */}
       <QuickCheckIn />
