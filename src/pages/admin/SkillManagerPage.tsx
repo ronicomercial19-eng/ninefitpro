@@ -74,7 +74,7 @@ export default function SkillManagerPage() {
             <p className="text-xs text-muted-foreground">Professor publica → Nexus sincroniza → Aluno consome.</p>
           </div>
         </div>
-        <Button onClick={() => setEditing({ ...empty })}><Plus className="w-4 h-4 mr-2" /> Nova skill</Button>
+        <Button onClick={() => setEditing({ ...empty })}><Plus className="w-4 h-4 mr-2" /> Adicionar Skill Manualmente</Button>
       </div>
 
       <SkillUploader onDone={load} />
