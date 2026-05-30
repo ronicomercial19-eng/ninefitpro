@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Image as ImageIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { MODULE_IMAGES } from "@/assets/modules";
 
 interface PhysioModule {
   id: string; key: string; name: string; description: string;
@@ -31,11 +32,14 @@ export function EcosystemGrid({ category }: { category?: string }) {
       </header>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {items.map((m) => (
-          <Card key={m.id} className="bg-card border-border hover:border-primary/40 transition-colors">
+          {(() => {
+            const src = MODULE_IMAGES[m.key] || m.hero_image;
+            return (
+          <Card key={m.id} className="bg-card border-border hover:border-primary/40 transition-colors overflow-hidden">
             <CardContent className="p-4 space-y-3">
               <div className="aspect-video rounded-md bg-muted overflow-hidden grid place-items-center">
-                {m.hero_image ? (
-                  <img src={m.hero_image} alt={m.name} loading="lazy" className="w-full h-full object-cover" />
+                {src ? (
+                  <img src={src} alt={m.name} loading="lazy" width={768} height={512} className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-6 h-6 text-muted-foreground" />
                 )}
@@ -50,6 +54,8 @@ export function EcosystemGrid({ category }: { category?: string }) {
               </Button>
             </CardContent>
           </Card>
+            );
+          })()}
         ))}
       </div>
     </section>
