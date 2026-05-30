@@ -60,6 +60,9 @@ import NineFitOferta from "./pages/9fit/Oferta";
 import NineFitCheckout from "./pages/9fit/Checkout";
 import NineFitCheckoutSuccess from "./pages/9fit/CheckoutSuccess";
 import MonetizacaoPage from "./pages/admin/MonetizacaoPage";
+import SkillManagerPage from "./pages/admin/SkillManagerPage";
+import Protocols from "./pages/9fit/Protocols";
+import NineFitSettings from "./pages/9fit/Settings";
 import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
 import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
@@ -263,12 +266,16 @@ const App = () => (
             <Route path="/9fit/checkout/:offerId" element={<NineFitCheckout />} />
             <Route path="/9fit/checkout/success" element={<NineFitCheckoutSuccess />} />
 
+            <Route path="/9fit/protocols" element={<NineFitLayout><Protocols /></NineFitLayout>} />
+            <Route path="/9fit/protocols/:category" element={<NineFitLayout><Protocols /></NineFitLayout>} />
+            <Route path="/9fit/protocols/:category/:id" element={<NineFitLayout><Protocols /></NineFitLayout>} />
+            <Route path="/9fit/settings" element={<NineFitLayout><NineFitSettings /></NineFitLayout>} />
+
             <Route path="/app/monetizacao" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <MonetizacaoPage />
-                </AppLayout>
-              </PrivateRoute>
+              <PrivateRoute><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
+            } />
+            <Route path="/app/skills" element={
+              <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
             } />
 
             <Route path="*" element={<NotFound />} />
