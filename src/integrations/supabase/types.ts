@@ -491,6 +491,51 @@ export type Database = {
         }
         Relationships: []
       }
+      api_connectors: {
+        Row: {
+          auth_mode: string
+          config: Json
+          created_at: string
+          endpoint: string | null
+          id: string
+          iframe_url: string | null
+          key: string
+          permissions: string[]
+          provider: string
+          secret_ref: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auth_mode?: string
+          config?: Json
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          iframe_url?: string | null
+          key: string
+          permissions?: string[]
+          provider: string
+          secret_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auth_mode?: string
+          config?: Json
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          iframe_url?: string | null
+          key?: string
+          permissions?: string[]
+          provider?: string
+          secret_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_type: string | null
@@ -1535,6 +1580,62 @@ export type Database = {
         }
         Relationships: []
       }
+      biohacker_protocols: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          difficulty: string
+          duration_min: number
+          hero_image: string | null
+          id: string
+          metadata: Json
+          name: string
+          skill_id: string | null
+          status: string
+          steps: Json
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          duration_min?: number
+          hero_image?: string | null
+          id?: string
+          metadata?: Json
+          name: string
+          skill_id?: string | null
+          status?: string
+          steps?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          duration_min?: number
+          hero_image?: string | null
+          id?: string
+          metadata?: Json
+          name?: string
+          skill_id?: string | null
+          status?: string
+          steps?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biohacker_protocols_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_bookings: {
         Row: {
           booking_time: string | null
@@ -2538,6 +2639,54 @@ export type Database = {
         }
         Relationships: []
       }
+      monetization_offers: {
+        Row: {
+          category: string
+          checkout_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          iframe_url: string | null
+          metadata: Json
+          name: string
+          plan_id: string | null
+          priority: number
+          status: string
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          checkout_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          iframe_url?: string | null
+          metadata?: Json
+          name: string
+          plan_id?: string | null
+          priority?: number
+          status?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          checkout_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          iframe_url?: string | null
+          metadata?: Json
+          name?: string
+          plan_id?: string | null
+          priority?: number
+          status?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ninefit_checkins: {
         Row: {
           alimentacao: number | null
@@ -2799,6 +2948,30 @@ export type Database = {
             referencedColumns: ["athlete_id"]
           },
         ]
+      }
+      onboarding_progress: {
+        Row: {
+          completed_steps: string[]
+          current_step: string
+          data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: string[]
+          current_step?: string
+          data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_steps?: string[]
+          current_step?: string
+          data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {
@@ -3304,6 +3477,54 @@ export type Database = {
           upper_push_after?: number | null
           upper_push_before?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      physio_modules: {
+        Row: {
+          category: string
+          connector_key: string | null
+          created_at: string
+          cta_label: string
+          cta_route: string | null
+          description: string | null
+          display_order: number
+          hero_image: string | null
+          id: string
+          key: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          connector_key?: string | null
+          created_at?: string
+          cta_label?: string
+          cta_route?: string | null
+          description?: string | null
+          display_order?: number
+          hero_image?: string | null
+          id?: string
+          key: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          connector_key?: string | null
+          created_at?: string
+          cta_label?: string
+          cta_route?: string | null
+          description?: string | null
+          display_order?: number
+          hero_image?: string | null
+          id?: string
+          key?: string
+          name?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4295,6 +4516,130 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      skill_activations: {
+        Row: {
+          activated_at: string
+          activated_by: string | null
+          active: boolean
+          id: string
+          scope: string
+          skill_id: string
+          target_id: string | null
+        }
+        Insert: {
+          activated_at?: string
+          activated_by?: string | null
+          active?: boolean
+          id?: string
+          scope?: string
+          skill_id: string
+          target_id?: string | null
+        }
+        Update: {
+          activated_at?: string
+          activated_by?: string | null
+          active?: boolean
+          id?: string
+          scope?: string
+          skill_id?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_activations_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          skill_id: string
+          user_id: string | null
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          skill_id: string
+          user_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          skill_id?: string
+          user_id?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_events_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skills: {
+        Row: {
+          category: string
+          content: Json
+          created_at: string
+          description: string | null
+          id: string
+          metrics: Json
+          name: string
+          owner_id: string | null
+          slug: string
+          status: string
+          tags: string[]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          category?: string
+          content?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          metrics?: Json
+          name: string
+          owner_id?: string | null
+          slug: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          category?: string
+          content?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          metrics?: Json
+          name?: string
+          owner_id?: string | null
+          slug?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       smart_treino_macro_rules: {
         Row: {
