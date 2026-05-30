@@ -6,6 +6,9 @@ import { useAthleteId } from '@/hooks/useAthleteId';
 import { useEngrenagem } from '@/hooks/useEngrenagem';
 import { DigitalIDCard } from './DigitalIDCard';
 import { RecommendationCard } from './RecommendationCard';
+import { EcosystemGrid } from './EcosystemGrid';
+import { DynamicOffers } from './DynamicOffers';
+import { QuickCheckIn } from './QuickCheckIn';
 import { awardXP } from '@/services/engrenagem/gamificationEngine';
 import { toast } from 'sonner';
 
@@ -58,6 +61,12 @@ export function OSDashboard() {
         streak={streak}
         classTier={totalXp > 2000 ? 'Elite' : 'Diamante'}
       />
+
+      {/* Check-in da próxima aula → abre fluxo Staff */}
+      <QuickCheckIn />
+
+      {/* Ofertas dinâmicas (monetization_offers) */}
+      <DynamicOffers compact />
 
       {/* Water tracker */}
       <div className="surface-card p-4">
