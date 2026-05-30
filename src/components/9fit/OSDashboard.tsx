@@ -6,6 +6,9 @@ import { useAthleteId } from '@/hooks/useAthleteId';
 import { useEngrenagem } from '@/hooks/useEngrenagem';
 import { DigitalIDCard } from './DigitalIDCard';
 import { RecommendationCard } from './RecommendationCard';
+import { EcosystemGrid } from './EcosystemGrid';
+import { DynamicOffers } from './DynamicOffers';
+import { QuickCheckIn } from './QuickCheckIn';
 import { awardXP } from '@/services/engrenagem/gamificationEngine';
 import { toast } from 'sonner';
 
@@ -59,6 +62,12 @@ export function OSDashboard() {
         classTier={totalXp > 2000 ? 'Elite' : 'Diamante'}
       />
 
+      {/* Check-in da próxima aula → abre fluxo Staff */}
+      <QuickCheckIn />
+
+      {/* Ofertas dinâmicas (monetization_offers) */}
+      <DynamicOffers compact />
+
       {/* Water tracker */}
       <div className="surface-card p-4">
         <div className="flex items-center justify-between mb-3">
@@ -105,9 +114,12 @@ export function OSDashboard() {
         </div>
       </div>
 
+      {/* Ecossistema (grid nativo de physio_modules) */}
+      <EcosystemGrid />
+
       {/* Quick actions */}
       <div className="grid grid-cols-3 gap-3">
-        <QuickAction icon={CheckCircle2} label="Check-in" onClick={() => navigate('/9fit/protocolo')} />
+        <QuickAction icon={CheckCircle2} label="Check-in" onClick={() => navigate('/9fit/staff?from=checkin')} />
         <QuickAction icon={Activity} label="Treino" onClick={() => navigate('/9fit/train')} />
         <QuickAction icon={MessageCircle} label="RON" onClick={() => navigate('/9fit/ron')} />
       </div>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { CheckCircle, Clock, MapPin, Loader2 } from "lucide-react";
+import { CheckCircle, Clock, MapPin, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface NextClass {
   bookingId: string;
@@ -17,6 +18,7 @@ interface NextClass {
 
 export function QuickCheckIn() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingIn, setCheckingIn] = useState(false);
@@ -79,8 +81,10 @@ export function QuickCheckIn() {
         }
       }
 
-      toast.success("Check-in realizado! +50 XP ✅");
+      toast.success("Check-in realizado! +50 XP ✅ — abrindo Staff");
       setNextClass(prev => prev ? { ...prev, checkedIn: true } : null);
+      // Fluxo Staff: após check-in, abrir Staff para escolher serviço / suporte
+      setTimeout(() => navigate("/9fit/staff?from=checkin"), 600);
     } catch {
       toast.error("Erro no check-in");
     } finally {
@@ -92,15 +96,19 @@ export function QuickCheckIn() {
 
   if (nextClass.checkedIn) {
     return (
-      <div className="bg-card border border-green-500/30 rounded-sm p-4 flex items-center gap-3">
+      <button
+        onClick={() => navigate("/9fit/staff?from=checkin")}
+        className="w-full bg-card border border-green-500/30 rounded-sm p-4 flex items-center gap-3 text-left hover:border-green-500/60 transition"
+      >
         <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
           <CheckCircle className="w-5 h-5 text-green-500" />
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-bold text-foreground">Check-in feito!</p>
-          <p className="text-xs text-muted-foreground">{nextClass.className}</p>
+          <p className="text-xs text-muted-foreground">{nextClass.className} · falar com Staff</p>
         </div>
-      </div>
+        <Users className="w-4 h-4 text-primary" />
+      </button>
     );
   }
 

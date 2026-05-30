@@ -14,6 +14,9 @@ import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
 import { QuickMoodInput } from "@/components/9fit/QuickMoodInput";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
 import { UpsellBanner } from "@/components/9fit/UpsellBanner";
+import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
+import { DynamicOffers } from "@/components/9fit/DynamicOffers";
+import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
@@ -183,9 +186,24 @@ export default function NineFitHub() {
         </div>
       )}
 
-      {/* 7. ECOSYSTEM MODULES */}
+      {/* Check-in da próxima aula → fluxo Staff */}
+      <div className="px-4 mt-6">
+        <QuickCheckIn />
+      </div>
+
+      {/* Ofertas dinâmicas */}
+      <div className="px-4 mt-6">
+        <DynamicOffers compact />
+      </div>
+
+      {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
       <div className="px-4 mt-8">
-        <p className="text-label mb-3">ECOSSISTEMA</p>
+        <EcosystemGrid />
+      </div>
+
+      {/* Carrossel sequencial legado */}
+      <div className="px-4 mt-6">
+        <p className="text-label mb-3">DESTAQUES</p>
         <HubSequentialCarousel />
       </div>
 
