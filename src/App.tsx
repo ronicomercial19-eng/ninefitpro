@@ -59,6 +59,7 @@ import NineFitPrime from "./pages/9fit/Prime";
 import NineFitOferta from "./pages/9fit/Oferta";
 import NineFitCheckout from "./pages/9fit/Checkout";
 import NineFitCheckoutSuccess from "./pages/9fit/CheckoutSuccess";
+import NineFitAtivacao from "./pages/9fit/Ativacao";
 import MonetizacaoPage from "./pages/admin/MonetizacaoPage";
 import SkillManagerPage from "./pages/admin/SkillManagerPage";
 import Protocols from "./pages/9fit/Protocols";
@@ -270,6 +271,7 @@ const App = () => (
             <Route path="/9fit/protocols/:category" element={<NineFitLayout><Protocols /></NineFitLayout>} />
             <Route path="/9fit/protocols/:category/:id" element={<NineFitLayout><Protocols /></NineFitLayout>} />
             <Route path="/9fit/settings" element={<NineFitLayout><NineFitSettings /></NineFitLayout>} />
+            <Route path="/9fit/ativacao" element={<NineFitLayout><NineFitAtivacao /></NineFitLayout>} />
 
             <Route path="/app/monetizacao" element={
               <PrivateRoute><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
