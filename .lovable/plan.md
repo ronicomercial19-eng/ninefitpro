@@ -1,47 +1,86 @@
-# Wave 20 — Port 9FIT OS Prototype → FitPro App
+# Wave 20 — Engrenagem FitPro + Port v2 Prototype
 
-## Contexto
-O zip `9fit.zip` traz um protótipo standalone polido (React + Tailwind, tema `dark-800/neon-400`, italic black) cobrindo: HUB OS, Train, Social, Progress, Profile, Premium, **SeasonPass**, **MissionCompleteOverlay**, **DigitalIDCard**, **MissionList**, **DailyCheckIn**, **Fit360**, **NineFlix**, **StoreView**, **Settings**. O app atual já tem a maioria das rotas (`Hub`, `Train`, `Social`, `Stats`, `Profile`, `Plans`, `Ron`) — falta principalmente **polimento visual**, **Season Pass**, **overlay de conclusão de missão** e **digital ID card** mais elaborado.
+O zip v2 (`files-cf39a26f.zip`) é uma evolução substancial do protótipo: agora inclui **OSView** (Engrenagem), **PrimePassHub** com sub-apps (ELITE/Bio/Kitchen/Recovery), **NineFitElite + Pillars**, **NineBeats**, **SmartPeriodizer embedded**, **DailyProtocol**, **CommunitySnippet**, **agentService (Squad Insights)** e nova bottom-nav com **Prime destacado**. Combinado aos docs `05/06/07/10`, define a Engrenagem do FitPro.
 
-## Estratégia
-Não recriar app do zero. **Portar componentes-chave do protótipo** para o projeto Lovable existente, conectando-os ao schema real (`athletes`, `daily_tasks`, `sync_score_logs`, etc.) — sem inventar tabelas. Manter rotas atuais.
+Vou portar para o app real, conectando ao schema existente (`athletes`, `daily_tasks`, `bio_*`, `ai_context_snapshots`, `ron_memory`, `subscription_plans`), sem novas tabelas e sem Sovereign Core.
 
-## Entregas
+## 1. Engrenagem (motor que roda ao abrir o app)
+Novo `src/services/engrenagem/`:
+- `contextLoader.ts` — ao montar o app: carrega `athletes` (xp/level/sync/streak), últimos `bio_hrv_logs`/`bio_sleep_logs`, `daily_tasks` ativas, último `ai_context_snapshots`. Resultado em store Zustand `useEngrenagem`.
+- `gamificationEngine.ts` — `awardXP(action, base, multipliers)` com streak/sync/dificuldade, grava `gamification_events` e atualiza `athletes.total_xp/level`. Emite `9fit:xp_awarded` e `9fit:level_up`.
+- `dataAggregator.ts` — consolida métricas dos módulos para o Hub/OS.
+- `recommendationEngine.ts` (squad insights) — port de `agentService.getSquadInsights` mapeado às tabelas reais; gera 3-5 insights priorizados (recuperação, treino, nutrição, mindset, premium). Persiste em `ai_insights`.
+- `orchestrationEngine.ts` — decide próximo CTA contextual (após avaliação → sugere PRIME; após treino → sugere protocolo recuperação) e dispara abertura do RON quando relevante.
+- Hook `useEngrenagem()` expõe tudo.
 
-### A. Novos componentes (port direto, dados reais)
-1. `src/components/9fit/SeasonPassTrack.tsx` — trilha de tiers (Free/Premium) consumindo `athletes.total_xp` + `athletes.level`. Botões de claim disparam `gamification_events` (XP bônus). Rota nova `/9fit/season-pass`.
-2. `src/components/9fit/MissionCompleteOverlay.tsx` — overlay fullscreen animado (Framer Motion) com XP ganho + streak. Disparado por evento `9fit:mission_completed`.
-3. `src/components/9fit/DigitalIDCard.tsx` — refatorar `PersonalIDCard` atual com layout do protótipo (QR holográfico, classe, badges). Manter dados do `useAthleteId`.
-4. `src/components/9fit/DailyCheckInPanel.tsx` — versão refinada do `QuickCheckIn` com sliders de mood/energy/sleep gravando em `bio_sleep_logs` + `sync_score_logs`.
-5. `src/components/9fit/MissionListPanel.tsx` — lista DAILY/WEEKLY/SEASON consumindo `daily_tasks` (filtro por tipo). Substitui parte do Hub.
+## 2. Bottom Navigation — 5 tabs canônicas (atualizar)
+Alterar `BottomNavigation.tsx` para: **Início (OS) · Train · Prime (destacado central elevado) · Hub · Perfil**. Mover Social para sub-rota do Hub. Atualizar memória `9fit-os-student-bottom-nav` (nova v5).
 
-### B. Refinos visuais
-6. `src/pages/9fit/Hub.tsx` — topo HUD compacto (LVL chip + XP bar + streak chip + settings), header "9FIT OS / System Operational", grid Ecosystem 3-col com `ModuleGrid`. Inserir `SeasonPassTrack` resumido (3 tiers próximos).
-7. `src/pages/9fit/Train.tsx` — adicionar `ClassPlayer` style cards + filtros de intensidade Low/Medium/High.
-8. `src/pages/9fit/Social.tsx` — feed estilo card grande + leaderboard semanal usando `aluno_score_composite`.
-9. `src/pages/9fit/Profile.tsx` — usar `DigitalIDCard` novo + seção achievements de `user_achievements`.
-10. `src/pages/9fit/Stats.tsx` — gráficos de `bio_*` + `workout_executions` semanal.
+## 3. Novos componentes/páginas (port v2)
+- `src/pages/9fit/OS.tsx` (refatorar) + componente `OSDashboard.tsx` — water tracker (`profile.waterIntake`), daily tasks de `daily_tasks` com toggle, painel **Squad Insights** com 3 cards, botão "Diagnóstico Rápido" (modal sentimento → grava `ron_memory` + XP).
+- `src/components/9fit/AgentHub.tsx` — drawer lateral mostrando agentes/squads ativos (EPSILON, BETA, ZETA...) com status.
+- `src/pages/9fit/Prime.tsx` (nova) + `PrimePassHub.tsx` — 4 sub-apps (9FIT ELITE, Bio, Kitchen, Recovery) com sync/recommendation/apply-protocol. Embedded ELITE View + Pillar Detail.
+- `src/components/9fit/elite/NineFitEliteView.tsx` + `ElitePillarDetail.tsx` — pilares de performance.
+- `src/components/9fit/SmartPeriodizerEmbedded.tsx` — abre dentro do Train.
+- `src/components/9fit/NineBeats.tsx` — player de áudio/playlists (Deep Link).
+- `src/components/9fit/DailyCheckInPanel.tsx` — mood/energy/sleep gravando `bio_sleep_logs` + `sync_score_logs`.
+- `src/components/9fit/DailyProtocolV2.tsx` — versão refinada substitui `DailyProtocol.tsx`.
+- `src/components/9fit/MissionCompleteOverlay.tsx` — overlay global (XP/level-up) escutando `9fit:xp_awarded` e `9fit:level_up`, montado no `App.tsx`.
+- `src/components/9fit/MissionListPanel.tsx` — DAILY/WEEKLY/SEASON de `daily_tasks`.
+- `src/components/9fit/SeasonPassTrack.tsx` + página `/9fit/season-pass`.
+- `src/components/9fit/DigitalIDCard.tsx` — substitui `PersonalIDCard` com QR holográfico, classe, badges.
+- `src/components/9fit/CommunitySnippet.tsx` — preview no Hub.
+- `src/components/9fit/RecommendationCard.tsx` — card padrão consumido pelo recommendationEngine (Hub + OS).
+- `src/components/9fit/QuickActionMenu.tsx` — FAB com ações rápidas (check-in, water+, foto, abrir RON).
 
-### C. Rotas e navegação
-11. `src/App.tsx` — adicionar rota `/9fit/season-pass`.
-12. `BottomNavigation` — sem mudanças (5 tabs canônicas mantidas). Season Pass entra como card no Hub + link no Profile.
+## 4. Hub redesenhado (descoberta de módulos)
+`src/pages/9fit/Hub.tsx`:
+- Seção **Em Destaque / Recomendados** (recommendationEngine).
+- **Meus Módulos** (usados nos últimos 7d via `system_events`).
+- **Explorar** por categoria (Performance / Recuperação / Nutrição / Mentalidade).
+- **Novidades** (cards estáticos).
+- Cada card: status (Ativo/Disponível/Bloqueado), CTA, abre Embedded ou Deep Link+SSO.
 
-### D. Tokens / estilo
-13. `tailwind.config.ts` + `src/index.css` — garantir tokens `neon-400`, `dark-800/700` mapeados a `--primary` / `--card` / `--muted` (HSL semânticos, sem cores hardcoded em componentes).
+## 5. Páginas refinadas
+- **Train** — `ClassPlayer` cards, filtros Low/Medium/High, SmartPeriodizer embedded.
+- **Profile** — `DigitalIDCard` + achievements (`user_achievements`).
+- **Stats** — gráficos `bio_*` + `workout_executions` semanal.
+- **Social** vira sub-rota `/9fit/hub/social`.
+
+## 6. Eventos globais
+Padrão `window.dispatchEvent`:
+- `9fit:xp_awarded` `{action, xp, multiplier}`
+- `9fit:level_up` `{newLevel}`
+- `9fit:mission_completed` `{taskId, xp}`
+- `9fit:protocol_completed`
+- `9fit:module_launched` `{moduleId}`
+Montar `MissionCompleteOverlay` + listener de orchestration no `App.tsx`.
+
+## 7. Tokens visuais
+`tailwind.config.ts` + `src/index.css`: garantir HSL semânticos para `neon-400` (verde), `prime-gold`, surfaces `dark-800/700` mapeadas em `--primary`/`--accent`/`--card`/`--muted`. Zero cores hardcoded em componentes.
+
+## 8. Rotas (`App.tsx`)
+Adicionar: `/9fit/prime`, `/9fit/prime/elite`, `/9fit/season-pass`, `/9fit/nine-beats`. `Social` movido sob Hub.
+
+## 9. Memórias a atualizar
+- `mem://navigation/9fit-os-student-bottom-nav-v5` — nova ordem com Prime destacado.
+- `mem://architecture/fitpro-engrenagem` (nova) — descreve os 6 engines + eventos globais.
+- `mem://features/primepass-hub` (nova) — 4 sub-apps + sync/apply protocol.
 
 ## Não-objetivos
-- Sem novas tabelas/migrations (usa schema existente).
-- Sem mexer no Sovereign Core / NEXO.
-- Sem alterar fluxos de auth / onboarding já entregues nas waves 17-19.
-
-## Arquivos
-**Novos (5):** SeasonPassTrack, MissionCompleteOverlay, DigitalIDCard, DailyCheckInPanel, MissionListPanel + página `pages/9fit/SeasonPass.tsx`.
-**Refatorados (6):** Hub, Train, Social, Profile, Stats, App.tsx (rota).
-**Tokens:** ajustes em index.css/tailwind se faltar mapeamento neon.
+- Nenhuma migration nova (usa schema existente).
+- Sem Sovereign Core / NEXO / Firebase (o protótipo usa Firebase; aqui adaptamos para Supabase).
+- Sem alterar auth/onboarding.
 
 ## Ordem de execução
-1. Tokens neon/dark (base visual)
-2. DigitalIDCard + MissionCompleteOverlay + DailyCheckInPanel + MissionListPanel
-3. SeasonPassTrack + página SeasonPass + rota
-4. Refino Hub (HUD + grid + season summary)
-5. Refino Train/Social/Profile/Stats
+1. Tokens + BottomNavigation v5 (Prime destacado).
+2. Engrenagem services (context/gamification/recommendation/orchestration) + hook.
+3. Eventos globais + MissionCompleteOverlay no App.
+4. OS refatorado (OSDashboard + AgentHub + QuickActionMenu).
+5. Prime (PrimePassHub + ELITE + Pillars + página).
+6. Hub redesenhado (4 seções + RecommendationCard).
+7. Componentes auxiliares (DailyProtocolV2, DailyCheckInPanel, MissionListPanel, DigitalIDCard, SeasonPassTrack, CommunitySnippet, NineBeats, SmartPeriodizerEmbedded).
+8. Refino Train/Profile/Stats + rotas.
+9. Atualizar memórias.
+
+Aprovar para sair do plan mode e implementar?
