@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Plus, Save, Trash2, Power, Loader2 } from "lucide-react";
+import { SkillUploader } from "@/components/admin/SkillUploader";
 import { toast } from "sonner";
 
 type Skill = {
@@ -75,6 +76,8 @@ export default function SkillManagerPage() {
         </div>
         <Button onClick={() => setEditing({ ...empty })}><Plus className="w-4 h-4 mr-2" /> Nova skill</Button>
       </div>
+
+      <SkillUploader onDone={load} />
 
       {loading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : (
         <div className="grid gap-3">
