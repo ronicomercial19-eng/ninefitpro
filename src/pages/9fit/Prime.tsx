@@ -40,6 +40,19 @@ export default function NineFitPrime() {
 
       {view === 'hub' && (
         <div className="px-4 pt-5 space-y-5">
+          {/* Activation Hero — port visual do zip */}
+          <div className="rounded-2xl border border-primary/40 p-6 text-center relative overflow-hidden bg-black"
+            style={{ boxShadow: '0 0 60px hsl(var(--primary)/0.35) inset' }}>
+            <p className="text-[10px] tracking-[0.3em] text-primary font-bold mb-2">WELCOME ACTIVATION</p>
+            <h2 className="font-display text-3xl italic mb-2">9FIT PRIME</h2>
+            <p className="text-xs text-muted-foreground mb-4">Ative seu protocolo de elite em 90 segundos</p>
+            <button
+              onClick={() => navigate('/9fit/onboarding')}
+              className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm tracking-widest shadow-[0_0_30px_hsl(var(--primary)/0.6)]"
+            >
+              INICIAR ATIVAÇÃO →
+            </button>
+          </div>
           <div className="surface-card p-5 relative overflow-hidden">
             <div
               className="absolute inset-0 opacity-40 pointer-events-none"

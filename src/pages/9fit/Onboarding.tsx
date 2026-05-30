@@ -5,6 +5,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
+import { OnboardingStepper } from "@/components/9fit/OnboardingStepper";
+
+const STEPS = [
+  { key: "name", label: "Conexão" },
+  { key: "goal", label: "Perfil" },
+  { key: "freq", label: "Protocolo" },
+  { key: "rest", label: "Bio" },
+  { key: "wear", label: "Sync" },
+  { key: "prime", label: "Prime" },
+];
 
 type Goal = 'hipertrofia' | 'emagrecimento' | 'performance' | 'saude';
 type Wearable = 'apple_watch' | 'garmin' | 'whoop' | 'oura' | 'none';
@@ -277,7 +287,8 @@ export default function NineFitOnboarding() {
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md space-y-8">
+          <OnboardingStepper steps={STEPS} currentIndex={step} />
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
