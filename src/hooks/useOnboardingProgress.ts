@@ -25,7 +25,7 @@ export function useOnboardingProgress() {
     if (row) {
       setStep((row.current_step as OnboardingStep) ?? "welcome");
       setCompleted((row.completed_steps as OnboardingStep[]) ?? []);
-      setData(row.data ?? {});
+      setData((row.data as Record<string, any>) ?? {});
     }
     setLoading(false);
   }

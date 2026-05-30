@@ -38,7 +38,7 @@ export default function NineFitProtocols() {
         skill_id: current.skill_id, user_id: user.id, event_type: "complete",
         metadata: { protocol_id: current.id },
       } as any);
-      await awardXP({ action: "protocol_completed", baseXp: 60, userId: user.id });
+      await awardXP("protocol_completed");
     }
     window.dispatchEvent(new CustomEvent("9fit:protocol_completed", { detail: { id: current.id } }));
     navigate(`/9fit/protocols/${current.category}`);
