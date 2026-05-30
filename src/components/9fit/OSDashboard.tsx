@@ -114,9 +114,12 @@ export function OSDashboard() {
         </div>
       </div>
 
+      {/* Ecossistema (grid nativo de physio_modules) */}
+      <EcosystemGrid />
+
       {/* Quick actions */}
       <div className="grid grid-cols-3 gap-3">
-        <QuickAction icon={CheckCircle2} label="Check-in" onClick={() => navigate('/9fit/protocolo')} />
+        <QuickAction icon={CheckCircle2} label="Check-in" onClick={() => navigate('/9fit/staff?from=checkin')} />
         <QuickAction icon={Activity} label="Treino" onClick={() => navigate('/9fit/train')} />
         <QuickAction icon={MessageCircle} label="RON" onClick={() => navigate('/9fit/ron')} />
       </div>
