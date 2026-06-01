@@ -45,3 +45,6 @@ verify_jwt = false
 
 [functions.intelligence-hub-sync]
 verify_jwt = false
+
+[functions.training-ai-adjust]
+verify_jwt = false
