@@ -169,111 +169,81 @@ export function DailyProtocol() {
   const total = displayTasks.length + (state === 'power' ? 1 : 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-end justify-between px-1">
         <div>
           <p className="text-[10px] tracking-[0.3em] uppercase text-primary/80 font-data">
-            DAILY PROTOCOL
-            {state === 'low' && <span className="ml-2 text-amber-400/80">· VERSÃO LEVE</span>}
-            {state === 'power' && <span className="ml-2 text-emerald-400/80">· MODO PEAK</span>}
+            INTERVENÇÕES FISIOLÓGICAS
+            {state === 'low' && <span className="ml-2 text-amber-400/80">· LEVE</span>}
+            {state === 'power' && <span className="ml-2 text-emerald-400/80">· PEAK</span>}
           </p>
-          <h2 className="text-display text-xl text-foreground mt-1">
-            {state === 'low' ? 'Recuperação prioritária hoje' : 'Intervenções fisiológicas do dia'}
-          </h2>
+          <h2 className="text-display text-base text-foreground mt-1">Protocolo do dia</h2>
         </div>
         <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-data">
           {done}/{total}
         </p>
       </div>
 
-      <div className="space-y-3">
+      {/* Grid sequencial compacto — uma linha por intervenção */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] divide-y divide-white/5 overflow-hidden">
         {displayTasks.map((task, idx) => {
           const def = DEFAULT_TASKS.find((d) => d.key === task.task_key) ?? DEFAULT_TASKS[idx];
           const Icon = def.Icon;
           return (
-            <motion.div
+            <motion.button
               key={task.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: idx * 0.06 }}
-              className={`relative rounded-2xl p-5 border backdrop-blur-xl transition-colors ${
-                task.completed
-                  ? "bg-white/[0.02] border-white/[0.04] opacity-60"
-                  : "bg-white/[0.04] border-white/[0.08]"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, delay: idx * 0.04 }}
+              onClick={() => !task.completed && complete(task)}
+              disabled={task.completed || working === task.id}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                task.completed ? "opacity-50" : "hover:bg-primary/5 active:bg-primary/10"
               }`}
-              style={!task.completed ? { boxShadow: "var(--shadow-card)" } : undefined}
             >
-              <div className="flex items-start gap-4">
-                <div
-                  className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                    task.completed ? "bg-white/5" : "bg-primary/10 border border-primary/20"
-                  }`}
-                >
-                  {task.completed ? (
-                    <Check className="w-5 h-5 text-primary" />
-                  ) : (
-                    <Icon className="w-6 h-6 text-primary" strokeWidth={1.6} />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-display text-base text-foreground">{def.title}</h3>
-                    <span className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground font-data">
-                      {def.duration}
-                    </span>
-                  </div>
-                  <p className="text-[10px] tracking-[0.18em] uppercase text-primary/70 font-data mb-1.5">
-                    POR QUÊ
-                  </p>
-                  <p className="text-[13px] text-muted-foreground italic leading-relaxed mb-4">
-                    {def.why}
-                  </p>
-                  {!task.completed && (
-                    <button
-                      onClick={() => complete(task)}
-                      disabled={working === task.id}
-                      className="text-[11px] tracking-[0.2em] uppercase font-data text-primary hover:underline disabled:opacity-50"
-                    >
-                      {working === task.id ? "Registrando..." : "Iniciar intervenção →"}
-                    </button>
-                  )}
-                </div>
+              <div className="shrink-0 w-7 text-[10px] font-data text-primary/70">
+                {String(idx + 1).padStart(2, "0")}
               </div>
-            </motion.div>
+              <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
+                task.completed ? "bg-white/5" : "bg-primary/10 border border-primary/20"
+              }`}>
+                {task.completed ? (
+                  <Check className="w-4 h-4 text-primary" />
+                ) : (
+                  <Icon className="w-4.5 h-4.5 text-primary" strokeWidth={1.6} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{def.title}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{def.why}</p>
+              </div>
+              <span className="shrink-0 text-[9px] tracking-[0.18em] uppercase text-muted-foreground font-data">
+                {def.duration}
+              </span>
+            </motion.button>
           );
         })}
 
         {state === 'power' && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl p-5 border border-emerald-500/30 bg-emerald-500/[0.04] backdrop-blur-xl"
-          >
-            <div className="flex items-start gap-4">
-              <div className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 border border-emerald-500/30">
-                <POWER_BONUS.Icon className="w-6 h-6 text-emerald-400" strokeWidth={1.6} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-display text-base text-foreground">
-                    {POWER_BONUS.title} <span className="text-[9px] tracking-[0.2em] uppercase text-emerald-400/80">OPCIONAL</span>
-                  </h3>
-                  <span className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground font-data">
-                    {POWER_BONUS.duration}
-                  </span>
-                </div>
-                <p className="text-[10px] tracking-[0.18em] uppercase text-emerald-400/70 font-data mb-1.5">
-                  POR QUÊ
-                </p>
-                <p className="text-[13px] text-muted-foreground italic leading-relaxed">
-                  {POWER_BONUS.why}
-                </p>
-              </div>
+          <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/[0.04]">
+            <div className="shrink-0 w-7 text-[10px] font-data text-emerald-400/70">
+              {String(displayTasks.length + 1).padStart(2, "0")}
             </div>
-          </motion.div>
+            <div className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500/10 border border-emerald-500/30">
+              <POWER_BONUS.Icon className="w-4.5 h-4.5 text-emerald-400" strokeWidth={1.6} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">
+                {POWER_BONUS.title} <span className="text-[9px] uppercase tracking-widest text-emerald-400/80">opcional</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{POWER_BONUS.why}</p>
+            </div>
+            <span className="shrink-0 text-[9px] tracking-[0.18em] uppercase text-muted-foreground font-data">
+              {POWER_BONUS.duration}
+            </span>
+          </div>
         )}
       </div>
     </div>
-
   );
 }
