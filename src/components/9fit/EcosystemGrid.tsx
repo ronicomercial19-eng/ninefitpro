@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Image as ImageIcon } from "lucide-react";
+import { ChevronRight, Plus, Image as ImageIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MODULE_IMAGES } from "@/assets/modules";
 
@@ -12,50 +10,84 @@ interface PhysioModule {
   category: string; display_order: number; connector_key: string | null;
 }
 
-export function EcosystemGrid({ category }: { category?: string }) {
+interface Props {
+  category?: string;
+  variant?: "grid" | "rail";
+  showHeader?: boolean;
+}
+
+export function EcosystemGrid({ category, variant = "grid", showHeader = true }: Props) {
   const [items, setItems] = useState<PhysioModule[]>([]);
+  const [statusByKey, setStatusByKey] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    let q = supabase.from("physio_modules").select("*").eq("status","active").order("display_order");
+    let q = supabase.from("physio_modules").select("*").eq("status", "active").order("display_order");
     if (category) q = q.eq("category", category);
-    q.then(({ data }) => setItems((data ?? []) as any));
+    q.then(({ data }) => {
+      const list = (data ?? []) as any[];
+      setItems(list);
+      // simple dynamic status seed; later replaced via realtime
+      const map: Record<string, string> = {};
+      list.forEach((m, i) => {
+        if (m.key === "staff") map[m.key] = `${4 + (i % 3)} online`;
+        else if (m.key === "ron") map[m.key] = "88%";
+      });
+      setStatusByKey(map);
+    });
   }, [category]);
 
   if (!items.length) return null;
 
   return (
-    <section className="space-y-4">
-      <header className="flex items-baseline justify-between">
-        <h2 className="text-xl font-display italic">Meu Ecossistema</h2>
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Grid Nativo</span>
-      </header>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <section className="space-y-3">
+      {showHeader && (
+        <header className="flex items-end justify-between">
+          <div>
+            <h2 className="font-display text-2xl tracking-tight">Ecosystem</h2>
+            <p className="text-[11px] text-primary">All modules • {items.length} active</p>
+          </div>
+          <button onClick={() => navigate('/9fit/protocols')} className="text-xs text-primary font-semibold">View all</button>
+        </header>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
         {items.map((m) => {
           const src = MODULE_IMAGES[m.key] || m.hero_image;
+          const status = statusByKey[m.key];
           return (
-            <Card key={m.id} className="bg-card border-border hover:border-primary/40 transition-colors overflow-hidden">
-              <CardContent className="p-4 space-y-3">
-                <div className="aspect-video rounded-md bg-muted overflow-hidden grid place-items-center">
-                  {src ? (
-                    <img src={src} alt={m.name} loading="lazy" width={768} height={512} className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
-                  )}
+            <button
+              key={m.id}
+              onClick={() => m.cta_route && navigate(m.cta_route)}
+              className="text-left rounded-2xl overflow-hidden border-t-2 border-primary bg-card/40 hover:bg-card/70 transition group"
+            >
+              <div className="aspect-[4/3] bg-muted relative">
+                {src ? (
+                  <img src={src} alt={m.name} loading="lazy" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full grid place-items-center">
+                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <div className="p-3 flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="font-display text-base truncate">{m.name}</p>
+                  {status && <p className="text-[10px] text-primary">{status}</p>}
                 </div>
-                <div>
-                  <h3 className="font-display text-base">{m.name}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{m.description}</p>
-                </div>
-                <Button size="sm" variant="outline" className="w-full"
-                  onClick={() => m.cta_route && navigate(m.cta_route)}>
-                  {m.cta_label} <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </CardContent>
-            </Card>
+                <ChevronRight className="w-4 h-4 text-primary opacity-70 group-hover:opacity-100" />
+              </div>
+            </button>
           );
         })}
       </div>
+
+      <button
+        onClick={() => navigate('/9fit/protocols')}
+        className="mt-2 mx-auto flex items-center gap-2 rounded-full bg-white text-black text-sm font-semibold px-4 py-2 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.4)]"
+      >
+        <Plus className="w-4 h-4" /> Add module
+      </button>
     </section>
   );
 }

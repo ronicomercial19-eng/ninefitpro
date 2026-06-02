@@ -1,403 +1,118 @@
-import { useState, useEffect } from "react";
-import { 
-  User, Settings, Bell, CreditCard, HelpCircle, LogOut,
-  ChevronRight, Camera, Flame, Dumbbell, Calendar, Loader2, Edit3, KeyRound, Eye, EyeOff,
-  Star, Utensils, Target, Wallet
-} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
+  ChevronRight, ExternalLink, Flame, LogOut,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { SkeletonCard } from "@/components/9fit/SkeletonCard";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 
-interface UserStats {
-  calories: number;
-  workouts: number;
-  streak: number;
-  totalXP: number;
-  level: number;
+interface MenuItem {
+  icon: any;
+  label: string;
+  sub: string;
+  route: string;
+  badge?: string;
+  badgeStyle?: "neon" | "outline";
 }
-
-interface AthleteProfile {
-  id: string;
-  name: string;
-  phone?: string;
-  birthdate?: string;
-  peso_kg?: number;
-  altura_cm?: number;
-  objetivo?: string;
-  nivel?: string;
-}
-
-interface PeriodizationInfo {
-  id: string;
-  model_id: string;
-  status: string;
-  match_percentage: number | null;
-  notes: string | null;
-}
-
-interface PaymentInfo {
-  total_credits: number;
-  used_credits: number;
-  expires_at: string | null;
-}
-
-const menuItems = [
-  { icon: Utensils, label: "Minha Dieta", action: "navigate", path: "/9fit/dieta" },
-  { icon: Bell, label: "Notificações", action: "navigate", path: "/9fit/mensagens" },
-  { icon: HelpCircle, label: "Ajuda & Suporte", action: "whatsapp" },
-];
 
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [athleteProfile, setAthleteProfile] = useState<AthleteProfile | null>(null);
-  const [stats, setStats] = useState<UserStats>({ calories: 0, workouts: 0, streak: 0, totalXP: 0, level: 1 });
-  const [periodization, setPeriodization] = useState<PeriodizationInfo | null>(null);
-  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
-
-  // Password change state
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPw, setShowNewPw] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
+  const [staffOnline, setStaffOnline] = useState(3);
+  const [nextInvoice, setNextInvoice] = useState("12/11");
+  const [planTier, setPlanTier] = useState("Aluno Premium");
 
   useEffect(() => {
-    if (user) fetchUserData();
-  }, [user]);
+    (async () => {
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .in("role", ["professor", "admin"] as any);
+      if (count) setStaffOnline(Math.min(9, Math.max(1, Math.round(count / 3))));
+    })();
+  }, []);
 
-  const fetchUserData = async () => {
-    setLoading(true);
-    try {
-      const { data: athleteData, error } = await supabase
-        .from("athletes")
-        .select("*")
-        .eq("user_id", user?.id)
-        .single();
 
-      if (!error && athleteData) {
-        setAthleteProfile(athleteData);
-        
-        // Fetch workout progress, periodization, credits in parallel
-        const [progressRes, periodRes, creditsRes] = await Promise.all([
-          supabase.from("workout_progress").select("*").eq("aluno_id", athleteData.id),
-          supabase.from("athlete_periodizations").select("id, periodization_model_id, status, match_percentage, notes").eq("athlete_id", athleteData.id).eq("status", "active").maybeSingle(),
-          supabase.from("student_credits").select("total_credits, used_credits, expires_at").eq("student_id", athleteData.id).maybeSingle(),
-        ]);
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
-        const totalWorkouts = progressRes.data?.length || 0;
-        setStats({
-          calories: totalWorkouts * 150,
-          workouts: totalWorkouts,
-          streak: Math.min(totalWorkouts, 7),
-          totalXP: athleteData.total_xp || 0,
-          level: athleteData.level || 1
-        });
-
-        if (periodRes.data) {
-          setPeriodization({
-            id: periodRes.data.id,
-            model_id: periodRes.data.periodization_model_id,
-            status: periodRes.data.status || 'active',
-            match_percentage: periodRes.data.match_percentage,
-            notes: periodRes.data.notes,
-          });
-        }
-
-        if (creditsRes.data) {
-          setPaymentInfo(creditsRes.data);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-    setLoading(false);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/9fit/login");
-  };
-
-  const handleChangePassword = async () => {
-    if (!newPassword || newPassword.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres"); return; }
-    if (newPassword !== confirmPassword) { toast.error("As senhas não coincidem"); return; }
-    setChangingPassword(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      if (athleteProfile) {
-        await supabase.from('athletes').update({ password_changed: true, auto_password_temp: null }).eq('id', athleteProfile.id);
-      }
-      toast.success("Senha alterada com sucesso!");
-      setShowPasswordDialog(false);
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (error: any) {
-      toast.error("Erro ao alterar senha: " + error.message);
-    } finally {
-      setChangingPassword(false);
-    }
-  };
-
-  const displayName = athleteProfile?.name || profile?.full_name || user?.email?.split("@")[0] || "Usuário";
-  const displayEmail = user?.email || "";
-  const availableCredits = paymentInfo ? paymentInfo.total_credits - paymentInfo.used_credits : 0;
-  const creditPercent = paymentInfo && paymentInfo.total_credits > 0 ? (paymentInfo.used_credits / paymentInfo.total_credits) * 100 : 0;
+  const items: MenuItem[] = [
+    { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} online`, badgeStyle: "neon" },
+    { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
+    { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
+    { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
+    { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
+    { icon: CreditCard, label: "Pagamento & Plano", sub: `Próxima fatura: ${nextInvoice}`, route: "/9fit/prime" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-foreground">Meu Perfil</h1>
-        <button onClick={() => navigate("/9fit/settings")} className="p-2 hover:bg-muted rounded-sm transition-colors">
-          <Settings className="w-5 h-5 text-muted-foreground" />
+    <div className="min-h-screen bg-background pb-32 text-foreground">
+      {/* Top bar */}
+      <header className="px-4 pt-6 flex items-center gap-2 border-b border-primary/30 pb-3">
+        <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+          <Flame className="w-5 h-5 text-primary" />
+        </div>
+        <h1 className="flex-1 text-center text-2xl font-display">Configurações</h1>
+        <div className="w-9 h-9" />
+      </header>
+
+      {/* Profile */}
+      <section className="px-4 mt-5 flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full border-2 border-primary bg-white/5 grid place-items-center font-display text-2xl text-primary">
+          {displayName[0]?.toUpperCase()}
+        </div>
+        <div className="flex-1">
+          <p className="font-display text-2xl">{displayName}</p>
+          <p className="text-primary font-semibold text-sm flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" /> {planTier}
+          </p>
+        </div>
+      </section>
+
+      {/* Menu */}
+      <div className="px-4 mt-6 space-y-3">
+        {items.map((it) => (
+          <button key={it.label} onClick={() => navigate(it.route)}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition">
+            <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
+              <it.icon className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="flex items-center gap-2">
+                <p className="font-display text-lg">{it.label}</p>
+                {it.badge && (
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    it.badgeStyle === "neon"
+                      ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
+                      : "border border-primary/60 text-primary"
+                  }`}>
+                    {it.badge}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{it.sub}</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        ))}
+      </div>
+
+      {/* CTAs */}
+      <div className="px-4 mt-6 space-y-3">
+        <button onClick={() => navigate("/9fit/hub")}
+          className="w-full rounded-full bg-gradient-to-r from-primary to-primary/70 text-primary-foreground py-3.5 font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]">
+          Explorar mais opções <ExternalLink className="w-4 h-4" />
+        </button>
+        <button onClick={() => navigate("/app")}
+          className="w-full rounded-full border border-primary/50 text-primary py-3 font-semibold">
+          Abrir no Sistema Nativo<br /><span className="text-[10px] opacity-70">(iframe)</span>
+        </button>
+        <button onClick={async () => { await logout(); navigate("/9fit/login"); }}
+          className="w-full rounded-2xl border border-white/10 bg-white/[0.02] py-3 text-sm text-muted-foreground hover:text-destructive flex items-center justify-center gap-2">
+          <LogOut className="w-4 h-4" /> Sair
         </button>
       </div>
-
-      {loading ? (
-        <div className="px-4"><SkeletonCard variant="profile" /></div>
-      ) : (
-        <>
-          {/* Digital ID Card */}
-          <div className="px-4 mb-6">
-            <div className="bg-gradient-to-br from-card to-muted border border-border rounded-sm p-6 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-5">
-                <div className="absolute top-0 right-0 w-32 h-32 border border-foreground rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 border border-foreground rounded-full translate-y-1/2 -translate-x-1/2" />
-              </div>
-
-              <div className="relative flex items-start gap-4">
-                <div className="relative">
-                  <div className="w-20 h-20 bg-muted rounded-sm flex items-center justify-center overflow-hidden">
-                    <User className="w-10 h-10 text-muted-foreground" />
-                  </div>
-                  <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                    <Camera className="w-4 h-4 text-primary-foreground" />
-                  </button>
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h2 className="text-lg font-black uppercase text-foreground">{displayName}</h2>
-                      <p className="text-xs text-muted-foreground mb-3">{displayEmail}</p>
-                    </div>
-                    <button className="p-2 hover:bg-muted/50 rounded-sm transition-colors">
-                      <Edit3 className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </div>
-
-                  <div className="flex gap-3 flex-wrap">
-                    <div>
-                      <p className="text-lg font-black text-yellow-500 flex items-center gap-1"><Star className="w-4 h-4" />Lv.{stats.level}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{stats.totalXP} XP</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-primary flex items-center gap-1"><Flame className="w-4 h-4" />{stats.calories.toLocaleString()}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">Calorias</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-foreground flex items-center gap-1"><Dumbbell className="w-4 h-4 text-muted-foreground" />{stats.workouts}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">Treinos</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-foreground flex items-center gap-1"><Calendar className="w-4 h-4 text-muted-foreground" />{stats.streak}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">Sequência</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute top-4 right-4">
-                <span className="text-[10px] font-black uppercase tracking-wider text-primary border border-primary px-2 py-1 rounded-sm">PRO</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Meu Planejamento */}
-          <div className="px-4 mb-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
-              <Target className="w-4 h-4 text-primary" />
-              Meu Planejamento
-            </h3>
-            <div className="bg-card border border-border rounded-sm overflow-hidden">
-              {periodization ? (
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-bold text-foreground">Periodização Ativa</p>
-                      <p className="text-xs text-muted-foreground">Compatibilidade: {periodization.match_percentage || 0}%</p>
-                    </div>
-                    <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Ativo</Badge>
-                  </div>
-                  {periodization.match_percentage && (
-                    <Progress value={periodization.match_percentage} className="h-2" />
-                  )}
-                  {periodization.notes && (
-                    <p className="text-xs text-muted-foreground">{periodization.notes}</p>
-                  )}
-                </div>
-              ) : (
-                <div className="p-4 text-center">
-                  <Target className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Nenhuma periodização ativa</p>
-                  <p className="text-xs text-muted-foreground">Seu professor irá definir seu planejamento</p>
-                </div>
-              )}
-              {athleteProfile?.objetivo && (
-                <div className="border-t border-border p-4 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Objetivo</span>
-                  <span className="text-sm font-medium text-primary capitalize">{athleteProfile.objetivo}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Pagamentos / Créditos */}
-          <div className="px-4 mb-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-primary" />
-              Pagamentos
-            </h3>
-            <div className="bg-card border border-border rounded-sm overflow-hidden">
-              {paymentInfo ? (
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-bold text-foreground">Créditos de Aula</p>
-                      <p className="text-xs text-muted-foreground">
-                        {paymentInfo.used_credits}/{paymentInfo.total_credits} usados
-                      </p>
-                    </div>
-                    <span className="text-2xl font-black text-primary">{availableCredits}</span>
-                  </div>
-                  <Progress value={creditPercent} className="h-2" />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Restantes: {availableCredits}</span>
-                    {paymentInfo.expires_at && (
-                      <span>Expira: {new Date(paymentInfo.expires_at).toLocaleDateString('pt-BR')}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-xs text-green-500 font-medium">Plano Ativo</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 text-center">
-                  <CreditCard className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Nenhum plano ativo</p>
-                  <p className="text-xs text-muted-foreground">Entre em contato com seu professor</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Personal Info */}
-          {athleteProfile && (
-            <div className="px-4 mb-6">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Informações Pessoais</h3>
-              <div className="bg-card border border-border rounded-sm divide-y divide-border">
-                {athleteProfile.peso_kg && (
-                  <div className="flex items-center justify-between p-4">
-                    <span className="text-sm text-muted-foreground">Peso</span>
-                    <span className="text-sm font-medium text-foreground">{athleteProfile.peso_kg} kg</span>
-                  </div>
-                )}
-                {athleteProfile.altura_cm && (
-                  <div className="flex items-center justify-between p-4">
-                    <span className="text-sm text-muted-foreground">Altura</span>
-                    <span className="text-sm font-medium text-foreground">{athleteProfile.altura_cm} cm</span>
-                  </div>
-                )}
-                {athleteProfile.nivel && (
-                  <div className="flex items-center justify-between p-4">
-                    <span className="text-sm text-muted-foreground">Nível</span>
-                    <span className="text-sm font-medium text-foreground capitalize">{athleteProfile.nivel}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Security */}
-          <div className="px-4 mb-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Segurança</h3>
-            <div className="bg-card border border-border rounded-sm overflow-hidden">
-              <button onClick={() => setShowPasswordDialog(true)} className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors">
-                <KeyRound className="w-5 h-5 text-muted-foreground" />
-                <span className="flex-1 text-left text-sm font-medium text-foreground">Alterar Senha</span>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-          </div>
-
-          {/* Menu */}
-          <div className="px-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Configurações</h3>
-            <div className="bg-card border border-border rounded-sm overflow-hidden divide-y divide-border">
-              {menuItems.map((item) => (
-                <button key={item.label} onClick={() => {
-                  if (item.action === 'navigate' && item.path) navigate(item.path);
-                  else if (item.action === 'whatsapp') window.open('https://wa.me/5511988328351?text=Ol%C3%A1%2C%20preciso%20de%20ajuda!', '_blank');
-                }} className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors">
-                  <item.icon className="w-5 h-5 text-muted-foreground" />
-                  <span className="flex-1 text-left text-sm font-medium text-foreground">{item.label}</span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </button>
-              ))}
-            </div>
-
-            <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 mt-4 bg-card border border-border rounded-sm hover:bg-destructive/10 hover:border-destructive/30 transition-colors group">
-              <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-destructive" />
-              <span className="text-sm font-medium text-foreground group-hover:text-destructive">Sair</span>
-            </button>
-          </div>
-        </>
-      )}
-
-      <div className="text-center mt-8">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">9FIT PRO v2.0.0</p>
-      </div>
-
-      {/* Password Dialog */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="w-5 h-5" />Alterar Senha</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Nova Senha</Label>
-              <div className="relative">
-                <Input type={showNewPw ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
-                <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Confirmar Nova Senha</Label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancelar</Button>
-            <Button onClick={handleChangePassword} disabled={changingPassword}>
-              {changingPassword ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Alterando...</> : "Alterar Senha"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <BottomNavigation />
     </div>

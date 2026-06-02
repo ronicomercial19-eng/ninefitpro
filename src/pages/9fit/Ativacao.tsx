@@ -1,175 +1,163 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Rocket, Sparkles, ChevronRight, Trophy } from "lucide-react";
-import { ACTIVATION_EVENTS, useActivationProgress, type ActivationKey } from "@/hooks/useActivationProgress";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { ArrowRight, Check, Lock, Activity } from "lucide-react";
+import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const ROUTE_BY_KEY: Record<ActivationKey, string> = {
-  profile_complete: "/9fit/profile",
-  first_assessment: "/9fit/onboarding",
-  first_plan: "/9fit/train",
-  first_workout: "/9fit/train",
-  hub_engagement: "/9fit/hub",
-  streak_7d: "/9fit/hub",
-};
+const STEPS = [
+  { n: 1, label: "CONEXÃO" },
+  { n: 2, label: "PERFIL" },
+  { n: 3, label: "PROTOCOLO" },
+  { n: 4, label: "PRIME" },
+];
 
-const CTA_BY_KEY: Record<ActivationKey, string> = {
-  profile_complete: "Completar perfil",
-  first_assessment: "Fazer avaliação",
-  first_plan: "Gerar meu plano",
-  first_workout: "Iniciar treino",
-  hub_engagement: "Abrir Hub",
-  streak_7d: "Ver progresso",
-};
+const PROTOCOLS = [
+  { key: "neurogenesis", title: "NEUROGÊNESIS", desc: "Foco cognitivo + recuperação neural" },
+  { key: "metabolic_alpha", title: "METABÓLICO ALPHA", desc: "Queima otimizada + força mitocondrial" },
+  { key: "recovery_total", title: "RECUPERAÇÃO TOTAL", desc: "Sono profundo + redução inflamação" },
+];
 
-const XP_BY_KEY: Record<ActivationKey, number> = {
-  profile_complete: 50,
-  first_assessment: 100,
-  first_plan: 150,
-  first_workout: 200,
-  hub_engagement: 75,
-  streak_7d: 300,
-};
-
-// Permitir marcação manual em missões que não têm gatilho automático claro
-const SELF_MARK: ActivationKey[] = ["hub_engagement"];
-
-export default function Ativacao() {
+export default function NineFitAtivacao() {
   const navigate = useNavigate();
-  const { completed, percent, done, total, next, loading, mark } = useActivationProgress();
-  const totalXp = ACTIVATION_EVENTS.reduce((acc, e) => acc + (completed.has(e.key) ? XP_BY_KEY[e.key] : 0), 0);
-  const maxXp = ACTIVATION_EVENTS.reduce((acc, e) => acc + XP_BY_KEY[e.key], 0);
+  const { user } = useAuth();
+  const [stepIdx, setStepIdx] = useState(2); // matches mock "Protocolo 2/4"
+  const [protocol, setProtocol] = useState("neurogenesis");
+  const [activating, setActivating] = useState(false);
+
+  const onActivate = async () => {
+    setActivating(true);
+    try {
+      if (user) {
+        await supabase.from("user_preferences" as any).upsert({
+          user_id: user.id,
+          preferred_protocol: protocol,
+          activated_at: new Date().toISOString(),
+        });
+      }
+      toast.success("Ativação iniciada");
+      setStepIdx(3);
+    } finally {
+      setActivating(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <header className="px-4 pt-6 pb-4 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-card border border-border grid place-items-center">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <div>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-primary font-black">Ativação · 14 dias</p>
-          <h1 className="font-display text-xl italic">Sua jornada inicial</h1>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background pb-32 text-foreground">
+      {/* Hero */}
+      <div className="px-6 pt-10 text-center">
+        <p className="text-xs uppercase tracking-[0.4em] text-primary font-bold">Welcome Activation</p>
+        <h1 className="mt-4 font-display text-4xl leading-tight">
+          BEM-VINDO À<br /><span className="text-primary">9FIT PRO</span> <span className="text-primary">✣</span>
+        </h1>
+      </div>
 
-      {/* Hero progresso */}
-      <motion.section
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mx-4 rounded-3xl p-6 relative overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/[0.18] via-card/60 to-card/40 backdrop-blur-xl"
+      {/* Iniciar */}
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        className="mx-6 mt-8 rounded-3xl border border-primary/50 p-6 text-center bg-black/60"
+        style={{ boxShadow: "0 0 60px -20px hsl(var(--primary)/0.7)" }}
       >
-        <div className="absolute -top-20 -right-20 w-48 h-48 bg-primary/20 rounded-full blur-3xl" />
-        <div className="relative flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary/20 border border-primary/30 grid place-items-center">
-              <Rocket className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Progresso geral</p>
-              <p className="font-display text-3xl tabular-nums leading-none mt-1">
-                {done}<span className="text-base text-muted-foreground">/{total}</span>
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">XP de ativação</p>
-            <p className="font-display text-2xl text-primary tabular-nums">{totalXp}<span className="text-xs text-muted-foreground">/{maxXp}</span></p>
-          </div>
-        </div>
+        <p className="text-base">Ative seu protocolo de<br/>elite em 90 segundos</p>
+        <button
+          onClick={onActivate}
+          disabled={activating}
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-bold px-8 py-3 shadow-[0_0_30px_hsl(var(--primary)/0.6)]"
+        >
+          INICIAR ATIVAÇÃO <ArrowRight className="w-4 h-4" />
+        </button>
+      </motion.div>
 
-        <div className="relative h-2 bg-white/[0.06] rounded-full overflow-hidden mb-2">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-primary via-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
-          />
-        </div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{percent}% completo</p>
-      </motion.section>
-
-      {/* Próxima missão */}
-      {next && (
-        <section className="px-4 mt-6">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-2 flex items-center gap-2">
-            <Sparkles className="w-3 h-3" /> Próxima missão
-          </p>
-          <button
-            onClick={() => navigate(ROUTE_BY_KEY[next.key])}
-            className="w-full rounded-2xl p-4 bg-primary/[0.12] border border-primary/30 hover:bg-primary/[0.18] transition flex items-center gap-3 text-left"
-          >
-            <div className="flex-1">
-              <p className="font-semibold text-foreground">{next.label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Recompensa: +{XP_BY_KEY[next.key]} XP · meta dia {next.day}</p>
-            </div>
-            <span className="text-xs font-bold text-primary">{CTA_BY_KEY[next.key]}</span>
-            <ChevronRight className="w-4 h-4 text-primary" />
-          </button>
-        </section>
-      )}
-
-      {/* Lista de missões */}
-      <section className="px-4 mt-6 space-y-3">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold mb-1">Todas as missões</p>
-        {loading ? (
-          <div className="h-32 surface-card animate-pulse" />
-        ) : (
-          ACTIVATION_EVENTS.map((ev) => {
-            const isDone = completed.has(ev.key);
+      {/* Stepper */}
+      <div className="mx-6 mt-10 rounded-3xl border border-primary/30 bg-black/60 p-6">
+        <p className="text-center text-xs text-muted-foreground">Step-by-step guided setup</p>
+        <div className="mt-4 flex items-center justify-between">
+          {STEPS.map((s, i) => {
+            const done = i < stepIdx;
+            const cur = i === stepIdx;
             return (
-              <div
-                key={ev.key}
-                className={cn(
-                  "surface-card p-4 flex items-center gap-3 transition",
-                  isDone && "opacity-60"
-                )}
-              >
-                <div className={cn(
-                  "w-9 h-9 rounded-full border flex items-center justify-center shrink-0",
-                  isDone ? "bg-primary border-primary" : "border-white/20 bg-white/[0.04]"
-                )}>
-                  {isDone ? <Check className="w-4 h-4 text-primary-foreground" /> : <span className="text-[10px] font-black text-muted-foreground">d{ev.day}</span>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={cn("text-sm font-semibold", isDone && "line-through text-muted-foreground")}>{ev.label}</p>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">+{XP_BY_KEY[ev.key]} XP · meta dia {ev.day}</p>
-                </div>
-                {!isDone && (
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => navigate(ROUTE_BY_KEY[ev.key])}>
-                      {CTA_BY_KEY[ev.key]}
-                    </Button>
-                    {SELF_MARK.includes(ev.key) && (
-                      <Button size="sm" variant="ghost" onClick={async () => {
-                        await mark(ev.key);
-                        toast.success(`+${XP_BY_KEY[ev.key]} XP de ativação`);
-                      }}>
-                        <Check className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
-                )}
+              <div key={s.n} className="flex flex-col items-center flex-1">
+                <div className={`w-9 h-9 rounded-md flex items-center justify-center font-bold border ${
+                  done || cur ? "bg-primary text-primary-foreground border-primary shadow-[0_0_18px_hsl(var(--primary)/0.6)]" : "bg-white/[0.04] border-white/10 text-muted-foreground"
+                }`}>{s.n}</div>
+                <p className={`text-[9px] uppercase tracking-widest mt-2 ${done || cur ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p>
+                {cur && <p className="text-[9px] text-primary mt-0.5">{stepIdx}/{STEPS.length}</p>}
               </div>
             );
-          })
-        )}
-      </section>
+          })}
+        </div>
 
-      {/* Reward final */}
-      {done >= total && (
-        <section className="px-4 mt-6">
-          <div className="rounded-2xl p-5 border border-primary/40 bg-primary/[0.1] flex items-center gap-3">
-            <Trophy className="w-6 h-6 text-primary" />
-            <div>
-              <p className="font-display text-lg">Ativação completa</p>
-              <p className="text-xs text-muted-foreground">Você desbloqueou o protocolo Elite Bio Hacking.</p>
-            </div>
-          </div>
-        </section>
-      )}
+        <h2 className="mt-6 text-center font-display text-2xl tracking-tight">
+          CONFIGURANDO<br />SEU SISTEMA
+        </h2>
+        <p className="text-center text-xs text-muted-foreground mt-2">Sincronizando com seu relógio…</p>
+
+        <div className="mt-5 flex items-center gap-4">
+          <ul className="space-y-2.5 text-sm flex-1">
+            {["Sensor Neural conectado", "Dados de sono importados", "Frequência cardíaca calibrada"].map((t, i) => (
+              <li key={t} className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-md border border-primary/60 bg-primary/15 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary" />
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
+          {/* Waveform */}
+          <svg viewBox="0 0 80 40" className="w-24 h-12">
+            <polyline
+              points="0,20 10,20 14,8 18,32 22,20 30,20 34,4 38,36 42,20 60,20 64,12 68,28 72,20 80,20"
+              fill="none" stroke="hsl(var(--primary))" strokeWidth="1.5"
+              style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }}
+            />
+          </svg>
+        </div>
+      </div>
+
+      {/* Protocolo */}
+      <div className="mx-6 mt-6 rounded-3xl border border-primary/30 bg-black/60 p-6">
+        <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest">Biohacker protocol selection</p>
+        <h3 className="text-center text-primary font-bold text-lg mt-1">ESCOLHA SEU PROTOCOLO</h3>
+        <div className="mt-4 space-y-2.5">
+          {PROTOCOLS.map((p) => {
+            const sel = protocol === p.key;
+            return (
+              <button key={p.key} onClick={() => setProtocol(p.key)}
+                className={`w-full rounded-2xl border p-3 text-left flex items-center justify-between transition ${
+                  sel ? "border-primary bg-primary/[0.08] shadow-[0_0_20px_-8px_hsl(var(--primary)/0.7)]" : "border-white/10 bg-white/[0.02]"
+                }`}>
+                <div>
+                  <p className="font-semibold text-sm">{p.title}</p>
+                  <p className="text-[11px] text-muted-foreground">{p.desc}</p>
+                </div>
+                {p.key === "neurogenesis" && <span className="text-primary">✣</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Prime */}
+      <div className="mx-6 mt-6 rounded-3xl border border-primary/50 bg-black/70 p-6 text-center"
+        style={{ boxShadow: "0 0 50px -20px hsl(var(--primary)/0.6)" }}>
+        <p className="text-xs text-primary tracking-[0.3em] uppercase font-bold">Prime Activation</p>
+        <h3 className="mt-2 font-display text-3xl">9FIT <span className="text-primary">PRIME</span></h3>
+        <p className="mt-3 text-sm text-muted-foreground">Desbloqueie acesso total ao protocolo<br />personalizado por 12 meses</p>
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <span className="text-muted-foreground line-through text-sm">R$ 89/mês</span>
+          <span className="font-display text-xl text-primary">R$ 49<span className="text-xs">/mês</span></span>
+        </div>
+        <p className="text-[10px] text-muted-foreground">(ativação única)</p>
+        <button onClick={() => navigate("/9fit/checkout/prime")}
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-bold px-6 py-3 shadow-[0_0_30px_hsl(var(--primary)/0.6)]">
+          <Lock className="w-4 h-4" /> ATIVAR 9FIT PRIME AGORA
+        </button>
+        <p className="text-[10px] text-muted-foreground underline mt-2">Garantia de 30 dias</p>
+      </div>
+
+      <BottomNavigation />
     </div>
   );
 }
