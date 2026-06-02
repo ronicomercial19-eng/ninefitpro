@@ -1,90 +1,113 @@
-# Plano — FitPro V3 Wave 23 (Mocks + Profundidade Train)
+## Próximo passo — Finalização do planejamento (Onda 2 + Onda 3)
 
-Inspecionei os 4 zips:
-
-- `moocks.zip` → 42 mockups PNG/JPG (telas finais do app)
-- `9fit.zip` → protótipo React/Firebase com `agentService`, `trainingAgent`, `workoutService` (lógica de IA + treino)  *CONTINUE USANDO O SUPABASE NATIVO* 
-- `files-cf39a26f.zip` → 10 markdowns de arquitetura + protótipo `9fit_app`
-- `implementacao.zip` → componentes-referência (`Train/`, `Workout/`, `Dashboard/`, `Hub/`, `Premium/`, `Staff/`, `Onboarding/`, `Shop/`, `Social/`, `Profile/`)
-
-Como são 42 telas + lógica nova, vou executar em **3 ondas** sequenciais. Ondas 2 e 3 só começam após você validar a Onda 1 no preview.
+Onda 1 (Train + Engrenagem + IA adaptativa) já está entregue. Falta executar as ondas 2 e 3 alinhadas aos 8 mockups anexos e à Skill Bible v1.
 
 ---
 
-## Onda 1 — TRAIN + ENGRENAGEM (ênfase pedida)
+### ONDA 2 — Experiência do Aluno (Hub / OS / Progresso / Perfil / Prime / Ativação)
 
-Portar a inteligência de treino dos zips para o app real e refazer o Train do zero seguindo os mocks.
+**1. OS "Fit OS+" (mock `Personal ID Card`)**
 
-**Telas / componentes (mocks correspondentes):**
+- Refator `OSDashboard` → header "Fit OS+", Personal ID Card com Sync Score em ring grande (98%), Nível + Classe.
+- Bloco "Ecossistema" com 4 atalhos (Train / Hub / Staff / Market).
+- Bloco "Ranking Global" (top 3 de `engrenagem_xp_logs` agregado) + "Destaques" carrossel (eventos / desafios).
+- Bottom tab inferior dourada: OS · TRAIN · STORE · PRIME · LAB.
 
-- `Train` redesenhado: lista de treinos da semana + cartão "Treino de Hoje" com músculos, duração, intensidade IA, RPE previsto.
-- `WorkoutOverview` (pré-treino): exercícios, séries, descanso, vídeo, aquecimento sugerido pela IA.
-- `WorkoutExecution` (execução): timer inteligente, controle série/peso/reps, RPE pós-set, RON dica contextual.
-- `AjusteDeTreino` (mock #2): SmartTreino + FitCopilot tabs, slider intensidade, gauge fadiga, sugestão IA com "Aplicar".
-- `Planejamento` (mock #1): periodização científica com calendário mensal, ciclos adaptativos carousel, gráfico evolução de carga (IA vs real).
-- `PostWorkoutReview`: RPE total, volume, comparação semana anterior, XP ganho, próximas recomendações.  
-  
-*ADICIONAR O COMPONENTE DA NAV BAR :   TRAIN / PROTOCOL / STREAMING 
+**2. Hub "Ecosystem" (mock View all / Add module)**
 
-**Lógica nova (portada de `9fit.zip/services`):**
+- Refator `EcosystemGrid` para layout 2 colunas com foto grande + título + estado (ex.: "4 online", "88%").
+- Header "Ecosystem · All modules · N active", botão "View all" e FAB "+ Add module".
+- Linha de cards segue as fotos em `src/assets/modules/`.
 
-- `src/services/training/trainingAgent.ts` — gera ajustes baseados em fadiga/HRV/sono (porta `trainingAgent.ts`)
-- `src/services/training/workoutPlanner.ts` — monta sessão diária a partir de `athlete_periodizations` + bio
-- `src/services/training/loadProgression.ts` — projeta carga relativa por exercício (alimenta gráfico de Planejamento)
-- Edge function `training-ai-adjust` (Lovable AI Gateway) — recebe contexto e devolve `{intensity, swaps[], rationale}`
-- Hook `useWorkoutOfTheDay`, `useAdaptiveAdjustment`
+**3. Train + Protocol (mock `SMART TRAINING 75%`)**
 
-**Persistência:** usa `athletes`, `athlete_periodizations`, `workout_executions`, `workout_exercise_sets`, `bio_*`, `ai_context_snapshots`. Sem novas tabelas.
+- Refator `Train.tsx`: hero "PROTOCOLO SMART TRAINING" com ring de progresso geral, lista "INTERVENÇÕES" (cards exercício com play/concluído/barra), bloco "MÉTRICAS" (Carga Total + Frequência mini-chart).
+- Bottom tab destacado central HUB (mock).
 
----
+**4. Progresso (novo `Progresso.tsx`)**
 
-## Onda 2 —  OS / TRAIN / PRIME / HUB / STAFF ( SIGA ESSA ORDEM ) 
+- Cards topo: Avaliação Atual %, Composição Corporal (radar), Força Total Δkg.
+- Gráfico "Tendência de Gordura Corporal" (area chart), "Progressão de Força" (3 barras), "Histórico de Performance" (VO₂, Força Máx), "Insights Personalizados" (bullets gerados via `recommendationEngine`).
+- Adicionar rota `/9fit/progresso` + entrada na bottom nav (Início · Treinos · Progresso · Perfil para variante 4-tabs).
 
-Portar visual dos mocks restantes do hub e fluxos de orquestração.
+**5. Perfil "Configurações" (mock Lucas Mendes)**
 
-- `OSDashboard` final (hero Sync Score + recomendações Squad + missões ativação + ecosystem grid com fotos).
-- `Hub` "Meu Ecossistema" no layout do `9fitpro_native_modules_grid.html` (cards horizontais 140px com imagem diagonal e badge API).
-- `Perfil/Configurações` igual mock #3 (Staff online, Planejamento, Ajuste Treino "Novo", Ron, Histórico, Pagamento).
-- `Staff` aprimorado: lista profissionais online, agendamento direto, chat 1:1.
-- `Prime / SeasonPass` (telas elite, pillars, marketplace performance).
-- `Onboarding` 6 passos com visual completo dos mocks.
-- `Social` feed + `Tribos` + `AIPremiumChat`.
+- Refator `Profile.tsx`: header avatar + nome + badge "Aluno Premium".
+- Lista de cards: Staff (online count), Planejamento, Ajuste de Treino (badge "Novo"), Ron, Histórico, Pagamento & Plano.
+- CTA "Explorar mais opções" + secundário "Abrir no Sistema Nativo".
 
----
+**6. Ativação (mock `BEM-VINDO À 9FIT PRO`)**
 
-## Onda 3 — PROFESSOR / SKILLS / MONETIZAÇÃO / SETTINGS
+- ativaçao de perfil nativa do fitpro deve ser ativada e criar as telas . 
 
-- `Gerenciar Skills` (mock #4) refeito: form Nova Skill (nome, categoria, descrição com counter 87/180, Upload Skill), lista com toggle on/off, prévia "como o aluno vê".
-- `TeacherWorkoutPanel` portado: visão do professor para criar/ajustar treinos com IA assistente.
-- Painel Monetização: ofertas, campanhas, métricas de conversão (visual dos mocks).
-- DesignSystemView interno (debug).
-- Settings completo (notificações, integrações wearable, privacidade).
-- Permitir o upload de skill em .json / .skill / word / pdf / .tsx
+- Refator `Ativacao.tsx`: hero glow laranja "Ative seu protocolo de elite em 90 segundos".
+- Stepper 4 etapas (Conexão · Perfil · Protocolo · Prime) usando `OnboardingStepper`.
+- Card "Configurando seu sistema" com checklist animado (Sensor Neural, Sono, FC) + waveform.
+- Bloco "Escolha seu Protocolo" (Neurogênesis / Metabólico Alpha / Recuperação Total) gravando em `user_preferences`.
+- Bloco "9FIT PRIME" com pricing R$ 89 → R$ 49 e CTA "Ativar 9Fit Prime agora" → `/9fit/checkout?plan=prime`.
 
----
+**7. Planejamento (mock `Periodização Científica`)**
 
-## Premissas técnicas
-
-- Tudo continua em React/Vite/Tailwind/shadcn, semantic tokens em `index.css` (Dark + Neon Orange `#E8571A`).
-- Sem novas tabelas; só novos arquivos em `src/`, `src/services/`, `supabase/functions/`.
-- Imagens geradas com `imagegen` para preencher cards do ecosystem e backgrounds.
-- Cada onda termina com checklist visual: rodar preview, comparar com mocks de referência, ajustar.
+- Aprimorar `Planejamento.tsx`: header "Planejamento" + badge "Aluno", bloco "Periodização Científica · Ciclo X · Meso Y/N" com calendário mensal colorido (deload / treino / teste).
+- "Ciclos Adaptativos" carrossel horizontal (ring %, foco, volume, "Gerado por IA · Xh atrás").
+- "Progresso do Ciclo" area chart Real vs Projetado pela IA (via `loadProgression`).
+- CTA fixo "Ver Plano Completo da Semana" com próximo treino.
 
 ---
 
-## Decisão necessária
+### ONDA 3 — Painel Professor / Skills / Monetização
 
-Antes de implementar, confirme:
+**1. Skills no Sidebar (já criado) → página completa**
 
-1. **Começo pela Onda 1 (Train + Engrenagem) — ok?** Ou prefere outra ordem? ok. profundidade e engreanagem do app  depois funcionalidades , telas para corresçoes . 
-2. Alguma tela específica dos 42 mocks que NÃO deve entrar? as que atrapalham o funcionamento do app, nao alterar as que ja existem funcionalmente pode aprimorar e refinar.   
-- atendo : preciso que remova os detalhes de daily protocol em um unico grid sequencial   
-- atendo: intervencoes fisioligcas: somente em um grid sequencial   
- 
-3. Posso gerar novos assets (`imagegen`) para fotos/heros das telas, ou prefere usar só os já existentes em `src/assets/modules/`? usar os novos pois esta mais refinados para aprimorar o ja existente.   
-  
-  
-  
--  O DOCUMENTO DE FILES QUE GERA A ENGRENAGEM INTELIGENCIA É TOTALMENTE PRIMORADIAL PARA CORRESPONDE O SCHEMA DE DADOS, ALIMENTAR O BANCO DE DADOS SUPREMO , O FIT EVOLUITION  
-- PERMITIR INSERIR AVALAIÇAO NO PERFIL DO ALUNO / GERAR TREINAR COM IA ATRAVES DO NAVBAR
-  &nbsp;
+- `SkillManagerPage`: adicionar tabs "Manual", "Upload JSON", "Biblioteca" (lista das 19 skills da Bible com toggle ativar/desativar por aluno).
+- Cada skill exibe: missão, tier, inputs, outputs (do `9FIT_SKILL_BIBLE_v1.md` parseado em constante TS).
+- Persistência em tabela `skills` + `student_skill_activations` (ambas já existem via migração anterior).
+- permitir upload de arquivo de .skill / .md /  .json /  .tsx , assim ele organzia e orquestrar e arquiteta todas as açoes no fitpro 
+
+**2. Painel Aluno do Professor — botão "Habilitar Skill"**
+
+- Em `StudentDetailedView`: nova aba "Skills" listando 19 skills com switch (grava em `student_skill_activations`).
+- Componente reaproveita `SkillUploader` para upload manual extra.
+
+**3. Monetização (`MonetizacaoPage`)**
+
+- Dashboard: MRR, churn, conversão Prime, ofertas ativas (`dynamic_offers`), CTA criar oferta.
+- Tabela de transações últimas + filtro por plano.
+
+**4. Staff flow no check-in**
+
+- `QuickCheckIn`: após check-in, abrir sheet com staff online (consulta `profiles` role trainer/nutricionist) e botão "Falar agora" → `/9fit/staff?from=checkin`.
+- aplicar fluxo de agendamento , ao agendar aula , descontar os creditos .
+- professor ira fazer agendamentos mensais , ao final do ciclo deve gerar relatorios automaticos de relaçao das aulas do mes 
+- habilitar campo para realizar api com stevent que ira fornecer todo matching e base de profissionais , inclusive as telas para o aluno acessar dentro do fitpro
+
+5.  API KEYS FITPRO 
+  disponibilizar toda chave api do fitpro para realziar conexao com oss outros modulos do ecossistema 
+  as conexoes feitas no fitpro foram sucesso mas nao atualizaram nada  
+
+6. HOUVE ATUALIZAÇES NO SHCEMA DE DADOS NO BANCO NATIVO, NO BANCO DE SUPREMO, AJUSTE O FITPRO PARA RECEBER TODAS MUDANÇAS DE FORMA PRAGMATICA E FUNCIONAL
+7. ATUALIZAR O GRID DO MEU ECOSSISTEMA DE ACORDO COM MOCKUPS ENVIADOS   
+REMOVER GRID DO ECOSSITEMA DO COMPONENTE OS 
+8. &nbsp;
+
+---
+
+### Detalhes técnicos
+
+- **Sem novas tabelas.** Usar: `athletes`, `workout_executions`, `engrenagem_xp_logs`, `skills`, `student_skill_activations`, `dynamic_offers`, `user_preferences`, `ai_context_snapshots`.
+- Tokens semânticos (`--primary` laranja `#E8571A`, `--background` `#000`). Nada de cores hardcoded.
+- Charts: `recharts` (já no projeto) para Progresso e Planejamento.
+- Skill Bible: criar `src/data/skillsBible.ts` com array tipado das 19 skills (parse uma vez do md, hardcode em TS).
+- Bottom nav: manter v5 (5 tabs) como canônico; rota `/9fit/progresso` acessível pelo Perfil → Histórico e pelo OS.
+- QA: após cada onda, screenshot mobile 390x844 das telas-chave (OS, Hub, Train, Progresso, Perfil, Ativação, Planejamento) e comparar com mocks.
+
+---
+
+### Ordem de execução
+
+1. Onda 2 — telas Aluno (OS → Hub → Train → Progresso → Perfil → Ativação → Planejamento).
+2. Onda 3 — Skills (Bible + ativação por aluno) → Painel Professor (aba Skills) → Monetização → Staff no check-in.
+3. Verificação final: build, screenshots, console logs limpos.
+4. 5 , 6 , 7. 
+
+Aprovar para eu iniciar a Onda 2,3,4,5,6 , 7.
