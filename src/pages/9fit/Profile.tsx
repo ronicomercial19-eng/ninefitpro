@@ -29,10 +29,11 @@ export default function NineFitProfile() {
       const { count } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true })
-        .in("role", ["trainer", "nutricionista", "admin"]);
+        .in("role", ["professor", "admin"] as any);
       if (count) setStaffOnline(Math.min(9, Math.max(1, Math.round(count / 3))));
     })();
   }, []);
+
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 

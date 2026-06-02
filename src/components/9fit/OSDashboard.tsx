@@ -32,11 +32,10 @@ export function OSDashboard() {
         .order('total_xp', { ascending: false, nullsFirst: false })
         .limit(20);
       const rows = (data || []) as any[];
-      const top = rows.slice(0, 3).map((r) => ({
+      const top: RankRow[] = rows.slice(0, 3).map((r) => ({
         name: (r.name || '—').split(' ')[0],
         pts: Number(r.total_xp || 0),
       }));
-      // ensure user appears
       if (!top.find((t) => t.name.toLowerCase() === name.toLowerCase())) {
         top[2] = { name, pts: totalXp, self: true };
       } else {
@@ -45,6 +44,7 @@ export function OSDashboard() {
       setRanking(top);
     })();
   }, [name, totalXp]);
+
 
   const events = [
     { label: 'Desafio de Força', cta: 'Participar', route: '/9fit/community' },
