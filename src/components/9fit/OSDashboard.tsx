@@ -1,148 +1,188 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Droplets, Plus, Activity, CheckCircle2, MessageCircle, Sparkles } from 'lucide-react';
+import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { useEngrenagem } from '@/hooks/useEngrenagem';
-import { DigitalIDCard } from './DigitalIDCard';
-import { RecommendationCard } from './RecommendationCard';
-import { EcosystemGrid } from './EcosystemGrid';
-import { DynamicOffers } from './DynamicOffers';
-import { QuickCheckIn } from './QuickCheckIn';
+import { supabase } from '@/integrations/supabase/client';
 import { ActivationMissionCard } from './ActivationMissionCard';
 import { ActiveSkillsBadge } from './ActiveSkillsBadge';
-import { awardXP } from '@/services/engrenagem/gamificationEngine';
-import { toast } from 'sonner';
+import { QuickCheckIn } from './QuickCheckIn';
+import { DynamicOffers } from './DynamicOffers';
 
-const WATER_TARGET = 2000;
-const WATER_STEP = 250;
+interface RankRow { name: string; pts: number; self?: boolean }
 
 export function OSDashboard() {
   const { user, profile } = useAuth();
   const { athleteName } = useAthleteId();
   const navigate = useNavigate();
-  const { totalXp, level, syncScore, streak, insights, loading, refresh } = useEngrenagem();
+  const { totalXp, level, syncScore } = useEngrenagem();
 
-  const [water, setWater] = useState<number>(() => Number(localStorage.getItem('9fit_water_today') || 0));
-
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const last = localStorage.getItem('9fit_water_date');
-    if (last !== today) {
-      localStorage.setItem('9fit_water_date', today);
-      localStorage.setItem('9fit_water_today', '0');
-      setWater(0);
-    }
-  }, []);
-
-  const addWater = async () => {
-    const next = Math.min(WATER_TARGET, water + WATER_STEP);
-    setWater(next);
-    localStorage.setItem('9fit_water_today', String(next));
-    await awardXP('water_log', { syncScore, streak });
-    toast.success(`+${WATER_STEP}ml registrado`);
-  };
+  const [ranking, setRanking] = useState<RankRow[]>([]);
+  const [eventIdx, setEventIdx] = useState(0);
 
   const name = (athleteName || profile?.full_name || user?.email?.split('@')[0] || 'Atleta').split(' ')[0];
-  const waterPct = (water / WATER_TARGET) * 100;
+  const classTier = totalXp > 2000 ? 'Elite Trainer' : totalXp > 800 ? 'Pro' : 'Iniciante';
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('athletes')
+        .select('name, total_xp')
+        .order('total_xp', { ascending: false, nullsFirst: false })
+        .limit(20);
+      const rows = (data || []) as any[];
+      const top = rows.slice(0, 3).map((r) => ({
+        name: (r.name || '—').split(' ')[0],
+        pts: Number(r.total_xp || 0),
+      }));
+      // ensure user appears
+      if (!top.find((t) => t.name.toLowerCase() === name.toLowerCase())) {
+        top[2] = { name, pts: totalXp, self: true };
+      } else {
+        top.forEach((t) => { if (t.name.toLowerCase() === name.toLowerCase()) t.self = true; });
+      }
+      setRanking(top);
+    })();
+  }, [name, totalXp]);
+
+  const events = [
+    { label: 'Desafio de Força', cta: 'Participar', route: '/9fit/community' },
+    { label: 'Recovery Week', cta: 'Ativar', route: '/9fit/elite-bio' },
+  ];
+  const ev = events[eventIdx];
 
   return (
-    <div className="space-y-6 px-4 pt-4">
-      <div>
-        <p className="text-[10px] font-data tracking-[0.3em] text-muted-foreground">9FIT · OS</p>
-        <h1 className="font-display text-2xl text-foreground mt-1">
-          Olá, {name}. <span className="text-primary">Sistema online.</span>
-        </h1>
-      </div>
-
-      <DigitalIDCard
-        name={athleteName || name}
-        level={level}
-        syncScore={syncScore}
-        totalXP={totalXp}
-        streak={streak}
-        classTier={totalXp > 2000 ? 'Elite' : 'Diamante'}
-      />
-
-      {/* Card de ativação (link para /9fit/ativacao) */}
-      <ActivationMissionCard />
-
-      {/* Inteligência ativa (skills) */}
-      <ActiveSkillsBadge />
-
-      {/* Check-in da próxima aula → abre fluxo Staff */}
-      <QuickCheckIn />
-
-      {/* Ofertas dinâmicas (monetization_offers) */}
-      <DynamicOffers compact />
-
-      {/* Water tracker */}
-      <div className="surface-card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Droplets className="w-4 h-4 text-primary" />
-            <p className="text-label">HIDRATAÇÃO</p>
-          </div>
-          <span className="font-data text-sm">
-            {water}ml <span className="text-muted-foreground">/ {WATER_TARGET}ml</span>
-          </span>
+    <div className="px-4 pt-4 space-y-5">
+      {/* Top bar */}
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate('/9fit/profile')} className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
+          <Menu className="w-4 h-4 text-foreground" />
+        </button>
+        <div className="text-center">
+          <h1 className="font-display text-2xl tracking-tight">
+            Fit <span className="text-primary">OS</span><sup className="text-primary">+</sup>
+          </h1>
         </div>
-        <div className="h-2 rounded-full bg-elevated overflow-hidden mb-3">
-          <div className="h-full transition-all duration-500" style={{ width: `${waterPct}%`, background: 'hsl(var(--primary))' }} />
-        </div>
-        <button
-          onClick={addWater}
-          className="w-full surface-elevated py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-elevated/80 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> +{WATER_STEP}ml
+        <button onClick={() => navigate('/9fit/settings')} className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
+          <Settings className="w-4 h-4 text-foreground" />
         </button>
       </div>
 
-      {/* Squad Insights */}
-      <div>
+      {/* Personal ID Card */}
+      <section className="rounded-3xl border border-primary/40 bg-card/40 p-5 shadow-[0_0_40px_-16px_hsl(var(--primary)/0.6)]">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">Personal ID Card</p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-primary font-display text-lg">
+                {name[0]}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Olá,</p>
+                <p className="font-display text-2xl leading-none">{name}</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3"><span className="font-semibold text-foreground">Nível:</span> {level}</p>
+            <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">Classe:</span> {classTier}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Sync Score</p>
+            <div className="relative w-24 h-24 mt-1">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
+                <circle cx="18" cy="18" r="15" stroke="hsl(var(--primary))" strokeWidth="3" fill="none"
+                  strokeDasharray={`${(syncScore || 0) * 0.94} 100`} strokeLinecap="round"
+                  style={{ filter: 'drop-shadow(0 0 6px hsl(var(--primary)/0.6))' }} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center font-display text-2xl">
+                {Math.round(syncScore || 0)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Ecossistema atalhos */}
+      <section className="rounded-3xl border border-primary/30 bg-card/30 p-4">
+        <p className="font-display text-xl mb-3">Ecossistema</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { I: Dumbbell, label: 'Train', route: '/9fit/train' },
+            { I: Share2, label: 'Hub', route: '/9fit/hub' },
+            { I: Users, label: 'Staff', route: '/9fit/staff' },
+            { I: Tag, label: 'Market', route: '/9fit/protocols' },
+          ].map(({ I, label, route }) => (
+            <button key={label} onClick={() => navigate(route)}
+              className="rounded-2xl border border-primary/30 bg-white/[0.02] py-3 flex items-center justify-center gap-2 hover:bg-primary/[0.06] transition">
+              <I className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Ranking Global */}
+      <section className="rounded-3xl border border-primary/30 bg-card/30 p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-label flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            INSIGHTS DOS SQUADS
-          </p>
-          <button onClick={refresh} className="text-[10px] text-primary font-semibold tracking-widest">
-            ATUALIZAR
+          <p className="font-display text-xl">Ranking Global</p>
+          <Trophy className="w-5 h-5 text-primary" />
+        </div>
+        <div className="space-y-2">
+          {ranking.map((r, i) => (
+            <div key={i} className={`flex items-center justify-between text-sm rounded-xl px-3 py-2 ${
+              r.self ? 'bg-primary/10 border border-primary/40 text-primary' : ''
+            }`}>
+              <span className="font-data tabular-nums">{i + 1}. {r.name}</span>
+              <span className="font-data tabular-nums">- {r.pts.toLocaleString('pt-BR')} pts</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Inteligência ativa */}
+      <ActiveSkillsBadge />
+
+      {/* Ativação */}
+      <ActivationMissionCard />
+
+      {/* Check-in */}
+      <QuickCheckIn />
+
+      {/* Destaques */}
+      <section className="rounded-3xl border border-primary/30 bg-card/30 p-4">
+        <p className="font-display text-xl mb-3">Destaques</p>
+        <div className="rounded-2xl border border-primary/30 bg-white/[0.02] p-4 flex items-center gap-3">
+          <button onClick={() => setEventIdx((i) => (i - 1 + events.length) % events.length)}
+            className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex-1 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl border border-primary/40 bg-primary/10 flex items-center justify-center">
+              <Activity className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground">Evento:</p>
+              <p className="font-semibold">{ev.label}</p>
+            </div>
+            <button onClick={() => navigate(ev.route)}
+              className="bg-primary text-primary-foreground text-xs font-semibold rounded-full px-4 py-2">
+              {ev.cta}
+            </button>
+          </div>
+          <button onClick={() => setEventIdx((i) => (i + 1) % events.length)}
+            className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center">
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-        <div className="space-y-3">
-          {loading ? (
-            <div className="surface-card p-4 animate-pulse h-24" />
-          ) : insights.length === 0 ? (
-            <div className="surface-card p-4 text-sm text-muted-foreground">
-              Sistema calibrando… faça um check-in para gerar recomendações.
-            </div>
-          ) : (
-            insights.map(i => <RecommendationCard key={i.id} insight={i} />)
-          )}
+        <div className="mt-3 flex justify-center gap-1.5">
+          {events.map((_, i) => (
+            <span key={i} className={`w-1.5 h-1.5 rounded-full ${i === eventIdx ? 'bg-primary' : 'bg-white/20'}`} />
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Ecossistema (grid nativo de physio_modules) */}
-      <EcosystemGrid />
-
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-3">
-        <QuickAction icon={CheckCircle2} label="Check-in" onClick={() => navigate('/9fit/staff?from=checkin')} />
-        <QuickAction icon={Activity} label="Treino" onClick={() => navigate('/9fit/train')} />
-        <QuickAction icon={MessageCircle} label="RON" onClick={() => navigate('/9fit/ron')} />
-      </div>
+      <DynamicOffers compact />
     </div>
-  );
-}
-
-function QuickAction({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="surface-card p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
-    >
-      <Icon className="w-5 h-5 text-primary" strokeWidth={1.8} />
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
-    </button>
   );
 }
