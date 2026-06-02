@@ -2063,6 +2063,351 @@ export type Database = {
         }
         Relationships: []
       }
+      fitpro_connections: {
+        Row: {
+          api_key_hash: string
+          api_key_prefix: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_sync_at: string | null
+          name: string
+          professor_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_hash: string
+          api_key_prefix: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_sync_at?: string | null
+          name: string
+          professor_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_hash?: string
+          api_key_prefix?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_sync_at?: string | null
+          name?: string
+          professor_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fitpro_events: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          fitpro_professor_id: string | null
+          fitpro_student_id: string | null
+          id: string
+          module: string
+          payload: Json | null
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id?: string | null
+          id?: string
+          module?: string
+          payload?: Json | null
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id?: string | null
+          id?: string
+          module?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitpro_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "fitpro_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fitpro_healthflix_assignments: {
+        Row: {
+          assigned_at: string
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          fitpro_professor_id: string | null
+          fitpro_student_id: string
+          healthflix_content_id: string
+          id: string
+          progress_percent: number
+          source: string
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id: string
+          healthflix_content_id: string
+          id?: string
+          progress_percent?: number
+          source?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id?: string
+          healthflix_content_id?: string
+          id?: string
+          progress_percent?: number
+          source?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fitpro_healthflix_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          fitpro_student_id: string
+          healthflix_content_id: string
+          id: string
+          last_event_at: string
+          progress_percent: number
+          started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          fitpro_student_id: string
+          healthflix_content_id: string
+          id?: string
+          last_event_at?: string
+          progress_percent?: number
+          started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          fitpro_student_id?: string
+          healthflix_content_id?: string
+          id?: string
+          last_event_at?: string
+          progress_percent?: number
+          started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fitpro_smartperiodizer_events: {
+        Row: {
+          created_at: string
+          delivered: boolean
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          fitpro_professor_id: string | null
+          fitpro_student_id: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string
+          delivered?: boolean
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string
+          delivered?: boolean
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: []
+      }
+      fitpro_smartperiodizer_periodizations: {
+        Row: {
+          adherence_level: number | null
+          created_at: string
+          current_cycle: string | null
+          current_phase: string | null
+          cycle_week: number | null
+          fatigue_level: number | null
+          fitpro_professor_id: string | null
+          fitpro_student_id: string
+          goal: string | null
+          id: string
+          intensity_level: string | null
+          payload: Json | null
+          recovery_status: string | null
+          smartperiodizer_periodization_id: string | null
+          status: string
+          training_level: string | null
+          updated_at: string
+          volume_level: string | null
+        }
+        Insert: {
+          adherence_level?: number | null
+          created_at?: string
+          current_cycle?: string | null
+          current_phase?: string | null
+          cycle_week?: number | null
+          fatigue_level?: number | null
+          fitpro_professor_id?: string | null
+          fitpro_student_id: string
+          goal?: string | null
+          id?: string
+          intensity_level?: string | null
+          payload?: Json | null
+          recovery_status?: string | null
+          smartperiodizer_periodization_id?: string | null
+          status?: string
+          training_level?: string | null
+          updated_at?: string
+          volume_level?: string | null
+        }
+        Update: {
+          adherence_level?: number | null
+          created_at?: string
+          current_cycle?: string | null
+          current_phase?: string | null
+          cycle_week?: number | null
+          fatigue_level?: number | null
+          fitpro_professor_id?: string | null
+          fitpro_student_id?: string
+          goal?: string | null
+          id?: string
+          intensity_level?: string | null
+          payload?: Json | null
+          recovery_status?: string | null
+          smartperiodizer_periodization_id?: string | null
+          status?: string
+          training_level?: string | null
+          updated_at?: string
+          volume_level?: string | null
+        }
+        Relationships: []
+      }
+      fitpro_student_map: {
+        Row: {
+          athlete_id: string | null
+          connection_id: string | null
+          context: Json | null
+          created_at: string
+          fitpro_professor_id: string | null
+          fitpro_student_id: string
+          id: string
+          last_seen_at: string | null
+        }
+        Insert: {
+          athlete_id?: string | null
+          connection_id?: string | null
+          context?: Json | null
+          created_at?: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id: string
+          id?: string
+          last_seen_at?: string | null
+        }
+        Update: {
+          athlete_id?: string | null
+          connection_id?: string | null
+          context?: Json | null
+          created_at?: string
+          fitpro_professor_id?: string | null
+          fitpro_student_id?: string
+          id?: string
+          last_seen_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "fitpro_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_workout_plans: {
         Row: {
           duration_months: number
@@ -8454,6 +8799,68 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_alunos_canonical: {
+        Row: {
+          adherence_level: number | null
+          athlete_id: string | null
+          fase_atual: string | null
+          fatigue_level: number | null
+          id: string | null
+          intensity_level: string | null
+          nivel: string | null
+          objetivo: string | null
+          professor_id: string | null
+          recovery_status: string | null
+          status: string | null
+          volume_level: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
+      vw_alunos_smarttreino: {
+        Row: {
+          email: string | null
+          nome: string | null
+          objetivo: string | null
+          telefone: string | null
+        }
+        Relationships: []
+      }
       vw_assessments_unified: {
         Row: {
           agua_corporal: number | null
@@ -8550,6 +8957,63 @@ export type Database = {
           },
         ]
       }
+      vw_smarttreino_aluno_ativo: {
+        Row: {
+          adherence_level: number | null
+          athlete_id: string | null
+          current_cycle: string | null
+          current_phase: string | null
+          cycle_week: number | null
+          fatigue_level: number | null
+          fitpro_professor_id: string | null
+          fitpro_student_id: string | null
+          goal: string | null
+          intensity_level: string | null
+          payload: Json | null
+          periodization_id: string | null
+          recovery_status: string | null
+          smartperiodizer_periodization_id: string | null
+          training_level: string | null
+          volume_level: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
       vw_workout_progress_unified: {
         Row: {
           aluno_id: string | null
@@ -8624,6 +9088,15 @@ export type Database = {
       }
     }
     Functions: {
+      _selecionar_exercicios_bloco: {
+        Args: {
+          p_aluno_id: string
+          p_dias_anti_repeticao?: number
+          p_grupos: string[]
+          p_qtd: number
+        }
+        Returns: Json
+      }
       calcular_periodizacao_correspondencia: {
         Args: { estudante: string }
         Returns: {
@@ -8675,6 +9148,33 @@ export type Database = {
           modelo_id: string
         }[]
       }
+      get_aluno_context_smarttreino: {
+        Args: { p_fitpro_student_id: string }
+        Returns: {
+          adherence_level: number | null
+          athlete_id: string | null
+          current_cycle: string | null
+          current_phase: string | null
+          cycle_week: number | null
+          fatigue_level: number | null
+          fitpro_professor_id: string | null
+          fitpro_student_id: string | null
+          goal: string | null
+          intensity_level: string | null
+          payload: Json | null
+          periodization_id: string | null
+          recovery_status: string | null
+          smartperiodizer_periodization_id: string | null
+          training_level: string | null
+          volume_level: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "vw_smarttreino_aluno_ativo"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -8722,6 +9222,14 @@ export type Database = {
           periodization_model_id: string
           title: string
         }[]
+      }
+      prescrever_treino: {
+        Args: { p_aluno_id?: string; p_data?: string }
+        Returns: Json
+      }
+      prescrever_treino_html: {
+        Args: { p_aluno_id?: string; p_data?: string }
+        Returns: string
       }
       recalc_user_stats: { Args: { p_aluno_id: string }; Returns: undefined }
       recalculate_composite_score: {
