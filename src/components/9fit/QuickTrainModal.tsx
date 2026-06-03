@@ -23,7 +23,7 @@ const QS = [
     { v: "outdoor", l: "Ar livre" }] },
 ];
 
-type Exercise = { id: string; name: string; video_url?: string | null; muscle_group?: string | null };
+type Exercise = { id: string; name: string; video_url?: string | null; category?: string | null };
 
 export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
@@ -55,12 +55,12 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       const tags = tagMap[a.goal] || ["funcional"];
       const { data: ex } = await supabase
         .from("exercises")
-        .select("id, name, video_url, muscle_group")
-        .or(tags.map((t) => `muscle_group.ilike.%${t}%`).join(","))
+        .select("id, name, video_url, category")
+        .or(tags.map((t) => `category.ilike.%${t}%,name.ilike.%${t}%`).join(","))
         .limit(parseInt(a.time, 10) >= 45 ? 8 : 5);
 
       if (ex && ex.length >= 3) {
-        setExercises(ex as Exercise[]);
+        setExercises(ex as unknown as Exercise[]);
         setStep(3);
       } else {
         // fallback infoproduto
@@ -130,7 +130,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                     <span className="w-7 h-7 rounded-full bg-primary/20 text-primary grid place-items-center text-xs font-bold">{i + 1}</span>
                     <div className="flex-1">
                       <p className="text-sm font-semibold">{e.name}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{e.muscle_group || "—"}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{e.category || "—"}</p>
                     </div>
                     {e.video_url && <a href={e.video_url} target="_blank" rel="noreferrer" className="text-primary"><Play className="w-4 h-4" /></a>}
                   </li>
