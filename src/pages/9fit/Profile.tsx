@@ -104,9 +104,9 @@ export default function NineFitProfile() {
           className="w-full rounded-full bg-gradient-to-r from-primary to-primary/70 text-primary-foreground py-3.5 font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]">
           Explorar mais opções <ExternalLink className="w-4 h-4" />
         </button>
-        <button onClick={() => navigate("/app")}
-          className="w-full rounded-full border border-primary/50 text-primary py-3 font-semibold">
-          Abrir no Sistema Nativo<br /><span className="text-[10px] opacity-70">(iframe)</span>
+        <button onClick={() => navigate("/9fit/native-system")}
+          className="w-full rounded-full border border-primary/50 text-primary py-3 font-semibold flex items-center justify-center gap-2">
+          Abrir Sistema Nativo <ExternalLink className="w-4 h-4" />
         </button>
         <button onClick={async () => { await logout(); navigate("/9fit/login"); }}
           className="w-full rounded-2xl border border-white/10 bg-white/[0.02] py-3 text-sm text-muted-foreground hover:text-destructive flex items-center justify-center gap-2">

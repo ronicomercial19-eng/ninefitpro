@@ -9,6 +9,7 @@ import { ActivationMissionCard } from './ActivationMissionCard';
 import { ActiveSkillsBadge } from './ActiveSkillsBadge';
 import { QuickCheckIn } from './QuickCheckIn';
 import { DynamicOffers } from './DynamicOffers';
+import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 
 interface RankRow { name: string; pts: number; self?: boolean }
 
@@ -142,6 +143,9 @@ export function OSDashboard() {
 
       {/* Inteligência ativa */}
       <ActiveSkillsBadge />
+
+      {/* Calibração diária (emoji quiz) */}
+      <EmojiCalibrationQuiz />
 
       {/* Ativação */}
       <ActivationMissionCard />

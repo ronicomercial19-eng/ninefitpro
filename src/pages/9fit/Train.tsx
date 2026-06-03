@@ -14,9 +14,10 @@ import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
+import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
-import { Film, Dumbbell as DumbIcon, Target } from "lucide-react";
+import { Film, Dumbbell as DumbIcon, Target, Zap } from "lucide-react";
 
 interface TrainingAssignment {
   id: string;
@@ -39,6 +40,7 @@ export default function NineFitTrain() {
   const [loading, setLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
   const [subTab, setSubTab] = useState<"train" | "protocol" | "healthflix">("train");
+  const [quickOpen, setQuickOpen] = useState(false);
 
   // Workout flow state
   const [flow, setFlow] = useState<WorkoutFlow>("HOME");
@@ -213,20 +215,21 @@ export default function NineFitTrain() {
         ) : subTab === "protocol" ? (
           <DailyProtocol />
         ) : (
-          <WorkoutHome
-            trainings={trainings}
-            athleteName={athleteName || "Atleta"}
-            completedCount={completedCount}
-            onSelectWorkout={handleSelectWorkout}
-            onStartQuick={() => {
-              if (trainings.length > 0) {
-                handleSelectWorkout(trainings[0]);
-              } else {
-                toast.info("Nenhum treino disponível");
-              }
-            }}
-          />
+          <>
+            <button onClick={() => setQuickOpen(true)}
+              className="w-full mb-3 rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 font-bold text-primary hover:bg-primary/[0.14] transition">
+              <Zap className="w-4 h-4" /> TREINO RÁPIDO (3 perguntas)
+            </button>
+            <WorkoutHome
+              trainings={trainings}
+              athleteName={athleteName || "Atleta"}
+              completedCount={completedCount}
+              onSelectWorkout={handleSelectWorkout}
+              onStartQuick={() => setQuickOpen(true)}
+            />
+          </>
         )}
+        <QuickTrainModal open={quickOpen} onClose={() => setQuickOpen(false)} />
 
         {flow === "HOME" && (
           <div className="mt-6 space-y-6">
