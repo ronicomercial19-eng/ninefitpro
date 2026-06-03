@@ -1,113 +1,114 @@
-## Próximo passo — Finalização do planejamento (Onda 2 + Onda 3)
+# Plano de Execução — Ondas 2–7 + Ajustes Funcionais
 
-Onda 1 (Train + Engrenagem + IA adaptativa) já está entregue. Falta executar as ondas 2 e 3 alinhadas aos 8 mockups anexos e à Skill Bible v1.
-
----
-
-### ONDA 2 — Experiência do Aluno (Hub / OS / Progresso / Perfil / Prime / Ativação)
-
-**1. OS "Fit OS+" (mock `Personal ID Card`)**
-
-- Refator `OSDashboard` → header "Fit OS+", Personal ID Card com Sync Score em ring grande (98%), Nível + Classe.
-- Bloco "Ecossistema" com 4 atalhos (Train / Hub / Staff / Market).
-- Bloco "Ranking Global" (top 3 de `engrenagem_xp_logs` agregado) + "Destaques" carrossel (eventos / desafios).
-- Bottom tab inferior dourada: OS · TRAIN · STORE · PRIME · LAB.
-
-**2. Hub "Ecosystem" (mock View all / Add module)**
-
-- Refator `EcosystemGrid` para layout 2 colunas com foto grande + título + estado (ex.: "4 online", "88%").
-- Header "Ecosystem · All modules · N active", botão "View all" e FAB "+ Add module".
-- Linha de cards segue as fotos em `src/assets/modules/`.
-
-**3. Train + Protocol (mock `SMART TRAINING 75%`)**
-
-- Refator `Train.tsx`: hero "PROTOCOLO SMART TRAINING" com ring de progresso geral, lista "INTERVENÇÕES" (cards exercício com play/concluído/barra), bloco "MÉTRICAS" (Carga Total + Frequência mini-chart).
-- Bottom tab destacado central HUB (mock).
-
-**4. Progresso (novo `Progresso.tsx`)**
-
-- Cards topo: Avaliação Atual %, Composição Corporal (radar), Força Total Δkg.
-- Gráfico "Tendência de Gordura Corporal" (area chart), "Progressão de Força" (3 barras), "Histórico de Performance" (VO₂, Força Máx), "Insights Personalizados" (bullets gerados via `recommendationEngine`).
-- Adicionar rota `/9fit/progresso` + entrada na bottom nav (Início · Treinos · Progresso · Perfil para variante 4-tabs).
-
-**5. Perfil "Configurações" (mock Lucas Mendes)**
-
-- Refator `Profile.tsx`: header avatar + nome + badge "Aluno Premium".
-- Lista de cards: Staff (online count), Planejamento, Ajuste de Treino (badge "Novo"), Ron, Histórico, Pagamento & Plano.
-- CTA "Explorar mais opções" + secundário "Abrir no Sistema Nativo".
-
-**6. Ativação (mock `BEM-VINDO À 9FIT PRO`)**
-
-- ativaçao de perfil nativa do fitpro deve ser ativada e criar as telas . 
-
-- Refator `Ativacao.tsx`: hero glow laranja "Ative seu protocolo de elite em 90 segundos".
-- Stepper 4 etapas (Conexão · Perfil · Protocolo · Prime) usando `OnboardingStepper`.
-- Card "Configurando seu sistema" com checklist animado (Sensor Neural, Sono, FC) + waveform.
-- Bloco "Escolha seu Protocolo" (Neurogênesis / Metabólico Alpha / Recuperação Total) gravando em `user_preferences`.
-- Bloco "9FIT PRIME" com pricing R$ 89 → R$ 49 e CTA "Ativar 9Fit Prime agora" → `/9fit/checkout?plan=prime`.
-
-**7. Planejamento (mock `Periodização Científica`)**
-
-- Aprimorar `Planejamento.tsx`: header "Planejamento" + badge "Aluno", bloco "Periodização Científica · Ciclo X · Meso Y/N" com calendário mensal colorido (deload / treino / teste).
-- "Ciclos Adaptativos" carrossel horizontal (ring %, foco, volume, "Gerado por IA · Xh atrás").
-- "Progresso do Ciclo" area chart Real vs Projetado pela IA (via `loadProgression`).
-- CTA fixo "Ver Plano Completo da Semana" com próximo treino.
+Trabalho dividido em **2 blocos**: primeiro fecho as Ondas restantes do roadmap (2 a 7), depois executo os **7 ajustes** específicos pedidos.
 
 ---
 
-### ONDA 3 — Painel Professor / Skills / Monetização
+## BLOCO A — Ondas 2 a 7 (finalização do roadmap)
 
-**1. Skills no Sidebar (já criado) → página completa**
+### Onda 2 — Train & Engrenagem (pendências)
 
-- `SkillManagerPage`: adicionar tabs "Manual", "Upload JSON", "Biblioteca" (lista das 19 skills da Bible com toggle ativar/desativar por aluno).
-- Cada skill exibe: missão, tier, inputs, outputs (do `9FIT_SKILL_BIBLE_v1.md` parseado em constante TS).
-- Persistência em tabela `skills` + `student_skill_activations` (ambas já existem via migração anterior).
-- permitir upload de arquivo de .skill / .md /  .json /  .tsx , assim ele organzia e orquestrar e arquiteta todas as açoes no fitpro 
+- `Train.tsx`: hero "PROTOCOLO SMART TRAINING" com anel de progresso real (workout do dia via `useWorkoutOfTheDay`), card "INTERVENÇÕES" puxando do `recommendationEngine`, mini-chart "MÉTRICAS" usando últimas 7 execuções.
+- `DailyProtocol.tsx`: garantir que cada linha vira CTA para a skill correspondente.
 
-**2. Painel Aluno do Professor — botão "Habilitar Skill"**
+### Onda 3 — Hub OS+ refinement
 
-- Em `StudentDetailedView`: nova aba "Skills" listando 19 skills com switch (grava em `student_skill_activations`).
-- Componente reaproveita `SkillUploader` para upload manual extra.
+- `EcosystemGrid.tsx`: indicador online/% por módulo (Staff: 4 online; Ron: 88%; etc.) usando dados reais quando existirem, fallback estático.
+- Header "All modules • N active" calculado em runtime.
 
-**3. Monetização (`MonetizacaoPage`)**
+### Onda 4 — Progresso analytics real
 
-- Dashboard: MRR, churn, conversão Prime, ofertas ativas (`dynamic_offers`), CTA criar oferta.
-- Tabela de transações últimas + filtro por plano.
+- `Progresso.tsx`: trocar dados estáticos por queries a `physical_assessments` (bodyfat), `workout_exercise_sets` (força), `engrenagem_xp_logs` (histórico). Insights via `recommendationEngine.generateInsights()`.
 
-**4. Staff flow no check-in**
+### Onda 5 — Skills professor (fechamento)
 
-- `QuickCheckIn`: após check-in, abrir sheet com staff online (consulta `profiles` role trainer/nutricionist) e botão "Falar agora" → `/9fit/staff?from=checkin`.
-- aplicar fluxo de agendamento , ao agendar aula , descontar os creditos .
-- professor ira fazer agendamentos mensais , ao final do ciclo deve gerar relatorios automaticos de relaçao das aulas do mes 
-- habilitar campo para realizar api com stevent que ira fornecer todo matching e base de profissionais , inclusive as telas para o aluno acessar dentro do fitpro
+- `SkillManagerPage`: aba **Biblioteca** com botão "Instalar todas (19)" e busca; aba **Aluno** ligando skill→athlete via `student_skill_activations`.
+- `StudentDetailedView`: nova aba "Skills" com toggles.
 
-5.  API KEYS FITPRO 
-  disponibilizar toda chave api do fitpro para realziar conexao com oss outros modulos do ecossistema 
-  as conexoes feitas no fitpro foram sucesso mas nao atualizaram nada  
+### Onda 6 — Monetização
 
-6. HOUVE ATUALIZAÇES NO SHCEMA DE DADOS NO BANCO NATIVO, NO BANCO DE SUPREMO, AJUSTE O FITPRO PARA RECEBER TODAS MUDANÇAS DE FORMA PRAGMATICA E FUNCIONAL
-7. ATUALIZAR O GRID DO MEU ECOSSISTEMA DE ACORDO COM MOCKUPS ENVIADOS   
-REMOVER GRID DO ECOSSITEMA DO COMPONENTE OS 
-8. &nbsp;
+- `MonetizacaoPage.tsx`: KPIs (MRR/Churn/Prime conv.) a partir de `transactions` + `subscriptions`. Tabela de últimas 20 transações. CTA "Criar oferta dinâmica" → `dynamic_offers`.
+
+### Onda 7 — Staff check-in flow
+
+- `QuickCheckIn` → após registro, sheet "Staff online agora" → CTA "Falar agora" → `/9fit/staff?from=checkin`.
 
 ---
 
-### Detalhes técnicos
+## BLOCO B — Ajustes funcionais (7 itens)
 
-- **Sem novas tabelas.** Usar: `athletes`, `workout_executions`, `engrenagem_xp_logs`, `skills`, `student_skill_activations`, `dynamic_offers`, `user_preferences`, `ai_context_snapshots`.
-- Tokens semânticos (`--primary` laranja `#E8571A`, `--background` `#000`). Nada de cores hardcoded.
-- Charts: `recharts` (já no projeto) para Progresso e Planejamento.
-- Skill Bible: criar `src/data/skillsBible.ts` com array tipado das 19 skills (parse uma vez do md, hardcode em TS).
-- Bottom nav: manter v5 (5 tabs) como canônico; rota `/9fit/progresso` acessível pelo Perfil → Histórico e pelo OS.
-- QA: após cada onda, screenshot mobile 390x844 das telas-chave (OS, Hub, Train, Progresso, Perfil, Ativação, Planejamento) e comparar com mocks.
+### 1. APIs Conectoras (HealthFlix etc.) validando de verdade
+
+- `ApiConnectorCard.tsx`: ao salvar endpoint+key, fazer **probe real** (`GET <endpoint>/health` ou `/ping`) via edge function `api-connector-proxy` e gravar `status: "connected"` + `last_sync_at`.
+- `HealthFlixAdminPage`: exibir badge **CONECTADO** (verde) + contagem de itens sincronizados puxando da tabela do módulo.
+- Job de sync (botão "Sincronizar agora") chama `intelligence-hub-sync` com `module: "healthflix"`.
+
+### 2. Fluxo de Ativação do Perfil funcional
+
+- `Ativacao.tsx`: integrar **5 telas reais** do onboarding em sequência dentro do stepper (Conexão wearable, Perfil base, Anamnese curta, Protocolo, Prime).
+- Cada step persiste em `user_preferences` + `athletes` e só avança com dados válidos.
+- Step "Conexão" usa `WearableConnectBox`; "Perfil" reusa `OnboardingStepper` campos chave.
+
+### 3. Streaming HealthFlix no app
+
+- **Aluno** (`HealthFlix.tsx`): renderizar grid completo de vídeos vindos da API (tabela `healthflix_videos` sincronizada). Player embed.
+- **Professor** (`HealthFlixAdminPage`): tela com toda a biblioteca da API + filtros + reatribuir/destacar.
+
+### 4. Quiz de 5 perguntas emoji → calibra sistema
+
+- Novo componente `EmojiCalibrationQuiz.tsx`: 5 perguntas sequenciais (Sono / Energia / Humor / Dor / Motivação), cada uma com 5 emojis. Avança ao tocar. Persiste em `bio_recovery_state` + atualiza `sync_score`.
+- Substitui a faixa "como você acordou" promessa-only no OS por este quiz interativo (1 vez/dia).
+
+### 5. Radar 5D dinâmico
+
+- `WeeklyRadar.tsx`: ler em tempo real de `engrenagem_xp_logs`, `workout_executions`, `daily_sync_logs`, `student_skill_activations`. Recompor 5 eixos (Força, Recovery, Consistência, Nutrição, Mente) a cada montagem + subscription `useRealtimeTable`.
+
+### 6. Perfil → "Abrir sistema nativo" (embed Fitness Place)
+
+- Nova rota `/9fit/native-system` que monta `<iframe src="https://fitnessplace.lovable.app" />` em fullscreen com header de retorno.
+- Card no `Profile.tsx` aponta para essa rota.
+
+### 7. Train → "Treino Rápido" (quiz 3 perguntas + entrega)
+
+- Novo `QuickTrainModal`: 3 perguntas (Objetivo / Tempo disponível / Equipamento).
+- Resolver: se houver match em `exercises` (biblioteca) → monta treino nativo com vídeos; senão → busca em `infoproducts` e abre `/9fit/checkout/:id`.
+- Após pagamento confirmado → libera infoproduto (`user_unlocks`).
+
+### 8. Edge Function `staff-api`
+
+- Criar `supabase/functions/staff-api/index.ts` com o código exato fornecido pelo usuário.
+- Adicionar `[functions.staff-api] verify_jwt = false` em `supabase/config.toml`.
+- No painel Professor `/app/staff`: fluxo de seleção de profissionais que consome `staff-api/professionals` e `staff-api/match`. Card libera no front-end do cliente via `staff-api/booking`.  
+  
+9.  AJUSTES DE FUNCIONALIDADES DA NAVBAR DO PROFESSOR   
+- TREINO COM IA -> ESCOLHER ALUNO -> ONBOARDING DE PREFERENCIAS -> ENTREGAR TREINO COMPLETO PARA O ALUNO COM O VIDEO NO PERFIL DO FITPRO /   
+-  ASSISTENTE DE IA -> EXECUTAR AÇOES DIRETA, EX: AJUSTAR PERIODIZAÇAO NO SMART TREINO / CRIAR TREINO NOVO PARA ALUNO X NO SMART TREINO  / COMANDOS DE AÇOES OPERACIONAIS DENTRO DO PAINEL   
+ANALISE COM IA -> APOS ANALISE -> OPÇAO PARA ENVIAR PRO ALUNO NO FITPRO -> APRESENTAR COM MENSAGEM NOVA NA OS   
+  
+10-  SKILLS E AGENTES   
+- PERMTIIR UPLOAD DE ARQUIVOS QUE CORRESPONDEM A ESSA FUNÇAO PARA EXTRAIR OS DADOS E CRIAR NOVAS SKILLS,AGENTES DENTRO DO SISTEMA 
 
 ---
 
-### Ordem de execução
+## Ordem de Execução
 
-1. Onda 2 — telas Aluno (OS → Hub → Train → Progresso → Perfil → Ativação → Planejamento).
-2. Onda 3 — Skills (Bible + ativação por aluno) → Painel Professor (aba Skills) → Monetização → Staff no check-in.
-3. Verificação final: build, screenshots, console logs limpos.
-4. 5 , 6 , 7. 
+1. Bloco A — Ondas 2 → 7 (commits incrementais).
+2. Bloco B — Itens 1 → 8 (na ordem listada; itens 1 e 3 são interdependentes).
+3. QA visual final (screenshots 390x844 mobile + 1280 desktop).
 
-Aprovar para eu iniciar a Onda 2,3,4,5,6 , 7.
+## Critérios de Aceite
+
+- Nenhum dado mockado nas telas finais; tudo lê de Supabase.
+- Quiz emoji altera `sync_score` visível no OS.
+- Radar 5D muda após completar 1 protocolo de teste.
+- HealthFlix mostra itens reais após sync.
+- `staff-api` responde 200 em `/methods`, `/hubs`, `/professionals`.
+
+## Tabelas necessárias (migrations)
+
+- `daily_sync_logs` (user_id, sleep, energy, mood, pain, motivation, score, created_at) — se ausente.
+- `infoproducts` + `user_unlocks` — se ausentes.
+- `healthflix_videos` — se ausente.
+- Todas com RLS + GRANTs adequados.
+
+Confirmar para iniciar a execução.
