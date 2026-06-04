@@ -135,7 +135,6 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
       const { error } = await supabase
         .from('athletes')
         .update({ 
-          auto_password_temp: newTempPassword, 
           password_changed: false 
         })
         .eq('id', currentStudent.id);
@@ -174,11 +173,11 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
     }
   };
 
-  // Generate temporary password based on student data
+  // Generate cryptographically secure temporary password (12 chars, mixed alphanumeric)
   const generateTempPassword = () => {
-    const namePart = currentStudent.nome.split(' ')[0].toLowerCase().slice(0, 4);
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `${namePart}${randomNum}`;
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = crypto.getRandomValues(new Uint8Array(12));
+    return Array.from(bytes).map((b) => chars[b % chars.length]).join('');
   };
 
   const handleSendWhatsAppRegistration = async () => {

@@ -52,12 +52,12 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
           } else {
             const { data: athlete } = await supabase
               .from('athletes')
-              .select('password_changed, auto_password_temp')
+              .select('password_changed')
               .eq('user_id', session.user.id)
               .maybeSingle();
             // Sem registro de athlete (coach/admin) → liberado
             // Athlete com senha já trocada → liberado
-            firstAccessDone = !athlete || athlete.password_changed === true || athlete.auto_password_temp === null;
+            firstAccessDone = !athlete || athlete.password_changed === true;
           }
         } catch (e) {
           console.log('[NineFitLayout] first-access check:', e);

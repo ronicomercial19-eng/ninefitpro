@@ -112,7 +112,6 @@ export async function activateAthlete(id: string, userId: string, markPasswordCh
     const updateData: Record<string, any> = { user_id: userId, activated: true };
     if (markPasswordChanged) {
       updateData.password_changed = true;
-      updateData.auto_password_temp = null;
     }
 
     const { data, error } = await supabase.from('athletes').update(updateData).eq('id', id).select().single();

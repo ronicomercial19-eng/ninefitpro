@@ -75,7 +75,7 @@ function scoreProfessional(pro: any, opts: { method?: string; hub?: string; pref
   return score;
 }
 
-function toPublicPro(pro: any, score?: number) {
+function toPublicPro(pro: any, score?: number, includeContact = false) {
   return {
     id: pro.id,
     name: pro.nome_completo,
@@ -87,7 +87,7 @@ function toPublicPro(pro: any, score?: number) {
     bio: pro.sobre_e_amor_por_eventos,
     portfolio: pro.link_portfolio_curriculo,
     transport: pro.tem_transporte_proprio,
-    contact: { whatsapp: pro.telefone_whatsapp, email: pro.email },
+    ...(includeContact ? { contact: { whatsapp: pro.telefone_whatsapp, email: pro.email } } : {}),
     ...(score !== undefined ? { match_score: score } : {}),
   };
 }
@@ -102,6 +102,15 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    // Optional auth — contact details only revealed to authenticated callers; booking requires auth
+    const authHeader = req.headers.get("Authorization");
+    let isAuthed = false;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claims, error: authErr } = await supabase.auth.getClaims(token);
+      if (!authErr && claims?.claims) isAuthed = true;
+    }
+
     if (req.method === "GET" && action === "methods") return json({ methods: METHODS });
     if (req.method === "GET" && action === "hubs") return json({ hubs: HUBS });
 
@@ -114,7 +123,7 @@ Deno.serve(async (req) => {
         .map((p) => ({ p, s: scoreProfessional(p, { method, hub }) }))
         .filter(({ s }) => (method || hub ? s > 0 : true))
         .sort((a, b) => b.s - a.s)
-        .map(({ p, s }) => toPublicPro(p, s));
+        .map(({ p, s }) => toPublicPro(p, s, isAuthed));
       return json({ count: list.length, professionals: list });
     }
 
@@ -127,11 +136,12 @@ Deno.serve(async (req) => {
         .map((p) => ({ p, s: scoreProfessional(p, { method, hub, preferences }) }))
         .sort((a, b) => b.s - a.s)
         .slice(0, limit)
-        .map(({ p, s }) => toPublicPro(p, s));
+        .map(({ p, s }) => toPublicPro(p, s, isAuthed));
       return json({ method, hub, matches: list });
     }
 
     if (req.method === "POST" && action === "booking") {
+      if (!isAuthed) return json({ error: "Authentication required for bookings" }, 401);
       const body = await req.json().catch(() => ({}));
       const { freelancer_id, method, slot, client_id, client_name, hub, notes } = body;
       if (!freelancer_id || !method)

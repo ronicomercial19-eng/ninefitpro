@@ -178,7 +178,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
               className="w-full h-[78vh]"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              sandbox="allow-scripts allow-forms allow-popups"
               title={assignment.content_title}
             />
             <p className="text-[10px] text-muted-foreground px-3 py-2 text-center">
@@ -256,7 +256,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
         <iframe
           src={buildIframeSrc(htmlContent)}
           className="w-full h-[70vh] rounded-xl bg-card border border-white/[0.06]"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts"
           title={assignment.content_title}
         />
       )}

@@ -468,7 +468,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
             {selectedHTMLTraining?.html_file_url && (
               <iframe
                 src={selectedHTMLTraining.html_file_url}
-                sandbox="allow-scripts allow-same-origin"
+                sandbox="allow-scripts"
                 className="w-full h-[600px] border-0"
                 title={selectedHTMLTraining.training_name}
               />

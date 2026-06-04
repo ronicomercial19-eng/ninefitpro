@@ -323,7 +323,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         ) : htmlContent ? (
           <iframe
             srcDoc={injectMobileViewport(htmlContent)}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            sandbox="allow-scripts allow-popups allow-forms"
             className="w-full h-[60vh] border-0 rounded-lg"
             title={training.training_name}
           />

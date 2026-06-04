@@ -62,7 +62,7 @@ export interface UpdateAthleteDTO extends Partial<CreateAthleteDTO> {
   level?: number;
   total_xp?: number;
   user_id?: string;
-  auto_password_temp?: string | null;
+  
 }
 
 // ==================== SCHEDULING DOMAIN ====================

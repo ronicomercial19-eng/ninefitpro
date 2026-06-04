@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +22,24 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Auth gate — require valid JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return fail("UNAUTHORIZED", "Missing authorization", 401);
+    }
+    const authClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claims, error: authErr } = await authClient.auth.getClaims(token);
+    if (authErr || !claims?.claims) return fail("UNAUTHORIZED", "Invalid token", 401);
+    const authedUserId = claims.claims.sub as string;
+
     const body = await req.json();
-    const { userId, workoutName, workoutType, bio, profile, activeSkills, recentRPE } = body ?? {};
-    if (!userId) return fail("BAD_INPUT", "userId obrigatório");
+    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE } = body ?? {};
+    const userId = authedUserId; // trust JWT, not body
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return fail("CONFIG", "LOVABLE_API_KEY ausente", 500);

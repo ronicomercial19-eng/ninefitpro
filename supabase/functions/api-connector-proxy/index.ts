@@ -21,15 +21,28 @@ Deno.serve(async (req) => {
     const { data: claims, error: authErr } = await supabase.auth.getClaims(token);
     if (authErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
 
-    const body = await req.json().catch(() => ({}));
-    const { connector, path, init } = body as { connector?: string; path?: string; init?: any };
-    if (!connector || typeof path !== "string") return json({ error: "connector and path required" }, 400);
-
-    const admin = createClient(
+    // Role gate — only trainers/admins may use the connector proxy
+    const userId = claims.claims.sub as string;
+    const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: rec, error } = await admin
+    const { data: roles } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const allowed = (roles ?? []).some((r: any) =>
+      ["trainer", "admin", "super_admin", "professor"].includes(r.role),
+    );
+    if (!allowed) return json({ error: "Forbidden" }, 403);
+
+    const body = await req.json().catch(() => ({}));
+    const { connector, path, init } = body as { connector?: string; path?: string; init?: any };
+    if (!connector || typeof path !== "string" || !path.startsWith("/")) {
+      return json({ error: "connector and relative path required" }, 400);
+    }
+
+    const { data: rec, error } = await adminClient
       .from("api_connectors")
       .select("key, endpoint, auth_mode, secret_ref, status, config")
       .eq("key", connector)
@@ -41,10 +54,12 @@ Deno.serve(async (req) => {
     const base = (rec.endpoint ?? "").replace(/\/$/, "");
     const url = `${base}${path}`;
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    };
+    // Whitelist only safe headers from client (never spread arbitrary headers)
+    const SAFE_HEADERS = new Set(["content-type", "accept", "accept-language"]);
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    for (const [k, v] of Object.entries(init?.headers ?? {})) {
+      if (SAFE_HEADERS.has(k.toLowerCase()) && typeof v === "string") headers[k] = v;
+    }
     if (rec.auth_mode === "apikey" && secret) {
       const headerName = (rec.config as any)?.api_key_header ?? "Authorization";
       const prefix = (rec.config as any)?.api_key_prefix ?? "Bearer ";

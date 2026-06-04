@@ -40,14 +40,13 @@ export function useFirstAccess(): UseFirstAccessResult {
         // 2) Atleta com senha temporária pendente?
         const { data: athlete } = await supabase
           .from('athletes')
-          .select('id, password_changed, auto_password_temp')
+          .select('id, password_changed')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (athlete) {
           setAthleteId(athlete.id);
-          const needs = athlete.password_changed === false && athlete.auto_password_temp !== null;
-          setIsFirstAccess(needs);
+          setIsFirstAccess(athlete.password_changed === false);
         } else {
           // Coach/admin sem registro de atleta — não precisa do fluxo
           setIsFirstAccess(false);
