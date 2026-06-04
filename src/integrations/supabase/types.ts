@@ -774,7 +774,6 @@ export type Database = {
           age: number | null
           altura_cm: number | null
           aluno_id: string | null
-          auto_password_temp: string | null
           birthdate: string | null
           coach_id: string
           created_at: string
@@ -816,7 +815,6 @@ export type Database = {
           age?: number | null
           altura_cm?: number | null
           aluno_id?: string | null
-          auto_password_temp?: string | null
           birthdate?: string | null
           coach_id: string
           created_at?: string
@@ -858,7 +856,6 @@ export type Database = {
           age?: number | null
           altura_cm?: number | null
           aluno_id?: string | null
-          auto_password_temp?: string | null
           birthdate?: string | null
           coach_id?: string
           created_at?: string
