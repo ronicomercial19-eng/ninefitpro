@@ -135,7 +135,6 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
       const { error } = await supabase
         .from('athletes')
         .update({ 
-          auto_password_temp: newTempPassword, 
           password_changed: false 
         })
         .eq('id', currentStudent.id);
