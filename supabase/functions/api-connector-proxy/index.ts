@@ -21,9 +21,26 @@ Deno.serve(async (req) => {
     const { data: claims, error: authErr } = await supabase.auth.getClaims(token);
     if (authErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
 
+    // Role gate — only trainers/admins may use the connector proxy
+    const userId = claims.claims.sub as string;
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: roles } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const allowed = (roles ?? []).some((r: any) =>
+      ["trainer", "admin", "super_admin", "professor"].includes(r.role),
+    );
+    if (!allowed) return json({ error: "Forbidden" }, 403);
+
     const body = await req.json().catch(() => ({}));
     const { connector, path, init } = body as { connector?: string; path?: string; init?: any };
-    if (!connector || typeof path !== "string") return json({ error: "connector and path required" }, 400);
+    if (!connector || typeof path !== "string" || !path.startsWith("/")) {
+      return json({ error: "connector and relative path required" }, 400);
+    }
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
