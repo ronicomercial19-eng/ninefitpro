@@ -42,11 +42,7 @@ Deno.serve(async (req) => {
       return json({ error: "connector and relative path required" }, 400);
     }
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-    const { data: rec, error } = await admin
+    const { data: rec, error } = await adminClient
       .from("api_connectors")
       .select("key, endpoint, auth_mode, secret_ref, status, config")
       .eq("key", connector)
@@ -58,10 +54,12 @@ Deno.serve(async (req) => {
     const base = (rec.endpoint ?? "").replace(/\/$/, "");
     const url = `${base}${path}`;
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    };
+    // Whitelist only safe headers from client (never spread arbitrary headers)
+    const SAFE_HEADERS = new Set(["content-type", "accept", "accept-language"]);
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    for (const [k, v] of Object.entries(init?.headers ?? {})) {
+      if (SAFE_HEADERS.has(k.toLowerCase()) && typeof v === "string") headers[k] = v;
+    }
     if (rec.auth_mode === "apikey" && secret) {
       const headerName = (rec.config as any)?.api_key_header ?? "Authorization";
       const prefix = (rec.config as any)?.api_key_prefix ?? "Bearer ";
