@@ -18,9 +18,8 @@ interface AdicionarAlunoFormProps {
 
 const generatePassword = () => {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$!';
-  let password = '';
-  for (let i = 0; i < 10; i++) password += chars.charAt(Math.floor(Math.random() * chars.length));
-  return password;
+  const bytes = crypto.getRandomValues(new Uint8Array(14));
+  return Array.from(bytes).map((b) => chars[b % chars.length]).join('');
 };
 
 export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoFormProps) {
