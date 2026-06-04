@@ -162,7 +162,7 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
           <DialogHeader><DialogTitle>{selectedTemplate?.training_name}</DialogTitle></DialogHeader>
           <div className="overflow-auto max-h-[70vh] border rounded-lg bg-white">
             {selectedTemplate?.html_file_url && (
-              <iframe src={selectedTemplate.html_file_url} sandbox="allow-scripts allow-same-origin" className="w-full h-[600px] border-0" title={selectedTemplate.training_name} />
+              <iframe src={selectedTemplate.html_file_url} sandbox="allow-scripts" className="w-full h-[600px] border-0" title={selectedTemplate.training_name} />
             )}
           </div>
         </DialogContent>

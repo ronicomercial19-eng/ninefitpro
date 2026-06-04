@@ -578,14 +578,14 @@ export function TrainingContentUpload({
                 src={externalLink}
                 className="w-full h-[600px] border-0"
                 title="Preview Link"
-                sandbox="allow-scripts allow-same-origin allow-popups"
+                sandbox="allow-scripts allow-popups"
               />
             ) : (
               <iframe
                 srcDoc={getPreviewContent()}
                 className="w-full h-[600px] border-0"
                 title="Preview HTML"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox="allow-scripts"
               />
             )}
           </div>
