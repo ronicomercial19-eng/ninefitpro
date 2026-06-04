@@ -60,9 +60,8 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
       if (!result.success) throw new Error(result.error?.message);
       const athleteResult = result.data;
 
-      // Store temp password
+      // Senha temporária é enviada ao edge function; nunca armazenada em texto plano no DB
       if (createAuth && athleteResult) {
-        await supabase.from('athletes').update({ auto_password_temp: formData.senha }).eq('id', athleteResult.id);
         
         try {
           const { error: authFuncError } = await supabase.functions.invoke('create-athlete-user', {
