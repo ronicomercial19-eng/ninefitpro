@@ -75,7 +75,7 @@ function scoreProfessional(pro: any, opts: { method?: string; hub?: string; pref
   return score;
 }
 
-function toPublicPro(pro: any, score?: number) {
+function toPublicPro(pro: any, score?: number, includeContact = false) {
   return {
     id: pro.id,
     name: pro.nome_completo,
@@ -87,7 +87,7 @@ function toPublicPro(pro: any, score?: number) {
     bio: pro.sobre_e_amor_por_eventos,
     portfolio: pro.link_portfolio_curriculo,
     transport: pro.tem_transporte_proprio,
-    contact: { whatsapp: pro.telefone_whatsapp, email: pro.email },
+    ...(includeContact ? { contact: { whatsapp: pro.telefone_whatsapp, email: pro.email } } : {}),
     ...(score !== undefined ? { match_score: score } : {}),
   };
 }
