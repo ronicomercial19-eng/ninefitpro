@@ -250,6 +250,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "aluno_score_composite_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       alunos: {
@@ -458,6 +465,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analises_ia_aluno_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -900,6 +914,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "athletes_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       audit_log: {
@@ -1172,6 +1193,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "avaliacoes_fisicas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       avaliacoes_unificadas: {
@@ -1380,6 +1408,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
           {
             foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
@@ -2530,6 +2565,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "health_metrics_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       historico_avaliacoes: {
@@ -2725,6 +2767,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "historico_treinos_realizados_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
+          {
             foreignKeyName: "historico_treinos_realizados_plano_treino_id_fkey"
             columns: ["plano_treino_id"]
             isOneToOne: false
@@ -2906,6 +2955,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -3098,6 +3154,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ninefit_checkins_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       ninefit_reports: {
@@ -3183,6 +3246,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ninefit_reports_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -3754,6 +3824,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "personal_records_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
+          {
             foreignKeyName: "personal_records_treino_id_fkey"
             columns: ["treino_id"]
             isOneToOne: false
@@ -4034,6 +4111,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_treino_aluno_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -4484,6 +4568,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "progresso_aluno_id_aluno_fkey"
+            columns: ["id_aluno"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       push_subscriptions: {
@@ -4524,6 +4615,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -4728,6 +4826,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "registros_carga_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
+          {
             foreignKeyName: "registros_carga_treino_id_fkey"
             columns: ["treino_id"]
             isOneToOne: false
@@ -4849,6 +4954,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
           {
             foreignKeyName: "saved_periodizations_user_profile_id_fkey"
@@ -5323,6 +5435,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_sync_logs_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -6678,6 +6797,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "treinos_realizados_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
         ]
       }
       uploads_periodizacao: {
@@ -7241,6 +7367,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
         ]
       }
@@ -7982,6 +8115,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_progress_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
           },
           {
             foreignKeyName: "workout_progress_athlete_id_fkey"
@@ -8918,6 +9058,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
+          {
             foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
@@ -8951,6 +9098,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_unified_users"
             referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
+      vw_periodizacao_ativa_aluno: {
+        Row: {
+          adherence_level: number | null
+          aluno_id: string | null
+          annual_plan_id: string | null
+          athlete_periodization_id: string | null
+          fase_atual: string | null
+          fatigue_level: number | null
+          fitpro_periodization_id: string | null
+          fonte: string | null
+          intensity_level: string | null
+          nivel: string | null
+          objetivo: string | null
+          recovery_status: string | null
+          semana_atual: number | null
+          tem_periodizacao: boolean | null
+          volume_level: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_periodizations_annual_plan_id_fkey"
+            columns: ["annual_plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_annual_plans"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -9040,6 +9215,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "workout_progress_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["aluno_id"]
+          },
+          {
             foreignKeyName: "workout_progress_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
@@ -9126,6 +9308,17 @@ export type Database = {
         Returns: Json
       }
       current_user_email: { Args: never; Returns: string }
+      deliver_periodization_to_athlete: {
+        Args: {
+          p_athlete_id: string
+          p_coach_id: string
+          p_match?: number
+          p_model_id: string
+          p_notes?: string
+          p_plan_id: string
+        }
+        Returns: string
+      }
       ensure_current_user_profile: {
         Args: never
         Returns: {
@@ -9220,6 +9413,10 @@ export type Database = {
           title: string
         }[]
       }
+      notificar_falta_periodizacao: {
+        Args: { p_aluno_id: string }
+        Returns: string
+      }
       prescrever_treino: {
         Args: { p_aluno_id?: string; p_data?: string }
         Returns: Json
@@ -9241,6 +9438,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      tem_periodizacao_ativa: { Args: { p_aluno_id: string }; Returns: boolean }
     }
     Enums: {
       aluno_status: "ativo" | "inativo" | "suspenso"
