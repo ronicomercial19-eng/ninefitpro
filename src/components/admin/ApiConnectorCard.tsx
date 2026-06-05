@@ -39,6 +39,8 @@ export function ApiConnectorCard(props: Props) {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [probing, setProbing] = useState(false);
+  const [probeStatus, setProbeStatus] = useState<"unknown" | "ok" | "fail">("unknown");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [moduleKey]);
