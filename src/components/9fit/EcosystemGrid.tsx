@@ -24,18 +24,28 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
   useEffect(() => {
     let q = supabase.from("physio_modules").select("*").eq("status", "active").order("display_order");
     if (category) q = q.eq("category", category);
-    q.then(({ data }) => {
+    q.then(async ({ data }) => {
       const list = (data ?? []) as any[];
       setItems(list);
-      // simple dynamic status seed; later replaced via realtime
-      const map: Record<string, string> = {};
-      list.forEach((m, i) => {
-        if (m.key === "staff") map[m.key] = `${4 + (i % 3)} online`;
-        else if (m.key === "ron") map[m.key] = "88%";
-      });
-      setStatusByKey(map);
+
+      // Status real via api_connectors (CONECTADO/AGUARDANDO)
+      const keys = list.map(m => m.connector_key).filter(Boolean);
+      if (keys.length) {
+        const { data: conns } = await supabase
+          .from("api_connectors").select("key, status").in("key", keys);
+        const map: Record<string, string> = {};
+        list.forEach((m) => {
+          if (m.connector_key) {
+            const c = (conns || []).find((x: any) => x.key === m.connector_key);
+            map[m.key] = c?.status === "active" ? "● Online" : "○ Aguardando";
+          } else if (m.key === "staff") map[m.key] = "● Online";
+        });
+        setStatusByKey(map);
+      }
     });
   }, [category]);
+
+  const activeCount = Object.values(statusByKey).filter(s => s.startsWith("●")).length || items.length;
 
   if (!items.length) return null;
 
