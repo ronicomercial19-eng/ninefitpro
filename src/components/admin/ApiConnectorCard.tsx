@@ -194,6 +194,22 @@ export function ApiConnectorCard(props: Props) {
             Sincronizar
           </Button>
           {connected && (
+            <Button variant="outline" onClick={probe} disabled={probing} className="text-primary">
+              <Activity className={`w-4 h-4 mr-2 ${probing ? "animate-pulse" : ""}`} />
+              Validar
+            </Button>
+          )}
+          {probeStatus === "ok" && (
+            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Validado
+            </Badge>
+          )}
+          {probeStatus === "fail" && (
+            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30">
+              <AlertTriangle className="w-3 h-3 mr-1" /> Sem resposta
+            </Badge>
+          )}
+          {connected && (
             <Button variant="ghost" onClick={disconnect} className="text-muted-foreground">Desconectar</Button>
           )}
           {docsUrl && (
