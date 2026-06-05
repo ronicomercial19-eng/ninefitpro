@@ -27,17 +27,12 @@ interface Props {
  * Secret nunca é exposto: persistimos apenas `secret_ref` (chave lógica)
  * e o último resumo em `config.apikey_hint`.
  */
-export function ApiConnectorCard({
-  moduleKey,
-  title,
-  description,
-  icon: Icon = Plug,
-  endpointPlaceholder,
-  docsUrl,
-  provider,
-  authMode = "apikey",
-  onSync,
-}: Props) {
+export function ApiConnectorCard(props: Props) {
+  const {
+    moduleKey, title, description, healthPath = "/health",
+    icon: Icon = Plug, endpointPlaceholder, docsUrl, provider,
+    authMode = "apikey", onSync,
+  } = props;
   const [apiKey, setApiKey] = useState("");
   const [endpoint, setEndpoint] = useState("");
   const [iframeUrl, setIframeUrl] = useState("");
