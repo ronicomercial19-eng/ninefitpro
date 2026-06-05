@@ -55,7 +55,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
         <header className="flex items-end justify-between">
           <div>
             <h2 className="font-display text-2xl tracking-tight">Ecosystem</h2>
-            <p className="text-[11px] text-primary">All modules • {items.length} active</p>
+            <p className="text-[11px] text-primary">All modules • {activeCount} active</p>
           </div>
           <button onClick={() => navigate('/9fit/protocols')} className="text-xs text-primary font-semibold">View all</button>
         </header>
