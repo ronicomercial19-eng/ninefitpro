@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2, AlertTriangle, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,6 +12,8 @@ interface Props {
   moduleKey: string;
   title: string;
   description: string;
+  /** Path relativo para validar conexão (default: /health) */
+  healthPath?: string;
   icon?: React.ComponentType<{ className?: string }>;
   endpointPlaceholder?: string;
   docsUrl?: string;
@@ -25,23 +27,20 @@ interface Props {
  * Secret nunca é exposto: persistimos apenas `secret_ref` (chave lógica)
  * e o último resumo em `config.apikey_hint`.
  */
-export function ApiConnectorCard({
-  moduleKey,
-  title,
-  description,
-  icon: Icon = Plug,
-  endpointPlaceholder,
-  docsUrl,
-  provider,
-  authMode = "apikey",
-  onSync,
-}: Props) {
+export function ApiConnectorCard(props: Props) {
+  const {
+    moduleKey, title, description, healthPath = "/health",
+    icon: Icon = Plug, endpointPlaceholder, docsUrl, provider,
+    authMode = "apikey", onSync,
+  } = props;
   const [apiKey, setApiKey] = useState("");
   const [endpoint, setEndpoint] = useState("");
   const [iframeUrl, setIframeUrl] = useState("");
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [probing, setProbing] = useState(false);
+  const [probeStatus, setProbeStatus] = useState<"unknown" | "ok" | "fail">("unknown");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [moduleKey]);
@@ -85,10 +84,29 @@ export function ApiConnectorCard({
       .from("api_connectors")
       .upsert(payload, { onConflict: "key" });
     if (error) { toast.error(error.message); return; }
-    toast.success(`${title} conectado`);
+    toast.success(`${title} salvo. Validando...`);
     setConnected(true);
     if (clean) setApiKey(`••••${hint}`);
+    // Probe automaticamente após salvar
+    await probe();
     load();
+  };
+
+  const probe = async () => {
+    setProbing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("api-connector-proxy", {
+        body: { connector: moduleKey, path: healthPath, init: { method: "GET" } },
+      });
+      if (error) throw error;
+      setProbeStatus("ok");
+      toast.success("Conexão validada ✓");
+    } catch (e: any) {
+      setProbeStatus("fail");
+      toast.warning("Endpoint não respondeu — verifique credenciais");
+    } finally {
+      setProbing(false);
+    }
   };
 
   const disconnect = async () => {
@@ -175,6 +193,22 @@ export function ApiConnectorCard({
             <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
             Sincronizar
           </Button>
+          {connected && (
+            <Button variant="outline" onClick={probe} disabled={probing} className="text-primary">
+              <Activity className={`w-4 h-4 mr-2 ${probing ? "animate-pulse" : ""}`} />
+              Validar
+            </Button>
+          )}
+          {probeStatus === "ok" && (
+            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Validado
+            </Badge>
+          )}
+          {probeStatus === "fail" && (
+            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30">
+              <AlertTriangle className="w-3 h-3 mr-1" /> Sem resposta
+            </Badge>
+          )}
           {connected && (
             <Button variant="ghost" onClick={disconnect} className="text-muted-foreground">Desconectar</Button>
           )}
