@@ -96,7 +96,7 @@ export function ApiConnectorCard(props: Props) {
     setProbing(true);
     try {
       const { data, error } = await supabase.functions.invoke("api-connector-proxy", {
-        body: { connector: moduleKey, path: (props as any).healthPath ?? "/health", init: { method: "GET" } },
+        body: { connector: moduleKey, path: healthPath, init: { method: "GET" } },
       });
       if (error) throw error;
       setProbeStatus("ok");
