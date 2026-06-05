@@ -87,10 +87,29 @@ export function ApiConnectorCard({
       .from("api_connectors")
       .upsert(payload, { onConflict: "key" });
     if (error) { toast.error(error.message); return; }
-    toast.success(`${title} conectado`);
+    toast.success(`${title} salvo. Validando...`);
     setConnected(true);
     if (clean) setApiKey(`••••${hint}`);
+    // Probe automaticamente após salvar
+    await probe();
     load();
+  };
+
+  const probe = async () => {
+    setProbing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("api-connector-proxy", {
+        body: { connector: moduleKey, path: (props as any).healthPath ?? "/health", init: { method: "GET" } },
+      });
+      if (error) throw error;
+      setProbeStatus("ok");
+      toast.success("Conexão validada ✓");
+    } catch (e: any) {
+      setProbeStatus("fail");
+      toast.warning("Endpoint não respondeu — verifique credenciais");
+    } finally {
+      setProbing(false);
+    }
   };
 
   const disconnect = async () => {
