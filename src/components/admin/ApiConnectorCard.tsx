@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2, AlertTriangle, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,6 +12,8 @@ interface Props {
   moduleKey: string;
   title: string;
   description: string;
+  /** Path relativo para validar conexão (default: /health) */
+  healthPath?: string;
   icon?: React.ComponentType<{ className?: string }>;
   endpointPlaceholder?: string;
   docsUrl?: string;
