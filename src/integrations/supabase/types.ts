@@ -4255,6 +4255,51 @@ export type Database = {
         }
         Relationships: []
       }
+      postura_scans: {
+        Row: {
+          athlete_id: string | null
+          back_url: string | null
+          created_at: string
+          front_url: string | null
+          id: string
+          left_url: string | null
+          notes: string | null
+          result: Json | null
+          right_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          athlete_id?: string | null
+          back_url?: string | null
+          created_at?: string
+          front_url?: string | null
+          id?: string
+          left_url?: string | null
+          notes?: string | null
+          result?: Json | null
+          right_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          athlete_id?: string | null
+          back_url?: string | null
+          created_at?: string
+          front_url?: string | null
+          id?: string
+          left_url?: string | null
+          notes?: string | null
+          result?: Json | null
+          right_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       proactive_events: {
         Row: {
           created_at: string
@@ -4970,6 +5015,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      share_events: {
+        Row: {
+          channel: string
+          content_id: string | null
+          content_type: string
+          created_at: string
+          id: string
+          reward_xp: number
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          content_id?: string | null
+          content_type: string
+          created_at?: string
+          id?: string
+          reward_xp?: number
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          content_id?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          reward_xp?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       skill_activations: {
         Row: {
