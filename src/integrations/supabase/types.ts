@@ -9500,12 +9500,20 @@ export type Database = {
         Args: { p_aluno_id?: string; p_data?: string }
         Returns: string
       }
+      prescrever_treino_partner: {
+        Args: { p_aluno_id: string; p_data?: string }
+        Returns: Json
+      }
       recalc_user_stats: { Args: { p_aluno_id: string }; Returns: undefined }
       recalculate_composite_score: {
         Args: { p_aluno_id: string }
         Returns: undefined
       }
       reconcile_appointments_for_user: { Args: never; Returns: undefined }
+      resolve_aluno_by_external: {
+        Args: { p_external_id: string }
+        Returns: string
+      }
       salvar_avaliacao: {
         Args: { p_dados: Json; p_estudante_id: string }
         Returns: {
@@ -9514,6 +9522,13 @@ export type Database = {
         }[]
       }
       tem_periodizacao_ativa: { Args: { p_aluno_id: string }; Returns: boolean }
+      validate_partner_key: {
+        Args: { p_key: string }
+        Returns: {
+          connection_id: string
+          professor_id: string
+        }[]
+      }
     }
     Enums: {
       aluno_status: "ativo" | "inativo" | "suspenso"
