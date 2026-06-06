@@ -1,205 +1,82 @@
-# Plano Final — Lançamento 9FIT PRO R$ 97 (Ondas 2-7 + Ajustes + Blindagem)
+## Contexto
 
-Execução em **4 blocos sequenciais**. Cada bloco é commitado independentemente.
+O zip enviado contém as edge functions do **projeto externo HealthFlix** (`kixjiwsfogqztlgiiztp`). Elas NÃO devem ser reimplantadas no nosso projeto (`mfrydtrzjxscbkaiwfnw`). O FitPro vai atuar como **cliente** dessas APIs usando:
 
----
+- `x-api-key` (HealthFlix): `c3e8579a23ba653bddf229b28032698e74c2f43b7ea09cb1`
+- `webhook_secret` (HealthFlix callbacks): `31851e8ef10c7eb7c64bc96722e41d8f0e0a62003c2637c4cf65070623b6d542`
+- `x-partner-key` (Biblioteca `vrbhljmsakruoejctclg`): chave fornecida (mesma `c3e857…` por padrão; confirmar)
+- SmartPeriodizer: já existe `ApiConnectorCard` em `src/pages/SmartPeriodizer.tsx`
 
-## BLOCO 1 — Blindagem de Lançamento (URGENTE)
+*ENTREGAR ETAPAS E PENDENCIAS DAS ONDAS ANTERIORES , PENDENCIAS, ATUALIZAÇOES DO FRONT,DESIGN, INTELINGENCIA, TABELAS, SCHEMAS ) 
 
-Remover qualquer 404 ou tela vazia antes de tráfego pago.
+## Entregáveis
 
-1. **Store → E-commerce nativo**: Card "Store" no `EcosystemGrid.tsx` aponta para `/9fit/native-system?app=store` que embeda [https://ninefit.lovable.app](https://ninefit.lovable.app) em iframe (já temos `NativeSystem.tsx` — generalizar para receber `?app=`).
-2. **9Zap fallback**: Card "9Zap" aponta para link WhatsApp suporte (`https://wa.me/55XXXXXXXXXX`) até integração nativa. Configurável em `src/data/ecosystemConfig.ts`.
-3. **Auditoria de 404**: Varrer rotas em `App.tsx`, ocultar módulos sem implementação real do `EcosystemGrid` (flag `enabled: false`).
-4. **Recuperação de senha**: Validar fluxo `/forgot-password` → email → `/reset-password` (página já existe, garantir handler `type=recovery`).
-5. **Boas-vindas RON**: Trigger no primeiro login (flag `first_login_at` em `athletes`) — RON dispara mensagem personalizada no Hub.
-6. **Vídeo "Comece por Aqui"**: Card destacado no topo do `Hub.tsx` apontando para vídeo curto no HealthFlix (slot `featured_onboarding`).
-7. **Sync Score calibração**: Texto explicativo "Calibrando seu sistema (3-7 dias)" quando score < 20 ou conta < 7 dias.
+### Bloco A — Streaming HealthFlix nativo (Aluno + Professor)
 
----
+1. **Secrets**: salvar `HEALTHFLIX_API_KEY`, `HEALTHFLIX_WEBHOOK_SECRET`, `LIBRARY_PARTNER_KEY` via `add_secret` (não em código).
+2. **Edge function proxy `healthflix-proxy**` (no nosso projeto): valida JWT do usuário, monta `x-api-key` no servidor e expõe 3 rotas internas:
+  - `POST /context` → chama `fitpro-student-context` da HealthFlix, devolve `embed_url` assinado (role student|professor).
+  - `GET /content` → chama `fitpro-content` (catálogo completo).
+  - `POST /assign` → chama `fitpro-content-assign` (professor atribui conteúdo ao aluno).
+  - `POST /events` → repassa eventos do player para `fitpro-events`.
+3. **Sincronização de aluno**: edge `healthflix-sync-student` que dispara `fitpro-sync` antes do primeiro acesso (resolve o erro "student not synced").
+4. **Aluno — `src/pages/9fit/HealthFlix.tsx**`: trocar o fetch direto de `library_items` por:
+  - Listar catálogo via `/content` (grid nativo já existente).
+  - Ao clicar em um vídeo OU no botão "Abrir HealthFlix completo": chamar `/context` e renderizar iframe com `embed_url` (full-screen dentro do app).
+5. **Train → Streaming**: o card "Streaming" em `src/pages/9fit/Train.tsx` continua navegando para `/9fit/healthflix`, mas agora com o catálogo real conectado.
+6. **Professor — `src/pages/admin/HealthFlixAdminPage.tsx**`: adicionar aba "Biblioteca HealthFlix" que abre `embed_url` no modo `role=professor` (acesso completo /professor/library) e mantém o gerenciamento manual atual como fallback.
+7. **Webhook receiver `healthflix-webhook**`: valida `x-webhook-secret` contra `HEALTHFLIX_WEBHOOK_SECRET` e grava em `integration_events` (nova tabela) + atualiza progresso em `content_progress`.
 
-## BLOCO 2 — Ondas 2 a 7 (Roadmap Roadmap)
+### Bloco B — Biblioteca de Conteúdo (library-full)
 
-### Onda 2 — Train hero real
-
-- `Train.tsx`: anel de progresso real via `useWorkoutOfTheDay`, INTERVENÇÕES do `recommendationEngine`, mini-chart últimas 7 execuções.
-- **Entregar apenas treino do dia** — bloquear visualização de outros dias até concluir o atual (regra em `pickWorkoutOfTheDay`).
-
-### Onda 3 — Hub OS+ refinement
-
-- `EcosystemGrid.tsx`: indicadores online/% reais por módulo. Header "All modules • N active" calculado em runtime.
-
-### Onda 4 — Progresso analytics real
-
-- `Progresso.tsx`: queries reais a `physical_assessments`, `workout_exercise_sets`, `engrenagem_xp_logs`. Insights via `recommendationEngine.generateInsights()`.
-
-### Onda 5 — Skills fechamento
-
-- `SkillManagerPage` aba **Biblioteca** com "Instalar todas (19)" + busca. `StudentDetailedView` nova aba "Skills" com toggles.
-
-### Onda 6 — Monetização
-
-- `MonetizacaoPage.tsx`: KPIs (MRR/Churn/Prime conv.) reais. Tabela 20 últimas transações. CTA "Criar oferta dinâmica".
-
-### Onda 7 — Staff check-in flow
-
-- `QuickCheckIn` → sheet "Staff online agora" → CTA → `/9fit/staff?from=checkin`.  
-Base URL: [https://xtexysqtfsofdohujtfr.supabase.co/functions/v1/staff-api](https://xtexysqtfsofdohujtfr.supabase.co/functions/v1/staff-api)
-
-  | **Método** | **Endpoint**                                               | **Descrição**                                                                    |
-  | ---------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
-  | GET        | /methods                                                   | Catálogo 9HEALTH / 9PERFORMANCE / 9LIFESTYLE                                     |
-  | GET        | /hubs                                                      | Hubs territoriais                                                                |
-  | GET        | /professionals?method=&hub=                                | Lista profissionais do banco freelancers_cadastro rankeados                      |
-  | POST       | /match { method, hub?, preferences?, limit? }              | Motor de matching com score (skill 50pt + hub 25pt + transporte/disponibilidade) |
-  | POST       | /booking { freelancer_id, method, slot, client_name, hub } | Registra solicitação vinda do FitPro                                             |
-
-  O FitPro consome esses endpoints no seu componente "Staff" — o matching cruza preferências do cliente com funcoes_experiencia, localizacao_bairro_cidade, disponibilidade e tem_transporte_proprio do Stevent.
-  ### Embutir a tela via iframe (mais rápido)
-  No app FitPro, dentro do componente **"Staff"**, basta abrir a rota pública:
+1. Edge proxy `library-full-proxy` no nosso projeto:
   ```
-  https://stevent.lovable.app/fitpro-staff
-
+   GET /library-full-proxy?student_external_id=<id>
+   header: x-partner-key = secret LIBRARY_PARTNER_KEY
+   → repassa para https://vrbhljmsakruoejctclg.supabase.co/functions/v1/library-full
   ```
-  ```
-  <iframe
-    src="https://stevent.lovable.app/fitpro-staff"
-    style="width:100%; height:100vh; border:0;"
-    allow="clipboard-write; geolocation"
-    title="9FIT Staff"
-  ></iframe>
-  ```
+2. Nova página `**src/pages/9fit/Biblioteca.tsx**` (Aluno) — grid nativo (cards categoria/título/thumb) usando o JSON retornado. Acessível em `9fit/biblioteca` e no Hub OS como módulo "Biblioteca".
+3. Rota registrada em `src/App.tsx` + entrada no `ModuleGrid`.
 
----
+### Bloco C — Planejamento via SmartPeriodizer
 
-## BLOCO 3 — Funcionalidades Operacionais (IA + Avaliações + Loops)
+1. **Migration**: tabela `periodization_plans_remote` cacheando o plano (semana, microciclo, volume, intensidade, recovery, status) keyed por `athlete_id` + `external_plan_id`. GRANTs + RLS (aluno vê o seu, trainer vê dos seus, service_role tudo).
+2. Edge `smartperiodizer-sync` (verifica `api_connectors.smart_periodizer` → endpoint + key, faz GET `/plan?athlete=<id>`, upserta em `periodization_plans_remote`, registra log).
+3. **Aluno — `src/pages/9fit/Planejamento.tsx**`: substituir placeholder pelas ondas 2–7 reais lidas da tabela (timeline, semana atual destacada, RPE alvo, carga prevista vs real, próximo deload). Empty-state com botão "Solicitar plano ao professor".
+4. **Professor — `src/pages/SmartPeriodizer.tsx**`: além do `ApiConnectorCard`, adicionar:
+  - Lista de alunos com plano sincronizado (status, última sync).
+  - Botão "Sincronizar agora" por aluno (chama `smartperiodizer-sync`).
+  - Iframe nativo do painel SmartPeriodizer (mesma estratégia de `NativeSystem.tsx`).
 
-### 3.1 TREINO COM IA (professor)
+### Bloco D — Schema de suporte (Migration única)
 
-- `AITrainingPage`: escolher aluno → onboarding curto de preferências → gera treino completo (HTML + vídeos) → publica em `student_training_assignments` → notifica aluno.
+Criar/alterar:
 
-### 3.2 ASSISTENTE IA (professor)
+- `fitpro_connections` (nossa cópia local mínima: id, provider enum [healthflix, smartperiodizer, library], endpoint, status, last_sync_at) — para o dashboard admin.
+- `integration_events` (log de eventos recebidos por webhook).
+- `content_progress` (espelho do progresso vindo do HealthFlix).
+- `periodization_plans_remote`.
+- Todas com GRANTs + RLS + triggers `updated_at`.
 
-- `AIChatPage`: comandos de ação direta. Edge function `ai-coach` modo `action` interpreta intents:
-  - "ajustar periodização do João" → escreve em `periodization_cycles`
-  - "criar treino X para Y" → cria assignment
-  - "enviar análise para Z" → entrega via mensagem.
+### Bloco E — UI de admin de integrações
 
-### 3.3 ANÁLISE COM IA (professor)
+Aba "Integrações" em `SettingsPage` agregando: HealthFlix, Biblioteca, SmartPeriodizer com status real (cor verde quando `/health` ok), botão Validar e botão Rotacionar chave.
 
-- `AIAnalysisPage`: após gerar análise, botão "Enviar ao aluno" → cria mensagem nova no OS do aluno + push.
+## Detalhes técnicos
 
-### 3.4 Avaliação 360 (loop completo)  
-- avaliaçao guiada vai fazer fazer requisao com o progress tracker nesse pagina e usar a tela em iframe /avaliacao-guiada/select utilizando a  **API Pública REST**
+- Nenhuma chave é colocada em `.env`/cliente — tudo via Edge Function proxy + secrets.
+- Iframe HealthFlix recebe `sandbox="allow-scripts allow-forms allow-popups"` (sem `allow-same-origin` por padrão; trocar apenas se o domínio for whitelisted).
+- Realtime: `content_progress` exposto via Supabase Realtime para refletir minutos assistidos no Hub.
+- `embed_url` é assinado e expira em 15 min — re-pedir ao expirar.
 
-**Base URL:**`https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/api-public`  
-**GET**`?action=student_profile`
+## Fora de escopo
 
-**cURL** Dados básicos do aluno email=aluno@email.com
+- Não reimplantar as edges enviadas no zip (são do outro projeto).
+- Não alterar fluxo de login/onboarding existente.
+- Não tocar componentes não relacionados (workout execution, anamnese etc.).
 
-**GET**`?action=student_assessments`
+## Confirmações antes de implementar
 
-**cURL** Todas as avaliações do aluno
-
-email=aluno@email.com
-
-**GET**`?action=student_scores`
-
-**cURL** Scores e flags da última avaliação
-
-email=aluno@email.com
-
-**POST**`?action=link_user`
-
-**cURL** Vincula user_id externo ao aluno
-
-Body: { email, external_user_id }
-
-- Aluno responde questionário guiado no ProgressTracker → executa protocolos com anotação numérica → ProgressTracker avalia → professor recebe no painel → 1-clique "Ativar Periodizer + SmartTreino" → app do aluno configurado automaticamente.  
-  
-- manter a tela de progresso do fitpro , dentro de progresso adiciona esse avaliaçao guiada.   
-- progress tracker em api para armzenar dados e avaliaçao robusta por professores, ou outra funçao nativa dentro do propio sistema para gerar recomendaçao pro fitpro. 
-
-### 3.5 Avaliação Postural
-
-- Aluno envia 4 fotos (frente/lados/costas) → edge function `postura-pro-scan` → resultado renderizado no `PosturaProPage` + recomendações enviadas ao aluno.  
-- utilizar a api que vai ser conectada para exercer essa funçao . deixe o ambiente preparado . 
-
-### 3.6 9Zap (futuro)
-
-- Placeholder com card "Em integração" + link WhatsApp suporte. Pasta `9zap/` com structure para produtos/ofertas/conversas (mock até API ).  
-- apos api este modulo deve funcionar de forma embed nativo dentro do app,atualizando todo front end para o app que foi conectado. 
-
-### 3.7 Staff loop completo
-
-- Seleção (método/hub) → matching (`staff-api/match`) → agendamento (`actions.book_freelancer`) → cobrança (Stripe checkout) → entrega (booking confirmado).
-
-### 3.8 Store loop completo
-
-- Aponta para `fitnessplace.lovable.app` nativo. Dropshipping ativo via Shopify do app embarcado (sem reinventar).
-
----
-
-## BLOCO 4 — APIs e Sistemas Externos (Reflexão Real)
-
-### 4.1 ApiConnectorCard validando de verdade
-
-- `ApiConnectorCard.tsx`: ao salvar, edge function `api-connector-proxy` faz `GET <endpoint>/health` → grava `status: connected` + `last_sync_at` em `api_connections`.
-- Frontend (`HealthFlixAdminPage`, etc.) exibe badge **CONECTADO** verde + contagem de itens sincronizados.
-- **Aluno reflete em tempo real**: `useRealtimeTable` em `api_connections` + `library_items` → HealthFlix do aluno popula automaticamente após sync do professor.
-
-### 4.2 Streaming HealthFlix completo
-
-- `HealthFlix.tsx` (aluno): grid completo da API. `HealthFlixAdminPage` (professor): biblioteca + filtros + reatribuir/destacar.
-
-### 4.3 Painel de APIs Configurável (NOVO)
-
-- Nova seção em `SettingsPage` (professor): **"Integrações & APIs"**.
-- Lista de sistemas com cards: SmartTreino, TrainCraft, Periodizer, ProgressTracker, PosturaPro, FitCopilot, HealthFlix, HTML→PDF, 9Zap, 9Flow, NineFitConnect.
-- Botão **"+ Adicionar nova API"** abre modal genérico (nome, endpoint, auth type, key, módulo destino).
-- Salva em `api_connections` com tipo `custom` e habilita reflexo automático no front via `useRealtimeTable`.
-
-### 4.4 Tabela de mapeamento
-
-- Criar `src/data/ecosystemApps.ts` com a matriz fornecida (Entram Agora / Depois / Fora) para alimentar `EcosystemGrid`, `ModuleGrid`, e painel de configurações.  
-  
-- criar uma funçao de compartilhamento - usuario consegue compartilha tela do fitpro, treino, dados, calorias, progresso,  planejamento, store, conquistas, metodo de virilizaçao interna via compartilhamento  *oferecer vantagens pro usuario que fizer isso* 
-
----
-
-## Migrations necessárias
-
-- `api_connections` (id, module_key, endpoint, status, last_sync_at, config jsonb) — RLS por professor.
-- `daily_sync_logs` (se ausente).
-- `infoproducts` + `user_unlocks` (se ausentes).
-- `healthflix_videos` (se ausente).
-- Todas com `GRANT` adequados.
-
----
-
-## Ordem de execução
-
-1. **Bloco 1** (blindagem — 1h) → testar fluxo de compra ponta a ponta.
-2. **Bloco 2** (Ondas 2-7 — incremental, commits por onda).
-3. **Bloco 3** (IA + loops — maior bloco, ~5 sub-tasks).
-4. **Bloco 4** (APIs + painel configurável).
-
-## QA final
-
-- Screenshots 390x844 mobile + 1280 desktop em cada bloco.
-- Teste E2E: cadastro → onboarding → primeiro treino → check-in → upgrade Prime.
-- Validar zero 404 em todos os cards do Hub.
-
-## Critérios de aceite
-
-- Nenhum mock nas telas finais.
-- Quiz emoji altera `sync_score` visível.
-- Radar 5D atualiza após 1 protocolo.
-- HealthFlix mostra itens reais após sync do professor (sem reload no aluno).
-- `staff-api` responde 200 em todos endpoints.
-- Store abre nativo (iframe Fitness Place).
-- 9Zap tem fallback funcional (WhatsApp).
-- TREINO/ASSISTENTE/ANÁLISE IA operacionais ponta a ponta.
-- Avaliação 360 → ativação automática SmartTreino + Periodizer no app do aluno.
-
-Confirmar para iniciar pelo **Bloco 1 (Blindagem)**.
+1. A `LIBRARY_PARTNER_KEY` para `vrbhljmsakruoejctclg/library-full` é a **mesma** `c3e857…` ou é outra chave? (Se outra, me envie.)
+2. O domínio base do embed HealthFlix é `https://healthflixnine.lovable.app` (padrão da função) ou outro?
+3. Posso seguir e criar os 4 secrets agora (`HEALTHFLIX_API_KEY`, `HEALTHFLIX_WEBHOOK_SECRET`, `LIBRARY_PARTNER_KEY`, `SMARTPERIODIZER_API_KEY` se já tiver)?
