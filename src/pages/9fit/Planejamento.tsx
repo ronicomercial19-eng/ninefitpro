@@ -1,17 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, Sparkles, Calendar as CalIcon } from "lucide-react";
+import { ChevronLeft, Sparkles, Calendar as CalIcon, RefreshCw, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutOfTheDay } from "@/hooks/useWorkoutOfTheDay";
 import { loadCarryProjection, type ProgressionPoint } from "@/services/training/loadProgression";
+import { supabase } from "@/integrations/supabase/client";
 
-const CYCLES = [
-  { label: "Semana 42-43 • Força Máxima", focus: "Lower Power", volume: "+12%", pct: 68, active: true },
-  { label: "Semana 44 • Hipertrofia", focus: "Peito & Costas", volume: "+8%", pct: 0 },
-  { label: "Semana 45 • Deload + Teste", focus: "Recuperação ativa", volume: "-30%", pct: 0, done: true },
+type RemoteWave = { label?: string; week?: number; focus?: string; volume?: string; intensity?: string; pct?: number; status?: string };
+const FALLBACK_CYCLES: RemoteWave[] = [
+  { label: "Onda 1 • Adaptação", focus: "Base aeróbica", volume: "+5%", pct: 100, status: "done" },
+  { label: "Onda 2 • Hipertrofia I", focus: "Volume moderado", volume: "+10%", pct: 100, status: "done" },
+  { label: "Onda 3 • Hipertrofia II", focus: "Volume alto", volume: "+15%", pct: 70, status: "active" },
+  { label: "Onda 4 • Força I", focus: "Carga máxima", volume: "+8%", pct: 0 },
+  { label: "Onda 5 • Força II", focus: "RPE 9", volume: "+12%", pct: 0 },
+  { label: "Onda 6 • Pico", focus: "Performance", volume: "+5%", pct: 0 },
+  { label: "Onda 7 • Deload + Teste", focus: "Recuperação ativa", volume: "-30%", pct: 0 },
 ];
 
 export default function NineFitPlanejamento() {
@@ -19,10 +25,40 @@ export default function NineFitPlanejamento() {
   const { athleteId } = useAthleteId();
   const { today: workoutToday } = useWorkoutOfTheDay();
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
+  const [waves, setWaves] = useState<RemoteWave[]>(FALLBACK_CYCLES);
+  const [planName, setPlanName] = useState<string>("Periodização Científica");
+  const [hasRemotePlan, setHasRemotePlan] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function loadPlan() {
+    if (!athleteId) return;
+    const { data } = await supabase
+      .from("periodization_plans_remote" as any)
+      .select("plan_name, waves")
+      .eq("athlete_id", athleteId)
+      .order("last_synced_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const w = (data as any)?.waves;
+    if (Array.isArray(w) && w.length) {
+      setWaves(w as RemoteWave[]);
+      setPlanName((data as any).plan_name || "Periodização SmartPeriodizer");
+      setHasRemotePlan(true);
+    }
+  }
+
+  async function syncNow() {
+    if (!athleteId) return;
+    setSyncing(true);
+    await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
+    setSyncing(false);
+    loadPlan();
+  }
 
   useEffect(() => {
     if (!athleteId) return;
     loadCarryProjection(athleteId).then(setPoints);
+    loadPlan();
   }, [athleteId]);
 
   const monthDays = useMemo(() => {
