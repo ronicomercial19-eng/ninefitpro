@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Film, Plus, RefreshCw, Loader2 } from "lucide-react";
+import { Film, Plus, RefreshCw, Loader2, Maximize2, X } from "lucide-react";
 import { ApiConnectorCard } from "@/components/admin/ApiConnectorCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
