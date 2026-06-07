@@ -96,10 +96,25 @@ export default function HealthFlixAdminPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={openProfessorPanel} disabled={loadingEmbed}>
+            {loadingEmbed ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Maximize2 className="w-4 h-4 mr-2" />}
+            Painel HealthFlix
+          </Button>
           <Button variant="outline" onClick={syncFromApi}><RefreshCw className="w-4 h-4 mr-2" /> Sync API</Button>
           <Button onClick={() => setAdding(!adding)}><Plus className="w-4 h-4 mr-2" /> Novo vídeo</Button>
         </div>
       </div>
+
+      {embedUrl && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <p className="text-xs uppercase tracking-widest text-primary">Painel HealthFlix (Professor)</p>
+            <button onClick={() => setEmbedUrl(null)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+          </div>
+          <iframe src={embedUrl} className="flex-1 w-full bg-black" sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-presentation" allow="autoplay; fullscreen; encrypted-media" />
+        </div>
+      )}
+
 
       <ApiConnectorCard
         moduleKey="healthflix"
