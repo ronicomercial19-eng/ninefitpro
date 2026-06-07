@@ -23,7 +23,26 @@ export default function HealthFlixAdminPage() {
   const [videos, setVideos] = useState<Vid[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+  const [loadingEmbed, setLoadingEmbed] = useState(false);
   const [form, setForm] = useState({ external_id: "", name: "", thumbnail_url: "", player_url: "", category: "geral" });
+
+  async function openProfessorPanel() {
+    setLoadingEmbed(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("healthflix-proxy?action=context", {
+        body: { role: "professor", fitpro_professor_id: "admin", view: "library" },
+      });
+      if (error) throw error;
+      const url = (data as any)?.embed_url;
+      if (!url) throw new Error("embed_url ausente");
+      setEmbedUrl(url);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao abrir painel HealthFlix");
+    } finally {
+      setLoadingEmbed(false);
+    }
+  }
 
   async function load() {
     setLoading(true);
