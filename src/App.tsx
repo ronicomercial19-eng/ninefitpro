@@ -61,6 +61,7 @@ import NineFitCheckout from "./pages/9fit/Checkout";
 import NineFitCheckoutSuccess from "./pages/9fit/CheckoutSuccess";
 import NineFitAtivacao from "./pages/9fit/Ativacao";
 import NineFitPlanejamento from "./pages/9fit/Planejamento";
+import NineFitBiblioteca from "./pages/9fit/Biblioteca";
 import NineFitProgresso from "./pages/9fit/Progresso";
 import NineFitNativeSystem from "./pages/9fit/NativeSystem";
 import NineFitAvaliacaoGuiada from "./pages/9fit/AvaliacaoGuiada";
