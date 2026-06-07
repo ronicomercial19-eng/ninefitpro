@@ -97,12 +97,16 @@ export default function NineFitPlanejamento() {
 
       {/* Periodização */}
       <div className="mx-4 mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-        <p className="text-primary font-semibold text-sm">
-          Periodização Científica • Ciclo 4 • Meso 3/8
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-primary font-semibold text-sm">{planName}</p>
+          <button onClick={syncNow} disabled={syncing} className="text-[10px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1 flex items-center gap-1 disabled:opacity-50">
+            {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Sincronizar
+          </button>
+        </div>
         <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>{format(new Date(), "MMMM yyyy", { locale: ptBR })}</span>
-          <span>Próxima deload em 9 dias</span>
+          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Plano local (não sincronizado)"}</span>
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">
           {["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"].map((d) => (
@@ -129,47 +133,55 @@ export default function NineFitPlanejamento() {
         </div>
       </div>
 
-      {/* Ciclos */}
+      {/* Ondas */}
       <div className="mt-6 px-4">
-        <h2 className="text-xl font-display mb-3">Ciclos Adaptativos</h2>
+        <h2 className="text-xl font-display mb-3">Ondas {hasRemotePlan ? "(SmartPeriodizer)" : "Adaptativas"}</h2>
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
-          {CYCLES.map((c, i) => (
-            <div
-              key={i}
-              className={`snap-start min-w-[230px] rounded-2xl p-4 border ${
-                c.active
-                  ? "border-primary/60 bg-primary/[0.06] shadow-[0_0_30px_-12px_hsl(var(--primary)/0.6)]"
-                  : "border-white/10 bg-white/[0.03]"
-              }`}
-            >
-              <p className="text-xs text-muted-foreground">{c.label.split(" • ")[0]}</p>
-              <p className="text-sm font-semibold">{c.label.split(" • ")[1]}</p>
-              <p className="text-xs text-muted-foreground mt-2">Foco: {c.focus}</p>
-              <p className="text-xs text-muted-foreground">Volume: {c.volume}</p>
-              {c.active && (
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="relative w-12 h-12">
-                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                      <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
-                      <circle
-                        cx="18" cy="18" r="15"
-                        stroke="hsl(var(--primary))" strokeWidth="3" fill="none"
-                        strokeDasharray={`${c.pct * 0.94} 100`}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">{c.pct}%</span>
+          {waves.map((c, i) => {
+            const isActive = c.status === "active" || (c.pct ?? 0) > 0 && (c.pct ?? 0) < 100;
+            const isDone = c.status === "done" || (c.pct ?? 0) >= 100;
+            const label = c.label || `Onda ${c.week ?? i + 1}`;
+            const [head, tail] = label.split(" • ");
+            return (
+              <div
+                key={i}
+                className={`snap-start min-w-[230px] rounded-2xl p-4 border ${
+                  isActive
+                    ? "border-primary/60 bg-primary/[0.06] shadow-[0_0_30px_-12px_hsl(var(--primary)/0.6)]"
+                    : "border-white/10 bg-white/[0.03]"
+                }`}
+              >
+                <p className="text-xs text-muted-foreground">{head}</p>
+                {tail && <p className="text-sm font-semibold">{tail}</p>}
+                {c.focus && <p className="text-xs text-muted-foreground mt-2">Foco: {c.focus}</p>}
+                {c.volume && <p className="text-xs text-muted-foreground">Volume: {c.volume}</p>}
+                {c.intensity && <p className="text-xs text-muted-foreground">Intensidade: {c.intensity}</p>}
+                {isActive && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="relative w-12 h-12">
+                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
+                        <circle
+                          cx="18" cy="18" r="15"
+                          stroke="hsl(var(--primary))" strokeWidth="3" fill="none"
+                          strokeDasharray={`${(c.pct ?? 0) * 0.94} 100`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">{c.pct ?? 0}%</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-tight">
+                      IA ajustou carga com<br/>base no seu RM
+                    </p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground leading-tight">
-                    IA ajustou carga com<br/>base no seu RM
-                  </p>
-                </div>
-              )}
-              {c.done && <p className="mt-3 text-emerald-400 text-lg">✓</p>}
-            </div>
-          ))}
+                )}
+                {isDone && <p className="mt-3 text-emerald-400 text-lg">✓</p>}
+              </div>
+            );
+          })}
         </div>
       </div>
+
 
       {/* Progresso */}
       <div className="mt-6 mx-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
