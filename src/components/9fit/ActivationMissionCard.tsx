@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils';
 
 // Cada missão pendente leva o usuário para o lugar certo de completá-la.
 const ROUTE_BY_KEY: Record<ActivationKey, string> = {
-  profile_complete:  '/9fit/perfil',
-  first_assessment:  '/9fit/onboarding',
-  first_plan:        '/9fit/train',
+  profile_complete:  '/9fit/profile',
+  first_assessment:  '/9fit/avaliacao-guiada',
+  first_plan:        '/9fit/planejamento',
   first_workout:     '/9fit/train',
   hub_engagement:    '/9fit/hub',
   streak_7d:         '/9fit/hub',

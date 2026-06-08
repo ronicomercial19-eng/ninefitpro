@@ -53,6 +53,8 @@ import NineFitHealthFlix from "./pages/9fit/HealthFlix";
 import NineFitPrimePass from "./pages/9fit/PrimePass";
 import NineFitHabitFlow from "./pages/9fit/HabitFlow";
 import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
+import NineFitKitchen from "./pages/9fit/Kitchen";
+import NineFitRecovery from "./pages/9fit/Recovery";
 import NineFitProtocolo from "./pages/9fit/Protocolo";
 import NineFitPlans from "./pages/9fit/Plans";
 import NineFitPrime from "./pages/9fit/Prime";
@@ -268,6 +270,8 @@ const App = () => (
             <Route path="/9fit/primepass" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/habit-flow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
             <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
+            <Route path="/9fit/kitchen" element={<NineFitKitchen />} />
+            <Route path="/9fit/recovery" element={<NineFitRecovery />} />
             <Route path="/9fit/protocolo" element={<NineFitLayout><NineFitProtocolo /></NineFitLayout>} />
             <Route path="/9fit/planos" element={<NineFitLayout><NineFitPlans /></NineFitLayout>} />
             <Route path="/9fit/prime" element={<NineFitLayout><NineFitPrime /></NineFitLayout>} />

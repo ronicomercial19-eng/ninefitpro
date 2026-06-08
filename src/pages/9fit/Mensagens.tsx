@@ -100,105 +100,124 @@ export default function NineFitMensagens() {
 
   const fetchConversations = async () => {
     setLoading(true);
-    
-    // Simulate API call - in production, fetch from Supabase
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockConversations: Conversation[] = [
-      {
-        id: "1",
-        name: "Diego Souza",
-        lastMessage: "Excelente treino hoje, Pedro!",
-        lastMessageTime: new Date(),
-        unreadCount: 1,
-        type: "coach"
-      },
+    const convs: Conversation[] = [
       {
         id: "ai",
         name: "FitCopilot",
         lastMessage: "Olá! Eu sou o FitCopilot IA. Como posso te ajudar?",
         lastMessageTime: new Date(),
         unreadCount: 0,
-        type: "ai"
-      }
+        type: "ai",
+      },
     ];
-    
-    setConversations(mockConversations);
+
+    // Tenta carregar threads 9ZAP do aluno
+    try {
+      const { data: athlete } = await supabase
+        .from("athletes")
+        .select("id, name, coach_id")
+        .eq("user_id", user?.id as any)
+        .maybeSingle();
+
+      const studentId = athlete?.id;
+      if (studentId) {
+        const { data: list, error } = await supabase.functions.invoke(
+          `zap-proxy?action=threads&student_fitpro_id=${studentId}`,
+          { method: "GET" }
+        );
+        if (!error && Array.isArray((list as any)?.threads)) {
+          for (const t of (list as any).threads) {
+            convs.push({
+              id: t.id,
+              name: t.subject || "Professor",
+              lastMessage: t.last_message_preview || "",
+              lastMessageTime: t.last_message_at ? new Date(t.last_message_at) : new Date(),
+              unreadCount: t.unread_count || 0,
+              type: "coach",
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("9ZAP threads not available", e);
+    }
+
+    setConversations(convs);
     setLoading(false);
   };
 
   const fetchMessages = async (conversationId: string) => {
-    // Simulate fetching messages
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
     if (conversationId === "ai") {
-      setMessages([
-        {
-          id: "1",
-          content: "Olá, Pedro! 👋\n\nSou o FITCOPILOT, seu assistente virtual de fitness. Em que posso te ajudar hoje?",
-          sender: "ai",
-          timestamp: new Date(Date.now() - 3600000),
-          senderName: "FitCopilot"
-        }
-      ]);
-    } else {
-      setMessages([
-        {
-          id: "1",
-          content: "Ajustei seu treino de força para amanhã. Vamos com tudo! 💪",
-          sender: "coach",
-          timestamp: new Date(Date.now() - 7200000),
-          senderName: "Diego Souza"
-        },
-        {
-          id: "2",
-          content: "Valeu, Alex! Vou conferir o treino e te aviso se tiver alguma dúvida. Obrigado!",
-          sender: "user",
-          timestamp: new Date(Date.now() - 3600000)
-        },
-        {
-          id: "3",
-          content: "Combinado! Se precisar de algo, é só chamar.",
-          sender: "coach",
-          timestamp: new Date(Date.now() - 1800000),
-          senderName: "Diego Souza"
-        }
-      ]);
+      setMessages([{
+        id: "1",
+        content: "Olá! 👋\n\nSou o FITCOPILOT, seu assistente virtual de fitness. Em que posso te ajudar hoje?",
+        sender: "ai",
+        timestamp: new Date(),
+        senderName: "FitCopilot",
+      }]);
+      return;
+    }
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        `zap-proxy?action=messages.list&thread_id=${conversationId}`,
+        { method: "GET" }
+      );
+      if (error) throw error;
+      const msgs: Message[] = ((data as any)?.messages || []).map((m: any) => ({
+        id: m.id,
+        content: m.body,
+        sender: m.sender_type === "student" ? "user" : (m.sender_type === "trainer" ? "coach" : "ai"),
+        senderName: m.sender_name,
+        timestamp: new Date(m.created_at),
+      }));
+      setMessages(msgs);
+    } catch (e) {
+      console.error(e);
+      setMessages([]);
     }
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || sending) return;
-    
+    if (!newMessage.trim() || sending || !selectedConversation) return;
     setSending(true);
-    
+    const text = newMessage;
     const userMessage: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender: "user",
-      timestamp: new Date()
+      id: Date.now().toString(), content: text, sender: "user", timestamp: new Date(),
     };
-    
     setMessages(prev => [...prev, userMessage]);
     setNewMessage("");
-    
-    // Simulate AI response if FitCopilot
-    if (selectedConversation?.type === "ai") {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Entendi! Vou analisar seu pedido e preparar uma sugestão personalizada para você. 🎯",
-        sender: "ai",
-        timestamp: new Date(),
-        senderName: "FitCopilot"
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
+
+    try {
+      if (selectedConversation.type === "ai") {
+        const { data, error } = await supabase.functions.invoke("ai-coach", {
+          body: { mode: "chat", message: text },
+        });
+        if (error) throw error;
+        const reply = (data as any)?.data?.content || (data as any)?.content || "Estou aqui para ajudar!";
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(), content: reply, sender: "ai",
+          timestamp: new Date(), senderName: "FitCopilot",
+        }]);
+      } else {
+        const { data: athlete } = await supabase
+          .from("athletes").select("id").eq("user_id", user?.id as any).maybeSingle();
+        await supabase.functions.invoke("zap-proxy?action=messages.send", {
+          method: "POST",
+          body: {
+            thread_id: selectedConversation.id,
+            sender_type: "student",
+            sender_external_id: athlete?.id,
+            body: text,
+            client_message_id: `fitpro-${Date.now()}`,
+          },
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Falha ao enviar mensagem");
+    } finally {
+      setSending(false);
     }
-    
-    setSending(false);
-    toast.success("Mensagem enviada!");
   };
 
   // Conversation List View

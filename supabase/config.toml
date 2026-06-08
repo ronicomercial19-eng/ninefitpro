@@ -63,3 +63,15 @@ verify_jwt = false
 
 [functions.smartperiodizer-sync]
 verify_jwt = false
+
+[functions.api-assessments]
+verify_jwt = false
+
+[functions.analyze-periodization]
+verify_jwt = false
+
+[functions.zap-proxy]
+verify_jwt = false
+
+[functions.zap-webhook]
+verify_jwt = false
