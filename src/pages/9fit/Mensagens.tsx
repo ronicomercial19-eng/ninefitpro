@@ -115,8 +115,8 @@ export default function NineFitMensagens() {
     try {
       const { data: athlete } = await supabase
         .from("athletes")
-        .select("id, name, coach_id, professor_id")
-        .or(`user_id.eq.${user?.id},auth_user_id.eq.${user?.id}` as any)
+        .select("id, name, coach_id")
+        .eq("user_id", user?.id as any)
         .maybeSingle();
 
       const studentId = athlete?.id;
@@ -200,7 +200,7 @@ export default function NineFitMensagens() {
         }]);
       } else {
         const { data: athlete } = await supabase
-          .from("athletes").select("id").or(`user_id.eq.${user?.id},auth_user_id.eq.${user?.id}` as any).maybeSingle();
+          .from("athletes").select("id").eq("user_id", user?.id as any).maybeSingle();
         await supabase.functions.invoke("zap-proxy?action=messages.send", {
           method: "POST",
           body: {
