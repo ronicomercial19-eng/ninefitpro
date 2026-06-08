@@ -815,6 +815,8 @@ export type Database = {
           restricoes: Json | null
           session_duration: string | null
           sessions_per_week: number | null
+          sleep_quality: number | null
+          stress_level: number | null
           sync_score: number | null
           total_xp: number | null
           training_environment: string | null
@@ -856,6 +858,8 @@ export type Database = {
           restricoes?: Json | null
           session_duration?: string | null
           sessions_per_week?: number | null
+          sleep_quality?: number | null
+          stress_level?: number | null
           sync_score?: number | null
           total_xp?: number | null
           training_environment?: string | null
@@ -897,6 +901,8 @@ export type Database = {
           restricoes?: Json | null
           session_duration?: string | null
           sessions_per_week?: number | null
+          sleep_quality?: number | null
+          stress_level?: number | null
           sync_score?: number | null
           total_xp?: number | null
           training_environment?: string | null
@@ -2019,6 +2025,13 @@ export type Database = {
           },
           {
             foreignKeyName: "exercise_logs_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_exercise_logs_workout_log"
             columns: ["workout_log_id"]
             isOneToOne: false
             referencedRelation: "workout_logs"
@@ -7883,6 +7896,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_assignments_workout"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts_new"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "workout_assignments_new_workout_id_fkey"
             columns: ["workout_id"]
             isOneToOne: false
@@ -8198,6 +8218,13 @@ export type Database = {
           workout_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_workout_logs_workout"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts_new"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_logs_workout_id_fkey"
             columns: ["workout_id"]
@@ -8704,6 +8731,120 @@ export type Database = {
           score_normalized?: never
           total_xp?: number | null
           workouts_completed?: never
+        }
+        Relationships: []
+      }
+      v_assessment_canonical: {
+        Row: {
+          altura: number | null
+          athlete_id: string | null
+          cardio_bpm_max: number | null
+          cardio_bpm_repouso: number | null
+          cardio_sprint_vel: number | null
+          core_prancha_seg: number | null
+          core_side_plank_dir_seg: number | null
+          core_side_plank_esq_seg: number | null
+          created_at: string | null
+          data_avaliacao: string | null
+          flags_inteligentes: Json | null
+          id: string | null
+          imc: number | null
+          mob_ombro: number | null
+          mob_overhead_squat: number | null
+          mob_quadril: number | null
+          mob_tornozelo: number | null
+          origem: string | null
+          peso: number | null
+          rm1_empurrar_perna: number | null
+          rm1_empurrar_superior: number | null
+          rm1_puxar_costas: number | null
+          rm1_puxar_inferior: number | null
+          rml_abs: number | null
+          rml_agachamento: number | null
+          rml_elevacao_p: number | null
+          rml_flexao: number | null
+          rml_pull: number | null
+          score_cardio: number | null
+          score_core: number | null
+          score_forca: number | null
+          score_global: number | null
+          score_mobilidade: number | null
+          score_resistencia: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          altura?: number | null
+          athlete_id?: never
+          cardio_bpm_max?: number | null
+          cardio_bpm_repouso?: number | null
+          cardio_sprint_vel?: number | null
+          core_prancha_seg?: number | null
+          core_side_plank_dir_seg?: number | null
+          core_side_plank_esq_seg?: number | null
+          created_at?: string | null
+          data_avaliacao?: string | null
+          flags_inteligentes?: Json | null
+          id?: string | null
+          imc?: number | null
+          mob_ombro?: number | null
+          mob_overhead_squat?: number | null
+          mob_quadril?: number | null
+          mob_tornozelo?: number | null
+          origem?: string | null
+          peso?: number | null
+          rm1_empurrar_perna?: number | null
+          rm1_empurrar_superior?: number | null
+          rm1_puxar_costas?: number | null
+          rm1_puxar_inferior?: number | null
+          rml_abs?: number | null
+          rml_agachamento?: number | null
+          rml_elevacao_p?: number | null
+          rml_flexao?: number | null
+          rml_pull?: number | null
+          score_cardio?: number | null
+          score_core?: number | null
+          score_forca?: number | null
+          score_global?: number | null
+          score_mobilidade?: number | null
+          score_resistencia?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          altura?: number | null
+          athlete_id?: never
+          cardio_bpm_max?: number | null
+          cardio_bpm_repouso?: number | null
+          cardio_sprint_vel?: number | null
+          core_prancha_seg?: number | null
+          core_side_plank_dir_seg?: number | null
+          core_side_plank_esq_seg?: number | null
+          created_at?: string | null
+          data_avaliacao?: string | null
+          flags_inteligentes?: Json | null
+          id?: string | null
+          imc?: number | null
+          mob_ombro?: number | null
+          mob_overhead_squat?: number | null
+          mob_quadril?: number | null
+          mob_tornozelo?: number | null
+          origem?: string | null
+          peso?: number | null
+          rm1_empurrar_perna?: number | null
+          rm1_empurrar_superior?: number | null
+          rm1_puxar_costas?: number | null
+          rm1_puxar_inferior?: number | null
+          rml_abs?: number | null
+          rml_agachamento?: number | null
+          rml_elevacao_p?: number | null
+          rml_flexao?: number | null
+          rml_pull?: number | null
+          score_cardio?: number | null
+          score_core?: number | null
+          score_forca?: number | null
+          score_global?: number | null
+          score_mobilidade?: number | null
+          score_resistencia?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
