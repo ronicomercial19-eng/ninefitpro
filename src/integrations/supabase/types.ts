@@ -8675,6 +8675,30 @@ export type Database = {
         }
         Relationships: []
       }
+      zap_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string | null
+          payload: Json | null
+          processed_at: string | null
+          received_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type?: string | null
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string | null
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       dashboard_students_overview: {
