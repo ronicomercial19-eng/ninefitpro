@@ -102,19 +102,14 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
         date: todayDate,
       } as any);
 
-      // Award XP (base 100 + RPE bonus)
+      // Award XP (base 100 + RPE bonus) via fn_award_xp
       const xp = 100 + (rpe > 7 ? 50 : rpe > 4 ? 25 : 0);
-      const { data: athlete } = await supabase
-        .from("athletes")
-        .select("total_xp, level")
-        .eq("id", athleteId)
-        .single();
-
-      if (athlete) {
-        const newXP = (athlete.total_xp || 0) + xp;
-        const newLevel = Math.floor(newXP / 500) + 1;
-        await supabase.from("athletes").update({ total_xp: newXP, level: newLevel }).eq("id", athleteId);
-      }
+      await supabase.rpc("fn_award_xp" as any, {
+        p_athlete_id: athleteId,
+        p_amount: xp,
+        p_source: "workout_completed",
+        p_metadata: { training_name: trainingName, rpe, duration_minutes: duration },
+      });
 
       setXpGained(xp);
       setCaloriesBurned(cal);
