@@ -57,12 +57,24 @@ export default function HealthFlixAdminPage() {
   async function syncFromApi() {
     toast.info("Disparando sincronização...");
     try {
-      const { error } = await supabase.functions.invoke("sync-library-full");
+      const { data, error } = await supabase.functions.invoke("sync-library-full");
       if (error) throw error;
-      toast.success("Sync concluído");
+      const synced = (data as any)?.data?.synced ?? 0;
+      toast.success(`Sync concluído: ${synced} itens`);
       load();
     } catch (e: any) {
       toast.warning("Sync indisponível — conecte a API HealthFlix");
+    }
+  }
+
+  async function validateConnection() {
+    try {
+      const r = await fetch("https://kixjiwsfogqztlgiiztp.supabase.co/functions/v1/fitpro-health");
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      toast.success(`HealthFlix online · v${j.version}`);
+    } catch (e: any) {
+      toast.error(`Validação falhou: ${e?.message || "sem resposta"}`);
     }
   }
 
