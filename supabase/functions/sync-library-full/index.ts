@@ -37,7 +37,13 @@ Deno.serve(async (req) => {
     const rows: any[] = [];
     let skipped = 0;
     for (const it of items) {
-      const type = String(it.type || "").toLowerCase();
+      let type = String(it.type || "").toLowerCase().trim();
+      // Normaliza variações para um vocabulário canônico
+      const VIDEO_ALIASES = new Set(["video", "videos", "streaming", "aula", "class", "treino-video", "treino_video"]);
+      if (VIDEO_ALIASES.has(type)) type = "videos";
+      // Heurística: se tem player/video URL e nenhum type claro, assume videos
+      const hasPlayer = !!(it.playerUrl || it.videoUrl);
+      if (!type && hasPlayer) type = "videos";
       const external_id = String(it.id ?? it.slug ?? it.external_id ?? "").trim();
       const name = it.name || it.title || "Sem nome";
       if (!type || !external_id) { skipped++; continue; }
@@ -54,6 +60,7 @@ Deno.serve(async (req) => {
         synced_at: new Date().toISOString(),
       });
     }
+
 
     // Batched upsert (500/chunk) — no upper bound on total rows
     const CHUNK = 500;
