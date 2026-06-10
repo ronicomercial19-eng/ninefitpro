@@ -28,10 +28,23 @@ export default function NineFitHealthFlix() {
       setLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke("healthflix-proxy?action=content", { method: "GET" as any });
-        if (error) throw error;
-        const list = (data as any)?.items || [];
-        setItems(list);
-      } catch (e: any) {
+        const list = (!error && (data as any)?.items) ? (data as any).items : [];
+        if (list.length > 0) {
+          setItems(list);
+        } else {
+          // Fallback: lê direto de library_items (aceita 'videos' e 'video')
+          const { data: rows } = await supabase
+            .from("library_items" as any)
+            .select("id, external_id, name, category, thumbnail_url, player_url, type")
+            .in("type", ["videos", "video", "streaming", "aula"])
+            .order("synced_at", { ascending: false })
+            .limit(120);
+          setItems(((rows as any[]) || []).map((r) => ({
+            id: r.id, title: r.name, category: r.category,
+            thumbnail: r.thumbnail_url, video_url: r.player_url,
+          })));
+        }
+      } catch {
         toast.error("Não foi possível carregar o catálogo HealthFlix");
       } finally {
         setLoading(false);
