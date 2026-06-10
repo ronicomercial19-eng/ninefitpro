@@ -51,14 +51,16 @@ export function ShareButton({
           user_id: user.id, channel, content_type: contentType,
           content_id: contentId ?? null, reward_xp: rewardXp,
         });
-        // Recompensa XP no athlete
+        // Recompensa XP via fn_award_xp (única porta de entrada)
         const { data: a } = await supabase.from("athletes")
-          .select("id, total_xp, level").eq("user_id", user.id).maybeSingle();
-        if (a) {
-          const xp = ((a as any).total_xp || 0) + rewardXp;
-          await supabase.from("athletes").update({
-            total_xp: xp, level: Math.floor(xp / 500) + 1,
-          }).eq("id", (a as any).id);
+          .select("id").eq("user_id", user.id).maybeSingle();
+        if (a?.id) {
+          await supabase.rpc("fn_award_xp" as any, {
+            p_athlete_id: (a as any).id,
+            p_amount: rewardXp,
+            p_source: `share:${channel}:${contentType}`,
+            p_metadata: { content_id: contentId ?? null },
+          });
           toast.success(`+${rewardXp} XP por compartilhar!`);
         }
       }

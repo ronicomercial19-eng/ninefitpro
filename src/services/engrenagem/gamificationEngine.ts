@@ -76,15 +76,23 @@ export async function awardXP(
 
     let prevXp = (athlete as any)?.total_xp ?? 0;
     let prevLevel = (athlete as any)?.level ?? levelFromXP(prevXp);
-    const newTotal = prevXp + xp;
-    const newLevel = levelFromXP(newTotal);
-    const leveledUp = newLevel > prevLevel;
+    let newTotal = prevXp + xp;
+    let newLevel = levelFromXP(newTotal);
+    let leveledUp = newLevel > prevLevel;
 
     if (athlete?.id) {
-      await supabase
-        .from('athletes')
-        .update({ total_xp: newTotal, level: newLevel })
-        .eq('id', athlete.id);
+      const { data: rpcRes } = await supabase.rpc('fn_award_xp' as any, {
+        p_athlete_id: athlete.id,
+        p_amount: xp,
+        p_source: action,
+        p_metadata: meta as any,
+      });
+      const row = Array.isArray(rpcRes) ? rpcRes[0] : rpcRes;
+      if (row) {
+        newTotal = (row as any).new_total_xp ?? newTotal;
+        newLevel = (row as any).new_level ?? newLevel;
+        leveledUp = (row as any).leveled_up ?? leveledUp;
+      }
     }
 
     // Best-effort event log

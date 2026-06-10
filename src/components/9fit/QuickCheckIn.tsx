@@ -63,21 +63,20 @@ export function QuickCheckIn() {
 
       if (error) throw error;
       
-      // Award XP for check-in
+      // Award XP for check-in (via fn_award_xp)
       if (user) {
         const { data: athlete } = await supabase
           .from("athletes")
-          .select("id, total_xp, level")
+          .select("id")
           .eq("user_id", user.id)
-          .single();
-        
-        if (athlete) {
-          const newXP = (athlete.total_xp || 0) + 50;
-          const newLevel = Math.floor(newXP / 500) + 1;
-          await supabase.from("athletes").update({ 
-            total_xp: newXP, 
-            level: newLevel 
-          }).eq("id", athlete.id);
+          .maybeSingle();
+        if (athlete?.id) {
+          await supabase.rpc("fn_award_xp" as any, {
+            p_athlete_id: athlete.id,
+            p_amount: 50,
+            p_source: "check_in",
+            p_metadata: { booking_id: nextClass.bookingId },
+          });
         }
       }
 
