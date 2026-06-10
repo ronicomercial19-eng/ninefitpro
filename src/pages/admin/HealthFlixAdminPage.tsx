@@ -112,6 +112,7 @@ export default function HealthFlixAdminPage() {
             {loadingEmbed ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Maximize2 className="w-4 h-4 mr-2" />}
             Painel HealthFlix
           </Button>
+          <Button variant="outline" onClick={validateConnection}>Validar</Button>
           <Button variant="outline" onClick={syncFromApi}><RefreshCw className="w-4 h-4 mr-2" /> Sync API</Button>
           <Button onClick={() => setAdding(!adding)}><Plus className="w-4 h-4 mr-2" /> Novo vídeo</Button>
         </div>
