@@ -91,6 +91,11 @@ export default function NineFitPlanejamento() {
         { event: "*", schema: "public", table: "periodization_plans_remote", filter: `athlete_id=eq.${athleteId}` },
         () => loadPlan()
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "periodization_annual_plans", filter: `athlete_id=eq.${athleteId}` },
+        () => loadPlan()
+      )
       .subscribe();
 
     return () => {
