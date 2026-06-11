@@ -32,18 +32,36 @@ export default function NineFitPlanejamento() {
 
   async function loadPlan() {
     if (!athleteId) return;
+    // Source of truth: vw_athlete_periodizacao_ativa (unifica athlete_periodizations + periodization_plans_remote)
     const { data } = await supabase
-      .from("periodization_plans_remote" as any)
-      .select("plan_name, waves")
+      .from("vw_athlete_periodizacao_ativa" as any)
+      .select("plan_name, waves, macrocycle, mesocycle, source")
       .eq("athlete_id", athleteId)
-      .order("last_synced_at", { ascending: false })
-      .limit(1)
       .maybeSingle();
-    const w = (data as any)?.waves;
-    if (Array.isArray(w) && w.length) {
-      setWaves(w as RemoteWave[]);
-      setPlanName((data as any).plan_name || "Periodização SmartPeriodizer");
+
+    const row = data as any;
+    let wavesFound: RemoteWave[] | null = null;
+
+    if (Array.isArray(row?.waves) && row.waves.length) {
+      wavesFound = row.waves as RemoteWave[];
+    } else if (Array.isArray(row?.mesocycle) && row.mesocycle.length) {
+      wavesFound = (row.mesocycle as any[]).map((m: any, i: number) => ({
+        label: m.label || m.name || `Onda ${i + 1}`,
+        week: m.week ?? i + 1,
+        focus: m.focus,
+        volume: m.volume,
+        intensity: m.intensity,
+        pct: m.pct ?? 0,
+        status: m.status,
+      }));
+    }
+
+    if (wavesFound && wavesFound.length) {
+      setWaves(wavesFound);
+      setPlanName(row.plan_name || "Periodização SmartPeriodizer");
       setHasRemotePlan(true);
+    } else {
+      setHasRemotePlan(false);
     }
   }
 
@@ -59,6 +77,25 @@ export default function NineFitPlanejamento() {
     if (!athleteId) return;
     loadCarryProjection(athleteId).then(setPoints);
     loadPlan();
+
+    // Realtime: reage a mudanças em athlete_periodizations e periodization_plans_remote
+    const channel = supabase
+      .channel(`athlete-periodization-${athleteId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "athlete_periodizations", filter: `athlete_id=eq.${athleteId}` },
+        () => loadPlan()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "periodization_plans_remote", filter: `athlete_id=eq.${athleteId}` },
+        () => loadPlan()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [athleteId]);
 
   const monthDays = useMemo(() => {
