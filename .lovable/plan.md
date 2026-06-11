@@ -1,6 +1,6 @@
 ## Estratégia geral
 
-Executo **um bloco por rodada**. Ao final de cada bloco reporto: o que mudou, o que migrou, o que ficou pendente para revisão manual. Você responde "próximo" (ou ajusta) e eu sigo. Tabelas DEPRECATED **mantêm escrita aberta** (só migramos dados, não revogamos). **Sem paywall** nesta jornada.
+Executo **um bloco por rodada**. Blocos 0, 1, 2 e 3 concluídos. Próximos: 4, 6, 7, 8, 9, 10 (Bloco 5 descartado).
 
 ---
 
