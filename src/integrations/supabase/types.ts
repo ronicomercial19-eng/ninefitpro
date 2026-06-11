@@ -10833,6 +10833,22 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_athlete_periodizacao_ativa: {
+        Row: {
+          assigned_at: string | null
+          athlete_id: string | null
+          external_id: string | null
+          macrocycle: Json | null
+          mesocycle: Json | null
+          microcycle: Json | null
+          plan_id: string | null
+          plan_name: string | null
+          source: string | null
+          status: string | null
+          waves: Json | null
+        }
+        Relationships: []
+      }
       vw_athlete_status: {
         Row: {
           athlete_id: string | null
