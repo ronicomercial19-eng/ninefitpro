@@ -32,8 +32,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [infoproduct, setInfoproduct] = useState<any>(null);
+  const [offerSeen, setOfferSeen] = useState(false);
+  const [showingOffer, setShowingOffer] = useState(false);
 
-  const reset = () => { setStep(0); setAnswers({ goal: "", time: "", equipment: "" }); setExercises([]); setInfoproduct(null); };
+  const reset = () => {
+    setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
+    setExercises([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
+  };
 
   const pick = async (k: keyof Answers, v: string) => {
     const next = { ...answers, [k]: v };
@@ -45,7 +50,21 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const resolve = async (a: Answers) => {
     setLoading(true);
     try {
-      // mapear objetivo -> grupos musculares / categoria
+      // 1) Buscar infoproduto alinhado ao objetivo (oferta antes do treino)
+      const goalSlugMap: Record<string, string> = {
+        fatburn: "audience_49", strength: "audience_49",
+        mobility: "audience_49", cardio: "audience_49",
+      };
+      const { data: prod } = await supabase
+        .from("monetization_offers" as any)
+        .select("*")
+        .eq("active", true)
+        .or(`slug.eq.${goalSlugMap[a.goal] || "audience_49"},goal.eq.${a.goal}`)
+        .limit(1)
+        .maybeSingle();
+      setInfoproduct(prod);
+
+      // 2) Montar treino do dia em paralelo
       const tagMap: Record<string, string[]> = {
         fatburn: ["cardio", "funcional", "hiit"],
         strength: ["peito", "costas", "perna", "ombro"],
@@ -58,21 +77,11 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .select("id, name, video_url, category")
         .or(tags.map((t) => `category.ilike.%${t}%,name.ilike.%${t}%`).join(","))
         .limit(parseInt(a.time, 10) >= 45 ? 8 : 5);
+      setExercises((ex as unknown as Exercise[]) || []);
 
-      if (ex && ex.length >= 3) {
-        setExercises(ex as unknown as Exercise[]);
-        setStep(3);
-      } else {
-        // fallback infoproduto
-        const { data: prod } = await supabase
-          .from("dynamic_offers" as any)
-          .select("*")
-          .eq("active", true)
-          .limit(1)
-          .maybeSingle();
-        setInfoproduct(prod);
-        setStep(3);
-      }
+      // 3) Sempre exibir oferta primeiro (se existir). Recusar → libera treino.
+      setShowingOffer(!!prod);
+      setStep(3);
     } catch (e) {
       toast.error("Não foi possível montar o treino agora.");
     } finally {
@@ -120,7 +129,36 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {!loading && step === 3 && exercises.length > 0 && (
+          {/* OFERTA primeiro — sempre aparece se houver infoproduto; recusar libera o treino */}
+          {!loading && step === 3 && showingOffer && !offerSeen && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Oferta para seu objetivo</p>
+              <p className="font-display text-lg mb-3">Aceleramos sua meta de {answers.goal}</p>
+              <div className="rounded-2xl border border-primary/40 bg-primary/[0.06] p-4 mb-4">
+                <p className="font-display text-lg">{infoproduct?.title || "Protocolo Personalizado"}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {infoproduct?.description || "Plano completo com vídeos, progressão semanal e ajustes pelo PDI."}
+                </p>
+                <p className="font-data text-primary text-2xl mt-3">
+                  R$ {((infoproduct?.price_cents ?? infoproduct?.price ?? 4900) / (infoproduct?.price_cents ? 100 : 1)).toFixed(0)}
+                  <span className="text-xs text-muted-foreground">/mês</span>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <button onClick={() => navigate(`/9fit/oferta?slug=${infoproduct?.slug || "audience_49"}`)}
+                  className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4" /> Quero conhecer
+                </button>
+                <button onClick={() => { setOfferSeen(true); setShowingOffer(false); }}
+                  className="w-full rounded-full border border-white/15 bg-transparent text-foreground py-3 text-sm hover:bg-white/[0.04]">
+                  Agora não — liberar treino do dia
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TREINO — exibido após oferta ser dispensada (ou se não houver oferta) */}
+          {!loading && step === 3 && !showingOffer && exercises.length > 0 && (
             <div>
               <p className="font-display text-lg mb-1">Seu treino está pronto</p>
               <p className="text-xs text-muted-foreground mb-3">{exercises.length} exercícios • {answers.time} min</p>
@@ -174,23 +212,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {!loading && step === 3 && exercises.length === 0 && (
-            <div>
-              <p className="font-display text-lg mb-1">Treino especial</p>
-              <p className="text-sm text-muted-foreground mb-3">
-                Encontramos um plano premium ideal para o seu objetivo.
-              </p>
-              <div className="rounded-2xl border border-primary/40 bg-primary/[0.06] p-4 mb-4">
-                <p className="font-display text-lg">{infoproduct?.title || "Protocolo Personalizado"}</p>
-                <p className="text-xs text-muted-foreground mt-1">{infoproduct?.description || "Plano completo com vídeos e progressão semanal."}</p>
-                <p className="font-data text-primary text-2xl mt-3">
-                  R$ {infoproduct?.price ?? "49"}<span className="text-xs text-muted-foreground">/único</span>
-                </p>
-              </div>
-              <button onClick={() => navigate(`/9fit/checkout/${infoproduct?.id || "quicktrain"}`)}
-                className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">
-                <Lock className="w-4 h-4" /> Desbloquear treino
-              </button>
+          {!loading && step === 3 && !showingOffer && exercises.length === 0 && (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Não conseguimos montar um treino para esses filtros. Tente outro objetivo.
             </div>
           )}
         </motion.div>
