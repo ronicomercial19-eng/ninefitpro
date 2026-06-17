@@ -17,6 +17,8 @@ import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
+import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
+import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
@@ -35,20 +37,34 @@ export default function NineFitHub() {
   const [card, setCard] = useState({ level: 1, classTier: "Diamante", syncScore: 0, streak: 0, totalXP: 0 });
   const [breakdown, setBreakdown] = useState({ treino: 0, nutri: 0, sono: 0, mob: 0, hidr: 0 });
   const [protocolCount, setProtocolCount] = useState(0);
+  const [weekly, setWeekly] = useState({ treinos: 0, nutri: 0, minutos: 0 });
+  const [missions, setMissions] = useState<HubMissions | null>(null);
 
   useEffect(() => {
     if (!athleteId) return;
     (async () => {
-      const { data } = await supabase
-        .from("athletes")
-        .select("level, total_xp, xp_total, sync_score")
-        .eq("id", athleteId)
+      // PROMPT 1 — dados reais via vw_hub_status
+      const { data: hub } = await supabase
+        .from("vw_hub_status" as any)
+        .select("*")
+        .eq("athlete_id", athleteId)
         .maybeSingle();
+      const h: any = hub || {};
 
-      const xp = (data as any)?.xp_total || (data as any)?.total_xp || 0;
-      const sync = (data as any)?.sync_score || 0;
+      setWeekly({
+        treinos: h.treinos_semana || 0,
+        nutri:   h.nutri_semana   || 0,
+        minutos: h.minutos_semana || 0,
+      });
+      setMissions({
+        missao_avaliacao:       !!h.missao_avaliacao,
+        missao_plano:           !!h.missao_plano,
+        missao_primeiro_treino: !!h.missao_primeiro_treino,
+        missao_3dias:           !!h.missao_3dias,
+        missao_7dias:           !!h.missao_7dias,
+      });
 
-      // Load 7d breakdown from master_registry
+      // 7d breakdown (radar) — composto via master_registry
       const since = new Date(Date.now() - 7 * 86400000).toISOString();
       const { data: reg } = await supabase
         .from("master_registry" as any)
@@ -59,27 +75,23 @@ export default function NineFitHub() {
       const cnt = (k: string) => events.filter(e => e.event_type === k).length;
       const pct = (n: number, max: number) => Math.min(100, (n / max) * 100);
       const bd = {
-        treino: pct(cnt("workout_completed"), 4),
-        nutri:  pct(cnt("nutrition_log"), 21),
+        treino: pct(h.treinos_semana || cnt("workout_completed"), 4),
+        nutri:  pct(h.nutri_semana   || cnt("nutrition_log"), 21),
         sono:   pct(cnt("sleep_log"), 7),
         mob:    pct(cnt("mobility_log"), 4),
         hidr:   pct(cnt("hydration_log"), 14),
       };
       setBreakdown(bd);
 
-      const compositeSync = sync || Math.round(
-        bd.treino * 0.25 + bd.nutri * 0.25 + bd.sono * 0.25 + bd.mob * 0.125 + bd.hidr * 0.125
-      );
-
+      const xp = h.total_xp || 0;
       setCard({
-        level: (data as any)?.level || Math.max(1, Math.floor(xp / 200) + 1),
+        level: h.level || 1,
         classTier: xp > 2000 ? "Elite" : "Diamante",
-        syncScore: compositeSync,
-        streak: cnt("workout_completed") + cnt("daily_protocol_step") > 0 ? cnt("daily_protocol_step") : 0,
+        syncScore: h.sync_score ?? 0,
+        streak: cnt("daily_protocol_step"),
         totalXP: xp,
       });
 
-      // Active protocols
       const { count } = await supabase
         .from("student_library_assignments")
         .select("id", { count: "exact", head: true })
@@ -135,9 +147,11 @@ export default function NineFitHub() {
         <HubRonCard syncScore={card.syncScore} name={name} />
       </div>
 
-      {/* 3.5 ATIVAÇÃO 14d */}
-      <div className="px-4 mt-6">
+      {/* 3.5 ATIVAÇÃO 14d + Missões reais (vw_hub_status) */}
+      <div className="px-4 mt-6 space-y-3">
         <ActivationMissionCard />
+        <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
+        <HubMissionsCard missions={missions} />
       </div>
 
 
