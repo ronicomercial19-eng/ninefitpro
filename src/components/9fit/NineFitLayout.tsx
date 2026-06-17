@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { NineFitTopBar } from "./NineFitTopBar";
 import { RonBubble } from "./RonBubble";
+import { BackButton } from "./BackButton";
+
 
 interface NineFitLayoutProps {
   children: React.ReactNode;
@@ -131,6 +133,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
   return (
     <>
       {!isOnboardingFlow && <NineFitTopBar />}
+      {!isOnboardingFlow && <BackButton />}
       {children}
       {!isOnboardingFlow && <RonBubble />}
     </>

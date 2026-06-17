@@ -45,20 +45,23 @@ export default function NineFitPrimePass() {
           </div>
 
           <div className="px-4 mb-4">
-            <button
-              onClick={() => setState("UPGRADING")}
+            <a
+              href="https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03"
+              target="_blank"
+              rel="noreferrer"
               className="w-full glass-mission glass-mission-active rounded-xl p-4 flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
                 <Crown className="w-5 h-5 text-primary" />
                 <div className="text-left">
-                  <p className="text-editorial text-base text-foreground">Upgrade Elite</p>
-                  <p className="text-[10px] font-data text-muted-foreground">Acesso completo ao protocolo</p>
+                  <p className="text-editorial text-base text-foreground">Assinar Elite (R$ 49/mês)</p>
+                  <p className="text-[10px] font-data text-muted-foreground">Liberação imediata após pagamento</p>
                 </div>
               </div>
               <ShieldCheck className="w-5 h-5 text-primary" />
-            </button>
+            </a>
           </div>
+
         </>
       )}
 

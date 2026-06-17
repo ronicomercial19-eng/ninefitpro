@@ -27,35 +27,31 @@ export default function AITrainingPage() {
   const handleQuestionnaireComplete = async (data: any) => {
     setGenerating(true);
     setShowQuestionnaire(false);
-    toast.info('Gerando treino via SmartTreino...');
+    toast.info('Gerando treino...');
 
     try {
-      // CORREÇÃO CRÍTICA: reutilizar rota automática do SmartTreino (fitpro-deliver-workout)
-      // em vez de criar nova lógica via ai-coach. Sem periodização → catálogo 9x9x9.
-      const { data: result, error } = await supabase.functions.invoke('fitpro-deliver-workout', {
-        body: {
-          aluno_id: data.studentId || data.aluno_id || null,
-          treino: {
-            source: 'admin_questionnaire',
-            studentName: data.studentName,
-            goal: data.goal,
-            level: data.level,
-            equipment: data.equipment,
-            duration: data.duration,
-            frequency: data.frequency,
-            preferences: data,
-          },
-        },
+      // ROTA OFICIAL — prescrever_treino (mesma usada pelo SmartTreino).
+      // p_aluno_id pode ser null para geração genérica baseada no perfil informado.
+      const today = new Date().toISOString().split('T')[0];
+      const { data: result, error } = await supabase.rpc('prescrever_treino' as any, {
+        p_aluno_id: data.studentId || data.aluno_id || null,
+        p_data: today,
       });
 
-      if (error) throw new Error(error.message || 'Falha na invocação da edge function');
-      if (result?.success === false) throw new Error(result?.error || 'SmartTreino retornou erro');
+      if (error) throw new Error(error.message || 'Falha ao chamar prescrever_treino');
 
-      const html =
-        result?.html ||
-        result?.treino?.html ||
-        result?.content ||
-        `<pre style="white-space:pre-wrap">${JSON.stringify(result?.treino || result, null, 2)}</pre>`;
+      // Construir HTML a partir do retorno jsonb
+      const payload: any = result || {};
+      const exercises: any[] = payload?.exercises || payload?.exercicios || payload?.session?.exercises || [];
+      const html = exercises.length
+        ? `<div style="font-family:system-ui;color:#F2F0EC;background:#090909;padding:24px;border-radius:12px">
+             <h2 style="color:#E8571A;margin:0 0 16px">${data.studentName || 'Treino IA'} · ${data.goal || ''}</h2>
+             <p style="color:#888;font-size:12px;margin:0 0 16px">Gerado em ${new Date().toLocaleDateString('pt-BR')} · ${exercises.length} exercícios</p>
+             <ol style="padding-left:20px;line-height:1.8">
+               ${exercises.map((e: any) => `<li><strong>${e.name || e.nome || 'Exercício'}</strong> — ${e.sets || 3}×${e.reps_range || e.reps || '10-12'}${e.rest_seconds ? ` · ${e.rest_seconds}s` : ''}${e.video_url ? ` · <a href="${e.video_url}" style="color:#E8571A">vídeo</a>` : ''}</li>`).join('')}
+             </ol>
+           </div>`
+        : `<pre style="white-space:pre-wrap;color:#F2F0EC">${JSON.stringify(payload, null, 2)}</pre>`;
 
       const newTraining: AITraining = {
         id: Date.now(),
@@ -66,14 +62,15 @@ export default function AITrainingPage() {
       };
 
       setAiTrainings(prev => [newTraining, ...prev]);
-      toast.success('Treino gerado pelo SmartTreino!');
+      toast.success('Treino gerado!');
     } catch (err: any) {
-      console.error('SmartTreino delivery error:', err);
+      console.error('prescrever_treino error:', err);
       toast.error(err?.message ? `Erro: ${err.message}` : 'Erro ao gerar treino com IA');
     } finally {
       setGenerating(false);
     }
   };
+
 
   const handleCopy = (training: AITraining) => {
     navigator.clipboard.writeText(training.html);

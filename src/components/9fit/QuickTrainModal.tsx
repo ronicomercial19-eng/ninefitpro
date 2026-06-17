@@ -4,6 +4,7 @@ import { X, Loader2, Play, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAthleteId } from "@/hooks/useAthleteId";
 
 type Step = 0 | 1 | 2 | 3;
 type Answers = { goal: string; time: string; equipment: string };
@@ -23,21 +24,34 @@ const QS = [
     { v: "outdoor", l: "Ar livre" }] },
 ];
 
-type Exercise = { id: string; name: string; video_url?: string | null; category?: string | null };
+type Exercise = {
+  id: string;
+  name: string;
+  video_url?: string | null;
+  gif_url?: string | null;
+  target_muscles?: string[] | null;
+  sets?: number | string | null;
+  reps_range?: string | null;
+  rest_seconds?: number | null;
+};
+
+type Modelo = { name?: string; objective?: string; stimulus?: string };
 
 export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
+  const { athleteId } = useAthleteId();
   const [step, setStep] = useState<Step>(0);
   const [answers, setAnswers] = useState<Answers>({ goal: "", time: "", equipment: "" });
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [modelos, setModelos] = useState<Modelo[]>([]);
   const [infoproduct, setInfoproduct] = useState<any>(null);
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
 
   const reset = () => {
     setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
-    setExercises([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
+    setExercises([]); setModelos([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
   };
 
   const pick = async (k: keyof Answers, v: string) => {
@@ -48,45 +62,72 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   };
 
   const resolve = async (a: Answers) => {
+    if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
     setLoading(true);
     try {
-      // 1) Buscar infoproduto alinhado ao objetivo (oferta antes do treino)
-      const goalSlugMap: Record<string, string> = {
-        fatburn: "audience_49", strength: "audience_49",
-        mobility: "audience_49", cardio: "audience_49",
-      };
+      // 1) Oferta antes do treino (não bloqueia)
       const { data: prod } = await supabase
         .from("monetization_offers" as any)
         .select("*")
         .eq("active", true)
-        .or(`slug.eq.${goalSlugMap[a.goal] || "audience_49"},goal.eq.${a.goal}`)
+        .or(`slug.eq.audience_49,goal.eq.${a.goal}`)
         .limit(1)
         .maybeSingle();
       setInfoproduct(prod);
 
-      // 2) Montar treino do dia em paralelo
-      const tagMap: Record<string, string[]> = {
-        fatburn: ["cardio", "funcional", "hiit"],
-        strength: ["peito", "costas", "perna", "ombro"],
-        mobility: ["mobilidade", "alongamento", "core"],
-        cardio: ["cardio"],
-      };
-      const tags = tagMap[a.goal] || ["funcional"];
-      const { data: ex } = await supabase
-        .from("exercises")
-        .select("id, name, video_url, category")
-        .or(tags.map((t) => `category.ilike.%${t}%,name.ilike.%${t}%`).join(","))
-        .limit(parseInt(a.time, 10) >= 45 ? 8 : 5);
-      setExercises((ex as unknown as Exercise[]) || []);
+      // 2) PRESCREVER TREINO RÁPIDO via RPC oficial
+      const { data, error } = await supabase.rpc("prescrever_treino_rapido" as any, {
+        p_athlete_id: athleteId,
+        p_objetivo: a.goal,
+        p_tempo_min: parseInt(a.time, 10),
+        p_equipamento: a.equipment,
+      });
+      if (error) throw error;
 
-      // 3) Sempre exibir oferta primeiro (se existir). Recusar → libera treino.
+      const payload: any = data || {};
+      setModelos((payload.modelos || []) as Modelo[]);
+      setExercises((payload.exercises || []) as Exercise[]);
+
       setShowingOffer(!!prod);
       setStep(3);
-    } catch (e) {
-      toast.error("Não foi possível montar o treino agora.");
+    } catch (e: any) {
+      console.error("[QuickTrain] prescrever_treino_rapido:", e);
+      toast.error(e?.message || "Não foi possível montar o treino agora.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const completeWorkout = async () => {
+    try {
+      if (athleteId) {
+        await supabase.from("workout_executions" as any).insert({
+          athlete_id: athleteId,
+          workout_date: new Date().toISOString().split("T")[0],
+          phase_name: "quick",
+          status: "completed",
+          duration_minutes: parseInt(answers.time, 10) || 30,
+          notes: `quick_workout · ${answers.goal} · ${answers.equipment}`,
+          metadata: { answers, exercises: exercises.map((e) => e.id), modelos },
+        } as any);
+        await supabase.from("athlete_profile_snapshots" as any).insert({
+          athlete_id: athleteId,
+          source: "workout_complete",
+          snapshot_data: { type: "quick", date: new Date().toISOString(), duration: parseInt(answers.time, 10), exercises: exercises.length },
+        } as any);
+        await supabase.rpc("fn_award_xp" as any, {
+          p_athlete_id: athleteId,
+          p_amount: 50,
+          p_source: "quick_workout",
+          p_metadata: answers as any,
+        });
+        toast.success("Treino concluído! +50 XP");
+      }
+    } catch (e) {
+      console.error("[QuickTrain] complete:", e);
+      toast.success("Treino iniciado");
+    }
+    onClose(); reset();
   };
 
   if (!open) return null;
@@ -129,7 +170,6 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {/* OFERTA primeiro — sempre aparece se houver infoproduto; recusar libera o treino */}
           {!loading && step === 3 && showingOffer && !offerSeen && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Oferta para seu objetivo</p>
@@ -145,10 +185,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                 </p>
               </div>
               <div className="space-y-2">
-                <button onClick={() => navigate(`/9fit/oferta?slug=${infoproduct?.slug || "audience_49"}`)}
+                <a href="https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03" target="_blank" rel="noreferrer"
                   className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">
                   <Lock className="w-4 h-4" /> Quero conhecer
-                </button>
+                </a>
                 <button onClick={() => { setOfferSeen(true); setShowingOffer(false); }}
                   className="w-full rounded-full border border-white/15 bg-transparent text-foreground py-3 text-sm hover:bg-white/[0.04]">
                   Agora não — liberar treino do dia
@@ -157,57 +197,39 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {/* TREINO — exibido após oferta ser dispensada (ou se não houver oferta) */}
           {!loading && step === 3 && !showingOffer && exercises.length > 0 && (
             <div>
+              {modelos.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Modelo</p>
+                  <p className="font-display text-base">{modelos[0]?.name || "Treino personalizado"}</p>
+                  <p className="text-xs text-muted-foreground">{modelos[0]?.stimulus || modelos[0]?.objective}</p>
+                </div>
+              )}
               <p className="font-display text-lg mb-1">Seu treino está pronto</p>
               <p className="text-xs text-muted-foreground mb-3">{exercises.length} exercícios • {answers.time} min</p>
               <ul className="space-y-2 mb-4 max-h-72 overflow-y-auto">
                 {exercises.map((e, i) => (
-                  <li key={e.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 flex items-center gap-3">
+                  <li key={e.id || i} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 flex items-center gap-3">
                     <span className="w-7 h-7 rounded-full bg-primary/20 text-primary grid place-items-center text-xs font-bold">{i + 1}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{e.name}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{e.category || "—"}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{e.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {(e.sets || "3")}×{e.reps_range || "10-12"}{e.rest_seconds ? ` · ${e.rest_seconds}s` : ""}
+                        {e.target_muscles?.length ? ` · ${e.target_muscles.slice(0,2).join(", ")}` : ""}
+                      </p>
                     </div>
-                    {e.video_url && <a href={e.video_url} target="_blank" rel="noreferrer" className="text-primary"><Play className="w-4 h-4" /></a>}
+                    {(e.video_url || e.gif_url) && (
+                      <a href={e.video_url || e.gif_url!} target="_blank" rel="noreferrer" className="text-primary">
+                        <Play className="w-4 h-4" />
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
-              <button onClick={async () => {
-                  try {
-                    const { data: u } = await supabase.auth.getUser();
-                    const userId = u?.user?.id;
-                    if (userId) {
-                      const { data: ath } = await supabase
-                        .from("athletes").select("id").eq("user_id", userId).maybeSingle();
-                      const athleteId = (ath as any)?.id;
-                      if (athleteId) {
-                        await supabase.from("workout_progress" as any).insert({
-                          athlete_id: athleteId,
-                          workout_id: null,
-                          status: "completed",
-                          completed_at: new Date().toISOString(),
-                          metadata: { source: "quick_workout", answers, exercises: exercises.map(e => e.id) },
-                        });
-                        await supabase.rpc("fn_award_xp" as any, {
-                          p_athlete_id: athleteId,
-                          p_amount: 50,
-                          p_source: "quick_workout",
-                          p_metadata: { goal: answers.goal, time: answers.time, equipment: answers.equipment },
-                        });
-                        toast.success("Treino concluído! +50 XP");
-                      } else {
-                        toast.success("Treino iniciado");
-                      }
-                    }
-                  } catch (e) {
-                    toast.success("Treino iniciado");
-                  }
-                  onClose(); reset();
-                }}
+              <button onClick={completeWorkout}
                 className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">
-                Iniciar agora (+50 XP)
+                Concluir treino (+50 XP)
               </button>
             </div>
           )}

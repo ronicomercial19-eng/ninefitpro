@@ -29,12 +29,15 @@ export default function NineFitPrime() {
             </p>
             <h1 className="font-display text-xl">{view === 'elite' ? 'ELITE PROTOCOLS' : 'PrimePass Hub'}</h1>
           </div>
-          <button
-            onClick={() => navigate('/9fit/planos')}
-            className="text-[10px] font-bold tracking-widest text-primary px-3 py-1.5 rounded-full border border-primary/30"
+          <a
+            href="https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[10px] font-bold tracking-widest text-primary px-3 py-1.5 rounded-full border border-primary/30 hover:bg-primary/10"
           >
             UPGRADE
-          </button>
+          </a>
+
         </div>
       </header>
 

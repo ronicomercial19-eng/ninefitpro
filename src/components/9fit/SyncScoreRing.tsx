@@ -13,48 +13,56 @@ interface Props {
   };
 }
 
+// Tokens canônicos (PROMPT 4)
+const COLOR_LOW = "#E8571A";    // 0-29 sem glow / 30-59 com glow 6px
+const COLOR_MID = "#F2C94C";    // 60-79
+const COLOR_HIGH = "#27AE60";   // 80-100
+
+function getRingStyle(score: number) {
+  let color = COLOR_LOW;
+  let glow = "none";
+  if (score >= 80) { color = COLOR_HIGH; glow = `drop-shadow(0 0 14px ${COLOR_HIGH})`; }
+  else if (score >= 60) { color = COLOR_MID; glow = `drop-shadow(0 0 10px ${COLOR_MID})`; }
+  else if (score >= 30) { color = COLOR_LOW; glow = `drop-shadow(0 0 6px ${COLOR_LOW})`; }
+  else { color = COLOR_LOW; glow = "none"; }
+  // Cor do arco conforme faixa (60-100 verde)
+  const arcColor = score >= 60 ? COLOR_HIGH : score >= 30 ? COLOR_MID : COLOR_LOW;
+  return { color, arcColor, glow };
+}
+
 export function SyncScoreRing({ score, breakdown }: Props) {
   const navigate = useNavigate();
-  const radius = 72;
-  const stroke = 10;
-  const c = 2 * Math.PI * radius;
-  const safeScore = Math.max(0, Math.min(100, score));
-  const offset = c - (safeScore / 100) * c;
-  const isZero = safeScore === 0;
+  const safeScore = Math.max(0, Math.min(100, score || 0));
+  const isCalibrating = safeScore === 0;
+  const { arcColor, glow } = getRingStyle(safeScore);
 
-  // Estado zero: tela acolhedora com CTA claro em vez de número frio.
-  if (isZero) {
+  // Estado calibrando: pulso neon
+  if (isCalibrating) {
     return (
       <div className="surface-card p-5 relative overflow-hidden">
-        <div
-          className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl pointer-events-none"
-          style={{ background: 'hsl(var(--primary) / 0.18)' }}
-        />
         <div className="relative flex flex-col sm:flex-row items-center gap-5">
           <motion.div
             initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="relative w-[160px] h-[160px] shrink-0 flex items-center justify-center"
+            className="relative w-[180px] h-[180px] shrink-0 flex items-center justify-center"
           >
-            <svg width="160" height="160" viewBox="0 0 180 180" className="-rotate-90 absolute inset-0">
-              <circle
-                cx="90" cy="90" r={radius}
-                stroke="hsl(0 0% 100% / 0.06)"
-                strokeWidth={stroke}
-                fill="none"
-                strokeDasharray="4 6"
-              />
-            </svg>
+            {/* Anel pulsante neon laranja durante calibração */}
             <motion.div
-              animate={{ scale: [1, 1.06, 1], opacity: [0.5, 0.9, 0.5] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute w-20 h-20 rounded-full"
-              style={{ background: 'hsl(var(--primary) / 0.18)', filter: 'blur(20px)' }}
+              animate={{ opacity: [0.3, 0.9, 0.3], scale: [0.96, 1.02, 0.96] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `conic-gradient(from -90deg, ${COLOR_LOW} 0deg 90deg, transparent 90deg 360deg)`,
+                filter: `drop-shadow(0 0 10px ${COLOR_LOW})`,
+                WebkitMask: "radial-gradient(circle, transparent 62%, black 63%)",
+                mask: "radial-gradient(circle, transparent 62%, black 63%)",
+                transition: "all 0.6s ease",
+              }}
             />
-            <div className="relative flex flex-col items-center">
-              <Sparkles className="w-6 h-6 text-primary mb-1" />
-              <span className="text-label">CALIBRANDO</span>
+            <div className="relative flex flex-col items-center text-center">
+              <Sparkles className="w-6 h-6 mb-1" style={{ color: COLOR_LOW }} />
+              <span className="text-[10px] font-data tracking-[0.3em] uppercase" style={{ color: COLOR_LOW }}>CALIBRANDO</span>
               <span className="text-[10px] text-muted-foreground mt-0.5">Aguardando você</span>
             </div>
           </motion.div>
@@ -68,7 +76,12 @@ export function SyncScoreRing({ score, breakdown }: Props) {
             </p>
             <button
               onClick={() => navigate('/9fit/onboarding')}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-xs font-bold tracking-wide px-4 py-2.5 rounded-full hover:opacity-90 transition shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.5)]"
+              className="inline-flex items-center gap-2 text-xs font-bold tracking-wide px-4 py-2.5 rounded-full transition"
+              style={{
+                background: COLOR_LOW,
+                color: "#0a0a0a",
+                boxShadow: `0 8px 24px -6px ${COLOR_LOW}88`,
+              }}
             >
               Começar avaliação
               <ArrowRight className="w-3.5 h-3.5" />
@@ -79,21 +92,18 @@ export function SyncScoreRing({ score, breakdown }: Props) {
     );
   }
 
-  // Cor neon dinâmica: laranja (<33) → amarelo (33-66) → verde (>66)
-  const neonHue =
-    safeScore < 33 ? "20 95% 55%" : safeScore < 66 ? "48 95% 55%" : "140 80% 50%";
   const ringStyle: React.CSSProperties = {
-    background: `conic-gradient(from -90deg, hsl(${neonHue}) 0% ${safeScore}%, hsl(0 0% 100% / 0.06) ${safeScore}% 100%)`,
-    filter: `drop-shadow(0 0 ${6 + safeScore / 6}px hsl(${neonHue} / 0.55))`,
+    background: `conic-gradient(from -90deg, ${arcColor} 0% ${safeScore}%, rgba(255,255,255,0.06) ${safeScore}% 100%)`,
+    filter: glow,
     WebkitMask: "radial-gradient(circle, transparent 62%, black 63%)",
     mask: "radial-gradient(circle, transparent 62%, black 63%)",
+    transition: "all 0.6s ease",
   };
 
   return (
     <div className="surface-card p-5">
       <div className="flex items-center gap-5">
         <div className="relative w-[180px] h-[180px] shrink-0">
-          {/* Conic ring neon proporcional ao sync */}
           <motion.div
             className="absolute inset-0 rounded-full"
             style={ringStyle}
@@ -102,8 +112,8 @@ export function SyncScoreRing({ score, breakdown }: Props) {
             transition={{ duration: 0.9, ease: "easeOut" }}
           />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-label" style={{ color: `hsl(${neonHue})` }}>SYNC</span>
-            <span className="text-hero text-5xl text-foreground">{Math.round(score)}</span>
+            <span className="text-[10px] font-data tracking-[0.3em] uppercase" style={{ color: arcColor }}>SYNC</span>
+            <span className="text-hero text-5xl text-foreground">{Math.round(safeScore)}</span>
             <span className="text-[10px] text-muted-foreground mt-1">/ 100</span>
           </div>
         </div>
