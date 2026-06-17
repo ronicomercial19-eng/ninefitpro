@@ -179,7 +179,8 @@ export default function NineFitTrain() {
         <div className="px-4 mb-3">
           <div className="glass-mission rounded-full p-1 flex gap-1">
             {[
-              { k: "train", l: "Treinos", I: DumbIcon },
+              { k: "train", l: "Hoje", I: DumbIcon },
+              { k: "semana", l: "Semana", I: Calendar },
               { k: "protocol", l: "Protocolo", I: Target },
               { k: "healthflix", l: "Streaming", I: Film },
             ].map(({ k, l, I }) => (
