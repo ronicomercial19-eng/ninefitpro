@@ -24,6 +24,34 @@ export default function NineFitAjusteTreino() {
 
   const onSave = async () => {
     if (mode === "copilot") await apply();
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: u } = await supabase.auth.getUser();
+      const userId = u?.user?.id;
+      if (userId) {
+        const { data: ath } = await supabase
+          .from("athletes").select("id").eq("user_id", userId).maybeSingle();
+        const athleteId = (ath as any)?.id;
+        if (athleteId) {
+          const today = new Date().toISOString().slice(0, 10);
+          const changes = {
+            workout_name: workoutName,
+            intensity_pct: intensity,
+            fatigue_adjustment: fatigueAdj,
+            mode,
+            applied_at: new Date().toISOString(),
+          };
+          const { error } = await supabase.rpc("aplicar_ajuste_treino_dia" as any, {
+            p_athlete_id: athleteId,
+            p_data: today,
+            p_changes: changes,
+          });
+          if (error) console.warn("[AjusteTreino] RPC error", error);
+        }
+      }
+    } catch (e) {
+      console.warn("[AjusteTreino] save failed", e);
+    }
     toast.success("Ajustes salvos");
     navigate(-1);
   };
