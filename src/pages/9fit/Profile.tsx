@@ -25,6 +25,8 @@ export default function NineFitProfile() {
   const [staffOnline, setStaffOnline] = useState(3);
   const [nextInvoice, setNextInvoice] = useState("12/11");
   const [planTier, setPlanTier] = useState("Aluno Premium");
+  const [pdiOpen, setPdiOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
