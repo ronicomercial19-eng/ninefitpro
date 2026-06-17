@@ -62,6 +62,18 @@
     --glow-soft: 0 4px 24px -8px rgba(0,0,0,0.5);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Bloco 10 — Design tokens canônicos 9FIT (semantic) */
+    --neon-orange: 18 87% 52%;
+    --neon-green: 153 95% 42%;
+    --neon-cyan: 187 92% 50%;
+    --surface-1: 240 4% 9%;     /* card base */
+    --surface-2: 240 4% 12%;    /* elevated */
+    --surface-3: 240 4% 16%;    /* highlighted */
+    --text-primary: 0 0% 98%;
+    --text-muted: 240 4% 56%;
+    --font-display: 'Satoshi', 'Inter Black', system-ui, sans-serif;
+    --font-body: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+
     /* Premium tokens — glass + halo + elevated shadow */
     --glass: 0 0% 100% / 0.04;
     --glass-border: 0 0% 100% / 0.08;
