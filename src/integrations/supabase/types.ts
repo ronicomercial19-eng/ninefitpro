@@ -10585,75 +10585,21 @@ export type Database = {
         Row: {
           adherence_level: number | null
           athlete_id: string | null
+          email: string | null
           fase_atual: string | null
           fatigue_level: number | null
           id: string | null
           intensity_level: string | null
           nivel: string | null
+          nome: string | null
           objetivo: string | null
           professor_id: string | null
           recovery_status: string | null
+          source: string | null
           status: string | null
           volume_level: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "athletes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "dashboard_students_overview"
-            referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "v_athletes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "v_students_canonical"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "v_unified_users"
-            referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_full_profile"
-            referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_legacy_map"
-            referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_status"
-            referencedColumns: ["athlete_id"]
-          },
-        ]
+        Relationships: []
       }
       vw_alunos_smarttreino: {
         Row: {
@@ -10837,12 +10783,21 @@ export type Database = {
         Row: {
           assigned_at: string | null
           athlete_id: string | null
+          current_macro: Json | null
+          current_meso: Json | null
+          current_phase: string | null
+          current_phase_category: string | null
+          current_week_index: number | null
           external_id: string | null
           macrocycle: Json | null
           mesocycle: Json | null
           microcycle: Json | null
+          output_json: Json | null
           plan_id: string | null
           plan_name: string | null
+          reps_range: string | null
+          rpe_cap: string | null
+          sets_range: string | null
           source: string | null
           status: string | null
           waves: Json | null
@@ -11112,6 +11067,10 @@ export type Database = {
         }
         Returns: Json
       }
+      aplicar_ajuste_treino_dia: {
+        Args: { p_athlete_id: string; p_changes: Json; p_workout_date: string }
+        Returns: Json
+      }
       calcular_periodizacao_correspondencia: {
         Args: { estudante: string }
         Returns: {
@@ -11162,19 +11121,24 @@ export type Database = {
           role: string
         }[]
       }
-      fn_award_xp: {
-        Args: {
-          p_amount: number
-          p_athlete_id: string
-          p_metadata?: Json
-          p_source?: string
-        }
-        Returns: {
-          leveled_up: boolean
-          new_level: number
-          new_total_xp: number
-        }[]
-      }
+      fn_award_xp:
+        | {
+            Args: { p_amount: number; p_athlete_id: string; p_reason: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_athlete_id: string
+              p_metadata?: Json
+              p_source?: string
+            }
+            Returns: {
+              leveled_up: boolean
+              new_level: number
+              new_total_xp: number
+            }[]
+          }
       generate_invitation_token: { Args: never; Returns: string }
       gerar_modelo_treino: {
         Args: {
