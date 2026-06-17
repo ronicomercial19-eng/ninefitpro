@@ -908,6 +908,7 @@ export type Database = {
           perfil_classificado: Json | null
           peso_kg: number | null
           phone: string | null
+          preferences: Json | null
           primary_goal: string | null
           respostas_anamnese: Json | null
           restricoes: Json | null
@@ -951,6 +952,7 @@ export type Database = {
           perfil_classificado?: Json | null
           peso_kg?: number | null
           phone?: string | null
+          preferences?: Json | null
           primary_goal?: string | null
           respostas_anamnese?: Json | null
           restricoes?: Json | null
@@ -994,6 +996,7 @@ export type Database = {
           perfil_classificado?: Json | null
           peso_kg?: number | null
           phone?: string | null
+          preferences?: Json | null
           primary_goal?: string | null
           respostas_anamnese?: Json | null
           restricoes?: Json | null
@@ -1938,36 +1941,107 @@ export type Database = {
       }
       daily_workouts: {
         Row: {
+          athlete_id: string | null
+          changes_json: Json | null
           created_at: string | null
           day_name: string
           day_number: number
           estimated_duration_minutes: number | null
           focus_muscles: string[]
           id: string
+          override_locked: boolean | null
+          updated_at: string | null
           weekly_structure_id: string | null
+          workout_date: string | null
           workout_type: string | null
         }
         Insert: {
+          athlete_id?: string | null
+          changes_json?: Json | null
           created_at?: string | null
           day_name: string
           day_number: number
           estimated_duration_minutes?: number | null
           focus_muscles: string[]
           id?: string
+          override_locked?: boolean | null
+          updated_at?: string | null
           weekly_structure_id?: string | null
+          workout_date?: string | null
           workout_type?: string | null
         }
         Update: {
+          athlete_id?: string | null
+          changes_json?: Json | null
           created_at?: string | null
           day_name?: string
           day_number?: number
           estimated_duration_minutes?: number | null
           focus_muscles?: string[]
           id?: string
+          override_locked?: boolean | null
+          updated_at?: string | null
           weekly_structure_id?: string | null
+          workout_date?: string | null
           workout_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
           {
             foreignKeyName: "daily_workouts_weekly_structure_id_fkey"
             columns: ["weekly_structure_id"]
@@ -6346,6 +6420,48 @@ export type Database = {
           variation_focus?: string
           variation_id?: number
           variation_name?: string
+        }
+        Relationships: []
+      }
+      social_share_templates: {
+        Row: {
+          accent_color: string | null
+          active: boolean | null
+          content_type: string
+          created_at: string | null
+          id: string
+          layout_css: string | null
+          layout_html: string | null
+          name: string
+          preview_url: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          active?: boolean | null
+          content_type: string
+          created_at?: string | null
+          id?: string
+          layout_css?: string | null
+          layout_html?: string | null
+          name: string
+          preview_url?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          active?: boolean | null
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          layout_css?: string | null
+          layout_html?: string | null
+          name?: string
+          preview_url?: string | null
+          slug?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -11068,7 +11184,7 @@ export type Database = {
         Returns: Json
       }
       aplicar_ajuste_treino_dia: {
-        Args: { p_athlete_id: string; p_changes: Json; p_workout_date: string }
+        Args: { p_athlete_id: string; p_changes: Json; p_data: string }
         Returns: Json
       }
       calcular_periodizacao_correspondencia: {
