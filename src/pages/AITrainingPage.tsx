@@ -27,17 +27,36 @@ export default function AITrainingPage() {
   const handleQuestionnaireComplete = async (data: any) => {
     setGenerating(true);
     setShowQuestionnaire(false);
-    toast.info('Gerando treino com IA... Isso pode levar alguns segundos.');
+    toast.info('Gerando treino via SmartTreino...');
 
     try {
-      const { data: result, error } = await supabase.functions.invoke('ai-coach', {
-        body: { type: 'generate_training', data },
+      // CORREÇÃO CRÍTICA: reutilizar rota automática do SmartTreino (fitpro-deliver-workout)
+      // em vez de criar nova lógica via ai-coach. Sem periodização → catálogo 9x9x9.
+      const { data: result, error } = await supabase.functions.invoke('fitpro-deliver-workout', {
+        body: {
+          aluno_id: data.studentId || data.aluno_id || null,
+          treino: {
+            source: 'admin_questionnaire',
+            studentName: data.studentName,
+            goal: data.goal,
+            level: data.level,
+            equipment: data.equipment,
+            duration: data.duration,
+            frequency: data.frequency,
+            preferences: data,
+          },
+        },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message || 'Falha na invocação da edge function');
+      if (result?.success === false) throw new Error(result?.error || 'SmartTreino retornou erro');
 
-      const html = result?.content || '<p>Erro ao gerar treino</p>';
-      
+      const html =
+        result?.html ||
+        result?.treino?.html ||
+        result?.content ||
+        `<pre style="white-space:pre-wrap">${JSON.stringify(result?.treino || result, null, 2)}</pre>`;
+
       const newTraining: AITraining = {
         id: Date.now(),
         name: `Treino IA - ${data.studentName}`,
@@ -47,10 +66,10 @@ export default function AITrainingPage() {
       };
 
       setAiTrainings(prev => [newTraining, ...prev]);
-      toast.success('Treino gerado com sucesso pela IA!');
+      toast.success('Treino gerado pelo SmartTreino!');
     } catch (err: any) {
-      console.error('AI generation error:', err);
-      toast.error(err.message || 'Erro ao gerar treino com IA');
+      console.error('SmartTreino delivery error:', err);
+      toast.error(err?.message ? `Erro: ${err.message}` : 'Erro ao gerar treino com IA');
     } finally {
       setGenerating(false);
     }
