@@ -104,6 +104,14 @@ export default function NineFitProfile() {
 
       {/* CTAs */}
       <div className="px-4 mt-6 space-y-3">
+        <button onClick={() => setCompleteOpen(true)}
+          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
+          <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
+        </button>
+        <button onClick={() => setPdiOpen(true)}
+          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
+          <Brain className="w-4 h-4" /> Calibrar IA (PDI)
+        </button>
         <button onClick={() => navigate("/9fit/hub")}
           className="w-full rounded-full bg-gradient-to-r from-primary to-primary/70 text-primary-foreground py-3.5 font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]">
           Explorar mais opções <ExternalLink className="w-4 h-4" />
@@ -118,6 +126,8 @@ export default function NineFitProfile() {
         </button>
       </div>
 
+      <PDIWizard open={pdiOpen} onClose={() => setPdiOpen(false)} />
+      <CompleteProfileFlow open={completeOpen} onClose={() => setCompleteOpen(false)} />
       <BottomNavigation />
     </div>
   );
