@@ -136,9 +136,40 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                   </li>
                 ))}
               </ul>
-              <button onClick={() => { toast.success("Treino iniciado"); onClose(); reset(); }}
+              <button onClick={async () => {
+                  try {
+                    const { data: u } = await supabase.auth.getUser();
+                    const userId = u?.user?.id;
+                    if (userId) {
+                      const { data: ath } = await supabase
+                        .from("athletes").select("id").eq("user_id", userId).maybeSingle();
+                      const athleteId = (ath as any)?.id;
+                      if (athleteId) {
+                        await supabase.from("workout_progress" as any).insert({
+                          athlete_id: athleteId,
+                          workout_id: null,
+                          status: "completed",
+                          completed_at: new Date().toISOString(),
+                          metadata: { source: "quick_workout", answers, exercises: exercises.map(e => e.id) },
+                        });
+                        await supabase.rpc("fn_award_xp" as any, {
+                          p_athlete_id: athleteId,
+                          p_amount: 50,
+                          p_source: "quick_workout",
+                          p_metadata: { goal: answers.goal, time: answers.time, equipment: answers.equipment },
+                        });
+                        toast.success("Treino concluído! +50 XP");
+                      } else {
+                        toast.success("Treino iniciado");
+                      }
+                    }
+                  } catch (e) {
+                    toast.success("Treino iniciado");
+                  }
+                  onClose(); reset();
+                }}
                 className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">
-                Iniciar agora
+                Iniciar agora (+50 XP)
               </button>
             </div>
           )}
