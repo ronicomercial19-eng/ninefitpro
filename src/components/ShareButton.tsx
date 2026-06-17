@@ -34,12 +34,32 @@ export function ShareButton({
     const shareUrl = url || window.location.href;
     let channel: "whatsapp" | "copy" | "native" | "instagram" = "copy";
 
+    // Bloco 6 — busca template visual por content_type
+    let templateSlug: string | null = null;
+    let templateAccent: string | null = null;
     try {
+      const { data: tpl } = await supabase
+        .from("social_share_templates" as any)
+        .select("slug, accent_color, name")
+        .eq("active", true)
+        .eq("content_type", contentType)
+        .limit(1)
+        .maybeSingle();
+      if (tpl) {
+        templateSlug = (tpl as any).slug;
+        templateAccent = (tpl as any).accent_color;
+      }
+    } catch { /* templates são opcionais */ }
+
+    try {
+      const enrichedText = templateAccent
+        ? `🔥 ${text}`
+        : text;
       if (navigator.share) {
-        await navigator.share({ title, text, url: shareUrl });
+        await navigator.share({ title, text: enrichedText, url: shareUrl });
         channel = "native";
       } else {
-        await navigator.clipboard.writeText(`${text} ${shareUrl}`);
+        await navigator.clipboard.writeText(`${enrichedText} ${shareUrl}`);
         channel = "copy";
         toast.success("Link copiado!");
       }
@@ -51,15 +71,14 @@ export function ShareButton({
           user_id: user.id, channel, content_type: contentType,
           content_id: contentId ?? null, reward_xp: rewardXp,
         });
-        // Recompensa XP via fn_award_xp (única porta de entrada)
         const { data: a } = await supabase.from("athletes")
           .select("id").eq("user_id", user.id).maybeSingle();
         if (a?.id) {
           await supabase.rpc("fn_award_xp" as any, {
             p_athlete_id: (a as any).id,
             p_amount: rewardXp,
-            p_source: `share:${channel}:${contentType}`,
-            p_metadata: { content_id: contentId ?? null },
+            p_source: `share:${channel}:${contentType}${templateSlug ? `:${templateSlug}` : ""}`,
+            p_metadata: { content_id: contentId ?? null, template: templateSlug },
           });
           toast.success(`+${rewardXp} XP por compartilhar!`);
         }

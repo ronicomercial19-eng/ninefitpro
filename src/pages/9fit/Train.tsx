@@ -15,9 +15,10 @@ import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
+import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
-import { Film, Dumbbell as DumbIcon, Target, Zap } from "lucide-react";
+import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react";
 
 interface TrainingAssignment {
   id: string;
@@ -39,7 +40,7 @@ export default function NineFitTrain() {
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
-  const [subTab, setSubTab] = useState<"train" | "protocol" | "healthflix">("train");
+  const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
   const [quickOpen, setQuickOpen] = useState(false);
 
   // Workout flow state
@@ -178,7 +179,8 @@ export default function NineFitTrain() {
         <div className="px-4 mb-3">
           <div className="glass-mission rounded-full p-1 flex gap-1">
             {[
-              { k: "train", l: "Treinos", I: DumbIcon },
+              { k: "train", l: "Hoje", I: DumbIcon },
+              { k: "semana", l: "Semana", I: Calendar },
               { k: "protocol", l: "Protocolo", I: Target },
               { k: "healthflix", l: "Streaming", I: Film },
             ].map(({ k, l, I }) => (
@@ -214,6 +216,19 @@ export default function NineFitTrain() {
           />
         ) : subTab === "protocol" ? (
           <DailyProtocol />
+        ) : subTab === "semana" && athleteId ? (
+          <WeeklyTrainingView
+            athleteId={athleteId}
+            onExecuteToday={(day) => {
+              // se houver treino atribuído hoje, abre overview do primeiro; caso contrário, abre Quick
+              if (trainings[0]) {
+                setSelectedTraining(trainings[0]);
+                setFlow("OVERVIEW");
+              } else {
+                setQuickOpen(true);
+              }
+            }}
+          />
         ) : (
           <>
             <button onClick={() => setQuickOpen(true)}
