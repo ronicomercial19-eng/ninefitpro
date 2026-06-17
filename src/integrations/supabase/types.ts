@@ -8477,6 +8477,70 @@ export type Database = {
         }
         Relationships: []
       }
+      user_parameters: {
+        Row: {
+          base_location_sp: string | null
+          consistency_30d: number | null
+          created_at: string
+          dietary_restrictions: string[] | null
+          discomfort_tolerance:
+            | Database["public"]["Enums"]["pdi_discomfort"]
+            | null
+          goal: Database["public"]["Enums"]["pdi_goal"] | null
+          id: string
+          injury_zones: string[] | null
+          peak_window: Database["public"]["Enums"]["pdi_peak_window"] | null
+          recovery_rate: Database["public"]["Enums"]["pdi_recovery_rate"] | null
+          stress_sensitivity: number | null
+          time_horizon: number | null
+          updated_at: string
+          user_id: string
+          volume_tolerance: number | null
+        }
+        Insert: {
+          base_location_sp?: string | null
+          consistency_30d?: number | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          discomfort_tolerance?:
+            | Database["public"]["Enums"]["pdi_discomfort"]
+            | null
+          goal?: Database["public"]["Enums"]["pdi_goal"] | null
+          id?: string
+          injury_zones?: string[] | null
+          peak_window?: Database["public"]["Enums"]["pdi_peak_window"] | null
+          recovery_rate?:
+            | Database["public"]["Enums"]["pdi_recovery_rate"]
+            | null
+          stress_sensitivity?: number | null
+          time_horizon?: number | null
+          updated_at?: string
+          user_id: string
+          volume_tolerance?: number | null
+        }
+        Update: {
+          base_location_sp?: string | null
+          consistency_30d?: number | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          discomfort_tolerance?:
+            | Database["public"]["Enums"]["pdi_discomfort"]
+            | null
+          goal?: Database["public"]["Enums"]["pdi_goal"] | null
+          id?: string
+          injury_zones?: string[] | null
+          peak_window?: Database["public"]["Enums"]["pdi_peak_window"] | null
+          recovery_rate?:
+            | Database["public"]["Enums"]["pdi_recovery_rate"]
+            | null
+          stress_sensitivity?: number | null
+          time_horizon?: number | null
+          updated_at?: string
+          user_id?: string
+          volume_tolerance?: number | null
+        }
+        Relationships: []
+      }
       user_plans: {
         Row: {
           athlete_id: string | null
@@ -11255,6 +11319,7 @@ export type Database = {
               new_total_xp: number
             }[]
           }
+      fn_compute_user_thresholds: { Args: { p_user_id: string }; Returns: Json }
       generate_invitation_token: { Args: never; Returns: string }
       gerar_modelo_treino: {
         Args: {
@@ -11434,6 +11499,10 @@ export type Database = {
       ninefit_report_tipo: "diagnostico" | "evolutivo" | "trimestral"
       notification_type: "info" | "warning" | "success" | "error"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
+      pdi_discomfort: "aggressive" | "moderate" | "conservative"
+      pdi_goal: "performance" | "aesthetics" | "longevity" | "recomposition"
+      pdi_peak_window: "morning" | "afternoon" | "night"
+      pdi_recovery_rate: "fast" | "medium" | "slow"
       post_type: "announcement" | "workout" | "nutrition" | "tips"
       product_type: "supplement" | "equipment" | "apparel" | "membership"
       tipo_analise:
@@ -11625,6 +11694,10 @@ export const Constants = {
       ninefit_report_tipo: ["diagnostico", "evolutivo", "trimestral"],
       notification_type: ["info", "warning", "success", "error"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
+      pdi_discomfort: ["aggressive", "moderate", "conservative"],
+      pdi_goal: ["performance", "aesthetics", "longevity", "recomposition"],
+      pdi_peak_window: ["morning", "afternoon", "night"],
+      pdi_recovery_rate: ["fast", "medium", "slow"],
       post_type: ["announcement", "workout", "nutrition", "tips"],
       product_type: ["supplement", "equipment", "apparel", "membership"],
       tipo_analise: [
