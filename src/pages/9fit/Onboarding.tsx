@@ -258,15 +258,42 @@ export default function NineFitOnboarding() {
             <h2 className="text-4xl font-display tracking-tight text-foreground mb-3">
               Seu sistema está online.
             </h2>
-            <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+            <p className="text-muted-foreground max-w-sm mx-auto mb-6">
               RON está calibrando seu protocolo com base nas respostas.
             </p>
+
+            {/* Bloco 9 — CTA para oferta Audience R$49 */}
+            <div className="max-w-sm mx-auto mb-6 rounded-2xl border border-primary/40 bg-primary/[0.06] p-4 text-left">
+              <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Oferta inicial</p>
+              <p className="font-display text-lg text-foreground mb-1">9FIT Audience — R$49/mês</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Hub completo, gamificação, comunidade e protocolos básicos. Cancele quando quiser.
+              </p>
+              <button
+                onClick={async () => {
+                  const { supabase } = await import("@/integrations/supabase/client");
+                  const { data } = await supabase
+                    .from("monetization_offers")
+                    .select("id")
+                    .eq("status", "active")
+                    .order("priority", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                  const id = (data as any)?.id;
+                  navigate(id ? `/9fit/oferta/${id}` : "/9fit/hub");
+                }}
+                className="w-full rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-bold"
+              >
+                Ver oferta
+              </button>
+            </div>
+
             <button
               onClick={finish}
               disabled={saving}
-              className="px-8 py-4 rounded-full bg-primary text-primary-foreground font-semibold tracking-wide hover:opacity-90 transition-opacity inline-flex items-center gap-2 disabled:opacity-50"
+              className="px-8 py-4 rounded-full border border-white/15 text-foreground font-semibold tracking-wide hover:bg-white/[0.04] transition inline-flex items-center gap-2 disabled:opacity-50"
             >
-              {saving ? 'Sincronizando...' : 'Entrar no Hub'}
+              {saving ? 'Sincronizando...' : 'Continuar para o Hub'}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
