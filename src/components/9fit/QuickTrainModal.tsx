@@ -32,8 +32,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [infoproduct, setInfoproduct] = useState<any>(null);
+  const [offerSeen, setOfferSeen] = useState(false);
+  const [showingOffer, setShowingOffer] = useState(false);
 
-  const reset = () => { setStep(0); setAnswers({ goal: "", time: "", equipment: "" }); setExercises([]); setInfoproduct(null); };
+  const reset = () => {
+    setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
+    setExercises([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
+  };
 
   const pick = async (k: keyof Answers, v: string) => {
     const next = { ...answers, [k]: v };
@@ -45,7 +50,21 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const resolve = async (a: Answers) => {
     setLoading(true);
     try {
-      // mapear objetivo -> grupos musculares / categoria
+      // 1) Buscar infoproduto alinhado ao objetivo (oferta antes do treino)
+      const goalSlugMap: Record<string, string> = {
+        fatburn: "audience_49", strength: "audience_49",
+        mobility: "audience_49", cardio: "audience_49",
+      };
+      const { data: prod } = await supabase
+        .from("monetization_offers" as any)
+        .select("*")
+        .eq("active", true)
+        .or(`slug.eq.${goalSlugMap[a.goal] || "audience_49"},goal.eq.${a.goal}`)
+        .limit(1)
+        .maybeSingle();
+      setInfoproduct(prod);
+
+      // 2) Montar treino do dia em paralelo
       const tagMap: Record<string, string[]> = {
         fatburn: ["cardio", "funcional", "hiit"],
         strength: ["peito", "costas", "perna", "ombro"],
@@ -58,21 +77,11 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .select("id, name, video_url, category")
         .or(tags.map((t) => `category.ilike.%${t}%,name.ilike.%${t}%`).join(","))
         .limit(parseInt(a.time, 10) >= 45 ? 8 : 5);
+      setExercises((ex as unknown as Exercise[]) || []);
 
-      if (ex && ex.length >= 3) {
-        setExercises(ex as unknown as Exercise[]);
-        setStep(3);
-      } else {
-        // fallback infoproduto
-        const { data: prod } = await supabase
-          .from("dynamic_offers" as any)
-          .select("*")
-          .eq("active", true)
-          .limit(1)
-          .maybeSingle();
-        setInfoproduct(prod);
-        setStep(3);
-      }
+      // 3) Sempre exibir oferta primeiro (se existir). Recusar → libera treino.
+      setShowingOffer(!!prod);
+      setStep(3);
     } catch (e) {
       toast.error("Não foi possível montar o treino agora.");
     } finally {
