@@ -15,9 +15,10 @@ import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
+import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
-import { Film, Dumbbell as DumbIcon, Target, Zap } from "lucide-react";
+import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react";
 
 interface TrainingAssignment {
   id: string;
