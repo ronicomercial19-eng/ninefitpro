@@ -1,87 +1,108 @@
-## Estratégia geral
+## Escopo desta rodada
 
-Executo **um bloco por rodada**. Blocos 0, 1, 2 e 3 concluídos. Próximos: 4, 6, 7, 8, 9, 10 (Bloco 5 descartado).
-
----
-
-## BLOCO 0 — HealthFlix (próximo a executar)
-
-**Diagnóstico em ordem:**
-
-1. `SELECT type, count(*) FROM library_items GROUP BY type` — descobrir estado real.
-2. `curl https://kixjiwsfogqztlgiiztp.supabase.co/functions/v1/fitpro-health` — confirmar deploy.
-3. Conferir RLS de `library_items` para role `authenticated`.
-4. Conferir registro em `fitpro_connections` com `status='connected'`.
-
-**Ações (condicionais ao diagnóstico):**
-
-- **sync-library-full**: normalizar `type` mapeando `video|streaming|aula|class|treino-video` → `videos` (lowercase, trim, fallback por presença de `playerUrl`/`videoUrl`).
-- Disparar sync se `library_items` vazia.
-- **RLS**: migração garantindo `GRANT SELECT ON public.library_items TO authenticated` + policy `USING (true)` para SELECT (catálogo é público para alunos logados).
-- **Painel admin HealthFlix**: substituir/ajustar o componente que chama `fitpro-connect`/`fitpro-admin` para usar a URL correta do projeto FitPro hospedeiro (`kixjiwsfogqztlgiiztp`) com header `x-api-key` lido de `fitpro_connections`. Botões: Validar (→ `fitpro-health`), Sincronizar (→ `sync-library-full` + `fitpro-content`), Rotacionar Key (→ `fitpro-admin?action=create-key`).
-- **Tela aluno** (`src/pages/9fit/HealthFlix.tsx`): manter leitura de `library_items` como fallback, mas priorizar `healthflix-proxy?action=content` quando disponível.
-
-**Pronto quando:** `library_items.type='videos' > 0`, grid do aluno renderiza com thumbnail+player, botão Validar do admin retorna 200.
+**Bloco 4 (crítico)** + **Blocos 6, 7, 9, 10**. Bloco 8 fica para a próxima.
 
 ---
 
-## BLOCO 1 — Engine XP/Progresso unificada
+### Bloco 4 — Train: Quick / Ajuste / Semana
 
-**Migração SQL única:**
+**4.1 Treino Rápido (`QuickTrainModal.tsx`)**
 
-- `UPDATE athletes SET total_xp = COALESCE(total_xp,0) + COALESCE(xp_total,0) WHERE xp_total IS NOT NULL`; deprecar `xp_total` (comentário + parar de escrever no código).
-- `UPDATE workout_progress SET athlete_id = a.id FROM athletes a, athlete_auth_link l WHERE workout_progress.athlete_id IS NULL AND workout_progress.aluno_id IS NOT NULL AND (...)` — de-para via `athlete_auth_link`/email/user_id; log de não-matches em tabela `migration_unmatched`.
-- `user_credits`/`user_plans`/`user_achievements`: adicionar coluna `athlete_id uuid` + backfill por `user_email = athletes.email`.
-- Função `fn_award_xp(p_athlete_id uuid, p_amount int, p_source text)` SECURITY DEFINER → atualiza `total_xp`, recalcula `level = floor(total_xp/1000)+1`, insere em `system_events`.
-- View `vw_athlete_status` (SECURITY INVOKER): `athletes` + `user_plans.is_active` + saldo `user_credits` + xp/level.
+Fluxo: tela criativo (já existe) → ao recusar/fechar, 3 perguntas (objetivo / tempo / equipamento) → query `workout_models` filtrando `goal`, `estimated_duration`, `equipment_required` → fallback: composição on-the-fly via `exercises` filtrando `target_muscle`/`equipment` → tela de execução guiada (reusar `WorkoutExecution.tsx`) com `exercises.video_url || exercises.gif_url` → `INSERT workout_executions (athlete_id, phase_name='quick', status='completed', completed_at)` → `supabase.rpc('fn_award_xp', { p_athlete_id, p_amount: 50, p_source: 'quick_workout' })`.
 
-**Refactor de código:**
+**4.2 Ajuste de Treino (`AjusteTreino.tsx`)**
 
-- Substituir toda escrita direta em `athletes.total_xp` por chamada à RPC `fn_award_xp` (ShareButton, gamificationEngine, WorkoutExecution, calibrationEngine).
-- Remover qualquer referência a `xp_total` no frontend (somente leitura via `total_xp`).
-- Frontend lê status via `vw_athlete_status` em vez de joinar manualmente.
+Nova RPC `aplicar_ajuste_treino_dia(p_athlete_id uuid, p_data date, p_changes jsonb)`:
+- Cria/atualiza registro em `daily_workouts` para a data alvo com `override_locked=true` e `changes_json=p_changes`.
+- NÃO toca em `planos_de_treino_gerados`.
+- Retorna o treino do dia resultante (merge plano base + changes).
 
-**Pronto quando:** completar treino → +XP único, refletido em `vw_athlete_status` sem duplicar.  
-no Bloco 1, item 4 (`fn_award_xp` como `SECURITY DEFINER`) — confirme que a função tem `search_path` fixado explicitamente (`SET search_path = public`), senão `SECURITY DEFINER` vira vetor de escalada de privilégio.
+Frontend `AjusteTreino.tsx`: substitui qualquer UPDATE direto em planos por chamada à RPC. Mostra treino atualizado imediatamente após retorno.
 
----
+**4.3 Treinos da Semana (`WorkoutHome.tsx` ou nova `TreinosSemana.tsx`)**
 
-## BLOCO 2 — Integração 4 módulos
+- Tela de preferências (objetivo / dias / equipamento) → atualiza `athletes.preferences` (jsonb).
+- Carrega `planos_de_treino_gerados` (`status='active'`, `athlete_id=eq.X`) + `vw_athlete_periodizacao_ativa` para identificar `current_phase_category`.
+- Renderiza grid 7 dias (D1–D7): nome do treino, grupos musculares, lista de exercícios.
+- Para cada exercício busca vídeo em `library_items` (`type='videos'`, `category=current_phase_category`) → fallback `exercises.video_url`.
+- Apenas o dia atual (`weekday=EXTRACT(dow FROM now())`) tem botão "Executar" → abre `WorkoutExecution`.
+- Conclusão → `INSERT workout_executions (phase_name='scheduled')` + `fn_award_xp(athlete_id, 100, 'workout_completed')`.
 
-- View `vw_athlete_legacy_map` (athletes ↔ estudantes/alunos/students via email/user_id).
-- Migração: `ALTER TABLE modelos_de_treino ADD COLUMN athlete_id uuid REFERENCES athletes(id)`; idem `planos_de_treino_gerados`, `periodizacoes_novas`, `progresso_aluno`. Backfill via `vw_athlete_legacy_map`.
-- Atualizar queries de SmartTreino/ProgressTracker para filtrar por `athlete_id` (manter coluna legada nullable como fallback).
-- View `vw_athlete_full_profile`: athletes + periodização ativa + plano de treino ativo + último progresso.
-- Trigger `AFTER INSERT ON athletes` → cria esqueleto em `athlete_periodizations` (status='pending') e `planos_de_treino_gerados` (status='pending').
+**Migration Bloco 4:**
 
-**Pronto quando:** novo aluno no FitPro aparece em SmartPeriodizer/SmartTreino/ProgressTracker sem ação manual.
+```sql
+-- daily_workouts: adicionar override_locked, changes_json se faltarem
+ALTER TABLE daily_workouts 
+  ADD COLUMN IF NOT EXISTS override_locked boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS changes_json jsonb DEFAULT '{}'::jsonb;
 
----
+-- RPC aplicar_ajuste_treino_dia
+CREATE OR REPLACE FUNCTION aplicar_ajuste_treino_dia(...) ...
 
-## BLOCO 3 — Settings → Planejamento Realtime
+-- athletes.preferences (jsonb) se faltar
+ALTER TABLE athletes ADD COLUMN IF NOT EXISTS preferences jsonb DEFAULT '{}'::jsonb;
 
-- Teste real: atribuir periodização via SmartPeriodizer → conferir em qual tabela aterrissa (`athlete_periodizations` vs `periodization_plans`).
-- View `vw_athlete_periodizacao_ativa` unificando `athlete_periodizations` + `periodization_models` + `periodization_plans_remote`, filtrando `status='active'`.
-- Refactor `src/pages/9fit/Planejamento.tsx` para consultar a view por `athlete_id`.
-- `supabase.channel('athlete-periodization').on('postgres_changes', { table: 'athlete_periodizations', filter: 'athlete_id=eq.<id>' }, refetch)`.
-
-**Pronto quando:** SmartPeriodizer atribui → Planejamento atualiza sem reload, testado com 2 alunos.
-
----
-
-## Blocos 4–10 (fora desta sequência, a pedido)
-
-Plano separado depois do Bloco 3 concluído: 4 (dia vs semana), 6 (templates sociais), 7 (audiência R$49), 8 (MVP prof/aluno), 9 (loop onboarding→venda), 10 (design system global). Bloco 5 (paywall) descartado.
+-- vw_athlete_periodizacao_ativa: adicionar coluna current_phase_category
+-- (derivada do mesociclo ativo na data corrente)
+```
 
 ---
 
-## Detalhes técnicos resumidos
+### Bloco 6 — Templates Sociais (compartilhamento viral)
 
-- Todas as views: `SECURITY INVOKER`.
-- Todas as RLS: padrão `(select auth.uid())`.
-- Toda nova tabela/coluna pública: `GRANT` explícito para `authenticated`/`service_role`.
-- Edge functions: `verify_jwt=false` + `auth.getClaims()` quando aplicável; `x-api-key` para conectores admin.
-- Sem mock data — tudo lê de tabelas/views reais.
-- `fn_award_xp` é a única porta de entrada de XP daqui pra frente.
+- Tabela `social_share_templates` (id, slug, layout_html, layout_css, preview_url, active).
+- Seed com 5 templates: "PR Bater", "Streak X dias", "Level Up", "Check-in", "Workout Done".
+- Refactor `ShareButton.tsx`: ao compartilhar, renderiza template via `<canvas>` ou OG image edge function → upload para `storage/share-cards` → URL pública para WhatsApp/Instagram.
+- Edge function `generate-share-card` (opcional MVP: client-side via html2canvas).
+- Cada share continua chamando `fn_award_xp(athlete_id, 10, 'share:<slug>')`.
 
-Começo pelo Bloco 0 assim que aprovar.
+---
+
+### Bloco 7 — Oferta Audiência R$49
+
+- Tabela `monetization_offers` já existe — seed oferta `audience_49` (price=4900, currency='BRL', active=true, target='public').
+- Página `src/pages/9fit/Oferta.tsx`: hero, prova social, CTA "Começar por R$49/mês".
+- Integração Stripe (já habilitado? usar `stripe--enable_stripe` se não) → checkout session de R$49 recorrente.
+- Pós-checkout: cria `athletes` (status=trial/active), envia welcome email (`send-student-welcome`), redireciona `/9fit/onboarding`.
+- Não bloquear features (paywall = Bloco 5 descartado). Apenas captar.
+
+---
+
+### Bloco 9 — Loop Onboarding → Venda
+
+- Página `Onboarding.tsx` já existe — adicionar última etapa "Próximos passos" com CTA para oferta R$49 (caso `athletes.plan_status != 'active'`).
+- Hook `useUserState` adiciona flag `should_show_offer` (true se onboarding completo + sem plano).
+- `Hub.tsx`: banner persistente `DynamicOffers` para usuários sem plano.
+- Event tracking: `monetization_events` registra `viewed_offer`, `clicked_offer`, `converted`.
+- Email transacional dia +1, +3, +7 (sem plano) via edge function `smart-notifications` agendada.
+
+---
+
+### Bloco 10 — Design System Global
+
+- Auditar `src/index.css` e `tailwind.config.ts`: garantir tokens canônicos (`--neon-orange`, `--neon-green`, `--bg-black`, `--surface-1/2/3`, `--text-primary/muted`).
+- Componentes hardcoded com `text-white`/`bg-black`/`bg-[#...]` → migrar para tokens semânticos.
+- Tipografia: definir `--font-display` (Sans-Serif Black Italic) e `--font-body` no CSS, aplicar via Tailwind theme extend.
+- Variantes shadcn: revisar `button`, `card`, `badge`, `input` para alinhar ao tema dark/neon.
+- Documentar tokens em `CANONICAL_DATA_CONTRACT.md` (seção "Design Tokens").
+- Validar visualmente: `Hub`, `Train`, `Profile`, `Settings`, `HealthFlix`.
+
+---
+
+## Ordem de execução
+
+1. Migração SQL única cobrindo: Bloco 4 (`daily_workouts` cols + RPC + `athletes.preferences` + `vw_athlete_periodizacao_ativa.current_phase_category`), Bloco 6 (`social_share_templates` + seed), Bloco 7 (seed `monetization_offers`).
+2. Frontend Bloco 4 (3 telas).
+3. Frontend Bloco 6 (`ShareButton` + templates).
+4. Frontend Bloco 7 (`Oferta.tsx` + Stripe checkout).
+5. Frontend Bloco 9 (onboarding CTA + hub banner + tracking).
+6. Bloco 10: tokens CSS + auditoria de componentes-chave.
+
+## Notas
+
+- Todas as views novas: `SECURITY INVOKER`. Todas as RLS: `(select auth.uid())`. Toda nova tabela: `GRANT` explícito.
+- `fn_award_xp` continua sendo a única porta de entrada de XP.
+- Stripe: se chaves não configuradas, deixar checkout em modo "coming soon" e logar evento.
+- Bloco 8 (MVP prof/aluno) fica para próxima rodada conforme solicitado.
+
+Confirme para eu começar pela migração.
