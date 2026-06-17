@@ -200,6 +200,15 @@
   .bg-ninefit-orange { background-color: hsl(var(--primary)); }
   .border-ninefit-orange { border-color: hsl(var(--primary)); }
 
+  /* Bloco 10 — utilitários semânticos */
+  .text-neon-orange { color: hsl(var(--neon-orange)); }
+  .text-neon-green { color: hsl(var(--neon-green)); }
+  .text-neon-cyan { color: hsl(var(--neon-cyan)); }
+  .bg-surface-1 { background-color: hsl(var(--surface-1)); }
+  .bg-surface-2 { background-color: hsl(var(--surface-2)); }
+  .bg-surface-3 { background-color: hsl(var(--surface-3)); }
+  .font-display-italic { font-family: var(--font-display); font-style: italic; font-weight: 900; letter-spacing: -0.02em; }
+
   /* ============================================
      LEGACY ALIASES — premium remap
      Old cyber/neon class names still used across
