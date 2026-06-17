@@ -216,6 +216,19 @@ export default function NineFitTrain() {
           />
         ) : subTab === "protocol" ? (
           <DailyProtocol />
+        ) : subTab === "semana" && athleteId ? (
+          <WeeklyTrainingView
+            athleteId={athleteId}
+            onExecuteToday={(day) => {
+              // se houver treino atribuído hoje, abre overview do primeiro; caso contrário, abre Quick
+              if (trainings[0]) {
+                setSelectedTraining(trainings[0]);
+                setFlow("OVERVIEW");
+              } else {
+                setQuickOpen(true);
+              }
+            }}
+          />
         ) : (
           <>
             <button onClick={() => setQuickOpen(true)}
