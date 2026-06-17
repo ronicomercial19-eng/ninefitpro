@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut,
+  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { PDIWizard } from "@/components/9fit/PDIWizard";
+import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
 
 interface MenuItem {
   icon: any;
