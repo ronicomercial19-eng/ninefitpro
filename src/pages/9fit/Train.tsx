@@ -40,7 +40,7 @@ export default function NineFitTrain() {
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
-  const [subTab, setSubTab] = useState<"train" | "protocol" | "healthflix">("train");
+  const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
   const [quickOpen, setQuickOpen] = useState(false);
 
   // Workout flow state
