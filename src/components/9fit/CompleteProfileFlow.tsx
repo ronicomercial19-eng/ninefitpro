@@ -41,7 +41,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
         });
       }
       // Streak: dias consecutivos com check-in
-      const { data: ck } = await supabase
+      const { data: ck } = await (supabase as any)
         .from("ninefit_checkins")
         .select("created_at")
         .eq("user_id", user.id)
