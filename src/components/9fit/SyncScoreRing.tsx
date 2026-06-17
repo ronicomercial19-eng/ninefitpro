@@ -79,26 +79,30 @@ export function SyncScoreRing({ score, breakdown }: Props) {
     );
   }
 
+  // Cor neon dinâmica: laranja (<33) → amarelo (33-66) → verde (>66)
+  const neonHue =
+    safeScore < 33 ? "20 95% 55%" : safeScore < 66 ? "48 95% 55%" : "140 80% 50%";
+  const ringStyle: React.CSSProperties = {
+    background: `conic-gradient(from -90deg, hsl(${neonHue}) 0% ${safeScore}%, hsl(0 0% 100% / 0.06) ${safeScore}% 100%)`,
+    filter: `drop-shadow(0 0 ${6 + safeScore / 6}px hsl(${neonHue} / 0.55))`,
+    WebkitMask: "radial-gradient(circle, transparent 62%, black 63%)",
+    mask: "radial-gradient(circle, transparent 62%, black 63%)",
+  };
+
   return (
     <div className="surface-card p-5">
       <div className="flex items-center gap-5">
         <div className="relative w-[180px] h-[180px] shrink-0">
-          <svg width="180" height="180" viewBox="0 0 180 180" className="-rotate-90">
-            <circle cx="90" cy="90" r={radius} stroke="hsl(0 0% 100% / 0.06)" strokeWidth={stroke} fill="none" />
-            <motion.circle
-              cx="90" cy="90" r={radius}
-              stroke="hsl(var(--primary))"
-              strokeWidth={stroke}
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray={c}
-              initial={{ strokeDashoffset: c }}
-              animate={{ strokeDashoffset: offset }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-            />
-          </svg>
+          {/* Conic ring neon proporcional ao sync */}
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            style={ringStyle}
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
+          />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-label">SYNC</span>
+            <span className="text-label" style={{ color: `hsl(${neonHue})` }}>SYNC</span>
             <span className="text-hero text-5xl text-foreground">{Math.round(score)}</span>
             <span className="text-[10px] text-muted-foreground mt-1">/ 100</span>
           </div>
