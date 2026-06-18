@@ -92,6 +92,7 @@ export default {
 				sans: ['Inter', 'SF Pro Display', 'system-ui', '-apple-system', 'sans-serif'],
 				display: ['Syne', 'Inter', 'system-ui', 'sans-serif'],
 				mono: ['"DM Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+				data: ['"DM Mono"', 'ui-monospace', 'monospace'],
 			},
 			keyframes: {
 				'accordion-down': {

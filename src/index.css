@@ -9,39 +9,39 @@
 
 @layer base {
   :root {
-    /* Core palette — HSL */
-    --background: 240 5% 5%;             /* #0B0B0D */
-    --foreground: 0 0% 98%;
+    /* Canonical 9FIT tokens — bg #090909, accent #E8571A, fg #F2F0EC */
+    --background: 0 0% 3.5%;             /* #090909 */
+    --foreground: 40 13% 93%;            /* #F2F0EC */
 
-    --card: 240 4% 9%;                   /* #141416 */
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 6%;                     /* #0F0F0F */
+    --card-foreground: 40 13% 93%;
 
-    --elevated: 240 4% 12%;              /* #1C1C1F */
+    --elevated: 0 0% 9%;                 /* #171717 */
 
-    --popover: 240 4% 9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 40 13% 93%;
 
-    --primary: 18 87% 52%;               /* #F05C1A — restrito */
+    --primary: 18 81% 51%;               /* #E8571A */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 4% 14%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 11%;
+    --secondary-foreground: 40 13% 93%;
 
-    --muted: 240 4% 12%;
-    --muted-foreground: 240 4% 56%;      /* #8A8A8E */
-    --subtle: 240 4% 38%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --subtle: 0 0% 38%;
 
-    --accent: 18 87% 52%;
+    --accent: 18 81% 51%;
     --accent-foreground: 0 0% 100%;
 
-    --neural: 213 90% 65%;               /* #4DA3FF — uso IA/RON */
+    --neural: 213 90% 65%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100%;                 /* used with opacity utilities */
-    --input: 240 4% 14%;
-    --ring: 18 87% 52%;
+    --border: 0 0% 100%;
+    --input: 0 0% 11%;
+    --ring: 18 81% 51%;
 
     --radius: 0.875rem;
 
