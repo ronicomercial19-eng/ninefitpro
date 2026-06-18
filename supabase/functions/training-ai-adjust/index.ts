@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { loadUserParameters, adjustForPDI } from "../_shared/pdi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,15 +48,24 @@ serve(async (req) => {
     const skills = Array.isArray(activeSkills)
       ? activeSkills.map((s: any) => `${s.slug}(${s.category})`).join(", ")
       : "";
+
+    // PDI context — pull user_parameters and pre-compute baseline modulation
+    const pdi = await loadUserParameters(authClient, userId);
+    const base = adjustForPDI({ volume: 100, intensity: 100 }, pdi, "normal");
+    const pdiBlock = pdi
+      ? `PDI: goal=${pdi.goal}, recovery=${pdi.recovery_rate}, tol_vol=${pdi.volume_tolerance}/10, discomfort=${pdi.discomfort_tolerance}, injuries=${(pdi.injury_zones||[]).join("|")||"none"}. Baseline modulado: vol=${base.volume}%, int=${base.intensity}%, notes=${base.notes.join(",")}.`
+      : "PDI: ainda não calibrado — use perfil conservador.";
+
     const sys = `Você é o FitCopilot, IA de ajuste adaptativo de treino do 9FIT PRO.
-Responda SEMPRE chamando a tool ajustar_treino. Em português.`;
+Responda SEMPRE chamando a tool ajustar_treino. Em português.
+${pdiBlock}`;
     const userPrompt = `Treino: ${workoutName ?? "—"} (${workoutType ?? "geral"})
 Perfil: nível ${profile?.level ?? "?"}, experiência ${profile?.experience ?? "?"}.
 Estado fisiológico: HRV ${bio?.hrv ?? "—"} | Sono(min) ${bio?.sleep ?? "—"} | Recovery ${bio?.recovery ?? "—"}.
 RPE recente: ${recentRPE ?? "—"}.
 Skills ativas: ${skills || "nenhuma"}.
 
-Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação curta.`;
+Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação curta — RESPEITE o PDI acima.`;
 
     const tools = [
       {

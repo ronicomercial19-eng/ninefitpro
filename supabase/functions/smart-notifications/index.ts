@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { classifyScore, loadUserParameters } from "../_shared/pdi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,14 +70,21 @@ Deno.serve(async (req: Request) => {
       if (recentRpe && recentRpe.length >= 3) {
         const avgRpe = recentRpe.reduce((s: number, r: any) => s + (r.rpe || 0), 0) / recentRpe.length;
 
-        if (avgRpe > 8) {
-          // Alert coach about overtraining
+        // PDI-aware: use shared helper to classify avgRpe against THIS user's thresholds
+        const userIdForPdi = athlete.user_id;
+        const label = userIdForPdi
+          ? await classifyScore(supabase, userIdForPdi, (avgRpe / 10) * 100)
+          : (avgRpe > 8 ? "intense" : "normal");
+        const pdi = userIdForPdi ? await loadUserParameters(supabase, userIdForPdi) : null;
+        const sensitive = pdi?.recovery_rate === "slow" || (pdi?.stress_sensitivity ?? 0) >= 7;
+        const trigger = label === "intense" || (sensitive && avgRpe >= 7.5);
+
+        if (trigger) {
           const coachUserId = athlete.coach_id;
-          // coach_id is already the auth user id for coaches
           await supabase.from("notifications").insert({
             user_id: coachUserId,
             title: `⚠️ Sobrecarga: ${athlete.name}`,
-            message: `RPE médio de ${avgRpe.toFixed(1)} nos últimos treinos. Considere reduzir intensidade.`,
+            message: `RPE médio ${avgRpe.toFixed(1)} (label PDI: ${label}). Considere reduzir intensidade.`,
             type: "alert",
             action_url: "/app/alunos",
           });
