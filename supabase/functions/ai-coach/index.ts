@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
+import { loadUserParameters } from "../_shared/pdi.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,13 +88,20 @@ serve(async (req) => {
             if (feedback) ctx += `\n<ULTIMO_FEEDBACK>${feedback.slice(0, 200)}</ULTIMO_FEEDBACK>`;
           }
 
-          // Top memories (sem embedding ainda — apenas top por importância + recência)
+          // PDI via helper compartilhado — fonte única de verdade do perfil
+          const pdi = await loadUserParameters(authClient, userId);
+          if (pdi) {
+            ctx += `\n<PDI>goal=${pdi.goal}, recovery=${pdi.recovery_rate}, tol_vol=${pdi.volume_tolerance}/10, peak=${pdi.peak_window}, discomfort=${pdi.discomfort_tolerance}, injuries=${(pdi.injury_zones||[]).join("|")||"none"}, restrições=${(pdi.dietary_restrictions||[]).join("|")||"none"}</PDI>`;
+          }
+
+          // Top memories
           const { data: mems } = await authClient
             .from("ron_long_term_memories")
             .select("memory_type, content, importance_score")
             .eq("user_id", userId)
             .order("importance_score", { ascending: false })
             .limit(8);
+
           if (mems?.length) {
             ctx += `\n<MEMORIAS>\n${mems.map((m: any) => `[${m.memory_type}] ${m.content}`).join("\n")}\n</MEMORIAS>`;
           }

@@ -2,7 +2,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, Check } from "lucide-react";
 import { useUserParameters, UserParameters } from "@/hooks/useUserParameters";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
 
 interface Props { open: boolean; onClose: () => void; onComplete?: () => void; }
 
@@ -33,6 +36,7 @@ const STEPS: Step[] = [
 ];
 
 export function PDIWizard({ open, onClose, onComplete }: Props) {
+  const { user } = useAuth();
   const { params, save } = useUserParameters();
   const [i, setI] = useState(0);
   const [draft, setDraft] = useState<Partial<UserParameters>>({});
@@ -46,6 +50,23 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
     if (i < STEPS.length - 1) { setI(i + 1); return; }
     setSaving(true);
     const { error } = await save(draft);
+    if (!error && user?.id) {
+      try {
+        const { data: link } = await (supabase as any)
+          .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
+        let athleteId = (link as any)?.athlete_id ?? null;
+        if (!athleteId) {
+          const { data: ath } = await supabase.from("athletes").select("id").eq("user_id", user.id).maybeSingle();
+          athleteId = ath?.id ?? null;
+        }
+        if (athleteId) {
+          await supabase.from("athlete_pdi_history" as any).insert({
+            athlete_id: athleteId,
+            pdi_data: { ...params, ...draft } as any,
+          } as any);
+        }
+      } catch (e) { console.warn("[PDIWizard] history:", e); }
+    }
     setSaving(false);
     if (error) return toast.error("Erro ao salvar PDI");
     toast.success("PDI calibrado — o sistema aprendeu seu perfil");

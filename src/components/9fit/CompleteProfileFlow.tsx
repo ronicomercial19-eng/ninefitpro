@@ -83,6 +83,21 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
         age: profile.age ? Number(profile.age) : null,
         ...(photoUrl ? { avatar_url: photoUrl } : {}),
       }).eq("user_id", user.id);
+
+      // Resolver athlete_id via athlete_auth_link
+      let resolvedAthleteId = athleteId;
+      if (!resolvedAthleteId) {
+        const { data: link } = await (supabase as any)
+          .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
+        resolvedAthleteId = (link as any)?.athlete_id ?? null;
+      }
+      if (resolvedAthleteId) {
+        await supabase.from("athlete_profile_snapshots" as any).insert({
+          athlete_id: resolvedAthleteId,
+          source: "profile_complete",
+          snapshot_data: { ...profile, photo: photoUrl, at: new Date().toISOString() },
+        } as any);
+      }
       toast.success("Perfil salvo");
       next();
     } catch {

@@ -62,27 +62,37 @@ export function QuickCheckIn() {
         .eq("id", nextClass.bookingId);
 
       if (error) throw error;
-      
-      // Award XP for check-in (via fn_award_xp)
+
       if (user) {
-        const { data: athlete } = await supabase
-          .from("athletes")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (athlete?.id) {
+        // Resolver athlete_id via athlete_auth_link, fallback athletes
+        const { data: link } = await (supabase as any)
+          .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
+        let athleteId: string | null = (link as any)?.athlete_id ?? null;
+        if (!athleteId) {
+          const { data: ath } = await supabase.from("athletes").select("id").eq("user_id", user.id).maybeSingle();
+          athleteId = ath?.id ?? null;
+        }
+        if (athleteId) {
           await supabase.rpc("fn_award_xp" as any, {
-            p_athlete_id: athlete.id,
-            p_amount: 50,
-            p_source: "check_in",
+            p_athlete_id: athleteId, p_amount: 50, p_source: "check_in",
             p_metadata: { booking_id: nextClass.bookingId },
           });
+          await supabase.from("ninefit_checkins" as any).insert({
+            aluno_id: athleteId,
+            athlete_id: athleteId,
+            data_checkin: new Date().toISOString().split("T")[0],
+            tipo: "aula",
+            treinos_semana: 1,
+          } as any);
+          await supabase.from("athlete_planning_history" as any).insert({
+            athlete_id: athleteId,
+            sync_data: { source: "checkin", class_id: nextClass.classId, at: new Date().toISOString() } as any,
+          } as any);
         }
       }
 
       toast.success("Check-in realizado! +50 XP ✅ — abrindo Staff");
       setNextClass(prev => prev ? { ...prev, checkedIn: true } : null);
-      // Fluxo Staff: após check-in, abrir Staff para escolher serviço / suporte
       setTimeout(() => navigate("/9fit/staff?from=checkin"), 600);
     } catch {
       toast.error("Erro no check-in");
