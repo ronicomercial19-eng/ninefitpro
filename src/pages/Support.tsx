@@ -1,4 +1,5 @@
 import { NavigationFitEvolution } from '@/components/shared/NavigationFitEvolution';
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,23 @@ export default function Support() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB]">
+      <Helmet>
+        <title>Central de Ajuda — 9FIT PRO</title>
+        <meta name="description" content="Tire dúvidas sobre treinos, alunos, biblioteca de exercícios e personalização na 9FIT PRO." />
+        <link rel="canonical" href="https://ninefitpro.lovable.app/suporte" />
+        <meta property="og:title" content="Central de Ajuda — 9FIT PRO" />
+        <meta property="og:description" content="FAQ e canais de suporte para personal trainers usando a 9FIT PRO." />
+        <meta property="og:url" content="https://ninefitpro.lovable.app/suporte" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqs.map(f => ({
+            "@type": "Question",
+            "name": f.question,
+            "acceptedAnswer": { "@type": "Answer", "text": f.answer }
+          }))
+        })}</script>
+      </Helmet>
       <NavigationFitEvolution />
       
       <div className="container mx-auto px-6 py-8">

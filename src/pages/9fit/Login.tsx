@@ -126,11 +126,11 @@ export default function NineFitLogin() {
         <div className="text-center mb-12">
           <div className="mb-4">
             <h1 className="text-4xl font-black italic tracking-tighter text-foreground">
-              9FIT
+              9FIT <span className="text-xl font-bold text-primary tracking-wider align-middle">PRO</span>
+              <span className="block text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mt-2">
+                Sistema de Treinamento
+              </span>
             </h1>
-            <span className="text-xl font-bold text-primary tracking-wider">
-              PRO
-            </span>
           </div>
           <p className="text-sm text-muted-foreground tracking-wide uppercase">
             Acesse sua conta

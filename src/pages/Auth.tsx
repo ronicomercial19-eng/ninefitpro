@@ -260,6 +260,7 @@ const Auth = () => {
                     />
                     <button
                       type="button"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                     >
@@ -375,6 +376,7 @@ const Auth = () => {
                     />
                     <button
                       type="button"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                     >

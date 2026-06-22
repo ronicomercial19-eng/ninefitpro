@@ -448,8 +448,9 @@ Quero receber meu plano personalizado!
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <main className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-6 max-w-2xl">
+        <h1 className="sr-only">Avaliação fitness 9FIT PRO</h1>
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
@@ -490,6 +491,6 @@ Quero receber meu plano personalizado!
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 };
