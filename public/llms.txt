@@ -1,0 +1,10 @@
+# 9FIT PRO
+
+> Plataforma profissional para personal trainers: gestão de alunos, treinos com IA, avaliações físicas e gamificação.
+
+## Pages
+
+- [Início](/): Entrada da plataforma 9FIT PRO.
+- [Vendas](/sales): Apresentação do produto, planos e benefícios para personal trainers.
+- [Suporte](/suporte): Perguntas frequentes e canais de atendimento.
+- [9FIT App](/9fit): Acesso ao app do aluno 9FIT.
