@@ -15,7 +15,8 @@ export default function WhatsAppRedirect() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+      <h1 className="sr-only">Avaliação concluída — Falar no WhatsApp com a 9FIT</h1>
       <Card className="max-w-md w-full shadow-xl">
         <CardHeader className="text-center space-y-2">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -71,6 +72,6 @@ export default function WhatsAppRedirect() {
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -302,7 +302,8 @@ export default function NineFitOnboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <main className="min-h-screen bg-background flex flex-col">
+      <h1 className="sr-only">Onboarding 9FIT — Configure seu sistema de treinamento</h1>
       {/* Progress bar fina */}
       <div className="h-[2px] bg-white/[0.04]">
         <motion.div
@@ -344,6 +345,6 @@ export default function NineFitOnboarding() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
