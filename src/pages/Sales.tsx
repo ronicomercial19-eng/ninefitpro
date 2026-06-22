@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Crown, Phone, MessageCircle } from "lucide-react";
@@ -20,6 +21,14 @@ const Sales = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <Helmet>
+        <title>Planos e benefícios — 9FIT PRO para Personal Trainers</title>
+        <meta name="description" content="Conheça os planos da 9FIT PRO: gestão de alunos, treinos com IA, avaliações físicas e gamificação para personal trainers." />
+        <link rel="canonical" href="https://ninefitpro.lovable.app/sales" />
+        <meta property="og:title" content="Planos 9FIT PRO — Plataforma para Personal Trainers" />
+        <meta property="og:description" content="Planos e ferramentas da 9FIT PRO para profissionais de educação física." />
+        <meta property="og:url" content="https://ninefitpro.lovable.app/sales" />
+      </Helmet>
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/90 backdrop-blur-lg border-b border-gray-800 z-50">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
