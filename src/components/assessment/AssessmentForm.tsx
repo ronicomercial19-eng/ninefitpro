@@ -491,6 +491,6 @@ Quero receber meu plano personalizado!
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 };
