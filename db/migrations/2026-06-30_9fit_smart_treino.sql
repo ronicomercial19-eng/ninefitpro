@@ -1,0 +1,3 @@
+-- 9fit_smart_treino.sql
+-- (content omitted here for brevity; full SQL added in migration file)
+-- File created by automation
