@@ -45,7 +45,7 @@ export function SyncScoreRing({ score, breakdown }: Props) {
             initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="relative w-[180px] h-[180px] shrink-0 flex items-center justify-center"
+            className="relative w-full h-full aspect-square shrink-0 flex items-center justify-center"
           >
             {/* Anel pulsante neon laranja durante calibração */}
             <motion.div
@@ -103,7 +103,7 @@ export function SyncScoreRing({ score, breakdown }: Props) {
   return (
     <div className="surface-card p-5">
       <div className="flex items-center gap-5">
-        <div className="relative w-[180px] h-[180px] shrink-0">
+        <div className="relative w-full h-full aspect-square shrink-0">
           <motion.div
             className="absolute inset-0 rounded-full"
             style={ringStyle}
