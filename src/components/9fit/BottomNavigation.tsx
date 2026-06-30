@@ -1,4 +1,4 @@
-import { Cpu, Dumbbell, Crown, LayoutGrid, User } from "lucide-react";
+import { Cpu, Dumbbell, Bot, LayoutGrid, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 /**
@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const navItems = [
   { icon: Cpu, label: "INÍCIO", path: "/9fit/os" },
   { icon: Dumbbell, label: "TRAIN", path: "/9fit/train" },
-  { icon: Crown, label: "PRIME", path: "/9fit/prime", center: true, premium: true },
+  { icon: Bot, label: "RON", path: "/9fit/ron", center: true },
   { icon: LayoutGrid, label: "HUB", path: "/9fit/hub" },
   { icon: User, label: "PERFIL", path: "/9fit/profile" },
 ];
