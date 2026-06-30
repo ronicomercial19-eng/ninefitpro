@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 /**
  * Wizard pós-onboarding "Completar Perfil" — 5 etapas sequenciais:
@@ -19,6 +20,7 @@ interface Props { open: boolean; onClose: () => void; }
 export function CompleteProfileFlow({ open, onClose }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { mark } = useActivationProgress();
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<any>({ full_name: "", height_cm: "", weight_kg: "", age: "" });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -99,6 +101,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
         } as any);
       }
       toast.success("Perfil salvo");
+      mark('profile_complete');
       next();
     } catch {
       toast.error("Erro ao salvar perfil");
