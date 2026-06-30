@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink, ClipboardCheck } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 const GUIDED_URL = "https://nineprogresstracker.lovable.app/avaliacao-guiada/select";
 
@@ -11,6 +13,37 @@ const GUIDED_URL = "https://nineprogresstracker.lovable.app/avaliacao-guiada/sel
  */
 export default function NineFitAvaliacaoGuiada() {
   const navigate = useNavigate();
+  const { mark } = useActivationProgress();
+
+  useEffect(() => {
+    // Escuta mensagens postadas pelo iframe (ProgressTracker).
+    // Ajuste o match das mensagens se o tracker usar outro formato.
+    const STORAGE_KEY = "9fit_first_assessment_marked";
+    function onMessage(e: MessageEvent) {
+      try {
+        const payload = e.data;
+        if (
+          payload === "progresstracker:assessment_saved" ||
+          payload?.type === "assessment_saved" ||
+          payload?.event === "assessment_saved"
+        ) {
+          if (!localStorage.getItem(STORAGE_KEY)) {
+            try {
+              mark("first_assessment");
+              localStorage.setItem(STORAGE_KEY, "1");
+            } catch (err) {
+              // noop
+            }
+          }
+        }
+      } catch (err) {
+        // noop
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [mark]);
+
   return (
     <div className="min-h-screen bg-background pb-28">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-primary/30 bg-black/70 sticky top-0 z-20">

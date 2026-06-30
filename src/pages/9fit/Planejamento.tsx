@@ -8,6 +8,7 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutOfTheDay } from "@/hooks/useWorkoutOfTheDay";
 import { loadCarryProjection, type ProgressionPoint } from "@/services/training/loadProgression";
 import { supabase } from "@/integrations/supabase/client";
+import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 type RemoteWave = { label?: string; week?: number; focus?: string; volume?: string; intensity?: string; pct?: number; status?: string };
 const FALLBACK_CYCLES: RemoteWave[] = [
@@ -29,6 +30,7 @@ export default function NineFitPlanejamento() {
   const [planName, setPlanName] = useState<string>("Periodização Científica");
   const [hasRemotePlan, setHasRemotePlan] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const { mark } = useActivationProgress();
 
   async function loadPlan() {
     if (!athleteId) return;
@@ -57,6 +59,16 @@ export default function NineFitPlanejamento() {
     }
 
     if (wavesFound && wavesFound.length) {
+      // marcar apenas na primeira detecção de plano remoto (evita chamadas repetidas)
+      const FIRST_PLAN_KEY = "9fit_first_plan_marked";
+      if (!hasRemotePlan && !localStorage.getItem(FIRST_PLAN_KEY)) {
+        try {
+          mark("first_plan");
+          localStorage.setItem(FIRST_PLAN_KEY, "1");
+        } catch (err) {
+          // não bloquear a UX
+        }
+      }
       setWaves(wavesFound);
       setPlanName(row.plan_name || "Periodização SmartPeriodizer");
       setHasRemotePlan(true);
@@ -141,7 +153,7 @@ export default function NineFitPlanejamento() {
       <div className="mx-4 mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
         <div className="flex items-center justify-between">
           <p className="text-primary font-semibold text-sm">{planName}</p>
-          <button onClick={syncNow} disabled={syncing} className="text-[10px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1 flex items-center gap-1 disabled:opacity-50">
+          <button onClick={syncNow} disabled={syncing} className="text-[10px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1 flex items-center gap-1 disabl[...]" title="sincronizar">
             {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
             Sincronizar
           </button>
@@ -151,7 +163,7 @@ export default function NineFitPlanejamento() {
           <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Plano local (não sincronizado)"}</span>
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">
-          {["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"].map((d) => (
+          {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map((d) => (
             <div key={d} className="text-muted-foreground/70 text-[9px] uppercase tracking-widest">{d}</div>
           ))}
           {monthDays.map((d) => {
@@ -224,7 +236,6 @@ export default function NineFitPlanejamento() {
         </div>
       </div>
 
-
       {/* Progresso */}
       <div className="mt-6 mx-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
         <h2 className="text-xl font-display mb-1">Progresso do Ciclo</h2>
@@ -267,7 +278,7 @@ export default function NineFitPlanejamento() {
       {/* CTA */}
       <button
         onClick={() => navigate("/9fit/train")}
-        className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl bg-primary text-primary-foreground py-4 font-semibold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]"
+        className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl bg-primary text-primary-foreground py-4 font-semibold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--prima[...]"
       >
         <CalIcon className="w-5 h-5" />
         Ver Plano Completo da Semana
