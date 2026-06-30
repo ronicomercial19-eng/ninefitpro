@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 type Step = 0 | 1 | 2 | 3;
 type Answers = { goal: string; time: string; equipment: string };
@@ -40,6 +41,7 @@ type Modelo = { name?: string; objective?: string; stimulus?: string };
 export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
+  const { mark } = useActivationProgress();
   const [step, setStep] = useState<Step>(0);
   const [answers, setAnswers] = useState<Answers>({ goal: "", time: "", equipment: "" });
   const [loading, setLoading] = useState(false);
@@ -122,6 +124,15 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
           p_metadata: answers as any,
         });
         toast.success("Treino concluído! +50 XP");
+
+        // marca ativação localmente — só na primeira vez
+        try {
+          const KEY = '9fit_first_workout_marked';
+          if (!localStorage.getItem(KEY)) {
+            try { mark('first_workout'); } catch (e) { /* noop */ }
+            localStorage.setItem(KEY, '1');
+          }
+        } catch (err) { /* noop */ }
       }
     } catch (e) {
       console.error("[QuickTrain] complete:", e);
