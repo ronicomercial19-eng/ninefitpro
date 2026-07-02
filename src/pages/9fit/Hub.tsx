@@ -23,6 +23,7 @@ import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { useAthleteScores } from "@/hooks/useAthleteScores";
 
 
 export default function NineFitHub() {
@@ -31,6 +32,7 @@ export default function NineFitHub() {
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const { data: liveScores } = useAthleteScores(athleteId);
 
 
 
@@ -57,6 +59,7 @@ export default function NineFitHub() {
       minutos: h.minutos_semana || 0,
     });
     setMissions({
+      missao_perfil:          !!(profile?.full_name && (profile as any)?.avatar_url),
       missao_avaliacao:       !!h.missao_avaliacao,
       missao_plano:           !!h.missao_plano,
       missao_primeiro_treino: !!h.missao_primeiro_treino,
@@ -138,13 +141,20 @@ export default function NineFitHub() {
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      {/* 1. HERO SYNC — full bleed B&W + halo */}
+      {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}
-        syncScore={card.syncScore}
-        breakdown={breakdown}
+        syncScore={liveScores.sync_score || card.syncScore}
+        breakdown={{
+          treino: liveScores.treino || breakdown.treino,
+          nutri:  liveScores.nutri  || breakdown.nutri,
+          sono:   liveScores.sono   || breakdown.sono,
+          mob:    liveScores.mob    || breakdown.mob,
+          hidr:   liveScores.hidr   || breakdown.hidr,
+        }}
         lastUpdate="agora"
       />
+
 
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics />

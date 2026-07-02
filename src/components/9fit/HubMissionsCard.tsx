@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Circle, ArrowRight } from "lucide-react";
 
 export interface HubMissions {
+  missao_perfil?: boolean;
   missao_avaliacao: boolean;
   missao_plano: boolean;
   missao_primeiro_treino: boolean;
@@ -15,6 +16,7 @@ const ROWS: Array<{
   cta: string;
   route: string;
 }> = [
+  { key: "missao_perfil",          label: "Completar perfil",            cta: "Completar",       route: "/9fit/profile?flow=complete" },
   { key: "missao_avaliacao",       label: "Avaliação inicial feita",     cta: "Fazer avaliação", route: "/9fit/avaliacao-guiada" },
   { key: "missao_plano",           label: "Primeiro plano gerado",       cta: "Gerar plano",     route: "/9fit/planejamento" },
   { key: "missao_primeiro_treino", label: "Primeiro treino registrado",  cta: "Registrar agora", route: "/9fit/train" },
@@ -25,13 +27,21 @@ const ROWS: Array<{
 export function HubMissionsCard({ missions }: { missions: HubMissions | null }) {
   const navigate = useNavigate();
   const m: HubMissions = missions ?? {
-    missao_avaliacao: false, missao_plano: false, missao_primeiro_treino: false,
-    missao_3dias: false, missao_7dias: false,
+    missao_perfil: false, missao_avaliacao: false, missao_plano: false,
+    missao_primeiro_treino: false, missao_3dias: false, missao_7dias: false,
   };
+  const done = ROWS.filter(r => !!m[r.key]).length;
+  const pct = Math.round((done / ROWS.length) * 100);
 
   return (
     <div className="surface-card p-4">
-      <p className="text-label mb-3">MISSÕES DE ATIVAÇÃO</p>
+      <div className="flex items-baseline justify-between mb-2">
+        <p className="text-label">SUA ATIVAÇÃO</p>
+        <p className="text-[11px] font-data text-primary tabular-nums">{done}/{ROWS.length} · {pct}%</p>
+      </div>
+      <div className="h-1 rounded-full bg-white/5 overflow-hidden mb-3">
+        <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      </div>
       <ul className="space-y-2">
         {ROWS.map((r) => {
           const done = !!m[r.key];

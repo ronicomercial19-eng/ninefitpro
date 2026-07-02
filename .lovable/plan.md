@@ -1,96 +1,137 @@
-# FitPro — Plano de Execução
+# Plano — Atualização Crítica de Frontend + Integração Total com Banco
 
-Ordem solicitada: **PROMPT 4 → 2 → 1 → 3**, seguido de motor de viralização, PrimePass real, refator PDI nas edge functions, fixes pendentes e design global.
+Regra dura para toda a execução: **atualizar de forma pragmatica ou manter o layout, CSS, tokens ou identidade visual**. Só lógica, handlers, queries, RPCs, fluxo e estado. Banco = fonte da verdade. Nenhuma Edge Function nova.
 
----
+## Fase 0 — Descoberta & Auditoria de RPCs (P0, bloqueante)
 
-## SQLs prévios (1 migration única)
-Pré-requisitos do `fitpro_finalizacao.md`:
-- `ALTER PUBLICATION supabase_realtime` para `workout_executions`, `planos_de_treino_gerados`, `ninefit_checkins`, `nutrition_logs` (+ `REPLICA IDENTITY FULL`).
-- `ninefit_checkins.athlete_id` (coluna + backfill via `athlete_auth_link`).
-- Limpeza de mocks (`workout_executions` notes ~ mock/test/fake; `planos_de_treino_gerados` vazios; `athlete_planning_history` vazios).
-- Confirmar/criar `vw_hub_status` (com `treinos_semana`, `nutri_semana`, `minutos_semana`, missões 1/3/7).
-- Criar `share_events` se inexistente (já existe — verificar colunas `content_type`, `shared_at`, `athlete_id`).
-- Função `prescrever_treino_rapido(p_athlete_id, p_objetivo, p_tempo_min, p_equipamento)` retornando `{ modelos, exercises }` a partir de `workout_models` + `exercises`.
+Antes de tocar em qualquer tela, validar contratos no banco. Já confirmado hoje:
 
----
+- Existem: `ajustar_exercicio_por_dor`, `regenerar_dia_evitando_regiao`, `fn_award_xp`, `fn_compute_user_thresholds`, `prescrever_treino_rapido`.
+- **Faltam**: `get_athlete_scores`, `get_healthflix_feed`.
 
-## PROMPT 4 — SyncScore Neon + Design tokens
-- `SyncScoreRing.tsx`: refator do conic-gradient e drop-shadow conforme faixas (0-29 sem glow / 30-59 #E8571A 6px / 60-79 #F2C94C 10px / 80-100 #27AE60 14px). Estado "CALIBRANDO" pulsante quando `score === 0` ou perfil sem PDI. `transition: all 0.6s ease`.
-- `WeeklyRadar.tsx` (5D): cada eixo lê `avaliacoes_unificadas` (forca/resistencia/core/cardio/mobilidade) e aplica `drop-shadow` proporcional.
-- `index.css` / `tailwind.config.ts`: tokens canônicos `--background:#090909`, `--accent:#E8571A`, `--foreground:#F2F0EC`, fontes Syne 800 (display) e DM Mono (label/mono). Sem alterar estrutura — só cores/fontes fora do padrão em Hub, Train, Perfil, Planejamento.
+Ação:
 
-## PROMPT 2 — Train (Treino Rápido + Semana)
-- `QuickTrainModal.tsx`: manter criativo `monetization_offers` como primeira tela; após "Agora não" → 3 perguntas → chamar `supabase.rpc('prescrever_treino_rapido', { p_athlete_id, p_objetivo, p_tempo_min, p_equipamento })`. Renderizar `data.exercises` (id, name, video_url, gif_url, target_muscles, sets, reps_range, rest_seconds) na execução guiada. Ao concluir: `INSERT workout_executions(athlete_id, phase_name='quick', ...)` + `fn_award_xp(athleteId, 50, 'quick_workout')`.
-- `Train.tsx` / `WeeklyTrainingView.tsx`: ao abrir aba Semana, se não houver `workout_executions` para hoje, chamar `prescrever_treino(p_aluno_id, today)`. Montar grid D1–D7 combinando retorno + `vw_athlete_periodizacao_ativa`. Só o dia atual clicável. Nunca renderizar `planos_de_treino_gerados` cru.
-- Remover botões duplicados na tela Train (existem dois iguais).
-- `AITrainingPage.tsx`: usar `prescrever_treino` (mesma rota do SmartTreino).
+1. Rodar `supabase--read_query` para inspecionar assinatura e retorno de cada RPC existente + views chave (`vw_athlete_status`, `vw_hub_status`, `vw_athlete_periodizacao_ativa`, `athlete_auth_link`).
+2. Se `get_athlete_scores` e `get_healthflix_feed` não existirem, criar via **migration** (RPC SECURITY INVOKER, sem edge function nova). Definir contrato antes do frontend.
+3. Extrair apenas os zips relevantes para /tmp e usar como referência de UI/lógica — **não copiar arquivos crus** para o projeto.
 
-## PROMPT 1 — Hub dados reais + roteamento
-- `Hub.tsx` + `HubWeeklyCounters.tsx` + `HubMissionsCard.tsx`: consumir `vw_hub_status` por `athlete_id`. Mapear treinos/nutri/move e 5 missões. Zero → CTA acionável ("Registrar agora", "Gerar plano").
-- Grid ecossistema (`physio_modules` / `EcosystemGrid.tsx`): rotas Planejamento → `/9fit/planejamento`, Ajuste → `/9fit/ajuste-treino`, Progresso → `/9fit/progresso`, Foods → `/9fit/foods`. STAFF mantém.
-- Helper `resolveAthleteId()` via `athlete_auth_link`.
-
-## PROMPT 3 — Armazenamento individual + Foods + Histórico real
-- `CompleteProfileFlow`: ao salvar → `INSERT athlete_profile_snapshots(source='profile_complete')`.
-- `PDIWizard`: ao salvar → `INSERT athlete_pdi_history(pdi_data, computed_thresholds)` + `UPDATE athletes.preferences`.
-- `Planejamento.tsx` sync: `INSERT athlete_planning_history`.
-- `QuickCheckIn`: `INSERT ninefit_checkins(aluno_id, athlete_id)`.
-- Workout complete: `INSERT workout_executions(athlete_id NOT NULL)` + `athlete_profile_snapshots(source='workout_complete')`.
-- `Progresso.tsx`, `Planejamento.tsx`, `AjusteTreino.tsx`: filtrar por `athlete_id` + `status != 'pending'`. Remover mocks.
-- `Foods.tsx`: substituir conteúdo por `<iframe src="https://ninefoodss.lovable.app" />` em viewport cheio sob navbar.
+Entrega: documento curto em `.lovable/plan.md` com o contrato canônico de cada RPC/view.
 
 ---
 
-## Bloco F — Motor de Viralização
-Componente `ShareableCard` + hook `useShareEvent(contentType)`:
-- `html2canvas` em conquista → PNG → `navigator.share` (fallback download).
-- `INSERT share_events(athlete_id, content_type, shared_at)`.
-- Template visual via `social_share_templates` (content_type).
-- Gatilhos: workout_completed, first_workout, id_card_upgrade, goal_achieved, level_up, streak_7.
-- Logo 9FIT discreta, foco na conquista.
+## P0 — Correções críticas (impedem comercialização)
 
-## PrimePass operação real
-- `PrimePass.tsx` / `PrimePassHub.tsx`: CTA assinatura → `https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03`.
-- Página de retorno (`CheckoutSuccess.tsx`): atualizar `user_plans(plan_type='prime', expires_at=now()+30d)` e `athletes.metadata.id_card_tier='gold'` quando aplicável; liberar todo o app.
-- Recompensa automática 7 dias consistência: mesma operação via trigger frontend.
+### 1. Sync Score real + Radar 5D
 
-## Refator Edge Functions (PDI helper)
-- `ai-coach`, `training-ai-adjust`, `smart-notifications`: importar `_shared/pdi.ts` (`classifyScore`, `adjustForPDI`) e usar `fn_compute_user_thresholds` antes de qualquer decisão de intensidade. Remover constantes fixas.
+- `SyncScoreRing.tsx`: consumir `rpc('get_athlete_scores', {p_athlete_id})` via novo hook `useAthleteScores` com realtime em `sync_score_logs`.
+- Faixas de cor: 0-40 vermelho, 41-70 laranja `#FF6600`, 71-100 verde (mantendo conic-gradient e glow atuais, só troca thresholds).
+- Recalcular após eventos: onboarding done, `ninefit_checkins` insert, `workout_executions` completed, `avaliacoes_unificadas` insert — usar hook único `useSyncScoreRefresh` disparado em cada handler.
+- `WeeklyRadar3D` no Hub consome o mesmo breakdown (treino/nutri/sono/mob/hidr) já retornado pela RPC.
 
-## UX global
-- `<BackButton />` fixo no topo de cada tela (esquerda), navigate(-1). Aplicar em todas pages `/9fit/*` e admin via layout.
-- Remover botões duplicados (Train e qualquer outro identificado).
+### 2. Fluxo de ativação 7 dias
+
+- `HubMissionsCard`: ler `athlete_activation` + `activation_events`. Se não existir linha, inicializar via RPC/insert.
+- 6 missões com rotas garantidas:
+  1. Completar perfil → `/9fit/profile?flow=complete`
+  2. Avaliação inicial → `/9fit/avaliacao-guiada`
+  3. Primeiro plano → `/9fit/planejamento`
+  4. Primeiro treino → `/9fit/train?open=today`
+  5. 3 dias no Hub → contagem automática (evento login)
+  6. 7 dias consecutivos → streak automático
+- Cada CTA navega e ao concluir insere em `activation_events` + `fn_award_xp`. Barra `0/6 · 0%` fica reativa via realtime.
+
+### 3. RON no lugar da aba Prime
+
+- `BottomNavigation.tsx`: trocar apenas o slot central "PRIME" por "RON" apontando para `/9fit/ron` (Prime continua acessível via Hub). Mesmo componente visual — só rótulo, ícone e rota.
+- Manter guard/estilo do slot central.
+
+### 4. Treino Rápido via RPC
+
+- `QuickTrainModal.tsx`: eliminar chamada a edge function; usar `supabase.rpc('prescrever_treino_rapido', { p_athlete_id, p_objetivo, p_tempo_min, p_equipamento })`.
+- Fluxo: criativo → 3 perguntas na mesma tela → geração → execução guiada com vídeos de `exercises.video_url`/`gif_url` ou implementar no treino do dia do aluno salvo. 
+- Início: `insert workout_executions {status:'in_progress', source:'quick'}`. Fim: `update status='completed'` + `fn_award_xp(50,'quick_workout')`.
+- Remover duplicação de botões da tela final (bug reportado).
+
+### 5. RON detecta dor e ajusta só o dia
+
+- `Ron.tsx`: novo detector `detectPain(message)` (regex PT-BR: dói/dor/travou/estralou + região) → extrai `body_region` + `intensity`.
+- Insert em `pain_reports`. Se detectado:
+  - `rpc('ajustar_exercicio_por_dor', { athlete_id, exercise_id: hoje, body_region, day: today })`
+  - Se retorno `no_safe_variation` → `rpc('regenerar_dia_evitando_regiao', ...)`.
+- Nunca tocar semana/periodização.
+
+### 6. Check-in pré-treino + durante treino
+
+- Modal pré-treino em `WorkoutExecution.tsx`: dor 0-10 + disposição 0-10 → grava em `ninefit_checkins`. Se dor ≥ 6 → dispara ajuste automático via RPC acima.
+- Após cada exercício concluído: mini-prompt 👍 / 😐 / ⚠️. Se ⚠️ → picker de região (joelho/ombro/lombar/punho/tornozelo/outro) → ajuste do próximo exercício via `ajustar_exercicio_por_dor`.
+
+### 7. Sistema Fliperama (fichas)
+
+- Novo hook `useCredits` lendo `athlete_credits`/`credit_transactions`.
+- Gate único `withCredit(action, cost=1)` que envolve toda chamada de IA (RON chat, treino IA, cálculo nutri, protocolo). Debita via `credit_transactions` (RPC nova `fn_consume_credit` se ainda não existir — criar por migration).
+- UI: badge de fichas no `NineFitTopBar` (sem redesign, só número + ícone). Ao chegar em 0: modal "Recarregar" com pacotes 30/50/100 → `/9fit/checkout?pack=X`. Histórico/perfil/treinos salvos continuam livres.
+
+## P1 — Alto impacto
+
+### 8. Treino IA (painel professor) — semana completa
+
+- `AITrainingPage.tsx`: fluxo obrigatório aluno → periodização (Smart Periodizer) → modelo (Smart Treino) → aplicar → distribuir D1-D7 → vídeos da biblioteca → publicar.
+- Substituir erro "gerar treino com IA" pela chamada correta: `rpc('smart_treino_criar_semana', {...})` ou pipeline: `analyze-periodization` já existente + inserts em `student_training_assignments` (7 registros).
+- Vídeos: matching por `exercises.name`/`muscle_group` em `library_items` (fase atual) com fallback `exercises.video_url`.
+
+### 9. Smart Periodizer
+
+- `SmartPeriodizer.tsx`: selecionar aluno → periodização → salvar em `periodization_annual_plans` com `athlete_id`. Auto-atualiza `Planejamento.tsx` do aluno via view já existente `vw_athlete_periodizacao_ativa` (realtime).
+
+### 10. Smart Treino
+
+- Página admin: aluno → template (`workout_models`) → distribuição por dia da semana → vídeos → publish. Escreve em `student_training_assignments` + `daily_workouts`.
+
+### 11. HealthFlix real
+
+- `HealthFlix.tsx`: usar `rpc('get_healthflix_feed', { p_athlete_id })` (criar por migration se ainda não existe). Fallback `library_items` filtrando `type IN ('video','videos')` + categoria = `current_phase_category`.
+- Ordenação por histórico (`healthflix_progress`) e fase atual.
+
+### 12. Progress Tracker
+
+- `Progresso.tsx`: linha do tempo lendo `avaliacoes_unificadas` + `historico_avaliacoes`. Comparativos automáticos (delta entre última e anterior). Botão "Nova avaliação" → `AvaliacaoGuiada` .   
+* se nao possuir dados de avaliação -> criar fluxo de aquisiçao de dados rapidas para começar gerar historico -> 5 dados basicos apenas para monitoramento de evoluçao/progresso
+
+### 13. Postura Pro
+
+- Página cliente: upload fotos → `postura-pro-scan` (já existe) → mostrar flags + sugestões (métodos + alongamentos) lendo `postura_scans`.
+
+### 14. Biblioteca + HealthFlix disponibilização automática
+
+- `Biblioteca.tsx`: filtro server-side por `id_card_tier` do athlete (via view). HealthFlix já coberto no item 11.
+
+### 15. Hub / Navegação — rotas
+
+- `ModuleGrid`: STAFF mantém; PLANEJAMENTO → `/9fit/planejamento`; AJUSTE TREINO → `/9fit/ajuste-treino`; PROGRESS → `/9fit/progresso`. Sem telas novas, apenas `onClick={navigate(...)}`.
+
+### 16. Dashboard admin FitPro
+
+- Aplicar dados reais nas métricas já existentes (`Dashboard.tsx` admin): alunos, conclusão, sessões, atenção, receita por plano — todos por query em `athletes`, `workout_executions`, `payments`, `user_plans`. Sem mudar layout do dashboard v2 do HTML enviado (mantido como referência, não copiado).
 
 ---
 
-## Arquivos a criar
-- `src/components/9fit/BackButton.tsx`
-- `src/components/9fit/ShareableCard.tsx`
-- `src/hooks/useShareEvent.ts`
-- `src/hooks/useResolveAthleteId.ts` (centraliza padrão)
-- Migration única com SQLs 1–5 + `prescrever_treino_rapido` + `share_events` (se faltar).
+## Fase Final — Checklist de validação
 
-## Arquivos a editar (principais)
-- `src/components/9fit/SyncScoreRing.tsx`, `WeeklyRadar.tsx`, `QuickTrainModal.tsx`, `WeeklyTrainingView.tsx`, `HubWeeklyCounters.tsx`, `HubMissionsCard.tsx`, `EcosystemGrid.tsx`, `CompleteProfileFlow.tsx`, `PDIWizard.tsx`, `QuickCheckIn.tsx`, `NineFitLayout.tsx`.
-- `src/pages/9fit/Hub.tsx`, `Train.tsx`, `Foods.tsx`, `Planejamento.tsx`, `Progresso.tsx`, `AjusteTreino.tsx`, `PrimePass.tsx`, `Prime.tsx`, `Profile.tsx`, `CheckoutSuccess.tsx`.
-- `src/pages/AITrainingPage.tsx`.
-- `src/index.css`, `tailwind.config.ts`.
-- `supabase/functions/ai-coach/index.ts`, `training-ai-adjust/index.ts`, `smart-notifications/index.ts`.
+Rodar cada item do checklist do briefing (Sync/Radar/RON/Treino Rápido/IA/Smart Periodizer/Smart Treino/HealthFlix/Biblioteca/Progress/Postura/Ativação/Viral/Fichas/Sync FitPro↔alunos), com Playwright em rotas críticas (Hub, Train, Ron, AITrainingPage, SmartPeriodizer) capturando screenshot para prova de UI intacta + logs de rede confirmando as RPCs.
 
-## Validação
-1. Migration executada sem erro; `vw_hub_status` retorna linhas.
-2. Hub mostra dados reais para athlete logado.
-3. Treino Rápido entrega sessão via `prescrever_treino_rapido` com vídeos.
-4. Semana mostra dia atual clicável; demais bloqueados.
-5. SyncScoreRing acende com glow proporcional; "CALIBRANDO" quando score=0.
-6. Foods carrega iframe ninefoodss.
-7. Botão voltar presente em todas telas; sem botões duplicados em Train.
-8. Compartilhar conquista gera PNG e grava em `share_events`.
-9. PrimePass CTA leva ao Stripe test e libera plano após retorno.
+Auditoria final entregue em `.lovable/plan.md` com: RPCs usadas, arquivos alterados, tabelas afetadas, itens que ficaram pendentes (ex.: RPCs a criar por migration, botões/edge cases descobertos durante execução).
 
 ---
 
-**Custo estimado:** ~4 créditos (4 prompts) + 1 migration + viralização/PrimePass/PDI edge functions. Pode chegar a 6 créditos no total dependendo do volume de edits.
+## Detalhes técnicos consolidados
 
-Confirmar para iniciar pela migration + PROMPT 4.
+- **Novos hooks**: `useAthleteScores`, `useSyncScoreRefresh`, `useCredits`, `useActivationMissions` (todos em `src/hooks/`, com realtime `supabase.channel` no `useEffect` + cleanup).
+- **Novos utilitários**: `src/services/pain/detectPain.ts`, `src/services/credits/withCredit.ts`.
+- **Migrations necessárias** (mínimas, só se RPC/coluna faltar): `get_athlete_scores`, `get_healthflix_feed`, `fn_consume_credit`, `athlete_credits` (se estrutura atual não bater), realtime `ALTER PUBLICATION supabase_realtime ADD TABLE ...` para `athlete_activation`, `sync_score_logs`, `credit_transactions` se ainda não estiverem.
+- **Nenhuma nova Edge Function.** Só RPCs no banco + código React.
+- **Zips enviados** ficam em /tmp como referência para copiar padrões de UI/lógica; nunca sobrescrever `.git` nem colar componentes crus no projeto.
+
+execução: 2 fases de build. Rodada 1 = Fase 0 + P0 (Sync Score, Ativação, Treino Rápido, RON dor, Fichas, RON tab) e Rodada 2 = P1 (Treino IA, Smart Periodizer/Treino, HealthFlix, Progress, Postura, Biblioteca). Rodada .  
+fase 2 de build = Dashboard admin + checklist final + auditoria.
+
+Confirma que posso seguir por essa ordem e criar as migrations mínimas (get_athlete_scores, get_healthflix_feed, fn_consume_credit) quando faltarem?
