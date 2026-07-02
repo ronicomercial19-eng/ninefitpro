@@ -140,13 +140,20 @@ export default function NineFitHub() {
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      {/* 1. HERO SYNC — full bleed B&W + halo */}
+      {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}
-        syncScore={card.syncScore}
-        breakdown={breakdown}
+        syncScore={liveScores.sync_score || card.syncScore}
+        breakdown={{
+          treino: liveScores.treino || breakdown.treino,
+          nutri:  liveScores.nutri  || breakdown.nutri,
+          sono:   liveScores.sono   || breakdown.sono,
+          mob:    liveScores.mob    || breakdown.mob,
+          hidr:   liveScores.hidr   || breakdown.hidr,
+        }}
         lastUpdate="agora"
       />
+
 
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics />
