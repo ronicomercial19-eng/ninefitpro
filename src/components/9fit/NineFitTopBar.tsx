@@ -10,6 +10,8 @@ import { useCredits } from "@/hooks/useCredits";
 export function NineFitTopBar() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { athleteId } = useAthleteId();
+  const { remaining } = useCredits(athleteId);
   const [unread, setUnread] = useState(0);
 
   const refresh = async () => {
