@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Circle, ArrowRight } from "lucide-react";
 
 export interface HubMissions {
+  missao_perfil?: boolean;
   missao_avaliacao: boolean;
   missao_plano: boolean;
   missao_primeiro_treino: boolean;
@@ -15,6 +16,7 @@ const ROWS: Array<{
   cta: string;
   route: string;
 }> = [
+  { key: "missao_perfil",          label: "Completar perfil",            cta: "Completar",       route: "/9fit/profile?flow=complete" },
   { key: "missao_avaliacao",       label: "Avaliação inicial feita",     cta: "Fazer avaliação", route: "/9fit/avaliacao-guiada" },
   { key: "missao_plano",           label: "Primeiro plano gerado",       cta: "Gerar plano",     route: "/9fit/planejamento" },
   { key: "missao_primeiro_treino", label: "Primeiro treino registrado",  cta: "Registrar agora", route: "/9fit/train" },
