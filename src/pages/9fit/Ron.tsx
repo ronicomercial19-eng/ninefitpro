@@ -100,6 +100,43 @@ export default function NineFitRon() {
     return data as any;
   };
 
+  const handlePainSideEffect = async (userMsg: string) => {
+    const pain = detectPain(userMsg);
+    if (!pain.detected || !athleteId) return null;
+    try {
+      // 1) registra a dor
+      await supabase.from("pain_reports" as any).insert({
+        athlete_id: athleteId,
+        source: "ron_chat",
+        body_region: pain.body_region,
+        intensity: pain.intensity,
+      } as any);
+      // 2) ajusta o treino do dia
+      if (pain.body_region) {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: adj } = await supabase.rpc("ajustar_exercicio_por_dor" as any, {
+          p_athlete_id: athleteId,
+          p_exercise_id: null,
+          p_body_region: pain.body_region,
+          p_workout_date: today,
+        });
+        const r: any = adj;
+        if (r?.status === "no_safe_variation") {
+          await supabase.rpc("regenerar_dia_evitando_regiao" as any, {
+            p_athlete_id: athleteId,
+            p_body_region: pain.body_region,
+            p_workout_date: today,
+          });
+          return `Detectei dor em ${pain.body_region} (~${pain.intensity}/10). Sem variação segura hoje — regenerei o treino do dia evitando essa região. Semana e periodização preservadas.`;
+        }
+        return `Detectei dor em ${pain.body_region} (~${pain.intensity}/10). Ajustei os exercícios de hoje para uma variação segura. Semana e periodização preservadas.`;
+      }
+    } catch (e) {
+      console.error("[Ron] pain adjust:", e);
+    }
+    return null;
+  };
+
   const send = async () => {
     if (!input.trim() || sending || !user?.id) return;
     const userMsg = input.trim();
@@ -110,32 +147,47 @@ export default function NineFitRon() {
     setMessages((p) => [...p, { role: "user", content: userMsg }, { role: "assistant", content: "..." }]);
     await persist("user", userMsg);
 
-    try {
-      // contexto: últimas 20 mensagens
+    // Ajuste automático por dor (não gasta ficha — é motor operacional)
+    const painReply = await handlePainSideEffect(userMsg);
+    if (painReply) {
+      setMessages((p) => {
+        const out = [...p];
+        out[out.length - 1] = { role: "assistant", content: painReply };
+        return out;
+      });
+      await persist("assistant", painReply);
+      setSending(false);
+      return;
+    }
+
+    const result = await withCredit("ron_chat", async () => {
       const history = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
       const { data } = await supabase.functions.invoke("ai-coach", {
         body: { mode: "chat", message: userMsg, userId: user.id, history },
       });
-      const content =
-        (data as any)?.data?.content ||
-        (data as any)?.content ||
-        "Aguardando mais sinais do seu corpo.";
+      return (data as any)?.data?.content || (data as any)?.content || "Aguardando mais sinais do seu corpo.";
+    });
+
+    if (result === null) {
+      // sem fichas
       setMessages((p) => {
         const out = [...p];
-        out[out.length - 1] = { role: "assistant", content };
+        out[out.length - 1] = { role: "assistant", content: "Fichas insuficientes. Recarregue para continuar conversando comigo." };
         return out;
       });
-      await persist("assistant", content);
-    } catch {
-      setMessages((p) => {
-        const out = [...p];
-        out[out.length - 1] = { role: "assistant", content: "Sistema recalibrando. Tente em alguns instantes." };
-        return out;
-      });
-    } finally {
       setSending(false);
+      return;
     }
+
+    setMessages((p) => {
+      const out = [...p];
+      out[out.length - 1] = { role: "assistant", content: result };
+      return out;
+    });
+    await persist("assistant", result);
+    setSending(false);
   };
+
 
   return (
     <div className="min-h-screen bg-background pb-28 flex flex-col">
