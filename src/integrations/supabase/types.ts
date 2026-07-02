@@ -14119,6 +14119,10 @@ export type Database = {
           role: string
         }[]
       }
+      fn_add_credits: {
+        Args: { p_amount: number; p_athlete_id: string; p_reason?: string }
+        Returns: Json
+      }
       fn_award_xp:
         | {
             Args: { p_amount: number; p_athlete_id: string; p_reason: string }
@@ -14138,6 +14142,10 @@ export type Database = {
             }[]
           }
       fn_compute_user_thresholds: { Args: { p_user_id: string }; Returns: Json }
+      fn_consume_credit: {
+        Args: { p_amount?: number; p_athlete_id: string; p_reason?: string }
+        Returns: Json
+      }
       generate_invitation_token: { Args: never; Returns: string }
       gerar_blocos_protocolo_dia: {
         Args: { p_athlete_id: string; p_date?: string }
@@ -14181,6 +14189,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
       get_forca_progressao: {
         Args: { p_athlete_id: string; p_exercicio?: string }
         Returns: {
@@ -14190,6 +14199,7 @@ export type Database = {
           weight_kg: number
         }[]
       }
+      get_healthflix_feed: { Args: { p_athlete_id: string }; Returns: Json }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
