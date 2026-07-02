@@ -29,10 +29,14 @@ interface Msg {
 
 export default function NineFitRon() {
   const { user } = useAuth();
+  const { athleteId } = useAthleteId();
+  const { withCredit } = useCredits(athleteId);
   const [params] = useSearchParams();
   const { state } = useUserState();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const autoCtx = params.get("context");
