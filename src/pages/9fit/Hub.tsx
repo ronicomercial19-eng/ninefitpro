@@ -23,6 +23,7 @@ import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { useAthleteScores } from "@/hooks/useAthleteScores";
 
 
 export default function NineFitHub() {
