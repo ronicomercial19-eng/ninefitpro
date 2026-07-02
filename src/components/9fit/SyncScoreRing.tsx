@@ -13,20 +13,18 @@ interface Props {
   };
 }
 
-// Tokens canônicos (PROMPT 4)
-const COLOR_LOW = "#E8571A";    // 0-29 sem glow / 30-59 com glow 6px
-const COLOR_MID = "#F2C94C";    // 60-79
-const COLOR_HIGH = "#27AE60";   // 80-100
+// Tokens canônicos (spec: 0-40 vermelho, 41-70 laranja #FF6600, 71-100 verde)
+const COLOR_LOW = "#FF3B30";    // 0-40
+const COLOR_MID = "#FF6600";    // 41-70
+const COLOR_HIGH = "#27AE60";   // 71-100
 
 function getRingStyle(score: number) {
   let color = COLOR_LOW;
   let glow = "none";
-  if (score >= 80) { color = COLOR_HIGH; glow = `drop-shadow(0 0 14px ${COLOR_HIGH})`; }
-  else if (score >= 60) { color = COLOR_MID; glow = `drop-shadow(0 0 10px ${COLOR_MID})`; }
-  else if (score >= 30) { color = COLOR_LOW; glow = `drop-shadow(0 0 6px ${COLOR_LOW})`; }
-  else { color = COLOR_LOW; glow = "none"; }
-  // Cor do arco conforme faixa (60-100 verde)
-  const arcColor = score >= 60 ? COLOR_HIGH : score >= 30 ? COLOR_MID : COLOR_LOW;
+  if (score >= 71)      { color = COLOR_HIGH; glow = `drop-shadow(0 0 16px ${COLOR_HIGH})`; }
+  else if (score >= 41) { color = COLOR_MID;  glow = `drop-shadow(0 0 14px ${COLOR_MID})`; }
+  else if (score > 0)   { color = COLOR_LOW;  glow = `drop-shadow(0 0 10px ${COLOR_LOW})`; }
+  const arcColor = color;
   return { color, arcColor, glow };
 }
 
