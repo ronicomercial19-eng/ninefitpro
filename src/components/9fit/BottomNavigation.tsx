@@ -21,7 +21,8 @@ export function BottomNavigation() {
     <nav className="fixed bottom-3 left-3 right-3 z-40 pb-safe">
       <div className="mx-auto max-w-md surface-elevated rounded-full backdrop-blur-xl bg-card/90">
         <div className="flex items-center justify-around h-16 px-2">
-          {navItems.map(({ icon: Icon, label, path, center, premium }) => {
+          {navItems.map(({ icon: Icon, label, path, center }) => {
+            const premium = center;
             const isActive =
               location.pathname === path ||
               (path === "/9fit/os" && location.pathname === "/9fit") ||
