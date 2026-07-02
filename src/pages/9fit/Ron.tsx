@@ -8,6 +8,10 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useUserState } from "@/hooks/useUserState";
 import { STATE_INSIGHT, STATE_LABEL } from "@/services/adaptiveState";
 import { Send } from "lucide-react";
+import { detectPain } from "@/services/pain/detectPain";
+import { useAthleteId } from "@/hooks/useAthleteId";
+import { useCredits } from "@/hooks/useCredits";
+import { toast } from "sonner";
 
 const SUGGESTIONS = [
   "Como está meu recovery?",
