@@ -59,6 +59,7 @@ export default function NineFitHub() {
       minutos: h.minutos_semana || 0,
     });
     setMissions({
+      missao_perfil:          !!(profile?.full_name && (profile as any)?.avatar_url),
       missao_avaliacao:       !!h.missao_avaliacao,
       missao_plano:           !!h.missao_plano,
       missao_primeiro_treino: !!h.missao_primeiro_treino,
