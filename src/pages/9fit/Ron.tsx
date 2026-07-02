@@ -37,8 +37,6 @@ export default function NineFitRon() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
-  const [sending, setSending] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
   const autoCtx = params.get("context");
   const autoTriggered = params.get("auto") === "1";
 
