@@ -1,9 +1,11 @@
-import { Bell, Menu } from "lucide-react";
+import { Bell, Menu, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { useAthleteId } from "@/hooks/useAthleteId";
+import { useCredits } from "@/hooks/useCredits";
 
 export function NineFitTopBar() {
   const navigate = useNavigate();
