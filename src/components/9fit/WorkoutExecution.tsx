@@ -181,9 +181,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   // Load HTML content for html-type
   useEffect(() => {
-    if (!isStructured && training.html_file_url && training.training_type !== 'link') {
+    if (!isStructured && liveTraining.html_file_url && liveTraining.training_type !== 'link') {
       setLoadingContent(true);
-      fetch(training.html_file_url)
+      fetch(liveTraining.html_file_url)
         .then(r => r.text())
         .then(text => {
           if (text.startsWith('<html') || text.startsWith('<!DOCTYPE') || text.startsWith('<HTML')) {
@@ -219,15 +219,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
     mirrorEvent("workout_completed", {
       training_id: training.id,
-      training_name: training.training_name,
+      training_name: liveTraining.training_name,
       duration_seconds: workoutSeconds,
     });
     setShowPSE(true);
   };
 
   // For link training
-  if (training.training_type === 'link' && training.html_file_url) {
-    window.open(training.html_file_url, '_blank');
+  if (liveTraining.training_type === 'link' && liveTraining.html_file_url) {
+    window.open(liveTraining.html_file_url, '_blank');
     onBack();
     return null;
   }
@@ -241,7 +241,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         </button>
         <div className="text-center">
           <p className="text-xs text-primary font-bold uppercase tracking-widest">Em Execução</p>
-          <p className="text-sm font-bold text-foreground truncate max-w-[200px]">{training.training_name}</p>
+          <p className="text-sm font-bold text-foreground truncate max-w-[200px]">{liveTraining.training_name}</p>
         </div>
         <div className="flex items-center gap-1 text-primary">
           <Timer className="w-4 h-4" />
@@ -392,7 +392,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             srcDoc={injectMobileViewport(htmlContent)}
             sandbox="allow-scripts allow-popups allow-forms"
             className="w-full h-[60vh] border-0 rounded-lg"
-            title={training.training_name}
+            title={liveTraining.training_name}
           />
         ) : (
           <div className="flex items-center justify-center h-64">
@@ -473,7 +473,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       </div>
 
       <PostWorkoutModal open={showPSE} onClose={() => { setShowPSE(false); onFinish(); }}
-        athleteId={athleteId} trainingName={training.training_name} />
+        athleteId={athleteId} trainingName={liveTraining.training_name} />
     </div>
   );
 }
