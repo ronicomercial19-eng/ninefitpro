@@ -254,6 +254,18 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         <WearableConnectBox isWorkoutActive={true} />
       </div>
 
+      {dailyOverride && (
+        <div className="mx-4 mb-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 flex items-center gap-2 text-xs text-primary">
+          <Sparkles className="w-3.5 h-3.5" />
+          Ajuste aplicado hoje
+          {dailyOverride.intensity_pct && <span className="font-bold">• {dailyOverride.intensity_pct}%</span>}
+          {typeof dailyOverride.fatigue_adjustment === "number" && (
+            <span className="font-bold">• fadiga {dailyOverride.fatigue_adjustment > 0 ? "+" : ""}{dailyOverride.fatigue_adjustment}</span>
+          )}
+        </div>
+      )}
+
+
       {/* Content Area */}
       <div className="flex-1 overflow-auto px-4 pb-4">
         {isStructured ? (
