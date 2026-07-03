@@ -1,8 +1,9 @@
 -- =============================================
 -- MIGRATION: Complete athlete_activation schema
+-- Date: 2026-07-03
 -- =============================================
 
--- 1) Confirmar estrutura completa (13 colunas)
+-- 1) Criar tabela athlete_activation com todas as 13 colunas
 CREATE TABLE IF NOT EXISTS public.athlete_activation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   athlete_id UUID NOT NULL UNIQUE REFERENCES public.athletes(id) ON DELETE CASCADE,
@@ -61,8 +62,8 @@ CREATE POLICY "Coaches can view athlete activation"
     )
   );
 
-DROP POLICY IF EXISTS "Service role full access" ON public.athlete_activation;
-CREATE POLICY "Service role full access"
+DROP POLICY IF EXISTS "Service role full access activation" ON public.athlete_activation;
+CREATE POLICY "Service role full access activation"
   ON public.athlete_activation
   FOR ALL
   TO service_role
@@ -140,60 +141,19 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.fn_complete_mission(UUID, TEXT) TO authenticated, service_role;
 
--- 7) Função: Resetar contadores semanais/mensais (call via cron job)
-CREATE OR REPLACE FUNCTION public.fn_reset_periodic_counters()
-RETURNS TABLE (reset_count INT4)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Reset weekly counters toda segunda-feira
-  UPDATE public.athlete_activation
-  SET weekly_missions_completed = 0
-  WHERE EXTRACT(DOW FROM now()) = 1;
-
-  -- Reset monthly counters no 1º do mês
-  UPDATE public.athlete_activation
-  SET monthly_missions_completed = 0
-  WHERE EXTRACT(DAY FROM now()) = 1;
-
-  RETURN QUERY SELECT COUNT(*)::INT4 FROM public.athlete_activation WHERE weekly_missions_completed = 0;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.fn_reset_periodic_counters() TO service_role;
-
--- 8) Função: Quebrar streak se não treinou há X dias
-CREATE OR REPLACE FUNCTION public.fn_check_streak_break()
-RETURNS TABLE (broken_count INT4)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  UPDATE public.athlete_activation
-  SET 
-    days_active = 0,
-    last_streak_broken_at = now()
-  WHERE 
-    (last_active_at IS NULL OR last_active_at < (now() - INTERVAL '2 days'))
-    AND days_active > 0;
-
-  RETURN QUERY SELECT COUNT(*)::INT4 FROM public.athlete_activation WHERE days_active = 0;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.fn_check_streak_break() TO service_role;
-
--- 9) Função: Incrementar streak se ativo hoje
+-- 7) Função: Incrementar streak
 CREATE OR REPLACE FUNCTION public.fn_increment_streak(p_athlete_id UUID)
-RETURNS TABLE (new_days_active INT4)
+RETURNS TABLE (new_days_active INT4, last_active TIMESTAMPTZ)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- Ensure athlete activation exists
+  INSERT INTO public.athlete_activation (athlete_id, activated_at)
+  VALUES (p_athlete_id, now())
+  ON CONFLICT (athlete_id) DO NOTHING;
+
   UPDATE public.athlete_activation
   SET 
     days_active = CASE 
@@ -202,13 +162,13 @@ BEGIN
     END,
     last_active_at = now()
   WHERE athlete_id = p_athlete_id
-  RETURNING days_active;
+  RETURNING days_active, last_active_at;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.fn_increment_streak(UUID) TO authenticated, service_role;
 
--- 10) Realtime publication
+-- 8) Realtime publication
 DO $$
 BEGIN
   BEGIN
@@ -216,9 +176,9 @@ BEGIN
   EXCEPTION WHEN duplicate_object THEN NULL; END;
 END $$;
 
--- 11) Backfill existing athletes (sem ativação anterior)
+-- 9) Backfill existing athletes (sem ativação anterior)
 INSERT INTO public.athlete_activation (athlete_id, activated_at)
-SELECT a.id, a.created_at
+SELECT a.id, COALESCE(a.created_at, now())
 FROM public.athletes a
 WHERE a.id NOT IN (SELECT athlete_id FROM public.athlete_activation)
 ON CONFLICT (athlete_id) DO NOTHING;
