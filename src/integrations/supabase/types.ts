@@ -14119,6 +14119,10 @@ export type Database = {
           role: string
         }[]
       }
+      ensure_plano_treino_gerado: {
+        Args: { p_assignment_id: string }
+        Returns: string
+      }
       fn_add_credits: {
         Args: { p_amount: number; p_athlete_id: string; p_reason?: string }
         Returns: Json
@@ -14189,7 +14193,17 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
+      get_athlete_scores: {
+        Args: { p_athlete_id: string }
+        Returns: {
+          consistency_score: number
+          hydration_score: number
+          mobility_score: number
+          nutrition_score: number
+          sleep_score: number
+          updated_at: string
+        }[]
+      }
       get_forca_progressao: {
         Args: { p_athlete_id: string; p_exercicio?: string }
         Returns: {
