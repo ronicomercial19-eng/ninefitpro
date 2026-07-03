@@ -14119,6 +14119,10 @@ export type Database = {
           role: string
         }[]
       }
+      ensure_plano_treino_gerado: {
+        Args: { p_assignment_id: string }
+        Returns: string
+      }
       fn_add_credits: {
         Args: { p_amount: number; p_athlete_id: string; p_reason?: string }
         Returns: Json
