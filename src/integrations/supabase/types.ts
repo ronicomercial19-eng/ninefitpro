@@ -14193,17 +14193,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_athlete_scores: {
-        Args: { p_athlete_id: string }
-        Returns: {
-          consistency_score: number
-          hydration_score: number
-          mobility_score: number
-          nutrition_score: number
-          sleep_score: number
-          updated_at: string
-        }[]
-      }
+      get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
       get_forca_progressao: {
         Args: { p_athlete_id: string; p_exercicio?: string }
         Returns: {
