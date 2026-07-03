@@ -2,13 +2,17 @@ import { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
   ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
-  Loader2, Check
+  Loader2, Check, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
+import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { toast } from "sonner";
+
 
 interface TrainingAssignment {
   id: string;
@@ -50,16 +54,79 @@ function injectMobileViewport(html: string): string {
 const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
 
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
-  const allExercises = training.training_data?.exercises || [];
+  // Live training data + realtime patches from daily_workouts.changes_json
+  const [liveTraining, setLiveTraining] = useState<TrainingAssignment>(training);
+  const [dailyOverride, setDailyOverride] = useState<any>(null);
+
   const todayKey = WEEKDAY_KEYS[new Date().getDay()];
-  // Filter exercises for today; fallback to all if none for today
-  const todayExercises = allExercises.filter((e: any) => e.training_day === todayKey);
-  const exercises = todayExercises.length > 0 ? todayExercises : allExercises;
+  const todayISO = new Date().toISOString().slice(0, 10);
+
+  // Apply daily override (from ajuste-treino) on top of base exercises
+  const baseExercises = liveTraining.training_data?.exercises || [];
+  const todayBase = baseExercises.filter((e: any) => e.training_day === todayKey);
+  const baseList = todayBase.length > 0 ? todayBase : baseExercises;
+
+  const exercises = (() => {
+    if (!dailyOverride) return baseList;
+    // Support two formats: full replacement or per-exercise patch
+    if (Array.isArray(dailyOverride.exercises)) return dailyOverride.exercises;
+    if (dailyOverride.intensity_pct || dailyOverride.fatigue_adjustment) {
+      const factor = (dailyOverride.intensity_pct ?? 100) / 100;
+      return baseList.map((e: any) => ({
+        ...e,
+        sets: Math.max(1, Math.round((e.sets || 3) + (dailyOverride.fatigue_adjustment ?? 0))),
+        _adjusted: true,
+        _intensity: dailyOverride.intensity_pct,
+      }));
+    }
+    return baseList;
+  })();
+
   const isStructured = exercises.length > 0;
 
   // Current exercise index (for structured workouts)
   const [currentIdx, setCurrentIdx] = useState(0);
   const currentExercise = exercises[currentIdx];
+
+  // Load initial override + subscribe to realtime changes on daily_workouts
+  const refreshDaily = async () => {
+    const { data } = await supabase
+      .from("daily_workouts")
+      .select("changes_json, override_locked, updated_at")
+      .eq("athlete_id", athleteId)
+      .eq("workout_date", todayISO)
+      .maybeSingle();
+    if (data?.changes_json) setDailyOverride(data.changes_json);
+  };
+
+  useEffect(() => { refreshDaily(); /* eslint-disable-next-line */ }, [athleteId]);
+
+  useRealtimeTable(
+    { table: "daily_workouts", filter: `athlete_id=eq.${athleteId}`, enabled: !!athleteId },
+    (payload: any) => {
+      const row = payload.new;
+      if (row?.workout_date === todayISO && row?.changes_json) {
+        setDailyOverride(row.changes_json);
+        toast.info("Treino do dia foi ajustado ✨");
+      }
+    },
+  );
+
+  // Refresh training assignment (professor can edit on the fly)
+  useRealtimeTable(
+    { table: "student_training_assignments", filter: `id=eq.${training.id}`, enabled: !!training.id },
+    async () => {
+      const { data } = await supabase
+        .from("student_training_assignments")
+        .select("*")
+        .eq("id", training.id)
+        .maybeSingle();
+      if (data) {
+        setLiveTraining(data as any);
+        toast.info("Treino atualizado pelo seu professor");
+      }
+    },
+  );
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(60);
