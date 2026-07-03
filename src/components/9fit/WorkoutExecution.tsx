@@ -195,7 +195,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .catch(() => setHtmlContent(null))
         .finally(() => setLoadingContent(false));
     }
-  }, [training]);
+  }, [liveTraining]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
