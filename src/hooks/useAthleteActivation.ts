@@ -53,9 +53,9 @@ export const useAthleteActivation = (athleteId: string | undefined) => {
             .single();
 
           if (createErr) throw createErr;
-          setActivation(created as AthleteActivation);
+          setActivation(created as unknown as AthleteActivation);
         } else {
-          setActivation(data as AthleteActivation);
+          setActivation(data as unknown as AthleteActivation);
         }
         setError(null);
       } catch (err) {
@@ -81,7 +81,7 @@ export const useAthleteActivation = (athleteId: string | undefined) => {
         },
         (payload) => {
           if (payload.new) {
-            setActivation(payload.new as AthleteActivation);
+            setActivation(payload.new as unknown as AthleteActivation);
           }
         }
       )
@@ -102,7 +102,7 @@ export const completeMission = async (
   athleteId: string,
   missionType: string = "default"
 ): Promise<{ missions_completed: number; weekly_count: number; consistency_score: number }> => {
-  const { data, error } = await supabase.rpc("fn_complete_mission", {
+  const { data, error } = await supabase.rpc("fn_complete_mission" as any, {
     p_athlete_id: athleteId,
     p_mission_type: missionType,
   });
@@ -115,7 +115,7 @@ export const completeMission = async (
  * Incrementar streak (chamado ao treinar/fazer check-in)
  */
 export const incrementStreak = async (athleteId: string): Promise<{ new_days_active: number; last_active: string }> => {
-  const { data, error } = await supabase.rpc("fn_increment_streak", {
+  const { data, error } = await supabase.rpc("fn_increment_streak" as any, {
     p_athlete_id: athleteId,
   });
 
@@ -134,5 +134,5 @@ export const getAthleteActivation = async (athleteId: string): Promise<AthleteAc
     .maybeSingle();
 
   if (error) throw error;
-  return data as AthleteActivation | null;
+  return data as unknown as unknown as AthleteActivation | null;
 };

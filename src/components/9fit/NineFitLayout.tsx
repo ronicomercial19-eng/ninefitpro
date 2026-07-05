@@ -76,20 +76,35 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         return;
       }
 
-      // --- 2. Onboarding gate (apenas atletas) ---
-      if (firstAccessDone && !onFirstAccess && !onOnboarding) {
+      // --- 2. Activation gate (fluxo único /9fit/ativacao) ---
+      // Fonte da verdade = athlete_activation.finished_at.
+      // NUNCA usar fully_activated (só vira true após 7 dias).
+      const onAtivacao = path.includes('/9fit/ativacao');
+      if (firstAccessDone && !onFirstAccess) {
         try {
           const { data: athlete } = await supabase
             .from('athletes')
-            .select('onboarding_completed_at')
+            .select('id')
             .eq('user_id', session.user.id)
             .maybeSingle();
-          if (athlete && !athlete.onboarding_completed_at) {
-            navigate("/9fit/onboarding");
-            return;
+          if (athlete?.id) {
+            const { data: act } = await supabase
+              .from('athlete_activation' as any)
+              .select('finished_at')
+              .eq('athlete_id', athlete.id)
+              .maybeSingle();
+            const finished = (act as any)?.finished_at;
+            if (!finished && !onAtivacao && !onOnboarding) {
+              navigate('/9fit/ativacao');
+              return;
+            }
+            if (finished && onAtivacao) {
+              navigate('/9fit/os');
+              return;
+            }
           }
         } catch (e) {
-          console.log('[NineFitLayout] onboarding check:', e);
+          console.log('[NineFitLayout] activation check:', e);
         }
       }
 
