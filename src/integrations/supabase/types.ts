@@ -755,7 +755,9 @@ export type Database = {
       athlete_activation: {
         Row: {
           activation_started_at: string | null
+          assessment_done_at: string | null
           athlete_id: string
+          consistency_days: number
           created_at: string | null
           day_1_completed: boolean | null
           day_1_completed_at: string | null
@@ -765,12 +767,17 @@ export type Database = {
           day_5_completed_at: string | null
           day_7_completed: boolean | null
           day_7_completed_at: string | null
+          finished_at: string | null
+          first_workout_at: string | null
           fully_activated: boolean | null
           id: string
+          plan_generated_at: string | null
         }
         Insert: {
           activation_started_at?: string | null
+          assessment_done_at?: string | null
           athlete_id: string
+          consistency_days?: number
           created_at?: string | null
           day_1_completed?: boolean | null
           day_1_completed_at?: string | null
@@ -780,12 +787,17 @@ export type Database = {
           day_5_completed_at?: string | null
           day_7_completed?: boolean | null
           day_7_completed_at?: string | null
+          finished_at?: string | null
+          first_workout_at?: string | null
           fully_activated?: boolean | null
           id?: string
+          plan_generated_at?: string | null
         }
         Update: {
           activation_started_at?: string | null
+          assessment_done_at?: string | null
           athlete_id?: string
+          consistency_days?: number
           created_at?: string | null
           day_1_completed?: boolean | null
           day_1_completed_at?: string | null
@@ -795,8 +807,11 @@ export type Database = {
           day_5_completed_at?: string | null
           day_7_completed?: boolean | null
           day_7_completed_at?: string | null
+          finished_at?: string | null
+          first_workout_at?: string | null
           fully_activated?: boolean | null
           id?: string
+          plan_generated_at?: string | null
         }
         Relationships: [
           {
@@ -3473,6 +3488,54 @@ export type Database = {
         }
         Relationships: []
       }
+      fitpro_delivery_log: {
+        Row: {
+          athlete_id: string
+          attempt_count: number
+          created_at: string
+          id: string
+          last_error: string | null
+          next_retry_at: string | null
+          payload: Json
+          plano_id: string | null
+          result: Json | null
+          source: string
+          status: string
+          updated_at: string
+          workout_date: string
+        }
+        Insert: {
+          athlete_id: string
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          plano_id?: string | null
+          result?: Json | null
+          source?: string
+          status?: string
+          updated_at?: string
+          workout_date?: string
+        }
+        Update: {
+          athlete_id?: string
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          plano_id?: string | null
+          result?: Json | null
+          source?: string
+          status?: string
+          updated_at?: string
+          workout_date?: string
+        }
+        Relationships: []
+      }
       fitpro_events: {
         Row: {
           connection_id: string | null
@@ -5685,6 +5748,42 @@ export type Database = {
           },
         ]
       }
+      periodization_generation_failures: {
+        Row: {
+          assignment_id: string | null
+          athlete_id: string | null
+          created_at: string
+          error_detail: Json | null
+          error_reason: string | null
+          id: string
+          origin: string
+          payload: Json | null
+          plan_id: string | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          athlete_id?: string | null
+          created_at?: string
+          error_detail?: Json | null
+          error_reason?: string | null
+          id?: string
+          origin: string
+          payload?: Json | null
+          plan_id?: string | null
+        }
+        Update: {
+          assignment_id?: string | null
+          athlete_id?: string | null
+          created_at?: string
+          error_detail?: Json | null
+          error_reason?: string | null
+          id?: string
+          origin?: string
+          payload?: Json | null
+          plan_id?: string | null
+        }
+        Relationships: []
+      }
       periodization_history: {
         Row: {
           change_description: string | null
@@ -7337,6 +7436,45 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      referencias_planejamento: {
+        Row: {
+          aluno_origem: string | null
+          criado_em: string | null
+          dia_treino: string | null
+          grupo_muscular: string | null
+          id: string
+          intervalo_segundos: number | null
+          nome_exercicio: string
+          protocolo_semana: string | null
+          repeticoes: string | null
+          series: string | null
+        }
+        Insert: {
+          aluno_origem?: string | null
+          criado_em?: string | null
+          dia_treino?: string | null
+          grupo_muscular?: string | null
+          id?: string
+          intervalo_segundos?: number | null
+          nome_exercicio: string
+          protocolo_semana?: string | null
+          repeticoes?: string | null
+          series?: string | null
+        }
+        Update: {
+          aluno_origem?: string | null
+          criado_em?: string | null
+          dia_treino?: string | null
+          grupo_muscular?: string | null
+          id?: string
+          intervalo_segundos?: number | null
+          nome_exercicio?: string
+          protocolo_semana?: string | null
+          repeticoes?: string | null
+          series?: string | null
         }
         Relationships: []
       }
@@ -9826,6 +9964,24 @@ export type Database = {
           key?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: string
         }
         Relationships: []
       }
@@ -14039,6 +14195,21 @@ export type Database = {
         }
         Returns: Json
       }
+      activation_advance: {
+        Args: { p_athlete_id: string; p_payload?: Json; p_step: string }
+        Returns: {
+          activation_row: Json
+          ok: boolean
+          step: string
+        }[]
+      }
+      activation_finish: {
+        Args: { p_athlete_id: string }
+        Returns: {
+          finished_at: string
+          fully_activated: boolean
+        }[]
+      }
       adicionar_fichas: {
         Args: {
           p_amount: number
@@ -14123,8 +14294,16 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: string
       }
+      fn_activate_prime_reward: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
       fn_add_credits: {
         Args: { p_amount: number; p_athlete_id: string; p_reason?: string }
+        Returns: Json
+      }
+      fn_ajustar_treino_dia: {
+        Args: { p_athlete_id: string; p_changes: Json; p_data: string }
         Returns: Json
       }
       fn_award_xp:
@@ -14145,9 +14324,38 @@ export type Database = {
               new_total_xp: number
             }[]
           }
+      fn_check_onboarding_progress: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
+      fn_complete_mission: {
+        Args: { p_athlete_id: string; p_mission_type?: string }
+        Returns: {
+          consistency_score: number
+          missions_completed: number
+          weekly_count: number
+        }[]
+      }
       fn_compute_user_thresholds: { Args: { p_user_id: string }; Returns: Json }
       fn_consume_credit: {
         Args: { p_amount?: number; p_athlete_id: string; p_reason?: string }
+        Returns: Json
+      }
+      fn_forcar_catalogar_planilhas_resiliente: { Args: never; Returns: Json }
+      fn_get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_get_week_workouts: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_processar_e_catalogar_planilhas: { Args: never; Returns: Json }
+      fn_resolve_athlete_internal: {
+        Args: { p_user_email: string; p_user_id: string }
+        Returns: string
+      }
+      fn_treino_rapido: {
+        Args: {
+          p_athlete_id: string
+          p_equipamento?: string
+          p_objetivo?: string
+          p_tempo_min?: number
+        }
         Returns: Json
       }
       generate_invitation_token: { Args: never; Returns: string }
@@ -14165,6 +14373,10 @@ export type Database = {
         Returns: {
           modelo_id: string
         }[]
+      }
+      gerar_plano_contingencia: {
+        Args: { p_athlete_id: string; p_objetivo?: string }
+        Returns: Json
       }
       get_aluno_context_smarttreino: {
         Args: { p_fitpro_student_id: string }
@@ -14205,6 +14417,7 @@ export type Database = {
       }
       get_healthflix_feed: { Args: { p_athlete_id: string }; Returns: Json }
       get_user_role: { Args: { _user_id: string }; Returns: string }
+      get_week_workouts: { Args: { p_athlete_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -14271,7 +14484,7 @@ export type Database = {
       }
       prescrever_treino_rapido: {
         Args: {
-          p_athlete_id?: string
+          p_athlete_id: string
           p_equipamento?: string
           p_objetivo?: string
           p_tempo_min?: number
@@ -14315,6 +14528,10 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      sync_fitpro_planejamento: {
+        Args: { p_athlete_id: string }
+        Returns: string
       }
       tem_periodizacao_ativa: { Args: { p_aluno_id: string }; Returns: boolean }
       validate_partner_key: {
