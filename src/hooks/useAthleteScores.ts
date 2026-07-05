@@ -34,7 +34,7 @@ export const useAthleteScores = (athleteId: string | undefined) => {
         );
 
         if (err) throw err;
-        setData(result as SyncScoreData);
+        setData(result as unknown as SyncScoreData);
         setError(null);
       } catch (err) {
         console.error("[useAthleteScores] error:", err);
@@ -81,5 +81,5 @@ export const getAthleteScores = async (athleteId: string): Promise<SyncScoreData
   });
 
   if (error) throw error;
-  return data as SyncScoreData;
+  return data as unknown as SyncScoreData;
 };
