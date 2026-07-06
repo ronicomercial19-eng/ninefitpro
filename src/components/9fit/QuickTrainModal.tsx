@@ -75,8 +75,8 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .maybeSingle();
       setInfoproduct(prod);
 
-      // 2) PRESCREVER TREINO RÁPIDO via RPC oficial
-      const { data, error } = await supabase.rpc("prescrever_treino_rapido" as any, {
+      // 2) TREINO RÁPIDO via RPC canônica (Bloco A)
+      const { data, error } = await supabase.rpc("fn_treino_rapido" as any, {
         p_athlete_id: athleteId,
         p_objetivo: a.goal,
         p_tempo_min: parseInt(a.time, 10),
@@ -86,12 +86,23 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
 
       const payload: any = data || {};
       setModelos((payload.modelos || []) as Modelo[]);
-      setExercises((payload.exercises || []) as Exercise[]);
+      setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
+
+      // Insere workout_executions in_progress (start)
+      try {
+        await supabase.from("workout_executions" as any).insert({
+          athlete_id: athleteId,
+          workout_date: new Date().toISOString().split("T")[0],
+          phase_name: "quick",
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+        } as any);
+      } catch (e) { console.warn("[QuickTrain] start insert", e); }
 
       setShowingOffer(!!prod);
       setStep(3);
     } catch (e: any) {
-      console.error("[QuickTrain] prescrever_treino_rapido:", e);
+      console.error("[QuickTrain] fn_treino_rapido:", e);
       toast.error(e?.message || "Não foi possível montar o treino agora.");
     } finally {
       setLoading(false);
@@ -101,20 +112,20 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const completeWorkout = async () => {
     try {
       if (athleteId) {
-        await supabase.from("workout_executions" as any).insert({
-          athlete_id: athleteId,
-          workout_date: new Date().toISOString().split("T")[0],
-          phase_name: "quick",
-          status: "completed",
-          duration_minutes: parseInt(answers.time, 10) || 30,
-          notes: `quick_workout · ${answers.goal} · ${answers.equipment}`,
-          metadata: { answers, exercises: exercises.map((e) => e.id), modelos },
-        } as any);
-        await supabase.from("athlete_profile_snapshots" as any).insert({
-          athlete_id: athleteId,
-          source: "workout_complete",
-          snapshot_data: { type: "quick", date: new Date().toISOString(), duration: parseInt(answers.time, 10), exercises: exercises.length },
-        } as any);
+        const today = new Date().toISOString().split("T")[0];
+        // Fecha execution in_progress
+        await supabase.from("workout_executions" as any)
+          .update({
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            duration_minutes: parseInt(answers.time, 10) || 30,
+            notes: `quick_workout · ${answers.goal} · ${answers.equipment}`,
+          } as any)
+          .eq("athlete_id", athleteId)
+          .eq("workout_date", today)
+          .eq("phase_name", "quick")
+          .eq("status", "in_progress");
+
         await supabase.rpc("fn_award_xp" as any, {
           p_athlete_id: athleteId,
           p_amount: 50,

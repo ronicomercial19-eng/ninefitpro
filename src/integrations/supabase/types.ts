@@ -7478,7 +7478,7 @@ export type Database = {
         }
         Relationships: []
       }
-      registros_carga: {
+      registros_carga_deprecated: {
         Row: {
           aluno_id: string
           carga_max: number
@@ -8428,35 +8428,49 @@ export type Database = {
           exercise_name: string
           id: string
           notes: string | null
+          origem: string | null
           recorded_at: string
           reps: number
           sets: number
           user_id: string
           weight_kg: number
+          workout_execution_id: string | null
         }
         Insert: {
           created_at?: string
           exercise_name: string
           id?: string
           notes?: string | null
+          origem?: string | null
           recorded_at?: string
           reps?: number
           sets?: number
           user_id: string
           weight_kg: number
+          workout_execution_id?: string | null
         }
         Update: {
           created_at?: string
           exercise_name?: string
           id?: string
           notes?: string | null
+          origem?: string | null
           recorded_at?: string
           reps?: number
           sets?: number
           user_id?: string
           weight_kg?: number
+          workout_execution_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "strength_records_workout_execution_id_fkey"
+            columns: ["workout_execution_id"]
+            isOneToOne: false
+            referencedRelation: "workout_executions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_activity_history: {
         Row: {

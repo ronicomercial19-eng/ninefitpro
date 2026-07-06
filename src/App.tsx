@@ -71,6 +71,7 @@ import NineFitAvaliacaoGuiada from "./pages/9fit/AvaliacaoGuiada";
 
 import NineFitAjusteTreino from "./pages/9fit/AjusteTreino";
 import NineFitPostWorkout from "./pages/9fit/PostWorkout";
+import NineFitCollections from "./pages/9fit/Collections";
 import MonetizacaoPage from "./pages/admin/MonetizacaoPage";
 import SkillManagerPage from "./pages/admin/SkillManagerPage";
 import Protocols from "./pages/9fit/Protocols";
@@ -293,6 +294,7 @@ const App = () => (
 
             <Route path="/9fit/ajuste-treino" element={<NineFitLayout><NineFitAjusteTreino /></NineFitLayout>} />
             <Route path="/9fit/pos-treino" element={<NineFitLayout><NineFitPostWorkout /></NineFitLayout>} />
+            <Route path="/9fit/collections" element={<NineFitLayout><NineFitCollections /></NineFitLayout>} />
             <Route path="/9fit/native-system" element={<NineFitNativeSystem />} />
 
             <Route path="/app/monetizacao" element={

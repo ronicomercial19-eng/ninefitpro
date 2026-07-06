@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 
 
 export default function NineFitHub() {
@@ -32,7 +33,8 @@ export default function NineFitHub() {
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const { data: liveScores } = useAthleteScores(athleteId);
+  const { data: liveScores, refresh: refreshScores } = useAthleteScores(athleteId);
+  useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
 
 
@@ -167,11 +169,10 @@ export default function NineFitHub() {
         <HubRonCard syncScore={card.syncScore} name={name} />
       </div>
 
-      {/* 3.5 ATIVAÇÃO 14d + Missões reais (vw_hub_status) */}
+      {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
       <div className="px-4 mt-6 space-y-3">
         <ActivationMissionCard />
         <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
-        <HubMissionsCard missions={missions} />
       </div>
 
 
