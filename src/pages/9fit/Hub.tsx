@@ -167,11 +167,10 @@ export default function NineFitHub() {
         <HubRonCard syncScore={card.syncScore} name={name} />
       </div>
 
-      {/* 3.5 ATIVAÇÃO 14d + Missões reais (vw_hub_status) */}
+      {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
       <div className="px-4 mt-6 space-y-3">
         <ActivationMissionCard />
         <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
-        <HubMissionsCard missions={missions} />
       </div>
 
 
