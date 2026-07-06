@@ -1,316 +1,66 @@
-import { PrivateRoute } from "@/components/auth/PrivateRoute";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import AgendaPage from "./pages/AgendaPage";
-import AITrainingPage from "./pages/AITrainingPage";
-import AIChatPage from "./pages/AIChatPage";
-import AIAnalysisPage from "./pages/AIAnalysisPage";
-import Assessment from "./pages/Assessment";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import ExercisesPage from "./pages/ExercisesPage";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import ReferenceSeriesPage from "./pages/ReferenceSeriesPage";
-import ReportsPage from "./pages/ReportsPage";
-import Sales from "./pages/Sales";
-import StatisticsPage from "./pages/StatisticsPage";
-import StudentsPage from "./pages/StudentsPage";
-import SuperSetsPage from "./pages/SuperSetsPage";
-import Support from "./pages/Support";
-import SmartTreinoPage from "./pages/SmartTreinoPage";
-import SmartPeriodizer from "./pages/SmartPeriodizer";
-import FitCopilotPage from "./pages/FitCopilotPage";
-import WhatsAppRedirect from "./pages/WhatsAppRedirect";
-import RoadmapPage from "./pages/RoadmapPage";
-import ForgotPassword from "./pages/ForgotPassword";
-import SettingsPage from "./pages/SettingsPage";
-import Register from "./pages/Register";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import Layout from "@/components/Layout";
 
-// 9FIT Pages
-import NineFitLogin from "./pages/9fit/Login";
-import NineFitHub from "./pages/9fit/Hub";
-import NineFitTrain from "./pages/9fit/Train";
-// NineFitAulas removed - orphan route, replaced by AulasCreditos
-import AulasCreditos from "./pages/9fit/AulasCreditos";
-import NineFitStats from "./pages/9fit/Stats";
-import NineFitProfile from "./pages/9fit/Profile";
-import NineFitOnboarding from "./pages/9fit/Onboarding";
-import NineFitDieta from "./pages/9fit/Dieta";
-import NineFitFoods from "./pages/9fit/Foods";
-import NineFitMensagens from "./pages/9fit/Mensagens";
-import NineFitFirstAccess from "./pages/9fit/FirstAccess";
-import NineFitSocial from "./pages/9fit/Social";
-import NineFitCommunity from "./pages/9fit/Community";
-import NineFitStaff from "./pages/9fit/Staff";
-import NineFitOS from "./pages/9fit/OS";
-import NineFitRon from "./pages/9fit/Ron";
-import NineFitHealthFlix from "./pages/9fit/HealthFlix";
-import NineFitPrimePass from "./pages/9fit/PrimePass";
-import NineFitHabitFlow from "./pages/9fit/HabitFlow";
-import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
-import NineFitKitchen from "./pages/9fit/Kitchen";
-import NineFitRecovery from "./pages/9fit/Recovery";
-import NineFitProtocolo from "./pages/9fit/Protocolo";
-import NineFitPlans from "./pages/9fit/Plans";
-import NineFitPrime from "./pages/9fit/Prime";
-import NineFitOferta from "./pages/9fit/Oferta";
-import NineFitCheckout from "./pages/9fit/Checkout";
-import NineFitCheckoutSuccess from "./pages/9fit/CheckoutSuccess";
-import NineFitAtivacao from "./pages/9fit/Ativacao";
-import NineFitPlanejamento from "./pages/9fit/Planejamento";
-import NineFitBiblioteca from "./pages/9fit/Biblioteca";
-import NineFitProgresso from "./pages/9fit/Progresso";
-import NineFitNativeSystem from "./pages/9fit/NativeSystem";
-import NineFitAvaliacaoGuiada from "./pages/9fit/AvaliacaoGuiada";
+// Pages
+import IndexPage from "@/pages/Index";
+import SsoBridgePage from "@/pages/SsoBridgePage";
+import OnboardingAssessmentPage from "@/pages/OnboardingAssessmentPage";
+import AssessmentSelectionPage from "@/pages/AssessmentSelectionPage";
 
-import NineFitAjusteTreino from "./pages/9fit/AjusteTreino";
-import NineFitPostWorkout from "./pages/9fit/PostWorkout";
-import NineFitCollections from "./pages/9fit/Collections";
-import MonetizacaoPage from "./pages/admin/MonetizacaoPage";
-import SkillManagerPage from "./pages/admin/SkillManagerPage";
-import Protocols from "./pages/9fit/Protocols";
-import NineFitSettings from "./pages/9fit/Settings";
-import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
-import PosturaProPage from "./pages/admin/PosturaProPage";
-import NexusPage from "./pages/admin/NexusPage";
-import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
-import { NineFitLayout } from "./components/9fit/NineFitLayout";
-import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
+// SSO/Auth pages (exemplo)
+import LoginPage from "@/pages/auth/LoginPage";
+import CallbackPage from "@/pages/auth/CallbackPage";
 
-const queryClient = new QueryClient();
+import "./App.css";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <MissionCompleteOverlay />
-        <BrowserRouter>
-          <SovereignBootstrap>
-          <Routes>
-            {/* Public Routes - Login is the main entry point */}
-            <Route path="/" element={<Auth />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Auth />} />
-            <Route path="/register" element={<Auth />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/suporte" element={<Support />} />
-            <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/assessment" element={<Assessment />} />
+function App() {
+  return (
+    <HelmetProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* ===== Auth Routes (sem Layout) ===== */}
+                <Route path="/auth/login" element={<LoginPage />} />
+                <Route path="/auth/callback" element={<CallbackPage />} />
+                <Route path="/sso" element={<SsoBridgePage />} />
 
-            {/* App Routes - All under /app */}
-            <Route path="/app" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/alunos" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <StudentsPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/exercicios" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <ExercisesPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/super-series" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <SuperSetsPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/series-referencia" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <ReferenceSeriesPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/smart-treino" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <SmartTreinoPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/smart-periodizer" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <SmartPeriodizer />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/fit-copilot" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <FitCopilotPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/treino-ia" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <AITrainingPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/assistente-ia" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <AIChatPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/analise-ia" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <AIAnalysisPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/estatisticas" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <StatisticsPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/relatorios" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <ReportsPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/agenda" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <AgendaPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/roadmap" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <RoadmapPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/configuracoes" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <SettingsPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/healthflix" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <HealthFlixAdminPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/postura-pro" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <PosturaProPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/ron" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <NineFitRon />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            <Route path="/app/nexus" element={
-              <PrivateRoute>
-                <AppLayout>
-                  <NexusPage />
-                </AppLayout>
-              </PrivateRoute>
-            } />
-            
-            {/* 9FIT Routes - Public */}
-            <Route path="/9fit" element={<NineFitLogin />} />
-            <Route path="/9fit/login" element={<NineFitLogin />} />
-            <Route path="/9fit/onboarding" element={<NineFitOnboarding />} />
-            <Route path="/9fit/first-access" element={<NineFitFirstAccess />} />
-            
-            {/* 9FIT Routes - Protected */}
-            <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
-            <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
-            {/* Orphan route /9fit/aulas removed - use /9fit/aulas-creditos */}
-            <Route path="/9fit/aulas-creditos" element={<NineFitLayout><AulasCreditos /></NineFitLayout>} />
-            <Route path="/9fit/stats" element={<NineFitLayout><NineFitStats /></NineFitLayout>} />
-            <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />
-            <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />
-            <Route path="/9fit/foods" element={<NineFitLayout><NineFitFoods /></NineFitLayout>} />
-            <Route path="/9fit/mensagens" element={<NineFitLayout><NineFitMensagens /></NineFitLayout>} />
-            <Route path="/9fit/social" element={<NineFitLayout><NineFitSocial /></NineFitLayout>} />
-            <Route path="/9fit/community" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
-            <Route path="/9fit/staff" element={<NineFitLayout><NineFitStaff /></NineFitLayout>} />
-            <Route path="/9fit/os" element={<NineFitLayout><NineFitOS /></NineFitLayout>} />
-            <Route path="/9fit/ron" element={<NineFitLayout><NineFitRon /></NineFitLayout>} />
-            <Route path="/9fit/healthflix" element={<NineFitLayout><NineFitHealthFlix /></NineFitLayout>} />
-            <Route path="/9fit/primepass" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
-            <Route path="/9fit/habit-flow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
-            <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
-            <Route path="/9fit/kitchen" element={<NineFitKitchen />} />
-            <Route path="/9fit/recovery" element={<NineFitRecovery />} />
-            <Route path="/9fit/protocolo" element={<NineFitLayout><NineFitProtocolo /></NineFitLayout>} />
-            <Route path="/9fit/planos" element={<NineFitLayout><NineFitPlans /></NineFitLayout>} />
-            <Route path="/9fit/prime" element={<NineFitLayout><NineFitPrime /></NineFitLayout>} />
-            <Route path="/9fit/oferta/:offerId" element={<NineFitOferta />} />
-            <Route path="/9fit/checkout/:offerId" element={<NineFitCheckout />} />
-            <Route path="/9fit/checkout/success" element={<NineFitCheckoutSuccess />} />
+                {/* ===== Protected Routes (com Layout) ===== */}
+                <Route element={<Layout />}>
+                  {/* Dashboard principal */}
+                  <Route index element={<IndexPage />} />
+                  <Route path="/" element={<IndexPage />} />
 
-            <Route path="/9fit/protocols" element={<NineFitLayout><Protocols /></NineFitLayout>} />
-            <Route path="/9fit/protocols/:category" element={<NineFitLayout><Protocols /></NineFitLayout>} />
-            <Route path="/9fit/protocols/:category/:id" element={<NineFitLayout><Protocols /></NineFitLayout>} />
-            <Route path="/9fit/settings" element={<NineFitLayout><NineFitSettings /></NineFitLayout>} />
-            <Route path="/9fit/ativacao" element={<NineFitLayout><NineFitAtivacao /></NineFitLayout>} />
-            <Route path="/9fit/planejamento" element={<NineFitLayout><NineFitPlanejamento /></NineFitLayout>} />
-            <Route path="/9fit/biblioteca" element={<NineFitLayout><NineFitBiblioteca /></NineFitLayout>} />
-            <Route path="/9fit/progresso" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
-            <Route path="/9fit/avaliacao-guiada" element={<NineFitLayout><NineFitAvaliacaoGuiada /></NineFitLayout>} />
+                  {/* Assessment Onboarding Flow */}
+                  <Route path="/avaliacao-guiada/select" element={<AssessmentSelectionPage />} />
+                  <Route
+                    path="/avaliacao-guiada/minha-avaliacao"
+                    element={<OnboardingAssessmentPage mode="self" athleteId={localStorage.getItem('userId') || ''} />}
+                  />
+                  <Route
+                    path="/avaliacao-guiada/:studentId"
+                    element={<OnboardingAssessmentPage mode="professor" athleteId={''} />}
+                  />
 
-            <Route path="/9fit/ajuste-treino" element={<NineFitLayout><NineFitAjusteTreino /></NineFitLayout>} />
-            <Route path="/9fit/pos-treino" element={<NineFitLayout><NineFitPostWorkout /></NineFitLayout>} />
-            <Route path="/9fit/collections" element={<NineFitLayout><NineFitCollections /></NineFitLayout>} />
-            <Route path="/9fit/native-system" element={<NineFitNativeSystem />} />
-
-            <Route path="/app/monetizacao" element={
-              <PrivateRoute><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
-            } />
-            <Route path="/app/skills" element={
-              <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
-            } />
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </SovereignBootstrap>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </HelmetProvider>
+  );
+}
 
 export default App;
