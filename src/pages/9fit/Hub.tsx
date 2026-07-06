@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight, Library } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 
 
 export default function NineFitHub() {
@@ -32,7 +33,8 @@ export default function NineFitHub() {
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const { data: liveScores } = useAthleteScores(athleteId);
+  const { data: liveScores, refresh: refreshScores } = useAthleteScores(athleteId);
+  useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
 
 
