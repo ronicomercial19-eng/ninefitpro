@@ -19,18 +19,18 @@ export async function loadCarryProjection(
   try {
     const { data } = await supabase
       .from("workout_exercise_sets" as any)
-      .select("weight, reps, created_at, exercise_name")
+      .select("actual_weight, reps, created_at, exercise_name")
       .ilike("exercise_name", `%${exerciseName}%`)
       .order("created_at", { ascending: true })
       .limit(200);
     if (data?.length) {
-      const baseline = Math.max(...data.map((r: any) => Number(r.weight) || 0)) || 1;
+      const baseline = Math.max(...data.map((r: any) => Number(r.actual_weight) || 0)) || 1;
       const buckets = new Map<number, number[]>();
       const first = new Date((data[0] as any).created_at).getTime();
       data.forEach((r: any) => {
         const weeks = Math.floor((new Date(r.created_at).getTime() - first) / (7 * 86400 * 1000));
         const arr = buckets.get(weeks) ?? [];
-        arr.push(((Number(r.weight) || 0) / baseline) * 100);
+        arr.push(((Number(r.actual_weight) || 0) / baseline) * 100);
         buckets.set(weeks, arr);
       });
       history = [...buckets.entries()]
