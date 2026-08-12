@@ -27,13 +27,13 @@ export default function NineFitProgresso() {
       const since = new Date(Date.now() - 60 * 86400000).toISOString();
       const { data } = await supabase
         .from("avaliacoes_unificadas" as any)
-        .select("data_avaliacao, percentual_gordura")
+        .select("data_avaliacao, gordura_corporal")
         .eq("athlete_id", athleteId)
         .gte("data_avaliacao", since)
         .order("data_avaliacao");
       const points = ((data as any[]) || []).map((r) => ({
         label: new Date(r.data_avaliacao).toLocaleDateString("pt-BR", { month: "short", day: "2-digit" }),
-        value: Number(r.percentual_gordura || 0),
+        value: Number(r.gordura_corporal || 0),
       }));
       if (points.length) setBodyfat(points);
       else {
@@ -49,13 +49,13 @@ export default function NineFitProgresso() {
       // strength PRs from workout_exercise_sets
       const { data: sets } = await supabase
         .from("workout_exercise_sets" as any)
-        .select("exercise_name, weight_kg, created_at")
+        .select("exercise_name, actual_weight, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
       const map = new Map<string, number>();
       ((sets as any[]) || []).forEach((s) => {
         const k = (s.exercise_name || "").toLowerCase();
-        const w = Number(s.weight_kg || 0);
+        const w = Number(s.actual_weight || 0);
         if (w > (map.get(k) || 0)) map.set(k, w);
       });
       const next: StrengthBar[] = [];
