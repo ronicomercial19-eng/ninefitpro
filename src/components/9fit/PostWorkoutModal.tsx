@@ -56,14 +56,14 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
 
   const fetchLastRpe = async () => {
     const { data } = await supabase
-      .from("workout_progress")
-      .select("rpe")
-      .eq("aluno_id", athleteId)
-      .not("rpe", "is", null)
+      .from("workout_executions")
+      .select("avg_rpe")
+      .eq("athlete_id", athleteId)
+      .not("avg_rpe", "is", null)
       .order("completed_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (data?.rpe) setLastRpe(data.rpe as number);
+    if (data?.avg_rpe) setLastRpe(data.avg_rpe as number);
   };
 
   const handleSubmit = async () => {
@@ -71,13 +71,13 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
     try {
       const todayDate = new Date().toISOString().split("T")[0];
 
-      // Check duplicate
+      // Check duplicate (tabela real observada pelos triggers de sync)
       const { data: existing } = await supabase
-        .from("workout_progress")
+        .from("workout_executions")
         .select("id")
-        .eq("aluno_id", athleteId)
-        .eq("training_name", trainingName)
-        .eq("date", todayDate)
+        .eq("athlete_id", athleteId)
+        .eq("workout_date", todayDate)
+        .eq("status", "completed")
         .maybeSingle();
 
       if (existing) {
@@ -88,19 +88,32 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
 
       const cal = calculatedCalories;
 
-      await supabase.from("workout_progress").insert({
-        aluno_id: athleteId,
-        exercise_name: trainingName,
-        training_name: trainingName,
-        completed_at: new Date().toISOString(),
-        calories_burned: cal,
-        duration_minutes: duration,
-        rpe,
-        notes: notes || null,
-        sets: 0,
-        reps: 0,
-        date: todayDate,
-      } as any);
+      // 1) Cria a execução (dispara trigger de ativação/missão no INSERT)
+      const { data: created } = await supabase
+        .from("workout_executions")
+        .insert({
+          athlete_id: athleteId,
+          workout_date: todayDate,
+          phase_name: trainingName,
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+        } as any)
+        .select("id")
+        .single();
+
+      // 2) Marca como concluída (dispara triggers de XP/score/snapshot no UPDATE)
+      if (created?.id) {
+        await supabase
+          .from("workout_executions")
+          .update({
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            duration_minutes: duration,
+            avg_rpe: rpe,
+            notes: notes || null,
+          } as any)
+          .eq("id", created.id);
+      }
 
       // Award XP (base 100 + RPE bonus) via fn_award_xp
       const xp = 100 + (rpe > 7 ? 50 : rpe > 4 ? 25 : 0);
