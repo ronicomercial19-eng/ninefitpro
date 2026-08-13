@@ -104,9 +104,10 @@ export default function NineFitTrain() {
 
   const fetchCompletedCount = async (aid: string) => {
     const { count } = await supabase
-      .from("workout_progress")
+      .from("workout_executions")
       .select("id", { count: "exact", head: true })
-      .or(`aluno_id.eq.${aid},athlete_id.eq.${aid}`);
+      .eq("athlete_id", aid)
+      .eq("status", "completed");
     setCompletedCount(count || 0);
   };
 
