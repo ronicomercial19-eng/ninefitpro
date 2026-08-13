@@ -12,6 +12,7 @@ import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { toast } from "sonner";
+import { TrendingUp, Layers, CalendarRange } from "lucide-react";
 
 
 interface TrainingAssignment {
@@ -146,6 +147,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
+  // Periodization content (for periodization-type trainings)
+  const [periodizationModel, setPeriodizationModel] = useState<any>(null);
+  const [loadingPeriodization, setLoadingPeriodization] = useState(false);
+
   // PSE Modal
   const [showPSE, setShowPSE] = useState(false);
 
@@ -195,6 +200,25 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .catch(() => setHtmlContent(null))
         .finally(() => setLoadingContent(false));
     }
+  }, [liveTraining]);
+
+  // Load periodization model for periodization-type trainings.
+  // Este tipo nao tem "exercicios do dia": e uma visao do plano de
+  // longo prazo (macro/meso/microciclo), entao busca o catalogo
+  // periodization_models pelo model_id salvo em training_data.
+  useEffect(() => {
+    const modelId = liveTraining.training_type === 'periodization'
+      ? liveTraining.training_data?.model_id
+      : null;
+    if (!modelId) { setPeriodizationModel(null); return; }
+    setLoadingPeriodization(true);
+    supabase
+      .from("periodization_models")
+      .select("id, title, goal, duration, description, macrocycle, mesocycle, microcycle, graph_data")
+      .eq("id", modelId)
+      .maybeSingle()
+      .then(({ data }) => setPeriodizationModel(data))
+      .finally(() => setLoadingPeriodization(false));
   }, [liveTraining]);
 
   const formatTime = (s: number) => {
@@ -395,7 +419,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
               })}
             </div>
           </div>
-        ) : loadingContent ? (
+        ) : loadingContent || loadingPeriodization ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
@@ -406,6 +430,93 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             className="w-full h-[60vh] border-0 rounded-lg"
             title={liveTraining.training_name}
           />
+        ) : liveTraining.training_type === 'periodization' && periodizationModel ? (
+          <div className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h3 className="text-lg font-black text-foreground">{periodizationModel.title}</h3>
+              {periodizationModel.description && (
+                <p className="text-sm text-muted-foreground mt-1">{periodizationModel.description}</p>
+              )}
+              <div className="flex gap-2 mt-2">
+                {periodizationModel.goal && <Badge variant="secondary">{periodizationModel.goal}</Badge>}
+                {periodizationModel.duration && <Badge variant="secondary">{periodizationModel.duration}</Badge>}
+              </div>
+            </div>
+
+            {Array.isArray(periodizationModel.macrocycle) && periodizationModel.macrocycle.length > 0 && (
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                  <CalendarRange className="w-4 h-4" /> Macrociclo
+                </p>
+                <div className="space-y-2">
+                  {periodizationModel.macrocycle.map((phase: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+                      <span className="text-sm text-foreground">{phase}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {periodizationModel.graph_data?.volume && periodizationModel.graph_data?.intensity && (
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" /> Volume x Intensidade por fase
+                </p>
+                <div className="space-y-3">
+                  {periodizationModel.graph_data.volume.map((v: number, i: number) => (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>Fase {i + 1}</span>
+                        <span>Volume {v}% · Intensidade {periodizationModel.graph_data.intensity[i]}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                        <div className="h-full bg-primary" style={{ width: `${v}%` }} />
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                        <div className="h-full bg-amber-500" style={{ width: `${periodizationModel.graph_data.intensity[i]}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(periodizationModel.mesocycle) && periodizationModel.mesocycle.length > 0 && (
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                  <Layers className="w-4 h-4" /> Estratégia por Mesociclo
+                </p>
+                <div className="space-y-1">
+                  {periodizationModel.mesocycle.flat().map((m: string, i: number) => (
+                    <p key={i} className="text-sm text-foreground/85 flex gap-2">
+                      <span className="text-primary">•</span> {m}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(periodizationModel.microcycle) && periodizationModel.microcycle.length > 0 && (
+              <div className="bg-card border border-border rounded-lg p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Padrão Semanal (Microciclo)
+                </p>
+                <div className="space-y-1">
+                  {periodizationModel.microcycle.flat().map((m: string, i: number) => (
+                    <p key={i} className="text-sm text-foreground/85 flex gap-2">
+                      <span className="text-primary">•</span> {m}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground text-center px-4">
+              Este é um plano de periodização (visão do ciclo completo). Fale com seu professor para o treino detalhado do dia.
+            </p>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
