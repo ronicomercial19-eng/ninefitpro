@@ -24,6 +24,8 @@ interface TrainingAssignment {
   is_active: boolean;
   training_type?: string;
   html_file_url?: string;
+  periodization_html?: string;
+  periodization_file_url?: string;
   training_data?: any;
 }
 
@@ -184,11 +186,32 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     }
   }, [currentIdx]);
 
-  // Load HTML content for html-type
+  // Load HTML content for html-type, and for periodization assigned as
+  // HTML colado ou PDF (periodization_html / periodization_file_url),
+  // que sao 2 das 3 formas que o professor pode atribuir periodizacao
+  // (PeriodizationAssignDialog: aba PDF, aba HTML, aba Modelo).
   useEffect(() => {
-    if (!isStructured && liveTraining.html_file_url && liveTraining.training_type !== 'link') {
+    if (isStructured) return;
+
+    // Periodizacao colada como HTML direto: sem fetch, ja e o conteudo.
+    if (liveTraining.training_type === 'periodization' && liveTraining.periodization_html) {
+      setHtmlContent(
+        liveTraining.periodization_html.startsWith('<html') ||
+        liveTraining.periodization_html.startsWith('<!DOCTYPE')
+          ? liveTraining.periodization_html
+          : `<!DOCTYPE html><html><body>${liveTraining.periodization_html}</body></html>`
+      );
+      return;
+    }
+
+    // Periodizacao como PDF: periodization_file_url aponta pro Storage.
+    const urlToFetch = liveTraining.training_type === 'periodization'
+      ? liveTraining.periodization_file_url
+      : (liveTraining.training_type !== 'link' ? liveTraining.html_file_url : null);
+
+    if (urlToFetch) {
       setLoadingContent(true);
-      fetch(liveTraining.html_file_url)
+      fetch(urlToFetch)
         .then(r => r.text())
         .then(text => {
           if (text.startsWith('<html') || text.startsWith('<!DOCTYPE') || text.startsWith('<HTML')) {
@@ -207,7 +230,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   // longo prazo (macro/meso/microciclo), entao busca o catalogo
   // periodization_models pelo model_id salvo em training_data.
   useEffect(() => {
-    const modelId = liveTraining.training_type === 'periodization'
+    const hasDirectContent = !!(liveTraining.periodization_html || liveTraining.periodization_file_url);
+    const modelId = liveTraining.training_type === 'periodization' && !hasDirectContent
       ? liveTraining.training_data?.model_id
       : null;
     if (!modelId) { setPeriodizationModel(null); return; }
