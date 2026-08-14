@@ -5,7 +5,7 @@ import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { format, subDays, startOfWeek, addDays } from "date-fns";
 import { getAthleteStats, getAthleteById } from '@/services/athletes.service';
-import { getWorkoutProgress } from '@/services/training.service';
+import { getWorkoutExecutions } from '@/services/training.service';
 import { supabase } from "@/integrations/supabase/client";
 
 interface WeekDay { day: string; value: number; calories: number; }
@@ -32,16 +32,17 @@ export default function NineFitStats() {
         setStats({ totalCalories, streak: currentStreak, totalWorkouts, totalXP: totalXp, level });
       }
 
-      // Weekly data from workout progress
-      const progressResult = await getWorkoutProgress(id);
+      // Weekly data from workout_executions (workout_progress e tabela orfa)
+      const progressResult = await getWorkoutExecutions(id, { status: "completed" });
       const workouts = progressResult.data ?? [];
-      
+
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const dayLabels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
       const weekly: WeekDay[] = dayLabels.map((day, i) => {
         const date = format(addDays(weekStart, i), "yyyy-MM-dd");
-        const dayWorkouts = workouts.filter((w: any) => format(new Date(w.completed_at || w.created_at), "yyyy-MM-dd") === date);
-        const cal = dayWorkouts.reduce((s: number, w: any) => s + (w.calories_burned || 150), 0);
+        const dayWorkouts = workouts.filter((w: any) => (w.workout_date || "").slice(0, 10) === date);
+        // workout_executions nao guarda calorias; estimativa via duration*rpe*1.2 (mesma formula do PostWorkoutModal)
+        const cal = dayWorkouts.reduce((s: number, w: any) => s + Math.round((w.duration_minutes ?? 45) * (w.avg_rpe ?? 5) * 1.2), 0);
         return { day, value: dayWorkouts.length > 0 ? Math.min(100, 60 + dayWorkouts.length * 20) : 0, calories: cal };
       });
 
