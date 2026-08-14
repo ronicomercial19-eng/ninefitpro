@@ -129,19 +129,27 @@ export async function getAthleteStats(athleteId: string): Promise<ApiResponse<{
 }>> {
   try {
     const { data: athlete } = await supabase.from('athletes').select('level, total_xp').eq('id', athleteId).single();
+    // workout_progress e uma tabela orfa (sem gravacoes desde 13/08/2026); a fonte
+    // real e workout_executions, observada pelos triggers de sync. Essa tabela nao
+    // guarda calorias, entao estimamos com a mesma formula usada no resumo pos-treino
+    // (PostWorkoutModal.tsx: duration_minutes * rpe * 1.2) em vez de deixar zerado.
     const { data: progress } = await supabase
-      .from('workout_progress')
-      .select('*')
-      .eq('aluno_id', athleteId)
-      .order('date', { ascending: false });
+      .from('workout_executions')
+      .select('workout_date, duration_minutes, avg_rpe')
+      .eq('athlete_id', athleteId)
+      .eq('status', 'completed')
+      .order('workout_date', { ascending: false });
 
     const totalWorkouts = progress?.length ?? 0;
-    const totalCalories = progress?.reduce((sum, p) => sum + (p.calories_burned ?? 0), 0) ?? 0;
+    const totalCalories = progress?.reduce((sum, p) => {
+      const estimated = Math.round((p.duration_minutes ?? 45) * (p.avg_rpe ?? 5) * 1.2);
+      return sum + estimated;
+    }, 0) ?? 0;
 
     let currentStreak = 0;
     if (progress && progress.length > 0) {
       const today = new Date();
-      const dates = progress.map(p => new Date(p.date).toDateString());
+      const dates = progress.map(p => new Date(p.workout_date).toDateString());
       for (let i = 0; i < 7; i++) {
         const checkDate = new Date(today);
         checkDate.setDate(checkDate.getDate() - i);
