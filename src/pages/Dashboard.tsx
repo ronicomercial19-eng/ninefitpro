@@ -86,22 +86,24 @@ export default function Dashboard() {
         }));
       }
 
-      // RPE Alerts - check workout_progress for high/low RPE averages
+      // RPE Alerts - check workout_executions for high/low RPE averages
+      // (workout_progress e tabela orfa, PostWorkoutModal grava em workout_executions desde 13/08/2026)
       const rpeAlerts: DashboardStats['rpeAlerts'] = [];
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const { data: recentProgress } = await supabase
-        .from('workout_progress')
-        .select('aluno_id, rpe')
-        .not('rpe', 'is', null)
-        .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+        .from('workout_executions')
+        .select('athlete_id, avg_rpe')
+        .not('avg_rpe', 'is', null)
+        .eq('status', 'completed')
+        .gte('workout_date', sevenDaysAgo.toISOString().split('T')[0]);
 
       if (recentProgress && recentProgress.length > 0) {
         const byAthlete = new Map<string, number[]>();
         recentProgress.forEach((p: any) => {
-          const arr = byAthlete.get(p.aluno_id) || [];
-          arr.push(p.rpe);
-          byAthlete.set(p.aluno_id, arr);
+          const arr = byAthlete.get(p.athlete_id) || [];
+          arr.push(p.avg_rpe);
+          byAthlete.set(p.athlete_id, arr);
         });
         
         const athleteNameMap = new Map(allAthletes.map((a: any) => [a.id, a.name]));
