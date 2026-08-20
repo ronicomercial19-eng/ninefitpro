@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PDIWizard } from "@/components/9fit/PDIWizard";
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
+import { NotificationBell } from "@/components/9fit/NotificationBell";
 
 interface MenuItem {
   icon: any;
@@ -23,7 +24,6 @@ export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
   const [staffOnline, setStaffOnline] = useState(3);
-  const [nextInvoice, setNextInvoice] = useState("12/11");
   const [planTier, setPlanTier] = useState("Aluno Premium");
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function NineFitProfile() {
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
     { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
-    { icon: CreditCard, label: "Pagamento & Plano", sub: `Próxima fatura: ${nextInvoice}`, route: "/9fit/prime" },
+    { icon: CreditCard, label: "Pagamento & Plano", sub: "Ver histórico e planos", route: "/9fit/billing" },
   ];
 
   return (
@@ -58,7 +58,7 @@ export default function NineFitProfile() {
           <Flame className="w-5 h-5 text-primary" />
         </div>
         <h1 className="flex-1 text-center text-2xl font-display">Configurações</h1>
-        <div className="w-9 h-9" />
+        <NotificationBell />
       </header>
 
       {/* Profile */}
