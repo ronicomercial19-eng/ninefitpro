@@ -5,6 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users, Check, X
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { toast } from "sonner";
 
 interface GymClass {
@@ -17,18 +18,19 @@ interface GymClass {
   description: string | null;
 }
 
-interface Booking {
+interface Appointment {
   id: string;
-  class_id: string;
+  gym_class_id: string | null;
   status: string;
 }
 
 export default function NineFitAulas() {
   const { user } = useAuth();
+  const { athleteId } = useAthleteId();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [classes, setClasses] = useState<GymClass[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
 
@@ -38,8 +40,8 @@ export default function NineFitAulas() {
 
   useEffect(() => {
     fetchClasses();
-    fetchBookings();
-  }, [currentMonth, user]);
+    if (athleteId) fetchBookings();
+  }, [currentMonth, athleteId]);
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -60,32 +62,40 @@ export default function NineFitAulas() {
   };
 
   const fetchBookings = async () => {
-    if (!user) return;
+    if (!athleteId) return;
 
     const { data, error } = await supabase
-      .from("class_bookings")
-      .select("id, class_id, status")
-      .or(`user_id.eq.${user.id},user_email.eq.${user.email}`);
+      .from("appointments")
+      .select("id, gym_class_id, status")
+      .eq("student_id", athleteId)
+      .not("gym_class_id", "is", null);
 
     if (!error && data) {
-      setBookings(data);
+      setBookings(data as Appointment[]);
     }
   };
 
-  const handleBookClass = async (classId: string) => {
-    if (!user) {
+  const handleBookClass = async (gymClass: GymClass) => {
+    if (!user || !athleteId) {
       toast.error("Faça login para agendar aulas");
       return;
     }
 
-    setBookingLoading(classId);
+    setBookingLoading(gymClass.id);
 
-    const { error } = await supabase.from("class_bookings").insert({
-      class_id: classId,
-      user_id: user.id,
-      user_email: user.email || "",
-      status: "confirmed",
-      booking_time: new Date().toISOString(),
+    const { data: athleteRow } = await supabase
+      .from("athletes").select("coach_id").eq("id", athleteId).maybeSingle();
+
+    const { error } = await supabase.from("appointments").insert({
+      student_id: athleteId,
+      teacher_id: (athleteRow as any)?.coach_id || null,
+      gym_class_id: gymClass.id,
+      title: gymClass.class_name,
+      appointment_type: "aula_grade",
+      scheduled_at: gymClass.class_datetime,
+      duration: 60,
+      location: gymClass.location,
+      status: "scheduled",
     });
 
     if (error) {
@@ -98,15 +108,15 @@ export default function NineFitAulas() {
     setBookingLoading(null);
   };
 
-  const handleCancelBooking = async (classId: string) => {
-    const booking = bookings.find((b) => b.class_id === classId);
+  const handleCancelBooking = async (gymClassId: string) => {
+    const booking = bookings.find((b) => b.gym_class_id === gymClassId);
     if (!booking) return;
 
-    setBookingLoading(classId);
+    setBookingLoading(gymClassId);
 
     const { error } = await supabase
-      .from("class_bookings")
-      .delete()
+      .from("appointments")
+      .update({ status: "cancelled" })
       .eq("id", booking.id);
 
     if (error) {
@@ -119,8 +129,8 @@ export default function NineFitAulas() {
     setBookingLoading(null);
   };
 
-  const isBooked = (classId: string) => {
-    return bookings.some((b) => b.class_id === classId && b.status === "confirmed");
+  const isBooked = (gymClassId: string) => {
+    return bookings.some((b) => b.gym_class_id === gymClassId && (b.status === "scheduled" || b.status === "confirmed"));
   };
 
   const getClassesForDate = (date: Date) => {
@@ -313,7 +323,7 @@ export default function NineFitAulas() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleBookClass(gymClass.id)}
+                        onClick={() => handleBookClass(gymClass)}
                         disabled={isLoading || gymClass.available_slots === 0}
                         className="w-full flex items-center justify-center gap-2 py-2 bg-primary text-primary-foreground rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                       >
@@ -342,7 +352,7 @@ export default function NineFitAulas() {
             Seus Agendamentos
           </h2>
           
-          {bookings.filter((b) => b.status === "confirmed").length === 0 ? (
+          {bookings.filter((b) => b.status === "scheduled" || b.status === "confirmed").length === 0 ? (
             <div className="bg-card border border-border rounded-sm p-6 text-center">
               <CalendarDays className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">
@@ -355,9 +365,9 @@ export default function NineFitAulas() {
           ) : (
             <div className="space-y-2">
               {bookings
-                .filter((b) => b.status === "confirmed")
+                .filter((b) => b.status === "scheduled" || b.status === "confirmed")
                 .map((booking) => {
-                  const gymClass = classes.find((c) => c.id === booking.class_id);
+                  const gymClass = classes.find((c) => c.id === booking.gym_class_id);
                   if (!gymClass) return null;
 
                   return (
