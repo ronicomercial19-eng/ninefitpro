@@ -4,6 +4,7 @@ import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethosco
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { toast } from "sonner";
 
 type Pro = {
@@ -21,24 +22,26 @@ const ROLE_LABEL: Record<string, string> = {
   nutritionist: "Nutricionista",
 };
 
-const SERVICES_BY_ROLE: Record<string, { key: string; name: string; desc: string; icon: any }[]> = {
+const SERVICES_BY_ROLE: Record<string, { key: string; name: string; desc: string; icon: any; appointmentType: string; durationMin: number }[]> = {
   default: [
-    { key: "consultoria", name: "Consultoria 1:1", desc: "30 min · vídeo-chamada", icon: Briefcase },
-    { key: "avaliacao", name: "Avaliação Física", desc: "Postural + bioimpedância", icon: Stethoscope },
-    { key: "aula", name: "Aula Presencial", desc: "Sessão de 50 min", icon: Calendar },
+    { key: "consultoria", name: "Consultoria 1:1", desc: "30 min · vídeo-chamada", icon: Briefcase, appointmentType: "consultoria", durationMin: 30 },
+    { key: "avaliacao", name: "Avaliação Física", desc: "Postural + bioimpedância", icon: Stethoscope, appointmentType: "avaliacao_fisica", durationMin: 45 },
+    { key: "aula", name: "Aula Presencial", desc: "Sessão de 50 min", icon: Calendar, appointmentType: "aula", durationMin: 50 },
   ],
   nutritionist: [
-    { key: "plano", name: "Plano Alimentar", desc: "Personalizado · 4 semanas", icon: Apple },
-    { key: "consultoria", name: "Consultoria Nutri", desc: "45 min · vídeo-chamada", icon: Briefcase },
+    { key: "plano", name: "Plano Alimentar", desc: "Personalizado · 4 semanas", icon: Apple, appointmentType: "plano_alimentar", durationMin: 45 },
+    { key: "consultoria", name: "Consultoria Nutri", desc: "45 min · vídeo-chamada", icon: Briefcase, appointmentType: "consultoria", durationMin: 45 },
   ],
 };
 
 export default function NineFitStaff() {
   const navigate = useNavigate();
+  const { athleteId, athleteName } = useAthleteId();
   const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
   const [pros, setPros] = useState<Pro[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Pro | null>(null);
+  const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -59,11 +62,41 @@ export default function NineFitStaff() {
 
   const services = selected ? (SERVICES_BY_ROLE[selected.role] || SERVICES_BY_ROLE.default) : [];
 
-  const bookService = (svcKey: string) => {
+  const bookService = async (svc: { key: string; name: string; appointmentType: string; durationMin: number }) => {
     if (!selected) return;
-    toast.success(`Agendando ${svcKey} com ${selected.full_name}...`);
-    setSelected(null);
-    navigate("/9fit/aulas-creditos");
+    if (!athleteId) {
+      toast.error("Não encontramos seu perfil de aluno. Tente novamente em instantes.");
+      return;
+    }
+
+    setBooking(true);
+    try {
+      // Próximo horário disponível provisório (hoje + 1h, arredondado) — o professor confirma o horário definitivo na Agenda dele
+      const when = new Date();
+      when.setMinutes(0, 0, 0);
+      when.setHours(when.getHours() + 1);
+
+      const { error } = await supabase.from("appointments").insert({
+        student_id: athleteId,
+        teacher_id: selected.user_id,
+        title: `${svc.name} — ${athleteName || ""}`.trim(),
+        appointment_type: svc.appointmentType,
+        scheduled_at: when.toISOString(),
+        duration: svc.durationMin,
+        status: "scheduled",
+        notes: `Solicitado via Staff pelo aluno. Horário provisório — aguardando confirmação de ${selected.full_name}.`,
+      });
+
+      if (error) throw error;
+
+      toast.success(`Solicitação enviada para ${selected.full_name}. Você será notificado quando confirmar.`);
+      setSelected(null);
+      navigate("/9fit/aulas-creditos");
+    } catch (e: any) {
+      toast.error("Erro ao agendar: " + e.message);
+    } finally {
+      setBooking(false);
+    }
   };
 
   return (
@@ -189,8 +222,9 @@ export default function NineFitStaff() {
                 {services.map((s) => (
                   <button
                     key={s.key}
-                    onClick={() => bookService(s.key)}
-                    className="w-full p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/40 transition flex items-center gap-3 text-left"
+                    onClick={() => bookService(s)}
+                    disabled={booking}
+                    className="w-full p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/40 transition flex items-center gap-3 text-left disabled:opacity-50"
                   >
                     <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
                       <s.icon className="w-5 h-5 text-primary" />
