@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck,
+  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, BellRing, BellOff,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PDIWizard } from "@/components/9fit/PDIWizard";
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
 import { NotificationBell } from "@/components/9fit/NotificationBell";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface MenuItem {
   icon: any;
@@ -27,6 +28,7 @@ export default function NineFitProfile() {
   const [planTier, setPlanTier] = useState("Aluno Premium");
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications();
 
   useEffect(() => {
     (async () => {
@@ -73,6 +75,27 @@ export default function NineFitProfile() {
           </p>
         </div>
       </section>
+
+      {/* Push notifications toggle */}
+      {pushSupported && (
+        <section className="px-4 mt-4">
+          <button
+            onClick={pushSubscribed ? unsubscribePush : subscribePush}
+            disabled={pushLoading}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition disabled:opacity-50"
+          >
+            <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
+              {pushSubscribed ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-display text-lg">{pushSubscribed ? "Notificações push ativas" : "Ativar notificações push"}</p>
+              <p className="text-xs text-muted-foreground">
+                {pushSubscribed ? "Toque para desativar neste dispositivo" : "Receba avisos de treino e agenda no celular"}
+              </p>
+            </div>
+          </button>
+        </section>
+      )}
 
       {/* Menu */}
       <div className="px-4 mt-6 space-y-3">
