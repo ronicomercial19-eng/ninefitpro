@@ -12,6 +12,13 @@ export interface EmbeddedApp {
   allow?: string;
 }
 
+// NOTA: "staff" foi removido daqui de propósito (25/08/2026).
+// Apontava para https://stevent.lovable.app/fitpro-staff — um app externo/demo
+// sem nenhuma conexão com o banco de profissionais real do FitPro (tela de
+// "Iniciar Matching" fake). O Staff de verdade vive em /9fit/staff (Staff.tsx),
+// que lê a tabela `profiles` e grava agendamentos reais em `appointments`.
+// physio_modules.cta_route da key 'staff' já foi atualizado no banco para /9fit/staff.
+
 export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
   store: {
     key: "store",
@@ -25,13 +32,6 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
     label: "Fitness Place",
     url: "https://fitnessplace.lovable.app",
     allow: "clipboard-write; fullscreen; payment",
-  },
-  staff: {
-    key: "staff",
-    label: "9FIT Staff",
-    url: "https://stevent.lovable.app/fitpro-staff",
-    description: "Matching e agendamento de profissionais",
-    allow: "clipboard-write; geolocation; fullscreen",
   },
   "avaliacao-guiada": {
     key: "avaliacao-guiada",
