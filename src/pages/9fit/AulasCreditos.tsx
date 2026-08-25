@@ -66,7 +66,9 @@ export default function AulasCreditos() {
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [classesPerMonth, setClassesPerMonth] = useState(0);
+  // Créditos vêm de student_credits — a MESMA tabela que o professor usa em "Enviar Créditos" na Agenda dele.
+  const [creditsTotal, setCreditsTotal] = useState(0);
+  const [creditsUsed, setCreditsUsed] = useState(0);
   const [extractFilter, setExtractFilter] = useState<"all" | "completed" | "no_show" | "scheduled" | "cancelled">("all");
 
   // Schedule form
@@ -75,6 +77,7 @@ export default function AulasCreditos() {
   const [notes, setNotes] = useState("");
 
   const todayISO = format(new Date(), "yyyy-MM-dd");
+  const creditsRemaining = Math.max(0, creditsTotal - creditsUsed);
 
   const fetchAppointments = useCallback(async () => {
     if (!athleteId) return;
@@ -93,34 +96,34 @@ export default function AulasCreditos() {
     setLoading(false);
   }, [athleteId]);
 
-  const fetchPlan = useCallback(async () => {
-    if (!user?.email) return;
+  const fetchCredits = useCallback(async () => {
+    if (!athleteId) return;
     const { data } = await supabase
-      .from("user_plans")
-      .select("classes_per_month")
-      .eq("user_email", user.email)
-      .eq("is_active", true)
-      .order("started_at", { ascending: false })
-      .limit(1)
+      .from("student_credits")
+      .select("total_credits, used_credits")
+      .eq("student_id", athleteId)
       .maybeSingle();
-    setClassesPerMonth((data as any)?.classes_per_month || 0);
-  }, [user?.email]);
+    setCreditsTotal((data as any)?.total_credits || 0);
+    setCreditsUsed((data as any)?.used_credits || 0);
+  }, [athleteId]);
 
   useEffect(() => {
     fetchAppointments();
-    fetchPlan();
-  }, [fetchAppointments, fetchPlan]);
+    fetchCredits();
+  }, [fetchAppointments, fetchCredits]);
 
-  // Realtime
+  // Realtime — agendamentos e créditos (créditos podem mudar quando o professor envia mais)
   useEffect(() => {
     if (!athleteId) return;
     const ch = supabase
       .channel(`appts-${athleteId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "appointments", filter: `student_id=eq.${athleteId}` },
         () => fetchAppointments())
+      .on("postgres_changes", { event: "*", schema: "public", table: "student_credits", filter: `student_id=eq.${athleteId}` },
+        () => fetchCredits())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [athleteId, fetchAppointments]);
+  }, [athleteId, fetchAppointments, fetchCredits]);
 
   // ---- Derived counts ----
   const monthAppts = useMemo(() => {
@@ -135,7 +138,6 @@ export default function AulasCreditos() {
   const realizadasMes = monthAppts.filter(a => a.status === "completed").length;
   const perdidasMes = monthAppts.filter(a => a.status === "no_show").length;
   const agendadasMes = monthAppts.filter(a => a.status === "scheduled" || a.status === "confirmed").length;
-  const restantes = Math.max(0, classesPerMonth - realizadasMes - agendadasMes);
 
   // ---- Actions ----
   const handleSchedule = async () => {
@@ -144,8 +146,8 @@ export default function AulasCreditos() {
 
     const when = new Date(`${date}T${time}:00`);
     if (isBefore(when, new Date())) return toast.error("Não é possível agendar no passado");
-    if (classesPerMonth > 0 && agendadasMes + realizadasMes >= classesPerMonth) {
-      return toast.error("Você já usou ou agendou todas as aulas do plano deste mês");
+    if (creditsRemaining <= 0) {
+      return toast.error("Você não tem créditos disponíveis. Fale com seu professor.");
     }
 
     setBusy(true);
@@ -165,9 +167,17 @@ export default function AulasCreditos() {
       });
       if (error) throw error;
 
+      // Debita 1 crédito ao agendar
+      const { error: creditError } = await supabase
+        .from("student_credits")
+        .update({ used_credits: creditsUsed + 1, updated_at: new Date().toISOString() })
+        .eq("student_id", athleteId);
+      if (creditError) console.error("Erro ao debitar crédito:", creditError);
+
       toast.success("Aula agendada. Confirme presença até 1h antes do horário.");
       setDate(""); setTime(""); setNotes("");
       fetchAppointments();
+      fetchCredits();
     } catch (e: any) {
       toast.error("Erro ao agendar: " + e.message);
     } finally {
@@ -198,8 +208,18 @@ export default function AulasCreditos() {
         .update({ status: "cancelled" })
         .eq("id", a.id);
       if (error) throw error;
+
+      // Devolve o crédito ao cancelar (se ainda não tinha sido usado/perdido)
+      if (a.status === "scheduled" || a.status === "confirmed") {
+        await supabase
+          .from("student_credits")
+          .update({ used_credits: Math.max(0, creditsUsed - 1), updated_at: new Date().toISOString() })
+          .eq("student_id", athleteId);
+      }
+
       toast.success("Agendamento cancelado");
       fetchAppointments();
+      fetchCredits();
     } catch (e: any) {
       toast.error("Erro: " + e.message);
     } finally { setBusy(false); }
@@ -239,23 +259,26 @@ export default function AulasCreditos() {
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-label">MEU PLANO</p>
+                <p className="text-label">MEUS CRÉDITOS</p>
                 <p className="text-xl font-bold mt-1">
-                  Aulas do mês:{" "}
-                  <span className="text-primary">{realizadasMes}</span>
-                  <span className="text-muted-foreground"> / {classesPerMonth || "—"}</span>
+                  Disponíveis:{" "}
+                  <span className="text-primary">{creditsRemaining}</span>
+                  <span className="text-muted-foreground"> / {creditsTotal}</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {agendadasMes} agendada{agendadasMes !== 1 ? "s" : ""} · {restantes} restante{restantes !== 1 ? "s" : ""} · {perdidasMes} perdida{perdidasMes !== 1 ? "s" : ""}
+                  {agendadasMes} agendada{agendadasMes !== 1 ? "s" : ""} este mês · {realizadasMes} realizada{realizadasMes !== 1 ? "s" : ""} · {perdidasMes} perdida{perdidasMes !== 1 ? "s" : ""}
                 </p>
+                {creditsTotal === 0 && (
+                  <p className="text-xs text-amber-400 mt-1">Nenhum crédito cadastrado — fale com seu professor.</p>
+                )}
               </div>
               <Activity className="w-8 h-8 text-primary opacity-60" />
             </div>
-            {classesPerMonth > 0 && (
+            {creditsTotal > 0 && (
               <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all"
-                  style={{ width: `${Math.min(100, ((realizadasMes + agendadasMes) / classesPerMonth) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (creditsUsed / creditsTotal) * 100)}%` }}
                 />
               </div>
             )}
@@ -284,7 +307,7 @@ export default function AulasCreditos() {
               <p>
                 A aula só conta como <span className="text-foreground font-medium">realizada</span> se você
                 confirmar presença em até <span className="text-primary font-medium">1h antes</span> do horário.
-                Sem confirmação, ela vira <span className="text-rose-400">perdida</span>.
+                Sem confirmação, ela vira <span className="text-rose-400">perdida</span> (crédito não é devolvido).
               </p>
             </div>
 
@@ -294,7 +317,8 @@ export default function AulasCreditos() {
                 <Input
                   id="date" type="date" value={date} min={todayISO}
                   onChange={(e) => setDate(e.target.value)}
-                  className="mt-1 bg-elevated border-border"
+                  style={{ colorScheme: "dark" }}
+                  className="mt-1 bg-elevated border-border text-foreground"
                 />
               </div>
               <div>
@@ -302,7 +326,8 @@ export default function AulasCreditos() {
                 <Input
                   id="time" type="time" value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="mt-1 bg-elevated border-border"
+                  style={{ colorScheme: "dark" }}
+                  className="mt-1 bg-elevated border-border text-foreground"
                 />
               </div>
               <div>
@@ -317,7 +342,7 @@ export default function AulasCreditos() {
 
             <Button
               onClick={handleSchedule}
-              disabled={busy || !date || !time}
+              disabled={busy || !date || !time || creditsRemaining <= 0}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12"
             >
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Agendar aula <ChevronRight className="w-4 h-4 ml-1" /></>}
@@ -399,8 +424,8 @@ export default function AulasCreditos() {
               <p className="text-xl font-bold text-rose-400 mt-1">{perdidasMes}</p>
             </div>
             <div className="surface-card p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Restantes</p>
-              <p className="text-xl font-bold text-primary mt-1">{restantes}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Créditos</p>
+              <p className="text-xl font-bold text-primary mt-1">{creditsRemaining}</p>
             </div>
           </div>
 
