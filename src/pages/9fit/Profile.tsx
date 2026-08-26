@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, BellRing, BellOff,
+  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, BellRing, BellOff, Share,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,19 @@ interface MenuItem {
   badgeStyle?: "neon" | "outline";
 }
 
+function isStandalone() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    (window.navigator as any).standalone === true
+  );
+}
+
+function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+}
+
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
@@ -29,6 +42,7 @@ export default function NineFitProfile() {
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications();
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -51,6 +65,20 @@ export default function NineFitProfile() {
     { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
     { icon: CreditCard, label: "Pagamento & Plano", sub: "Ver histórico e planos", route: "/9fit/billing" },
   ];
+
+  const handlePushClick = () => {
+    // iOS Safari só expõe a API de Push quando o app está instalado (modo standalone).
+    // Fora disso, o navegador simplesmente não suporta — orientamos a instalar primeiro.
+    if (isIOS() && !isStandalone()) {
+      setShowIOSInstructions(true);
+      return;
+    }
+    if (!pushSupported) {
+      setShowIOSInstructions(true);
+      return;
+    }
+    pushSubscribed ? unsubscribePush() : subscribePush();
+  };
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -76,26 +104,47 @@ export default function NineFitProfile() {
         </div>
       </section>
 
-      {/* Push notifications toggle */}
-      {pushSupported && (
-        <section className="px-4 mt-4">
-          <button
-            onClick={pushSubscribed ? unsubscribePush : subscribePush}
-            disabled={pushLoading}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition disabled:opacity-50"
-          >
-            <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
-              {pushSubscribed ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-display text-lg">{pushSubscribed ? "Notificações push ativas" : "Ativar notificações push"}</p>
-              <p className="text-xs text-muted-foreground">
-                {pushSubscribed ? "Toque para desativar neste dispositivo" : "Receba avisos de treino e agenda no celular"}
-              </p>
-            </div>
-          </button>
-        </section>
-      )}
+      {/* Push notifications toggle — sempre visível, orienta instalação quando necessário */}
+      <section className="px-4 mt-4">
+        <button
+          onClick={handlePushClick}
+          disabled={pushLoading}
+          className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition disabled:opacity-50"
+        >
+          <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
+            {pushSubscribed ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-display text-lg">
+              {pushSubscribed ? "Notificações push ativas" : "Ativar notificações push"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {pushSubscribed
+                ? "Toque para desativar neste dispositivo"
+                : isIOS() && !isStandalone()
+                ? "No iPhone: instale o app na tela de início primeiro"
+                : "Receba avisos de treino e agenda no celular"}
+            </p>
+          </div>
+        </button>
+
+        {showIOSInstructions && (
+          <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground space-y-2">
+            <p className="text-foreground font-medium flex items-center gap-2">
+              <Share className="w-4 h-4 text-primary" /> Pra ativar notificações no iPhone:
+            </p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Toque no ícone de compartilhar do Safari (o quadrado com a seta pra cima)</li>
+              <li>Toque em "Adicionar à Tela de Início"</li>
+              <li>Abra o 9FIT pelo ícone na tela de início (não pelo Safari)</li>
+              <li>Volte aqui e toque em "Ativar notificações push"</li>
+            </ol>
+            <button onClick={() => setShowIOSInstructions(false)} className="text-primary underline">
+              Entendi
+            </button>
+          </div>
+        )}
+      </section>
 
       {/* Menu */}
       <div className="px-4 mt-6 space-y-3">
