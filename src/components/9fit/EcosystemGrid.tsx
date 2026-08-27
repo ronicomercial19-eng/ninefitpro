@@ -33,23 +33,32 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
     q.then(async ({ data }) => {
       const list = (data ?? []) as any[];
       setItems(list);
+
       const keys = list.map((m) => m.connector_key).filter(Boolean);
-      if (keys.length) {
-        const { data: conns } = await supabase
-          .from("api_connectors").select("key, status").in("key", keys);
-        const map: Record<string, "online" | "waiting"> = {};
-        list.forEach((m) => {
-          if (m.connector_key) {
-            const c = (conns || []).find((x: any) => x.key === m.connector_key);
-            map[m.key] = c?.status === "active" ? "online" : "waiting";
-          } else if (["staff", "foods", "prime"].includes(m.key)) map[m.key] = "online";
-        });
-        setStatusByKey(map);
-      }
+      const conns = keys.length
+        ? (await supabase.from("api_connectors").select("key, status").in("key", keys)).data
+        : [];
+
+      // FIX #10 (QA Master): módulo sem connector_key não depende de API
+      // externa nenhuma — é nativo do app e status='active' no banco já
+      // garante isso, então é "online" por padrão. Só fica "waiting" quando
+      // TEM um connector_key e esse conector não está ativo.
+      const map: Record<string, "online" | "waiting"> = {};
+      list.forEach((m) => {
+        if (!m.connector_key) {
+          map[m.key] = "online";
+        } else {
+          const c = (conns || []).find((x: any) => x.key === m.connector_key);
+          map[m.key] = c?.status === "active" ? "online" : "waiting";
+        }
+      });
+      setStatusByKey(map);
     });
   }, [category]);
 
-  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length || items.length;
+  // Sem fallback pra items.length — o contador reflete o status real
+  // de cada card, nunca um número que não bate com o grid abaixo.
+  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
 
   if (!items.length) return null;
 
