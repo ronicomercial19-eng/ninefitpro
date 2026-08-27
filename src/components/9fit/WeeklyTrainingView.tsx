@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Play, Loader2, Dumbbell, Lock, Check } from "lucide-react";
-import { toast } from "sonner";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -48,7 +47,6 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
   const [days, setDays] = useState<DayPlan[]>([]);
   const [phase, setPhase] = useState<string>("");
   const [match, setMatch] = useState<number>(0);
-  const [completing, setCompleting] = useState<string | null>(null);
   const { refresh: refreshScores } = useAthleteScores(athleteId);
 
   const todayISO = new Date().toISOString().slice(0, 10);
@@ -91,31 +89,11 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
     return () => { supabase.removeChannel(ch); };
   }, [athleteId, loadWeek]);
 
-  const completeDay = async (d: DayPlan) => {
-    if (!athleteId) return;
-    setCompleting(d.date);
-    try {
-      await supabase.from("workout_executions" as any).insert({
-        athlete_id: athleteId,
-        workout_date: d.date,
-        phase_name: phase || "week",
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      } as any);
-      await supabase.rpc("fn_award_xp" as any, {
-        p_athlete_id: athleteId,
-        p_amount: 100,
-        p_source: "workout_completed",
-        p_metadata: { date: d.date, phase } as any,
-      });
-      toast.success("Treino concluído · +100 XP");
-      await refreshScores();
-      await loadWeek();
-    } catch (e: any) {
-      console.error("[WeeklyTrainingView] complete", e);
-      toast.error("Falha ao concluir treino");
-    } finally { setCompleting(null); }
-  };
+  // NOTA (fix xp-fantasma): completeDay() foi removido. XP e conclusão só
+  // acontecem dentro do fluxo real de execução (onExecuteToday → tela de
+  // treino com registro de série), nunca por um atalho na lista da semana.
+  // refreshScores fica disponível pro fluxo de execução chamar ao voltar.
+  void refreshScores;
 
   return (
     <div className="space-y-4">
@@ -161,17 +139,10 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                   <Check className="w-3.5 h-3.5" /> Concluído
                 </span>
               ) : isToday && d.status !== "rest" ? (
-                <div className="flex gap-2">
-                  <button onClick={() => onExecuteToday(d)}
-                    className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold flex items-center gap-1">
-                    <Play className="w-3.5 h-3.5" /> Executar
-                  </button>
-                  <button onClick={() => completeDay(d)} disabled={completing === d.date}
-                    className="rounded-full border border-primary/50 text-primary px-4 py-2 text-xs font-bold flex items-center gap-1 disabled:opacity-40">
-                    {completing === d.date ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    Concluir
-                  </button>
-                </div>
+                <button onClick={() => onExecuteToday(d)}
+                  className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold flex items-center gap-1">
+                  <Play className="w-3.5 h-3.5" /> Executar
+                </button>
               ) : (
                 <div className="text-muted-foreground"><Lock className="w-4 h-4" /></div>
               )}
@@ -203,7 +174,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       })}
 
       <p className="text-[10px] text-muted-foreground text-center pt-2 flex items-center justify-center gap-1">
-        <Calendar className="w-3 h-3" /> Conclusão concede +100 XP · Sync Score recalcula em tempo real
+        <Calendar className="w-3 h-3" /> Conclusão concede XP apenas após execução real registrada
       </p>
     </div>
   );
