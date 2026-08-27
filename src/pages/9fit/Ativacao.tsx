@@ -41,6 +41,20 @@ const STEPS: { id: Exclude<ActivationStep, 'not_started' | 'finished'>; num: num
   { id: 'consistency', num: 4, label: 'Hábito', icon: MessageSquare },
 ];
 
+// Helper: chama a edge function progress-sync com o token atual do usuário
+async function progressSync(kind: string, payload: Record<string, any>) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) return { success: false, error: 'no_session' as const };
+
+  const { data, error } = await supabase.functions.invoke('progress-sync', {
+    body: { kind, payload },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) return { success: false, error: error.message };
+  return data as { success: boolean; data?: any; error?: string };
+}
+
 export default function NineFitAtivacao() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
@@ -66,6 +80,8 @@ export default function NineFitAtivacao() {
   const [timerActive, setTimerActive] = useState(false);
   const [done, setDone] = useState<Record<number, boolean>>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
 
   // Consistency
   const consistencyDays = row?.consistency_days ?? 0;
@@ -86,7 +102,9 @@ export default function NineFitAtivacao() {
 
   const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-  const awardXp = (amount: number) => {
+  // XP visual agora é só um ECO de algo que o backend já confirmou.
+  // Nunca chamar isso antes/sem confirmação real de fn_award_xp.
+  const showXpEarned = (amount: number) => {
     const id = Date.now();
     setXpNotif({ amount, id });
     setTimeout(() => setXpNotif((p) => (p?.id === id ? null : p)), 2500);
@@ -98,7 +116,6 @@ export default function NineFitAtivacao() {
     await advanceStep('assessment', {
       goal, experience_level: level, weekly_frequency: frequency, restrictions,
     });
-    awardXp(50);
     setUiState('generation');
   };
 
@@ -152,7 +169,6 @@ export default function NineFitAtivacao() {
       workout_type: 'quick',
     });
     setGenerating(false);
-    awardXp(50);
     setUiState('execute');
   };
 
@@ -162,26 +178,86 @@ export default function NineFitAtivacao() {
   }, [uiState]);
 
   // ── Step 3: Execute ───────────────────────────────────
-  const startWorkout = () => {
+  // Cria a execução real no banco (status=pending) antes de deixar o
+  // usuário marcar qualquer série. Sem isso não há onde registrar set_log.
+  const startWorkout = async () => {
+    if (!athleteId) {
+      toast.error('Não foi possível identificar seu perfil de atleta.');
+      return;
+    }
+    const { data: exec, error } = await supabase
+      .from('workout_executions')
+      .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().slice(0, 10), status: 'pending', started_at: new Date().toISOString() })
+      .select('id')
+      .single();
+
+    if (error || !exec) {
+      console.error('[startWorkout] falha ao criar execução:', error);
+      toast.error('Não foi possível iniciar o treino. Tente novamente.');
+      return;
+    }
+
+    setExecutionId(exec.id);
     setWorkoutStarted(true);
     setTimerCount(0);
     setTimerActive(true);
     setDone({});
-    awardXp(15);
   };
 
-  const toggleDone = (idx: number) => {
+  // Marcar exercício como feito agora grava um set real via progress-sync.
+  // Não concede XP aqui (evita farm por série) — XP só no fim do treino.
+  const toggleDone = async (idx: number) => {
+    if (!plan || !executionId) return;
     const isChecking = !done[idx];
     setDone((d) => ({ ...d, [idx]: isChecking }));
-    if (isChecking) awardXp(20);
+
+    if (isChecking) {
+      const ex = plan.exercises[idx];
+      const result = await progressSync('set_log', {
+        execution_id: executionId,
+        exercise_name: ex.name,
+        exercise_order: idx,
+        set_number: 1,
+        actual_reps: ex.reps,
+        completed: true,
+      });
+      if (!result.success) {
+        console.error('[toggleDone] set_log falhou:', result.error);
+        // reverte o check visual se o registro real falhou
+        setDone((d) => ({ ...d, [idx]: false }));
+        toast.error('Não foi possível registrar esta série. Tente novamente.');
+      }
+    }
   };
 
   const finishWorkout = async () => {
+    if (!executionId) return;
+    setFinishing(true);
     setTimerActive(false);
+
+    const result = await progressSync('workout_complete', { execution_id: executionId });
+
+    if (!result.success) {
+      // Backend recusou (ex.: nenhum set real registrado) — não mostrar
+      // sucesso nem XP. Mantém o usuário na tela de execução.
+      console.error('[finishWorkout] workout_complete falhou:', result.error);
+      toast.error(
+        result.error === 'no_real_execution_recorded'
+          ? 'Marque ao menos um exercício como concluído antes de finalizar.'
+          : 'Não foi possível registrar o treino. Tente novamente.',
+      );
+      setFinishing(false);
+      setTimerActive(true);
+      return;
+    }
+
     setWorkoutStarted(false);
-    await advanceStep('execute', { amount: 100, source: 'first_workout' });
-    awardXp(100);
+    await advanceStep('execute', {});
+    if (result.data?.xp?.awarded) {
+      showXpEarned(result.data.xp.awarded);
+    }
     setShowSuccess(true);
+    setFinishing(false);
   };
 
   const advanceToConsistency = () => {
@@ -192,12 +268,10 @@ export default function NineFitAtivacao() {
   // ── Step 4: Consistency ───────────────────────────────
   const registerConsistencyDay = async () => {
     await advanceStep('consistency');
-    awardXp(30);
   };
 
   const finishFlow = async () => {
     await finishActivation();
-    awardXp(150);
     toast.success('Ativação concluída! Bem-vindo ao 9FIT.');
     setTimeout(() => navigate('/9fit/os', { replace: true }), 800);
   };
@@ -467,10 +541,10 @@ export default function NineFitAtivacao() {
               {workoutStarted && (
                 <Button
                   size="lg" variant="default" onClick={finishWorkout}
-                  disabled={advancing || Object.values(done).filter(Boolean).length < plan.exercises.length}
+                  disabled={advancing || finishing || Object.values(done).filter(Boolean).length < plan.exercises.length}
                   className="w-full gap-2 mt-6"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Finalizar e registrar treino
+                  <CheckCircle2 className="w-4 h-4" /> {finishing ? 'Registrando…' : 'Finalizar e registrar treino'}
                 </Button>
               )}
             </motion.section>
@@ -489,7 +563,7 @@ export default function NineFitAtivacao() {
                 >
                   <Trophy className="w-14 h-14 mx-auto text-primary mb-4" />
                   <h3 className="text-2xl font-black tracking-tight mb-2">Primeiro treino registrado!</h3>
-                  <p className="text-sm text-muted-foreground mb-6">+100 XP · Você desbloqueou a trilha de consistência.</p>
+                  <p className="text-sm text-muted-foreground mb-6">Você desbloqueou a trilha de consistência.</p>
                   <Button size="lg" onClick={advanceToConsistency} className="w-full gap-2">
                     Continuar <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -510,7 +584,7 @@ export default function NineFitAtivacao() {
                 <Flame className="w-6 h-6 text-primary" /> Trilha dos 7 dias
               </h2>
               <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Marque seu check-in diário. Ao completar hoje, seu perfil é oficialmente ativado.
+                Marque seu check-in diário. Este é um desafio de consistência — sua ativação já está confirmada.
               </p>
 
               <div className="grid grid-cols-7 gap-2 mb-6">
@@ -539,7 +613,7 @@ export default function NineFitAtivacao() {
               </div>
 
               <p className="text-[10px] text-muted-foreground mt-4 text-center font-mono">
-                Ativação oficial libera o app imediatamente. O selo de consistência (7 dias) é conquistado com o tempo.
+                Ativação oficial já está confirmada. O selo de consistência (7 dias) é conquistado com o tempo.
               </p>
             </motion.section>
           )}
