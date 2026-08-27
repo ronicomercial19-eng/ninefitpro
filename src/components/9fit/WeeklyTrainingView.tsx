@@ -6,6 +6,26 @@ import { useAthleteScores } from "@/hooks/useAthleteScores";
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+// FIX #9 (QA Master): "Fase: sem_periodizacao" era o enum cru do banco
+// vazando na UI. Dicionário de tradução — qualquer enum sem entrada aqui
+// cai no fallback (nunca mais snake_case puro na tela).
+const PHASE_LABELS: Record<string, string> = {
+  sem_periodizacao: "Sem periodização definida",
+  base: "Base",
+  acumulacao: "Acumulação",
+  intensificacao: "Intensificação",
+  realizacao: "Realização",
+  deload: "Deload",
+  transicao: "Transição",
+};
+
+function friendlyPhase(raw: string): string {
+  if (!raw) return "—";
+  if (PHASE_LABELS[raw]) return PHASE_LABELS[raw];
+  // fallback genérico: nunca deixa snake_case cru, mesmo pra enum novo
+  return raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 interface WeeklyTrainingViewProps {
   athleteId: string;
   onExecuteToday: (workout: any) => void;
@@ -103,7 +123,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
         <div>
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Treinos da Semana</p>
           <p className="text-xs text-muted-foreground">
-            Fase: <span className="text-foreground font-semibold">{phase || "—"}</span>
+            Fase: <span className="text-foreground font-semibold">{friendlyPhase(phase)}</span>
             {match > 0 && <> · Aderência {match}%</>}
           </p>
         </div>
