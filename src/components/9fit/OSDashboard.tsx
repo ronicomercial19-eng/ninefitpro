@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { useEngrenagem } from '@/hooks/useEngrenagem';
@@ -20,6 +20,10 @@ export function OSDashboard() {
   const { totalXp, level, syncScore } = useEngrenagem();
 
   const [ranking, setRanking] = useState<RankRow[]>([]);
+  // FIX #26 (QA Master): "Ranking Global" com 1 usuário/0 pontos não é
+  // competição real. Rastreia se existe pelo menos 1 outro atleta com
+  // XP > 0 pra decidir entre mostrar o ranking ou um estado "começando".
+  const [hasRealCompetition, setHasRealCompetition] = useState(true);
   const [eventIdx, setEventIdx] = useState(0);
 
   const name = (athleteName || profile?.full_name || user?.email?.split('@')[0] || 'Atleta').split(' ')[0];
@@ -42,6 +46,8 @@ export function OSDashboard() {
       } else {
         top.forEach((t) => { if (t.name.toLowerCase() === name.toLowerCase()) t.self = true; });
       }
+      const others = rows.filter((r) => (r.name || '').split(' ')[0].toLowerCase() !== name.toLowerCase());
+      setHasRealCompetition(others.some((r) => Number(r.total_xp || 0) > 0));
       setRanking(top);
     })();
   }, [name, totalXp]);
@@ -129,16 +135,24 @@ export function OSDashboard() {
           <p className="font-display text-xl">Ranking Global</p>
           <Trophy className="w-5 h-5 text-primary" />
         </div>
-        <div className="space-y-2">
-          {ranking.map((r, i) => (
-            <div key={i} className={`flex items-center justify-between text-sm rounded-xl px-3 py-2 ${
-              r.self ? 'bg-primary/10 border border-primary/40 text-primary' : ''
-            }`}>
-              <span className="font-data tabular-nums">{i + 1}. {r.name}</span>
-              <span className="font-data tabular-nums">- {r.pts.toLocaleString('pt-BR')} pts</span>
-            </div>
-          ))}
-        </div>
+        {hasRealCompetition ? (
+          <div className="space-y-2">
+            {ranking.map((r, i) => (
+              <div key={i} className={`flex items-center justify-between text-sm rounded-xl px-3 py-2 ${
+                r.self ? 'bg-primary/10 border border-primary/40 text-primary' : ''
+              }`}>
+                <span className="font-data tabular-nums">{i + 1}. {r.name}</span>
+                <span className="font-data tabular-nums">- {r.pts.toLocaleString('pt-BR')} pts</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 text-center">
+            <Sparkles className="w-6 h-6 text-primary mx-auto mb-2" />
+            <p className="text-sm font-semibold">Você está começando agora</p>
+            <p className="text-xs text-muted-foreground mt-1">O ranking é liberado quando houver outros atletas competindo com XP.</p>
+          </div>
+        )}
       </section>
 
       {/* Inteligência ativa */}
