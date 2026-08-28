@@ -8,6 +8,7 @@ interface PhysioModule {
   id: string; key: string; name: string; description: string;
   hero_image: string | null; cta_label: string; cta_route: string | null;
   category: string; display_order: number; connector_key: string | null;
+  lock_reason: string | null;
 }
 
 interface Props {
@@ -15,6 +16,15 @@ interface Props {
   variant?: "grid" | "rail";
   showHeader?: boolean;
 }
+
+// FIX #36 (QA Master): motivo específico por módulo "aguardando" em vez
+// de um genérico "waiting" sem explicação.
+const LOCK_LABELS: Record<string, string> = {
+  em_desenvolvimento: "Em desenvolvimento",
+  plano_premium: "Disponível no 9FIT Prime",
+  aguardando_calibracao: "Aguardando calibração",
+  aguardando_ativacao: "Complete sua ativação",
+};
 
 /**
  * Ecosystem Grid — Native redesign (no mocks).
@@ -87,6 +97,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
           const src = MODULE_IMAGES[m.key] || m.hero_image;
           const status = statusByKey[m.key];
           const online = status === "online";
+          const waitingLabel = !online ? (LOCK_LABELS[m.lock_reason || ""] || "Aguardando") : null;
           return (
             <button
               key={m.id}
@@ -117,7 +128,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                     className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-400 animate-pulse" : "bg-amber-400/70"}`}
                   />
                   <span className="font-mono text-[9px] uppercase tracking-widest text-foreground/90">
-                    {online ? "Online" : "Aguardando"}
+                    {online ? "Online" : waitingLabel}
                   </span>
                 </div>
               </div>
