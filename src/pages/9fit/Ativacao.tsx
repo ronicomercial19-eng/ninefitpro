@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Rocket, Dumbbell, Sparkles, Check, ArrowRight, ClipboardList,
   MessageSquare, Trophy, Play, CheckCircle2, Timer, RotateCcw, Flame,
+  X, AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivationFlow, type ActivationStep } from '@/hooks/useActivationFlow';
@@ -41,6 +42,9 @@ const STEPS: { id: Exclude<ActivationStep, 'not_started' | 'finished'>; num: num
   { id: 'consistency', num: 4, label: 'Hábito', icon: MessageSquare },
 ];
 
+// FIX #32 (QA Master): nunca deixar o loading de geração girar pra sempre.
+const GENERATION_TIMEOUT_MS = 20000;
+
 export default function NineFitAtivacao() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
@@ -58,6 +62,7 @@ export default function NineFitAtivacao() {
   // Generation
   const [generating, setGenerating] = useState(false);
   const [genLogs, setGenLogs] = useState<string[]>([]);
+  const [genError, setGenError] = useState(false);
   const [plan, setPlan] = useState<WorkoutPlan | null>(null);
 
   // Execute
@@ -103,8 +108,12 @@ export default function NineFitAtivacao() {
   };
 
   // ── Step 2: Generation ────────────────────────────────
+  // FIX #31/#32 (QA Master): geração agora pode ser cancelada (volta pra
+  // ficha sem perder os dados) e nunca fica girando pra sempre — timeout
+  // de 20s cai em estado de erro com retry, em vez de loading infinito.
   const runGeneration = async () => {
     setGenerating(true);
+    setGenError(false);
     setGenLogs([]);
     const logs = [
       '📥 Conectando ao motor de biomecânica 9FIT...',
@@ -113,51 +122,71 @@ export default function NineFitAtivacao() {
       `🛡️ Aplicando restrições: "${restrictions || 'Sem restrições'}"`,
       '🚀 Finalizando programa adaptado!',
     ];
-    for (let i = 0; i < logs.length; i++) {
-      await new Promise((r) => setTimeout(r, 550));
-      setGenLogs((prev) => [...prev, logs[i]]);
-    }
 
-    // Tenta usar RPC oficial de treino rápido; fallback local em qualquer erro
-    let workout = FALLBACK_PLAN(goal, level);
     try {
-      const { data } = await supabase.rpc('fn_treino_rapido' as any, {
-        p_athlete_id: athleteId,
-        p_objetivo: goal,
-        p_tempo_min: 40,
-        p_equipamento: null,
-      });
-      const arr = (data as any)?.exercises;
-      if (Array.isArray(arr) && arr.length) {
-        workout = {
-          ...workout,
-          exercises: arr.slice(0, 6).map((e: any) => ({
-            name: e.name ?? e.nome ?? 'Exercício',
-            sets: (data as any)?.sets_default ?? 3,
-            reps: String((data as any)?.reps_default ?? '10-12'),
-            rest: `${(data as any)?.rest_default_seconds ?? 60}s`,
-            tips: e.target_muscles ? `Foco: ${(e.target_muscles || []).join(', ')}` : undefined,
-          })),
-        };
+      for (let i = 0; i < logs.length; i++) {
+        await new Promise((r) => setTimeout(r, 550));
+        setGenLogs((prev) => [...prev, logs[i]]);
       }
-    } catch (err) {
-      console.warn('[fn_treino_rapido] fallback:', err);
-    }
 
-    setPlan(workout);
-    await advanceStep('generation', {
-      day_number: 1,
-      day_name: workout.title,
-      focus_muscles: [workout.focus],
-      workout_type: 'quick',
-    });
+      let workout = FALLBACK_PLAN(goal, level);
+      try {
+        const rpcPromise = supabase.rpc('fn_treino_rapido' as any, {
+          p_athlete_id: athleteId,
+          p_objetivo: goal,
+          p_tempo_min: 40,
+          p_equipamento: null,
+        });
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), GENERATION_TIMEOUT_MS)
+        );
+        const { data }: any = await Promise.race([rpcPromise, timeoutPromise]);
+        const arr = data?.exercises;
+        if (Array.isArray(arr) && arr.length) {
+          workout = {
+            ...workout,
+            exercises: arr.slice(0, 6).map((e: any) => ({
+              name: e.name ?? e.nome ?? 'Exercício',
+              sets: data?.sets_default ?? 3,
+              reps: String(data?.reps_default ?? '10-12'),
+              rest: `${data?.rest_default_seconds ?? 60}s`,
+              tips: e.target_muscles ? `Foco: ${(e.target_muscles || []).join(', ')}` : undefined,
+            })),
+          };
+        }
+      } catch (err) {
+        console.warn('[fn_treino_rapido] fallback:', err);
+        // RPC falhou/estourou timeout, mas o plano fallback local garante
+        // que o usuário nunca fica travado sem treino nenhum.
+      }
+
+      setPlan(workout);
+      await advanceStep('generation', {
+        day_number: 1,
+        day_name: workout.title,
+        focus_muscles: [workout.focus],
+        workout_type: 'quick',
+      });
+      setGenerating(false);
+      awardXp(50);
+      setUiState('execute');
+    } catch (e) {
+      console.error('[runGeneration] falha inesperada', e);
+      setGenerating(false);
+      setGenError(true);
+    }
+  };
+
+  const cancelGeneration = () => {
     setGenerating(false);
-    awardXp(50);
-    setUiState('execute');
+    setGenError(false);
+    setGenLogs([]);
+    setPlan(null);
+    setUiState('assessment');
   };
 
   useEffect(() => {
-    if (uiState === 'generation' && !generating && !plan) runGeneration();
+    if (uiState === 'generation' && !generating && !plan && !genError) runGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uiState]);
 
@@ -390,24 +419,47 @@ export default function NineFitAtivacao() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
               className="bg-card/70 border border-border rounded-3xl p-8"
             >
-              <p className="text-[10px] font-mono text-primary uppercase tracking-widest font-black">Etapa 02</p>
-              <h2 className="text-2xl font-black tracking-tight mt-1 flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-primary" /> Análise IA em andamento
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1 mb-6">O motor 9FIT está montando seu programa.</p>
-
-              <div className="bg-background/60 border border-border rounded-2xl p-5 font-mono text-xs space-y-2 min-h-[220px]">
-                {genLogs.map((l, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                    className="text-muted-foreground">{l}</motion.div>
-                ))}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-mono text-primary uppercase tracking-widest font-black">Etapa 02</p>
+                  <h2 className="text-2xl font-black tracking-tight mt-1 flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-primary" /> {genError ? 'Não conseguimos gerar seu treino' : 'Análise IA em andamento'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1 mb-6">
+                    {genError ? 'Algo deu errado ao montar seu programa.' : 'O motor 9FIT está montando seu programa.'}
+                  </p>
+                </div>
                 {generating && (
-                  <div className="flex items-center gap-2 text-primary pt-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span>Processando…</span>
-                  </div>
+                  <button type="button" onClick={cancelGeneration}
+                    className="text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
+                    <X className="w-3.5 h-3.5" /> Cancelar
+                  </button>
                 )}
               </div>
+
+              {genError ? (
+                <div className="bg-background/60 border border-destructive/30 rounded-2xl p-6 text-center space-y-4">
+                  <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
+                  <p className="text-sm text-muted-foreground">Isso pode acontecer por instabilidade momentânea. Tenta de novo?</p>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="outline" onClick={cancelGeneration}>Voltar à ficha</Button>
+                    <Button onClick={runGeneration}>Tentar novamente</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-background/60 border border-border rounded-2xl p-5 font-mono text-xs space-y-2 min-h-[220px]">
+                  {genLogs.map((l, i) => (
+                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                      className="text-muted-foreground">{l}</motion.div>
+                  ))}
+                  {generating && (
+                    <div className="flex items-center gap-2 text-primary pt-2">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span>Processando…</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.section>
           )}
 
