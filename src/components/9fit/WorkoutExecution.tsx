@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
-import { PostWorkoutModal } from "./PostWorkoutModal";
+import { PostWorkoutModal, type ExerciseSetRecord } from "./PostWorkoutModal";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -261,6 +261,27 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       sets[setIdx] = !sets[setIdx];
       return { ...prev, [key]: sets };
     });
+  };
+
+  // FIX #7 (QA Master): monta o payload de séries reais (carga + quais
+  // foram marcadas) pra persistir em workout_exercise_sets via o modal.
+  const buildRecordedSets = (): ExerciseSetRecord[] => {
+    const records: ExerciseSetRecord[] = [];
+    exercises.forEach((ex: any, exerciseIdx: number) => {
+      const sets = completedSets[`${exerciseIdx}`] || [];
+      sets.forEach((done, setIdx) => {
+        if (done) {
+          records.push({
+            exercise_name: ex.name || `Exercício ${exerciseIdx + 1}`,
+            exercise_order: exerciseIdx,
+            set_number: setIdx + 1,
+            actual_weight: weights[exerciseIdx] ?? null,
+            completed: true,
+          });
+        }
+      });
+    });
+    return records;
   };
 
   const handleFinishWorkout = () => {
@@ -619,8 +640,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         </div>
       </div>
 
-      <PostWorkoutModal open={showPSE} onClose={() => { setShowPSE(false); onFinish(); }}
-        athleteId={athleteId} trainingName={liveTraining.training_name} />
+      <PostWorkoutModal
+        open={showPSE}
+        onClose={() => { setShowPSE(false); onFinish(); }}
+        athleteId={athleteId}
+        trainingName={liveTraining.training_name}
+        recordedSets={buildRecordedSets()}
+      />
     </div>
   );
 }
