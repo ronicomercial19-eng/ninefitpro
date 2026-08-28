@@ -1,8 +1,8 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
-import { Play, Film, ExternalLink, Loader2, Maximize2 } from "lucide-react";
+import { Play, Film, ExternalLink, Loader2, Maximize2, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -22,6 +22,13 @@ export default function NineFitHealthFlix() {
   const [loading, setLoading] = useState(true);
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [openingEmbed, setOpeningEmbed] = useState(false);
+
+  // FIX #12 (QA Master): abrir o HealthFlix completo deixava a tela preta
+  // sem feedback até o iframe carregar (ou falhar em silêncio). Agora tem
+  // loading próprio do iframe (onLoad) + timeout de 15s com erro e retry.
+  const [iframeLoading, setIframeLoading] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+  const iframeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +65,13 @@ export default function NineFitHealthFlix() {
     return Array.from(set);
   }, [items]);
 
+  function closeEmbed() {
+    if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+    setEmbedUrl(null);
+    setIframeLoading(false);
+    setIframeError(false);
+  }
+
   async function openFullHealthFlix(view: "library" | "home" = "library") {
     if (!athleteId) { toast.error("Aguarde carregar seu perfil"); return; }
     setOpeningEmbed(true);
@@ -73,7 +87,14 @@ export default function NineFitHealthFlix() {
       if (error) throw error;
       const url = (data as any)?.embed_url;
       if (!url) throw new Error("embed_url ausente");
+      setIframeError(false);
+      setIframeLoading(true);
       setEmbedUrl(url);
+      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+      iframeTimeoutRef.current = setTimeout(() => {
+        setIframeLoading(false);
+        setIframeError(true);
+      }, 15000);
     } catch (e: any) {
       toast.error(e?.message || "Falha ao abrir HealthFlix");
     } finally {
@@ -86,14 +107,48 @@ export default function NineFitHealthFlix() {
       <div className="fixed inset-0 z-50 bg-black flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <p className="text-[10px] font-data tracking-[0.4em] text-primary">HEALTHFLIX</p>
-          <button onClick={() => setEmbedUrl(null)} className="text-xs text-muted-foreground hover:text-foreground">Fechar</button>
+          <button onClick={closeEmbed} className="text-xs text-muted-foreground hover:text-foreground">Fechar</button>
         </div>
-        <iframe
-          src={embedUrl}
-          className="flex-1 w-full bg-black"
-          sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-presentation"
-          allow="autoplay; fullscreen; encrypted-media"
-        />
+
+        <div className="flex-1 relative">
+          {iframeLoading && !iframeError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black z-10">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground">Abrindo HealthFlix…</p>
+            </div>
+          )}
+
+          {iframeError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black z-10 px-8 text-center">
+              <AlertTriangle className="w-8 h-8 text-primary" />
+              <p className="text-sm text-foreground font-semibold">Não foi possível carregar este conteúdo.</p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => openFullHealthFlix("library")}
+                  className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold"
+                >
+                  Tentar novamente
+                </button>
+                <button onClick={closeEmbed} className="rounded-full border border-white/20 text-muted-foreground px-4 py-2 text-xs font-bold">
+                  Voltar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!iframeError && (
+            <iframe
+              src={embedUrl}
+              className="w-full h-full bg-black"
+              sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-presentation"
+              allow="autoplay; fullscreen; encrypted-media"
+              onLoad={() => {
+                if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+                setIframeLoading(false);
+              }}
+            />
+          )}
+        </div>
       </div>
     );
   }
