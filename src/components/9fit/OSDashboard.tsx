@@ -13,11 +13,23 @@ import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 
 interface RankRow { name: string; pts: number; self?: boolean }
 
+// FIX #29 (QA Master): curva de XP por nível — antes não existia
+// fórmula nenhuma ligando total_xp a level em lugar algum do sistema.
+// Definida: Nível N exige N x 500 XP acumulados (1: 0-500, 2: 500-1000...).
+const XP_PER_LEVEL = 500;
+function xpProgress(totalXp: number) {
+  const level = Math.floor(totalXp / XP_PER_LEVEL) + 1;
+  const xpIntoLevel = totalXp % XP_PER_LEVEL;
+  const xpForNext = XP_PER_LEVEL;
+  return { level, xpIntoLevel, xpForNext, pct: Math.min(100, (xpIntoLevel / xpForNext) * 100) };
+}
+
 export function OSDashboard() {
   const { user, profile } = useAuth();
   const { athleteName } = useAthleteId();
   const navigate = useNavigate();
-  const { totalXp, level, syncScore } = useEngrenagem();
+  const { totalXp, syncScore } = useEngrenagem();
+  const { level, xpIntoLevel, xpForNext, pct } = xpProgress(totalXp);
 
   const [ranking, setRanking] = useState<RankRow[]>([]);
   // FIX #26 (QA Master): "Ranking Global" com 1 usuário/0 pontos não é
@@ -26,7 +38,7 @@ export function OSDashboard() {
   const [hasRealCompetition, setHasRealCompetition] = useState(true);
   const [eventIdx, setEventIdx] = useState(0);
 
-  const name = (athleteName || profile?.full_name || user?.email?.split('@')[0] || 'Atleta').split(' ')[0];
+  const name = (athleteName || profile?.full_name || user?.email?.split(' ')[0] || 'Atleta').split(' ')[0];
   const classTier = totalXp > 2000 ? 'Elite Trainer' : totalXp > 800 ? 'Pro' : 'Iniciante';
 
   useEffect(() => {
@@ -67,8 +79,10 @@ export function OSDashboard() {
           <Menu className="w-4 h-4 text-foreground" />
         </button>
         <div className="text-center">
+          {/* FIX #38/#39/#40 (QA Master): padroniza a marca — "FIT OS"
+              (sem "+" solto), sem sobreposição com "9FIT PRO"/"RON". */}
           <h1 className="font-display text-2xl tracking-tight">
-            Fit <span className="text-primary">OS</span><sup className="text-primary">+</sup>
+            FIT <span className="text-primary">OS</span>
           </h1>
         </div>
         <button onClick={() => navigate('/9fit/settings')} className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
@@ -92,6 +106,16 @@ export function OSDashboard() {
             </div>
             <p className="text-xs text-muted-foreground mt-3"><span className="font-semibold text-foreground">Nível:</span> {level}</p>
             <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">Classe:</span> {classTier}</p>
+            {/* FIX #29 (QA Master): economia de XP visível — nível atual e quanto falta */}
+            <div className="mt-2 w-40">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground font-data">
+                <span>Nível {level}</span>
+                <span>{xpIntoLevel}/{xpForNext} XP</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
+                <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
           </div>
           <div className="text-center">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Sync Score</p>
