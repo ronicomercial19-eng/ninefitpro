@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trackMonetizationEvent } from "@/services/monetization";
-import { Crown, ArrowRight, Loader2 } from "lucide-react";
+import { Crown, ArrowRight, Loader2, CalendarCheck } from "lucide-react";
 
 export default function NineFitOferta() {
   const { offerId } = useParams<{ offerId: string }>();
@@ -26,6 +26,13 @@ export default function NineFitOferta() {
   if (loading) return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   if (!offer) return <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">Oferta não encontrada</div>;
 
+  // FIX #23 (QA Master): "Faça uma avaliação 360 GRATUITA" com botão
+  // "Assinar agora" era contraditório. Uma oferta sem plan_id não tem
+  // cobrança associada — nunca deveria ir pro checkout pago. Detecta
+  // oferta gratuita (sem plan_id, ou descrição menciona "gratuit") e
+  // mostra CTA/rota coerente com o que foi prometido.
+  const isFree = !offer.plan_id && /gratuit/i.test(`${offer.name} ${offer.description}`);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -39,16 +46,29 @@ export default function NineFitOferta() {
         )}
         <p className="text-muted-foreground">{offer.description}</p>
         <Card className="p-6 border-primary/30 bg-card">
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              trackMonetizationEvent("select_plan", offerId, "dedicated_screen");
-              navigate(`/9fit/checkout/${offerId}`);
-            }}
-          >
-            Assinar agora <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+          {isFree ? (
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                trackMonetizationEvent("select_plan", offerId, "dedicated_screen");
+                navigate("/9fit/staff");
+              }}
+            >
+              Agendar avaliação gratuita <CalendarCheck className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                trackMonetizationEvent("select_plan", offerId, "dedicated_screen");
+                navigate(`/9fit/checkout/${offerId}`);
+              }}
+            >
+              Assinar agora <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
         </Card>
       </div>
     </div>
