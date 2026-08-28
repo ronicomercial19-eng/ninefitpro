@@ -10,11 +10,22 @@ import {
   Flame, Clock, Star, Trophy, TrendingUp, ChevronRight, Zap, Heart
 } from "lucide-react";
 
+export interface ExerciseSetRecord {
+  exercise_name: string;
+  exercise_order: number;
+  set_number: number;
+  actual_weight?: number | null;
+  completed: boolean;
+}
+
 interface PostWorkoutModalProps {
   open: boolean;
   onClose: () => void;
   athleteId: string;
   trainingName: string;
+  // FIX #7 (QA Master): sets reais registrados durante a execução
+  // (carga + quais séries foram marcadas). Sem isso, XP não é concedido.
+  recordedSets?: ExerciseSetRecord[];
 }
 
 type Step = "pse" | "summary";
@@ -32,7 +43,7 @@ const RPE_LABELS: Record<number, { label: string; emoji: string; color: string }
   10: { label: "Máximo", emoji: "💀", color: "text-red-600" },
 };
 
-export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: PostWorkoutModalProps) {
+export function PostWorkoutModal({ open, onClose, athleteId, trainingName, recordedSets = [] }: PostWorkoutModalProps) {
   const [step, setStep] = useState<Step>("pse");
   const [rpe, setRpe] = useState(5);
   const [duration, setDuration] = useState(45);
@@ -41,6 +52,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
   const [xpGained, setXpGained] = useState(0);
   const [caloriesBurned, setCaloriesBurned] = useState(0);
   const [lastRpe, setLastRpe] = useState<number | null>(null);
+  const [noExecutionWarning, setNoExecutionWarning] = useState(false);
 
   const calculatedCalories = Math.round(duration * rpe * 1.2);
 
@@ -50,6 +62,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
       setRpe(5);
       setDuration(45);
       setNotes("");
+      setNoExecutionWarning(false);
       fetchLastRpe();
     }
   }, [open]);
@@ -101,8 +114,27 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
         .select("id")
         .single();
 
-      // 2) Marca como concluída (dispara triggers de XP/score/snapshot no UPDATE)
-      if (created?.id) {
+      const executionId = created?.id;
+
+      // 2) FIX #7 (QA Master): grava as séries reais registradas durante a
+      // execução (carga + quais foram marcadas como feitas). Sem isso,
+      // "exercício com check" nunca virava "performance registrada".
+      const completedSets = recordedSets.filter((s) => s.completed);
+      if (executionId && completedSets.length > 0) {
+        await supabase.from("workout_exercise_sets" as any).insert(
+          completedSets.map((s) => ({
+            execution_id: executionId,
+            exercise_name: s.exercise_name,
+            exercise_order: s.exercise_order,
+            set_number: s.set_number,
+            actual_weight: s.actual_weight ?? null,
+            completed: true,
+          }))
+        );
+      }
+
+      // 3) Marca como concluída (dispara triggers de score/snapshot no UPDATE)
+      if (executionId) {
         await supabase
           .from("workout_executions")
           .update({
@@ -112,19 +144,27 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
             avg_rpe: rpe,
             notes: notes || null,
           } as any)
-          .eq("id", created.id);
+          .eq("id", executionId);
       }
 
-      // Award XP (base 100 + RPE bonus) via fn_award_xp
+      // FIX #6/#30 (mesma trava do backend): XP só é concedido se existir
+      // pelo menos 1 série real registrada nesta execução. Sem isso, o
+      // treino fica salvo (com RPE/duração) mas sem XP fantasma.
       const xp = 100 + (rpe > 7 ? 50 : rpe > 4 ? 25 : 0);
-      await supabase.rpc("fn_award_xp" as any, {
-        p_athlete_id: athleteId,
-        p_amount: xp,
-        p_source: "workout_completed",
-        p_metadata: { training_name: trainingName, rpe, duration_minutes: duration },
-      });
+      if (executionId) {
+        const { data: awardResult } = await supabase.rpc("fn_award_workout_xp" as any, {
+          p_execution_id: executionId,
+          p_amount: xp,
+        });
+        const result = Array.isArray(awardResult) ? awardResult[0] : awardResult;
+        if (result?.awarded) {
+          setXpGained(xp);
+        } else {
+          setXpGained(0);
+          setNoExecutionWarning(true);
+        }
+      }
 
-      setXpGained(xp);
       setCaloriesBurned(cal);
       setStep("summary");
     } catch {
@@ -233,6 +273,15 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
               <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">Parabéns! 🔥</h2>
               <p className={`text-sm font-bold mt-1 ${getMessage().color}`}>{getMessage().text}</p>
             </div>
+
+            {noExecutionWarning && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-sm p-3 text-left">
+                <p className="text-xs text-amber-600">
+                  Treino salvo, mas nenhuma série foi marcada como concluída — por isso o XP não foi
+                  concedido dessa vez. Marque as séries feitas durante o treino pra pontuar.
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-card border border-border rounded-sm p-3">
