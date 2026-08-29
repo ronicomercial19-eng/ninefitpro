@@ -6,16 +6,16 @@ import { useAthleteScores } from "@/hooks/useAthleteScores";
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 // FIX #9 (QA Master): "Fase: sem_periodizacao" era o enum cru do banco
-// vazando na UI. Dicionário de tradução — qualquer enum sem entrada aqui
-// cai no fallback (nunca mais snake_case puro na tela).
+// vazando na UI. phase_status vem de athlete_periodizations.status —
+// valores reais são 'active' / 'in_progress' / 'sem_periodizacao'
+// (fallback quando não há periodização atribuída), não fases de
+// treino como base/deload. Dicionário cobre os valores reais; qualquer
+// enum novo não mapeado cai no fallback legível (nunca snake_case cru).
 const PHASE_LABELS: Record<string, string> = {
   sem_periodizacao: "Sem periodização definida",
-  base: "Base",
-  acumulacao: "Acumulação",
-  intensificacao: "Intensificação",
-  realizacao: "Realização",
-  deload: "Deload",
-  transicao: "Transição",
+  active: "Periodização ativa",
+  in_progress: "Periodização em andamento",
+  completed: "Periodização concluída",
 };
 
 function friendlyPhase(raw: string): string {
