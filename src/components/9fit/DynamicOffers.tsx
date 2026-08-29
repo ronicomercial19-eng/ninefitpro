@@ -59,8 +59,11 @@ export function DynamicOffers({ category, max = 3, compact = false }: { category
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] tracking-widest uppercase text-primary">{o.category}</p>
-                <p className="font-display text-base truncate">{o.name}</p>
-                {o.description && <p className="text-xs text-muted-foreground line-clamp-2">{o.description}</p>}
+                {/* FIX #24 (QA Master): título em 1 linha cortava nomes
+                    como "CONSULTORIA DE PERFOM..." — line-clamp-2 dá
+                    espaço pra nomes longos sem truncar tão agressivo. */}
+                <p className="font-display text-base leading-tight line-clamp-2">{o.name}</p>
+                {o.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{o.description}</p>}
               </div>
               <ArrowRight className="w-4 h-4 text-primary shrink-0" />
             </div>
