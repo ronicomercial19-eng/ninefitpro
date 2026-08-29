@@ -167,7 +167,10 @@ export function WeeklyRadar3D({ current, previous }: Props) {
     <div className="surface-card p-4">
       <div className="flex items-center justify-between mb-2">
         <p className="text-label">RADAR 5D · SEMANA</p>
-        <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground">3D · INTERATIVO</p>
+        {/* FIX #21/#22 (QA Master): "Treino 50", "Sono 14" sem unidade
+            geravam dúvida (pontos? %? minutos?). Deixa explícito que é
+            um índice de 0 a 100 em cada eixo. */}
+        <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground">Índice 0–100 · 3D</p>
       </div>
       <div className="w-full h-64 rounded-xl bg-black/40 overflow-hidden">
         <Suspense fallback={<div className="w-full h-full animate-pulse bg-white/5" />}>
@@ -197,7 +200,7 @@ export function WeeklyRadar3D({ current, previous }: Props) {
         {AXES.map((label, i) => (
           <div key={label} className="text-center">
             <p className="text-[8px] tracking-[0.2em] uppercase text-muted-foreground">{label}</p>
-            <p className="text-xs font-display text-foreground">{Math.round(values[i])}</p>
+            <p className="text-xs font-display text-foreground">{Math.round(values[i])}<span className="text-[9px] text-muted-foreground">/100</span></p>
           </div>
         ))}
       </div>
