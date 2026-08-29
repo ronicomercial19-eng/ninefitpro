@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, Play, Lock } from "lucide-react";
+import { X, Loader2, Play, Lock, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -37,21 +37,32 @@ type Exercise = {
 
 type Modelo = { name?: string; objective?: string; stimulus?: string };
 
+// FIX #32 (QA Master): nunca deixar o loading de geração girar pra sempre.
+const GENERATION_TIMEOUT_MS = 20000;
+
 export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
   const [step, setStep] = useState<Step>(0);
   const [answers, setAnswers] = useState<Answers>({ goal: "", time: "", equipment: "" });
   const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [modelos, setModelos] = useState<Modelo[]>([]);
   const [infoproduct, setInfoproduct] = useState<any>(null);
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  // FIX #6/#30 (QA Master): "Treino Rápido" dava XP garantido no clique de
+  // "Concluir treino", sem nenhuma evidência de execução real. Agora exige
+  // marcar cada exercício como feito antes de liberar o botão.
+  const [done, setDone] = useState<Record<number, boolean>>({});
+  const [completing, setCompleting] = useState(false);
 
   const reset = () => {
     setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
     setExercises([]); setModelos([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
+    setExecutionId(null); setDone({}); setGenError(false);
   };
 
   const pick = async (k: keyof Answers, v: string) => {
@@ -64,6 +75,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const resolve = async (a: Answers) => {
     if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
     setLoading(true);
+    setGenError(false);
     try {
       // 1) Oferta antes do treino (não bloqueia)
       const { data: prod } = await supabase
@@ -75,45 +87,76 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .maybeSingle();
       setInfoproduct(prod);
 
-      // 2) TREINO RÁPIDO via RPC canônica (Bloco A)
-      const { data, error } = await supabase.rpc("fn_treino_rapido" as any, {
+      // 2) TREINO RÁPIDO via RPC canônica (Bloco A) — com timeout (fix #32)
+      const rpcPromise = supabase.rpc("fn_treino_rapido" as any, {
         p_athlete_id: athleteId,
         p_objetivo: a.goal,
         p_tempo_min: parseInt(a.time, 10),
         p_equipamento: a.equipment,
       });
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), GENERATION_TIMEOUT_MS)
+      );
+      const { data, error }: any = await Promise.race([rpcPromise, timeoutPromise]);
       if (error) throw error;
 
       const payload: any = data || {};
+      const exList = (payload.exercises || payload.exercicios || []) as Exercise[];
       setModelos((payload.modelos || []) as Modelo[]);
-      setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
+      setExercises(exList);
+      setDone({});
 
-      // Insere workout_executions in_progress (start)
+      if (exList.length === 0) {
+        setStep(3);
+        setLoading(false);
+        return;
+      }
+
+      // Insere workout_executions in_progress (start) e guarda o id pra
+      // vincular as séries reais depois.
       try {
-        await supabase.from("workout_executions" as any).insert({
+        const { data: created } = await supabase.from("workout_executions" as any).insert({
           athlete_id: athleteId,
           workout_date: new Date().toISOString().split("T")[0],
           phase_name: "quick",
           status: "in_progress",
           started_at: new Date().toISOString(),
-        } as any);
+        } as any).select("id").single();
+        setExecutionId((created as any)?.id ?? null);
       } catch (e) { console.warn("[QuickTrain] start insert", e); }
 
       setShowingOffer(!!prod);
       setStep(3);
     } catch (e: any) {
       console.error("[QuickTrain] fn_treino_rapido:", e);
-      toast.error(e?.message || "Não foi possível montar o treino agora.");
+      setGenError(true);
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleDone = (idx: number) => setDone((d) => ({ ...d, [idx]: !d[idx] }));
+
+  const allDone = exercises.length > 0 && exercises.every((_, i) => done[i]);
+
   const completeWorkout = async () => {
+    setCompleting(true);
     try {
-      if (athleteId) {
-        const today = new Date().toISOString().split("T")[0];
-        // Fecha execution in_progress
+      if (athleteId && executionId) {
+        // FIX #7 (QA Master): grava as séries reais marcadas antes de fechar
+        const checkedExercises = exercises.filter((_, i) => done[i]);
+        if (checkedExercises.length > 0) {
+          await supabase.from("workout_exercise_sets" as any).insert(
+            checkedExercises.map((e, idx) => ({
+              execution_id: executionId,
+              exercise_name: e.name,
+              exercise_order: idx,
+              set_number: 1,
+              completed: true,
+            }))
+          );
+        }
+
         await supabase.from("workout_executions" as any)
           .update({
             status: "completed",
@@ -121,22 +164,26 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             duration_minutes: parseInt(answers.time, 10) || 30,
             notes: `quick_workout · ${answers.goal} · ${answers.equipment}`,
           } as any)
-          .eq("athlete_id", athleteId)
-          .eq("workout_date", today)
-          .eq("phase_name", "quick")
-          .eq("status", "in_progress");
+          .eq("id", executionId);
 
-        await supabase.rpc("fn_award_xp" as any, {
-          p_athlete_id: athleteId,
+        // FIX #6/#30: fn_award_workout_xp só libera XP com set real
+        // registrado — trava idêntica à do fluxo principal de treino.
+        const { data: awardResult } = await supabase.rpc("fn_award_workout_xp" as any, {
+          p_execution_id: executionId,
           p_amount: 50,
-          p_source: "quick_workout",
-          p_metadata: answers as any,
         });
-        toast.success("Treino concluído! +50 XP");
+        const result = Array.isArray(awardResult) ? awardResult[0] : awardResult;
+        if (result?.awarded) {
+          toast.success("Treino concluído! +50 XP");
+        } else {
+          toast.info("Treino salvo. Marque os exercícios feitos pra receber XP na próxima.");
+        }
       }
     } catch (e) {
       console.error("[QuickTrain] complete:", e);
-      toast.success("Treino iniciado");
+      toast.error("Não foi possível concluir o treino agora.");
+    } finally {
+      setCompleting(false);
     }
     onClose(); reset();
   };
@@ -166,7 +213,24 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {!loading && step < 3 && (
+          {/* FIX #32 (QA Master): estado de erro com retry em vez de spinner infinito */}
+          {!loading && genError && (
+            <div className="py-8 text-center space-y-4">
+              <p className="text-sm text-muted-foreground">Não conseguimos montar seu treino agora. Tenta de novo?</p>
+              <div className="flex gap-2 justify-center">
+                <button onClick={() => { setGenError(false); setStep(0); }}
+                  className="rounded-full border border-white/15 text-foreground px-4 py-2 text-xs font-bold">
+                  Refazer perguntas
+                </button>
+                <button onClick={() => resolve(answers)}
+                  className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold">
+                  Tentar novamente
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!loading && !genError && step < 3 && (
             <div>
               <p className="text-[10px] text-muted-foreground mb-2">Pergunta {step + 1} de 3</p>
               <p className="font-display text-lg mb-4">{QS[step].label}</p>
@@ -181,7 +245,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {!loading && step === 3 && showingOffer && !offerSeen && (
+          {!loading && !genError && step === 3 && showingOffer && !offerSeen && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Oferta para seu objetivo</p>
               <p className="font-display text-lg mb-3">Aceleramos sua meta de {answers.goal}</p>
@@ -208,7 +272,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           )}
 
-          {!loading && step === 3 && !showingOffer && exercises.length > 0 && (
+          {!loading && !genError && step === 3 && !showingOffer && exercises.length > 0 && (
             <div>
               {modelos.length > 0 && (
                 <div className="mb-3">
@@ -218,11 +282,19 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                 </div>
               )}
               <p className="font-display text-lg mb-1">Seu treino está pronto</p>
-              <p className="text-xs text-muted-foreground mb-3">{exercises.length} exercícios • {answers.time} min</p>
+              <p className="text-xs text-muted-foreground mb-3">{exercises.length} exercícios • {answers.time} min · marque cada um ao terminar</p>
               <ul className="space-y-2 mb-4 max-h-72 overflow-y-auto">
                 {exercises.map((e, i) => (
-                  <li key={e.id || i} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-full bg-primary/20 text-primary grid place-items-center text-xs font-bold">{i + 1}</span>
+                  <li key={e.id || i}
+                    onClick={() => toggleDone(i)}
+                    className={`rounded-xl border p-3 flex items-center gap-3 cursor-pointer transition ${
+                      done[i] ? "border-primary/50 bg-primary/[0.08]" : "border-white/10 bg-white/[0.02]"
+                    }`}>
+                    <span className={`w-7 h-7 rounded-full grid place-items-center text-xs font-bold shrink-0 ${
+                      done[i] ? "bg-primary text-primary-foreground" : "bg-primary/20 text-primary"
+                    }`}>
+                      {done[i] ? <Check className="w-4 h-4" /> : i + 1}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{e.name}</p>
                       <p className="text-[10px] text-muted-foreground">
@@ -231,21 +303,21 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                       </p>
                     </div>
                     {(e.video_url || e.gif_url) && (
-                      <a href={e.video_url || e.gif_url!} target="_blank" rel="noreferrer" className="text-primary">
+                      <a href={e.video_url || e.gif_url!} target="_blank" rel="noreferrer" onClick={(ev) => ev.stopPropagation()} className="text-primary">
                         <Play className="w-4 h-4" />
                       </a>
                     )}
                   </li>
                 ))}
               </ul>
-              <button onClick={completeWorkout}
-                className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">
-                Concluir treino (+50 XP)
+              <button onClick={completeWorkout} disabled={!allDone || completing}
+                className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 disabled:opacity-40">
+                {completing ? "Salvando..." : allDone ? "Concluir treino (+50 XP)" : `Marque todos os exercícios (${Object.values(done).filter(Boolean).length}/${exercises.length})`}
               </button>
             </div>
           )}
 
-          {!loading && step === 3 && !showingOffer && exercises.length === 0 && (
+          {!loading && !genError && step === 3 && !showingOffer && exercises.length === 0 && (
             <div className="py-8 text-center text-sm text-muted-foreground">
               Não conseguimos montar um treino para esses filtros. Tente outro objetivo.
             </div>
