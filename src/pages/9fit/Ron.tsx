@@ -27,6 +27,24 @@ interface Msg {
   created_at?: string;
 }
 
+// FIX #33 (QA Master): indicador de "digitando" real em vez do texto
+// literal "..." parado na tela.
+function TypingDots() {
+  return (
+    <span className="inline-flex gap-1 items-center h-4">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+const TYPING_PLACEHOLDER = "__typing__";
+
 export default function NineFitRon() {
   const { user } = useAuth();
   const { athleteId } = useAthleteId();
@@ -75,6 +93,35 @@ export default function NineFitRon() {
       }
     })();
   }, [user?.id, autoTriggered, autoCtx, state]);
+
+  // FIX #34 (QA Master): "Memória persistente ativa" era só uma frase —
+  // não demonstrava nada concreto. Ao voltar com histórico existente,
+  // referencia o último treino real do atleta pra provar que lembra.
+  useEffect(() => {
+    if (!athleteId) return;
+    (async () => {
+      const { data: lastWorkout } = await supabase
+        .from("workout_executions" as any)
+        .select("phase_name, completed_at")
+        .eq("athlete_id", athleteId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const w: any = lastWorkout;
+      if (w?.phase_name && w?.completed_at) {
+        const days = Math.floor((Date.now() - new Date(w.completed_at).getTime()) / 86400000);
+        const when = days === 0 ? "hoje" : days === 1 ? "ontem" : `há ${days} dias`;
+        setMessages((p) => {
+          if (p.length === 0) return p;
+          // só injeta se ainda não tem essa referência nessa sessão
+          if (p.some((m) => m.content.includes("Vi que seu último treino"))) return p;
+          return [...p, { role: "assistant", content: `Vi que seu último treino (${w.phase_name}) foi ${when}. Como você está se sentindo desde então?` }];
+        });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [athleteId]);
 
   // Realtime: novas mensagens entram sozinhas
   useRealtimeTable(
@@ -143,49 +190,64 @@ export default function NineFitRon() {
     setInput("");
     setSending(true);
 
-    // optimistic
-    setMessages((p) => [...p, { role: "user", content: userMsg }, { role: "assistant", content: "..." }]);
+    // optimistic — placeholder marcado (não mais o texto literal "...")
+    setMessages((p) => [...p, { role: "user", content: userMsg }, { role: "assistant", content: TYPING_PLACEHOLDER }]);
     await persist("user", userMsg);
 
-    // Ajuste automático por dor (não gasta ficha — é motor operacional)
-    const painReply = await handlePainSideEffect(userMsg);
-    if (painReply) {
+    // FIX #33 (QA Master): sem try/catch aqui, uma falha na função de IA
+    // deixava a mensagem travada em "..." pra sempre e o input nunca
+    // reabilitava. Agora qualquer erro cai num estado visível com retry.
+    try {
+      // Ajuste automático por dor (não gasta ficha — é motor operacional)
+      const painReply = await handlePainSideEffect(userMsg);
+      if (painReply) {
+        setMessages((p) => {
+          const out = [...p];
+          out[out.length - 1] = { role: "assistant", content: painReply };
+          return out;
+        });
+        await persist("assistant", painReply);
+        setSending(false);
+        return;
+      }
+
+      const result = await withCredit("ron_chat", async () => {
+        const history = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
+        const { data, error } = await supabase.functions.invoke("ai-coach", {
+          body: { mode: "chat", message: userMsg, userId: user.id, history },
+        });
+        if (error) throw error;
+        return (data as any)?.data?.content || (data as any)?.content || "Aguardando mais sinais do seu corpo.";
+      });
+
+      if (result === null) {
+        // sem fichas — mensagem já é dinâmica no hook, mas garante fallback claro aqui
+        setMessages((p) => {
+          const out = [...p];
+          out[out.length - 1] = { role: "assistant", content: "Você usou todas as suas fichas de conversa hoje. Elas renovam à meia-noite." };
+          return out;
+        });
+        setSending(false);
+        return;
+      }
+
       setMessages((p) => {
         const out = [...p];
-        out[out.length - 1] = { role: "assistant", content: painReply };
+        out[out.length - 1] = { role: "assistant", content: result };
         return out;
       });
-      await persist("assistant", painReply);
-      setSending(false);
-      return;
-    }
-
-    const result = await withCredit("ron_chat", async () => {
-      const history = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
-      const { data } = await supabase.functions.invoke("ai-coach", {
-        body: { mode: "chat", message: userMsg, userId: user.id, history },
-      });
-      return (data as any)?.data?.content || (data as any)?.content || "Aguardando mais sinais do seu corpo.";
-    });
-
-    if (result === null) {
-      // sem fichas
+      await persist("assistant", result);
+    } catch (e) {
+      console.error("[Ron] send error:", e);
       setMessages((p) => {
         const out = [...p];
-        out[out.length - 1] = { role: "assistant", content: "Fichas insuficientes. Recarregue para continuar conversando comigo." };
+        out[out.length - 1] = { role: "assistant", content: "Não consegui responder agora. Tenta de novo?" };
         return out;
       });
+      toast.error("Falha ao falar com o RON");
+    } finally {
       setSending(false);
-      return;
     }
-
-    setMessages((p) => {
-      const out = [...p];
-      out[out.length - 1] = { role: "assistant", content: result };
-      return out;
-    });
-    await persist("assistant", result);
-    setSending(false);
   };
 
 
@@ -218,7 +280,7 @@ export default function NineFitRon() {
                 : "mr-auto bg-white/[0.04] border-l-2 border-primary/50 text-foreground"
             }`}
           >
-            {m.content}
+            {m.content === TYPING_PLACEHOLDER ? <TypingDots /> : m.content}
           </div>
         ))}
         <div ref={endRef} />
@@ -230,7 +292,8 @@ export default function NineFitRon() {
             <button
               key={s}
               onClick={() => setInput(s)}
-              className="shrink-0 text-[11px] tracking-wide px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+              disabled={sending}
+              className="shrink-0 text-[11px] tracking-wide px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors disabled:opacity-40"
             >
               {s}
             </button>
@@ -241,12 +304,13 @@ export default function NineFitRon() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Pergunte ao RON..."
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none px-3"
+            disabled={sending}
+            placeholder={sending ? "RON está respondendo..." : "Pergunte ao RON..."}
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none px-3 disabled:opacity-60"
           />
           <button
             onClick={send}
-            disabled={sending}
+            disabled={sending || !input.trim()}
             className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
