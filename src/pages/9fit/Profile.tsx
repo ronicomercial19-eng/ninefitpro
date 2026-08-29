@@ -57,11 +57,18 @@ export default function NineFitProfile() {
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
-  const items: MenuItem[] = [
+  // FIX #37 (QA Master): "Configurações" era uma lista única misturando
+  // produto/serviço (Staff, Planejamento, Ajuste de Treino, Ron) com
+  // conta de verdade (Histórico, Pagamento). Separado em duas seções
+  // com propósito claro.
+  const ecosystemItems: MenuItem[] = [
     { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} online`, badgeStyle: "neon" },
     { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
-    { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
+    { icon: Crown, label: "RON", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
+  ];
+
+  const accountItems: MenuItem[] = [
     { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
     { icon: CreditCard, label: "Pagamento & Plano", sub: "Ver histórico e planos", route: "/9fit/billing" },
   ];
@@ -79,6 +86,31 @@ export default function NineFitProfile() {
     }
     pushSubscribed ? unsubscribePush() : subscribePush();
   };
+
+  const renderItem = (it: MenuItem) => (
+    <button key={it.label} onClick={() => navigate(it.route)}
+      className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition">
+      <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
+        <it.icon className="w-5 h-5 text-primary" />
+      </div>
+      <div className="flex-1 text-left">
+        <div className="flex items-center gap-2">
+          <p className="font-display text-lg">{it.label}</p>
+          {it.badge && (
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+              it.badgeStyle === "neon"
+                ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
+                : "border border-primary/60 text-primary"
+            }`}>
+              {it.badge}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">{it.sub}</p>
+      </div>
+      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -104,86 +136,78 @@ export default function NineFitProfile() {
         </div>
       </section>
 
-      {/* Push notifications toggle — sempre visível, orienta instalação quando necessário */}
-      <section className="px-4 mt-4">
-        <button
-          onClick={handlePushClick}
-          disabled={pushLoading}
-          className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition disabled:opacity-50"
-        >
-          <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
-            {pushSubscribed ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
-          </div>
-          <div className="flex-1 text-left">
-            <p className="font-display text-lg">
-              {pushSubscribed ? "Notificações push ativas" : "Ativar notificações push"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {pushSubscribed
-                ? "Toque para desativar neste dispositivo"
-                : isIOS() && !isStandalone()
-                ? "No iPhone: instale o app na tela de início primeiro"
-                : "Receba avisos de treino e agenda no celular"}
-            </p>
-          </div>
-        </button>
-
-        {showIOSInstructions && (
-          <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground space-y-2">
-            <p className="text-foreground font-medium flex items-center gap-2">
-              <Share className="w-4 h-4 text-primary" /> Pra ativar notificações no iPhone:
-            </p>
-            <ol className="list-decimal list-inside space-y-1">
-              <li>Toque no ícone de compartilhar do Safari (o quadrado com a seta pra cima)</li>
-              <li>Toque em "Adicionar à Tela de Início"</li>
-              <li>Abra o 9FIT pelo ícone na tela de início (não pelo Safari)</li>
-              <li>Volte aqui e toque em "Ativar notificações push"</li>
-            </ol>
-            <button onClick={() => setShowIOSInstructions(false)} className="text-primary underline">
-              Entendi
-            </button>
-          </div>
-        )}
-      </section>
-
-      {/* Menu */}
-      <div className="px-4 mt-6 space-y-3">
-        {items.map((it) => (
-          <button key={it.label} onClick={() => navigate(it.route)}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition">
+      {/* CONTA — notificações + histórico + pagamento */}
+      <div className="px-4 mt-6">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 px-1">Conta</p>
+        <div className="space-y-3">
+          <button
+            onClick={handlePushClick}
+            disabled={pushLoading}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition disabled:opacity-50"
+          >
             <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
-              <it.icon className="w-5 h-5 text-primary" />
+              {pushSubscribed ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
             </div>
             <div className="flex-1 text-left">
-              <div className="flex items-center gap-2">
-                <p className="font-display text-lg">{it.label}</p>
-                {it.badge && (
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                    it.badgeStyle === "neon"
-                      ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
-                      : "border border-primary/60 text-primary"
-                  }`}>
-                    {it.badge}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{it.sub}</p>
+              <p className="font-display text-lg">
+                {pushSubscribed ? "Notificações push ativas" : "Ativar notificações push"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {pushSubscribed
+                  ? "Toque para desativar neste dispositivo"
+                  : isIOS() && !isStandalone()
+                  ? "No iPhone: instale o app na tela de início primeiro"
+                  : "Receba avisos de treino e agenda no celular"}
+              </p>
             </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
-        ))}
+
+          {showIOSInstructions && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground space-y-2">
+              <p className="text-foreground font-medium flex items-center gap-2">
+                <Share className="w-4 h-4 text-primary" /> Pra ativar notificações no iPhone:
+              </p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Toque no ícone de compartilhar do Safari (o quadrado com a seta pra cima)</li>
+                <li>Toque em "Adicionar à Tela de Início"</li>
+                <li>Abra o 9FIT pelo ícone na tela de início (não pelo Safari)</li>
+                <li>Volte aqui e toque em "Ativar notificações push"</li>
+              </ol>
+              <button onClick={() => setShowIOSInstructions(false)} className="text-primary underline">
+                Entendi
+              </button>
+            </div>
+          )}
+
+          {accountItems.map(renderItem)}
+        </div>
       </div>
 
-      {/* CTAs */}
+      {/* ECOSSISTEMA — atalhos de produto/serviço, não são "configuração" */}
+      <div className="px-4 mt-6">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 px-1">Ecossistema</p>
+        <div className="space-y-3">
+          {ecosystemItems.map(renderItem)}
+        </div>
+      </div>
+
+      {/* PERFIL — completar cadastro / calibração de IA */}
+      <div className="px-4 mt-6">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 px-1">Perfil</p>
+        <div className="space-y-3">
+          <button onClick={() => setCompleteOpen(true)}
+            className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
+            <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
+          </button>
+          <button onClick={() => setPdiOpen(true)}
+            className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
+            <Brain className="w-4 h-4" /> Calibrar IA (PDI)
+          </button>
+        </div>
+      </div>
+
+      {/* Ações gerais */}
       <div className="px-4 mt-6 space-y-3">
-        <button onClick={() => setCompleteOpen(true)}
-          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
-          <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
-        </button>
-        <button onClick={() => setPdiOpen(true)}
-          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
-          <Brain className="w-4 h-4" /> Calibrar IA (PDI)
-        </button>
         <button onClick={() => navigate("/9fit/hub")}
           className="w-full rounded-full bg-gradient-to-r from-primary to-primary/70 text-primary-foreground py-3.5 font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]">
           Explorar mais opções <ExternalLink className="w-4 h-4" />
