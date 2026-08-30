@@ -67,7 +67,10 @@ export function HubFloatingMetrics() {
   }, [user?.id]);
 
   return (
-    <div className="px-4 -mt-6 relative z-10">
+    // FIX #16 (QA Master): -mt-6 puxava esse grid pra cima e sobrepunha
+    // o texto do Hero (HeroSyncSection) embaixo dele. Espaçamento
+    // positivo elimina a sobreposição.
+    <div className="px-4 mt-3 relative z-10">
       <div className="grid grid-cols-4 gap-2">
         {metrics.map((m, i) => (
           <MetricCard key={m.key} metric={m} delay={i * 0.08} />
