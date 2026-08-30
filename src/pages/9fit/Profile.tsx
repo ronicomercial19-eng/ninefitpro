@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, BellRing, BellOff, Share,
+  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, BellRing, BellOff, Share, MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PDIWizard } from "@/components/9fit/PDIWizard";
@@ -37,12 +38,17 @@ function isIOS() {
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
+  const { athleteId } = useAthleteId();
   const [staffOnline, setStaffOnline] = useState(3);
   const [planTier, setPlanTier] = useState("Aluno Premium");
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications();
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+
+  // FIX (Rony, 30/08): fichas diárias do RON visíveis no perfil — antes
+  // não existia lugar nenhum no app pra ver o saldo.
+  const [credits, setCredits] = useState<{ remaining: number; total: number; resetAt: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -54,6 +60,18 @@ export default function NineFitProfile() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!athleteId) return;
+    supabase
+      .from("athlete_credits" as any)
+      .select("credits_remaining, credits_total, reset_at")
+      .eq("athlete_id", athleteId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const d: any = data;
+        if (d) setCredits({ remaining: d.credits_remaining, total: d.credits_total, resetAt: d.reset_at });
+      });
+  }, [athleteId]);
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
@@ -135,6 +153,36 @@ export default function NineFitProfile() {
           </p>
         </div>
       </section>
+
+      {/* Fichas diárias do RON */}
+      {credits && (
+        <section className="px-4 mt-4">
+          <button
+            onClick={() => navigate("/9fit/ron")}
+            className="w-full rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-4"
+          >
+            <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.08] flex items-center justify-center">
+              <MessageCircle className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-display text-lg">
+                {credits.remaining}/{credits.total} fichas do RON hoje
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {credits.resetAt
+                  ? `Renovam ${new Date(credits.resetAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                  : "Não cumulativas · renovam todo dia"}
+              </p>
+            </div>
+            <div className="w-14 h-1.5 rounded-full bg-white/10 overflow-hidden shrink-0">
+              <div
+                className="h-full bg-primary"
+                style={{ width: `${credits.total > 0 ? (credits.remaining / credits.total) * 100 : 0}%` }}
+              />
+            </div>
+          </button>
+        </section>
+      )}
 
       {/* CONTA — notificações + histórico + pagamento */}
       <div className="px-4 mt-6">
