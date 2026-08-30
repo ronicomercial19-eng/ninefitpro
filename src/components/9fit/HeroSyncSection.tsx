@@ -8,6 +8,21 @@ interface Props {
   lastUpdate?: string;
 }
 
+// FIX #18 (QA Master): "O sistema ainda está te calibrando" aparecia
+// repetido sem explicar o que falta nem quanto já foi coletado.
+function calibrationDetail(breakdown: Props["breakdown"]) {
+  const dims: { label: string; v: number }[] = [
+    { label: "Perfil", v: breakdown.treino },
+    { label: "Nutrição", v: breakdown.nutri },
+    { label: "Sono", v: breakdown.sono },
+    { label: "Mobilidade", v: breakdown.mob },
+    { label: "Hidratação", v: breakdown.hidr },
+  ];
+  const collected = dims.filter((d) => d.v > 0).length;
+  const missing = dims.filter((d) => d.v === 0).map((d) => d.label);
+  return { collected, total: dims.length, missing };
+}
+
 /**
  * Hero cinematográfico do Hub.
  * Imagem B&W full-bleed + overlay pesado + halo accent + Sync Score gigante.
@@ -21,6 +36,9 @@ export function HeroSyncSection({ name, syncScore, breakdown, lastUpdate = "agor
       : syncScore > 0
       ? "Sinais de sobrecarga detectados."
       : "O sistema ainda está te calibrando.";
+
+  const isCalibrating = syncScore === 0;
+  const calib = calibrationDetail(breakdown);
 
   return (
     <section className="relative w-full overflow-hidden">
@@ -56,10 +74,34 @@ export function HeroSyncSection({ name, syncScore, breakdown, lastUpdate = "agor
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-display text-3xl sm:text-5xl leading-tight max-w-md mb-6 text-foreground"
+            className="text-display text-3xl sm:text-5xl leading-tight max-w-md mb-3 text-foreground"
           >
             {headline}
           </motion.h1>
+
+          {isCalibrating && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mb-4 max-w-xs"
+            >
+              <div className="flex items-center justify-between text-[10px] font-data text-muted-foreground mb-1">
+                <span>{calib.collected}/{calib.total} sinais coletados</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${(calib.collected / calib.total) * 100}%` }}
+                />
+              </div>
+              {calib.missing.length > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  Faltando: {calib.missing.join(", ")}
+                </p>
+              )}
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
