@@ -1,7 +1,7 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { RonWaveform } from "@/components/9fit/RonWaveform";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -25,13 +25,18 @@ interface Msg {
   role: "user" | "assistant" | "system";
   content: string;
   created_at?: string;
+  // FIX QA Master #5: permite anexar uma ação (CTA) à mensagem do assistente,
+  // usada para o aviso de fichas insuficientes navegar direto para a recarga
+  // em vez de mostrar um "Recarregue" genérico sem destino.
+  action?: { label: string; route: string };
 }
 
 export default function NineFitRon() {
   const { user } = useAuth();
   const { athleteId } = useAthleteId();
-  const { withCredit } = useCredits(athleteId);
+  const { remaining, withCredit } = useCredits(athleteId);
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const { state } = useUserState();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -169,10 +174,16 @@ export default function NineFitRon() {
     });
 
     if (result === null) {
-      // sem fichas
+      // FIX QA Master #5: antes mostrava "Recarregue" sem dizer onde;
+      // agora explica o saldo e a mensagem vira uma ação clicável para
+      // a tela real de créditos (/9fit/aulas-creditos).
       setMessages((p) => {
         const out = [...p];
-        out[out.length - 1] = { role: "assistant", content: "Fichas insuficientes. Recarregue para continuar conversando comigo." };
+        out[out.length - 1] = {
+          role: "assistant",
+          content: "Suas fichas de conversa acabaram por enquanto. Toque abaixo para ver seu plano e recarregar — assim que renovar, retomamos de onde paramos.",
+          action: { label: "Ver planos e recarregar", route: "/9fit/aulas-creditos" },
+        };
         return out;
       });
       setSending(false);
@@ -210,15 +221,24 @@ export default function NineFitRon() {
 
       <div className="flex-1 px-5 space-y-3 overflow-y-auto">
         {messages.map((m, i) => (
-          <div
-            key={m.id ?? i}
-            className={`max-w-[78%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
-              m.role === "user"
-                ? "ml-auto bg-primary text-primary-foreground"
-                : "mr-auto bg-white/[0.04] border-l-2 border-primary/50 text-foreground"
-            }`}
-          >
-            {m.content}
+          <div key={m.id ?? i} className="max-w-[78%]" style={{ marginLeft: m.role === "user" ? "auto" : undefined }}>
+            <div
+              className={`rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
+                m.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-white/[0.04] border-l-2 border-primary/50 text-foreground"
+              }`}
+            >
+              {m.content}
+            </div>
+            {m.action && (
+              <button
+                onClick={() => navigate(m.action!.route)}
+                className="mt-2 w-full text-[12px] font-medium rounded-xl px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                {m.action.label}
+              </button>
+            )}
           </div>
         ))}
         <div ref={endRef} />
