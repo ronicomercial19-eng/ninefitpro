@@ -54,7 +54,7 @@ export default function AIAnalysisPage() {
       const { data: assessments } = await supabase
         .from('avaliacoes_unificadas')
         .select('peso, gordura_corporal, massa_muscular, data_avaliacao')
-        .eq('aluno_id', selectedStudent)
+        .eq('athlete_id', selectedStudent)
         .order('data_avaliacao', { ascending: false })
         .limit(5);
 
@@ -62,6 +62,7 @@ export default function AIAnalysisPage() {
         body: {
           type: 'analyze_progress',
           data: {
+            athleteId: selectedStudent,
             name: student.name,
             goal: student.primary_goal,
             assessments: assessments || [],
@@ -92,6 +93,7 @@ export default function AIAnalysisPage() {
         body: {
           type: 'recommendations',
           data: {
+            athleteId: selectedStudent,
             name: student.name,
             goal: student.primary_goal,
             level: student.experience_level,
