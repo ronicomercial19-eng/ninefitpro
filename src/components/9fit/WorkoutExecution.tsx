@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
   ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
-  Loader2, Check, Sparkles
+  Loader2, Check, Sparkles, Gauge
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
+import { ExerciseVideoPlayer } from "@/components/exercises/ExerciseVideoPlayer";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -295,8 +296,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             {/* Current Exercise Card */}
             {currentExercise && (
               <div className="bg-card border border-border rounded-lg overflow-hidden">
-                {/* Video/Image */}
-                {currentExercise.video_url ? (
+                {/* Video/GIF player — usa o player real (loading, fallback, toggle gif/video) */}
+                {currentExercise.exercise_id ? (
+                  <ExerciseVideoPlayer
+                    exerciseId={currentExercise.exercise_id}
+                    exerciseName={currentExercise.name}
+                    className="w-full aspect-video"
+                    showGif={true}
+                  />
+                ) : currentExercise.video_url ? (
                   <div className="aspect-video bg-black">
                     <iframe
                       src={currentExercise.video_url}
@@ -325,7 +333,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                   </div>
 
                   {/* Prescription */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <div className="bg-muted/50 rounded p-2 text-center">
                       <p className="text-[10px] text-muted-foreground uppercase">Séries</p>
                       <p className="text-xl font-black text-foreground">{currentExercise.sets}</p>
@@ -335,7 +343,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                       <p className="text-xl font-black text-foreground">{currentExercise.reps}</p>
                     </div>
                     <div className="bg-muted/50 rounded p-2 text-center">
-                      <p className="text-[10px] text-muted-foreground uppercase">Tempo</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">Descanso</p>
+                      <p className="text-xl font-black text-foreground">{currentExercise.rest_seconds ? `${currentExercise.rest_seconds}s` : "—"}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded p-2 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center justify-center gap-0.5">
+                        <Gauge className="w-2.5 h-2.5" /> Cadência
+                      </p>
                       <p className="text-xl font-black text-foreground">{currentExercise.tempo || "—"}</p>
                     </div>
                   </div>
