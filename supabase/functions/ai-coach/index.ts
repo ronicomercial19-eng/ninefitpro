@@ -20,6 +20,73 @@ function apiError(code: string, message: string, status = 500) {
   return apiResponse({ code, message }, status);
 }
 
+// FIX QA Master #4: monta contexto real do atleta (sync score, sono, HRV,
+// avaliações, treinos recentes) para os modos 'recommendations'/'recommend'
+// e 'analyze_progress'/'analyze', que antes recebiam só {name, goal, level,
+// injuries} do front e geravam recomendações "no escuro". Mirra a lógica de
+// contexto já usada no modo 'chat' do RON.
+async function buildAthleteRichContext(authClient: any, athleteId: string) {
+  const parts: string[] = [];
+
+  const { data: ath } = await authClient
+    .from("athletes")
+    .select("id, name, level, xp_total, total_xp, sync_score, preferred_goal, primary_goal, experience_level, injuries_limitations, user_id")
+    .eq("id", athleteId)
+    .maybeSingle();
+  if (ath) {
+    parts.push(`Nível ${ath.level || 1} • Sync Score ${ath.sync_score ?? 0} • XP ${ath.xp_total || ath.total_xp || 0} • Objetivo ${ath.preferred_goal || ath.primary_goal || 'NI'} • Nível de experiência ${ath.experience_level || 'NI'} • Lesões/limitações: ${ath.injuries_limitations || 'nenhuma'}`);
+  }
+
+  const { data: scoreLogs } = await authClient
+    .from("sync_score_logs")
+    .select("score, feedback_text, created_at")
+    .eq("athlete_id", athleteId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (scoreLogs?.length) {
+    parts.push(`Últimos sync scores: ${scoreLogs.map((l: any) => l.score).join(', ')}`);
+    if (scoreLogs[0]?.feedback_text) parts.push(`Último feedback: ${scoreLogs[0].feedback_text.slice(0, 200)}`);
+  }
+
+  const { data: workouts } = await authClient
+    .from("workout_executions")
+    .select("workout_date, status")
+    .eq("athlete_id", athleteId)
+    .order("workout_date", { ascending: false })
+    .limit(10);
+  if (workouts?.length) {
+    const completed = workouts.filter((w: any) => w.status === 'completed').length;
+    parts.push(`Treinos: ${completed}/${workouts.length} concluídos nos últimos registros. Último em ${workouts[0]?.workout_date || 'NI'}`);
+  } else {
+    parts.push(`Sem execuções de treino registradas ainda`);
+  }
+
+  const { data: assessments } = await authClient
+    .from("avaliacoes_unificadas")
+    .select("peso, gordura_corporal, massa_muscular, score_global, data_avaliacao")
+    .eq("athlete_id", athleteId)
+    .order("data_avaliacao", { ascending: false })
+    .limit(3);
+  if (assessments?.length) {
+    parts.push(`Avaliações recentes: ${assessments.map((a: any) => `[${a.data_avaliacao}] score ${a.score_global ?? 'NI'}, peso ${a.peso ?? 'NI'}kg`).join('; ')}`);
+  } else {
+    parts.push(`Sem avaliações físicas registradas ainda`);
+  }
+
+  try {
+    const { data: sleep } = await authClient
+      .from("bio_sleep_logs")
+      .select("hours, duration_hours, quality_score")
+      .eq("user_id", ath?.user_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (sleep) parts.push(`Sono recente: ${sleep.hours ?? sleep.duration_hours ?? 'NI'}h, qualidade ${sleep.quality_score ?? 'NI'}`);
+  } catch (_) { /* table optional */ }
+
+  return parts.length ? parts.join('\n') : 'Sem dados suficientes registrados para este atleta ainda.';
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -184,14 +251,34 @@ ${ctx}
 - Lesões: ${String(d.injuries || 'nenhuma').slice(0, 500)}`;
       chatMessages = [{ role: 'user', content: userPrompt }];
     } else if (mode === 'analyze_progress' || mode === 'analyze') {
-      systemPrompt = `Analista de performance. HTML formatado: Resumo, Pontos Fortes, Áreas de Melhoria, Tendências, Recomendações. Use h3, h4, ul, li, strong.`;
+      systemPrompt = `Analista de performance. HTML formatado: Resumo, Pontos Fortes, Áreas de Melhoria, Tendências, Recomendações. Use h3, h4, ul, li, strong.
+NUNCA invente dados que não estejam no contexto abaixo. Se um dado não existir, diga explicitamente que não há dados suficientes em vez de estimar.`;
       const p = data || {};
-      userPrompt = `Analise: Nome: ${String(p.name || '')} | Treinos: ${p.workoutsCompleted || 0} | Objetivo: ${String(p.goal || '')} | Dados: ${JSON.stringify(p).slice(0, 2000)}`;
+      let richCtx = "";
+      if (p.athleteId) {
+        try { richCtx = await buildAthleteRichContext(authClient, p.athleteId); } catch (_) { /* optional */ }
+      }
+      userPrompt = `Analise o aluno: Nome: ${String(p.name || '')} | Objetivo: ${String(p.goal || '')}
+<DADOS_REAIS_DO_ATLETA>
+${richCtx || 'Sem dados adicionais fornecidos.'}
+</DADOS_REAIS_DO_ATLETA>
+${p.assessments?.length ? `Avaliações brutas: ${JSON.stringify(p.assessments).slice(0, 1500)}` : ''}`;
       chatMessages = [{ role: 'user', content: userPrompt }];
     } else {
-      systemPrompt = `Consultor fitness. JSON: {"recommendations":[{"category":"...","title":"...","description":"...","priority":"alta|média|baixa","icon":"dumbbell|apple|moon|brain"}]}. 4-6 itens. APENAS JSON.`;
+      // FIX QA Master #4: modo 'recommendations'/'recommend' agora carrega
+      // contexto real (sync score, treinos, avaliações, sono) em vez de
+      // gerar recomendações apenas com name/goal/level/injuries.
+      systemPrompt = `Consultor fitness. JSON: {"recommendations":[{"category":"...","title":"...","description":"...","priority":"alta|média|baixa","icon":"dumbbell|apple|moon|brain"}]}. 4-6 itens. APENAS JSON.
+Baseie CADA recomendação em pelo menos um dado concreto do contexto fornecido — cite o dado na descrição. Se o contexto disser que faltam dados em alguma área, gere uma recomendação pedindo esse registro em vez de inventar um conselho genérico.`;
       const r = data || {};
-      userPrompt = `Aluno: ${String(r.name || '')} | Objetivo: ${String(r.goal || '')} | Nível: ${String(r.level || '')} | Lesões: ${String(r.injuries || '')}`;
+      let richCtx = "";
+      if (r.athleteId) {
+        try { richCtx = await buildAthleteRichContext(authClient, r.athleteId); } catch (_) { /* optional */ }
+      }
+      userPrompt = `Aluno: ${String(r.name || '')} | Objetivo: ${String(r.goal || '')} | Nível: ${String(r.level || '')} | Lesões: ${String(r.injuries || '')}
+<DADOS_REAIS_DO_ATLETA>
+${richCtx || 'Sem dados adicionais fornecidos — gere recomendações pedindo que o aluno complete avaliação e primeiro treino.'}
+</DADOS_REAIS_DO_ATLETA>`;
       chatMessages = [{ role: 'user', content: userPrompt }];
     }
 
