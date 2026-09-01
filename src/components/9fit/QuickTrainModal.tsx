@@ -40,9 +40,14 @@ type Modelo = { name?: string; objective?: string; stimulus?: string };
 // FIX (bug real 4 — Treino Rápido não entrava no player guiado): o modal
 // listava os exercícios com link de vídeo abrindo em nova aba (YouTube) e
 // concluía o treino direto no próprio modal, sem nunca passar pelo player
-// guiado (ExerciseVideoPlayer, séries clicáveis, cronômetro). Agora
-// "Iniciar treino guiado" navega para /9fit/train com os exercícios prontos,
-// que Train.tsx abre direto no WorkoutExecution.
+// guiado (ExerciseVideoPlayer, séries clicáveis, cronômetro).
+//
+// FIX 2 (Safari modo privado): a primeira versão usava sessionStorage para
+// passar os exercícios para /9fit/train — Safari em modo privado restringe
+// ou isola storage entre navegações e pode quebrar esse handoff
+// silenciosamente. Trocado por navigate(path, { state }) do React Router,
+// que viaja em memória junto da navegação SPA e não depende de storage do
+// navegador.
 export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
@@ -116,11 +121,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   };
 
   // FIX: em vez de "concluir" direto no modal sem nunca ter executado nada,
-  // navega para o player guiado com os exercícios já resolvidos. O
+  // navega para o player guiado com os exercícios já resolvidos via router
+  // state (não storage — funciona em Safari modo privado). O
   // WorkoutExecution existente cuida de séries, cronômetro, vídeo inline e
   // só concede XP quando execução real (sets) é registrada.
   const startGuidedWorkout = () => {
-    sessionStorage.setItem("9fit_quick_training", JSON.stringify({
+    const quickTraining = {
+      id: `quick-${Date.now()}`,
       training_name: `Treino Rápido · ${answers.goal}`,
       training_type: "structured",
       is_active: true,
@@ -137,10 +144,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
           target_muscles: e.target_muscles,
         })),
       },
-    }));
+    };
     onClose();
     reset();
-    navigate("/9fit/train?quick=1");
+    navigate("/9fit/train", { state: { quickTraining } });
   };
 
   if (!open) return null;
