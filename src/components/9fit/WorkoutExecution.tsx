@@ -34,6 +34,33 @@ interface WorkoutExecutionProps {
   onBack: () => void;
 }
 
+// FIX SISTEMA (guided player como destino padrão): converte o retorno de
+// prescrever_treino (blocos reset/neural/integracao/bloco9) no mesmo shape
+// de exercises[] que o componente já consome quando training_type='structured'.
+function flattenPrescricao(resultado: any): any[] {
+  const t = resultado?.treino;
+  if (!t) return [];
+  const blocos = ['neural', 'bloco9', 'integracao', 'reset'];
+  const out: any[] = [];
+  for (const bloco of blocos) {
+    const lista = Array.isArray(t[bloco]) ? t[bloco] : [];
+    for (const ex of lista) {
+      out.push({
+        exercise_id: ex.id,
+        name: ex.nome,
+        sets: ex.series,
+        reps: ex.reps,
+        rest_seconds: ex.descanso ? parseInt(String(ex.descanso).replace(/\D/g, ''), 10) || undefined : undefined,
+        tempo: ex.cadencia,
+        target_muscles: ex.grupo_muscular ? [ex.grupo_muscular] : undefined,
+        notes: ex.nota_tecnica,
+        _bloco: bloco,
+      });
+    }
+  }
+  return out;
+}
+
 function injectMobileViewport(html: string): string {
   const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">';
   const mobileStyles = `<style>
@@ -67,23 +94,55 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const todayBase = baseExercises.filter((e: any) => e.training_day === todayKey);
   const baseList = todayBase.length > 0 ? todayBase : baseExercises;
 
+  // FIX SISTEMA: exercícios resolvidos dinamicamente via prescrever_treino
+  // quando a atribuição não trouxe training_data.exercises pronto (cobre
+  // 'periodization' e 'html' — qualquer origem sem estrutura estática).
+  const [resolvedExercises, setResolvedExercises] = useState<any[] | null>(null);
+  const [resolvingPlayer, setResolvingPlayer] = useState(false);
+  const [resolveFailed, setResolveFailed] = useState(false);
+
+  useEffect(() => {
+    setResolvedExercises(null);
+    setResolveFailed(false);
+    const hasStaticExercises = baseExercises.length > 0;
+    const canTryPrescricao = liveTraining.training_type !== 'link' && !hasStaticExercises && athleteId;
+    if (!canTryPrescricao) return;
+
+    setResolvingPlayer(true);
+    supabase
+      .rpc('prescrever_treino', { p_aluno_id: athleteId, p_data: todayISO })
+      .then(({ data, error }) => {
+        if (error) { setResolveFailed(true); return; }
+        const flat = flattenPrescricao(data);
+        if (flat.length > 0) setResolvedExercises(flat);
+        else setResolveFailed(true);
+      })
+      .finally(() => setResolvingPlayer(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveTraining.id, athleteId]);
+
   const exercises = (() => {
-    if (!dailyOverride) return baseList;
+    const source = baseList.length > 0 ? baseList : (resolvedExercises || []);
+    if (!dailyOverride) return source;
     // Support two formats: full replacement or per-exercise patch
     if (Array.isArray(dailyOverride.exercises)) return dailyOverride.exercises;
     if (dailyOverride.intensity_pct || dailyOverride.fatigue_adjustment) {
       const factor = (dailyOverride.intensity_pct ?? 100) / 100;
-      return baseList.map((e: any) => ({
+      return source.map((e: any) => ({
         ...e,
         sets: Math.max(1, Math.round((e.sets || 3) + (dailyOverride.fatigue_adjustment ?? 0))),
         _adjusted: true,
         _intensity: dailyOverride.intensity_pct,
       }));
     }
-    return baseList;
+    return source;
   })();
 
+  // FIX SISTEMA: o player guiado agora é o destino padrão — só cai no
+  // conteúdo html legado quando não há NENHUMA forma de resolver exercícios
+  // (nem training_data estático, nem prescrever_treino, e a tentativa já terminou).
   const isStructured = exercises.length > 0;
+  const stillResolving = resolvingPlayer && baseList.length === 0;
 
   // Current exercise index (for structured workouts)
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -143,7 +202,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [weights, setWeights] = useState<Record<number, number>>({});
   const [completedSets, setCompletedSets] = useState<Record<string, boolean[]>>({});
 
-  // HTML content (for html-type trainings)
+  // HTML content (for html-type trainings) — só carrega quando o player
+  // guiado não conseguiu resolver exercícios de nenhuma forma (fallback final)
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
@@ -180,9 +240,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     }
   }, [currentIdx]);
 
-  // Load HTML content for html-type
+  // Load HTML content — só como último recurso, quando não há exercícios
+  // estruturados nem estáticos nem resolvidos via prescrever_treino, e a
+  // tentativa de resolução já terminou.
   useEffect(() => {
-    if (!isStructured && liveTraining.html_file_url && liveTraining.training_type !== 'link') {
+    if (!isStructured && !stillResolving && liveTraining.html_file_url && liveTraining.training_type !== 'link') {
       setLoadingContent(true);
       fetch(liveTraining.html_file_url)
         .then(r => r.text())
@@ -196,7 +258,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .catch(() => setHtmlContent(null))
         .finally(() => setLoadingContent(false));
     }
-  }, [liveTraining]);
+  }, [liveTraining, isStructured, stillResolving]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -408,6 +470,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                 );
               })}
             </div>
+          </div>
+        ) : stillResolving ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-2">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-xs text-muted-foreground">Montando seu treino guiado...</p>
           </div>
         ) : loadingContent ? (
           <div className="flex items-center justify-center h-64">
