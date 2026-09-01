@@ -16,7 +16,7 @@ import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
 import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react";
 
@@ -37,6 +37,7 @@ type WorkoutFlow = "HOME" | "OVERVIEW" | "EXECUTION";
 export default function NineFitTrain() {
   const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
@@ -55,6 +56,38 @@ export default function NineFitTrain() {
       setLoading(false);
     }
   }, [athleteId, athleteLoading]);
+
+  // FIX (bug real 4 — Treino Rápido não entrava no player guiado):
+  // QuickTrainModal navega para /9fit/train?quick=1 e grava os exercícios
+  // resolvidos em sessionStorage. Ao chegar aqui, consome esse pacote e
+  // abre direto no WorkoutExecution, em vez do modal "concluir" sem nunca
+  // ter passado pelo player guiado.
+  useEffect(() => {
+    if (searchParams.get("quick") === "1") {
+      try {
+        const raw = sessionStorage.getItem("9fit_quick_training");
+        if (raw) {
+          const quick = JSON.parse(raw);
+          sessionStorage.removeItem("9fit_quick_training");
+          setSelectedTraining({
+            id: `quick-${Date.now()}`,
+            training_name: quick.training_name || "Treino Rápido",
+            start_date: quick.start_date,
+            is_active: true,
+            training_type: "structured",
+            training_data: quick.training_data,
+          });
+          setFlow("EXECUTION");
+        }
+      } catch (e) {
+        console.warn("[Train] quick training payload", e);
+      } finally {
+        searchParams.delete("quick");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Realtime: novos treinos/atualizações entram sozinhos
   useRealtimeTable(
