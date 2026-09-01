@@ -97,8 +97,19 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   // FIX SISTEMA: exercícios resolvidos dinamicamente via prescrever_treino
   // quando a atribuição não trouxe training_data.exercises pronto (cobre
   // 'periodization' e 'html' — qualquer origem sem estrutura estática).
+  //
+  // BUGFIX (race condition): resolvingPlayer começa TRUE sempre que a
+  // resolução via prescrever_treino é possível — antes começava false, o que
+  // deixava uma janela no primeiro render onde isStructured=false E
+  // stillResolving=false ao mesmo tempo. Nessa janela o fetch do HTML legado
+  // (mais rápido, é só um GET de storage) populava htmlContent primeiro, e o
+  // iframe antigo aparecia no lugar do player guiado mesmo quando a
+  // resolução ia funcionar — era exatamente o "abriu e não teve player".
+  const hasStaticExercisesInit = baseExercises.length > 0;
   const [resolvedExercises, setResolvedExercises] = useState<any[] | null>(null);
-  const [resolvingPlayer, setResolvingPlayer] = useState(false);
+  const [resolvingPlayer, setResolvingPlayer] = useState(
+    liveTraining.training_type !== 'link' && !hasStaticExercisesInit,
+  );
   const [resolveFailed, setResolveFailed] = useState(false);
 
   useEffect(() => {
@@ -106,7 +117,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     setResolveFailed(false);
     const hasStaticExercises = baseExercises.length > 0;
     const canTryPrescricao = liveTraining.training_type !== 'link' && !hasStaticExercises && athleteId;
-    if (!canTryPrescricao) return;
+    if (!canTryPrescricao) { setResolvingPlayer(false); return; }
 
     setResolvingPlayer(true);
     supabase
@@ -242,7 +253,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   // Load HTML content — só como último recurso, quando não há exercícios
   // estruturados nem estáticos nem resolvidos via prescrever_treino, e a
-  // tentativa de resolução já terminou.
+  // tentativa de resolução já terminou (stillResolving=false).
   useEffect(() => {
     if (!isStructured && !stillResolving && liveTraining.html_file_url && liveTraining.training_type !== 'link') {
       setLoadingContent(true);
