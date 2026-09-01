@@ -123,6 +123,48 @@ export default function NineFitTrain() {
     setFlow("EXECUTION");
   };
 
+  // FIX (aba Semana desconectada do player guiado): WeeklyTrainingView já
+  // busca via fn_get_week_workouts os exercícios reais do dia clicado
+  // (exercise_id, sets, reps, rest_seconds) — só nunca chegava ao
+  // WorkoutExecution. Antes, "Executar" sempre abria trainings[0] (a
+  // primeira atribuição da lista), ignorando qual dia da semana foi
+  // clicado, e o vídeo de cada exercício abria em nova aba do YouTube em
+  // vez do player guiado. Agora montamos uma TrainingAssignment sintética
+  // com o training_data.exercises do próprio dia, e vai direto para EXECUTION.
+  const handleExecuteWeekDay = (day: any) => {
+    const exercises = (day?.exercises || []).map((e: any) => ({
+      exercise_id: e.id,
+      name: e.name,
+      sets: e.sets,
+      reps: e.reps_range || e.reps,
+      rest_seconds: e.rest_seconds,
+      video_url: e.video_url,
+      gif_url: e.gif_url,
+    }));
+
+    if (exercises.length === 0) {
+      // Sem exercícios estruturados nesse dia — fallback ao fluxo antigo
+      // (primeira atribuição ativa) só quando não há nada para executar direto.
+      if (trainings[0]) {
+        setSelectedTraining(trainings[0]);
+        setFlow("OVERVIEW");
+      } else {
+        setQuickOpen(true);
+      }
+      return;
+    }
+
+    setSelectedTraining({
+      id: day.id || `week-${day.date}`,
+      training_name: day.day_name || "Treino do dia",
+      start_date: day.date,
+      is_active: true,
+      training_type: "structured",
+      training_data: { exercises },
+    });
+    setFlow("EXECUTION");
+  };
+
   const handleFinish = () => {
     setFlow("HOME");
     setSelectedTraining(null);
@@ -219,15 +261,7 @@ export default function NineFitTrain() {
         ) : subTab === "semana" && athleteId ? (
           <WeeklyTrainingView
             athleteId={athleteId}
-            onExecuteToday={(day) => {
-              // se houver treino atribuído hoje, abre overview do primeiro; caso contrário, abre Quick
-              if (trainings[0]) {
-                setSelectedTraining(trainings[0]);
-                setFlow("OVERVIEW");
-              } else {
-                setQuickOpen(true);
-              }
-            }}
+            onExecuteToday={handleExecuteWeekDay}
           />
         ) : (
           <>
