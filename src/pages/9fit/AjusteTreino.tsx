@@ -109,6 +109,29 @@ export default function NineFitAjusteTreino() {
     }
   };
 
+  // FIX (player guiado): "ver vídeo" aqui abria o YouTube em nova aba.
+  // Esta tela é de ajuste de parâmetros (séries/reps/descanso), não de
+  // execução — então em vez de embutir o player inteiro, o botão agora
+  // leva ao mesmo player guiado (WorkoutExecution via Train.tsx) já
+  // posicionado no treino de hoje, mantendo o ajuste como tela separada.
+  const openInGuidedPlayer = () => {
+    sessionStorage.setItem("9fit_quick_training", JSON.stringify({
+      training_name: workoutName,
+      start_date: today,
+      training_data: {
+        exercises: exercises.map((e) => ({
+          exercise_id: e.id,
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps_range,
+          rest_seconds: e.rest_seconds,
+          video_url: e.video_url,
+        })),
+      },
+    }));
+    navigate("/9fit/train?quick=1");
+  };
+
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
       <div className="px-4 pt-6 flex items-center gap-2">
@@ -123,6 +146,15 @@ export default function NineFitAjusteTreino() {
           <RefreshCw className={`w-4 h-4 ${reloading ? "animate-spin" : ""}`} />
         </button>
       </div>
+
+      {exercises.length > 0 && (
+        <div className="mx-4 mt-4">
+          <button onClick={openInGuidedPlayer}
+            className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 flex items-center justify-center gap-2 font-bold text-primary hover:bg-primary/[0.12] transition">
+            <Play className="w-4 h-4" /> Abrir no player guiado
+          </button>
+        </div>
+      )}
 
       <div className="mx-4 mt-5 grid grid-cols-2 gap-3">
         <button onClick={() => setMode("smart")}
@@ -151,9 +183,7 @@ export default function NineFitAjusteTreino() {
                   {ex.sets}×{ex.reps_range} · {ex.rest_seconds}s
                 </p>
               </div>
-              {ex.video_url && (
-                <a href={ex.video_url} target="_blank" rel="noreferrer" className="text-primary"><Play className="w-4 h-4" /></a>
-              )}
+              {ex.video_url && <Play className="w-4 h-4 text-primary/60" />}
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2">
               <label className="text-[10px] uppercase text-muted-foreground">
