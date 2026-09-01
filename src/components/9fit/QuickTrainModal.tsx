@@ -37,6 +37,12 @@ type Exercise = {
 
 type Modelo = { name?: string; objective?: string; stimulus?: string };
 
+// FIX (bug real 4 — Treino Rápido não entrava no player guiado): o modal
+// listava os exercícios com link de vídeo abrindo em nova aba (YouTube) e
+// concluía o treino direto no próprio modal, sem nunca passar pelo player
+// guiado (ExerciseVideoPlayer, séries clicáveis, cronômetro). Agora
+// "Iniciar treino guiado" navega para /9fit/train com os exercícios prontos,
+// que Train.tsx abre direto no WorkoutExecution.
 export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
@@ -109,36 +115,32 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
     }
   };
 
-  const completeWorkout = async () => {
-    try {
-      if (athleteId) {
-        const today = new Date().toISOString().split("T")[0];
-        // Fecha execution in_progress
-        await supabase.from("workout_executions" as any)
-          .update({
-            status: "completed",
-            completed_at: new Date().toISOString(),
-            duration_minutes: parseInt(answers.time, 10) || 30,
-            notes: `quick_workout · ${answers.goal} · ${answers.equipment}`,
-          } as any)
-          .eq("athlete_id", athleteId)
-          .eq("workout_date", today)
-          .eq("phase_name", "quick")
-          .eq("status", "in_progress");
-
-        await supabase.rpc("fn_award_xp" as any, {
-          p_athlete_id: athleteId,
-          p_amount: 50,
-          p_source: "quick_workout",
-          p_metadata: answers as any,
-        });
-        toast.success("Treino concluído! +50 XP");
-      }
-    } catch (e) {
-      console.error("[QuickTrain] complete:", e);
-      toast.success("Treino iniciado");
-    }
-    onClose(); reset();
+  // FIX: em vez de "concluir" direto no modal sem nunca ter executado nada,
+  // navega para o player guiado com os exercícios já resolvidos. O
+  // WorkoutExecution existente cuida de séries, cronômetro, vídeo inline e
+  // só concede XP quando execução real (sets) é registrada.
+  const startGuidedWorkout = () => {
+    sessionStorage.setItem("9fit_quick_training", JSON.stringify({
+      training_name: `Treino Rápido · ${answers.goal}`,
+      training_type: "structured",
+      is_active: true,
+      start_date: new Date().toISOString().split("T")[0],
+      training_data: {
+        exercises: exercises.map((e) => ({
+          exercise_id: e.id,
+          name: e.name,
+          sets: e.sets || 3,
+          reps: e.reps_range || "10-12",
+          rest_seconds: e.rest_seconds || 60,
+          video_url: e.video_url,
+          gif_url: e.gif_url,
+          target_muscles: e.target_muscles,
+        })),
+      },
+    }));
+    onClose();
+    reset();
+    navigate("/9fit/train?quick=1");
   };
 
   if (!open) return null;
@@ -230,17 +232,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                         {e.target_muscles?.length ? ` · ${e.target_muscles.slice(0,2).join(", ")}` : ""}
                       </p>
                     </div>
-                    {(e.video_url || e.gif_url) && (
-                      <a href={e.video_url || e.gif_url!} target="_blank" rel="noreferrer" className="text-primary">
-                        <Play className="w-4 h-4" />
-                      </a>
-                    )}
+                    {(e.video_url || e.gif_url) && <Play className="w-4 h-4 text-primary shrink-0" />}
                   </li>
                 ))}
               </ul>
-              <button onClick={completeWorkout}
-                className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">
-                Concluir treino (+50 XP)
+              <button onClick={startGuidedWorkout}
+                className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">
+                <Play className="w-4 h-4" /> Iniciar treino guiado
               </button>
             </div>
           )}
