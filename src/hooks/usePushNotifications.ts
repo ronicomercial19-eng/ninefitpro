@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 // Chave pública VAPID do 9FIT (a privada fica só no edge function send-push)
-const VAPID_PUBLIC_KEY = "BLvbn52-uZQNAgvz3oZxFWxs1jWpiCqxwAHPz0059nVPUP0iG0caKwnUT-Vgn7nctPQaMv5H9GDO_BgyRtprL9U";
+const VAPID_PUBLIC_KEY = "BOdSB4k3SK8y9ihm24cFJ5CLk0dwHay-C02DbjvSLh875bNezXi1N13mT_R8a_SOW_ezD1QS6aIKIDGoddkk5Cc";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
