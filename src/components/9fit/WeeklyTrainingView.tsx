@@ -44,16 +44,17 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       setMatch(Number(payload.match_percentage || 0));
       const week: any[] = payload.week || [];
       setDays(week.map((d: any) => ({
-        date: d.date,
-        day_label: d.day_label || DAY_LABELS[new Date(d.date).getDay()],
+        date: d.workout_date || d.date,
+        day_label: d.day_name || d.day_label || DAY_LABELS[new Date(d.workout_date || d.date).getDay()],
         status: d.status || "planned",
         exercises: (d.exercises || []).map((e: any) => ({
           id: e.id,
           name: e.name,
           sets: e.sets,
-          reps: e.reps,
+          reps: e.reps_range || e.reps,
           rest_seconds: e.rest_seconds,
           video_url: e.video_url,
+          gif_url: e.gif_url,
         })),
       })));
     } catch (e) {
@@ -97,13 +98,23 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
     } finally { setCompleting(null); }
   };
 
+  // FIX (player guiado): mapa de nomes técnicos de status para rótulo legível.
+  // fn_get_week_workouts retorna o status bruto da periodização (active,
+  // in_progress, sem_periodizacao) — mostrar isso cru como "Fase" confundia
+  // o aluno (aparecia "active" ou "—" em vez do nome real da fase de treino).
+  const phaseLabel = phase === "active" || phase === "in_progress"
+    ? "Em andamento"
+    : phase === "sem_periodizacao" || !phase
+    ? "Sem periodização ativa"
+    : phase;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Treinos da Semana</p>
           <p className="text-xs text-muted-foreground">
-            Fase: <span className="text-foreground font-semibold">{phase || "—"}</span>
+            Fase: <span className="text-foreground font-semibold">{phaseLabel}</span>
             {match > 0 && <> · Aderência {match}%</>}
           </p>
         </div>
@@ -140,37 +151,44 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                 <span className="rounded-full bg-primary/20 text-primary px-3 py-1 text-xs font-bold flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" /> Concluído
                 </span>
-              ) : isToday && d.status !== "rest" ? (
+              ) : d.status !== "rest" && d.exercises.length > 0 ? (
                 <div className="flex gap-2">
                   <button onClick={() => onExecuteToday(d)}
                     className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold flex items-center gap-1">
                     <Play className="w-3.5 h-3.5" /> Executar
                   </button>
-                  <button onClick={() => completeDay(d)} disabled={completing === d.date}
-                    className="rounded-full border border-primary/50 text-primary px-4 py-2 text-xs font-bold flex items-center gap-1 disabled:opacity-40">
-                    {completing === d.date ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    Concluir
-                  </button>
+                  {isToday && (
+                    <button onClick={() => completeDay(d)} disabled={completing === d.date}
+                      className="rounded-full border border-primary/50 text-primary px-4 py-2 text-xs font-bold flex items-center gap-1 disabled:opacity-40">
+                      {completing === d.date ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      Concluir
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="text-muted-foreground"><Lock className="w-4 h-4" /></div>
               )}
             </div>
 
+            {/* FIX (player guiado): cada exercício também abre o player
+                guiado no exercício certo em vez do link do YouTube em nova
+                aba — clicar em qualquer item leva direto para a execução
+                posicionada nesse exercício. */}
             {d.exercises?.length > 0 && (
               <ul className="space-y-1.5 mt-3">
                 {d.exercises.slice(0, 8).map((e, j) => (
-                  <li key={j} className="flex items-center gap-2 text-xs">
-                    <Dumbbell className="w-3 h-3 text-muted-foreground shrink-0" />
-                    <span className="flex-1 truncate">{e.name}</span>
-                    {(e.sets || e.reps) && (
-                      <span className="text-muted-foreground">{e.sets}{e.reps ? `×${e.reps}` : ""}</span>
-                    )}
-                    {e.video_url && (
-                      <a href={e.video_url} target="_blank" rel="noreferrer" className="text-primary">
-                        <Play className="w-3 h-3" />
-                      </a>
-                    )}
+                  <li key={j}>
+                    <button
+                      onClick={() => onExecuteToday(d)}
+                      className="w-full flex items-center gap-2 text-xs text-left hover:text-primary transition-colors"
+                    >
+                      <Dumbbell className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="flex-1 truncate">{e.name}</span>
+                      {(e.sets || e.reps) && (
+                        <span className="text-muted-foreground">{e.sets}{e.reps ? `×${e.reps}` : ""}</span>
+                      )}
+                      {e.video_url && <Play className="w-3 h-3 text-primary shrink-0" />}
+                    </button>
                   </li>
                 ))}
                 {d.exercises.length > 8 && (
