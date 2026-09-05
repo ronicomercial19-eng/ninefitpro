@@ -12,6 +12,9 @@ export async function listAthletesByCoach(coachId: string): Promise<ApiResponse<
       .from('athletes')
       .select('*')
       .eq('coach_id', coachId)
+      // FIX (QA Fase A): contas de teste (is_test_account=true) nunca devem
+      // entrar em contagens/listagens de alunos reais (Dashboard, relatórios).
+      .eq('is_test_account', false)
       .order('name', { ascending: true });
 
     if (error) return { success: false, error: { code: 'FETCH_ERROR', message: error.message } };
