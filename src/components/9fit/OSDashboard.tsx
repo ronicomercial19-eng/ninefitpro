@@ -46,6 +46,8 @@ export function OSDashboard() {
       const { data } = await supabase
         .from('athletes')
         .select('name, total_xp')
+        // FIX (QA Fase A): contas de teste não competem no ranking de alunos reais.
+        .eq('is_test_account', false)
         .order('total_xp', { ascending: false, nullsFirst: false })
         .limit(20);
       const rows = (data || []) as any[];
