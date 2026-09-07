@@ -42,8 +42,11 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
     try {
       const { data, error } = await supabase
         .from('student_photos')
+        // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
+        // e a RLS antiga também dependia dela — nenhuma foto jamais aparecia.
+        // athlete_id é a coluna viva com FK real pra athletes.
         .select('*')
-        .eq('student_id', studentId)
+        .eq('athlete_id', studentId)
         .order('taken_date', { ascending: false });
 
       if (error) throw error;
@@ -83,7 +86,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
       const { data, error } = await supabase
         .from('student_photos')
         .insert({
-          student_id: studentId,
+          athlete_id: studentId,
           photo_url: publicUrl,
           ...uploadData
         })
