@@ -31,8 +31,11 @@ export function StudentAnamnesis({ studentId }: StudentAnamnesisProps) {
     try {
       const { data, error } = await supabase
         .from('student_anamnesis')
+        // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
+        // e RLS dependia dela — nenhuma anamnese jamais aparecia. athlete_id é a
+        // coluna viva, com FK real pra athletes e RLS já corrigida.
         .select('*')
-        .eq('student_id', studentId)
+        .eq('athlete_id', studentId)
         .order('completed_at', { ascending: false });
 
       if (error) throw error;
@@ -243,97 +246,6 @@ export function StudentAnamnesis({ studentId }: StudentAnamnesisProps) {
           </CardContent>
         </Card>
       )}
-
-      {/* Preview de uma anamnese exemplo */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Objetivos e preferências
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4 text-sm">
-            <div>
-              <p className="font-medium text-gray-700">P: Faça um breve resumo sobre você</p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: Sem resposta
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">
-                P: Descreva em detalhes seus objetivos e metas com a prática do exercício físico
-              </p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: Fortalecimento muscular com foco principal no core, coxinha, coxas e peitoral
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">
-                P: Você pratica alguma atividade física ou esporte específico? Se sim, qual? Com qual frequência?
-              </p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: Pilates e caminhadas
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">P: Com qual frequência semanal pretende treinar?</p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: 1x por semana
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">P: Quais os dias disponíveis da semana para treino?</p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: segunda, quarta e sexta
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">P: Quantos minutos por dia você tem disponível para treinar?</p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: 60
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">
-                P: Quais os períodos de horário da sua preferência? (Manhã, Tarde, Noite)
-              </p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: noite
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">
-                P: Em qual ambiente pretende treinar? (Academia, Em casa, Ar livre)
-              </p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: Academia do condomínio
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">P: Caso faça exercícios atualmente, descreva brevemente seu treino</p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: Pilates com alongamentos e fortalecimento do core, coxinha, costas e peitoral
-              </p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-gray-700">P: Tem algum tipo de exercício preferencial?</p>
-              <p className="text-gray-600 bg-gray-50 p-2 rounded mt-1">
-                R: Sem resposta
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
