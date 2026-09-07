@@ -72,8 +72,11 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
     try {
       const { data, error } = await supabase
         .from('student_measurements')
+        // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
+        // e a RLS antiga também dependia dela — nenhuma medida jamais aparecia,
+        // mesmo cadastrada. athlete_id é a coluna viva com FK real pra athletes.
         .select('*')
-        .eq('student_id', studentId)
+        .eq('athlete_id', studentId)
         .order('measurement_date', { ascending: true });
 
       if (error) throw error;
@@ -97,7 +100,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
       const { data, error } = await supabase
         .from('student_measurements')
         .insert({
-          student_id: studentId,
+          athlete_id: studentId,
           ...newMeasurement
         })
         .select()
