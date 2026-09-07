@@ -34,8 +34,11 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
     try {
       const { data, error } = await supabase
         .from('student_activity_history')
+        // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
+        // e a RLS antiga também dependia dela — nenhum registro jamais aparecia.
+        // athlete_id é a coluna viva com FK real pra athletes.
         .select('*')
-        .eq('student_id', studentId)
+        .eq('athlete_id', studentId)
         .order('activity_date', { ascending: false });
 
       if (error) throw error;
@@ -54,7 +57,7 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
       const { data, error } = await supabase
         .from('student_activity_history')
         .insert({
-          student_id: studentId,
+          athlete_id: studentId,
           activity_type: activityType,
           activity_name: activityName,
           activity_date: new Date().toISOString(),
@@ -249,12 +252,10 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
         
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {activities.filter(a => a.activity_type === 'treino').length}
-              </div>
-              <div className="text-sm text-gray-600">Treinos</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {activities.filter(a => a.activity_type === 'treino').length}
             </div>
+            <div className="text-sm text-gray-600">Treinos</div>
           </CardContent>
         </Card>
         
