@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Flame, Trophy, TrendingUp, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -36,7 +37,8 @@ export default function NineFitPostWorkout() {
       window.dispatchEvent(new CustomEvent("9fit:xp_awarded", { detail: { xp } }));
       toast.success(`RPE ${rpe} registrado · +${xp} XP`);
       setConfirmed(true);
-      setTimeout(() => navigate("/9fit/train"), 1200);
+      // Removido o redirect automático: o card de compartilhamento fica visível
+      // até o aluno decidir voltar (fluxo continua opcional, nunca bloqueia).
     } catch (e) {
       toast.error("Erro ao salvar feedback");
     } finally {
@@ -110,13 +112,30 @@ export default function NineFitPostWorkout() {
         </div>
       </div>
 
-      <button
-        disabled={saving || confirmed}
-        onClick={submit}
-        className="mx-4 mt-8 w-[calc(100%-2rem)] rounded-full bg-primary text-primary-foreground py-4 font-bold tracking-widest uppercase disabled:opacity-50"
-      >
-        {confirmed ? "Salvo ✓" : saving ? "Salvando…" : "Concluir & Voltar"}
-      </button>
+      {!confirmed ? (
+        <button
+          disabled={saving}
+          onClick={submit}
+          className="mx-4 mt-8 w-[calc(100%-2rem)] rounded-full bg-primary text-primary-foreground py-4 font-bold tracking-widest uppercase disabled:opacity-50"
+        >
+          {saving ? "Salvando…" : "Concluir & Voltar"}
+        </button>
+      ) : (
+        <div className="mx-4 mt-8 space-y-4">
+          <ShareableCard
+            contentType="workout_completed"
+            title="Treino concluído"
+            subtitle={`RPE ${rpe}/10 · Sessão registrada`}
+            stat={{ label: "XP GANHO", value: `+${xp}` }}
+          />
+          <button
+            onClick={() => navigate("/9fit/train")}
+            className="w-full rounded-full border border-white/15 py-3 text-sm text-muted-foreground"
+          >
+            Voltar ao treino
+          </button>
+        </div>
+      )}
 
       <BottomNavigation />
     </div>
