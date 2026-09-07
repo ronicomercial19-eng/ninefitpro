@@ -6,16 +6,19 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { toast } from "sonner";
 
 export default function NineFitPostWorkout() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { user } = useAuth();
+  const { athleteId } = useAthleteId();
   const xp = Number(params.get("xp") ?? 75);
   const [rpe, setRpe] = useState(7);
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [isFirstWorkout, setIsFirstWorkout] = useState(false);
 
   const stats = [
     { Icon: Flame, label: "Volume", value: "12.4 t", trend: "+8%" },
@@ -34,6 +37,19 @@ export default function NineFitPostWorkout() {
         feedback_text: `Pós-treino RPE ${rpe}`,
         source: "post_workout",
       });
+
+      // Detecta se essa é a 1ª sessão concluída de verdade (dado real, não suposição) —
+      // o card de compartilhamento muda pra "first_workout" só nesse caso, que é o
+      // momento de maior emoção/viralização (prova social de "comecei").
+      if (athleteId) {
+        const { count } = await supabase
+          .from("workout_executions")
+          .select("id", { count: "exact", head: true })
+          .eq("athlete_id", athleteId)
+          .eq("status", "completed");
+        setIsFirstWorkout((count ?? 0) <= 1);
+      }
+
       window.dispatchEvent(new CustomEvent("9fit:xp_awarded", { detail: { xp } }));
       toast.success(`RPE ${rpe} registrado · +${xp} XP`);
       setConfirmed(true);
@@ -123,9 +139,9 @@ export default function NineFitPostWorkout() {
       ) : (
         <div className="mx-4 mt-8 space-y-4">
           <ShareableCard
-            contentType="workout_completed"
-            title="Treino concluído"
-            subtitle={`RPE ${rpe}/10 · Sessão registrada`}
+            contentType={isFirstWorkout ? "first_workout" : "workout_completed"}
+            title={isFirstWorkout ? "Meu primeiro treino!" : "Treino concluído"}
+            subtitle={isFirstWorkout ? "Comecei minha jornada no 9FIT" : `RPE ${rpe}/10 · Sessão registrada`}
             stat={{ label: "XP GANHO", value: `+${xp}` }}
           />
           <button
