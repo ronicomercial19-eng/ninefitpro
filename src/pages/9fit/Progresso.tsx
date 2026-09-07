@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { TrendingUp, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { MetasSection } from "@/components/9fit/MetasSection";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -146,6 +147,9 @@ export default function NineFitProgresso() {
           </div>
         </div>
       </div>
+
+      {/* Metas — dado real (metas_progresso), dispara goal_achieved ao bater */}
+      <MetasSection />
 
       {/* Progressão de Força */}
       <div className="px-4 mt-6">
