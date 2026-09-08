@@ -160,7 +160,7 @@ export function WeeklyRadar3D({ current, previous }: Props) {
     : undefined;
 
   if (error) {
-    return <WeeklyRadar current={current} previous={previous} />;
+    const safeCurrent = { treino: current.treino ?? 0, nutri: current.nutri ?? 0, sono: current.sono ?? 0, mob: current.mob ?? 0, hidr: current.hidr ?? 0 };\n    const safePrevious = previous ? { treino: previous.treino ?? 0, nutri: previous.nutri ?? 0, sono: previous.sono ?? 0, mob: previous.mob ?? 0, hidr: previous.hidr ?? 0 } : undefined;\n    return <WeeklyRadar current={safeCurrent} previous={safePrevious} />;
   }
 
   return (
@@ -197,7 +197,7 @@ export function WeeklyRadar3D({ current, previous }: Props) {
         {AXES.map((label, i) => (
           <div key={label} className="text-center">
             <p className="text-[8px] tracking-[0.2em] uppercase text-muted-foreground">{label}</p>
-            <p className="text-xs font-display text-foreground">{Math.round(values[i])}</p>
+            <p className="text-xs font-display text-foreground">{rawValues[i] === null ? "—" : Math.round(rawValues[i]!)}</p>
           </div>
         ))}
       </div>
