@@ -2,118 +2,131 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useCallback, useRef } from "react";
 
 export interface RadarAxes {
-  forca: number;
-  resistencia: number;
-  core: number;
-  cardio: number;
-  mobilidade: number;
-  global: number;
+  forca?: number;
+  resistencia?: number;
+  core?: number;
+  cardio?: number;
+  mobilidade?: number;
+  global?: number;
 }
 
 export interface SyncScoreData {
   sync_score: number;
   total_xp: number;
   level: number;
-  radar: RadarAxes;
-  // Aliases legacy (Hub/HeroSync consomem estes nomes)
+  radar?: RadarAxes;
   treino: number;
   nutri: number;
   sono: number;
   mob: number;
   hidr: number;
-  updated_at: string;
+  updated_at: string | null;
 }
 
-const EMPTY: SyncScoreData = {
-  sync_score: 0,
-  total_xp: 0,
-  level: 1,
-  radar: { forca: 0, resistencia: 0, core: 0, cardio: 0, mobilidade: 0, global: 0 },
-  treino: 0, nutri: 0, sono: 0, mob: 0, hidr: 0,
-  updated_at: new Date().toISOString(),
-};
+export type HubScoreStatus = "loading" | "available" | "calibrating" | "error";
 
-function mapPayload(raw: any): SyncScoreData {
-  const radar = raw?.radar ?? {};
+function numeric(value: unknown): number {
+  const result = Number(value);
+  return Number.isFinite(result) ? result : 0;
+}
+
+function mapPayload(raw: any): SyncScoreData | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  // The Hub's five dimensions must come from fields with the same meaning.
+  // Do not derive nutrition/sleep/mobility/hydration from a performance radar.
   return {
-    sync_score: Number(raw?.sync_score ?? 0),
-    total_xp: Number(raw?.total_xp ?? 0),
-    level: Number(raw?.level ?? 1),
-    radar: {
-      forca: Number(radar.forca ?? 0),
-      resistencia: Number(radar.resistencia ?? 0),
-      core: Number(radar.core ?? 0),
-      cardio: Number(radar.cardio ?? 0),
-      mobilidade: Number(radar.mobilidade ?? 0),
-      global: Number(radar.global ?? 0),
-    },
-    // Aliases → 5D visual antigo
-    treino: Number(radar.forca ?? 0),
-    nutri: Number(radar.global ?? 0),
-    sono: Number(radar.mobilidade ?? 0),
-    mob: Number(radar.resistencia ?? 0),
-    hidr: Number(radar.cardio ?? 0),
-    updated_at: new Date().toISOString(),
+    sync_score: numeric(raw.sync_score),
+    total_xp: numeric(raw.total_xp),
+    level: numeric(raw.level) || 1,
+    radar: raw.radar && typeof raw.radar === "object" ? raw.radar : undefined,
+    treino: numeric(raw.treino),
+    nutri: numeric(raw.nutri),
+    sono: numeric(raw.sono),
+    mob: numeric(raw.mob),
+    hidr: numeric(raw.hidr),
+    updated_at: typeof raw.updated_at === "string" ? raw.updated_at : null,
   };
 }
 
+function hasMeasuredSignal(data: SyncScoreData): boolean {
+  return [data.sync_score, data.treino, data.nutri, data.sono, data.mob, data.hidr]
+    .some((value) => value > 0);
+}
+
 /**
- * Hook central de Sync Score + Radar 5D.
- * Consome fn_get_athlete_scores (fonte da verdade).
- * Subscribe realtime a sync_score_logs (user_id) + workout_executions (athlete_id).
+ * Reads the Hub score snapshot. A missing or all-zero snapshot is calibration,
+ * not a low physiological state. The UI can therefore be honest about data
+ * availability instead of creating a fallback score.
  */
 export const useAthleteScores = (athleteId: string | undefined | null) => {
-  const [data, setData] = useState<SyncScoreData>(EMPTY);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SyncScoreData | null>(null);
+  const [status, setStatus] = useState<HubScoreStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
 
   const fetchScores = useCallback(async () => {
-    if (!athleteId) { setLoading(false); return; }
+    if (!athleteId) {
+      setData(null);
+      setStatus("calibrating");
+      setError(null);
+      return;
+    }
+
+    setStatus("loading");
     try {
-      const { data: result, error: err } = await supabase.rpc(
-        "fn_get_athlete_scores" as any,
-        { p_athlete_id: athleteId }
+      const { data: result, error: rpcError } = await supabase.rpc(
+        "fn_get_athlete_scores" as never,
+        { p_athlete_id: athleteId } as never,
       );
-      if (err) throw err;
-      setData(mapPayload(result));
+      if (rpcError) throw rpcError;
+
+      const mapped = mapPayload(result);
+      setData(mapped);
+      setStatus(mapped && hasMeasuredSignal(mapped) ? "available" : "calibrating");
       setError(null);
     } catch (err: any) {
       console.error("[useAthleteScores] error:", err);
-      setError(err?.message ?? "Failed to fetch scores");
-    } finally {
-      setLoading(false);
+      setData(null);
+      setStatus("error");
+      setError(err?.message ?? "Não foi possível carregar o Sync.");
     }
   }, [athleteId]);
 
   useEffect(() => {
-    if (!athleteId) return;
     fetchScores();
-    supabase.auth.getUser().then(({ data: u }) => { userIdRef.current = u?.user?.id ?? null; });
+    if (!athleteId) return;
 
-    const ch = supabase
+    void supabase.auth.getUser().then(({ data: authData }) => {
+      userIdRef.current = authData.user?.id ?? null;
+    });
+
+    const channel = supabase
       .channel(`scores:${athleteId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs" },
         (payload: any) => {
-          const uid = payload?.new?.user_id;
-          if (!userIdRef.current || uid === userIdRef.current) fetchScores();
+          const userId = payload?.new?.user_id;
+          if (!userIdRef.current || userId === userIdRef.current) void fetchScores();
         })
       .on("postgres_changes",
         { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` },
-        () => fetchScores())
+        () => void fetchScores())
       .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "athletes", filter: `id=eq.${athleteId}` },
-        () => fetchScores())
+        () => void fetchScores())
       .subscribe();
 
-    return () => { supabase.removeChannel(ch); };
+    return () => { void supabase.removeChannel(channel); };
   }, [athleteId, fetchScores]);
 
-  return { data, loading, error, refresh: fetchScores };
+  return { data, status, loading: status === "loading", error, refresh: fetchScores };
 };
 
-export const getAthleteScores = async (athleteId: string): Promise<SyncScoreData> => {
-  const { data, error } = await supabase.rpc("fn_get_athlete_scores" as any, { p_athlete_id: athleteId });
+export const getAthleteScores = async (athleteId: string): Promise<SyncScoreData | null> => {
+  const { data, error } = await supabase.rpc(
+    "fn_get_athlete_scores" as never,
+    { p_athlete_id: athleteId } as never,
+  );
   if (error) throw error;
   return mapPayload(data);
 };
