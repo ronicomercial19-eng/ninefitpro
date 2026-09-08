@@ -56,48 +56,6 @@ export default function NineFitHub() {
       .maybeSingle();
     const h: any = hub || {};
 
-    setWeekly({
-      treinos: h.treinos_semana || 0,
-      nutri:   h.nutri_semana   || 0,
-      minutos: h.minutos_semana || 0,
-    });
-    setMissions({
-      missao_perfil:          !!(profile?.full_name && (profile as any)?.avatar_url),
-      missao_avaliacao:       !!h.missao_avaliacao,
-      missao_plano:           !!h.missao_plano,
-      missao_primeiro_treino: !!h.missao_primeiro_treino,
-      missao_3dias:           !!h.missao_3dias,
-      missao_7dias:           !!h.missao_7dias,
-    });
-
-    // 7d breakdown (radar) — composto via master_registry
-    const since = new Date(Date.now() - 7 * 86400000).toISOString();
-    const { data: reg } = await supabase
-      .from("master_registry" as any)
-      .select("event_type")
-      .eq("user_id", user?.id)
-      .gte("created_at", since);
-    const events = (reg as any[]) || [];
-    const cnt = (k: string) => events.filter(e => e.event_type === k).length;
-    const pct = (n: number, max: number) => Math.min(100, (n / max) * 100);
-    const bd = {
-      treino: pct(h.treinos_semana || cnt("workout_completed"), 4),
-      nutri:  pct(h.nutri_semana   || cnt("nutrition_log"), 21),
-      sono:   pct(cnt("sleep_log"), 7),
-      mob:    pct(cnt("mobility_log"), 4),
-      hidr:   pct(cnt("hydration_log"), 14),
-    };
-    setBreakdown(bd);
-
-    const xp = h.total_xp || 0;
-    setCard({
-      level: h.level || 1,
-      classTier: xp > 2000 ? "Elite" : "Diamante",
-      syncScore: h.sync_score ?? 0,
-      streak: cnt("daily_protocol_step"),
-      totalXP: xp,
-    });
-
     const { count } = await supabase
       .from("student_library_assignments")
       .select("id", { count: "exact", head: true })
@@ -151,22 +109,22 @@ export default function NineFitHub() {
       {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}
-        syncScore={scoreStatus === "available" ? liveScores?.sync_score ?? null : null}
+        syncScore={liveScores?.sync.value ?? null}
         scoreStatus={scoreStatus}
         breakdown={breakdown}
-        lastUpdate={liveScores?.updated_at ?? undefined}
+        lastUpdate={liveScores?.sync.observed_at ?? undefined}
       />
 
 
       {/* 2. FLOATING METRICS — glass sensors */}
-      <HubFloatingMetrics />
+      <HubFloatingMetrics vitals={liveScores?.vitals} />
 
       {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
       <QuickMoodInput onLogged={invalidate} />
 
       {/* 3. RON & PRESENÇA — card inteligente substitui tip simples */}
       <div className="px-4 mt-8">
-        <HubRonCard syncScore={scoreStatus === "available" ? liveScores?.sync_score ?? null : null} name={name} />
+        <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
       </div>
 
       {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
