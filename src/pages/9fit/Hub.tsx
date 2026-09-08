@@ -137,11 +137,10 @@ export default function NineFitHub() {
     const onComplete = () => {
       invalidate();
       void refreshScores();
-      void loadHubData();
     };
     window.addEventListener('9fit:protocol_completed', onComplete);
     return () => window.removeEventListener('9fit:protocol_completed', onComplete);
-  }, [invalidate, refreshScores, athleteId, user?.id]);
+  }, [invalidate, refreshScores]);
 
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
