@@ -17,7 +17,6 @@ import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
-import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
 import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
@@ -40,11 +39,15 @@ export default function NineFitHub() {
 
 
 
-  const [card, setCard] = useState({ level: 1, classTier: "Diamante", syncScore: 0, streak: 0, totalXP: 0 });
-  const [breakdown, setBreakdown] = useState({ treino: 0, nutri: 0, sono: 0, mob: 0, hidr: 0 });
   const [protocolCount, setProtocolCount] = useState(0);
-  const [weekly, setWeekly] = useState({ treinos: 0, nutri: 0, minutos: 0 });
-  const [missions, setMissions] = useState<HubMissions | null>(null);
+  const breakdown = {
+    treino: liveScores?.dimensions.treino.value ?? null,
+    nutri: liveScores?.dimensions.nutri.value ?? null,
+    sono: liveScores?.dimensions.sono.value ?? null,
+    mob: liveScores?.dimensions.mob.value ?? null,
+    hidr: liveScores?.dimensions.hidr.value ?? null,
+  };
+  const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
 
   const loadHubData = async () => {
     if (!athleteId) return;
