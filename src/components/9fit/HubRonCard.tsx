@@ -5,7 +5,7 @@ import { useUserState } from '@/hooks/useUserState';
 import { STATE_LABEL, STATE_COLOR, STATE_INSIGHT } from '@/services/adaptiveState';
 
 interface Props {
-  syncScore: number;
+  syncScore: number | null;
   name?: string;
 }
 
@@ -18,7 +18,9 @@ export function HubRonCard({ syncScore, name }: Props) {
   const { state, reasoning } = useUserState();
   const color = STATE_COLOR[state];
   const insights = STATE_INSIGHT[state];
-  const insight = insights[syncScore % insights.length] ?? insights[0];
+  const insight = syncScore === null
+    ? "Ainda estamos reunindo dados para uma leitura confiável do seu dia."
+    : insights[Math.abs(Math.round(syncScore)) % insights.length] ?? insights[0];
 
   return (
     <motion.button
@@ -65,7 +67,7 @@ export function HubRonCard({ syncScore, name }: Props) {
           </p>
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <Activity className="w-3 h-3" style={{ color }} /> Sync {syncScore}
+              <Activity className="w-3 h-3" style={{ color }} /> {syncScore === null ? "Sync em calibração" : `Sync ${syncScore}`}
             </span>
             <span className="opacity-60">·</span>
             <span className="truncate">{reasoning}</span>
