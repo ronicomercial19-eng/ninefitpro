@@ -5,8 +5,8 @@ import * as THREE from "three";
 import { WeeklyRadar } from "./WeeklyRadar";
 
 interface Props {
-  current: { treino: number; nutri: number; sono: number; mob: number; hidr: number };
-  previous?: { treino: number; nutri: number; sono: number; mob: number; hidr: number };
+  current: { treino: number | null; nutri: number | null; sono: number | null; mob: number | null; hidr: number | null };
+  previous?: { treino: number | null; nutri: number | null; sono: number | null; mob: number | null; hidr: number | null };
 }
 
 const AXES = ["TREINO", "NUTRI", "SONO", "MOB", "HIDR"] as const;
@@ -154,13 +154,16 @@ function Scene({ values, prev }: { values: number[]; prev?: number[] }) {
 
 export function WeeklyRadar3D({ current, previous }: Props) {
   const [error, setError] = useState(false);
-  const values = [current.treino, current.nutri, current.sono, current.mob, current.hidr];
+  const rawValues = [current.treino, current.nutri, current.sono, current.mob, current.hidr];
+  const values = rawValues.map((value) => value ?? 0);
   const prevValues = previous
-    ? [previous.treino, previous.nutri, previous.sono, previous.mob, previous.hidr]
+    ? [previous.treino, previous.nutri, previous.sono, previous.mob, previous.hidr].map((value) => value ?? 0)
     : undefined;
 
   if (error) {
-    const safeCurrent = { treino: current.treino ?? 0, nutri: current.nutri ?? 0, sono: current.sono ?? 0, mob: current.mob ?? 0, hidr: current.hidr ?? 0 };\n    const safePrevious = previous ? { treino: previous.treino ?? 0, nutri: previous.nutri ?? 0, sono: previous.sono ?? 0, mob: previous.mob ?? 0, hidr: previous.hidr ?? 0 } : undefined;\n    return <WeeklyRadar current={safeCurrent} previous={safePrevious} />;
+    const safeCurrent = { treino: current.treino ?? 0, nutri: current.nutri ?? 0, sono: current.sono ?? 0, mob: current.mob ?? 0, hidr: current.hidr ?? 0 };
+    const safePrevious = previous ? { treino: previous.treino ?? 0, nutri: previous.nutri ?? 0, sono: previous.sono ?? 0, mob: previous.mob ?? 0, hidr: previous.hidr ?? 0 } : undefined;
+    return <WeeklyRadar current={safeCurrent} previous={safePrevious} />;
   }
 
   return (
