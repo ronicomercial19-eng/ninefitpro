@@ -3,7 +3,8 @@ import { SyncScoreRing } from "./SyncScoreRing";
 
 interface Props {
   name: string;
-  syncScore: number;
+  syncScore: number | null;
+  scoreStatus?: "loading" | "available" | "calibrating" | "error";
   breakdown: { treino: number; nutri: number; sono: number; mob: number; hidr: number };
   lastUpdate?: string;
 }
@@ -12,15 +13,18 @@ interface Props {
  * Hero cinematográfico do Hub.
  * Imagem B&W full-bleed + overlay pesado + halo accent + Sync Score gigante.
  */
-export function HeroSyncSection({ name, syncScore, breakdown, lastUpdate = "agora" }: Props) {
+export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate }: Props) {
+  const hasScore = scoreStatus === "available" && typeof syncScore === "number";
   const headline =
-    syncScore >= 80
-      ? "Seu organismo está operando acima da média."
+    scoreStatus === "error"
+      ? "Não foi possível atualizar seus dados agora."
+      : !hasScore
+      ? "Seu sistema ainda está em calibração."
+      : syncScore >= 80
+      ? "Seu plano está em boa consistência."
       : syncScore >= 60
-      ? "Sistema em equilíbrio. Mantenha o ritmo."
-      : syncScore > 0
-      ? "Sinais de sobrecarga detectados."
-      : "O sistema ainda está te calibrando.";
+      ? "Seu ritmo está estável. Vamos manter a consistência."
+      : "Há pouco sinal recente para ajustar seu plano com segurança.";
 
   return (
     <section className="relative w-full overflow-hidden">
@@ -50,7 +54,7 @@ export function HeroSyncSection({ name, syncScore, breakdown, lastUpdate = "agor
             transition={{ duration: 0.6 }}
             className="text-[10px] tracking-[0.4em] uppercase text-primary/80 font-data mb-2"
           >
-            9FIT · NEURAL OS · {lastUpdate}
+            9FIT · HUB · {lastUpdate ? new Date(lastUpdate).toLocaleString("pt-BR") : scoreStatus === "error" ? "erro de atualização" : "calibrando"}
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 12 }}
@@ -68,7 +72,7 @@ export function HeroSyncSection({ name, syncScore, breakdown, lastUpdate = "agor
             className="flex items-end gap-4"
           >
             <div className="w-40 h-40 sm:w-48 sm:h-48">
-              <SyncScoreRing score={syncScore} breakdown={breakdown} />
+              <SyncScoreRing score={hasScore ? syncScore ?? 0 : 0} breakdown={breakdown} />
             </div>
             <div className="pb-4">
               <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-1">
