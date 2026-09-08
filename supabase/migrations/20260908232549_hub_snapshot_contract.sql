@@ -1,4 +1,9 @@
 -- Canonical, authenticated snapshot for the 9FIT Hub.
+-- Schema/RPC decision:
+-- - public is intentional because PostgREST must expose this authenticated RPC;
+-- - no client-controlled user_id or athlete_id is accepted;
+-- - SECURITY INVOKER preserves RLS and caller privileges on every source;
+-- - no duplicate table or parallel schema is introduced.
 -- A missing value remains NULL; zero is reserved for an observed zero.
 
 CREATE OR REPLACE FUNCTION public.fn_get_hub_snapshot()
@@ -165,5 +170,5 @@ REVOKE ALL ON FUNCTION public.fn_get_hub_snapshot() FROM anon;
 GRANT EXECUTE ON FUNCTION public.fn_get_hub_snapshot() TO authenticated;
 
 COMMENT ON FUNCTION public.fn_get_hub_snapshot() IS
-  'Canonical authenticated Hub snapshot. NULL means not collected; zero means observed zero.';
+  'Canonical public RPC for the authenticated Hub. Uses caller RLS; accepts no identity parameter; NULL means not collected and zero means observed zero.';
 
