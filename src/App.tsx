@@ -79,6 +79,7 @@ import NineFitSettings from "./pages/9fit/Settings";
 import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
 import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
+import RonProfessorPage from "./pages/admin/RonProfessorPage";
 import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
@@ -236,7 +237,7 @@ const App = () => (
             <Route path="/app/ron" element={
               <PrivateRoute>
                 <AppLayout>
-                  <NineFitRon />
+                  <RonProfessorPage />
                 </AppLayout>
               </PrivateRoute>
             } />
