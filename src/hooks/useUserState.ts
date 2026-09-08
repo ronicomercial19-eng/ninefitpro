@@ -10,6 +10,16 @@ export function useUserState() {
   const { user } = useAuth();
   const [result, setResult] = useState<StateResult>({ state: 'unknown', reasoning: 'Carregando dados...', confidence: 0 });
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    const refreshState = () => {
+      cache = null;
+      setRevision((value) => value + 1);
+    };
+    window.addEventListener("9fit:user-state-invalidated", refreshState);
+    return () => window.removeEventListener("9fit:user-state-invalidated", refreshState);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -63,8 +73,11 @@ export function useUserState() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, revision]);
 
-  const invalidate = () => { cache = null; };
+  const invalidate = () => {
+    cache = null;
+    window.dispatchEvent(new Event("9fit:user-state-invalidated"));
+  };
   return { ...result, loading, invalidate };
 }
