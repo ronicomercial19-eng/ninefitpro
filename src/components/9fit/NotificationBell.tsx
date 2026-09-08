@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -20,6 +21,7 @@ interface NotificationRow {
 
 export function NotificationBell() {
   const { user } = useAuth();
+  usePushNotifications();
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
 
