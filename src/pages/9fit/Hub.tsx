@@ -25,6 +25,7 @@ import { Crown, ChevronRight, Library } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
+import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 
 
 export default function NineFitHub() {
@@ -143,6 +144,7 @@ export default function NineFitHub() {
 
   return (
     <div className="min-h-screen bg-background pb-28">
+      <WeeklyRecapPrompt />
       {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}

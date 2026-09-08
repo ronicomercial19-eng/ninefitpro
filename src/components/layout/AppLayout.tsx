@@ -2,7 +2,8 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
-import { Bell, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { NotificationBell } from '@/components/9fit/NotificationBell';
 import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
@@ -81,9 +82,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
-                <Bell className="w-5 h-5" />
-              </Button>
+              <NotificationBell />
               <Button variant="ghost" size="icon">
                 <Settings className="w-5 h-5" />
               </Button>
