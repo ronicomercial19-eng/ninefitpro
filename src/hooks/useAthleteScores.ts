@@ -55,7 +55,7 @@ function mapMetric(raw: unknown): HubMetric {
     : numericOrNull(value.value) === null ? "not_collected" : "available";
 
   return {
-    value: numericOrNull(value.value),
+    value: status === "not_collected" ? null : numericOrNull(value.value),
     status,
     source: typeof value.source === "string" || Array.isArray(value.source)
       ? value.source as string | string[]
@@ -176,8 +176,11 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
         { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` },
         () => void fetchScores())
       .on("postgres_changes",
-        { event: "*", schema: "public", table: "master_registry", filter: `user_id=eq.${userIdRef.current ?? ""}` },
-        () => void fetchScores())
+        { event: "*", schema: "public", table: "master_registry" },
+        (payload: any) => {
+          const userId = payload?.new?.user_id ?? payload?.old?.user_id;
+          if (!userIdRef.current || userId === userIdRef.current) void fetchScores();
+        })
       .subscribe();
 
     return () => {
