@@ -55,9 +55,6 @@ Deno.serve(async (req) => {
     const {
       event_type,
       payload = {},
-      // Identity is derived from the JWT, never supplied by the browser.
-      aluno_id: _ignoredAlunoId,
-      aluno_email: _ignoredAlunoEmail,
       occurred_at,
     } = body ?? {};
 
