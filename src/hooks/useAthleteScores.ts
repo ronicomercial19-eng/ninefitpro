@@ -1,66 +1,124 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useCallback, useRef } from "react";
 
-export interface RadarAxes {
-  forca?: number;
-  resistencia?: number;
-  core?: number;
-  cardio?: number;
-  mobilidade?: number;
-  global?: number;
+export type HubMetricStatus = "not_collected" | "available" | "stale" | "error" | "offline";
+export type HubScoreStatus = "loading" | "available" | "calibrating" | "stale" | "error" | "offline";
+
+export interface HubMetric {
+  value: number | null;
+  status: HubMetricStatus;
+  source: string | string[] | null;
+  observed_at: string | null;
 }
 
-export interface SyncScoreData {
-  sync_score: number;
-  total_xp: number;
-  level: number;
-  radar?: RadarAxes;
-  treino: number;
-  nutri: number;
-  sono: number;
-  mob: number;
-  hidr: number;
-  updated_at: string | null;
-}
-
-export type HubScoreStatus = "loading" | "available" | "calibrating" | "error";
-
-function numeric(value: unknown): number {
-  const result = Number(value);
-  return Number.isFinite(result) ? result : 0;
-}
-
-function mapPayload(raw: any): SyncScoreData | null {
-  if (!raw || typeof raw !== "object") return null;
-
-  // The Hub's five dimensions must come from fields with the same meaning.
-  // Do not derive nutrition/sleep/mobility/hydration from a performance radar.
-  return {
-    sync_score: numeric(raw.sync_score),
-    total_xp: numeric(raw.total_xp),
-    level: numeric(raw.level) || 1,
-    radar: raw.radar && typeof raw.radar === "object" ? raw.radar : undefined,
-    treino: numeric(raw.treino),
-    nutri: numeric(raw.nutri),
-    sono: numeric(raw.sono),
-    mob: numeric(raw.mob),
-    hidr: numeric(raw.hidr),
-    updated_at: typeof raw.updated_at === "string" ? raw.updated_at : null,
+export interface HubSnapshot {
+  version: number;
+  status: string;
+  generated_at: string | null;
+  athlete?: { id: string; name: string | null };
+  sync: HubMetric;
+  dimensions: {
+    treino: HubMetric;
+    nutri: HubMetric;
+    sono: HubMetric;
+    mob: HubMetric;
+    hidr: HubMetric;
+  };
+  weekly: { treinos: number; nutri: number; minutos: number };
+  vitals: {
+    water: HubMetric;
+    hrv: HubMetric;
+    calories: HubMetric;
+    heart_rate: HubMetric;
   };
 }
 
-function hasMeasuredSignal(data: SyncScoreData): boolean {
-  return [data.sync_score, data.treino, data.nutri, data.sono, data.mob, data.hidr]
-    .some((value) => value > 0);
+const emptyMetric = (): HubMetric => ({
+  value: null,
+  status: "not_collected",
+  source: null,
+  observed_at: null,
+});
+
+function numericOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function mapMetric(raw: unknown): HubMetric {
+  if (!raw || typeof raw !== "object") return emptyMetric();
+  const value = raw as Record<string, unknown>;
+  const allowed: HubMetricStatus[] = ["not_collected", "available", "stale", "error", "offline"];
+  const status = allowed.includes(value.status as HubMetricStatus)
+    ? value.status as HubMetricStatus
+    : numericOrNull(value.value) === null ? "not_collected" : "available";
+
+  return {
+    value: numericOrNull(value.value),
+    status,
+    source: typeof value.source === "string" || Array.isArray(value.source)
+      ? value.source as string | string[]
+      : null,
+    observed_at: typeof value.observed_at === "string" ? value.observed_at : null,
+  };
+}
+
+function count(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function mapPayload(raw: unknown): HubSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, any>;
+  const dimensions = value.dimensions ?? {};
+  const vitals = value.vitals ?? {};
+  const weekly = value.weekly ?? {};
+
+  return {
+    version: count(value.version) || 1,
+    status: typeof value.status === "string" ? value.status : "calibrating",
+    generated_at: typeof value.generated_at === "string" ? value.generated_at : null,
+    athlete: value.athlete && typeof value.athlete === "object"
+      ? { id: String(value.athlete.id ?? ""), name: typeof value.athlete.name === "string" ? value.athlete.name : null }
+      : undefined,
+    sync: mapMetric(value.sync),
+    dimensions: {
+      treino: mapMetric(dimensions.treino),
+      nutri: mapMetric(dimensions.nutri),
+      sono: mapMetric(dimensions.sono),
+      mob: mapMetric(dimensions.mob),
+      hidr: mapMetric(dimensions.hidr),
+    },
+    weekly: {
+      treinos: count(weekly.treinos),
+      nutri: count(weekly.nutri),
+      minutos: count(weekly.minutos),
+    },
+    vitals: {
+      water: mapMetric(vitals.water),
+      hrv: mapMetric(vitals.hrv),
+      calories: mapMetric(vitals.calories),
+      heart_rate: mapMetric(vitals.heart_rate),
+    },
+  };
+}
+
+function scoreStatus(snapshot: HubSnapshot | null): HubScoreStatus {
+  if (!snapshot || snapshot.sync.value === null || snapshot.sync.status === "not_collected") return "calibrating";
+  if (snapshot.sync.status === "stale") return "stale";
+  if (snapshot.sync.status === "offline") return "offline";
+  if (snapshot.sync.status === "error") return "error";
+  return "available";
 }
 
 /**
- * Reads the Hub score snapshot. A missing or all-zero snapshot is calibration,
- * not a low physiological state. The UI can therefore be honest about data
- * availability instead of creating a fallback score.
+ * Single read-model for the Hub. The authenticated RPC resolves the athlete
+ * server-side; no user or athlete identity is trusted from the browser.
  */
 export const useAthleteScores = (athleteId: string | undefined | null) => {
-  const [data, setData] = useState<SyncScoreData | null>(null);
+  const [data, setData] = useState<HubSnapshot | null>(null);
   const [status, setStatus] = useState<HubScoreStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
@@ -72,24 +130,25 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       setError(null);
       return;
     }
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setStatus("offline");
+      setError("Sem conexão. Exibindo o último estado disponível.");
+      return;
+    }
 
     setStatus("loading");
     try {
-      const { data: result, error: rpcError } = await supabase.rpc(
-        "fn_get_athlete_scores" as any,
-        { p_athlete_id: athleteId } as any,
-      );
+      const { data: result, error: rpcError } = await supabase.rpc("fn_get_hub_snapshot" as any);
       if (rpcError) throw rpcError;
 
       const mapped = mapPayload(result);
       setData(mapped);
-      setStatus(mapped && hasMeasuredSignal(mapped) ? "available" : "calibrating");
+      setStatus(scoreStatus(mapped));
       setError(null);
     } catch (err: any) {
       console.error("[useAthleteScores] error:", err);
-      setData(null);
       setStatus("error");
-      setError(err?.message ?? "Não foi possível carregar o Sync.");
+      setError(err?.message ?? "Não foi possível carregar o Hub.");
     }
   }, [athleteId]);
 
@@ -101,8 +160,13 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       userIdRef.current = authData.user?.id ?? null;
     });
 
+    const onOffline = () => setStatus("offline");
+    const onOnline = () => void fetchScores();
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+
     const channel = supabase
-      .channel(`scores:${athleteId}`)
+      .channel(`hub-snapshot:${athleteId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs" },
         (payload: any) => {
           const userId = payload?.new?.user_id;
@@ -112,21 +176,22 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
         { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` },
         () => void fetchScores())
       .on("postgres_changes",
-        { event: "UPDATE", schema: "public", table: "athletes", filter: `id=eq.${athleteId}` },
+        { event: "*", schema: "public", table: "master_registry", filter: `user_id=eq.${userIdRef.current ?? ""}` },
         () => void fetchScores())
       .subscribe();
 
-    return () => { void supabase.removeChannel(channel); };
+    return () => {
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+      void supabase.removeChannel(channel);
+    };
   }, [athleteId, fetchScores]);
 
   return { data, status, loading: status === "loading", error, refresh: fetchScores };
 };
 
-export const getAthleteScores = async (athleteId: string): Promise<SyncScoreData | null> => {
-  const { data, error } = await supabase.rpc(
-    "fn_get_athlete_scores" as any,
-    { p_athlete_id: athleteId } as any,
-  );
+export const getAthleteScores = async (): Promise<HubSnapshot | null> => {
+  const { data, error } = await supabase.rpc("fn_get_hub_snapshot" as any);
   if (error) throw error;
   return mapPayload(data);
 };
