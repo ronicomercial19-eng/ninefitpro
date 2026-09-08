@@ -21,7 +21,7 @@ interface NotificationRow {
 
 export function NotificationBell() {
   const { user } = useAuth();
-  usePushNotifications();
+  const { supported, subscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -75,7 +75,14 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 bg-card border-border max-h-[70vh] overflow-hidden flex flex-col">
         <div className="p-3 border-b border-border flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-wider">Notificações</p>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider">Notificações</p>
+            {supported && (
+              <button onClick={subscribed ? unsubscribe : subscribe} disabled={pushLoading} className="text-[10px] text-primary uppercase tracking-wide mt-1 disabled:opacity-50">
+                {pushLoading ? "Aguarde..." : subscribed ? "Desativar push" : "Ativar push"}
+              </button>
+            )}
+          </div>
           {unreadCount > 0 && (
             <button onClick={markAllAsRead} className="text-[10px] text-primary uppercase tracking-wide">
               Marcar todas como lidas
