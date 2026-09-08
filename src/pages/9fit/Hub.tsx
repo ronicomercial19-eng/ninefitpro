@@ -17,7 +17,6 @@ import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
-import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
 import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
@@ -34,17 +33,21 @@ export default function NineFitHub() {
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const { data: liveScores, refresh: refreshScores } = useAthleteScores(athleteId);
+  const { data: liveScores, status: scoreStatus, refresh: refreshScores } = useAthleteScores(athleteId);
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
 
 
 
-  const [card, setCard] = useState({ level: 1, classTier: "Diamante", syncScore: 0, streak: 0, totalXP: 0 });
-  const [breakdown, setBreakdown] = useState({ treino: 0, nutri: 0, sono: 0, mob: 0, hidr: 0 });
   const [protocolCount, setProtocolCount] = useState(0);
-  const [weekly, setWeekly] = useState({ treinos: 0, nutri: 0, minutos: 0 });
-  const [missions, setMissions] = useState<HubMissions | null>(null);
+  const breakdown = {
+    treino: liveScores?.dimensions.treino.value ?? null,
+    nutri: liveScores?.dimensions.nutri.value ?? null,
+    sono: liveScores?.dimensions.sono.value ?? null,
+    mob: liveScores?.dimensions.mob.value ?? null,
+    hidr: liveScores?.dimensions.hidr.value ?? null,
+  };
+  const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
 
   const loadHubData = async () => {
     if (!athleteId) return;
@@ -55,48 +58,6 @@ export default function NineFitHub() {
       .eq("athlete_id", athleteId)
       .maybeSingle();
     const h: any = hub || {};
-
-    setWeekly({
-      treinos: h.treinos_semana || 0,
-      nutri:   h.nutri_semana   || 0,
-      minutos: h.minutos_semana || 0,
-    });
-    setMissions({
-      missao_perfil:          !!(profile?.full_name && (profile as any)?.avatar_url),
-      missao_avaliacao:       !!h.missao_avaliacao,
-      missao_plano:           !!h.missao_plano,
-      missao_primeiro_treino: !!h.missao_primeiro_treino,
-      missao_3dias:           !!h.missao_3dias,
-      missao_7dias:           !!h.missao_7dias,
-    });
-
-    // 7d breakdown (radar) — composto via master_registry
-    const since = new Date(Date.now() - 7 * 86400000).toISOString();
-    const { data: reg } = await supabase
-      .from("master_registry" as any)
-      .select("event_type")
-      .eq("user_id", user?.id)
-      .gte("created_at", since);
-    const events = (reg as any[]) || [];
-    const cnt = (k: string) => events.filter(e => e.event_type === k).length;
-    const pct = (n: number, max: number) => Math.min(100, (n / max) * 100);
-    const bd = {
-      treino: pct(h.treinos_semana || cnt("workout_completed"), 4),
-      nutri:  pct(h.nutri_semana   || cnt("nutrition_log"), 21),
-      sono:   pct(cnt("sleep_log"), 7),
-      mob:    pct(cnt("mobility_log"), 4),
-      hidr:   pct(cnt("hydration_log"), 14),
-    };
-    setBreakdown(bd);
-
-    const xp = h.total_xp || 0;
-    setCard({
-      level: h.level || 1,
-      classTier: xp > 2000 ? "Elite" : "Diamante",
-      syncScore: h.sync_score ?? 0,
-      streak: cnt("daily_protocol_step"),
-      totalXP: xp,
-    });
 
     const { count } = await supabase
       .from("student_library_assignments")
@@ -134,10 +95,13 @@ export default function NineFitHub() {
   }, [user?.id, user?.created_at]);
 
   useEffect(() => {
-    const onComplete = () => invalidate();
+    const onComplete = () => {
+      invalidate();
+      void refreshScores();
+    };
     window.addEventListener('9fit:protocol_completed', onComplete);
     return () => window.removeEventListener('9fit:protocol_completed', onComplete);
-  }, [invalidate]);
+  }, [invalidate, refreshScores]);
 
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
@@ -148,27 +112,22 @@ export default function NineFitHub() {
       {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}
-        syncScore={liveScores.sync_score || card.syncScore}
-        breakdown={{
-          treino: liveScores.treino || breakdown.treino,
-          nutri:  liveScores.nutri  || breakdown.nutri,
-          sono:   liveScores.sono   || breakdown.sono,
-          mob:    liveScores.mob    || breakdown.mob,
-          hidr:   liveScores.hidr   || breakdown.hidr,
-        }}
-        lastUpdate="agora"
+        syncScore={liveScores?.sync.value ?? null}
+        scoreStatus={scoreStatus}
+        breakdown={breakdown}
+        lastUpdate={liveScores?.sync.observed_at ?? undefined}
       />
 
 
       {/* 2. FLOATING METRICS — glass sensors */}
-      <HubFloatingMetrics />
+      <HubFloatingMetrics vitals={liveScores?.vitals} />
 
       {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
       <QuickMoodInput onLogged={invalidate} />
 
       {/* 3. RON & PRESENÇA — card inteligente substitui tip simples */}
       <div className="px-4 mt-8">
-        <HubRonCard syncScore={card.syncScore} name={name} />
+        <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
       </div>
 
       {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}

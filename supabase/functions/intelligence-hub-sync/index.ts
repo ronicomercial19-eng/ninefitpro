@@ -27,34 +27,34 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validação leve do JWT (não bloqueante para preservar fire-and-forget local)
+    // This function forwards data using a central service credential. It must
+    // never accept an anonymous event or identity fields chosen by the client.
     const authHeader = req.headers.get("Authorization");
-    let userEmail: string | null = null;
-    let userId: string | null = null;
-    if (authHeader?.startsWith("Bearer ")) {
-      try {
-        const sb = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_ANON_KEY")!,
-          { global: { headers: { Authorization: authHeader } } },
-        );
-        const token = authHeader.replace("Bearer ", "");
-        const { data } = await sb.auth.getClaims(token);
-        if (data?.claims) {
-          userId = (data.claims.sub as string) ?? null;
-          userEmail = (data.claims.email as string) ?? null;
-        }
-      } catch (_) {
-        // ignora; ainda permitimos eventos não autenticados (ex.: login)
-      }
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const caller = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimData, error: claimError } = await caller.auth.getClaims(token);
+    const userId = claimData?.claims?.sub as string | undefined;
+    const userEmail = claimData?.claims?.email as string | undefined;
+    if (claimError || !userId) {
+      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const body = await req.json().catch(() => ({}));
     const {
       event_type,
       payload = {},
-      aluno_id = null,
-      aluno_email = null,
       occurred_at,
     } = body ?? {};
 
@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
     const hubPayload = {
       source_system: SOURCE_SYSTEM,
       event_type,
-      aluno_email: aluno_email ?? userEmail,
-      aluno_id,
+      aluno_email: userEmail ?? null,
+      aluno_id: null,
       payload: { ...payload, _user_id: userId },
       occurred_at: occurred_at ?? new Date().toISOString(),
     };

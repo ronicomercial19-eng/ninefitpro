@@ -24,7 +24,7 @@ interface Props {
  */
 export function EcosystemGrid({ category, variant = "grid", showHeader = true }: Props) {
   const [items, setItems] = useState<PhysioModule[]>([]);
-  const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting">>({});
+  const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,19 +37,19 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
       if (keys.length) {
         const { data: conns } = await supabase
           .from("api_connectors").select("key, status").in("key", keys);
-        const map: Record<string, "online" | "waiting"> = {};
+        const map: Record<string, "online" | "waiting" | "not_configured"> = {};
         list.forEach((m) => {
           if (m.connector_key) {
             const c = (conns || []).find((x: any) => x.key === m.connector_key);
             map[m.key] = c?.status === "active" ? "online" : "waiting";
-          } else if (["staff", "foods", "prime"].includes(m.key)) map[m.key] = "online";
+          } else map[m.key] = "not_configured";
         });
         setStatusByKey(map);
       }
     });
   }, [category]);
 
-  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length || items.length;
+  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
 
   if (!items.length) return null;
 
@@ -78,6 +78,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
           const src = MODULE_IMAGES[m.key] || m.hero_image;
           const status = statusByKey[m.key];
           const online = status === "online";
+          const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
           return (
             <button
               key={m.id}
@@ -108,7 +109,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                     className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-400 animate-pulse" : "bg-amber-400/70"}`}
                   />
                   <span className="font-mono text-[9px] uppercase tracking-widest text-foreground/90">
-                    {online ? "Online" : "Aguardando"}
+                    {label}
                   </span>
                 </div>
               </div>

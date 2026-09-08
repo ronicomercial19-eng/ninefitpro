@@ -8,8 +8,18 @@ const TTL = 5 * 60 * 1000;
 
 export function useUserState() {
   const { user } = useAuth();
-  const [result, setResult] = useState<StateResult>({ state: 'balanced', reasoning: 'Carregando...', confidence: 0 });
+  const [result, setResult] = useState<StateResult>({ state: 'unknown', reasoning: 'Carregando dados...', confidence: 0 });
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    const refreshState = () => {
+      cache = null;
+      setRevision((value) => value + 1);
+    };
+    window.addEventListener("9fit:user-state-invalidated", refreshState);
+    return () => window.removeEventListener("9fit:user-state-invalidated", refreshState);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -41,12 +51,18 @@ export function useUserState() {
           .gte('created_at', sevenDaysAgo.toISOString());
         const consistency = Math.min(100, ((count || 0) / 7) * 100);
 
-        const inferred = inferUserState({
-          syncScore: latest ? Number(latest.score) : 5.5,
-          recentScores: scores,
-          recentConsistencyPct: consistency,
-          feedbackText: latest?.feedback_text,
-        });
+        const inferred: StateResult = latest
+          ? inferUserState({
+              syncScore: Number(latest.score),
+              recentScores: scores,
+              recentConsistencyPct: consistency,
+              feedbackText: latest.feedback_text,
+            })
+          : {
+              state: 'unknown',
+              reasoning: 'Ainda não há sinais suficientes para uma leitura confiável.',
+              confidence: 0,
+            };
         if (cancelled) return;
         cache = { uid: user.id, at: Date.now(), result: inferred };
         setResult(inferred);
@@ -57,8 +73,11 @@ export function useUserState() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, revision]);
 
-  const invalidate = () => { cache = null; };
+  const invalidate = () => {
+    cache = null;
+    window.dispatchEvent(new Event("9fit:user-state-invalidated"));
+  };
   return { ...result, loading, invalidate };
 }

@@ -21,28 +21,28 @@ const DEFAULT_TASKS = [
     title: "Neural Prep",
     duration: "5 min",
     Icon: Brain,
-    why: "Seu sistema mostrou sobrecarga simpática nas últimas 48h. Respiração diafragmática reduz cortisol e prepara o córtex para foco.",
+    why: "Respiração guiada para começar o dia com presença e foco.",
   },
   {
     key: "elite_training",
     title: "Elite Training",
     duration: "45 min",
     Icon: Dumbbell,
-    why: "Janela hormonal ótima detectada. Treino de força agora maximiza síntese proteica e adaptação neuromuscular.",
+    why: "Treino estruturado para avançar com consistência conforme seu plano.",
   },
   {
     key: "nutri_log",
     title: "Nutri-Log",
     duration: "2 min",
     Icon: Apple,
-    why: "Densidade calórica abaixo da meta. Registrar refeição alimenta o motor de recomendação e fecha o loop metabólico do dia.",
+    why: "Registrar refeições ajuda você e o time a acompanharem sua rotina.",
   },
   {
     key: "recovery",
     title: "Recovery",
     duration: "8 min",
     Icon: Wind,
-    why: "Tensão muscular acumulada em cadeia posterior. Mobilidade ativa restaura amplitude e acelera recuperação parassimpática.",
+    why: "Mobilidade leve para cuidar do corpo e manter sua rotina.",
   },
 ] as const;
 
@@ -52,7 +52,7 @@ const POWER_BONUS = {
   title: "Bloco Extra",
   duration: "12 min",
   Icon: Flame,
-  why: "Sinais indicam capacidade de absorver mais carga hoje. Bloco extra opcional para aproveitar a janela hormonal.",
+  why: "Bloco opcional para quem quer adicionar movimento ao dia.",
 } as const;
 
 export function DailyProtocol() {
@@ -136,22 +136,14 @@ export function DailyProtocol() {
     toast.success(`Protocolo registrado · +${task.xp_reward} XP`, { duration: 1600 });
     setWorking(null);
 
-    // CLOSE LOOP: ao completar todos → grava sync_score_log + dispara RON + auto-navega
+    // Completing a protocol is an adherence event, not a physiological measurement.
+    // Never manufacture a Sync score from UI task completion.
     const allDone = newTasks.every((t) => t.completed);
-    if (allDone && user?.id) {
-      const avgScore = state === 'power' ? 8.2 : state === 'low' ? 5.5 : 7;
-      await supabase.from('sync_score_logs' as any).insert({
-        user_id: user.id,
-        score: avgScore,
-        feedback_text: `Daily Protocol completo (${newTasks.length} intervenções).`,
-        source: 'daily_protocol_complete',
-      });
+    if (allDone) {
       invalidate();
-      window.dispatchEvent(new CustomEvent('9fit:protocol_completed', { detail: { score: avgScore, state } }));
-      // Auto-abre RON após pequeno delay para usuário absorver o toast
-      setTimeout(() => {
-        window.location.assign(`/9fit/ron?auto=1&context=protocol_complete&state=${state}`);
-      }, 1400);
+      window.dispatchEvent(new CustomEvent("9fit:protocol_completed", {
+        detail: { kind: "adherence", completedTasks: newTasks.length },
+      }));
     }
   };
 

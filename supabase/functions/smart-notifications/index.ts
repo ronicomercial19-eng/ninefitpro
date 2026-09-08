@@ -3,7 +3,7 @@ import { classifyScore, loadUserParameters } from "../_shared/pdi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-smart-notifications-secret",
 };
 
 Deno.serve(async (req: Request) => {
@@ -12,6 +12,19 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ success: false, error: "method_not_allowed" }), {
+        status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const schedulerSecret = Deno.env.get("SMART_NOTIFICATIONS_SECRET");
+    if (!schedulerSecret || req.headers.get("x-smart-notifications-secret") !== schedulerSecret) {
+      return new Response(JSON.stringify({ success: false, error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
