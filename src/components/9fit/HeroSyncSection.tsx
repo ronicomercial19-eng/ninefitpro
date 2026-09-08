@@ -15,14 +15,15 @@ interface Props {
  */
 export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate }: Props) {
   const hasScore = scoreStatus === "available" && typeof syncScore === "number";
+  const numericScore = syncScore ?? 0;
   const headline =
     scoreStatus === "error"
       ? "Não foi possível atualizar seus dados agora."
       : !hasScore
       ? "Seu sistema ainda está em calibração."
-      : syncScore >= 80
+      : numericScore >= 80
       ? "Seu plano está em boa consistência."
-      : syncScore >= 60
+      : numericScore >= 60
       ? "Seu ritmo está estável. Vamos manter a consistência."
       : "Há pouco sinal recente para ajustar seu plano com segurança.";
 
