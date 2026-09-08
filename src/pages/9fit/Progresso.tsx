@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { MetasSection } from "@/components/9fit/MetasSection";
+import { CheckinCorporalCard } from "@/components/9fit/CheckinCorporalCard";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 
-interface SeriesPoint { label: string; value: number }
+interface SeriesPoint { label: string; value: number; oficial: boolean }
 interface StrengthBar { name: string; kg: number; delta: number }
 interface PrItem { exercicio: string; valor: number; unidade: string; data: string; delta: number | null }
 
@@ -19,121 +20,132 @@ export default function NineFitProgresso() {
   const [scoreTrend, setScoreTrend] = useState<number | null>(null);
   const [gordura, setGordura] = useState<number | null>(null);
   const [musculo, setMusculo] = useState<number | null>(null);
+  const [gorduraOficial, setGorduraOficial] = useState(true);
   const [metaGordura, setMetaGordura] = useState<number | null>(null);
   const [prs, setPrs] = useState<PrItem[]>([]);
   const [insights, setInsights] = useState<string[]>([]);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!athleteId) return;
-    (async () => {
-      // Últimas avaliações (para composição, score e tendência)
-      const since = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
-      const { data: avals } = await supabase
-        .from("avaliacoes_unificadas" as any)
-        .select("data_avaliacao, gordura_corporal, massa_muscular, score_global")
-        .eq("athlete_id", athleteId)
-        .gte("data_avaliacao", since)
-        .order("data_avaliacao");
-      const rows = (avals as any[]) || [];
+    // Últimas avaliações — inclui oficiais (professor/API) E auto-registro do aluno.
+    // "oficial" = origem != 'self_checkin' → só essas contam pra score/composição
+    // detalhada; o self_checkin entra na curva de peso/gordura pra dar mais pontos
+    // de referência entre uma avaliação oficial e outra.
+    const since = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+    const { data: avals } = await supabase
+      .from("avaliacoes_unificadas" as any)
+      .select("data_avaliacao, gordura_corporal, massa_muscular, score_global, origem")
+      .eq("athlete_id", athleteId)
+      .gte("data_avaliacao", since)
+      .order("data_avaliacao");
+    const rows = (avals as any[]) || [];
 
-      const points = rows
-        .filter((r) => r.gordura_corporal != null)
-        .map((r) => ({
-          label: new Date(r.data_avaliacao).toLocaleDateString("pt-BR", { month: "short", day: "2-digit" }),
-          value: Number(r.gordura_corporal),
-        }));
-      setBodyfat(points);
+    const points = rows
+      .filter((r) => r.gordura_corporal != null)
+      .map((r) => ({
+        label: new Date(r.data_avaliacao).toLocaleDateString("pt-BR", { month: "short", day: "2-digit" }),
+        value: Number(r.gordura_corporal),
+        oficial: r.origem !== "self_checkin",
+      }));
+    setBodyfat(points);
 
-      if (rows.length > 0) {
-        const last = rows[rows.length - 1];
-        setGordura(last.gordura_corporal != null ? Number(last.gordura_corporal) : null);
-        setMusculo(last.massa_muscular != null ? Number(last.massa_muscular) : null);
-        if (last.score_global != null) {
-          setScore(Math.round(Number(last.score_global)));
-          const first = rows.find((r) => r.score_global != null);
-          if (first && first !== last && first.score_global != null) {
-            setScoreTrend(Math.round(Number(last.score_global) - Number(first.score_global)));
-          }
+    // Score e composição detalhada só vêm de avaliação oficial (self_checkin não mede tudo isso)
+    const oficiais = rows.filter((r) => r.origem !== "self_checkin");
+    if (oficiais.length > 0) {
+      const last = oficiais[oficiais.length - 1];
+      setGordura(last.gordura_corporal != null ? Number(last.gordura_corporal) : null);
+      setMusculo(last.massa_muscular != null ? Number(last.massa_muscular) : null);
+      setGorduraOficial(true);
+      if (last.score_global != null) {
+        setScore(Math.round(Number(last.score_global)));
+        const first = oficiais.find((r) => r.score_global != null);
+        if (first && first !== last && first.score_global != null) {
+          setScoreTrend(Math.round(Number(last.score_global) - Number(first.score_global)));
         }
       }
+    } else if (points.length > 0) {
+      // Sem avaliação oficial ainda, mas tem auto-registro — mostra com aviso
+      setGordura(points[points.length - 1].value);
+      setGorduraOficial(false);
+    }
 
-      // Meta de % de gordura, se o aluno tiver cadastrado em Metas
-      const { data: metaGord } = await supabase
-        .from("metas_progresso" as any)
-        .select("valor_meta")
-        .eq("athlete_id", athleteId)
-        .ilike("metrica", "%gordura%")
-        .eq("status", "ativa")
-        .limit(1)
-        .maybeSingle();
-      if (metaGord) setMetaGordura(Number((metaGord as any).valor_meta));
+    // Meta de % de gordura, se o aluno tiver cadastrado em Metas
+    const { data: metaGord } = await supabase
+      .from("metas_progresso" as any)
+      .select("valor_meta")
+      .eq("athlete_id", athleteId)
+      .ilike("metrica", "%gordura%")
+      .eq("status", "ativa")
+      .limit(1)
+      .maybeSingle();
+    setMetaGordura(metaGord ? Number((metaGord as any).valor_meta) : null);
 
-      // Progressão de força real (workout_exercise_sets)
-      const { data: sets } = await supabase
-        .from("workout_exercise_sets" as any)
-        .select("exercise_name, weight_kg, created_at")
-        .order("created_at", { ascending: false })
-        .limit(300);
-      const byExercise = new Map<string, number[]>();
-      ((sets as any[]) || []).forEach((s) => {
-        const k = (s.exercise_name || "").toLowerCase();
-        const w = Number(s.weight_kg || 0);
-        if (!k || w <= 0) return;
-        if (!byExercise.has(k)) byExercise.set(k, []);
-        byExercise.get(k)!.push(w);
+    // Progressão de força real (workout_exercise_sets)
+    const { data: sets } = await supabase
+      .from("workout_exercise_sets" as any)
+      .select("exercise_name, weight_kg, created_at")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    const byExercise = new Map<string, number[]>();
+    ((sets as any[]) || []).forEach((s) => {
+      const k = (s.exercise_name || "").toLowerCase();
+      const w = Number(s.weight_kg || 0);
+      if (!k || w <= 0) return;
+      if (!byExercise.has(k)) byExercise.set(k, []);
+      byExercise.get(k)!.push(w);
+    });
+    const aliases: Record<string, string> = { supino: "Supino", agachamento: "Agachamento", puxada: "Puxada" };
+    const strengthNext: StrengthBar[] = [];
+    Object.entries(aliases).forEach(([key, label]) => {
+      let all: number[] = [];
+      for (const [k, arr] of byExercise.entries()) if (k.includes(key)) all = all.concat(arr);
+      if (all.length === 0) return;
+      const max = Math.max(...all);
+      const baseline = all.slice(-Math.min(5, all.length));
+      const avgBaseline = baseline.reduce((a, b) => a + b, 0) / baseline.length;
+      strengthNext.push({ name: label, kg: Math.round(max), delta: Math.round(max - avgBaseline) });
+    });
+    setStrength(strengthNext);
+
+    // PRs reais mais recentes
+    const { data: prData } = await supabase
+      .from("personal_records" as any)
+      .select("exercicio, valor, unidade, data_pr")
+      .eq("athlete_id", athleteId)
+      .order("data_pr", { ascending: false })
+      .limit(6);
+    const prRows = (prData as any[]) || [];
+    const prItems: PrItem[] = [];
+    for (const r of prRows.slice(0, 2)) {
+      const previous = prRows.find((p) => p.exercicio === r.exercicio && p.data_pr < r.data_pr);
+      prItems.push({
+        exercicio: r.exercicio,
+        valor: Number(r.valor),
+        unidade: r.unidade || "kg",
+        data: new Date(r.data_pr).toLocaleDateString("pt-BR"),
+        delta: previous ? Number(r.valor) - Number(previous.valor) : null,
       });
-      const aliases: Record<string, string> = { supino: "Supino", agachamento: "Agachamento", puxada: "Puxada" };
-      const strengthNext: StrengthBar[] = [];
-      Object.entries(aliases).forEach(([key, label]) => {
-        let all: number[] = [];
-        for (const [k, arr] of byExercise.entries()) if (k.includes(key)) all = all.concat(arr);
-        if (all.length === 0) return;
-        const max = Math.max(...all);
-        // delta = diferença entre o máximo e a média das primeiras cargas registradas (aproxima evolução real)
-        const baseline = all.slice(-Math.min(5, all.length));
-        const avgBaseline = baseline.reduce((a, b) => a + b, 0) / baseline.length;
-        strengthNext.push({ name: label, kg: Math.round(max), delta: Math.round(max - avgBaseline) });
-      });
-      setStrength(strengthNext);
+    }
+    setPrs(prItems);
 
-      // PRs reais mais recentes
-      const { data: prData } = await supabase
-        .from("personal_records" as any)
-        .select("exercicio, valor, unidade, data_pr")
-        .eq("athlete_id", athleteId)
-        .order("data_pr", { ascending: false })
-        .limit(6);
-      const prRows = (prData as any[]) || [];
-      const prItems: PrItem[] = [];
-      for (const r of prRows.slice(0, 2)) {
-        const previous = prRows.find((p) => p.exercicio === r.exercicio && p.data_pr < r.data_pr);
-        prItems.push({
-          exercicio: r.exercicio,
-          valor: Number(r.valor),
-          unidade: r.unidade || "kg",
-          data: new Date(r.data_pr).toLocaleDateString("pt-BR"),
-          delta: previous ? Number(r.valor) - Number(previous.valor) : null,
-        });
-      }
-      setPrs(prItems);
-
-      // Insights: só afirmações que dá pra provar com o dado que acabamos de buscar
-      const ins: string[] = [];
-      if (strengthNext.length > 0) {
-        const top = [...strengthNext].sort((a, b) => b.delta - a.delta)[0];
-        if (top.delta > 0) ins.push(`Seu ${top.name.toLowerCase()} evoluiu ${top.delta}kg no período analisado.`);
-      }
-      if (points.length >= 2) {
-        const diff = points[0].value - points[points.length - 1].value;
-        if (diff > 0) ins.push(`Redução de ${diff.toFixed(1)}pp de gordura corporal nas últimas avaliações.`);
-        else if (diff < 0) ins.push(`Gordura corporal subiu ${Math.abs(diff).toFixed(1)}pp desde a última avaliação — vale revisar dieta/treino com seu professor.`);
-      }
-      if (prItems.length > 0) {
-        ins.push(`Último recorde: ${prItems[0].exercicio} em ${prItems[0].data}.`);
-      }
-      setInsights(ins);
-    })();
+    // Insights: só afirmações que dá pra provar com o dado que acabamos de buscar
+    const ins: string[] = [];
+    if (strengthNext.length > 0) {
+      const top = [...strengthNext].sort((a, b) => b.delta - a.delta)[0];
+      if (top.delta > 0) ins.push(`Seu ${top.name.toLowerCase()} evoluiu ${top.delta}kg no período analisado.`);
+    }
+    if (points.length >= 2) {
+      const diff = points[0].value - points[points.length - 1].value;
+      if (diff > 0) ins.push(`Redução de ${diff.toFixed(1)}pp de gordura corporal nas últimas avaliações.`);
+      else if (diff < 0) ins.push(`Gordura corporal subiu ${Math.abs(diff).toFixed(1)}pp desde a última avaliação — vale revisar dieta/treino com seu professor.`);
+    }
+    if (prItems.length > 0) {
+      ins.push(`Último recorde: ${prItems[0].exercicio} em ${prItems[0].data}.`);
+    }
+    setInsights(ins);
   }, [athleteId]);
+
+  useEffect(() => { load(); }, [load]);
 
   const W = 320, H = 110, pad = 8;
   const hasCurve = bodyfat.length > 1;
@@ -142,6 +154,7 @@ export default function NineFitProgresso() {
   const span = Math.max(1, maxV - minV);
   const xStep = hasCurve ? (W - pad * 2) / (bodyfat.length - 1) : 0;
   const pts = bodyfat.map((p, i) => `${pad + i * xStep},${H - pad - ((p.value - minV) / span) * (H - pad * 2)}`).join(" ");
+  const hasSelfCheckin = bodyfat.some((p) => !p.oficial);
   const forcaTotal = strength.reduce((s, b) => s + b.delta, 0);
 
   return (
@@ -174,9 +187,12 @@ export default function NineFitProgresso() {
             </svg>
           </div>
           <div className="flex justify-between text-[9px] mt-1">
-            <span><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%` : "—"}</span>
+            <span><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%${!gorduraOficial ? "*" : ""}` : "—"}</span>
             <span><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo}%` : "—"}</span>
           </div>
+          {!gorduraOficial && gordura != null && (
+            <p className="text-[8px] text-muted-foreground mt-1">*auto-registro, sem avaliação oficial ainda</p>
+          )}
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
           <p className="text-[10px] text-muted-foreground">Força Total</p>
@@ -224,9 +240,25 @@ export default function NineFitProgresso() {
                 </defs>
                 <polygon points={`${pad},${H - pad} ${pts} ${W - pad},${H - pad}`} fill="url(#bf)" />
                 <polyline points={pts} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
+                {bodyfat.map((p, i) => (
+                  <circle
+                    key={i}
+                    cx={pad + i * xStep}
+                    cy={H - pad - ((p.value - minV) / span) * (H - pad * 2)}
+                    r={p.oficial ? 3 : 2.5}
+                    fill={p.oficial ? "hsl(var(--primary))" : "transparent"}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={p.oficial ? 0 : 1.5}
+                  />
+                ))}
               </svg>
-              <div className="mt-2 flex justify-between text-[9px] text-muted-foreground">
-                {bodyfat.map((p) => <span key={p.label}>• {p.label}</span>)}
+              <div className="mt-2 flex items-center justify-between">
+                <div className="flex gap-2 text-[9px] text-muted-foreground overflow-x-auto">
+                  {bodyfat.map((p, i) => <span key={i}>• {p.label}</span>)}
+                </div>
+                {hasSelfCheckin && (
+                  <span className="text-[8px] text-muted-foreground shrink-0 ml-2">● oficial &nbsp; ○ auto-registro</span>
+                )}
               </div>
             </>
           ) : (
@@ -236,6 +268,9 @@ export default function NineFitProgresso() {
           )}
         </div>
       </div>
+
+      {/* Auto-registro do aluno — não substitui a avaliação oficial */}
+      <CheckinCorporalCard onSaved={load} />
 
       {/* Metas — dado real (metas_progresso), dispara goal_achieved ao bater */}
       <MetasSection />
