@@ -2,7 +2,7 @@
  * Adaptive State Engine — infere Power / Low / Balanced sem rótulos neuro.
  * Baseado em Sync Score, tendência (3-5d), consistência e feedback textual.
  */
-export type UserState = 'power' | 'low' | 'balanced';
+export type UserState = 'unknown' | 'power' | 'low' | 'balanced';
 
 export interface StateSignals {
   syncScore: number;             // 0-10 (ou 0-100 normalizado)
@@ -73,18 +73,23 @@ export function inferUserState(signals: StateSignals): StateResult {
 }
 
 export const STATE_LABEL: Record<UserState, string> = {
+  unknown: 'CALIBRANDO',
   power: 'POWER',
   low: 'LOW',
   balanced: 'BALANCED',
 };
 
 export const STATE_COLOR: Record<UserState, string> = {
+  unknown: 'hsl(220 9% 65%)',
   power: 'hsl(142 72% 50%)',
   low: 'hsl(38 92% 55%)',
   balanced: 'hsl(220 9% 65%)',
 };
 
 export const STATE_INSIGHT: Record<UserState, string[]> = {
+  unknown: [
+    'Registre como você está hoje para começarmos uma leitura confiável.',
+  ],
   power: [
     'Você está operando acima da média. Hoje é dia de progressão.',
     'Sistema calibrado. Aumente um pouco o desafio.',
