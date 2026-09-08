@@ -34,7 +34,7 @@ export default function NineFitHub() {
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const { data: liveScores, refresh: refreshScores } = useAthleteScores(athleteId);
+  const { data: liveScores, status: scoreStatus, refresh: refreshScores } = useAthleteScores(athleteId);
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
 
@@ -134,10 +134,14 @@ export default function NineFitHub() {
   }, [user?.id, user?.created_at]);
 
   useEffect(() => {
-    const onComplete = () => invalidate();
+    const onComplete = () => {
+      invalidate();
+      void refreshScores();
+      void loadHubData();
+    };
     window.addEventListener('9fit:protocol_completed', onComplete);
     return () => window.removeEventListener('9fit:protocol_completed', onComplete);
-  }, [invalidate]);
+  }, [invalidate, refreshScores, athleteId, user?.id]);
 
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
@@ -148,15 +152,10 @@ export default function NineFitHub() {
       {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}
-        syncScore={liveScores.sync_score || card.syncScore}
-        breakdown={{
-          treino: liveScores.treino || breakdown.treino,
-          nutri:  liveScores.nutri  || breakdown.nutri,
-          sono:   liveScores.sono   || breakdown.sono,
-          mob:    liveScores.mob    || breakdown.mob,
-          hidr:   liveScores.hidr   || breakdown.hidr,
-        }}
-        lastUpdate="agora"
+        syncScore={scoreStatus === "available" ? liveScores?.sync_score ?? null : null}
+        scoreStatus={scoreStatus}
+        breakdown={breakdown}
+        lastUpdate={liveScores?.updated_at ?? undefined}
       />
 
 
@@ -168,7 +167,7 @@ export default function NineFitHub() {
 
       {/* 3. RON & PRESENÇA — card inteligente substitui tip simples */}
       <div className="px-4 mt-8">
-        <HubRonCard syncScore={card.syncScore} name={name} />
+        <HubRonCard syncScore={scoreStatus === "available" ? liveScores?.sync_score ?? null : null} name={name} />
       </div>
 
       {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
