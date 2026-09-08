@@ -76,8 +76,8 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     setStatus("loading");
     try {
       const { data: result, error: rpcError } = await supabase.rpc(
-        "fn_get_athlete_scores" as never,
-        { p_athlete_id: athleteId } as never,
+        "fn_get_athlete_scores" as any,
+        { p_athlete_id: athleteId } as any,
       );
       if (rpcError) throw rpcError;
 
@@ -124,8 +124,8 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
 
 export const getAthleteScores = async (athleteId: string): Promise<SyncScoreData | null> => {
   const { data, error } = await supabase.rpc(
-    "fn_get_athlete_scores" as never,
-    { p_athlete_id: athleteId } as never,
+    "fn_get_athlete_scores" as any,
+    { p_athlete_id: athleteId } as any,
   );
   if (error) throw error;
   return mapPayload(data);
