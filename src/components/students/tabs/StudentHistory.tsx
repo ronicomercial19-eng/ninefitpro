@@ -43,7 +43,7 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
 
       if (error) throw error;
 
-      setActivities(data || []);
+      setActivities((data || []) as unknown as ActivityRecord[]);
     } catch (error) {
       console.error('Erro ao buscar histórico:', error);
       toast.error('Erro ao carregar histórico');
@@ -68,7 +68,7 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
 
       if (error) throw error;
 
-      setActivities([data, ...activities]);
+      setActivities([data as unknown as ActivityRecord, ...activities]);
       toast.success('Atividade registrada com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar atividade:', error);
