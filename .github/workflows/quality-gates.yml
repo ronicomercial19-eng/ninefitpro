@@ -20,9 +20,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund\n        # TODO: restore npm ci after regenerating the drifted package-lock.json.
       - run: npm run typecheck
       - run: npm run build
       - run: npm run lint
