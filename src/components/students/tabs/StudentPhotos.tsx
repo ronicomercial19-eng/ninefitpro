@@ -41,7 +41,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
   const fetchPhotos = async () => {
     try {
       const { data, error } = await supabase
-        .from('student_photos')
+        .from('student_photos' as any)
         // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
         // e a RLS antiga também dependia dela — nenhuma foto jamais aparecia.
         // athlete_id é a coluna viva com FK real pra athletes.
@@ -84,7 +84,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
 
       // Salvar referência no banco
       const { data, error } = await supabase
-        .from('student_photos')
+        .from('student_photos' as any)
         .insert({
           athlete_id: studentId,
           photo_url: publicUrl,
@@ -125,7 +125,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
 
       // Deletar do banco
       const { error } = await supabase
-        .from('student_photos')
+        .from('student_photos' as any)
         .delete()
         .eq('id', photoId);
 
