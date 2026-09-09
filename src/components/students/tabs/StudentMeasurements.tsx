@@ -81,7 +81,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
 
       if (error) throw error;
 
-      setMeasurements(data || []);
+      setMeasurements((data || []) as unknown as Measurement[]);
     } catch (error) {
       console.error('Erro ao buscar medidas:', error);
       toast.error('Erro ao carregar medidas');
