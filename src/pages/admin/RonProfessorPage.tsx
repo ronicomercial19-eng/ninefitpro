@@ -72,7 +72,7 @@ export default function RonProfessorPage() {
       setDossier({
         workouts: workouts?.length ?? 0,
         completed: workouts?.filter((w: any) => w.status === "completed").length ?? 0,
-        lastAssessment: assess?.[0]?.data_avaliacao ?? null,
+        lastAssessment: (assess?.[0] as unknown as { data_avaliacao?: string } | undefined)?.data_avaliacao ?? null,
       });
       setLoadingDossier(false);
     })();
