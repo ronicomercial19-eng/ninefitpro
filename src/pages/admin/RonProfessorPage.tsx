@@ -43,7 +43,7 @@ export default function RonProfessorPage() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from("athletes")
+        .from("athletes" as any)
         .select("id, name, user_id, sync_score, level, total_xp, preferred_goal")
         .eq("coach_id", user?.id)
         .eq("is_test_account", false)
@@ -58,13 +58,13 @@ export default function RonProfessorPage() {
     setLoadingDossier(true);
     (async () => {
       const { data: workouts } = await supabase
-        .from("workout_executions")
+        .from("workout_executions" as any)
         .select("status")
         .eq("athlete_id", selected.id)
         .order("workout_date", { ascending: false })
         .limit(10);
       const { data: assess } = await supabase
-        .from("avaliacoes_unificadas")
+        .from("avaliacoes_unificadas" as any)
         .select("data_avaliacao")
         .eq("athlete_id", selected.id)
         .order("data_avaliacao", { ascending: false })
