@@ -120,15 +120,17 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (!canTryPrescricao) { setResolvingPlayer(false); return; }
 
     setResolvingPlayer(true);
-    supabase
-      .rpc('prescrever_treino', { p_aluno_id: athleteId, p_data: todayISO })
-      .then(({ data, error }) => {
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc('prescrever_treino', { p_aluno_id: athleteId, p_data: todayISO });
         if (error) { setResolveFailed(true); return; }
         const flat = flattenPrescricao(data);
         if (flat.length > 0) setResolvedExercises(flat);
         else setResolveFailed(true);
-      })
-      .finally(() => setResolvingPlayer(false));
+      } finally {
+        setResolvingPlayer(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveTraining.id, athleteId]);
 
