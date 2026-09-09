@@ -1,81 +1,81 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Crown, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock3, Crown, Loader2, RefreshCw, TriangleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAthleteId } from "@/hooks/useAthleteId";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 
-/**
- * Pós-checkout (Stripe test). Solução temporária: marca usuário como Prime
- * por 30 dias e libera id_card_tier = gold, permitindo iniciar vendas.
- */
+type VerificationStatus = "checking" | "active" | "pending" | "error";
+
 export default function NineFitCheckoutSuccess() {
   const [params] = useSearchParams();
   const offerId = params.get("offer");
-  const { athleteId } = useAthleteId();
-  const [activating, setActivating] = useState(true);
+  const [status, setStatus] = useState<VerificationStatus>("checking");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const expires = new Date(Date.now() + 30 * 86400 * 1000).toISOString();
-          await supabase.from("user_plans" as any).upsert({
-            user_id: user.id,
-            plan_type: "prime",
-            status: "active",
-            expires_at: expires,
-            metadata: { source: "stripe_test", offer: offerId },
-          } as any, { onConflict: "user_id" } as any);
-        }
-        if (athleteId) {
-          // Atualizar tier do ID card
-          const { data: ath } = await supabase.from("athletes").select("metadata").eq("id", athleteId).maybeSingle();
-          const meta = ((ath as any)?.metadata || {}) as Record<string, any>;
-          await supabase.from("athletes").update({
-            metadata: { ...meta, id_card_tier: "gold", prime_active: true } as any,
-          } as any).eq("id", athleteId);
-        }
-      } catch (e) {
-        console.error("[CheckoutSuccess] activation:", e);
-      } finally {
-        setActivating(false);
-      }
-    })();
-  }, [athleteId, offerId]);
+  const verifyEntitlement = useCallback(async () => {
+    setStatus("checking");
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setStatus("error");
+      return;
+    }
 
-  return (
-    <div className="min-h-screen bg-background grid place-items-center p-6">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-primary/15 grid place-items-center mx-auto">
-          {activating ? <Loader2 className="w-10 h-10 text-primary animate-spin" /> : <CheckCircle2 className="w-10 h-10 text-primary" />}
-        </div>
-        <h1 className="text-3xl font-display italic">{activating ? "Ativando seu acesso..." : "Acesso liberado!"}</h1>
-        <p className="text-muted-foreground">
-          {activating ? "Confirmando pagamento e liberando módulos premium." : "Sua assinatura foi ativada. Você agora é Prime · ID Card Gold."}
-        </p>
+    let planId: string | null = null;
+    if (offerId) {
+      const { data: offer } = await supabase
+        .from("monetization_offers")
+        .select("plan_id")
+        .eq("id", offerId)
+        .maybeSingle();
+      planId = offer?.plan_id ?? null;
+    }
 
-        {!activating && (
-          <ShareableCard
-            contentType="id_card_upgrade"
-            title="Eu sou 9FIT PRIME"
-            subtitle="ID Card Gold ativado · acesso completo ao ecossistema"
-            stat={{ label: "Status", value: "GOLD" }}
-          />
-        )}
+    let query = supabase
+      .from("user_subscriptions" as any)
+      .select("status, plan_id, activated_at")
+      .eq("user_id", authData.user.id)
+      .eq("status", "active");
+    if (planId) query = query.eq("plan_id", planId);
 
-        <div className="flex flex-col gap-2">
-          <Button asChild size="lg" disabled={activating}>
-            <Link to="/9fit/prime"><Crown className="w-4 h-4 mr-2" /> Ir para Prime</Link>
-          </Button>
-          <Button asChild variant="ghost">
-            <Link to="/9fit/hub">Voltar ao Hub</Link>
-          </Button>
-        </div>
-        {offerId && <p className="text-[10px] font-mono text-muted-foreground">ref: {offerId}</p>}
+    const { data, error } = await query.order("activated_at", { ascending: false }).limit(1).maybeSingle();
+    if (error) setStatus("error");
+    else setStatus(data ? "active" : "pending");
+  }, [offerId]);
+
+  useEffect(() => { void verifyEntitlement(); }, [verifyEntitlement]);
+
+  const active = status === "active";
+  return <div className="min-h-screen bg-background grid place-items-center p-6">
+    <div className="max-w-md w-full text-center space-y-6">
+      <div className="w-20 h-20 rounded-full bg-primary/15 grid place-items-center mx-auto">
+        {status === "checking" ? <Loader2 className="w-10 h-10 text-primary animate-spin" /> :
+         active ? <CheckCircle2 className="w-10 h-10 text-primary" /> :
+         status === "pending" ? <Clock3 className="w-10 h-10 text-amber-400" /> :
+         <TriangleAlert className="w-10 h-10 text-destructive" />}
       </div>
+      <h1 className="text-3xl font-display italic">
+        {status === "checking" ? "Verificando pagamento…" :
+         active ? "Acesso liberado!" :
+         status === "pending" ? "Pagamento em processamento" : "Não foi possível verificar"}
+      </h1>
+      <p className="text-muted-foreground">
+        {active
+          ? "Sua assinatura foi confirmada pelo servidor."
+          : "O acesso será liberado somente após a confirmação segura do provedor. Nenhuma tela ou URL ativa o plano."}
+      </p>
+
+      {active && <ShareableCard contentType="id_card_upgrade" title="Eu sou 9FIT PRIME"
+        subtitle="Assinatura confirmada · acesso ao ecossistema"
+        stat={{ label: "Status", value: "ATIVO" }} />}
+
+      <div className="flex flex-col gap-2">
+        {active ? <Button asChild size="lg"><Link to="/9fit/prime"><Crown className="w-4 h-4 mr-2" /> Ir para Prime</Link></Button> :
+          <Button size="lg" onClick={() => void verifyEntitlement()} disabled={status === "checking"}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Verificar novamente
+          </Button>}
+        <Button asChild variant="ghost"><Link to="/9fit/hub">Voltar ao Hub</Link></Button>
+      </div>
+      {offerId && <p className="text-[10px] font-mono text-muted-foreground">ref: {offerId}</p>}
     </div>
-  );
+  </div>;
 }
