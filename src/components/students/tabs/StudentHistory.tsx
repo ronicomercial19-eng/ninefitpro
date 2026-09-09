@@ -33,7 +33,7 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
   const fetchActivities = async () => {
     try {
       const { data, error } = await supabase
-        .from('student_activity_history')
+        .from('student_activity_history' as any)
         // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
         // e a RLS antiga também dependia dela — nenhum registro jamais aparecia.
         // athlete_id é a coluna viva com FK real pra athletes.
@@ -55,7 +55,7 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
   const addNewActivity = async (activityType: string, activityName: string) => {
     try {
       const { data, error } = await supabase
-        .from('student_activity_history')
+        .from('student_activity_history' as any)
         .insert({
           athlete_id: studentId,
           activity_type: activityType,
