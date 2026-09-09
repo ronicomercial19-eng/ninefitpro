@@ -20,7 +20,9 @@ interface NineFitLayoutProps {
  */
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);\n  const [gateError, setGateError] = useState<string | null>(null);\n  const [retryKey, setRetryKey] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
