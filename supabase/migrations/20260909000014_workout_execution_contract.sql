@@ -134,7 +134,10 @@ BEGIN
   UPDATE public.workout_executions
   SET status = 'completed',
       completed_at = now(),
-      duration_minutes = GREATEST(1, CEIL(GREATEST(0, p_duration_seconds) / 60.0))
+      duration_minutes = GREATEST(
+        1,
+        CEIL(EXTRACT(EPOCH FROM (now() - COALESCE(started_at, now()))) / 60.0)
+      )
   WHERE id = p_execution_id;
 
   RETURN jsonb_build_object('ok', true, 'completed_sets', v_completed);
