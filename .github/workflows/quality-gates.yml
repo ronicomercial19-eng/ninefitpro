@@ -25,4 +25,6 @@ jobs:
       - run: npm install --no-audit --no-fund\n        # TODO: restore npm ci after regenerating the drifted package-lock.json.
       - run: npm run typecheck
       - run: npm run build
+        if: ${{ always() }}
       - run: npm run lint
+        if: ${{ always() }}
