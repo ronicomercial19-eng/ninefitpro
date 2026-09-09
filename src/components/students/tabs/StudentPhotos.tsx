@@ -51,7 +51,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
 
       if (error) throw error;
 
-      setPhotos(data || []);
+      setPhotos((data || []) as unknown as StudentPhoto[]);
     } catch (error) {
       console.error('Erro ao buscar fotos:', error);
       toast.error('Erro ao carregar fotos');
@@ -95,7 +95,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
 
       if (error) throw error;
 
-      setPhotos([data, ...photos]);
+      setPhotos([data as unknown as StudentPhoto, ...photos]);
       setSelectedFile(null);
       setUploadData({
         photo_type: 'frente',
