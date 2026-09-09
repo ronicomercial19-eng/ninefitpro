@@ -7,7 +7,7 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const { user, loading, profile, signOut } = useAuth();
+  const { user, loading, profile, logout } = useAuth();
   const [profileTimedOut, setProfileTimedOut] = useState(false);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
         <p className="text-slate-300 text-sm">Sua sessão existe, mas o perfil não respondeu. Tente novamente ou saia com segurança.</p>
         <div className="flex gap-2 justify-center">
           <button onClick={() => window.location.reload()} className="px-4 py-2 rounded bg-orange-500 text-black font-semibold">Tentar novamente</button>
-          <button onClick={() => void signOut()} className="px-4 py-2 rounded border border-slate-600 text-white">Sair</button>
+          <button onClick={() => void logout()} className="px-4 py-2 rounded border border-slate-600 text-white">Sair</button>
         </div>
       </div>
     </div>;
