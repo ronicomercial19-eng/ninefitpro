@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type MonetizationEvent = 'view_paywall' | 'select_plan' | 'start_trial' | 'convert' | 'dismiss_paywall';
+export type MonetizationEvent = 'view_paywall' | 'select_plan' | 'start_trial' | 'convert' | 'dismiss_paywall' | 'payment_returned';
 export type MonetizationContext = 'post_assessment' | 'hub_upsell' | 'dedicated_screen' | 'feature_locked' | 'onboarding';
 
 export async function trackMonetizationEvent(
