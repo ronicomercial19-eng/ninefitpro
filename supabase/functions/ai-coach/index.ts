@@ -40,7 +40,7 @@ async function buildAthleteRichContext(authClient: any, athleteId: string) {
   const { data: scoreLogs } = await authClient
     .from("sync_score_logs")
     .select("score, feedback_text, created_at")
-    .eq("athlete_id", athleteId)
+    .eq("user_id", ath?.user_id)
     .order("created_at", { ascending: false })
     .limit(5);
   if (scoreLogs?.length) {
@@ -108,11 +108,19 @@ serve(async (req) => {
     const data = body.data;
     const message: string | undefined = body.message;
     const history: any[] = Array.isArray(body.history) ? body.history : [];
-    const userId: string | undefined = body.userId;
+    const userId = claimsData.claims.sub as string;
     const messages: any[] = Array.isArray(body.messages) ? body.messages : [];
 
     const allowed = ['generate_training', 'train', 'analyze_progress', 'analyze', 'recommendations', 'recommend', 'chat'];
     if (!allowed.includes(mode)) return apiError('INVALID_MODE', `Modo inválido: ${mode}`, 400);
+
+    const requestedAthleteId = data?.athleteId;
+    if (requestedAthleteId) {
+      const { data: currentAthleteId, error: identityError } = await authClient.rpc("fn_current_athlete_id");
+      if (identityError || currentAthleteId !== requestedAthleteId) {
+        return apiError("ATHLETE_ACCESS_DENIED", "Athlete does not belong to caller", 403);
+      }
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'LOVABLE_API_KEY not configured', 500);
@@ -305,7 +313,29 @@ ${richCtx || 'Sem dados adicionais fornecidos — gere recomendações pedindo q
     }
 
     const result = await response.json();
-    const content = result.choices?.[0]?.message?.content || "Sem resposta da IA.";
+    const content = result.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || content.trim().length === 0) {
+      return apiError("INVALID_AI_RESPONSE", "Resposta vazia ou inválida", 502);
+    }
+
+    if (mode === "recommendations" || mode === "recommend") {
+      try {
+        const normalized = content.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
+        const parsed = JSON.parse(normalized);
+        if (!Array.isArray(parsed?.recommendations)) throw new Error("recommendations missing");
+        const recommendations = parsed.recommendations.slice(0, 6).map((item: any) => ({
+          category: String(item?.category ?? "").slice(0, 60),
+          title: String(item?.title ?? "").slice(0, 120),
+          description: String(item?.description ?? "").slice(0, 600),
+          priority: ["alta", "média", "baixa"].includes(item?.priority) ? item.priority : "baixa",
+          icon: ["dumbbell", "apple", "moon", "brain"].includes(item?.icon) ? item.icon : "brain",
+        }));
+        return apiResponse({ content: JSON.stringify({ recommendations }), recommendations });
+      } catch {
+        return apiError("INVALID_AI_SCHEMA", "A IA respondeu fora do contrato esperado", 502);
+      }
+    }
+
     return apiResponse({ content });
   } catch (e: any) {
     console.error("ai-coach error:", e?.message, e?.stack);
