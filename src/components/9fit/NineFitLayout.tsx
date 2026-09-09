@@ -20,7 +20,7 @@ interface NineFitLayoutProps {
  */
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);\n  const [gateError, setGateError] = useState<string | null>(null);\n  const [retryKey, setRetryKey] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,8 +62,10 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             firstAccessDone = !athlete || athlete.password_changed === true;
           }
         } catch (e) {
-          console.log('[NineFitLayout] first-access check:', e);
-          firstAccessDone = true; // fail-open para não travar
+          console.error("[NineFitLayout] first-access gate failed", e);
+          setGateError("Não foi possível validar seu primeiro acesso.");
+          setIsLoading(false);
+          return;
         }
       }
 
@@ -104,7 +106,10 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             }
           }
         } catch (e) {
-          console.log('[NineFitLayout] activation check:', e);
+          console.error("[NineFitLayout] activation gate failed", e);
+          setGateError("Não foi possível validar sua ativação.");
+          setIsLoading(false);
+          return;
         }
       }
 
@@ -123,7 +128,22 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, retryKey]);
+
+  if (gateError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-sm text-center space-y-4">
+          <h1 className="text-lg font-semibold">Acesso não validado</h1>
+          <p className="text-sm text-muted-foreground">{gateError}</p>
+          <button onClick={() => setRetryKey((value) => value + 1)}
+            className="rounded-full bg-primary text-primary-foreground px-5 py-2.5 font-semibold">
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
