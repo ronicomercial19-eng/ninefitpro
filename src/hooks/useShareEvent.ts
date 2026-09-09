@@ -9,7 +9,12 @@ export type ShareContentType =
   | "id_card_upgrade"
   | "goal_achieved"
   | "level_up"
-  | "streak_7";
+  | "streak_7"
+  | "personal_record"
+  | "assessment_completed"
+  | "quick_workout_completed"
+  | "sync_score"
+  | "weekly_recap";
 
 /**
  * Motor de Viralização (Bloco F).
@@ -21,7 +26,7 @@ export function useShareEvent(contentType: ShareContentType) {
   const [sharing, setSharing] = useState(false);
 
   const share = useCallback(
-    async (node: HTMLElement | null, label?: string) => {
+    async (node: HTMLElement | null, label?: string, contentId?: string | null): Promise<"native" | "download" | undefined> => {
       if (!node) return;
       setSharing(true);
       try {
@@ -37,7 +42,8 @@ export function useShareEvent(contentType: ShareContentType) {
         const file = new File([blob], `9fit-${contentType}-${Date.now()}.png`, { type: "image/png" });
 
         const navAny = navigator as any;
-        if (navAny.share && navAny.canShare?.({ files: [file] })) {
+        const channel: "native" | "download" = navAny.share && navAny.canShare?.({ files: [file] }) ? "native" : "download";
+        if (channel === "native") {
           await navAny.share({
             files: [file],
             title: label || "9FIT",
@@ -57,10 +63,12 @@ export function useShareEvent(contentType: ShareContentType) {
             athlete_id: athleteId,
             user_id: (await supabase.auth.getUser()).data.user?.id,
             content_type: contentType,
-            channel: navAny.share ? "native" : "download",
+            content_id: contentId ?? null,
+            channel,
             shared_at: new Date().toISOString(),
           } as any);
         } catch (e) { console.warn("[share_events] insert:", e); }
+        return channel;
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           console.error("[useShareEvent]", e);
