@@ -108,7 +108,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
 
       if (error) throw error;
 
-      setMeasurements([...measurements, data]);
+      setMeasurements([...measurements, data as unknown as Measurement]);
       setNewMeasurement({ measurement_date: new Date().toISOString().split('T')[0] });
       setShowNewForm(false);
       toast.success('Medida adicionada com sucesso!');
