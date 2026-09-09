@@ -253,8 +253,9 @@ export default function NineFitAtivacao() {
 
     setWorkoutStarted(false);
     await advanceStep('execute', {});
-    if (result.data?.xp?.awarded) {
-      showXpEarned(result.data.xp.awarded);
+    const resultData = "data" in result ? result.data : undefined;
+    if (resultData?.xp?.awarded) {
+      showXpEarned(resultData.xp.awarded);
     }
     setShowSuccess(true);
     setFinishing(false);
