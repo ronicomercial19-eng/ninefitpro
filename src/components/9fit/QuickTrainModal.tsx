@@ -204,10 +204,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
                 </p>
               </div>
               <div className="space-y-2">
-                <a href="https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03" target="_blank" rel="noreferrer"
-                  className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">
-                  <Lock className="w-4 h-4" /> Quero conhecer
-                </a>
+                <button onClick={() => navigate("/9fit/primepass")} className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4" /> Ver opções do Prime Pass
+                </button>
                 <button onClick={() => { setOfferSeen(true); setShowingOffer(false); }}
                   className="w-full rounded-full border border-white/15 bg-transparent text-foreground py-3 text-sm hover:bg-white/[0.04]">
                   Agora não — liberar treino do dia
