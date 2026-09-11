@@ -177,8 +177,13 @@ export default function NineFitRon() {
 
     const result = await withCredit("ron_chat", async () => {
       const history = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
+      const [{ data: performance }, { data: safety }, { data: diet }] = await Promise.all([
+        supabase.from("vw_fitpro_performance_overview" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
+        supabase.from("vw_fitpro_safety_context" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
+        supabase.from("vw_fitpro_diet_context" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
+      ]);
       const { data } = await supabase.functions.invoke("ai-coach", {
-        body: { mode: "chat", message: userMsg, userId: user.id, history },
+        body: { mode: "chat", message: userMsg, userId: user.id, history, context: { performance, safety, diet } },
       });
       return (data as any)?.data?.content || (data as any)?.content || "Aguardando mais sinais do seu corpo.";
     });
