@@ -9,7 +9,12 @@ export type ShareContentType =
   | "id_card_upgrade"
   | "goal_achieved"
   | "level_up"
-  | "streak_7";
+  | "streak_7"
+  | "personal_record"
+  | "assessment_completed"
+  | "quick_workout_completed"
+  | "sync_score"
+  | "weekly_recap";
 
 /**
  * Motor de Viralização (Bloco F).
