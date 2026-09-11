@@ -41,7 +41,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
         list.forEach((m) => {
           if (m.connector_key) {
             const c = (conns || []).find((x: any) => x.key === m.connector_key);
-            map[m.key] = !/^https?:\\/\\//i.test(m.cta_route || "") || c?.status === "active" ? "online" : "waiting";
+            map[m.key] = !/^https?:\/\//i.test(m.cta_route || "") || c?.status === "active" ? "online" : "waiting";
           } else map[m.key] = "not_configured";
         });
         setStatusByKey(map);
