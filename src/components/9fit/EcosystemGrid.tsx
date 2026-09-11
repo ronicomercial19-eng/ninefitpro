@@ -83,7 +83,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
             <button
               key={m.id}
               onClick={() => { if (!m.cta_route) return; if (/^https?:\/\//i.test(m.cta_route)) navigate(`/9fit/embed?url=${encodeURIComponent(m.cta_route)}&title=${encodeURIComponent(m.name)}`); else navigate(m.cta_route); }}
-              className="group relative text-left rounded-2xl overflow-hidden bg-card border border-white/[0.06] hover:border-primary/60 transition-all duration-300"
+              className="group relative text-left rounded-xl overflow-hidden bg-card border border-zinc-800/50 hover:border-primary/40 shadow-card-premium transition-all duration-300"
             >
               {/* glow on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -114,7 +114,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                 </div>
               </div>
 
-              <div className="p-3 flex items-center justify-between gap-2">
+              <div className="p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-display font-black italic text-sm leading-tight text-foreground truncate">
                     {m.name}
