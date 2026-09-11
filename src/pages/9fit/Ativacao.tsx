@@ -254,7 +254,6 @@ export default function NineFitAtivacao() {
     setWorkoutStarted(false);
     await advanceStep('execute', {});
 
-    }
     setShowSuccess(true);
     setFinishing(false);
   };

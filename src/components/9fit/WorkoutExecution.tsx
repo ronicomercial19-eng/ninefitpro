@@ -121,6 +121,14 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
     setResolvingPlayer(true);
 
+    (async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data, error } = await supabase.rpc('prescrever_treino' as any, {
+          p_aluno_id: athleteId,
+          p_data: today,
+        });
+
         if (error) { setResolveFailed(true); return; }
         const flat = flattenPrescricao(data);
         if (flat.length > 0) setResolvedExercises(flat);

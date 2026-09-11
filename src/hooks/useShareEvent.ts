@@ -26,6 +26,10 @@ export function useShareEvent(contentType: ShareContentType) {
   const [sharing, setSharing] = useState(false);
 
   const share = useCallback(
+    async (node: HTMLElement, opts?: { label?: string; contentId?: string | null }) => {
+      const label = opts?.label;
+      const contentId = opts?.contentId;
+      let channel: "native" | "download" = "download";
 
       setSharing(true);
       try {
@@ -41,6 +45,7 @@ export function useShareEvent(contentType: ShareContentType) {
         const file = new File([blob], `9fit-${contentType}-${Date.now()}.png`, { type: "image/png" });
 
         const navAny = navigator as any;
+        if (navAny.share && navAny.canShare?.({ files: [file] })) {
           await navAny.share({
             files: [file],
             title: label || "9FIT",

@@ -57,7 +57,7 @@ export function ShareableCard({ contentType, title, subtitle, stat, accent = "#E
         />
       </div>
       <button
-        onClick={() => share(ref.current, title)}
+        onClick={() => share(ref.current, { label: title })}
         disabled={sharing}
         className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground font-bold py-3 disabled:opacity-50"
       >
