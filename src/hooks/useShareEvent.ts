@@ -6,6 +6,7 @@ import { toast } from "sonner";
 export type ShareContentType =
   | "workout_completed"
   | "first_workout"
+  | "id_card"
   | "id_card_upgrade"
   | "goal_achieved"
   | "level_up"
