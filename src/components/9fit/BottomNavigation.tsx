@@ -1,4 +1,4 @@
-import { Cpu, Dumbbell, Bot, LayoutGrid, User, Share2 } from "lucide-react";
+import { Cpu, Dumbbell, Bot, LayoutGrid, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 /**
@@ -11,7 +11,6 @@ const navItems = [
   { icon: Bot, label: "RON", path: "/9fit/ron", center: true },
   { icon: LayoutGrid, label: "HUB", path: "/9fit/hub" },
   { icon: User, label: "PERFIL", path: "/9fit/profile" },
-  { icon: Share2, label: "SHARE", path: "/9fit/compartilhar" },
 ];
 
 export function BottomNavigation() {
