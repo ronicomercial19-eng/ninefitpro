@@ -18,6 +18,7 @@ import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
 import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
 import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react";
 
 interface TrainingAssignment {
@@ -110,7 +111,17 @@ export default function NineFitTrain() {
           const endValid = !t.end_date || t.end_date >= today;
           return startValid && endValid;
         });
-        setTrainings(valid as TrainingAssignment[]);
+        const assigned = await loadResolvedTemplateAssignments(aid, "training").catch(() => []);
+        const assignedTrainings: TrainingAssignment[] = assigned.map((item: any) => ({
+          id: item.assignment_id,
+          training_name: item.content_title || item.content_ref || "Protocolo atribuído",
+          training_description: "Atribuído pelo seu professor",
+          start_date: today,
+          is_active: true,
+          training_type: "structured",
+          training_data: item.prescription_schema || item.protocol_schema || undefined,
+        }));
+        setTrainings([...assignedTrainings, ...(valid as TrainingAssignment[])]);
       }
     } catch (error) {
       console.error("[Train] Error:", error);
