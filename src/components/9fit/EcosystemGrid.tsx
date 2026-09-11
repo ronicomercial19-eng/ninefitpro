@@ -84,7 +84,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
               key={m.id}
               onClick={() => { if (!m.cta_route) return; if (/^https?:\/\//i.test(m.cta_route)) navigate(`/9fit/embed?url=${encodeURIComponent(m.cta_route)}&title=${encodeURIComponent(m.name)}`); else navigate(m.cta_route); }}
               aria-label={`${m.name}: ${label}. Abrir módulo`}
-              className="group relative text-left rounded-xl overflow-hidden bg-card border border-zinc-800/50 hover:border-primary/40 shadow-card-premium transition-all duration-300"
+              className="group neural-node text-left overflow-hidden transition-all duration-300"
             >
               {/* glow on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -133,7 +133,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
 
       <button
         onClick={() => navigate("/9fit/protocols")}
-        className="mt-1 mx-auto flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-display font-black italic text-xs uppercase tracking-widest px-5 py-2.5 shadow-[0_10px_40px_-10px_hsl(26_56%_51%/0.42)] hover:scale-[1.02] transition"
+        className="mt-1 mx-auto action-primary gap-2 font-display font-black italic text-xs uppercase tracking-widest hover:scale-[1.02] transition"
       >
         <Sparkles className="w-3.5 h-3.5" /> Explorar tudo
       </button>
