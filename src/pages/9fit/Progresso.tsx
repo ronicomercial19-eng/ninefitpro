@@ -26,9 +26,11 @@ export default function NineFitProgresso() {
   const [prs, setPrs] = useState<PrItem[]>([]);
   const [insights, setInsights] = useState<string[]>([]);
   const [runs, setRuns] = useState<RunItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!athleteId) return;
+    if (!athleteId) { setLoading(false); return; }
+    setLoading(true);
     // Últimas avaliações — inclui oficiais (professor/API) E auto-registro do aluno.
     // "oficial" = origem != 'self_checkin' → só essas contam pra score/composição
     // detalhada; o self_checkin entra na curva de peso/gordura pra dar mais pontos
@@ -184,6 +186,7 @@ export default function NineFitProgresso() {
         <h1 className="text-4xl font-display tracking-tight">Progresso</h1>
         <TrendingUp className="w-7 h-7 text-primary" />
       </div>
+      {loading && <p className="px-4 mt-3 text-xs text-muted-foreground">Carregando seus dados reais…</p>}
       <div className="px-4 mt-1">
         <div className="h-[2px] w-32 bg-primary/70" />
         <p className="text-xs text-muted-foreground mt-2">Módulo 9FIT PRO</p>
