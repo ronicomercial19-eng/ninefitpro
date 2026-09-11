@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 type State = "DIAGNOSTIC" | "READY" | "UPGRADING";
 
+const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || "https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03";
+
 export default function NineFitPrimePass() {
   const [state, setState] = useState<State>("DIAGNOSTIC");
 
@@ -46,7 +48,9 @@ export default function NineFitPrimePass() {
 
           <div className="px-4 mb-4">
             <a
-              href="https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03"
+              href={PRIME_PASS_CHECKOUT_URL || "#"}
+              aria-disabled={!PRIME_PASS_CHECKOUT_URL}
+              onClick={(event) => { if (!PRIME_PASS_CHECKOUT_URL) { event.preventDefault(); } }}
               target="_blank"
               rel="noreferrer"
               className="w-full glass-mission glass-mission-active rounded-xl p-4 flex items-center justify-between"

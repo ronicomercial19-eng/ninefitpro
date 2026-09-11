@@ -97,7 +97,7 @@ export default function Plans() {
       return;
     }
     await trackMonetizationEvent('start_trial', plan.id, 'dedicated_screen', { cycle });
-    navigate('/9fit/hub');
+    navigate('/9fit/primepass?plan=' + encodeURIComponent(plan.id) + '&cycle=' + cycle);
   };
 
   return (
