@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface SeriesPoint { label: string; value: number; oficial: boolean }
 interface StrengthBar { name: string; kg: number; delta: number }
-interface PrItem { exercicio: string; valor: number; unidade: string; data: string; delta: number | null }
+interface PrItem { exercicio: string; valor: number; unidade: string; data: string; delta: number | null }\ninterface RunItem { distanceKm: number; date: string }
 
 export default function NineFitProgresso() {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ export default function NineFitProgresso() {
   const [gorduraOficial, setGorduraOficial] = useState(true);
   const [metaGordura, setMetaGordura] = useState<number | null>(null);
   const [prs, setPrs] = useState<PrItem[]>([]);
-  const [insights, setInsights] = useState<string[]>([]);
+  const [insights, setInsights] = useState<string[]>([]);\n  const [runs, setRuns] = useState<RunItem[]>([]);
 
   const load = useCallback(async () => {
     if (!athleteId) return;
@@ -128,7 +128,7 @@ export default function NineFitProgresso() {
     }
     setPrs(prItems);
 
-    // Insights: só afirmações que dá pra provar com o dado que acabamos de buscar
+    // Corridas do Move — fonte canônica bio_activity_logs, sem fallback sintético\n    const { data: { user: authUser } } = await supabase.auth.getUser();\n    if (authUser) {\n      const { data: runData } = await supabase\n        .from("bio_activity_logs")\n        .select("distance_m, recorded_at, source")\n        .eq("user_id", authUser.id)\n        .eq("source", "move_gps")\n        .order("recorded_at", { ascending: false })\n        .limit(10);\n      setRuns(((runData as any[]) || []).map((r) => ({\n        distanceKm: Number(r.distance_m || 0) / 1000,\n        date: new Date(r.recorded_at).toLocaleDateString("pt-BR"),\n      })));\n    } else {\n      setRuns([]);\n    }\n\n    // Insights: só afirmações que dá pra provar com o dado que acabamos de buscar
     const ins: string[] = [];
     if (strengthNext.length > 0) {
       const top = [...strengthNext].sort((a, b) => b.delta - a.delta)[0];
@@ -338,7 +338,7 @@ export default function NineFitProgresso() {
         )}
       </div>
 
-      {/* Insights */}
+      {/* Corridas registradas no Move */}\n      <div className="px-4 mt-6">\n        <p className="text-sm font-semibold flex items-center gap-2 mb-2">\n          <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Corridas recentes\n        </p>\n        {runs.length > 0 ? (\n          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">\n            {runs.map((run, i) => (\n              <div key={`${run.date}-${i}`} className="min-w-[45%] rounded-2xl border border-white/10 bg-white/[0.03] p-3">\n                <p className="text-[10px] text-muted-foreground">{run.date}</p>\n                <p className="font-display text-xl mt-1">{run.distanceKm.toFixed(2)}<span className="text-xs"> km</span></p>\n                <p className="text-[10px] text-muted-foreground mt-1">GPS · Move</p>\n              </div>\n            ))}\n          </div>\n        ) : (\n          <div className="rounded-2xl border border-dashed border-white/15 p-4 text-center text-xs text-muted-foreground">\n            Suas corridas registradas no Move aparecerão aqui.\n          </div>\n        )}\n      </div>\n\n      {/* Insights */}
       <div className="px-4 mt-6">
         <p className="text-sm font-semibold flex items-center gap-2 mb-2 text-primary">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Insights Personalizados
