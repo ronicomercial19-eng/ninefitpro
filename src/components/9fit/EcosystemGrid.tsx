@@ -64,7 +64,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
             </p>
           </div>
           <button
-            onClick={() => navigate("/9fit/hub")}
+            onClick={() => navigate("/9fit/hub#ecosystem-grid")}
             className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"
           >
             Ver todos
