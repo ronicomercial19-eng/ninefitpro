@@ -131,6 +131,8 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       is_active: true,
       start_date: new Date().toISOString().split("T")[0],
       training_data: {
+        estimated_duration: Number.parseInt(answers.time, 10),
+        requested_duration_min: Number.parseInt(answers.time, 10),
         exercises: exercises.map((e) => ({
           exercise_id: e.id,
           name: e.name,
