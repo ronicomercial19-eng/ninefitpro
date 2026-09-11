@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,7 +23,7 @@
     --popover: 0 0% 6%;
     --popover-foreground: 40 13% 93%;
 
-    --primary: 26 56% 51%;                /* amber queimado #C97A3D */
+    --primary: 18 100% 59%;              /* Nine Pro orange */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 11%;
@@ -31,7 +33,7 @@
     --muted-foreground: 0 0% 60%;
     --subtle: 0 0% 38%;
 
-    --accent: 26 56% 51%;
+    --accent: 18 100% 59%;
     --accent-foreground: 0 0% 100%;
 
     --neural: 174 52% 42%; /* teal do eixo saúde/recuperação */
@@ -43,7 +45,7 @@
     --input: 0 0% 11%;
     --ring: 26 56% 51%;
 
-    --radius: 0.875rem;
+    --radius: 0.25rem;                   /* Nine Pro: cantos contidos */
 
     /* Legacy aliases — kept so old className references resolve cleanly */
     --neon-400: 18 87% 52%;
@@ -63,7 +65,11 @@
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Bloco 10 — Design tokens canônicos 9FIT (semantic) */
-    --neon-orange: 26 56% 51%;
+    --neon-orange: 18 87% 52%;
+    --nine-pro-orange: 18 100% 59%;
+    --nine-pro-red: 4 100% 57%;
+    --nine-pro-purple: 281 64% 51%;
+    --nine-pro-lime: 73 100% 61%;
     --neon-green: 153 95% 42%;
     --neon-cyan: 187 92% 50%;
     --surface-1: 240 4% 9%;     /* card base */
@@ -71,7 +77,7 @@
     --surface-3: 240 4% 16%;    /* highlighted */
     --text-primary: 0 0% 98%;
     --text-muted: 240 4% 56%;
-    --font-display: 'Satoshi', 'Inter Black', system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Inter Black', system-ui, sans-serif;
     --font-body: 'Inter', 'SF Pro Display', system-ui, sans-serif;
 
     /* Premium tokens — glass + halo + elevated shadow */
@@ -118,7 +124,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
@@ -163,7 +169,7 @@
   }
 
   .text-display {
-    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.05;
@@ -187,7 +193,7 @@
     letter-spacing: 0.01em;
   }
   .font-display {
-    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: -0.015em;
   }
@@ -199,6 +205,10 @@
   .text-ninefit-orange { color: hsl(var(--primary)); }
   .bg-ninefit-orange { background-color: hsl(var(--primary)); }
   .border-ninefit-orange { border-color: hsl(var(--primary)); }
+
+  .nine-pro-gradient { background: linear-gradient(110deg, hsl(var(--nine-pro-orange)), hsl(var(--nine-pro-red)) 58%, hsl(var(--nine-pro-purple))); }
+  .nine-pro-clip { clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); }
+  .nine-pro-lime { color: hsl(var(--nine-pro-lime)); }
 
   /* Bloco 10 — utilitários semânticos */
   .text-neon-orange { color: hsl(var(--neon-orange)); }
@@ -235,7 +245,7 @@
   }
   .text-editorial,
   .text-massive {
-    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: -0.025em;
     line-height: 1;
@@ -302,14 +312,17 @@
 
   /* 9FIT Button Variants */
   .btn-neon {
-    @apply bg-primary text-primary-foreground font-semibold;
+    @apply text-primary-foreground font-semibold;
+    background: linear-gradient(110deg, hsl(var(--nine-pro-orange)), hsl(var(--nine-pro-red)) 58%, hsl(var(--nine-pro-purple)));
     @apply hover:opacity-90 disabled:opacity-50;
-    @apply transition-all duration-200 rounded-lg;
+    @apply transition-all duration-200;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   }
   .btn-neon-outline {
     @apply border border-primary/40 text-primary bg-transparent;
     @apply hover:bg-primary/10;
-    @apply font-semibold rounded-lg transition-all duration-200;
+    @apply font-semibold transition-all duration-200;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   }
   .btn-ghost {
     @apply text-foreground/80 hover:text-foreground bg-transparent;
@@ -317,12 +330,12 @@
   }
 
   .card-9fit {
-    @apply bg-card border border-white/5 rounded-xl p-5;
+    @apply bg-card border border-white/5 p-5;
     @apply hover:border-white/10 transition-all duration-200;
   }
 
   .input-9fit {
-    @apply bg-card border border-white/8 rounded-lg;
+    @apply bg-card border border-white/8;
     @apply focus:border-primary/60 focus:outline-none;
     @apply text-foreground placeholder:text-muted-foreground;
     @apply transition-all duration-200;

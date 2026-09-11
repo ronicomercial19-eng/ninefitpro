@@ -1,4 +1,5 @@
-// 9ZAP proxy — encaminha chamadas autenticadas do FitPro para a API do 9ZAP (chat).
+// 9ZAP proxy — mantém o segredo HMAC no servidor e expõe uma API autenticada
+// ao cliente FitPro. O browser nunca chama o Core OS diretamente.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -7,22 +8,32 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-const ZAP_BASE = Deno.env.get("ZAP_BASE_URL") ||
-  "https://project--77259b3e-ad02-40dd-b522-75d1dcbd4ed9.lovable.app/api/public/zap";
+const ZAP_BASE = (Deno.env.get("NINEZAP_BASE_URL") ||
+  "https://project--77259b3e-ad02-40dd-b522-75d1dcbd4ed9.lovable.app") + "/api/public/zap";
+const TENANT = Deno.env.get("NINEZAP_TENANT") || "fitpro";
 
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-async function zapFetch(path: string, init: RequestInit = {}) {
-  const token = Deno.env.get("FITPRO_API_TOKEN");
-  const tenant = Deno.env.get("ZAP_TENANT_SLUG") || "default";
-  if (!token) return { status: 503, data: { error: "9ZAP not configured (missing FITPRO_API_TOKEN)" } };
+async function hmacHex(secret: string, value: string) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(signature)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function zapFetch(path: string, init: RequestInit & { rawBody?: string } = {}) {
+  const secret = Deno.env.get("NINEZAP_SHARED_SECRET");
+  if (!secret) return { status: 503, data: { error: "9ZAP not configured (missing NINEZAP_SHARED_SECRET)" } };
+  const rawBody = init.rawBody ?? (typeof init.body === "string" ? init.body : "");
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = await hmacHex(secret, `${timestamp}.${rawBody}`);
   const res = await fetch(`${ZAP_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-      "X-Fitpro-Tenant": tenant,
+      "X-Zap-Tenant": TENANT,
+      "X-Zap-Timestamp": timestamp,
+      "X-Zap-Signature": signature,
       ...(init.headers || {}),
     },
   });
@@ -55,13 +66,15 @@ Deno.serve(async (req) => {
     }
     if (action === "threads" && req.method === "GET") {
       const qs = url.search.replace(/^\?/, "");
-      const r = await zapFetch(`/threads?${qs}`, { method: "GET" });
+      const query = qs ? `?${qs}` : "";
+      const r = await zapFetch(`/threads${query}`, { method: "GET", rawBody: query });
       return json(r.status, r.data);
     }
     if (action === "messages.list" && req.method === "GET") {
       const threadId = url.searchParams.get("thread_id");
       if (!threadId) return json(400, { error: "thread_id required" });
-      const r = await zapFetch(`/threads/${threadId}/messages?limit=50`, { method: "GET" });
+      const query = "?limit=50";
+      const r = await zapFetch(`/threads/${threadId}/messages${query}`, { method: "GET", rawBody: query });
       return json(r.status, r.data);
     }
     if (action === "messages.send" && req.method === "POST") {
