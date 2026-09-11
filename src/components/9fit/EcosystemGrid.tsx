@@ -71,7 +71,15 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
               {activeCount}/{items.length} online
             </p>
           </div>
-          {items.length > 2 && (\n            <button\n              onClick={() => setExpanded((value) => !value)}\n              aria-expanded={expanded}\n              className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"\n            >\n              {expanded ? "Recolher" : `Ver todos (${items.length})`}\n            </button>\n          )}
+          {items.length > 2 && (
+            <button
+              onClick={() => setExpanded((value) => !value)}
+              aria-expanded={expanded}
+              className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"
+            >
+              {expanded ? "Recolher" : `Ver todos (${items.length})`}
+            </button>
+          )}
         </header>
       )}
 
