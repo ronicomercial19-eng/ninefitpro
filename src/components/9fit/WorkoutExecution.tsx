@@ -223,6 +223,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [persisting, setPersisting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
+  const [executionAttempt, setExecutionAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -259,7 +260,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     })();
 
     return () => { cancelled = true; };
-  }, [training.id]);
+  }, [training.id, executionAttempt]);
 
   // HTML content (for html-type trainings) — só carrega quando o player
   // guiado não conseguiu resolver exercícios de nenhuma forma (fallback final)
@@ -274,9 +275,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   // Start workout timer
   useEffect(() => {
+    if (!executionId) return;
     workoutTimerRef.current = setInterval(() => setWorkoutSeconds(s => s + 1), 1000);
     return () => { if (workoutTimerRef.current) clearInterval(workoutTimerRef.current); };
-  }, []);
+  }, [executionId]);
 
   // Rest timer
   useEffect(() => {
@@ -402,6 +404,25 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     window.open(liveTraining.html_file_url, '_blank');
     onBack();
     return null;
+  }
+
+  // P0: nunca abrir o player nem iniciar cronômetro sem execução persistida.
+  if (!executionId || executionError) {
+    const retry = () => {
+      setExecutionError(null);
+      setExecutionId(null);
+      setExecutionAttempt((attempt) => attempt + 1);
+    };
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 text-center">
+        <div className="max-w-sm space-y-4">
+          {executionError ? <p className="text-sm text-destructive">{executionError}</p> : <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />}
+          <p className="text-sm text-muted-foreground">{executionError ? "O treino não foi iniciado. Nada foi marcado como concluído." : "Preparando uma execução segura…"}</p>
+          {executionError && <Button onClick={retry} className="w-full">Tentar novamente</Button>}
+          <Button variant="ghost" onClick={onBack} className="w-full">Voltar</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
