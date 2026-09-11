@@ -131,7 +131,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
       </div>
 
       <button
-        onClick={() => navigate("/9fit/protocols")}
+        onClick={() => navigate("/9fit/hub#ecosystem-grid")}
         className="mt-1 mx-auto action-primary gap-2 font-display font-black italic text-xs uppercase tracking-widest hover:scale-[1.02] transition"
       >
         <Sparkles className="w-3.5 h-3.5" /> Explorar tudo
