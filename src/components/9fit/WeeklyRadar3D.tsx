@@ -58,8 +58,7 @@ function RadarMesh({
           side={THREE.DoubleSide}
         />
       </mesh>
-      <line>
-        <bufferGeometry attach="geometry" {...edgesGeometry} />
+      <line geometry={edgesGeometry}>
         <lineBasicMaterial attach="material" color={color} linewidth={2} />
       </line>
       {getPoints(values).map((p, i) => (
@@ -82,8 +81,7 @@ function GridRings() {
         });
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         return (
-          <line key={r}>
-            <bufferGeometry attach="geometry" {...geo} />
+          <line key={r} geometry={geo}>
             <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.08} />
           </line>
         );
@@ -95,8 +93,7 @@ function GridRings() {
           new THREE.Vector3(Math.cos(angle) * 2, Math.sin(angle) * 2, 0),
         ]);
         return (
-          <line key={i}>
-            <bufferGeometry attach="geometry" {...geo} />
+          <line key={i} geometry={geo}>
             <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.1} />
           </line>
         );
