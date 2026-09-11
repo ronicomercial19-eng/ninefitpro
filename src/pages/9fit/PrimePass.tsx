@@ -8,7 +8,7 @@ import { loadPrimeSnapshot, type PrimeSnapshot } from "@/integrations/primeSyste
 
 type State = "DIAGNOSTIC" | "READY" | "UPGRADING";
 
-const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || "https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03";
+const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || null;
 
 export default function NineFitPrimePass() {
   const { user } = useAuth();
@@ -59,7 +59,7 @@ export default function NineFitPrimePass() {
 
           <div className="px-4 mb-4">
             <a
-              href={PRIME_PASS_CHECKOUT_URL || "#"}
+              href={PRIME_PASS_CHECKOUT_URL || undefined}
               aria-disabled={!PRIME_PASS_CHECKOUT_URL}
               onClick={(event) => { if (!PRIME_PASS_CHECKOUT_URL) { event.preventDefault(); } }}
               target="_blank"
@@ -70,7 +70,7 @@ export default function NineFitPrimePass() {
                 <Crown className="w-5 h-5 text-primary" />
                 <div className="text-left">
                   <p className="text-editorial text-base text-foreground">Assinar Elite (R$ 49/mês)</p>
-                  <p className="text-[10px] font-data text-muted-foreground">Liberação imediata após pagamento</p>
+                  <p className="text-[10px] font-data text-muted-foreground">{PRIME_PASS_CHECKOUT_URL ? "Liberação após confirmação segura" : "Checkout em configuração"}</p>
                 </div>
               </div>
               <ShieldCheck className="w-5 h-5 text-primary" />
