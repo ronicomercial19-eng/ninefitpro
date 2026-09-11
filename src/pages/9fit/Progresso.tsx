@@ -14,7 +14,7 @@ interface RunItem { distanceKm: number; date: string }
 
 export default function NineFitProgresso() {
   const navigate = useNavigate();
-  const { athleteId } = useAthleteId();
+  const { athleteId, error: athleteError } = useAthleteId();
   const [bodyfat, setBodyfat] = useState<SeriesPoint[]>([]);
   const [strength, setStrength] = useState<StrengthBar[]>([]);
   const [score, setScore] = useState<number | null>(null);
@@ -187,6 +187,7 @@ export default function NineFitProgresso() {
         <TrendingUp className="w-7 h-7 text-primary" />
       </div>
       {loading && <p className="px-4 mt-3 text-xs text-muted-foreground">Carregando seus dados reais…</p>}
+      {athleteError && <p className="px-4 mt-3 text-xs text-destructive">{athleteError}</p>}
       <div className="px-4 mt-1">
         <div className="h-[2px] w-32 bg-primary/70" />
         <p className="text-xs text-muted-foreground mt-2">Módulo 9FIT PRO</p>
