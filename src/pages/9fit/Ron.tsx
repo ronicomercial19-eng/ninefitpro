@@ -13,6 +13,13 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { useCredits } from "@/hooks/useCredits";
 import { toast } from "sonner";
 
+const RON_ACTIONS = [
+  { label: "Criar treino", route: "/9fit/train?from=ron" },
+  { label: "Criar planilha", route: "/9fit/planejamento?from=ron" },
+  { label: "Abrir dieta", route: "/9fit/dieta?from=ron" },
+  { label: "Ver progresso", route: "/9fit/progresso?from=ron" },
+];
+
 const SUGGESTIONS = [
   "Como está meu recovery?",
   "Próximo treino recomendado",
@@ -260,6 +267,13 @@ export default function NineFitRon() {
       </div>
 
       <div className="px-5 pt-2 sticky bottom-20 bg-background/80 backdrop-blur-md">
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {RON_ACTIONS.map((action) => (
+            <button key={action.route} onClick={() => navigate(action.route)} className="rounded-xl border border-primary/25 bg-primary/[0.06] px-3 py-2 text-[11px] font-semibold text-primary hover:bg-primary/[0.12] transition-colors">
+              {action.label}
+            </button>
+          ))}
+        </div>
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
           {SUGGESTIONS.map((s) => (
             <button
