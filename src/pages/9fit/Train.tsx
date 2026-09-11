@@ -111,8 +111,10 @@ export default function NineFitTrain() {
           const endValid = !t.end_date || t.end_date >= today;
           return startValid && endValid;
         });
-        const assigned = await loadResolvedTemplateAssignments(aid, "training").catch(() => []);
-        const assignedTrainings: TrainingAssignment[] = assigned.map((item: any) => ({
+        const assigned = await loadResolvedTemplateAssignments(aid).catch(() => []);
+        const assignedTrainings: TrainingAssignment[] = assigned
+          .filter((item: any) => item.prescription_schema || item.protocol_schema)
+          .map((item: any) => ({
           id: item.assignment_id,
           training_name: item.content_title || item.content_ref || "Protocolo atribuído",
           training_description: "Atribuído pelo seu professor",
