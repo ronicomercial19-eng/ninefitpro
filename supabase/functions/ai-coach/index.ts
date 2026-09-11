@@ -122,8 +122,9 @@ serve(async (req) => {
       }
     }
 
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'LOVABLE_API_KEY not configured', 500);
+    if (!OPENAI_API_KEY && !LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'AI provider not configured', 500);
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -291,14 +292,16 @@ ${richCtx || 'Sem dados adicionais fornecidos — gere recomendações pedindo q
     }
 
     const aiBody = {
-      model: "google/gemini-3-flash-preview",
+      model: OPENAI_API_KEY ? "gpt-5-mini" : "google/gemini-3-flash-preview",
       messages: [{ role: "system", content: systemPrompt }, ...chatMessages],
     };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiEndpoint = OPENAI_API_KEY ? "https://api.openai.com/v1/chat/completions" : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const aiKey = OPENAI_API_KEY || LOVABLE_API_KEY;
+    const response = await fetch(aiEndpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${aiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(aiBody),
