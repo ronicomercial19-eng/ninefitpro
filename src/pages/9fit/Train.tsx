@@ -41,6 +41,7 @@ export default function NineFitTrain() {
   const location = useLocation();
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
   const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
   const [quickOpen, setQuickOpen] = useState(false);
@@ -95,6 +96,7 @@ export default function NineFitTrain() {
 
   const fetchTrainings = async (aid: string) => {
     try {
+      setLoadError(false);
       const { data, error } = await supabase
         .from("student_training_assignments")
         .select("*")
@@ -126,6 +128,7 @@ export default function NineFitTrain() {
         setTrainings([...assignedTrainings, ...(valid as TrainingAssignment[])]);
       }
     } catch (error) {
+      setLoadError(true);
       console.error("[Train] Error:", error);
       toast.error("Erro ao carregar treinos");
     } finally {
@@ -294,6 +297,12 @@ export default function NineFitTrain() {
           <div className="space-y-3">
             <SkeletonCard />
             <SkeletonCard />
+          </div>
+        ) : loadError ? (
+          <div className="glass-mission rounded-2xl p-6 text-center">
+            <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
+            <p className="text-sm">Não foi possível carregar seus treinos.</p>
+            <button onClick={() => athleteId && fetchTrainings(athleteId)} className="mt-3 rounded-lg border border-primary/40 px-4 py-2 text-xs text-primary">Tentar novamente</button>
           </div>
         ) : flow === "OVERVIEW" && selectedTraining ? (
           <WorkoutOverview
