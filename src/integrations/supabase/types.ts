@@ -10,10 +10,34 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      _temp_html_extraction: {
+        Row: {
+          aluno: string | null
+          content: string | null
+          created_at: string | null
+          id: number
+          url: string | null
+        }
+        Insert: {
+          aluno?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          url?: string | null
+        }
+        Update: {
+          aluno?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          url?: string | null
+        }
+        Relationships: []
+      }
       activation_events: {
         Row: {
           completed_at: string | null
@@ -225,6 +249,13 @@ export type Database = {
             foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -310,6 +341,13 @@ export type Database = {
             foreignKeyName: "aluno_score_composite_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: true
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aluno_score_composite_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -335,6 +373,7 @@ export type Database = {
           horario_preferido: string | null
           id: string
           id_plano_ativo: string | null
+          is_test_account: boolean
           meta_tempo_meses: number | null
           nivel_experiencia: string | null
           nome: string
@@ -354,6 +393,7 @@ export type Database = {
           tempo_disponivel_min: number | null
           treina_sozinho: boolean | null
           ultima_atualizacao: string | null
+          updated_at: string
         }
         Insert: {
           altura_cm?: number | null
@@ -374,6 +414,7 @@ export type Database = {
           horario_preferido?: string | null
           id?: string
           id_plano_ativo?: string | null
+          is_test_account?: boolean
           meta_tempo_meses?: number | null
           nivel_experiencia?: string | null
           nome: string
@@ -393,6 +434,7 @@ export type Database = {
           tempo_disponivel_min?: number | null
           treina_sozinho?: boolean | null
           ultima_atualizacao?: string | null
+          updated_at?: string
         }
         Update: {
           altura_cm?: number | null
@@ -413,6 +455,7 @@ export type Database = {
           horario_preferido?: string | null
           id?: string
           id_plano_ativo?: string | null
+          is_test_account?: boolean
           meta_tempo_meses?: number | null
           nivel_experiencia?: string | null
           nome?: string
@@ -432,6 +475,7 @@ export type Database = {
           tempo_disponivel_min?: number | null
           treina_sozinho?: boolean | null
           ultima_atualizacao?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -533,6 +577,13 @@ export type Database = {
             foreignKeyName: "analises_ia_aluno_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analises_ia_aluno_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -620,6 +671,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           duration: number | null
+          gym_class_id: string | null
           id: string
           location: string | null
           notes: string | null
@@ -627,7 +679,7 @@ export type Database = {
           scheduled_at: string
           status: Database["public"]["Enums"]["appointment_status"] | null
           student_id: string
-          teacher_id: string
+          teacher_id: string | null
           title: string
           updated_at: string | null
         }
@@ -637,6 +689,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration?: number | null
+          gym_class_id?: string | null
           id?: string
           location?: string | null
           notes?: string | null
@@ -644,7 +697,7 @@ export type Database = {
           scheduled_at: string
           status?: Database["public"]["Enums"]["appointment_status"] | null
           student_id: string
-          teacher_id: string
+          teacher_id?: string | null
           title: string
           updated_at?: string | null
         }
@@ -654,6 +707,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration?: number | null
+          gym_class_id?: string | null
           id?: string
           location?: string | null
           notes?: string | null
@@ -661,11 +715,18 @@ export type Database = {
           scheduled_at?: string
           status?: Database["public"]["Enums"]["appointment_status"] | null
           student_id?: string
-          teacher_id?: string
+          teacher_id?: string | null
           title?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_gym_class_id_fkey"
+            columns: ["gym_class_id"]
+            isOneToOne: false
+            referencedRelation: "gym_classes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_student_id_fkey"
             columns: ["student_id"]
@@ -734,6 +795,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -772,6 +840,7 @@ export type Database = {
           fully_activated: boolean | null
           id: string
           plan_generated_at: string | null
+          profile_reminder_dismissed: boolean
         }
         Insert: {
           activation_started_at?: string | null
@@ -792,6 +861,7 @@ export type Database = {
           fully_activated?: boolean | null
           id?: string
           plan_generated_at?: string | null
+          profile_reminder_dismissed?: boolean
         }
         Update: {
           activation_started_at?: string | null
@@ -812,6 +882,7 @@ export type Database = {
           fully_activated?: boolean | null
           id?: string
           plan_generated_at?: string | null
+          profile_reminder_dismissed?: boolean
         }
         Relationships: [
           {
@@ -882,6 +953,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_activation_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -988,6 +1066,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1115,11 +1200,128 @@ export type Database = {
             foreignKeyName: "athlete_credits_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "athlete_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
+      athlete_inactivity_flags: {
+        Row: {
+          athlete_id: string
+          flagged_at: string
+          last_flagged_bucket: number
+        }
+        Insert: {
+          athlete_id: string
+          flagged_at?: string
+          last_flagged_bucket: number
+        }
+        Update: {
+          athlete_id?: string
+          flagged_at?: string
+          last_flagged_bucket?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_radar_5d"
@@ -1227,6 +1429,13 @@ export type Database = {
             foreignKeyName: "athlete_pdi_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_pdi_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -1249,6 +1458,7 @@ export type Database = {
           id: string
           match_factors: Json | null
           match_percentage: number | null
+          model_snapshot: Json | null
           notes: string | null
           periodization_model_id: string
           status: string | null
@@ -1262,6 +1472,7 @@ export type Database = {
           id?: string
           match_factors?: Json | null
           match_percentage?: number | null
+          model_snapshot?: Json | null
           notes?: string | null
           periodization_model_id: string
           status?: string | null
@@ -1275,6 +1486,7 @@ export type Database = {
           id?: string
           match_factors?: Json | null
           match_percentage?: number | null
+          model_snapshot?: Json | null
           notes?: string | null
           periodization_model_id?: string
           status?: string | null
@@ -1355,6 +1567,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1476,6 +1695,13 @@ export type Database = {
             foreignKeyName: "athlete_planning_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_planning_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -1579,6 +1805,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_profile_snapshots_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1703,6 +1936,13 @@ export type Database = {
             foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -1722,8 +1962,10 @@ export type Database = {
           altura_cm: number | null
           aluno_id: string | null
           avatar_url: string | null
+          bio: string | null
           birthdate: string | null
           coach_id: string
+          cover_photo_url: string | null
           created_at: string
           email: string | null
           experience_level: string | null
@@ -1734,6 +1976,8 @@ export type Database = {
           injuries_limitations: string | null
           invitation_sent: boolean | null
           invitation_token: string | null
+          is_public_profile: boolean | null
+          is_test_account: boolean
           level: number | null
           metadata: Json | null
           name: string
@@ -1767,8 +2011,10 @@ export type Database = {
           altura_cm?: number | null
           aluno_id?: string | null
           avatar_url?: string | null
+          bio?: string | null
           birthdate?: string | null
           coach_id: string
+          cover_photo_url?: string | null
           created_at?: string
           email?: string | null
           experience_level?: string | null
@@ -1779,6 +2025,8 @@ export type Database = {
           injuries_limitations?: string | null
           invitation_sent?: boolean | null
           invitation_token?: string | null
+          is_public_profile?: boolean | null
+          is_test_account?: boolean
           level?: number | null
           metadata?: Json | null
           name: string
@@ -1812,8 +2060,10 @@ export type Database = {
           altura_cm?: number | null
           aluno_id?: string | null
           avatar_url?: string | null
+          bio?: string | null
           birthdate?: string | null
           coach_id?: string
+          cover_photo_url?: string | null
           created_at?: string
           email?: string | null
           experience_level?: string | null
@@ -1824,6 +2074,8 @@ export type Database = {
           injuries_limitations?: string | null
           invitation_sent?: boolean | null
           invitation_token?: string | null
+          is_public_profile?: boolean | null
+          is_test_account?: boolean
           level?: number | null
           metadata?: Json | null
           name?: string
@@ -1865,6 +2117,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_athlete_legacy_map"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "athletes_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "athletes_aluno_id_fkey"
@@ -2156,6 +2415,13 @@ export type Database = {
             foreignKeyName: "avaliacoes_fisicas_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_fisicas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -2165,7 +2431,7 @@ export type Database = {
         Row: {
           agua_corporal: number | null
           altura: number | null
-          aluno_id: string
+          aluno_id: string | null
           athlete_id: string | null
           avaliacao_exames: string | null
           avaliador_cref: string | null
@@ -2231,7 +2497,7 @@ export type Database = {
         Insert: {
           agua_corporal?: number | null
           altura?: number | null
-          aluno_id: string
+          aluno_id?: string | null
           athlete_id?: string | null
           avaliacao_exames?: string | null
           avaliador_cref?: string | null
@@ -2297,7 +2563,7 @@ export type Database = {
         Update: {
           agua_corporal?: number | null
           altura?: number | null
-          aluno_id?: string
+          aluno_id?: string | null
           athlete_id?: string | null
           avaliacao_exames?: string | null
           avaliador_cref?: string | null
@@ -2379,6 +2645,13 @@ export type Database = {
             foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -2450,6 +2723,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -2533,6 +2813,7 @@ export type Database = {
       }
       bio_hrv_logs: {
         Row: {
+          athlete_id: string | null
           created_at: string
           hrv_ms: number
           id: string
@@ -2540,8 +2821,10 @@ export type Database = {
           recorded_at: string
           source: string | null
           user_id: string
+          value: number | null
         }
         Insert: {
+          athlete_id?: string | null
           created_at?: string
           hrv_ms: number
           id?: string
@@ -2549,8 +2832,10 @@ export type Database = {
           recorded_at?: string
           source?: string | null
           user_id: string
+          value?: number | null
         }
         Update: {
+          athlete_id?: string | null
           created_at?: string
           hrv_ms?: number
           id?: string
@@ -2558,6 +2843,7 @@ export type Database = {
           recorded_at?: string
           source?: string | null
           user_id?: string
+          value?: number | null
         }
         Relationships: []
       }
@@ -2569,6 +2855,7 @@ export type Database = {
           metadata: Json | null
           nervous_system: string | null
           recovery_score: number | null
+          score: number | null
           user_id: string
         }
         Insert: {
@@ -2578,6 +2865,7 @@ export type Database = {
           metadata?: Json | null
           nervous_system?: string | null
           recovery_score?: number | null
+          score?: number | null
           user_id: string
         }
         Update: {
@@ -2587,15 +2875,18 @@ export type Database = {
           metadata?: Json | null
           nervous_system?: string | null
           recovery_score?: number | null
+          score?: number | null
           user_id?: string
         }
         Relationships: []
       }
       bio_sleep_logs: {
         Row: {
+          athlete_id: string | null
           created_at: string
           deep_min: number | null
           duration_min: number | null
+          hours: number | null
           id: string
           quality_score: number | null
           rem_min: number | null
@@ -2604,9 +2895,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          athlete_id?: string | null
           created_at?: string
           deep_min?: number | null
           duration_min?: number | null
+          hours?: number | null
           id?: string
           quality_score?: number | null
           rem_min?: number | null
@@ -2615,9 +2908,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          athlete_id?: string | null
           created_at?: string
           deep_min?: number | null
           duration_min?: number | null
+          hours?: number | null
           id?: string
           quality_score?: number | null
           rem_min?: number | null
@@ -2769,6 +3064,39 @@ export type Database = {
         }
         Relationships: []
       }
+      core_os_webhook_log: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json | null
+          response_body: string | null
+          response_status: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          response_body?: string | null
+          response_status?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          response_body?: string | null
+          response_status?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -2869,11 +3197,146 @@ export type Database = {
             foreignKeyName: "credit_transactions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "credit_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
+      daily_checkins: {
+        Row: {
+          alimentacao: number | null
+          athlete_id: string
+          checkin_date: string
+          created_at: string | null
+          dor: number | null
+          dor_local: string | null
+          energia: number | null
+          id: string
+          sono: number | null
+        }
+        Insert: {
+          alimentacao?: number | null
+          athlete_id: string
+          checkin_date?: string
+          created_at?: string | null
+          dor?: number | null
+          dor_local?: string | null
+          energia?: number | null
+          id?: string
+          sono?: number | null
+        }
+        Update: {
+          alimentacao?: number | null
+          athlete_id?: string
+          checkin_date?: string
+          created_at?: string | null
+          dor?: number | null
+          dor_local?: string | null
+          energia?: number | null
+          id?: string
+          sono?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_radar_5d"
@@ -2984,6 +3447,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -3153,6 +3623,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -3443,6 +3920,75 @@ export type Database = {
           name?: string
           phase?: string | null
           target_muscles?: string[]
+          updated_at?: string | null
+          video_cached_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      exercises_backup_pre_goal: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          equipment: string | null
+          equipment_needed: string | null
+          external_video_id: string | null
+          gif_url: string | null
+          goal: string | null
+          id: string | null
+          image_url: string | null
+          instructions: string | null
+          is_optional: boolean | null
+          muscle_groups: Json | null
+          name: string | null
+          phase: string | null
+          target_muscles: string[] | null
+          updated_at: string | null
+          video_cached_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          equipment?: string | null
+          equipment_needed?: string | null
+          external_video_id?: string | null
+          gif_url?: string | null
+          goal?: string | null
+          id?: string | null
+          image_url?: string | null
+          instructions?: string | null
+          is_optional?: boolean | null
+          muscle_groups?: Json | null
+          name?: string | null
+          phase?: string | null
+          target_muscles?: string[] | null
+          updated_at?: string | null
+          video_cached_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          equipment?: string | null
+          equipment_needed?: string | null
+          external_video_id?: string | null
+          gif_url?: string | null
+          goal?: string | null
+          id?: string | null
+          image_url?: string | null
+          instructions?: string | null
+          is_optional?: boolean | null
+          muscle_groups?: Json | null
+          name?: string | null
+          phase?: string | null
+          target_muscles?: string[] | null
           updated_at?: string | null
           video_cached_at?: string | null
           video_url?: string | null
@@ -3766,6 +4312,82 @@ export type Database = {
         }
         Relationships: []
       }
+      fitpro_smartperiodizer_waves: {
+        Row: {
+          ai_adjustment_note: string | null
+          completed_at: string | null
+          created_at: string
+          duration_weeks: number
+          fitpro_student_id: string
+          focus: string | null
+          id: string
+          progress_pct: number
+          smartperiodizer_periodization_id: string
+          started_at: string | null
+          status: string
+          volume_change_pct: number | null
+          wave_label: string
+          wave_name: string
+          wave_order: number
+        }
+        Insert: {
+          ai_adjustment_note?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_weeks?: number
+          fitpro_student_id: string
+          focus?: string | null
+          id?: string
+          progress_pct?: number
+          smartperiodizer_periodization_id: string
+          started_at?: string | null
+          status?: string
+          volume_change_pct?: number | null
+          wave_label: string
+          wave_name: string
+          wave_order: number
+        }
+        Update: {
+          ai_adjustment_note?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_weeks?: number
+          fitpro_student_id?: string
+          focus?: string | null
+          id?: string
+          progress_pct?: number
+          smartperiodizer_periodization_id?: string
+          started_at?: string | null
+          status?: string
+          volume_change_pct?: number | null
+          wave_label?: string
+          wave_name?: string
+          wave_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitpro_smartperiodizer_waves_smartperiodizer_periodization_fkey"
+            columns: ["smartperiodizer_periodization_id"]
+            isOneToOne: false
+            referencedRelation: "fitpro_smartperiodizer_periodizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fitpro_smartperiodizer_waves_smartperiodizer_periodization_fkey"
+            columns: ["smartperiodizer_periodization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_periodizacao_ativa_aluno"
+            referencedColumns: ["fitpro_periodization_id"]
+          },
+          {
+            foreignKeyName: "fitpro_smartperiodizer_waves_smartperiodizer_periodization_fkey"
+            columns: ["smartperiodizer_periodization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_smarttreino_aluno_ativo"
+            referencedColumns: ["periodization_id"]
+          },
+        ]
+      }
       fitpro_student_map: {
         Row: {
           athlete_id: string | null
@@ -3872,6 +4494,13 @@ export type Database = {
             foreignKeyName: "fitpro_student_map_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -3971,10 +4600,253 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_logs: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          habit_id: string
+          id: string
+          logged_date: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          habit_id: string
+          id?: string
+          logged_date?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          habit_id?: string
+          id?: string
+          logged_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          archived_at: string | null
+          athlete_id: string
+          created_at: string
+          goal_per_week: number
+          id: string
+          name: string
+        }
+        Insert: {
+          archived_at?: string | null
+          athlete_id: string
+          created_at?: string
+          goal_per_week?: number
+          id?: string
+          name: string
+        }
+        Update: {
+          archived_at?: string | null
+          athlete_id?: string
+          created_at?: string
+          goal_per_week?: number
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
       health_metrics: {
         Row: {
           agua_litros: number | null
           aluno_id: string
+          athlete_id: string | null
           calorias: number | null
           created_at: string
           data_metrica: string
@@ -3987,6 +4859,7 @@ export type Database = {
         Insert: {
           agua_litros?: number | null
           aluno_id: string
+          athlete_id?: string | null
           calorias?: number | null
           created_at?: string
           data_metrica?: string
@@ -3999,6 +4872,7 @@ export type Database = {
         Update: {
           agua_litros?: number | null
           aluno_id?: string
+          athlete_id?: string | null
           calorias?: number | null
           created_at?: string
           data_metrica?: string
@@ -4027,8 +4901,106 @@ export type Database = {
             foreignKeyName: "health_metrics_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_metrics_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
           },
         ]
       }
@@ -4141,6 +5113,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "healthflix_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -4362,6 +5341,13 @@ export type Database = {
             foreignKeyName: "historico_treinos_realizados_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_treinos_realizados_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -4371,6 +5357,122 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "planos_treino_aluno"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      hydration_logs: {
+        Row: {
+          amount_ml: number
+          athlete_id: string
+          created_at: string
+          id: string
+          log_date: string
+        }
+        Insert: {
+          amount_ml: number
+          athlete_id: string
+          created_at?: string
+          id?: string
+          log_date?: string
+        }
+        Update: {
+          amount_ml?: number
+          athlete_id?: string
+          created_at?: string
+          id?: string
+          log_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
           },
         ]
       }
@@ -4410,6 +5512,27 @@ export type Database = {
           payload?: Json | null
           received_at?: string
           source?: string
+        }
+        Relationships: []
+      }
+      integration_secrets: {
+        Row: {
+          created_at: string
+          id: string
+          integration_name: string
+          secret_value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          integration_name: string
+          secret_value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          integration_name?: string
+          secret_value?: string
         }
         Relationships: []
       }
@@ -4536,6 +5659,7 @@ export type Database = {
       metas_progresso: {
         Row: {
           aluno_id: string
+          athlete_id: string | null
           created_at: string
           exercicio: string | null
           id: string
@@ -4551,6 +5675,7 @@ export type Database = {
         }
         Insert: {
           aluno_id: string
+          athlete_id?: string | null
           created_at?: string
           exercicio?: string | null
           id?: string
@@ -4566,6 +5691,7 @@ export type Database = {
         }
         Update: {
           aluno_id?: string
+          athlete_id?: string | null
           created_at?: string
           exercicio?: string | null
           id?: string
@@ -4598,8 +5724,106 @@ export type Database = {
             foreignKeyName: "metas_progresso_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
           },
         ]
       }
@@ -4748,6 +5972,13 @@ export type Database = {
             foreignKeyName: "modelos_de_treino_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "modelos_de_treino_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -4802,6 +6033,7 @@ export type Database = {
           name: string
           plan_id: string | null
           priority: number
+          slug: string | null
           status: string
           thumbnail_url: string | null
           updated_at: string
@@ -4817,6 +6049,7 @@ export type Database = {
           name: string
           plan_id?: string | null
           priority?: number
+          slug?: string | null
           status?: string
           thumbnail_url?: string | null
           updated_at?: string
@@ -4832,6 +6065,7 @@ export type Database = {
           name?: string
           plan_id?: string | null
           priority?: number
+          slug?: string | null
           status?: string
           thumbnail_url?: string | null
           updated_at?: string
@@ -4921,6 +6155,13 @@ export type Database = {
             foreignKeyName: "ninefit_checkins_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ninefit_checkins_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -4992,6 +6233,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "ninefit_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5105,18 +6353,85 @@ export type Database = {
             foreignKeyName: "ninefit_reports_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ninefit_reports_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
         ]
       }
+      ninefit_template_library: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          design_tokens: Json
+          id: string
+          metadata: Json
+          name: string
+          prescription_schema: Json
+          protocol_schema: Json
+          required_variables: Json
+          slug: string
+          source_html: string | null
+          source_legacy_id: number | null
+          source_url: string | null
+          status: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          design_tokens?: Json
+          id?: string
+          metadata?: Json
+          name: string
+          prescription_schema?: Json
+          protocol_schema?: Json
+          required_variables?: Json
+          slug: string
+          source_html?: string | null
+          source_legacy_id?: number | null
+          source_url?: string | null
+          status?: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          design_tokens?: Json
+          id?: string
+          metadata?: Json
+          name?: string
+          prescription_schema?: Json
+          protocol_schema?: Json
+          required_variables?: Json
+          slug?: string
+          source_html?: string | null
+          source_legacy_id?: number | null
+          source_url?: string | null
+          status?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
           created_at: string | null
+          event_type: string | null
           id: string
           is_read: boolean | null
           message: string
+          related_id: string | null
+          related_table: string | null
           title: string
           type: Database["public"]["Enums"]["notification_type"] | null
           user_id: string
@@ -5124,9 +6439,12 @@ export type Database = {
         Insert: {
           action_url?: string | null
           created_at?: string | null
+          event_type?: string | null
           id?: string
           is_read?: boolean | null
           message: string
+          related_id?: string | null
+          related_table?: string | null
           title: string
           type?: Database["public"]["Enums"]["notification_type"] | null
           user_id: string
@@ -5134,9 +6452,12 @@ export type Database = {
         Update: {
           action_url?: string | null
           created_at?: string | null
+          event_type?: string | null
           id?: string
           is_read?: boolean | null
           message?: string
+          related_id?: string | null
+          related_table?: string | null
           title?: string
           type?: Database["public"]["Enums"]["notification_type"] | null
           user_id?: string
@@ -5252,6 +6573,13 @@ export type Database = {
             foreignKeyName: "nutrition_logs_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -5298,8 +6626,13 @@ export type Database = {
           exercise_id: string | null
           id: string
           intensity: number
+          is_red_flag: boolean | null
+          red_flags: Json | null
           resolved_detail: Json | null
+          routed_content: Json | null
           source: string
+          status: string | null
+          symptom_slug: string | null
           workout_execution_id: string | null
         }
         Insert: {
@@ -5311,8 +6644,13 @@ export type Database = {
           exercise_id?: string | null
           id?: string
           intensity: number
+          is_red_flag?: boolean | null
+          red_flags?: Json | null
           resolved_detail?: Json | null
+          routed_content?: Json | null
           source?: string
+          status?: string | null
+          symptom_slug?: string | null
           workout_execution_id?: string | null
         }
         Update: {
@@ -5324,8 +6662,13 @@ export type Database = {
           exercise_id?: string | null
           id?: string
           intensity?: number
+          is_red_flag?: boolean | null
+          red_flags?: Json | null
           resolved_detail?: Json | null
+          routed_content?: Json | null
           source?: string
+          status?: string | null
+          symptom_slug?: string | null
           workout_execution_id?: string | null
         }
         Relationships: [
@@ -5397,6 +6740,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "pain_reports_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5571,6 +6921,13 @@ export type Database = {
             foreignKeyName: "periodizacoes_novas_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodizacoes_novas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -5736,6 +7093,13 @@ export type Database = {
             foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -5826,44 +7190,74 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string
+          detailed_macrocycles: Json | null
+          detailed_mesocycles: Json | null
+          detailed_microcycle: Json | null
           duration: string
           goal: string
           graph_data: Json
           id: string
+          legal_notice: string | null
+          load_progression_rules: Json | null
           macrocycle: Json
           mesocycle: Json
           microcycle: Json
+          nivel: string | null
           recommended_for: Json
+          scientific_rationale: Json | null
+          scientific_references: Json | null
           title: string
           updated_at: string | null
+          weekly_split: Json | null
+          workout_generation_rules: Json | null
         }
         Insert: {
           created_at?: string | null
           description: string
+          detailed_macrocycles?: Json | null
+          detailed_mesocycles?: Json | null
+          detailed_microcycle?: Json | null
           duration: string
           goal: string
           graph_data?: Json
           id: string
+          legal_notice?: string | null
+          load_progression_rules?: Json | null
           macrocycle?: Json
           mesocycle?: Json
           microcycle?: Json
+          nivel?: string | null
           recommended_for?: Json
+          scientific_rationale?: Json | null
+          scientific_references?: Json | null
           title: string
           updated_at?: string | null
+          weekly_split?: Json | null
+          workout_generation_rules?: Json | null
         }
         Update: {
           created_at?: string | null
           description?: string
+          detailed_macrocycles?: Json | null
+          detailed_mesocycles?: Json | null
+          detailed_microcycle?: Json | null
           duration?: string
           goal?: string
           graph_data?: Json
           id?: string
+          legal_notice?: string | null
+          load_progression_rules?: Json | null
           macrocycle?: Json
           mesocycle?: Json
           microcycle?: Json
+          nivel?: string | null
           recommended_for?: Json
+          scientific_rationale?: Json | null
+          scientific_references?: Json | null
           title?: string
           updated_at?: string | null
+          weekly_split?: Json | null
+          workout_generation_rules?: Json | null
         }
         Relationships: []
       }
@@ -6032,6 +7426,13 @@ export type Database = {
             foreignKeyName: "periodization_plans_remote_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_remote_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -6136,7 +7537,8 @@ export type Database = {
       }
       personal_records: {
         Row: {
-          aluno_id: string
+          aluno_id: string | null
+          athlete_id: string | null
           created_at: string
           data_pr: string
           exercicio: string
@@ -6147,7 +7549,8 @@ export type Database = {
           valor: number
         }
         Insert: {
-          aluno_id: string
+          aluno_id?: string | null
+          athlete_id?: string | null
           created_at?: string
           data_pr?: string
           exercicio: string
@@ -6158,7 +7561,8 @@ export type Database = {
           valor: number
         }
         Update: {
-          aluno_id?: string
+          aluno_id?: string | null
+          athlete_id?: string | null
           created_at?: string
           data_pr?: string
           exercicio?: string
@@ -6187,8 +7591,106 @@ export type Database = {
             foreignKeyName: "personal_records_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
           },
           {
             foreignKeyName: "personal_records_treino_id_fkey"
@@ -6271,6 +7773,7 @@ export type Database = {
           hero_image: string | null
           id: string
           key: string
+          lock_reason: string | null
           name: string
           status: string
           updated_at: string
@@ -6286,6 +7789,7 @@ export type Database = {
           hero_image?: string | null
           id?: string
           key: string
+          lock_reason?: string | null
           name: string
           status?: string
           updated_at?: string
@@ -6301,6 +7805,7 @@ export type Database = {
           hero_image?: string | null
           id?: string
           key?: string
+          lock_reason?: string | null
           name?: string
           status?: string
           updated_at?: string
@@ -6467,6 +7972,13 @@ export type Database = {
             foreignKeyName: "planos_de_treino_gerados_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "planos_de_treino_gerados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -6572,6 +8084,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_athlete_legacy_map"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "planos_treino_aluno_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "planos_treino_aluno_aluno_id_fkey"
@@ -6688,6 +8207,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -6937,6 +8463,13 @@ export type Database = {
             columns: ["periodization_model_id"]
             isOneToOne: false
             referencedRelation: "periodization_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_periodization_matches_periodization_model_id_fkey"
+            columns: ["periodization_model_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_models_valid"
             referencedColumns: ["id"]
           },
           {
@@ -7193,6 +8726,13 @@ export type Database = {
             foreignKeyName: "progresso_aluno_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "progresso_aluno_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -7221,8 +8761,144 @@ export type Database = {
             foreignKeyName: "progresso_aluno_id_aluno_fkey"
             columns: ["id_aluno"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progresso_aluno_id_aluno_fkey"
+            columns: ["id_aluno"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
+          },
+        ]
+      }
+      protocol_feedback: {
+        Row: {
+          athlete_id: string
+          content_ref: string
+          id: string
+          notes: string | null
+          outcome: string | null
+          pain_report_id: string | null
+          reported_at: string | null
+        }
+        Insert: {
+          athlete_id: string
+          content_ref: string
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          pain_report_id?: string | null
+          reported_at?: string | null
+        }
+        Update: {
+          athlete_id?: string
+          content_ref?: string
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          pain_report_id?: string | null
+          reported_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_pain_report_id_fkey"
+            columns: ["pain_report_id"]
+            isOneToOne: false
+            referencedRelation: "pain_reports"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7271,6 +8947,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_athlete_legacy_map"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "push_subscriptions_aluno_id_fkey"
@@ -7478,6 +9161,144 @@ export type Database = {
         }
         Relationships: []
       }
+      registros_carga: {
+        Row: {
+          aluno_id: string | null
+          athlete_id: string | null
+          carga_max: number
+          created_at: string | null
+          data_registro: string
+          exercicio: string
+          id: string
+          origem: string | null
+          reps: number | null
+          treino_id: string | null
+        }
+        Insert: {
+          aluno_id?: string | null
+          athlete_id?: string | null
+          carga_max: number
+          created_at?: string | null
+          data_registro?: string
+          exercicio: string
+          id?: string
+          origem?: string | null
+          reps?: number | null
+          treino_id?: string | null
+        }
+        Update: {
+          aluno_id?: string | null
+          athlete_id?: string | null
+          carga_max?: number
+          created_at?: string | null
+          data_registro?: string
+          exercicio?: string
+          id?: string
+          origem?: string | null
+          reps?: number | null
+          treino_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_treino_id_fkey1"
+            columns: ["treino_id"]
+            isOneToOne: false
+            referencedRelation: "treinos_realizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registros_carga_deprecated: {
         Row: {
           aluno_id: string
@@ -7526,6 +9347,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_athlete_legacy_map"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "registros_carga_aluno_id_fkey"
@@ -7668,6 +9496,13 @@ export type Database = {
             foreignKeyName: "saved_periodizations_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -7689,6 +9524,7 @@ export type Database = {
           created_at: string
           id: string
           reward_xp: number
+          rewarded: boolean | null
           shared_at: string
           user_id: string
         }
@@ -7700,6 +9536,7 @@ export type Database = {
           created_at?: string
           id?: string
           reward_xp?: number
+          rewarded?: boolean | null
           shared_at?: string
           user_id: string
         }
@@ -7711,6 +9548,7 @@ export type Database = {
           created_at?: string
           id?: string
           reward_xp?: number
+          rewarded?: boolean | null
           shared_at?: string
           user_id?: string
         }
@@ -7783,6 +9621,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "share_events_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -8079,6 +9924,13 @@ export type Database = {
             foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -8244,6 +10096,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: true
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -8417,6 +10276,13 @@ export type Database = {
             foreignKeyName: "source_sync_logs_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_sync_logs_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -8482,7 +10348,7 @@ export type Database = {
           details: Json | null
           id: string
           status: string | null
-          student_id: string
+          student_id: string | null
         }
         Insert: {
           activity_date?: string
@@ -8493,7 +10359,7 @@ export type Database = {
           details?: Json | null
           id?: string
           status?: string | null
-          student_id: string
+          student_id?: string | null
         }
         Update: {
           activity_date?: string
@@ -8504,7 +10370,7 @@ export type Database = {
           details?: Json | null
           id?: string
           status?: string | null
-          student_id?: string
+          student_id?: string | null
         }
         Relationships: [
           {
@@ -8581,6 +10447,13 @@ export type Database = {
             foreignKeyName: "student_activity_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_activity_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -8590,20 +10463,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_radar_5d"
             referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "student_activity_history_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_activity_history_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_legacy_map"
-            referencedColumns: ["student_id"]
           },
         ]
       }
@@ -8615,7 +10474,7 @@ export type Database = {
           created_at: string | null
           id: string
           questions_answers: Json
-          student_id: string
+          student_id: string | null
           title: string
         }
         Insert: {
@@ -8625,7 +10484,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           questions_answers?: Json
-          student_id: string
+          student_id?: string | null
           title: string
         }
         Update: {
@@ -8635,7 +10494,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           questions_answers?: Json
-          student_id?: string
+          student_id?: string | null
           title?: string
         }
         Relationships: [
@@ -8713,6 +10572,13 @@ export type Database = {
             foreignKeyName: "student_anamnesis_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_anamnesis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -8722,20 +10588,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_radar_5d"
             referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "student_anamnesis_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_anamnesis_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_legacy_map"
-            referencedColumns: ["student_id"]
           },
         ]
       }
@@ -8836,6 +10688,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: true
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -8972,6 +10831,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -9162,6 +11028,13 @@ export type Database = {
             foreignKeyName: "student_library_assignments_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -9192,7 +11065,7 @@ export type Database = {
           measurement_date: string
           observacoes: string | null
           peso_kg: number | null
-          student_id: string
+          student_id: string | null
         }
         Insert: {
           altura_cm?: number | null
@@ -9211,7 +11084,7 @@ export type Database = {
           measurement_date?: string
           observacoes?: string | null
           peso_kg?: number | null
-          student_id: string
+          student_id?: string | null
         }
         Update: {
           altura_cm?: number | null
@@ -9230,7 +11103,7 @@ export type Database = {
           measurement_date?: string
           observacoes?: string | null
           peso_kg?: number | null
-          student_id?: string
+          student_id?: string | null
         }
         Relationships: [
           {
@@ -9307,6 +11180,13 @@ export type Database = {
             foreignKeyName: "student_measurements_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_measurements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -9316,20 +11196,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_radar_5d"
             referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "student_measurements_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_measurements_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_legacy_map"
-            referencedColumns: ["student_id"]
           },
         ]
       }
@@ -9372,7 +11238,7 @@ export type Database = {
           photo_category: string | null
           photo_type: string
           photo_url: string
-          student_id: string
+          student_id: string | null
           taken_date: string | null
         }
         Insert: {
@@ -9383,7 +11249,7 @@ export type Database = {
           photo_category?: string | null
           photo_type: string
           photo_url: string
-          student_id: string
+          student_id?: string | null
           taken_date?: string | null
         }
         Update: {
@@ -9394,7 +11260,7 @@ export type Database = {
           photo_category?: string | null
           photo_type?: string
           photo_url?: string
-          student_id?: string
+          student_id?: string | null
           taken_date?: string | null
         }
         Relationships: [
@@ -9472,6 +11338,13 @@ export type Database = {
             foreignKeyName: "student_photos_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_photos_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -9481,20 +11354,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_radar_5d"
             referencedColumns: ["athlete_id"]
-          },
-          {
-            foreignKeyName: "student_photos_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_photos_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "vw_athlete_legacy_map"
-            referencedColumns: ["student_id"]
           },
         ]
       }
@@ -9667,6 +11526,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_training_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -10026,6 +11892,101 @@ export type Database = {
         }
         Relationships: []
       }
+      training_html_deliveries: {
+        Row: {
+          athlete_id: string
+          created_at: string | null
+          id: string
+          professor_id: string | null
+          rendered_html: string
+          storage_path: string | null
+          template_id: string | null
+          training_name: string | null
+          variaveis_usadas: Json | null
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string | null
+          id?: string
+          professor_id?: string | null
+          rendered_html: string
+          storage_path?: string | null
+          template_id?: string | null
+          training_name?: string | null
+          variaveis_usadas?: Json | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string | null
+          id?: string
+          professor_id?: string | null
+          rendered_html?: string
+          storage_path?: string | null
+          template_id?: string | null
+          training_name?: string | null
+          variaveis_usadas?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_html_deliveries_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "training_html_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_html_templates: {
+        Row: {
+          ativo: boolean | null
+          categoria: string
+          created_at: string | null
+          descricao: string | null
+          html_template: string
+          id: string
+          nome: string
+          origem_arquivo: string | null
+          preview_color: string | null
+          slug: string
+          tags: string[] | null
+          updated_at: string | null
+          variaveis_requeridas: Json | null
+          vezes_usado: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria: string
+          created_at?: string | null
+          descricao?: string | null
+          html_template: string
+          id?: string
+          nome: string
+          origem_arquivo?: string | null
+          preview_color?: string | null
+          slug: string
+          tags?: string[] | null
+          updated_at?: string | null
+          variaveis_requeridas?: Json | null
+          vezes_usado?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string
+          created_at?: string | null
+          descricao?: string | null
+          html_template?: string
+          id?: string
+          nome?: string
+          origem_arquivo?: string | null
+          preview_color?: string | null
+          slug?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          variaveis_requeridas?: Json | null
+          vezes_usado?: number | null
+        }
+        Relationships: []
+      }
       training_phases: {
         Row: {
           created_at: string | null
@@ -10181,6 +12142,7 @@ export type Database = {
       treinos_realizados: {
         Row: {
           aluno_id: string
+          athlete_id: string | null
           created_at: string
           data_treino: string
           duracao_min: number | null
@@ -10194,6 +12156,7 @@ export type Database = {
         }
         Insert: {
           aluno_id: string
+          athlete_id?: string | null
           created_at?: string
           data_treino?: string
           duracao_min?: number | null
@@ -10207,6 +12170,7 @@ export type Database = {
         }
         Update: {
           aluno_id?: string
+          athlete_id?: string | null
           created_at?: string
           data_treino?: string
           duracao_min?: number | null
@@ -10237,8 +12201,106 @@ export type Database = {
             foreignKeyName: "treinos_realizados_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
           },
         ]
       }
@@ -10393,6 +12455,13 @@ export type Database = {
             foreignKeyName: "user_achievements_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_achievements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -10535,6 +12604,13 @@ export type Database = {
             foreignKeyName: "user_credits_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -10665,6 +12741,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -10904,6 +12987,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -11152,6 +13242,7 @@ export type Database = {
       user_stats_agg: {
         Row: {
           aluno_id: string
+          athlete_id: string | null
           kg_total_mes: number
           prs_count: number
           streak_dias: number
@@ -11162,6 +13253,7 @@ export type Database = {
         }
         Insert: {
           aluno_id: string
+          athlete_id?: string | null
           kg_total_mes?: number
           prs_count?: number
           streak_dias?: number
@@ -11172,6 +13264,7 @@ export type Database = {
         }
         Update: {
           aluno_id?: string
+          athlete_id?: string | null
           kg_total_mes?: number
           prs_count?: number
           streak_dias?: number
@@ -11199,8 +13292,156 @@ export type Database = {
             foreignKeyName: "user_stats_agg_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: true
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
+      user_subscriptions: {
+        Row: {
+          activated_at: string
+          amount: number | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          metadata: Json
+          plan_id: string | null
+          source: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          amount?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          plan_id?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          amount?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          plan_id?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -11400,6 +13641,13 @@ export type Database = {
             foreignKeyName: "vacation_requests_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -11503,6 +13751,7 @@ export type Database = {
       }
       workout_executions: {
         Row: {
+          assignment_id: string | null
           athlete_id: string
           avg_rpe: number | null
           completed_at: string | null
@@ -11514,6 +13763,7 @@ export type Database = {
           periodization_id: string | null
           phase_name: string | null
           rating: number | null
+          rpe: number | null
           started_at: string | null
           status: string
           total_volume_kg: number | null
@@ -11521,6 +13771,7 @@ export type Database = {
           workout_date: string
         }
         Insert: {
+          assignment_id?: string | null
           athlete_id: string
           avg_rpe?: number | null
           completed_at?: string | null
@@ -11532,6 +13783,7 @@ export type Database = {
           periodization_id?: string | null
           phase_name?: string | null
           rating?: number | null
+          rpe?: number | null
           started_at?: string | null
           status?: string
           total_volume_kg?: number | null
@@ -11539,6 +13791,7 @@ export type Database = {
           workout_date?: string
         }
         Update: {
+          assignment_id?: string | null
           athlete_id?: string
           avg_rpe?: number | null
           completed_at?: string | null
@@ -11550,6 +13803,7 @@ export type Database = {
           periodization_id?: string | null
           phase_name?: string | null
           rating?: number | null
+          rpe?: number | null
           started_at?: string | null
           status?: string
           total_volume_kg?: number | null
@@ -11557,6 +13811,13 @@ export type Database = {
           workout_date?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_executions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "student_training_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -11625,6 +13886,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -11769,7 +14037,7 @@ export type Database = {
             foreignKeyName: "workout_exercises_exercise_id_fkey"
             columns: ["exercise_id"]
             isOneToOne: false
-            referencedRelation: "exercise_library"
+            referencedRelation: "exercises"
             referencedColumns: ["id"]
           },
         ]
@@ -12066,6 +14334,13 @@ export type Database = {
             foreignKeyName: "workout_progress_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_progress_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -12137,6 +14412,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12460,6 +14742,81 @@ export type Database = {
         }
         Relationships: []
       }
+      periodization_models_valid: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          detailed_macrocycles: Json | null
+          detailed_mesocycles: Json | null
+          detailed_microcycle: Json | null
+          duration: string | null
+          goal: string | null
+          graph_data: Json | null
+          id: string | null
+          legal_notice: string | null
+          load_progression_rules: Json | null
+          macrocycle: Json | null
+          mesocycle: Json | null
+          microcycle: Json | null
+          nivel: string | null
+          recommended_for: Json | null
+          scientific_rationale: Json | null
+          scientific_references: Json | null
+          title: string | null
+          updated_at: string | null
+          weekly_split: Json | null
+          workout_generation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          detailed_macrocycles?: Json | null
+          detailed_mesocycles?: Json | null
+          detailed_microcycle?: Json | null
+          duration?: string | null
+          goal?: string | null
+          graph_data?: Json | null
+          id?: string | null
+          legal_notice?: string | null
+          load_progression_rules?: Json | null
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
+          nivel?: string | null
+          recommended_for?: Json | null
+          scientific_rationale?: Json | null
+          scientific_references?: Json | null
+          title?: string | null
+          updated_at?: string | null
+          weekly_split?: Json | null
+          workout_generation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          detailed_macrocycles?: Json | null
+          detailed_mesocycles?: Json | null
+          detailed_microcycle?: Json | null
+          duration?: string | null
+          goal?: string | null
+          graph_data?: Json | null
+          id?: string | null
+          legal_notice?: string | null
+          load_progression_rules?: Json | null
+          macrocycle?: Json | null
+          mesocycle?: Json | null
+          microcycle?: Json | null
+          nivel?: string | null
+          recommended_for?: Json | null
+          scientific_rationale?: Json | null
+          scientific_references?: Json | null
+          title?: string | null
+          updated_at?: string | null
+          weekly_split?: Json | null
+          workout_generation_rules?: Json | null
+        }
+        Relationships: []
+      }
       v_assessment_canonical: {
         Row: {
           altura: number | null
@@ -12686,6 +15043,13 @@ export type Database = {
             foreignKeyName: "athlete_periodizations_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -12697,6 +15061,25 @@ export type Database = {
             referencedColumns: ["athlete_id"]
           },
         ]
+      }
+      v_athlete_workout_plans_canonical: {
+        Row: {
+          athlete_id: string | null
+          created_at: string | null
+          description: string | null
+          duration_weeks: number | null
+          end_date: string | null
+          goal: string | null
+          id: string | null
+          plan_data: Json | null
+          professor_id: string | null
+          source_table: string | null
+          start_date: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
       }
       v_athletes: {
         Row: {
@@ -13140,6 +15523,13 @@ export type Database = {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -13151,6 +15541,20 @@ export type Database = {
             referencedColumns: ["athlete_id"]
           },
         ]
+      }
+      v_workout_templates_canonical: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_weeks: number | null
+          frequency_per_week: number | null
+          goal: string | null
+          id: string | null
+          source_table: string | null
+          template_data: Json | null
+          title: string | null
+        }
+        Relationships: []
       }
       v_workouts_canonical: {
         Row: {
@@ -13273,6 +15677,13 @@ export type Database = {
             foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_periodizacao_ativa_aluno"
             referencedColumns: ["aluno_id"]
           },
@@ -13344,6 +15755,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -13600,6 +16018,13 @@ export type Database = {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -13666,6 +16091,157 @@ export type Database = {
           treinos_semana?: never
         }
         Relationships: []
+      }
+      vw_leaderboard_semanal: {
+        Row: {
+          athlete_id: string | null
+          avatar_url: string | null
+          kg_total_mes: number | null
+          level: number | null
+          name: string | null
+          rank_frequencia: number | null
+          rank_streak: number | null
+          rank_volume: number | null
+          streak_dias: number | null
+          treinos_mes: number | null
+          xp_total: number | null
+        }
+        Relationships: []
+      }
+      vw_meus_alunos: {
+        Row: {
+          altura_cm: number | null
+          ambiente_treino: string | null
+          condicionamento_cardio: string | null
+          data_cadastro: string | null
+          data_fim_plano: string | null
+          data_inicio_plano: string | null
+          data_nascimento: string | null
+          email: string | null
+          experiencia_pesos_livres: string | null
+          foco_muscular: string | null
+          foto_perfil_url: string | null
+          frequencia_semanal: number | null
+          genero: string | null
+          historico_lesoes: string | null
+          historico_medico: string | null
+          horario_preferido: string | null
+          id: string | null
+          id_plano_ativo: string | null
+          meta_tempo_meses: number | null
+          nivel_experiencia: string | null
+          nome: string | null
+          nome_completo: string | null
+          objetivo: string | null
+          observacoes: string | null
+          peso_atual: number | null
+          preferencia_cardio: string | null
+          preferencia_equipamento: string | null
+          preferencia_intensidade: string | null
+          professor_id: string | null
+          restricoes_alimentares: string | null
+          restricoes_medicas: string | null
+          status: Database["public"]["Enums"]["aluno_status"] | null
+          status_plano: string | null
+          telefone: string | null
+          tempo_disponivel_min: number | null
+          treina_sozinho: boolean | null
+          ultima_atualizacao: string | null
+        }
+        Insert: {
+          altura_cm?: number | null
+          ambiente_treino?: string | null
+          condicionamento_cardio?: string | null
+          data_cadastro?: string | null
+          data_fim_plano?: string | null
+          data_inicio_plano?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          experiencia_pesos_livres?: string | null
+          foco_muscular?: string | null
+          foto_perfil_url?: string | null
+          frequencia_semanal?: number | null
+          genero?: string | null
+          historico_lesoes?: string | null
+          historico_medico?: string | null
+          horario_preferido?: string | null
+          id?: string | null
+          id_plano_ativo?: string | null
+          meta_tempo_meses?: number | null
+          nivel_experiencia?: string | null
+          nome?: string | null
+          nome_completo?: string | null
+          objetivo?: string | null
+          observacoes?: string | null
+          peso_atual?: number | null
+          preferencia_cardio?: string | null
+          preferencia_equipamento?: string | null
+          preferencia_intensidade?: string | null
+          professor_id?: string | null
+          restricoes_alimentares?: string | null
+          restricoes_medicas?: string | null
+          status?: Database["public"]["Enums"]["aluno_status"] | null
+          status_plano?: string | null
+          telefone?: string | null
+          tempo_disponivel_min?: number | null
+          treina_sozinho?: boolean | null
+          ultima_atualizacao?: string | null
+        }
+        Update: {
+          altura_cm?: number | null
+          ambiente_treino?: string | null
+          condicionamento_cardio?: string | null
+          data_cadastro?: string | null
+          data_fim_plano?: string | null
+          data_inicio_plano?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          experiencia_pesos_livres?: string | null
+          foco_muscular?: string | null
+          foto_perfil_url?: string | null
+          frequencia_semanal?: number | null
+          genero?: string | null
+          historico_lesoes?: string | null
+          historico_medico?: string | null
+          horario_preferido?: string | null
+          id?: string | null
+          id_plano_ativo?: string | null
+          meta_tempo_meses?: number | null
+          nivel_experiencia?: string | null
+          nome?: string | null
+          nome_completo?: string | null
+          objetivo?: string | null
+          observacoes?: string | null
+          peso_atual?: number | null
+          preferencia_cardio?: string | null
+          preferencia_equipamento?: string | null
+          preferencia_intensidade?: string | null
+          professor_id?: string | null
+          restricoes_alimentares?: string | null
+          restricoes_medicas?: string | null
+          status?: Database["public"]["Enums"]["aluno_status"] | null
+          status_plano?: string | null
+          telefone?: string | null
+          tempo_disponivel_min?: number | null
+          treina_sozinho?: boolean | null
+          ultima_atualizacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alunos_id_plano_ativo_fkey"
+            columns: ["id_plano_ativo"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id_plano"]
+          },
+          {
+            foreignKeyName: "alunos_id_plano_ativo_fkey"
+            columns: ["id_plano_ativo"]
+            isOneToOne: false
+            referencedRelation: "v_plans_canonical"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vw_performance_athlete: {
         Row: {
@@ -13825,6 +16401,13 @@ export type Database = {
             foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -13942,6 +16525,13 @@ export type Database = {
             foreignKeyName: "fitpro_student_map_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -14051,6 +16641,13 @@ export type Database = {
             foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_performance_athlete"
             referencedColumns: ["athlete_id"]
           },
@@ -14097,6 +16694,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_athlete_legacy_map"
             referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_meus_alunos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_progress_aluno_id_fkey"
@@ -14173,6 +16777,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -14297,6 +16908,15 @@ export type Database = {
         }
         Returns: string
       }
+      deprecated_prescrever_treino_rapido: {
+        Args: {
+          p_athlete_id: string
+          p_equipamento?: string
+          p_objetivo?: string
+          p_tempo_min?: number
+        }
+        Returns: Json
+      }
       ensure_current_user_profile: {
         Args: never
         Returns: {
@@ -14308,36 +16928,100 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: string
       }
+      find_exercises_for_groups:
+        | { Args: { p_groups: Json; p_limit?: number }; Returns: Json }
+        | {
+            Args: { p_groups: Json; p_limit?: number; p_seed?: string }
+            Returns: Json
+          }
       fn_activate_prime_reward: {
         Args: { p_athlete_id: string }
+        Returns: Json
+      }
+      fn_add_class_credits: {
+        Args: { p_amount: number; p_reason?: string; p_student_id: string }
         Returns: Json
       }
       fn_add_credits: {
         Args: { p_amount: number; p_athlete_id: string; p_reason?: string }
         Returns: Json
       }
+      fn_add_hydration: {
+        Args: { p_amount_ml?: number; p_athlete_id: string }
+        Returns: number
+      }
+      fn_advance_wave: {
+        Args: { p_periodization_id: string }
+        Returns: undefined
+      }
       fn_ajustar_treino_dia: {
         Args: { p_athlete_id: string; p_changes: Json; p_data: string }
         Returns: Json
       }
-      fn_award_xp:
-        | {
-            Args: { p_amount: number; p_athlete_id: string; p_reason: string }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_athlete_id: string
-              p_metadata?: Json
-              p_source?: string
-            }
-            Returns: {
-              leveled_up: boolean
-              new_level: number
-              new_total_xp: number
-            }[]
-          }
+      fn_ajustar_treino_real: {
+        Args: { p_periodization_id: string; p_student_id: string }
+        Returns: Json
+      }
+      fn_aplicar_protocolo_9x9x9: {
+        Args: { p_athlete_id: string; p_data?: string; p_protocol_id: string }
+        Returns: Json
+      }
+      fn_apply_template_to_athlete: {
+        Args: {
+          p_athlete_id: string
+          p_end_date?: string
+          p_start_date?: string
+          p_template_id: string
+          p_variables?: Json
+        }
+        Returns: string
+      }
+      fn_assert_is_staff: { Args: never; Returns: boolean }
+      fn_atualizar_perfil_completo: {
+        Args: {
+          p_age?: number
+          p_altura_cm?: number
+          p_athlete_id: string
+          p_avatar_url?: string
+          p_name?: string
+          p_peso_kg?: number
+        }
+        Returns: Json
+      }
+      fn_award_workout_xp: {
+        Args: { p_amount?: number; p_execution_id: string }
+        Returns: {
+          awarded: boolean
+          leveled_up: boolean
+          new_level: number
+          new_total_xp: number
+          reason: string
+        }[]
+      }
+      fn_award_xp: {
+        Args: {
+          p_amount: number
+          p_athlete_id: string
+          p_metadata?: Json
+          p_source?: string
+        }
+        Returns: {
+          leveled_up: boolean
+          new_level: number
+          new_total_xp: number
+        }[]
+      }
+      fn_calcular_score_avaliacao: {
+        Args: { p_avaliacao_id: string }
+        Returns: {
+          score_cardio: number
+          score_core: number
+          score_forca: number
+          score_global: number
+          score_mobilidade: number
+          score_resistencia: number
+        }[]
+      }
       fn_check_onboarding_progress: {
         Args: { p_athlete_id: string }
         Returns: Json
@@ -14350,28 +17034,234 @@ export type Database = {
           weekly_count: number
         }[]
       }
+      fn_complete_workout_execution: {
+        Args: { p_duration_seconds: number; p_execution_id: string }
+        Returns: Json
+      }
       fn_compute_user_thresholds: { Args: { p_user_id: string }; Returns: Json }
+      fn_consume_class_credit: {
+        Args: { p_amount?: number; p_reason?: string; p_student_id: string }
+        Returns: Json
+      }
       fn_consume_credit: {
         Args: { p_amount?: number; p_athlete_id: string; p_reason?: string }
         Returns: Json
       }
+      fn_consume_ron_credit: {
+        Args: { p_athlete_id: string }
+        Returns: {
+          allowed: boolean
+          credits_remaining: number
+          credits_total: number
+          reset_at: string
+        }[]
+      }
+      fn_core_os_check_inactive_athletes: { Args: never; Returns: undefined }
+      fn_current_athlete_id: { Args: never; Returns: string }
+      fn_dispensar_lembrete_perfil: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
       fn_forcar_catalogar_planilhas_resiliente: { Args: never; Returns: Json }
+      fn_generate_plan_from_bank_model: {
+        Args: { p_athlete_id: string; p_coach_id?: string; p_model_id: string }
+        Returns: string
+      }
+      fn_generate_waves_from_periodization: {
+        Args: { p_periodization_id: string }
+        Returns: undefined
+      }
+      fn_gerar_treino_semana: {
+        Args: {
+          p_athlete_id: string
+          p_categoria?: string
+          p_dias_semana?: number
+        }
+        Returns: Json
+      }
+      fn_get_access_level: { Args: { p_athlete_id: string }; Returns: Json }
       fn_get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_get_historico_performance: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
+      fn_get_hub_snapshot: { Args: never; Returns: Json }
+      fn_get_hydration_today: {
+        Args: { p_athlete_id: string }
+        Returns: number
+      }
+      fn_get_planejamento_retencao: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
+      fn_get_planning_screen: { Args: { p_student_id: string }; Returns: Json }
+      fn_get_professor_panel: {
+        Args: { p_professor_id?: string }
+        Returns: Json
+      }
+      fn_get_protocolo_arquivos: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
+      fn_get_recordes: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_get_treino_dia: {
+        Args: { p_athlete_id: string; p_data?: string }
+        Returns: Json
+      }
+      fn_get_user_id_for_athlete: {
+        Args: { p_athlete_id: string }
+        Returns: string
+      }
       fn_get_week_workouts: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_grupo_muscular_do_dia: {
+        Args: { p_aluno_id: string; p_data: string; p_frequencia?: number }
+        Returns: string[]
+      }
+      fn_is_staff: { Args: { p_user_id: string }; Returns: boolean }
+      fn_montar_bloco_exercicios: {
+        Args: { p_descricao: string; p_qtd_alvo?: number }
+        Returns: Json
+      }
+      fn_montar_bloco9_exercicios:
+        | {
+            Args: {
+              p_descricao: string
+              p_grupos_musculares: string[]
+              p_qtd_alvo: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_cadence?: string
+              p_descricao: string
+              p_grupos_musculares: string[]
+              p_qtd_alvo: number
+              p_reps?: string
+              p_rest?: string
+              p_rpe?: string
+            }
+            Returns: Json
+          }
       fn_processar_e_catalogar_planilhas: { Args: never; Returns: Json }
+      fn_registrar_recorde: {
+        Args: {
+          p_athlete_id: string
+          p_categoria: string
+          p_teste: string
+          p_unidade: string
+          p_valor: number
+        }
+        Returns: Json
+      }
       fn_resolve_athlete_internal: {
         Args: { p_user_email: string; p_user_id: string }
         Returns: string
       }
-      fn_treino_rapido: {
+      fn_review_ninefit_template: {
+        Args: { p_status: string; p_template_id: string }
+        Returns: boolean
+      }
+      fn_reward_share: {
+        Args: {
+          p_amount?: number
+          p_athlete_id: string
+          p_content_id?: string
+          p_content_type: string
+        }
+        Returns: {
+          awarded: boolean
+          new_level: number
+          new_total_xp: number
+          reason: string
+        }[]
+      }
+      fn_salvar_avaliacao_guiada: {
         Args: {
           p_athlete_id: string
-          p_equipamento?: string
-          p_objetivo?: string
-          p_tempo_min?: number
+          p_data_avaliacao?: string
+          p_gordura_corporal?: number
+          p_massa_muscular?: number
+          p_peso?: number
+          p_rm_agachamento?: number
+          p_rm_puxada?: number
+          p_rm_supino?: number
         }
         Returns: Json
       }
+      fn_salvar_checkin_diario: {
+        Args: {
+          p_alimentacao: number
+          p_athlete_id: string
+          p_dor: number
+          p_dor_local?: string
+          p_energia: number
+          p_sono: number
+        }
+        Returns: Json
+      }
+      fn_save_workout_set: {
+        Args: {
+          p_actual_reps?: number
+          p_actual_weight?: number
+          p_completed: boolean
+          p_execution_id: string
+          p_exercise_name: string
+          p_exercise_order: number
+          p_planned_reps?: string
+          p_rest_seconds?: number
+          p_set_number: number
+          p_tempo?: string
+        }
+        Returns: string
+      }
+      fn_search_exercises_by_muscle_term: {
+        Args: { p_limit?: number; p_term: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      fn_send_event_to_supra: {
+        Args: {
+          p_event_type: string
+          p_importance?: number
+          p_payload?: Json
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      fn_start_workout_execution: {
+        Args: { p_assignment_id: string }
+        Returns: string
+      }
+      fn_sugerir_protocolo_por_perfil: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
+      fn_sync_macro_rules_from_periodization: {
+        Args: { p_athlete_id: string }
+        Returns: string
+      }
+      fn_treino_rapido:
+        | {
+            Args: {
+              p_athlete_id: string
+              p_equipamento?: string
+              p_objetivo?: string
+              p_tempo_min?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_athlete_id: string
+              p_local?: string
+              p_objetivo?: string
+              p_tempo_min: number
+            }
+            Returns: Json
+          }
       generate_invitation_token: { Args: never; Returns: string }
       gerar_blocos_protocolo_dia: {
         Args: { p_athlete_id: string; p_date?: string }
@@ -14419,6 +17309,21 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_athlete_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          athlete_id: string
+          bio: string
+          current_phase: string
+          current_week_index: number
+          is_public_profile: boolean
+          level: number
+          name: string
+          plan_id: string
+          plan_name: string
+          xp_total: number
+        }[]
+      }
       get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
       get_forca_progressao: {
         Args: { p_athlete_id: string; p_exercicio?: string }
@@ -14432,6 +17337,10 @@ export type Database = {
       get_healthflix_feed: { Args: { p_athlete_id: string }; Returns: Json }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       get_week_workouts: { Args: { p_athlete_id: string }; Returns: Json }
+      get_workout_of_day: {
+        Args: { p_athlete_id: string; p_date?: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -14480,12 +17389,13 @@ export type Database = {
           title: string
         }[]
       }
+      muscle_group_synonyms: { Args: { p_group: string }; Returns: string[] }
       notificar_falta_periodizacao: {
         Args: { p_aluno_id: string }
         Returns: string
       }
       prescrever_treino: {
-        Args: { p_aluno_id?: string; p_data?: string }
+        Args: { p_aluno_id: string; p_data: string }
         Returns: Json
       }
       prescrever_treino_html: {
@@ -14494,15 +17404,6 @@ export type Database = {
       }
       prescrever_treino_partner: {
         Args: { p_aluno_id: string; p_data?: string }
-        Returns: Json
-      }
-      prescrever_treino_rapido: {
-        Args: {
-          p_athlete_id: string
-          p_equipamento?: string
-          p_objetivo?: string
-          p_tempo_min?: number
-        }
         Returns: Json
       }
       recalc_user_stats: { Args: { p_aluno_id: string }; Returns: undefined }
@@ -14544,7 +17445,7 @@ export type Database = {
         }[]
       }
       sync_fitpro_planejamento: {
-        Args: { p_athlete_id: string }
+        Args: { p_athlete_id: string; p_origin?: string }
         Returns: string
       }
       tem_periodizacao_ativa: { Args: { p_aluno_id: string }; Returns: boolean }
@@ -14635,12 +17536,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -14664,11 +17565,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -14689,11 +17590,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -14714,11 +17615,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -14731,11 +17632,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
