@@ -284,8 +284,8 @@ const App = () => (
             <Route path="/9fit/kitchen" element={<NineFitKitchen />} />
             <Route path="/9fit/recovery" element={<NineFitRecovery />} />
             <Route path="/9fit/protocolo" element={<NineFitLayout><NineFitProtocolo /></NineFitLayout>} />
-            <Route path="/9fit/planos" element={<NineFitLayout><NineFitPlans /></NineFitLayout>} />
-            <Route path="/9fit/prime" element={<NineFitLayout><NineFitPrime /></NineFitLayout>} />
+            <Route path="/9fit/planos" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
+            <Route path="/9fit/prime" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/oferta/:offerId" element={<NineFitOferta />} />
             <Route path="/9fit/checkout/:offerId" element={<NineFitCheckout />} />
             <Route path="/9fit/checkout/success" element={<NineFitCheckoutSuccess />} />
