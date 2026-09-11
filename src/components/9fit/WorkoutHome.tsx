@@ -44,7 +44,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
   return (
     <div className="space-y-6">
       {/* Protocol Header */}
-      <div className="bg-gradient-to-br from-card to-muted border border-border rounded-sm p-5">
+      <div className="journey-card p-5">
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-[10px] text-primary uppercase tracking-widest font-bold mb-1">Meu Protocolo</p>
@@ -81,7 +81,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
       </div>
 
       {/* Support Level */}
-      <div className="bg-card border border-border rounded-sm p-4">
+      <div className="neural-node p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-primary" />
           <p className="text-xs font-bold uppercase tracking-wider text-foreground">Nível de Suporte</p>
@@ -121,7 +121,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
                 <button
                   key={training.id}
                   onClick={() => onSelectWorkout(training)}
-                  className="w-full bg-card border border-border rounded-sm p-4 text-left hover:border-primary/50 transition-all group"
+                  className="w-full neural-node p-4 text-left hover:border-primary/50 transition-all group"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-primary/10 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
