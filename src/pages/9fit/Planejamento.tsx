@@ -156,7 +156,8 @@ export default function NineFitPlanejamento() {
         </div>
         <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>{format(new Date(), "MMMM yyyy", { locale: ptBR })}</span>
-          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Sem plano sincronizado"}</span>\n          {currentPhase && <span>Fase: {currentPhase}</span>}
+          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Sem plano sincronizado"}</span>
+          {currentPhase && <span>Fase: {currentPhase}</span>}
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">
           {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map((d) => (
