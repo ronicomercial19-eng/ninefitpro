@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 type State = "DIAGNOSTIC" | "READY" | "UPGRADING";
 
-const PRIME_PASS_CHECKOUT_URL = import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined;
+const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || "https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03";
 
 export default function NineFitPrimePass() {
   const [state, setState] = useState<State>("DIAGNOSTIC");
