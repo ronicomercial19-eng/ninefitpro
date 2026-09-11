@@ -217,8 +217,8 @@ export default function NineFitHub() {
             <Crown className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <p className="text-label">9PASS</p>
-            <p className="text-sm font-semibold">Acesso ao Hub Lounge Premium</p>
+            <p className="text-label">PRIME PASS</p>
+            <p className="text-sm font-semibold">Plano, pagamento e Hub Lounge Premium</p>
           </div>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
