@@ -303,10 +303,6 @@ export default function NineFitDieta() {
           </div>
         </div>
       ) : (
-        <div className="px-4">
-          <EmptyDieta />
-        </div>
-      ) : (
         <div className="px-4 space-y-6">
           {/* Assigned Diets Section */}
           <div>
