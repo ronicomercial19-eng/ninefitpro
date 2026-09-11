@@ -72,30 +72,9 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
     return () => { supabase.removeChannel(ch); };
   }, [athleteId, loadWeek]);
 
-  const completeDay = async (d: DayPlan) => {
-    if (!athleteId) return;
-    setCompleting(d.date);
-    try {
-      await supabase.from("workout_executions" as any).insert({
-        athlete_id: athleteId,
-        workout_date: d.date,
-        phase_name: phase || "week",
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      } as any);
-      await supabase.rpc("fn_award_xp" as any, {
-        p_athlete_id: athleteId,
-        p_amount: 100,
-        p_source: "workout_completed",
-        p_metadata: { date: d.date, phase } as any,
-      });
-      toast.success("Treino concluído · +100 XP");
-      await refreshScores();
-      await loadWeek();
-    } catch (e: any) {
-      console.error("[WeeklyTrainingView] complete", e);
-      toast.error("Falha ao concluir treino");
-    } finally { setCompleting(null); }
+  const completeDay = (d: DayPlan) => {
+    // A conclusão passa pelo player para garantir séries persistidas e XP validado.
+    onExecuteToday(d);
   };
 
   // FIX (player guiado): mapa de nomes técnicos de status para rótulo legível.
@@ -161,7 +140,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                     <button onClick={() => completeDay(d)} disabled={completing === d.date}
                       className="rounded-full border border-primary/50 text-primary px-4 py-2 text-xs font-bold flex items-center gap-1 disabled:opacity-40">
                       {completing === d.date ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                      Concluir
+                      Abrir execução
                     </button>
                   )}
                 </div>
