@@ -8,6 +8,7 @@ interface PhysioModule {
   id: string; key: string; name: string; description: string;
   hero_image: string | null; cta_label: string; cta_route: string | null;
   category: string; display_order: number; connector_key: string | null;
+  iframe_url?: string | null;
 }
 
 interface Props {
@@ -35,12 +36,13 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
       setItems(list);
       const keys = list.map((m) => m.connector_key).filter(Boolean);
       const { data: conns } = keys.length
-        ? await supabase.from("api_connectors").select("key, status").in("key", keys)
+        ? await supabase.from("api_connectors").select("key, status, iframe_url").in("key", keys)
         : { data: [] as any[] };
+      const connectorByKey = new Map((conns || []).map((c: any) => [c.key, c]));
       const map: Record<string, "online" | "waiting" | "not_configured"> = {};
       list.forEach((m) => {
           if (m.connector_key) {
-            const c = (conns || []).find((x: any) => x.key === m.connector_key);
+            const c = connectorByKey.get(m.connector_key);
             map[m.key] = !/^https?:\/\//i.test(m.cta_route || "") || c?.status === "active" ? "online" : "waiting";
           } else map[m.key] = "not_configured";
         });
