@@ -24,8 +24,9 @@ export default function NineFitCompartilhar() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const { data: athlete } = await supabase.from("athletes" as any).select("id,name,sync_score").eq("user_id", user.id).maybeSingle();
-      if (!athlete) { setLoading(false); return; }
+      const { data: athleteData } = await supabase.from("athletes" as any).select("id,name,sync_score").eq("user_id", user.id).maybeSingle();
+      const athlete = athleteData as any;
+      if (!athlete?.id) { setLoading(false); return; }
       const [{ data: executions }, { data: records }] = await Promise.all([
         supabase.from("workout_executions" as any).select("id").eq("athlete_id", athlete.id).eq("status", "completed"),
         supabase.from("personal_records" as any).select("exercicio,valor,unidade").eq("athlete_id", athlete.id).order("data_pr", { ascending: false }).limit(1),
