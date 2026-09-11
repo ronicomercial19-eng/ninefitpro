@@ -20,6 +20,8 @@ export default function NineFitPlanejamento() {
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
   const [waves, setWaves] = useState<RemoteWave[]>(FALLBACK_CYCLES);
   const [planName, setPlanName] = useState<string>("Periodização Científica");
+  const [periodizationId, setPeriodizationId] = useState<string | null>(null);
+  const [currentPhase, setCurrentPhase] = useState<string | null>(null);
   const [hasRemotePlan, setHasRemotePlan] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const { mark } = useActivationProgress();
@@ -29,7 +31,7 @@ export default function NineFitPlanejamento() {
     // Source of truth: vw_athlete_periodizacao_ativa (unifica athlete_periodizations + periodization_plans_remote)
     const { data } = await supabase
       .from("vw_athlete_periodizacao_ativa" as any)
-      .select("plan_name, waves, macrocycle, mesocycle, source")
+      .select("plan_name, waves, macrocycle, mesocycle, source, periodization_id, current_phase")
       .eq("athlete_id", athleteId)
       .maybeSingle();
 
@@ -63,6 +65,8 @@ export default function NineFitPlanejamento() {
       }
       setWaves(wavesFound);
       setPlanName(row.plan_name || "Periodização SmartPeriodizer");
+      setPeriodizationId(row.periodization_id || null);
+      setCurrentPhase(row.current_phase || null);
       setHasRemotePlan(true);
     } else {
       setHasRemotePlan(false);
@@ -152,7 +156,7 @@ export default function NineFitPlanejamento() {
         </div>
         <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>{format(new Date(), "MMMM yyyy", { locale: ptBR })}</span>
-          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Plano local (não sincronizado)"}</span>
+          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Sem plano sincronizado"}</span>\n          {currentPhase && <span>Fase: {currentPhase}</span>}
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">
           {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map((d) => (
