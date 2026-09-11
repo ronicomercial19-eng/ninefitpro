@@ -29,8 +29,8 @@ export default function NineFitPrimePass() {
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // PRIMEPASS</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">ELITE PANEL</h1>
+        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // PRIME PASS</p>
+        <h1 className="text-massive text-4xl text-foreground mt-1">PRIME PASS</h1>
       </div>
 
       {state === "DIAGNOSTIC" && (
@@ -52,7 +52,7 @@ export default function NineFitPrimePass() {
         <>
           <div className="px-4 mb-4 grid grid-cols-2 gap-3">
             <Pillar icon={Dna} label="Assinatura" tag={snapshot?.entitlement === "active" ? "Ativa" : snapshot?.entitlement === "trial" ? "Em teste" : "Indisponível"} />
-            <Pillar icon={Zap} label="Performance" tag={snapshot?.syncScore == null ? "Indisponível" : `Sync ${snapshot.syncScore}%`} />
+            <Pillar icon={Zap} label="Performance" tag={snapshot?.syncScore == null ? "Sem dados" : `Sync ${snapshot.syncScore}%`} />
             <Pillar icon={Brain} label="Recuperação" tag={snapshot?.recovery == null ? "Indisponível" : `${snapshot.recovery}%`} />
             <Pillar icon={Activity} label="Protocolo" tag={snapshot?.activeProtocol || "Indisponível"} />
           </div>
@@ -69,8 +69,8 @@ export default function NineFitPrimePass() {
               <div className="flex items-center gap-3">
                 <Crown className="w-5 h-5 text-primary" />
                 <div className="text-left">
-                  <p className="text-editorial text-base text-foreground">Assinar Elite (R$ 49/mês)</p>
-                  <p className="text-[10px] font-data text-muted-foreground">{PRIME_PASS_CHECKOUT_URL ? "Liberação após confirmação segura" : "Checkout em configuração"}</p>
+                  <p className="text-editorial text-base text-foreground">Ativar Prime Pass</p>
+                  <p className="text-[10px] font-data text-muted-foreground">{PRIME_PASS_CHECKOUT_URL ? "Liberação após confirmação segura" : "Acesso gerenciado pelo Prime Pass"}</p>
                 </div>
               </div>
               <ShieldCheck className="w-5 h-5 text-primary" />
