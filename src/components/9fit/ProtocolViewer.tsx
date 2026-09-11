@@ -37,6 +37,12 @@ const buildIframeSrc = (html: string) => {
 
 const isImgUrl = (u?: string | null) => !!u && /\.(jpg|jpeg|png|webp|gif|avif)(\?|$)/i.test(u);
 
+const moduleLabel = (module: any) => {
+  if (typeof module === "string") return module;
+  if (!module || typeof module !== "object") return "Módulo do protocolo";
+  return module.title || module.name || module.label || "Módulo do protocolo";
+};
+
 export function ProtocolViewer({ assignment, onBack, onComplete }: {
   assignment: Assignment;
   onBack: () => void;
@@ -214,7 +220,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
                 <li key={i} className="flex gap-3 items-start text-sm">
                   <span className="text-primary font-bold w-6 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                   <span className="flex-1">
-                    {typeof m === 'string' ? m : (m?.title || m?.name || m?.label || JSON.stringify(m))}
+                    {typeof m === 'string' ? m : moduleLabel(m)}
                     {m?.duration && <span className="text-muted-foreground text-xs ml-2">{m.duration}</span>}
                   </span>
                 </li>
