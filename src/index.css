@@ -21,7 +21,7 @@
     --popover: 0 0% 6%;
     --popover-foreground: 40 13% 93%;
 
-    --primary: 18 81% 51%;               /* #E8571A */
+    --primary: 34 28% 58%;                /* bronze discreto */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 11%;
@@ -31,7 +31,7 @@
     --muted-foreground: 0 0% 60%;
     --subtle: 0 0% 38%;
 
-    --accent: 18 81% 51%;
+    --accent: 34 28% 58%;
     --accent-foreground: 0 0% 100%;
 
     --neural: 213 90% 65%;
@@ -41,7 +41,7 @@
 
     --border: 0 0% 100%;
     --input: 0 0% 11%;
-    --ring: 18 81% 51%;
+    --ring: 34 28% 58%;
 
     --radius: 0.875rem;
 
@@ -63,7 +63,7 @@
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Bloco 10 — Design tokens canônicos 9FIT (semantic) */
-    --neon-orange: 18 87% 52%;
+    --neon-orange: 34 28% 58%;
     --neon-green: 153 95% 42%;
     --neon-cyan: 187 92% 50%;
     --surface-1: 240 4% 9%;     /* card base */
@@ -77,7 +77,7 @@
     /* Premium tokens — glass + halo + elevated shadow */
     --glass: 0 0% 100% / 0.04;
     --glass-border: 0 0% 100% / 0.08;
-    --halo-primary: radial-gradient(circle, hsl(18 87% 52% / 0.22) 0%, transparent 70%);
+    --halo-primary: radial-gradient(circle, hsl(34 28% 58% / 0.12) 0%, transparent 70%);
     --halo-neural: radial-gradient(circle, hsl(213 90% 65% / 0.18) 0%, transparent 70%);
     --shadow-elevated: 0 24px 48px -16px hsl(0 0% 0% / 0.6);
     --shadow-card: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
@@ -100,7 +100,7 @@
     --elevated: 0 0% 100%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 6% 10%;
-    --primary: 18 87% 52%;
+    --primary: 34 28% 58%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 5% 96%;
     --secondary-foreground: 240 6% 10%;
