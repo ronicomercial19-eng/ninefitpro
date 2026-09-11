@@ -28,6 +28,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      setGateError(null);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -64,10 +65,10 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             firstAccessDone = !athlete || athlete.password_changed === true;
           }
         } catch (e) {
-          console.error("[NineFitLayout] first-access gate failed", e);
-          setGateError("Não foi possível validar seu primeiro acesso.");
-          setIsLoading(false);
-          return;
+          // Compatibilidade: alunos já cadastrados não podem perder acesso
+          // por indisponibilidade transitória de RLS/API durante o gate.
+          console.error("[NineFitLayout] first-access gate failed; preserving session", e);
+          firstAccessDone = true;
         }
       }
 
@@ -108,10 +109,8 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             }
           }
         } catch (e) {
-          console.error("[NineFitLayout] activation gate failed", e);
-          setGateError("Não foi possível validar sua ativação.");
-          setIsLoading(false);
-          return;
+          // Não transformar falha transitória de leitura em tela preta.
+          console.error("[NineFitLayout] activation gate failed; preserving session", e);
         }
       }
 
