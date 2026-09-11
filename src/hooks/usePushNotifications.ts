@@ -61,7 +61,7 @@ export function usePushNotifications() {
         user_id: user.id,
         endpoint: subJson.endpoint,
         p256dh: subJson.keys.p256dh,
-        auth_key: subJson.keys.auth,
+        auth: subJson.keys.auth,
       }, { onConflict: "endpoint" });
 
       if (error) throw error;

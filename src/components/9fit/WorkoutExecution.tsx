@@ -120,9 +120,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (!canTryPrescricao) { setResolvingPlayer(false); return; }
 
     setResolvingPlayer(true);
-    void (async () => {
-      try {
-        const { data, error } = await supabase.rpc('prescrever_treino', { p_aluno_id: athleteId, p_data: todayISO });
+
         if (error) { setResolveFailed(true); return; }
         const flat = flattenPrescricao(data);
         if (flat.length > 0) setResolvedExercises(flat);

@@ -26,8 +26,7 @@ export function useShareEvent(contentType: ShareContentType) {
   const [sharing, setSharing] = useState(false);
 
   const share = useCallback(
-    async (node: HTMLElement | null, label?: string, contentId?: string | null): Promise<"native" | "download" | undefined> => {
-      if (!node) return;
+
       setSharing(true);
       try {
         const { default: html2canvas } = await import("html2canvas");
@@ -42,13 +41,12 @@ export function useShareEvent(contentType: ShareContentType) {
         const file = new File([blob], `9fit-${contentType}-${Date.now()}.png`, { type: "image/png" });
 
         const navAny = navigator as any;
-        const channel: "native" | "download" = navAny.share && navAny.canShare?.({ files: [file] }) ? "native" : "download";
-        if (channel === "native") {
           await navAny.share({
             files: [file],
             title: label || "9FIT",
             text: label || "Mais uma conquista no 9FIT",
           });
+          channel = "native";
         } else {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -74,6 +72,7 @@ export function useShareEvent(contentType: ShareContentType) {
           console.error("[useShareEvent]", e);
           toast.error("Não foi possível compartilhar agora.");
         }
+        return null;
       } finally {
         setSharing(false);
       }

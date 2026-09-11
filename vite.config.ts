@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024, // 12MB (bundle único ~5.7MB após remover manualChunks)
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -67,16 +67,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui': ['@radix-ui/react-tabs', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          'charts': ['recharts', 'chart.js', 'react-chartjs-2'],
-          'supabase': ['@supabase/supabase-js'],
-        }
-      }
-    },
+    // Sem manualChunks manuais: separar react/react-dom em um chunk fixo quebrava a
+    // ordem de inicialização entre os chunks (tela branca / "Cannot read properties of undefined").
+    // O Rollup faz o code-splitting automático com ordem correta.
     chunkSizeWarningLimit: 1000
   }
 }));
