@@ -27,6 +27,7 @@ export function useAthleteId(): UseAthleteIdResult {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
+          setError("Sessão expirada. Entre novamente para acessar seu perfil.");
           setLoading(false);
           return;
         }
