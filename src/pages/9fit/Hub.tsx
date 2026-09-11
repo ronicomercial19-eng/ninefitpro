@@ -40,6 +40,7 @@ export default function NineFitHub() {
 
 
   const [protocolCount, setProtocolCount] = useState(0);
+  const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
   const breakdown = {
     treino: liveScores?.dimensions.treino.value ?? null,
     nutri: liveScores?.dimensions.nutri.value ?? null,
@@ -58,6 +59,8 @@ export default function NineFitHub() {
       .eq("athlete_id", athleteId)
       .maybeSingle();
     const h: any = hub || {};
+    const { data: performance } = await supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle();
+    setPerformancePlanTitle((performance as any)?.plan_title || null);
 
     const { count } = await supabase
       .from("student_library_assignments")
@@ -134,6 +137,7 @@ export default function NineFitHub() {
       <div className="px-4 mt-6 space-y-3">
         <ActivationMissionCard />
         <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
+        {performancePlanTitle && <p className="text-[11px] text-muted-foreground">Plano ativo: <span className="text-foreground">{performancePlanTitle}</span></p>}
       </div>
 
 
