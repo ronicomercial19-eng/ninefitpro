@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Plus, Image as ImageIcon, Sparkles } from "lucide-react";
+import { ChevronRight, Image as ImageIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MODULE_IMAGES } from "@/assets/modules";
 
@@ -55,6 +55,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
   }, [category]);
 
   const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
+  const [expanded, setExpanded] = useState(false);
+  const visibleItems = expanded ? items : items.slice(0, 2);
 
   if (!items.length) return null;
 
@@ -69,17 +71,12 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
               {activeCount}/{items.length} online
             </p>
           </div>
-          <button
-            onClick={() => navigate("/9fit/hub#ecosystem-grid")}
-            className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"
-          >
-            Ver todos
-          </button>
+          {items.length > 2 && (\n            <button\n              onClick={() => setExpanded((value) => !value)}\n              aria-expanded={expanded}\n              className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"\n            >\n              {expanded ? "Recolher" : `Ver todos (${items.length})`}\n            </button>\n          )}
         </header>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {items.map((m) => {
+        {visibleItems.map((m) => {
           const src = MODULE_IMAGES[m.key] || m.hero_image;
           const status = statusByKey[m.key];
           const online = status === "online";
@@ -144,12 +141,6 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
         })}
       </div>
 
-      <button
-        onClick={() => navigate("/9fit/hub#ecosystem-grid")}
-        className="mt-1 mx-auto action-primary gap-2 font-display font-black italic text-xs uppercase tracking-widest hover:scale-[1.02] transition"
-      >
-        <Sparkles className="w-3.5 h-3.5" /> Explorar tudo
-      </button>
     </section>
   );
 }
