@@ -1,5 +1,6 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { Settings } from 'lucide-react';
@@ -32,6 +33,9 @@ const routeLabels: Record<string, string> = {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
+  const { isTrainer } = useAuth();
+
+  if (!isTrainer) return <Navigate to="/9fit/hub" replace />;
   
   const getBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(Boolean);
