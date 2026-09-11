@@ -109,7 +109,7 @@ export default function NineFitProfile() {
           className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
           <Share2 className="w-4 h-4" /> Compartilhar meu ID Card
         </button>
-        <button onClick={() => setCompleteOpen(true)
+        <button onClick={() => setCompleteOpen(true)}
           className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
           <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
         </button>
