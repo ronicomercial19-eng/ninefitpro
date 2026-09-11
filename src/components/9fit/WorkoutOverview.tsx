@@ -39,6 +39,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
   const exerciseCount = exercises.length || training.training_data?.exercise_count || 0;
   const duration = training.training_data?.estimated_duration ?? training.training_data?.requested_duration_min ?? null;
   const protocol = training.training_data?.protocol;
+  const xpReward = training.training_data?.xp_reward ?? null;
 
   const todayKey = WEEKDAYS.find(w => w.jsDay === new Date().getDay())?.key || "segunda";
   const [activeDay, setActiveDay] = useState<string>(todayKey);
@@ -124,7 +125,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
           <div className="bg-background/50 rounded-sm p-3 text-center">
             <Zap className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
             <p className="text-xs text-muted-foreground">XP</p>
-            <p className="text-lg font-black text-foreground">+150</p>
+            <p className="text-lg font-black text-foreground">{xpReward ? `Até +${xpReward}` : "Após concluir"}</p>
           </div>
         </div>
 
