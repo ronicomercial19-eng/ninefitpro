@@ -34,7 +34,7 @@
     --accent: 26 56% 51%;
     --accent-foreground: 0 0% 100%;
 
-    --neural: 213 90% 65%;
+    --neural: 174 52% 42%; /* teal do eixo saúde/recuperação */
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -291,6 +291,15 @@
 }
 
 @layer components {
+
+  /* Google FitPro visual layer — jornada, dados e ações sem alterar contratos */
+  .journey-card { @apply relative overflow-hidden rounded-2xl border border-white/[0.08] bg-card p-5; box-shadow: 0 18px 50px -28px hsl(0 0% 0% / .8); }
+  .journey-card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, hsl(var(--primary) / .08), transparent 48%); }
+  .neural-node { @apply relative rounded-2xl border border-white/[0.08] bg-elevated p-4 transition-all duration-200; }
+  .neural-node:hover { border-color: hsl(var(--primary) / .45); transform: translateY(-2px); }
+  .metric-hero { @apply text-5xl font-display tracking-tight tabular-nums; }
+  .action-primary { @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:opacity-90; }
+
   /* 9FIT Button Variants */
   .btn-neon {
     @apply bg-primary text-primary-foreground font-semibold;
