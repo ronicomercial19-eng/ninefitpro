@@ -2,13 +2,24 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { motion } from "framer-motion";
 import { Activity, Brain, Crown, Dna, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAthleteId } from "@/hooks/useAthleteId";
+import { loadPrimeSnapshot, type PrimeSnapshot } from "@/integrations/primeSystem";
 
 type State = "DIAGNOSTIC" | "READY" | "UPGRADING";
 
 const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || "https://buy.stripe.com/test_4gMfZg0NK3gn2NMahkgbm03";
 
 export default function NineFitPrimePass() {
+  const { user } = useAuth();
+  const { athleteId } = useAthleteId();
+  const [snapshot, setSnapshot] = useState<PrimeSnapshot | null>(null);
   const [state, setState] = useState<State>("DIAGNOSTIC");
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void loadPrimeSnapshot(user.id, athleteId).then((data) => { setSnapshot(data); setState("READY"); });
+  }, [user?.id, athleteId]);
 
   useEffect(() => {
     const t = setTimeout(() => setState("READY"), 2200);
@@ -40,10 +51,10 @@ export default function NineFitPrimePass() {
       {state === "READY" && (
         <>
           <div className="px-4 mb-4 grid grid-cols-2 gap-3">
-            <Pillar icon={Dna} label="Genética" tag="Decodificado" />
-            <Pillar icon={Zap} label="Performance" tag="Otimizado" />
-            <Pillar icon={Brain} label="Longevidade" tag="Estável" />
-            <Pillar icon={Activity} label="Bio-Hacking" tag="Ativo" />
+            <Pillar icon={Dna} label="Assinatura" tag={snapshot?.entitlement === "active" ? "Ativa" : snapshot?.entitlement === "trial" ? "Em teste" : "Indisponível"} />
+            <Pillar icon={Zap} label="Performance" tag={snapshot?.syncScore == null ? "Indisponível" : `Sync ${snapshot.syncScore}%`} />
+            <Pillar icon={Brain} label="Recuperação" tag={snapshot?.recovery == null ? "Indisponível" : `${snapshot.recovery}%`} />
+            <Pillar icon={Activity} label="Protocolo" tag={snapshot?.activeProtocol || "Indisponível"} />
           </div>
 
           <div className="px-4 mb-4">
