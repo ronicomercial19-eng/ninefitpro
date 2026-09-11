@@ -256,6 +256,20 @@ export type Database = {
             foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -271,6 +285,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "aluno_periodizacao_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -857,6 +878,20 @@ export type Database = {
             foreignKeyName: "appointments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -872,6 +907,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1050,6 +1092,20 @@ export type Database = {
             foreignKeyName: "athlete_activation_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_activation_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_activation_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -1065,6 +1121,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_activation_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1198,6 +1261,20 @@ export type Database = {
             foreignKeyName: "athlete_auth_link_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -1213,6 +1290,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_auth_link_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1361,6 +1445,20 @@ export type Database = {
             foreignKeyName: "athlete_credits_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -1376,6 +1474,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1506,6 +1611,20 @@ export type Database = {
             foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -1521,6 +1640,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: true
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_inactivity_flags_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1660,6 +1786,20 @@ export type Database = {
             foreignKeyName: "athlete_pdi_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_pdi_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_pdi_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -1675,6 +1815,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_pdi_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1839,6 +1986,20 @@ export type Database = {
             foreignKeyName: "athlete_periodizations_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -1854,6 +2015,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -1996,6 +2164,20 @@ export type Database = {
             foreignKeyName: "athlete_planning_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_planning_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_planning_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -2011,6 +2193,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_planning_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -2147,6 +2336,20 @@ export type Database = {
             foreignKeyName: "athlete_profile_snapshots_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_profile_snapshots_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_profile_snapshots_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -2162,6 +2365,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_profile_snapshots_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -2307,6 +2517,20 @@ export type Database = {
             foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -2322,6 +2546,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -3135,6 +3366,20 @@ export type Database = {
             foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -3150,6 +3395,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -3638,6 +3890,20 @@ export type Database = {
             foreignKeyName: "credit_transactions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -3653,6 +3919,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -3801,6 +4074,20 @@ export type Database = {
             foreignKeyName: "daily_checkins_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -3816,6 +4103,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -3964,6 +4258,20 @@ export type Database = {
             foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -3979,6 +4287,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -4175,6 +4490,20 @@ export type Database = {
             foreignKeyName: "daily_workouts_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -4190,6 +4519,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_workouts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5075,6 +5411,20 @@ export type Database = {
             foreignKeyName: "fitpro_student_map_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -5090,6 +5440,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5313,6 +5670,20 @@ export type Database = {
             foreignKeyName: "habit_logs_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -5328,6 +5699,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habit_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5474,6 +5852,20 @@ export type Database = {
             foreignKeyName: "habits_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -5489,6 +5881,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "habits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5671,6 +6070,20 @@ export type Database = {
             foreignKeyName: "health_metrics_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -5686,6 +6099,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "health_metrics_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -5840,6 +6260,20 @@ export type Database = {
             foreignKeyName: "healthflix_progress_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "healthflix_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "healthflix_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -5855,6 +6289,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "healthflix_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -6213,6 +6654,20 @@ export type Database = {
             foreignKeyName: "hydration_logs_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -6228,6 +6683,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "hydration_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -6599,6 +7061,20 @@ export type Database = {
             foreignKeyName: "metas_progresso_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -6614,6 +7090,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "metas_progresso_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -6798,6 +7281,20 @@ export type Database = {
             foreignKeyName: "modelos_de_treino_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "modelos_de_treino_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "modelos_de_treino_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -6813,6 +7310,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "modelos_de_treino_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -7100,6 +7604,20 @@ export type Database = {
             foreignKeyName: "ninefit_checkins_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "ninefit_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "ninefit_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -7115,6 +7633,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "ninefit_checkins_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -7311,6 +7836,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ninefit_template_versions: {
+        Row: {
+          change_reason: string | null
+          created_at: string
+          created_by: string
+          design_tokens: Json
+          id: string
+          prescription_schema: Json
+          protocol_schema: Json
+          required_variables: Json
+          status: string
+          template_id: string
+          version: number
+        }
+        Insert: {
+          change_reason?: string | null
+          created_at?: string
+          created_by: string
+          design_tokens?: Json
+          id?: string
+          prescription_schema?: Json
+          protocol_schema?: Json
+          required_variables?: Json
+          status?: string
+          template_id: string
+          version: number
+        }
+        Update: {
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string
+          design_tokens?: Json
+          id?: string
+          prescription_schema?: Json
+          protocol_schema?: Json
+          required_variables?: Json
+          status?: string
+          template_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ninefit_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "ninefit_template_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -7469,6 +8044,20 @@ export type Database = {
             foreignKeyName: "nutrition_logs_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -7484,6 +8073,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -7677,6 +8273,20 @@ export type Database = {
             foreignKeyName: "pain_reports_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "pain_reports_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "pain_reports_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -7692,6 +8302,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "pain_reports_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -7887,6 +8504,20 @@ export type Database = {
             foreignKeyName: "periodizacoes_novas_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodizacoes_novas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodizacoes_novas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -7902,6 +8533,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodizacoes_novas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -8094,6 +8732,20 @@ export type Database = {
             foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -8109,6 +8761,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_annual_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -8462,6 +9121,20 @@ export type Database = {
             foreignKeyName: "periodization_plans_remote_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_remote_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_remote_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -8477,6 +9150,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_remote_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -8746,6 +9426,20 @@ export type Database = {
             foreignKeyName: "personal_records_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -8761,6 +9455,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "personal_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -9078,6 +9779,20 @@ export type Database = {
             foreignKeyName: "planos_de_treino_gerados_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "planos_de_treino_gerados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "planos_de_treino_gerados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -9093,6 +9808,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "planos_de_treino_gerados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -9354,6 +10076,20 @@ export type Database = {
             foreignKeyName: "fk_plans_athlete"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -9369,6 +10105,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fk_plans_athlete"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -9916,6 +10659,20 @@ export type Database = {
             foreignKeyName: "progresso_aluno_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "progresso_aluno_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "progresso_aluno_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -9931,6 +10688,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "progresso_aluno_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -10101,6 +10865,20 @@ export type Database = {
             foreignKeyName: "protocol_feedback_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -10116,6 +10894,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "protocol_feedback_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -10533,6 +11318,20 @@ export type Database = {
             foreignKeyName: "registros_carga_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -10548,6 +11347,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "registros_carga_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -10922,6 +11728,20 @@ export type Database = {
             foreignKeyName: "share_events_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "share_events_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "share_events_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -10937,6 +11757,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "share_events_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -11254,6 +12081,20 @@ export type Database = {
             foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -11269,6 +12110,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_macro_rules_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -11467,6 +12315,20 @@ export type Database = {
             foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: true
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -11482,6 +12344,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: true
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "smart_treino_profiles_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -11847,6 +12716,20 @@ export type Database = {
             foreignKeyName: "student_activity_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_activity_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_activity_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -11862,6 +12745,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_activity_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12007,6 +12897,20 @@ export type Database = {
             foreignKeyName: "student_anamnesis_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_anamnesis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_anamnesis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -12022,6 +12926,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_anamnesis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12164,6 +13075,20 @@ export type Database = {
             foreignKeyName: "student_credits_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: true
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -12179,6 +13104,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: true
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12342,6 +13274,20 @@ export type Database = {
             foreignKeyName: "student_diet_assignments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -12357,6 +13303,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_diet_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12443,6 +13396,7 @@ export type Database = {
           player_url: string | null
           progress_pct: number | null
           status: string | null
+          template_version_id: string | null
           thumbnail_url: string | null
           weekly_schedule: Json
         }
@@ -12463,6 +13417,7 @@ export type Database = {
           player_url?: string | null
           progress_pct?: number | null
           status?: string | null
+          template_version_id?: string | null
           thumbnail_url?: string | null
           weekly_schedule?: Json
         }
@@ -12483,6 +13438,7 @@ export type Database = {
           player_url?: string | null
           progress_pct?: number | null
           status?: string | null
+          template_version_id?: string | null
           thumbnail_url?: string | null
           weekly_schedule?: Json
         }
@@ -12568,6 +13524,20 @@ export type Database = {
             foreignKeyName: "student_library_assignments_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -12583,6 +13553,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12612,6 +13589,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_radar_5d"
             referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "ninefit_template_versions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -12755,6 +13739,20 @@ export type Database = {
             foreignKeyName: "student_measurements_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_measurements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_measurements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -12770,6 +13768,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_measurements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -12948,6 +13953,20 @@ export type Database = {
             foreignKeyName: "student_photos_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_photos_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_photos_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -12963,6 +13982,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_photos_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -13177,6 +14203,20 @@ export type Database = {
             foreignKeyName: "student_training_assignments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_training_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_training_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -13192,6 +14232,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_training_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -13965,6 +15012,20 @@ export type Database = {
             foreignKeyName: "treinos_realizados_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -13980,6 +15041,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "treinos_realizados_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -14170,6 +15238,20 @@ export type Database = {
             foreignKeyName: "user_achievements_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_achievements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_achievements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -14185,6 +15267,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_achievements_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -14354,6 +15443,20 @@ export type Database = {
             foreignKeyName: "user_credits_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -14369,6 +15472,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_credits_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -14532,6 +15642,20 @@ export type Database = {
             foreignKeyName: "user_memory_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -14547,6 +15671,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_memory_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -14813,6 +15944,20 @@ export type Database = {
             foreignKeyName: "user_plans_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -14828,6 +15973,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_plans_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -15231,6 +16383,20 @@ export type Database = {
             foreignKeyName: "user_stats_agg_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -15246,6 +16412,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "user_stats_agg_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -15531,6 +16704,20 @@ export type Database = {
             foreignKeyName: "vacation_requests_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -15546,6 +16733,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "vacation_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -15817,6 +17011,20 @@ export type Database = {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -15832,6 +17040,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -16378,6 +17593,20 @@ export type Database = {
             foreignKeyName: "workout_progress_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -16393,6 +17622,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -17052,6 +18288,20 @@ export type Database = {
             foreignKeyName: "athlete_periodizations_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -17067,6 +18317,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_periodizations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -17567,6 +18824,20 @@ export type Database = {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -17582,6 +18853,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -17840,6 +19118,20 @@ export type Database = {
             foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -17855,6 +19147,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_unificadas_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -18132,6 +19431,20 @@ export type Database = {
             foreignKeyName: "workout_executions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -18147,6 +19460,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_executions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -18299,6 +19619,67 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_fitpro_consistency_audit: {
+        Row: {
+          athlete_id: string | null
+          athlete_name: string | null
+          athlete_sync_score: number | null
+          athlete_total_xp: number | null
+          audited_at: string | null
+          has_performance_plan: boolean | null
+          hub_sync_score: number | null
+          hub_total_xp: number | null
+          progress_completed_workouts: number | null
+          sync_score_divergence: boolean | null
+          xp_divergence: boolean | null
+        }
+        Relationships: []
+      }
+      vw_fitpro_diet_context: {
+        Row: {
+          altura_cm: number | null
+          athlete_id: string | null
+          avg_calories_30d: number | null
+          avg_protein_30d: number | null
+          coach_id: string | null
+          days_logged_30d: number | null
+          diet_assignment_id: string | null
+          diet_data: Json | null
+          diet_description: string | null
+          diet_mode: string | null
+          diet_name: string | null
+          diet_type: string | null
+          end_date: string | null
+          is_active: boolean | null
+          meals_logged_30d: number | null
+          peso_kg: number | null
+          primary_goal: string | null
+          start_date: string | null
+        }
+        Relationships: []
+      }
+      vw_fitpro_ecosystem_status: {
+        Row: {
+          auth_mode: string | null
+          availability: string | null
+          category: string | null
+          connector_id: string | null
+          connector_key: string | null
+          connector_status: string | null
+          cta_label: string | null
+          cta_route: string | null
+          description: string | null
+          display_order: number | null
+          endpoint: string | null
+          iframe_url: string | null
+          lock_reason: string | null
+          module_key: string | null
+          module_status: string | null
+          name: string | null
+          provider: string | null
+        }
+        Relationships: []
+      }
       vw_fitpro_healthflix_assignments: {
         Row: {
           assigned_at: string | null
@@ -18313,6 +19694,16 @@ export type Database = {
           progress_percent: number | null
           started_at: string | null
           title: string | null
+        }
+        Relationships: []
+      }
+      vw_fitpro_operational_health: {
+        Row: {
+          checked_at: string | null
+          data_divergences: number | null
+          modules_attention: number | null
+          sync_errors_24h: number | null
+          sync_events_24h: number | null
         }
         Relationships: []
       }
@@ -18338,6 +19729,18 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_fitpro_release_readiness: {
+        Row: {
+          athletes_total: number | null
+          athletes_with_plan: number | null
+          checked_at: string | null
+          data_divergences: number | null
+          modules_attention: number | null
+          modules_online: number | null
+          modules_total: number | null
+        }
+        Relationships: []
+      }
       vw_fitpro_safety_context: {
         Row: {
           athlete_id: string | null
@@ -18350,6 +19753,35 @@ export type Database = {
           postura_status: string | null
           postura_updated_at: string | null
           posture_approved: boolean | null
+        }
+        Relationships: []
+      }
+      vw_fitpro_security_readiness: {
+        Row: {
+          checked_at: string | null
+          policies_total: number | null
+          rls_tables: number | null
+          rls_without_policy: number | null
+        }
+        Relationships: []
+      }
+      vw_fitpro_share_catalog: {
+        Row: {
+          accent_color: string | null
+          achievement_count: number | null
+          athlete_id: string | null
+          athlete_name: string | null
+          content_type: string | null
+          last_shared_at: string | null
+          layout_css: string | null
+          layout_html: string | null
+          preview_url: string | null
+          share_count: number | null
+          template_active: boolean | null
+          template_id: string | null
+          template_name: string | null
+          template_slug: string | null
+          user_id: string | null
         }
         Relationships: []
       }
@@ -18552,6 +19984,184 @@ export type Database = {
           },
         ]
       }
+      vw_ninefit_assignment_with_version: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          assignment_id: string | null
+          assignment_status: string | null
+          athlete_id: string | null
+          completed_at: string | null
+          content_ref: string | null
+          content_title: string | null
+          content_type: string | null
+          design_tokens: Json | null
+          prescription_schema: Json | null
+          progress_pct: number | null
+          protocol_schema: Json | null
+          required_variables: Json | null
+          resolved_version: number | null
+          resolved_version_id: string | null
+          resolved_version_status: string | null
+          template_version_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_athlete_canonical"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_coach_student_performance"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_healthflix_assignments"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_performance_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "student_library_assignments_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "ninefit_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_performance_athlete: {
         Row: {
           athlete_id: string | null
@@ -18717,6 +20327,20 @@ export type Database = {
             foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -18732,6 +20356,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "daily_protocol_blocks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -18876,6 +20507,20 @@ export type Database = {
             foreignKeyName: "fitpro_student_map_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -18891,6 +20536,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "fitpro_student_map_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -19027,6 +20679,20 @@ export type Database = {
             foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -19042,6 +20708,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_subapp_access_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
@@ -19204,6 +20877,20 @@ export type Database = {
             foreignKeyName: "workout_progress_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "vw_fitpro_healthflix_assignments"
             referencedColumns: ["athlete_id"]
           },
@@ -19219,6 +20906,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "workout_progress_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
             referencedColumns: ["athlete_id"]
           },
           {
