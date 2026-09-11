@@ -48,7 +48,7 @@ export default function NineFitProfile() {
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
     { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
     { icon: Share2, label: "Compartilhar", sub: "Cards de progresso e conquistas", route: "/9fit/compartilhar" },
-    { icon: CreditCard, label: "Pagamento & Plano", sub: `Próxima fatura: ${nextInvoice}`, route: "/9fit/prime" },
+    { icon: CreditCard, label: "Pagamento & Plano", sub: `Próxima fatura: ${nextInvoice}`, route: "/9fit/primepass" },
   ];
 
   return (

@@ -34,18 +34,17 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
       const list = (data ?? []) as any[];
       setItems(list);
       const keys = list.map((m) => m.connector_key).filter(Boolean);
-      if (keys.length) {
-        const { data: conns } = await supabase
-          .from("api_connectors").select("key, status").in("key", keys);
-        const map: Record<string, "online" | "waiting" | "not_configured"> = {};
-        list.forEach((m) => {
+      const { data: conns } = keys.length
+        ? await supabase.from("api_connectors").select("key, status").in("key", keys)
+        : { data: [] as any[] };
+      const map: Record<string, "online" | "waiting" | "not_configured"> = {};
+      list.forEach((m) => {
           if (m.connector_key) {
             const c = (conns || []).find((x: any) => x.key === m.connector_key);
             map[m.key] = !/^https?:\/\//i.test(m.cta_route || "") || c?.status === "active" ? "online" : "waiting";
           } else map[m.key] = "not_configured";
         });
-        setStatusByKey(map);
-      }
+      setStatusByKey(map);
     });
   }, [category]);
 
@@ -65,7 +64,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
             </p>
           </div>
           <button
-            onClick={() => navigate("/9fit/protocols")}
+            onClick={() => navigate("/9fit/hub#ecosystem-grid")}
             className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"
           >
             Ver todos
