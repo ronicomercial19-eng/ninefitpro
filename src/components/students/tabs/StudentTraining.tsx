@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
   const [showPeriodization, setShowPeriodization] = useState(false);
   const [selectedHTMLTraining, setSelectedHTMLTraining] = useState<TrainingAssignment | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTrainings();
@@ -92,8 +94,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
     if (training.training_type === 'html' && training.html_file_url) {
       setSelectedHTMLTraining(training);
     } else {
-      // TODO: Implementar visualização de treino JSON
-      toast.info('Visualização de treino JSON em desenvolvimento');
+      navigate('/9fit/train', { state: { quickTraining: training } });
     }
   };
 
