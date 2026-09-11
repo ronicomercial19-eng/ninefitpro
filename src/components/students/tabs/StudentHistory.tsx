@@ -32,18 +32,35 @@ export function StudentHistory({ studentId }: StudentHistoryProps) {
 
   const fetchActivities = async () => {
     try {
-      const { data, error } = await supabase
-        .from('student_activity_history' as any)
-        // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
-        // e a RLS antiga também dependia dela — nenhum registro jamais aparecia.
-        // athlete_id é a coluna viva com FK real pra athletes.
-        .select('*')
-        .eq('athlete_id', studentId)
-        .order('activity_date', { ascending: false });
+      const [{ data, error }, { data: progress, error: progressError }] = await Promise.all([
+        supabase
+          .from('student_activity_history' as any)
+          .select('*')
+          .eq('athlete_id', studentId)
+          .order('activity_date', { ascending: false }),
+        supabase
+          .from('vw_workout_progress_unified' as any)
+          .select('id, training_name, exercise_name, date, completed_at, notes, rpe, sets, reps, weight_kg')
+          .eq('resolved_athlete_id', studentId)
+          .order('date', { ascending: false }),
+      ]);
 
       if (error) throw error;
+      if (progressError) console.warn('Progresso unificado indisponível:', progressError);
 
-      setActivities((data || []) as unknown as ActivityRecord[]);
+      const activityRows = (data || []) as unknown as ActivityRecord[];
+      const workoutRows: ActivityRecord[] = (progress || []).map((row: any) => ({
+        id: `workout-${row.id}`,
+        activity_type: 'treino',
+        activity_name: row.training_name || row.exercise_name || 'Treino concluído',
+        activity_date: row.completed_at || row.date,
+        details: row,
+        status: row.completed_at ? 'concluido' : 'em_andamento',
+        created_at: row.completed_at || row.date,
+      }));
+      setActivities([...activityRows, ...workoutRows].sort((a, b) =>
+        new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime(),
+      ));
     } catch (error) {
       console.error('Erro ao buscar histórico:', error);
       toast.error('Erro ao carregar histórico');
