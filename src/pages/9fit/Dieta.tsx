@@ -124,7 +124,8 @@ export default function NineFitDieta() {
   // Real nutrition tracking from nutrition_logs
   const [consumed, setConsumed] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [todayMeals, setTodayMeals] = useState<any[]>([]);
-  const caloriesGoal = 2500;
+  const [dietMode, setDietMode] = useState<"assigned" | "self_guided" | "inactive">("self_guided");
+  const [caloriesGoal, setCaloriesGoal] = useState(2000);
 
   const fetchNutritionLogs = async (aid: string) => {
     const today = format(currentDate, "yyyy-MM-dd");
@@ -181,7 +182,7 @@ export default function NineFitDieta() {
     }
   };
 
-  useEffect(() => { fetchAssignedDiets(); }, [athleteId]);
+  useEffect(() => { fetchAssignedDiets(); if (athleteId) supabase.from("vw_fitpro_diet_context" as any).select("diet_mode,diet_data").eq("athlete_id", athleteId).maybeSingle().then(({ data }) => { const row: any = data || {}; setDietMode(row.diet_mode || "self_guided"); const goal = Number(row.diet_data?.calories_goal || row.diet_data?.daily_calories || 0); if (goal > 0) setCaloriesGoal(goal); }); }, [athleteId]);
 
   // Realtime: re-fetch when diet assignments change for this student
   useRealtimeTable(
@@ -289,6 +290,19 @@ export default function NineFitDieta() {
           <DietaSkeleton />
         </div>
       ) : assignedDiets.length === 0 ? (
+        <div className="px-4 space-y-6">
+          <div className="bg-card border border-border rounded-sm p-5">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Modo {dietMode === "self_guided" ? "autoguiado" : "sem plano ativo"}</p>
+            <h2 className="text-lg font-bold text-foreground mt-1">Construa sua consistência alimentar</h2>
+            <p className="text-sm text-muted-foreground mt-2">Registre refeições, acompanhe médias e ajuste suas escolhas com apoio do RON.</p>
+          </div>
+          <div className="bg-card border border-border rounded-sm p-4">
+            <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Calorias registradas hoje</span><Button size="sm" onClick={() => setShowLogForm(true)}><Plus className="w-3 h-3 mr-1" />Registrar</Button></div>
+            <p className="text-2xl font-bold text-foreground mt-2">{consumed.calories} kcal</p>
+            <p className="text-xs text-muted-foreground mt-1">Meta inicial: {caloriesGoal} kcal</p>
+          </div>
+        </div>
+      ) : (
         <div className="px-4">
           <EmptyDieta />
         </div>
