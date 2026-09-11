@@ -142,11 +142,23 @@ export default function NineFitTrain() {
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
+    const exercises = training.training_data?.exercises;
+    if (training.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
+      toast.info("Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca.");
+      navigate("/9fit/biblioteca");
+      return;
+    }
     setSelectedTraining(training);
     setFlow("OVERVIEW");
   };
 
   const handleStartExecution = () => {
+    const exercises = selectedTraining?.training_data?.exercises;
+    if (selectedTraining?.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
+      toast.info("A prescrição deste protocolo ainda está sendo preparada.");
+      navigate("/9fit/biblioteca");
+      return;
+    }
     if (selectedTraining?.training_type === 'link' && selectedTraining.html_file_url) {
       window.open(selectedTraining.html_file_url, '_blank');
       return;
