@@ -248,6 +248,7 @@ export default function NineFitTrain() {
                 key={k}
                 onClick={() => {
                   if (k === "healthflix") navigate("/9fit/healthflix");
+                  else if (k === "protocol") navigate("/9fit/protocolo");
                   else setSubTab(k as any);
                 }}
                 className={`flex-1 py-2 rounded-full text-[10px] font-display uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${
