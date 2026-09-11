@@ -30,9 +30,9 @@ export async function planWeek(athleteId: string): Promise<PlannedSession[]> {
     d.setDate(monday.getDate() + i);
     week.push({
       date: d.toISOString().slice(0, 10),
-      label: `${DAY_LABELS[d.getDay()]} • Recuperação`,
+      label: `${DAY_LABELS[d.getDay()]} • Sem treino atribuído`,
       durationMin: 0,
-      intensityPct: 30,
+      intensityPct: 0,
       source: "fallback",
     });
   }
@@ -48,14 +48,18 @@ export async function planWeek(athleteId: string): Promise<PlannedSession[]> {
     (assigns ?? []).forEach((a: any) => {
       const td = a.training_data || {};
       const days: number[] = Array.isArray(td.weekDays) ? td.weekDays : [1, 3, 5];
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const starts = !a.start_date || a.start_date <= todayKey;
+      const ends = !a.end_date || a.end_date >= todayKey;
+      if (!starts || !ends) return;
       week.forEach((slot, idx) => {
         const dow = new Date(slot.date).getDay();
         if (days.includes(dow) && slot.source === "fallback") {
           week[idx] = {
             ...slot,
             label: a.training_name,
-            durationMin: td.estimated_duration || 60,
-            intensityPct: td.intensity || 72,
+            durationMin: Number(td.estimated_duration ?? td.requested_duration_min ?? 0),
+            intensityPct: Number(td.intensity ?? 0),
             source: "assignment",
             trainingId: a.id,
             trainingType: a.training_type,
