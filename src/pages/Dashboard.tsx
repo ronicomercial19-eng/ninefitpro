@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { MetricsDisplay } from "@/components/analytics/MetricsDisplay";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { listAthletesByCoach } from '@/services/athletes.service';
+import { loadCoachStudentsPerformance } from '@/integrations/coachStudentPerformance';
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
@@ -49,9 +49,8 @@ export default function Dashboard() {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Use service layer for athletes
-      const athletesResult = await listAthletesByCoach(currentUser.id);
-      const allAthletes = athletesResult.data ?? [];
+      // Fonte canônica Professor ↔ Aluno (security_invoker + RLS)
+      const allAthletes = await loadCoachStudentsPerformance();
 
       // Parallel fetch for remaining data
       const [workoutsRes, appointmentsRes, activeAssignmentsRes, expiredAssignmentsRes] = await Promise.all([
