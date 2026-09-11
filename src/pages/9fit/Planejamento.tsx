@@ -11,15 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 type RemoteWave = { label?: string; week?: number; focus?: string; volume?: string; intensity?: string; pct?: number; status?: string };
-const FALLBACK_CYCLES: RemoteWave[] = [
-  { label: "Onda 1 • Adaptação", focus: "Base aeróbica", volume: "+5%", pct: 100, status: "done" },
-  { label: "Onda 2 • Hipertrofia I", focus: "Volume moderado", volume: "+10%", pct: 100, status: "done" },
-  { label: "Onda 3 • Hipertrofia II", focus: "Volume alto", volume: "+15%", pct: 70, status: "active" },
-  { label: "Onda 4 • Força I", focus: "Carga máxima", volume: "+8%", pct: 0 },
-  { label: "Onda 5 • Força II", focus: "RPE 9", volume: "+12%", pct: 0 },
-  { label: "Onda 6 • Pico", focus: "Performance", volume: "+5%", pct: 0 },
-  { label: "Onda 7 • Deload + Teste", focus: "Recuperação ativa", volume: "-30%", pct: 0 },
-];
+const FALLBACK_CYCLES: RemoteWave[] = [];
 
 export default function NineFitPlanejamento() {
   const navigate = useNavigate();
