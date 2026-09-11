@@ -20,7 +20,7 @@ import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
 import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
-import { Crown, ChevronRight, Library } from "lucide-react";
+import { ChevronRight, Library } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
@@ -205,23 +205,6 @@ export default function NineFitHub() {
       <div className="px-4 mt-6">
         <p className="text-label mb-3">DESTAQUES</p>
         <HubSequentialCarousel />
-      </div>
-
-      {/* 8. 9PASS */}
-      <div className="px-4 mt-6">
-        <button
-          onClick={() => navigate("/9fit/primepass")}
-          className="w-full rounded-2xl p-4 flex items-center gap-3 border border-white/[0.06] bg-white/[0.04] backdrop-blur-xl hover:border-primary/30 transition-colors text-left"
-        >
-          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
-            <Crown className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <p className="text-label">PRIME PASS</p>
-            <p className="text-sm font-semibold">Plano, pagamento e Hub Lounge Premium</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </button>
       </div>
 
       <RonBubble />
