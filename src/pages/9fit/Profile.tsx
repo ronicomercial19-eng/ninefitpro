@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck,
+  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, Share2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ export default function NineFitProfile() {
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
     { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
+    { icon: Share2, label: "Compartilhar", sub: "Cards de progresso e conquistas", route: "/9fit/compartilhar" },
     { icon: CreditCard, label: "Pagamento & Plano", sub: `Próxima fatura: ${nextInvoice}`, route: "/9fit/prime" },
   ];
 
