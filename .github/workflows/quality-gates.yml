@@ -1,0 +1,33 @@
+name: quality-gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund\n        # TODO: restore npm ci after regenerating the drifted package-lock.json.
+      - run: npm run typecheck
+      - run: npm run build
+        if: ${{ always() }}
+      - name: Lint baseline (informational until legacy debt is cleared)
+        run: npm run lint
+        if: ${{ always() }}
+        continue-on-error: true
+        # Existing baseline: 805 findings. Typecheck and production build remain blocking.

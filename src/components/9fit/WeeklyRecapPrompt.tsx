@@ -25,11 +25,11 @@ async function buildWeeklyRecap(athleteId: string, userId: string): Promise<Achi
   const sinceIso = since.toISOString();
 
   const [{ count: workouts }, { count: prs }, { data: scores }] = await Promise.all([
-    supabase.from("workout_executions").select("id", { count: "exact", head: true })
+    supabase.from("workout_executions" as any).select("id", { count: "exact", head: true })
       .eq("athlete_id", athleteId).eq("status", "completed").gte("completed_at", sinceIso),
-    supabase.from("personal_records").select("id", { count: "exact", head: true })
+    supabase.from("personal_records" as any).select("id", { count: "exact", head: true })
       .eq("athlete_id", athleteId).gte("created_at", sinceIso),
-    supabase.from("sync_score_logs").select("score")
+    supabase.from("sync_score_logs" as any).select("score")
       .eq("user_id", userId).gte("created_at", sinceIso).order("created_at", { ascending: false }),
   ]);
 

@@ -108,38 +108,48 @@ export default function NineFitRon() {
   const handlePainSideEffect = async (userMsg: string) => {
     const pain = detectPain(userMsg);
     if (!pain.detected || !athleteId) return null;
-    try {
-      // 1) registra a dor
-      await supabase.from("pain_reports" as any).insert({
-        athlete_id: athleteId,
-        source: "ron_chat",
-        body_region: pain.body_region,
-        intensity: pain.intensity,
-      } as any);
-      // 2) ajusta o treino do dia
-      if (pain.body_region) {
-        const today = new Date().toISOString().slice(0, 10);
-        const { data: adj } = await supabase.rpc("ajustar_exercicio_por_dor" as any, {
-          p_athlete_id: athleteId,
-          p_exercise_id: null,
-          p_body_region: pain.body_region,
-          p_workout_date: today,
-        });
-        const r: any = adj;
-        if (r?.status === "no_safe_variation") {
-          await supabase.rpc("regenerar_dia_evitando_regiao" as any, {
-            p_athlete_id: athleteId,
-            p_body_region: pain.body_region,
-            p_workout_date: today,
-          });
-          return `Detectei dor em ${pain.body_region} (~${pain.intensity}/10). Sem variação segura hoje — regenerei o treino do dia evitando essa região. Semana e periodização preservadas.`;
-        }
-        return `Detectei dor em ${pain.body_region} (~${pain.intensity}/10). Ajustei os exercícios de hoje para uma variação segura. Semana e periodização preservadas.`;
-      }
-    } catch (e) {
-      console.error("[Ron] pain adjust:", e);
+
+    const { error: reportError } = await supabase.from("pain_reports" as any).insert({
+      athlete_id: athleteId,
+      source: "ron_chat",
+      body_region: pain.body_region,
+      intensity: pain.intensity,
+    } as any);
+    if (reportError) {
+      console.error("[Ron] pain report failed", reportError);
+      return "Percebi seu relato de dor, mas não consegui registrá-lo. Não alterei seu treino. Evite continuar se houver risco e procure orientação profissional.";
     }
-    return null;
+    if (!pain.body_region) return "Registrei seu relato de dor, mas preciso que você indique a região antes de sugerir qualquer ajuste.";
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: adjustment, error: adjustmentError } = await supabase.rpc("ajustar_exercicio_por_dor" as any, {
+      p_athlete_id: athleteId,
+      p_exercise_id: null,
+      p_body_region: pain.body_region,
+      p_workout_date: today,
+    });
+    if (adjustmentError) {
+      console.error("[Ron] pain adjustment failed", adjustmentError);
+      return `Dor em ${pain.body_region} registrada. O ajuste não foi aplicado; mantenha o exercício pausado até nova orientação.`;
+    }
+
+    const result = adjustment as any;
+    if (result?.status === "no_safe_variation") {
+      const { data: regeneration, error: regenerationError } = await supabase.rpc("regenerar_dia_evitando_regiao" as any, {
+        p_athlete_id: athleteId,
+        p_body_region: pain.body_region,
+        p_workout_date: today,
+      });
+      if (regenerationError || !(regeneration as any)?.success) {
+        return `Dor em ${pain.body_region} registrada, mas não encontrei uma variação segura confirmada. O treino não foi alterado.`;
+      }
+      return `Dor em ${pain.body_region} registrada. O servidor confirmou a regeneração do treino evitando essa região.`;
+    }
+
+    if (result?.status === "applied" || result?.success === true) {
+      return `Dor em ${pain.body_region} registrada. O servidor confirmou o ajuste do treino de hoje.`;
+    }
+    return `Dor em ${pain.body_region} registrada, mas nenhum ajuste foi confirmado. O treino permanece sem alteração.`;
   };
 
   const send = async () => {

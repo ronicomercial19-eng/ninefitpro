@@ -52,12 +52,12 @@ export function usePushNotifications() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
       });
 
       const subJson = sub.toJSON() as any;
 
-      const { error } = await supabase.from("push_subscriptions").upsert({
+      const { error } = await supabase.from("push_subscriptions" as any).upsert({
         user_id: user.id,
         endpoint: subJson.endpoint,
         p256dh: subJson.keys.p256dh,
@@ -82,7 +82,7 @@ export function usePushNotifications() {
       const reg = await navigator.serviceWorker.getRegistration();
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
-        await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+        await supabase.from("push_subscriptions" as any).delete().eq("endpoint", sub.endpoint);
         await sub.unsubscribe();
       }
       setSubscribed(false);

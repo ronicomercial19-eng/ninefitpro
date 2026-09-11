@@ -21,11 +21,14 @@ interface NineFitLayoutProps {
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
+      setGateError(null);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -62,8 +65,10 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             firstAccessDone = !athlete || athlete.password_changed === true;
           }
         } catch (e) {
-          console.log('[NineFitLayout] first-access check:', e);
-          firstAccessDone = true; // fail-open para não travar
+          // Compatibilidade: alunos já cadastrados não podem perder acesso
+          // por indisponibilidade transitória de RLS/API durante o gate.
+          console.error("[NineFitLayout] first-access gate failed; preserving session", e);
+          firstAccessDone = true;
         }
       }
 
@@ -104,7 +109,8 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             }
           }
         } catch (e) {
-          console.log('[NineFitLayout] activation check:', e);
+          // Não transformar falha transitória de leitura em tela preta.
+          console.error("[NineFitLayout] activation gate failed; preserving session", e);
         }
       }
 
@@ -123,7 +129,22 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, retryKey]);
+
+  if (gateError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-sm text-center space-y-4">
+          <h1 className="text-lg font-semibold">Acesso não validado</h1>
+          <p className="text-sm text-muted-foreground">{gateError}</p>
+          <button onClick={() => setRetryKey((value) => value + 1)}
+            className="rounded-full bg-primary text-primary-foreground px-5 py-2.5 font-semibold">
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

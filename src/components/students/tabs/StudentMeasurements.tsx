@@ -71,7 +71,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
   const fetchMeasurements = async () => {
     try {
       const { data, error } = await supabase
-        .from('student_measurements')
+        .from('student_measurements' as any)
         // FIX (QA Fase B): student_id apontava pra tabela `students` morta (0 linhas)
         // e a RLS antiga também dependia dela — nenhuma medida jamais aparecia,
         // mesmo cadastrada. athlete_id é a coluna viva com FK real pra athletes.
@@ -81,7 +81,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
 
       if (error) throw error;
 
-      setMeasurements(data || []);
+      setMeasurements((data || []) as unknown as Measurement[]);
     } catch (error) {
       console.error('Erro ao buscar medidas:', error);
       toast.error('Erro ao carregar medidas');
@@ -98,7 +98,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
 
     try {
       const { data, error } = await supabase
-        .from('student_measurements')
+        .from('student_measurements' as any)
         .insert({
           athlete_id: studentId,
           ...newMeasurement
@@ -108,7 +108,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
 
       if (error) throw error;
 
-      setMeasurements([...measurements, data]);
+      setMeasurements([...measurements, data as unknown as Measurement]);
       setNewMeasurement({ measurement_date: new Date().toISOString().split('T')[0] });
       setShowNewForm(false);
       toast.success('Medida adicionada com sucesso!');

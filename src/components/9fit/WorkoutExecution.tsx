@@ -120,16 +120,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (!canTryPrescricao) { setResolvingPlayer(false); return; }
 
     setResolvingPlayer(true);
-    Promise.resolve(
-      supabase.rpc('prescrever_treino', { p_aluno_id: athleteId, p_data: todayISO })
-    )
-      .then(({ data, error }) => {
+
         if (error) { setResolveFailed(true); return; }
         const flat = flattenPrescricao(data);
         if (flat.length > 0) setResolvedExercises(flat);
         else setResolveFailed(true);
-      })
-      .finally(() => setResolvingPlayer(false));
+      } finally {
+        setResolvingPlayer(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveTraining.id, athleteId]);
 
@@ -213,6 +212,46 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   // Weight tracking per exercise
   const [weights, setWeights] = useState<Record<number, number>>({});
   const [completedSets, setCompletedSets] = useState<Record<string, boolean[]>>({});
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [persisting, setPersisting] = useState(false);
+  const [executionError, setExecutionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("fn_start_workout_execution" as any, {
+        p_assignment_id: training.id,
+      } as any);
+      if (cancelled) return;
+      if (error || !data) {
+        setExecutionError("Não foi possível iniciar uma execução persistente.");
+        return;
+      }
+
+      const id = String(data);
+      setExecutionId(id);
+      const { data: savedSets, error: setsError } = await supabase
+        .from("workout_exercise_sets")
+        .select("exercise_order, set_number, completed, actual_weight")
+        .eq("execution_id", id);
+      if (cancelled || setsError) return;
+
+      const restored: Record<string, boolean[]> = {};
+      const restoredWeights: Record<number, number> = {};
+      for (const row of savedSets ?? []) {
+        const exerciseOrder = Number(row.exercise_order);
+        const setNumber = Number(row.set_number);
+        const list = restored[String(exerciseOrder)] ?? [];
+        list[Math.max(0, setNumber - 1)] = row.completed === true;
+        restored[String(exerciseOrder)] = list;
+        if (row.actual_weight !== null) restoredWeights[exerciseOrder] = Number(row.actual_weight);
+      }
+      setCompletedSets(restored);
+      setWeights(restoredWeights);
+    })();
+
+    return () => { cancelled = true; };
+  }, [training.id]);
 
   // HTML content (for html-type trainings) — só carrega quando o player
   // guiado não conseguiu resolver exercícios de nenhuma forma (fallback final)
@@ -281,21 +320,71 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const currentWeight = weights[currentIdx] ?? 20;
   const setWeight = (v: number) => setWeights(prev => ({ ...prev, [currentIdx]: v }));
 
-  const toggleSet = (exerciseIdx: number, setIdx: number) => {
+  const toggleSet = async (exerciseIdx: number, setIdx: number) => {
+    if (!executionId || persisting) {
+      toast.error(executionError ?? "Aguarde o treino terminar de carregar.");
+      return;
+    }
+
     const key = `${exerciseIdx}`;
-    setCompletedSets(prev => {
-      const sets = [...(prev[key] || Array(exercises[exerciseIdx]?.sets || 3).fill(false))];
-      sets[setIdx] = !sets[setIdx];
-      return { ...prev, [key]: sets };
-    });
+    const previous = [...(completedSets[key] || Array(exercises[exerciseIdx]?.sets || 3).fill(false))];
+    const next = [...previous];
+    next[setIdx] = !next[setIdx];
+    setCompletedSets(current => ({ ...current, [key]: next }));
+    setPersisting(true);
+
+    const exercise = exercises[exerciseIdx] ?? {};
+    const parsedReps = Number.parseInt(String(exercise.reps ?? exercise.reps_range ?? ""), 10);
+    const { error } = await supabase.rpc("fn_save_workout_set" as any, {
+      p_execution_id: executionId,
+      p_exercise_name: String(exercise.name ?? "Exercício"),
+      p_exercise_order: exerciseIdx,
+      p_set_number: setIdx + 1,
+      p_completed: next[setIdx],
+      p_actual_reps: Number.isFinite(parsedReps) ? parsedReps : null,
+      p_actual_weight: weights[exerciseIdx] ?? null,
+      p_planned_reps: String(exercise.reps ?? exercise.reps_range ?? ""),
+      p_rest_seconds: exercise.rest_seconds ?? null,
+      p_tempo: exercise.tempo ?? null,
+    } as any);
+    setPersisting(false);
+
+    if (error) {
+      setCompletedSets(current => ({ ...current, [key]: previous }));
+      setExecutionError(error.message);
+      toast.error("Não foi possível salvar esta série. Tente novamente.");
+    } else {
+      setExecutionError(null);
+    }
   };
 
-  const handleFinishWorkout = () => {
+  const handleFinishWorkout = async () => {
+    if (!executionId || persisting) {
+      toast.error(executionError ?? "A execução ainda não está pronta.");
+      return;
+    }
+
+    setPersisting(true);
+    const { data, error } = await supabase.rpc("fn_complete_workout_execution" as any, {
+      p_execution_id: executionId,
+      p_duration_seconds: workoutSeconds,
+    } as any);
+    setPersisting(false);
+
+    if (error || !(data as any)?.ok) {
+      toast.error((data as any)?.error === "no_completed_sets"
+        ? "Conclua ao menos uma série antes de finalizar."
+        : "Não foi possível concluir o treino.");
+      return;
+    }
+
     if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
-    mirrorEvent("workout_completed", {
+    await mirrorEvent("workout_completed", {
+      execution_id: executionId,
       training_id: training.id,
       training_name: liveTraining.training_name,
       duration_seconds: workoutSeconds,
+      completed_sets: (data as any).completed_sets,
     });
     setShowPSE(true);
   };
@@ -569,10 +658,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
         {/* Finish */}
         <div className="px-4 py-3">
-          <Button onClick={handleFinishWorkout}
+          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting}
             className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">
-            <Zap className="w-5 h-5 mr-2" />
-            Concluir Treino
+            {persisting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
+            {persisting ? "Salvando..." : "Concluir Treino"}
           </Button>
         </div>
       </div>

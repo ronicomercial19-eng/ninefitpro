@@ -26,8 +26,7 @@ export function useShareEvent(contentType: ShareContentType) {
   const [sharing, setSharing] = useState(false);
 
   const share = useCallback(
-    async (node: HTMLElement | null, label?: string, contentId?: string | null): Promise<string | null> => {
-      if (!node) return null;
+
       setSharing(true);
       try {
         const { default: html2canvas } = await import("html2canvas");
@@ -42,8 +41,6 @@ export function useShareEvent(contentType: ShareContentType) {
         const file = new File([blob], `9fit-${contentType}-${Date.now()}.png`, { type: "image/png" });
 
         const navAny = navigator as any;
-        let channel = "download";
-        if (navAny.share && navAny.canShare?.({ files: [file] })) {
           await navAny.share({
             files: [file],
             title: label || "9FIT",
