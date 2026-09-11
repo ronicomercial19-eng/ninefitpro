@@ -180,7 +180,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       })}
 
       <p className="text-[10px] text-muted-foreground text-center pt-2 flex items-center justify-center gap-1">
-        <Calendar className="w-3 h-3" /> Conclusão concede +100 XP · Sync Score recalcula em tempo real
+        <Calendar className="w-3 h-3" /> Ao concluir, o progresso e o Sync Score são atualizados
       </p>
     </div>
   );
