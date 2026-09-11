@@ -42,12 +42,14 @@ export function useShareEvent(contentType: ShareContentType) {
         const file = new File([blob], `9fit-${contentType}-${Date.now()}.png`, { type: "image/png" });
 
         const navAny = navigator as any;
+        let channel = "download";
         if (navAny.share && navAny.canShare?.({ files: [file] })) {
           await navAny.share({
             files: [file],
             title: label || "9FIT",
             text: label || "Mais uma conquista no 9FIT",
           });
+          channel = "native";
         } else {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -62,15 +64,18 @@ export function useShareEvent(contentType: ShareContentType) {
             athlete_id: athleteId,
             user_id: (await supabase.auth.getUser()).data.user?.id,
             content_type: contentType,
-            channel: navAny.share ? "native" : "download",
+            content_id: contentId ?? null,
+            channel,
             shared_at: new Date().toISOString(),
           } as any);
         } catch (e) { console.warn("[share_events] insert:", e); }
+        return channel;
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           console.error("[useShareEvent]", e);
           toast.error("Não foi possível compartilhar agora.");
         }
+        return null;
       } finally {
         setSharing(false);
       }
