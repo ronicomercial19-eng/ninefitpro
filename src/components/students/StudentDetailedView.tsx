@@ -35,6 +35,7 @@ import { StudentAnamnesis } from "./tabs/StudentAnamnesis";
 import { StudentPhotos } from "./tabs/StudentPhotos";
 import { StudentPayments } from "./tabs/StudentPayments";
 import { StudentDiet } from "./tabs/StudentDiet";
+import { loadCoachStudentsPerformance, type CoachStudentPerformance } from "@/integrations/coachStudentPerformance";
 
 interface Student {
   id: string;
@@ -73,6 +74,13 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [performance, setPerformance] = useState<CoachStudentPerformance | null>(null);
+
+  useEffect(() => {
+    loadCoachStudentsPerformance()
+      .then((rows) => setPerformance(rows.find((row) => row.athlete_id === student.id) ?? null))
+      .catch((error) => console.warn("Performance summary unavailable", error));
+  }, [student.id]);
 
   const calculateAge = (birthDate: string | undefined) => {
     if (!birthDate) return null;
@@ -290,6 +298,18 @@ Bons treinos! 🎯`;
           Voltar para Lista
         </Button>
       </div>
+
+      {performance && (
+        <Card>
+          <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4">
+            <div><p className="text-xs text-muted-foreground">Sync Score</p><p className="text-xl font-semibold">{performance.sync_score ?? "—"}</p></div>
+            <div><p className="text-xs text-muted-foreground">Plano</p><p className="text-sm font-medium truncate">{performance.plan_title ?? "Sem plano"}</p></div>
+            <div><p className="text-xs text-muted-foreground">Fase</p><p className="text-sm font-medium">{performance.current_phase ?? "—"}</p></div>
+            <div><p className="text-xs text-muted-foreground">Treinos concluídos</p><p className="text-xl font-semibold">{performance.completed_workouts ?? 0}</p></div>
+            <div><p className="text-xs text-muted-foreground">RPE médio</p><p className="text-xl font-semibold">{performance.avg_rpe ?? "—"}</p></div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Card de perfil do aluno */}
       <Card>
