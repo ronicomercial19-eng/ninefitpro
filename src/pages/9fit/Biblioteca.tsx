@@ -28,7 +28,7 @@ export default function NineFitBiblioteca() {
     (async () => {
       setLoading(true);
       try {
-        const assignments = await loadResolvedTemplateAssignments(athleteId, "library");
+        const assignments = await loadResolvedTemplateAssignments(athleteId);
         setItems(assignments.map((assignment) => ({
           id: assignment.assignment_id,
           title: assignment.content_title || assignment.content_ref,
