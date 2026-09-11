@@ -189,6 +189,7 @@ export default function NineFitTrain() {
     if (athleteId) {
       fetchCompletedCount(athleteId);
     }
+    navigate("/9fit/progresso?source=train");
   };
 
   const handleBack = () => {
