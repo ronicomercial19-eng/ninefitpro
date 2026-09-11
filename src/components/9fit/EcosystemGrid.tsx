@@ -82,7 +82,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
           return (
             <button
               key={m.id}
-              onClick={() => { if (!m.cta_route) return; if (/^https?:\/\//i.test(m.cta_route)) window.open(m.cta_route, "_blank", "noopener,noreferrer"); else navigate(m.cta_route); }}
+              onClick={() => { if (!m.cta_route) return; if (/^https?:\/\//i.test(m.cta_route)) navigate(`/9fit/embed?url=${encodeURIComponent(m.cta_route)}&title=${encodeURIComponent(m.name)}`); else navigate(m.cta_route); }}
               className="group relative text-left rounded-2xl overflow-hidden bg-card border border-white/[0.06] hover:border-primary/60 transition-all duration-300"
             >
               {/* glow on hover */}
