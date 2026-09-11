@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AchievementShareSheet, type Achievement } from "@/components/9fit/AchievementShareSheet";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ const templates = [
 
 export default function NineFitCompartilhar() {
   const { user } = useAuth();
+  const [params] = useSearchParams();
   const [achievement, setAchievement] = useState<Achievement | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ name: "Aluno 9FIT", score: null as number | null, workouts: 0, record: null as string | null });
@@ -36,6 +38,12 @@ export default function NineFitCompartilhar() {
       setLoading(false);
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!loading && params.get("template") === "id_card") {
+      setAchievement({ contentType: "id_card", kicker: "MEU PERFIL", title: "Meu ID Card 9FIT", subtitle: "Perfil verificado · " + stats.name });
+    }
+  }, [loading, params, stats.name]);
 
   const openTemplate = (template: (typeof templates)[number]) => setAchievement({
     contentType: template.type, kicker: template.kicker, title: template.title,
