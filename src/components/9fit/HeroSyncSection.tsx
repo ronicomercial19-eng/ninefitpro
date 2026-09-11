@@ -29,7 +29,7 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
     : scoreStatus === "loading" ? "atualizando"
     : "calibrando";
 
-  return <section className="relative w-full overflow-hidden">
+  return <section className="journey-card relative w-full overflow-hidden">
     <div className="relative aspect-[3/4] sm:aspect-[16/9] w-full">
       <div className="absolute inset-0 bg-cover bg-center grayscale"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80')" }} aria-hidden />
