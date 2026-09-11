@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { BookOpen, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
