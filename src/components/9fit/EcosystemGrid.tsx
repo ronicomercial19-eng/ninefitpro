@@ -26,6 +26,7 @@ interface Props {
 export function EcosystemGrid({ category, variant = "grid", showHeader = true }: Props) {
   const [items, setItems] = useState<PhysioModule[]>([]);
   const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
+  const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,13 +41,16 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
         : { data: [] as any[] };
       const connectorByKey = new Map((conns || []).map((c: any) => [c.key, c]));
       const map: Record<string, "online" | "waiting" | "not_configured"> = {};
+      const iframeMap: Record<string, string | null> = {};
       list.forEach((m) => {
           if (m.connector_key) {
             const c = connectorByKey.get(m.connector_key);
             map[m.key] = !/^https?:\/\//i.test(m.cta_route || "") || c?.status === "active" ? "online" : "waiting";
+            iframeMap[m.key] = c?.iframe_url || null;
           } else map[m.key] = "not_configured";
         });
       setStatusByKey(map);
+      setIframeByKey(iframeMap);
     });
   }, [category]);
 
@@ -83,7 +87,15 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
           return (
             <button
               key={m.id}
-              onClick={() => { if (!m.cta_route) return; if (/^https?:\/\//i.test(m.cta_route)) navigate(`/9fit/embed?url=${encodeURIComponent(m.cta_route)}&title=${encodeURIComponent(m.name)}`); else navigate(m.cta_route); }}
+              onClick={() => {
+                // Fonte real de navegação: o iframe_url do conector quando existe
+                // (reflete o alvo de integração vivo), com cta_route como
+                // fallback para módulos sem conector configurado.
+                const target = iframeByKey[m.key] || m.cta_route;
+                if (!target) return;
+                if (/^https?:\/\//i.test(target)) navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(m.name)}`);
+                else navigate(target);
+              }}
               aria-label={`${m.name}: ${label}. Abrir módulo`}
               className="group neural-node text-left overflow-hidden transition-all duration-300"
             >
