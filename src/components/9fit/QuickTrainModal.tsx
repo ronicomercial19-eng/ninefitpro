@@ -59,10 +59,11 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [infoproduct, setInfoproduct] = useState<any>(null);
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
+  const [quickExecutionId, setQuickExecutionId] = useState<string | null>(null);
 
   const reset = () => {
     setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
-    setExercises([]); setModelos([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
+    setExercises([]); setModelos([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false); setQuickExecutionId(null);
   };
 
   const pick = async (k: keyof Answers, v: string) => {
@@ -100,15 +101,11 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
       // Insere workout_executions in_progress (start)
-      try {
-        await supabase.from("workout_executions" as any).insert({
-          athlete_id: athleteId,
-          workout_date: new Date().toISOString().split("T")[0],
-          phase_name: "quick",
-          status: "in_progress",
-          started_at: new Date().toISOString(),
-        } as any);
-      } catch (e) { console.warn("[QuickTrain] start insert", e); }
+      const { data: execution, error: executionError } = await supabase.from("workout_executions" as any)
+        .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() } as any)
+        .select("id").single();
+      if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
+      setQuickExecutionId(String(execution.id));
 
       setShowingOffer(!!prod);
       setStep(3);
@@ -128,6 +125,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const startGuidedWorkout = () => {
     const quickTraining = {
       id: `quick-${Date.now()}`,
+      execution_id: quickExecutionId,
       training_name: `Treino Rápido · ${answers.goal}`,
       training_type: "structured",
       is_active: true,
@@ -145,6 +143,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         })),
       },
     };
+    if (!quickExecutionId) { toast.error("A execução ainda não está pronta. Tente novamente."); return; }
     onClose();
     reset();
     navigate("/9fit/train", { state: { quickTraining } });

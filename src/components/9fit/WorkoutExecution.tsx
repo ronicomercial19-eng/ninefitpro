@@ -25,6 +25,7 @@ interface TrainingAssignment {
   training_type?: string;
   html_file_url?: string;
   training_data?: any;
+  execution_id?: string;
 }
 
 interface WorkoutExecutionProps {
@@ -228,6 +229,21 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (training.execution_id) {
+        setExecutionId(training.execution_id);
+        const { data: savedSets, error: setsError } = await supabase.from("workout_exercise_sets")
+          .select("exercise_order, set_number, completed, actual_weight")
+          .eq("execution_id", training.execution_id);
+        if (cancelled || setsError) return;
+        const restored: Record<string, boolean[]> = {};
+        const restoredWeights: Record<number, number> = {};
+        for (const row of savedSets ?? []) {
+          const exerciseOrder = Number(row.exercise_order); const setNumber = Number(row.set_number);
+          const list = restored[String(exerciseOrder)] ?? []; list[Math.max(0, setNumber - 1)] = row.completed === true; restored[String(exerciseOrder)] = list;
+          if (row.actual_weight !== null) restoredWeights[exerciseOrder] = Number(row.actual_weight);
+        }
+        setCompletedSets(restored); setWeights(restoredWeights); return;
+      }
       const { data, error } = await supabase.rpc("fn_start_workout_execution" as any, {
         p_assignment_id: training.id,
       } as any);
