@@ -24,6 +24,7 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				elevated: 'hsl(var(--elevated))',
 				// 9FIT Neon Colors
 				neon: {
 					300: 'hsl(var(--neon-300))',
