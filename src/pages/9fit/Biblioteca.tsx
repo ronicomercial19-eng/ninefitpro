@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { BookOpen, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
 import { motion } from "framer-motion";
 
 interface LibItem {
@@ -28,13 +29,14 @@ export default function NineFitBiblioteca() {
     (async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke(
-          `library-full-proxy?student_external_id=${athleteId}`,
-          { method: "GET" as any },
-        );
-        if (error) throw error;
-        const list = (data as any)?.items ?? (data as any)?.data ?? [];
-        setItems(Array.isArray(list) ? list : []);
+        const assignments = await loadResolvedTemplateAssignments(athleteId, "library");
+        setItems(assignments.map((assignment) => ({
+          id: assignment.assignment_id,
+          title: assignment.content_title || assignment.content_ref,
+          category: assignment.content_type,
+          type: assignment.resolved_version != null ? `v${assignment.resolved_version}` : undefined,
+          url: assignment.content_ref?.startsWith("http") ? assignment.content_ref : null,
+        })));
       } catch (e: any) {
         toast.error("Biblioteca indisponível agora");
       } finally {
