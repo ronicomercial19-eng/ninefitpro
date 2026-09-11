@@ -197,7 +197,7 @@ export default function NineFitHub() {
       </div>
 
       {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
-      <div className="px-4 mt-8">
+      <div id="ecosystem-grid" className="px-4 mt-8">
         <EcosystemGrid />
       </div>
 
