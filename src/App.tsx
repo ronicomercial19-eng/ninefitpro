@@ -81,6 +81,7 @@ import PosturaProPage from "./pages/admin/PosturaProPage";
 import NexusPage from "./pages/admin/NexusPage";
 import RonProfessorPage from "./pages/admin/RonProfessorPage";
 import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
+import NineFitTemplateLibraryPage from "./pages/admin/NineFitTemplateLibraryPage";
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
@@ -303,6 +304,9 @@ const App = () => (
             } />
             <Route path="/app/skills" element={
               <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
+            } />
+            <Route path="/app/modelos-ninefit" element={
+              <PrivateRoute><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>
             } />
 
             <Route path="*" element={<NotFound />} />
