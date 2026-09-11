@@ -19,7 +19,7 @@ interface LibItem {
 }
 
 export default function NineFitBiblioteca() {
-  const { athleteId } = useAthleteId();
+  const { athleteId, error: athleteError } = useAthleteId();
   const [items, setItems] = useState<LibItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -55,6 +55,14 @@ export default function NineFitBiblioteca() {
         <h1 className="text-massive text-4xl text-foreground mt-1">CATÁLOGO COMPLETO</h1>
         <p className="text-xs text-muted-foreground mt-1">Conteúdos liberados para você pelo seu professor.</p>
       </div>
+
+      {athleteError && (
+        <div className="px-4 mb-4">
+          <div className="glass-mission rounded-xl p-4 text-center">
+            <p className="text-xs">{athleteError}</p>
+          </div>
+        </div>
+      )}
 
       <div className="px-4 grid grid-cols-2 gap-3">
         {loading && (
