@@ -50,6 +50,7 @@ export function StudentDiet({ student }: StudentDietProps) {
   const [previewDiet, setPreviewDiet] = useState<DietAssignment | null>(null);
   const [previewContent, setPreviewContent] = useState<string>('');
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [dietContext, setDietContext] = useState<{ diet_mode?: string; calories_goal?: number | null } | null>(null);
 
   const fetchDiets = async () => {
     setLoading(true);
@@ -72,6 +73,13 @@ export function StudentDiet({ student }: StudentDietProps) {
 
   useEffect(() => {
     fetchDiets();
+    (supabase as any).from('vw_fitpro_diet_context').select('diet_mode,diet_data').eq('athlete_id', student.id).maybeSingle()
+      .then(({ data }: any) => {
+        const row = data || {};
+        const payload = row.diet_data || {};
+        setDietContext({ diet_mode: row.diet_mode, calories_goal: Number(payload.calories_goal || payload.daily_calories || 0) || null });
+      })
+      .catch((error: unknown) => console.warn('Diet context unavailable', error));
   }, [student.id]);
 
   const handleToggleActive = async (diet: DietAssignment) => {
@@ -190,6 +198,20 @@ export function StudentDiet({ student }: StudentDietProps) {
           Atribuir Dieta
         </Button>
       </div>
+
+      {dietContext && (
+        <Card>
+          <CardContent className="flex items-center justify-between gap-3 p-4">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Contexto canônico</p>
+              <p className="text-sm font-medium">{dietContext.diet_mode === 'self_guided' ? 'Modo autoguiado' : 'Plano atribuído'}</p>
+            </div>
+            {dietContext.calories_goal && (
+              <Badge variant="outline">{dietContext.calories_goal} kcal/dia</Badge>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Diet List */}
       {loading ? (
