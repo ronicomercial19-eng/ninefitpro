@@ -37,7 +37,7 @@ const WEEKDAYS = [
 export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewProps) {
   const exercises = training.training_data?.exercises || [];
   const exerciseCount = exercises.length || training.training_data?.exercise_count || 0;
-  const duration = training.training_data?.estimated_duration || 45;
+  const duration = training.training_data?.estimated_duration ?? training.training_data?.requested_duration_min ?? null;
   const protocol = training.training_data?.protocol;
 
   const todayKey = WEEKDAYS.find(w => w.jsDay === new Date().getDay())?.key || "segunda";
@@ -119,7 +119,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
           <div className="bg-background/50 rounded-sm p-3 text-center">
             <Clock className="w-4 h-4 text-primary mx-auto mb-1" />
             <p className="text-xs text-muted-foreground">Duração</p>
-            <p className="text-lg font-black text-foreground">~{duration}min</p>
+            <p className="text-lg font-black text-foreground">{duration ? `~${duration}min` : "Não informado"}</p>
           </div>
           <div className="bg-background/50 rounded-sm p-3 text-center">
             <Zap className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
