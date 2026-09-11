@@ -33,6 +33,7 @@ const THEMES: Record<ShareContentType, Theme> = {
   weekly_recap: { accent: "#E8571A", accentSoft: "#E8571A33", bgFrom: "#0d0d0d", deltaColor: "#39FF14", deltaBg: "#39FF1422", icon: "📅" },
   workout_completed: { accent: "#E8571A", accentSoft: "#E8571A33", bgFrom: "#2a1206", deltaColor: "#39FF14", deltaBg: "#39FF1422", icon: "💪" },
   first_workout: { accent: "#E8571A", accentSoft: "#E8571A33", bgFrom: "#2a1206", deltaColor: "#39FF14", deltaBg: "#39FF1422", icon: "🔥" },
+  id_card: { accent: "#B84DFF", accentSoft: "#B84DFF33", bgFrom: "#1c0a2a", deltaColor: "#B84DFF", deltaBg: "#B84DFF22", icon: "🪪" },
   id_card_upgrade: { accent: "#B84DFF", accentSoft: "#B84DFF33", bgFrom: "#1c0a2a", deltaColor: "#B84DFF", deltaBg: "#B84DFF22", icon: "🪪" },
   goal_achieved: { accent: "#E8571A", accentSoft: "#E8571A33", bgFrom: "#2a1206", deltaColor: "#39FF14", deltaBg: "#39FF1422", icon: "🎯" },
   level_up: { accent: "#FFC01E", accentSoft: "#FFC01E33", bgFrom: "#2a2206", deltaColor: "#FFC01E", deltaBg: "#FFC01E22", icon: "⭐" },
