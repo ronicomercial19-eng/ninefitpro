@@ -46,6 +46,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [embedded, setEmbedded] = useState(false);
+  const [playerLoaded, setPlayerLoaded] = useState(false);
 
   const p = assignment.payload || {};
   const url = assignment.access_url || assignment.player_url || assignment.download_url || p.episodeUrl || p.playerUrl || null;
@@ -85,8 +86,16 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
     })();
   }, [assignment.id]);
 
+  const canComplete = isInfoproduto
+    ? (playerUrl ? embedded && playerLoaded : !!htmlContent)
+    : (loaded && (!!htmlContent || !!url));
+
   const markDone = async () => {
     if (marking) return;
+    if (!canComplete) {
+      toast.error("Carregue o conteúdo antes de marcar como concluído.");
+      return;
+    }
     setMarking(true);
     try {
       const { error } = await supabase
@@ -121,7 +130,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
             <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
           </Button>
           {!assignment.completed_at && (
-            <Button onClick={markDone} disabled={marking} size="sm" className="bg-primary text-primary-foreground">
+            <Button onClick={markDone} disabled={marking || !canComplete} size="sm" className="bg-primary text-primary-foreground">
               <Check className="w-4 h-4 mr-1" />
               {marking ? "Salvando..." : "Marcar concluído"}
             </Button>
@@ -175,6 +184,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
           <div className="rounded-xl overflow-hidden border border-white/[0.06] bg-black">
             <iframe
               src={playerUrl}
+              onLoad={() => setPlayerLoaded(true)}
               className="w-full h-[78vh]"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
@@ -237,7 +247,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
           <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
         </Button>
         {!assignment.completed_at && (
-          <Button onClick={markDone} disabled={marking} className="bg-primary text-primary-foreground">
+          <Button onClick={markDone} disabled={marking || !canComplete} className="bg-primary text-primary-foreground">
             <Check className="w-4 h-4 mr-1" />
             {marking ? "Salvando..." : "Marcar concluído"}
           </Button>
@@ -269,6 +279,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
         <div className="aspect-video rounded-xl overflow-hidden bg-black border border-white/[0.06]">
           <iframe
             src={url.replace('watch?v=', 'embed/')}
+            onLoad={() => setPlayerLoaded(true)}
             className="w-full h-full"
             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
