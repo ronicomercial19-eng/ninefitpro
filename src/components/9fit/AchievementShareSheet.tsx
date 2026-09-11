@@ -156,7 +156,7 @@ export function AchievementShareSheet({
   const handleShare = async () => {
     if (!achievement) return;
     const label = `${achievement.kicker}: ${achievement.title}${achievement.value ? ` ${achievement.value}` : ""} · 9FIT PRO`;
-    const channel = await share(ref.current, label, achievement.contentId);
+    const channel = await share(ref.current, { label, contentId: achievement.contentId });
     if (channel) onClose();
   };
 
