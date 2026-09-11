@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
@@ -17,6 +17,33 @@ function getPoints(values: number[], radius = 2): THREE.Vector3[] {
     const r = (Math.max(0, Math.min(100, v)) / 100) * radius;
     return new THREE.Vector3(Math.cos(angle) * r, Math.sin(angle) * r, 0);
   });
+}
+
+function RadarLine({
+  geometry,
+  color,
+  opacity = 1,
+}: {
+  geometry: THREE.BufferGeometry;
+  color: string;
+  opacity?: number;
+}) {
+  const line = useMemo(() => {
+    const material = new THREE.LineBasicMaterial({
+      color,
+      opacity,
+      transparent: opacity < 1,
+    });
+    return new THREE.Line(geometry, material);
+  }, [color, geometry, opacity]);
+
+  useEffect(() => {
+    return () => {
+      (line.material as THREE.Material).dispose();
+    };
+  }, [line]);
+
+  return <primitive object={line} />;
 }
 
 function RadarMesh({
@@ -58,9 +85,7 @@ function RadarMesh({
           side={THREE.DoubleSide}
         />
       </mesh>
-      <line geometry={edgesGeometry}>
-        <lineBasicMaterial attach="material" color={color} linewidth={2} />
-      </line>
+      <RadarLine geometry={edgesGeometry} color={color} />
       {getPoints(values).map((p, i) => (
         <mesh key={i} position={p}>
           <sphereGeometry args={[0.08, 16, 16]} />
@@ -81,9 +106,7 @@ function GridRings() {
         });
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         return (
-          <line key={r} geometry={geo}>
-            <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.08} />
-          </line>
+          <RadarLine key={r} geometry={geo} color="#ffffff" opacity={0.08} />
         );
       })}
       {AXES.map((_, i) => {
@@ -93,9 +116,7 @@ function GridRings() {
           new THREE.Vector3(Math.cos(angle) * 2, Math.sin(angle) * 2, 0),
         ]);
         return (
-          <line key={i} geometry={geo}>
-            <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.1} />
-          </line>
+          <RadarLine key={i} geometry={geo} color="#ffffff" opacity={0.1} />
         );
       })}
     </group>
