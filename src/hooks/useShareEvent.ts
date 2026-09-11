@@ -26,8 +26,8 @@ export function useShareEvent(contentType: ShareContentType) {
   const [sharing, setSharing] = useState(false);
 
   const share = useCallback(
-    async (node: HTMLElement | null, label?: string) => {
-      if (!node) return;
+    async (node: HTMLElement | null, label?: string, contentId?: string | null): Promise<string | null> => {
+      if (!node) return null;
       setSharing(true);
       try {
         const { default: html2canvas } = await import("html2canvas");
