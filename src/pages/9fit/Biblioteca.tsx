@@ -22,11 +22,14 @@ export default function NineFitBiblioteca() {
   const { athleteId } = useAthleteId();
   const [items, setItems] = useState<LibItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!athleteId) return;
     (async () => {
       setLoading(true);
+      setError(false);
       try {
         const assignments = await loadResolvedTemplateAssignments(athleteId);
         setItems(assignments.map((assignment) => ({
@@ -37,12 +40,13 @@ export default function NineFitBiblioteca() {
           url: assignment.content_ref?.startsWith("http") ? assignment.content_ref : null,
         })));
       } catch (e: any) {
+        setError(true);
         toast.error("Biblioteca indisponível agora");
       } finally {
         setLoading(false);
       }
     })();
-  }, [athleteId]);
+  }, [athleteId, reloadKey]);
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
@@ -58,7 +62,14 @@ export default function NineFitBiblioteca() {
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
           </div>
         )}
-        {!loading && items.length === 0 && (
+        {!loading && error && (
+          <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
+            <BookOpen className="w-6 h-6 text-destructive mb-2" />
+            <p className="text-xs text-muted-foreground">Não foi possível carregar sua biblioteca.</p>
+            <button onClick={() => setReloadKey((k) => k + 1)} className="mt-3 rounded-lg border border-primary/40 px-4 py-2 text-xs text-primary">Tentar novamente</button>
+          </div>
+        )}
+        {!loading && !error && items.length === 0 && (
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
             <BookOpen className="w-6 h-6 text-primary mb-2" />
             <p className="text-xs text-muted-foreground">Sem conteúdos atribuídos ainda.</p>
