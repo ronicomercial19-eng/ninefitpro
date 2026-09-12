@@ -1,180 +1,61 @@
-# Entrega Completa — Blocos A–H + Sync Engine + Guard Reverso + Ativação Unificada
-
-## Escopo
-
-Frontend puro sobre RPCs já existentes no Supabase. Nenhuma migration nova (Bloco H já executado). Nada de layout novo — reaproveitar tokens neon/dark existentes.
-
-## 0. Ativação Unificada (corrigir duplicidade dos anexos 2/3)
-
-- `**ActivationMissionCard.tsx**`: reduzir a **um único CTA "Sua Ativação"** (remover a versão duplicada "Completar perfil / Fazer avaliação / Gerar plano / Registrar agora / Abrir Hub / Ver progresso" que aparece embaixo).
-- `**Hub.tsx**`: remover a segunda instância / segundo card de ativação renderizado (anexo 3). Só 1 card por página.
-- `**Ativacao.tsx**`: garantir as 4 telas funcionais (Assessment → Generation → Execute → Consistency → Finished) já usando `useActivationFlow` — validar handlers.
-- **Guard reverso** em `NineFitLayout.tsx`: se `athlete_activation.finished_at != null` e usuário em `/9fit/ativacao` → redirect `/9fit/os` (já existe parcial — confirmar).
-- **Remover do grid** o item pedido no anexo 1 (identificar no `EcosystemGrid` / `ModuleGrid` o card duplicado de ativação e remover).
-
-## 1. BLOCO E — useAthleteScores (correção de chave)
-
-sync_score_logs usa user_id, NÃO athlete_id. Ajustar o realtime subscribe:
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  [supabase.channel](http://supabase.channel)('sync-score')
-
-    .on('postgres_changes', {
-
-      event: 'INSERT', schema: 'public', table: 'sync_score_logs',
-
-      filter: `user_id=eq.${user.id}`
-
-    }, refresh)
-
-    .subscribe();
-
-Nota: sync_score_logs parece ser o check-in qualitativo diário (feedback_text,
-
-inferred_state), diferente do score calculado em athletes.sync_score
-
-(calcular_sync_score_real). Confirmar com Rony qual das duas fontes alimenta
-
-o Radar 5D visual antes de escolher uma sozinho.
-
-## 2. Daily Protocol + Propagação
-
-- `DailyProtocol.tsx`: 4 perguntas (sono/energia/dor/humor), upsert em `ninefit_checkins` (colunas existentes), chama `refresh()` do `useAthleteScores` após cada resposta.
-- Estado `syncScore === 0` → renderiza `<DailyProtocolCTA>` no Hub em vez de "0" alarmante.
-
-## 3. BLOCO A — Treino Rápido
-
-`QuickTrainModal.tsx` (já existe) + nova página `src/pages/9fit/TreinoRapido.tsx` se necessário:
-
-- 3 perguntas (objetivo / tempo / equipamento) → `rpc('fn_treino_rapido', {...})`.
-- Ao iniciar: `insert workout_executions { phase_name:'quick', status:'in_progress' }`.
-- Ao concluir: `update` para `completed` + `rpc('fn_award_xp', { p_amount: 50, p_source:'quick_workout' })` + `refresh()`.
-
-## 4. BLOCO C — Treinos da Semana
-
-`WeeklyTrainingView.tsx`:
-
-- `rpc('fn_get_week_workouts', { p_athlete_id })` → grid D1-D7 com `phase_status` e `match_percentage`.
-- Não renderizar `rpe_cap` / `phase_category`.
-- Ao concluir dia: `insert workout_executions completed` + `fn_award_xp 100` + `refresh()`.
-
-## 5. BLOCO D — Ajuste de Treino
-
-`AjusteTreino.tsx`:
-
-- Substituir `aplicar_ajuste_treino_dia` por `rpc('fn_ajustar_treino_dia', { p_athlete_id, p_data, p_changes: arrayDeAlteracoes })`.
-- Atualizar UI imediatamente com `data.exercises[]` retornado.
-- Manter realtime `daily_workouts` já implementado.
-
-## 6. BLOCO G — Completar Perfil + Prime Reward
-
-- `CompleteProfileFlow.tsx` (ou nova `CompletarPerfil.tsx`): `rpc('fn_check_onboarding_progress')` → checklist com 7 campos.
-- Quando `sete_dias === true` → `rpc('fn_activate_prime_reward')` (1x, com guard local para não duplicar).
-
-## 7. BLOCO F — HealthFlix
-
-- `HealthFlix.tsx`: reconectar cliente existente (`healthflix-proxy` edge function) e listar conteúdo livre. Sem migration.
-
-## 8. BLOCO H — BLOCO H — Collections / Share Viral
-
-Nova página src/pages/9fit/Collections.tsx + rota:
-
-- Buscar benchmarks reais: carga via strength_records (NÃO registros_carga —
-
-  foi consolidada/desativada), streak via athlete_activation.consistency_days,
-
-  treinos concluídos via workout_executions, metas via metas_aluno se aplicável.
-
-- Montar cards com foto do atleta + dado + marca d'água "9FIT PRO" (canto inf. dir.).
-
-- html2canvas (checar se já está no bundle — se não, bun add html2canvas) →
-
-  screenshot → navigator.share ou download.
-
-Registrar carga (ao concluir treino ou registro manual):
-
-  await supabase.from('strength_records').insert({
-
-    user_id: [user.id](http://user.id),
-
-    exercise_name: exerciseName,
-
-    weight_kg: weight,
-
-    reps: reps,
-
-    sets: sets,
-
-    workout_execution_id: workoutExecutionId,
-
-    origem: 'app',
-
-    recorded_at: new Date()
-
-  });
-
-Registrar compartilhamento (formato real da tabela — NÃO usar dado_exibido,
-
-essa coluna não existe):
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  await supabase.from('share_events').insert({
-
-    user_id: [user.id](http://user.id),
-
-    athlete_id: athleteId,
-
-    channel: 'native_share', // ou 'download' no fallback desktop
-
-    content_type: contentType,
-
-    content_id: templateSlug,
-
-    reward_xp: 20,
-
-    shared_at: new Date()
-
-  });
-
-Templates: social_share_templates já tem 11 seeds ativos — usar direto,
-
-sem criar novo.
-
-## 9. Propagação obrigatória
-
-Após cada evento abaixo → chamar `useAthleteScores().refresh()`:
-
-- resposta Daily Protocol, conclusão de treino, `fn_award_xp`, abertura do app.
-
-## 10. Guard reverso
-
-Confirmar em `NineFitLayout.tsx` o bloco `if (finished && onAtivacao) → /9fit/os` (já presente — validar).
-
-## 11. Validação Playwright
-
-Roteiro em `/tmp/browser/validation.py` cobrindo:
-
-- A: 3 perguntas → treino gerado → start/complete → XP+50.
-- C: semana carrega D1-D7 → concluir dia → XP+100.
-- D: enviar ajuste → UI atualiza sem reload.
-- E: score varia após treino concluído.
-- G: 7 dias → prime ativado (`user_plans` criado).
-- H: share_events registrado.
-- Engine: syncScore=0 → CTA aparece.
-- Guard reverso: usuário finished acessa /ativacao → redirect /os.
-
-## Arquivos afetados (aprox.)
-
-**Editar:** `src/hooks/useAthleteScores.ts`, `src/components/9fit/DailyProtocol.tsx`, `src/components/9fit/QuickTrainModal.tsx`, `src/components/9fit/WeeklyTrainingView.tsx`, `src/pages/9fit/AjusteTreino.tsx`, `src/components/9fit/CompleteProfileFlow.tsx`, `src/pages/9fit/HealthFlix.tsx`, `src/components/9fit/ActivationMissionCard.tsx`, `src/pages/9fit/Hub.tsx`, `src/components/9fit/EcosystemGrid.tsx`, `src/components/9fit/NineFitLayout.tsx`, `src/components/9fit/SyncScoreRing.tsx`, `src/components/9fit/WeeklyRadar3D.tsx`, `src/components/9fit/HubFloatingMetrics.tsx`, `src/components/9fit/OSDashboard.tsx`, `src/App.tsx` (rota Collections).
-**Criar:** `src/pages/9fit/Collections.tsx`, `src/pages/9fit/TreinoRapido.tsx` (se preciso), `src/components/9fit/DailyProtocolCTA.tsx`.
-
-## Fora de escopo
-
-Migrations novas, mudanças de layout/tokens, refatorar edge functions, PATCH 7 não-ativação (Radar externo, PrimePass, multitenant).
-
-## Riscos
-
-- RPCs assumidas existentes (`fn_treino_rapido`, `fn_get_week_workouts`, `fn_ajustar_treino_dia`, `fn_get_athlete_scores`, `fn_check_onboarding_progress`, `fn_activate_prime_reward`, `fn_award_xp`). Se alguma não existir no schema, reportar antes de implementar.
-- `html2canvas` pode precisar ser instalado.
+# QA somente leitura — FitPro (/9fit + /app)
+
+Auditoria por leitura de código, cruzamento de links x rotas e checagem de tipos. Nada foi alterado.
+
+Legenda: ✅ ok · ⚠️ parcial · ❌ ausente/quebrado · 🔒 não verificável nesta sessão
+
+## Checagem de tipos
+
+`tsgo -p tsconfig.app.json` → **2 erros**, ambos em `QuickTrainModal.tsx` (linhas 107 e 108): a consulta de oferta não retorna um registro válido para o TypeScript. Causa: a busca filtra por colunas que não existem em `monetization_offers` (`active` e `goal`; o correto é `status`). Na prática a oferta do Treino Rápido nunca aparece e a criação da execução pode falhar. ❌ P0
+
+## Matriz por tela
+
+| Tela | Rota | Dados reais | Loading | Vazio | Erro | Status |
+|---|---|---|---|---|---|---|
+| Hub | /9fit/hub | vw_hub_status, vw_fitpro_performance_overview, student_library_assignments | ❌ | ❌ | ❌ | ⚠️ |
+| Train | /9fit/train | atribuições + progresso | ✅ | ✅ | ✅ | ✅ |
+| Protocolo | /9fit/protocolo | student_library_assignments | ✅ | ✅ | ⚠️ | ⚠️ |
+| Planejamento | /9fit/planejamento | view de periodização ativa | ⚠️ | ⚠️ | ✅ | ⚠️ |
+| Biblioteca | /9fit/biblioteca | componente versionado | ✅ | ✅ | ✅ | ✅ |
+| Progresso | /9fit/progresso | recordes, avaliações, metas | ✅ | ✅ | ⚠️ | ⚠️ |
+| Move (GPS) | /9fit/move | bio_activity_logs | ✅ | ✅ | ⚠️ | ✅ |
+| Ron | /9fit/ron | mensagens + créditos | ⚠️ | ✅ | ✅ | ⚠️ |
+| Dieta | /9fit/dieta | nutrition_logs | ✅ | ✅ | ✅ | ✅ |
+| Foods | /9fit/foods | só embed externo | ❌ | ❌ | ❌ | ⚠️ |
+| HealthFlix | /9fit/healthflix | library_items | ✅ | ❌ | ✅ | ⚠️ |
+| Prime / PrimePass | /9fit/prime, /planos, /primepass | conteúdo estático | ❌ | ❌ | ❌ | ⚠️ |
+| Perfil | /9fit/profile | profiles | ❌ | ❌ | ❌ | ⚠️ |
+| Compartilhar | /9fit/compartilhar | atletas, recordes, execuções | ✅ | ❌ | ❌ | ⚠️ |
+| Eventos | — | — | — | — | — | ❌ tela não existe |
+| Cobrança | — | — | — | — | — | ❌ tela não existe |
+| Painel professor | /app/* | várias | ❌ | varia | varia | ⚠️ |
+
+## Achados priorizados
+
+### P0 — crítico
+1. **Professor legítimo pode ser expulso do painel.** `AppLayout` redireciona para o app do aluno assim que `isTrainer` é falso, sem esperar o carregamento do papel do usuário. Como o papel é buscado de forma assíncrona depois do login, o primeiro render tende a jogar o professor para fora. Falta um estado de espera antes de decidir.
+2. **Treino Rápido com consulta inválida** (ver seção de tipos): filtro por colunas inexistentes; a oferta nunca é exibida e a verificação de tipos quebra o build de produção.
+
+### P1 — alto
+3. **Quatro links internos sem rota** (levam a tela "não encontrado"): `/9fit/perfil` (botão em Train — a rota real é `/9fit/profile`), `/9fit/progresso/recordes` ("Ver todos" em Progresso), `/9fit/premium` (cartão do ecossistema) e `/9fit/store` (grade de módulos).
+4. **Link de pagamento de teste ainda no código.** `Prime.tsx` aponta para `buy.stripe.com/test_...`. A tela está órfã (importada, mas sem rota — `/9fit/prime` abre PrimePass), então hoje não é alcançável, mas o link fixo continua no projeto e a importação inútil pesa no pacote.
+5. **Prime/PrimePass sem estado real de assinatura.** Nenhuma leitura de `user_subscriptions`, `subscription_plans` ou `payments` nessas telas; o aluno não vê se já é assinante. Existem `useSubscription` e `usePrimeOffer` prontos, porém não usados nessas telas.
+6. **Hub falha em silêncio.** As três consultas do Hub ignoram erro e não têm carregamento: se a view não responder, a tela mostra zeros como se fossem dados confirmados.
+
+### P2 — médio
+7. Perfil, Compartilhar e HealthFlix sem estado de lista vazia/erro.
+8. Foods é apenas um embed externo, sem tratamento de falha de carregamento.
+9. Planejamento trata erro, mas sem indicador de carregamento nem estado vazio claro.
+10. Telas de Eventos e Cobrança, entregues em rodadas anteriores, não existem mais no projeto.
+
+### P3 — baixo
+11. Sessão expirada: o guard preserva a sessão quando a leitura do perfil falha, então queda de rede e falta de permissão produzem a mesma tela — sem mensagem específica.
+12. Pacote principal continua acima do recomendado (cache do app offline elevado para 12 MB para o build passar).
+
+## 🔒 Não verificável nesta sessão
+- Execução autenticada real das telas: o Supabase é externo e não gerenciado aqui, não é possível criar sessão de teste. Toda validação de fluxo logado foi por leitura de código.
+- Efeito prático das regras de acesso (RLS) por papel em tempo de execução.
+- Carregamento efetivo dos embeds externos (HealthFlix, Foods, Community, Checkout), que dependem de login no domínio de origem.
+
+## Próximo passo sugerido
+Corrigir na ordem P0 → P1. Nada será alterado sem sua aprovação.
