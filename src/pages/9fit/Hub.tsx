@@ -41,6 +41,8 @@ export default function NineFitHub() {
 
   const [protocolCount, setProtocolCount] = useState(0);
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
+  const [hubLoading, setHubLoading] = useState(true);
+  const [hubError, setHubError] = useState<string | null>(null);
   const breakdown = {
     treino: liveScores?.dimensions.treino.value ?? null,
     nutri: liveScores?.dimensions.nutri.value ?? null,
@@ -52,22 +54,38 @@ export default function NineFitHub() {
 
   const loadHubData = async () => {
     if (!athleteId) return;
-    // PROMPT 1 — dados reais via vw_hub_status
-    const { data: hub } = await supabase
-      .from("vw_hub_status" as any)
-      .select("*")
-      .eq("athlete_id", athleteId)
-      .maybeSingle();
-    const h: any = hub || {};
-    const { data: performance } = await supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle();
-    setPerformancePlanTitle((performance as any)?.plan_title || null);
+    setHubLoading(true);
+    setHubError(null);
+    try {
+      // PROMPT 1 — dados reais via vw_hub_status
+      const { error: hubErr } = await supabase
+        .from("vw_hub_status" as any)
+        .select("*")
+        .eq("athlete_id", athleteId)
+        .maybeSingle();
+      if (hubErr) throw hubErr;
 
-    const { count } = await supabase
-      .from("student_library_assignments")
-      .select("id", { count: "exact", head: true })
-      .eq("athlete_id", athleteId)
-      .is("completed_at", null);
-    setProtocolCount(count || 0);
+      const { data: performance, error: perfErr } = await supabase
+        .from("vw_fitpro_performance_overview" as any)
+        .select("plan_title")
+        .eq("athlete_id", athleteId)
+        .maybeSingle();
+      if (perfErr) throw perfErr;
+      setPerformancePlanTitle((performance as any)?.plan_title || null);
+
+      const { count, error: countErr } = await supabase
+        .from("student_library_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("athlete_id", athleteId)
+        .is("completed_at", null);
+      if (countErr) throw countErr;
+      setProtocolCount(count || 0);
+    } catch (e: any) {
+      console.error("[Hub] loadHubData:", e);
+      setHubError("Não foi possível carregar seus dados agora.");
+    } finally {
+      setHubLoading(false);
+    }
   };
 
   useEffect(() => { loadHubData(); }, [athleteId, user?.id]);
