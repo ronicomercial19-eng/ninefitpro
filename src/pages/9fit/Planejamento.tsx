@@ -158,6 +158,18 @@ export default function NineFitPlanejamento() {
         </span>
       </div>
 
+      {planLoading && (
+        <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>
+      )}
+      {planError && (
+        <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-destructive">{planError}</p>
+          <button onClick={() => void loadPlan()} className="text-xs text-primary shrink-0">Tentar de novo</button>
+        </div>
+      )}
+
+
+
       {/* Periodização */}
       <div className="mx-4 mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
         <div className="flex items-center justify-between">
