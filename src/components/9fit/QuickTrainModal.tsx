@@ -102,9 +102,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
       // Insere workout_executions in_progress (start)
-      const { data: execution, error: executionError } = await supabase.from("workout_executions" as any)
+      const { data: executionRaw, error: executionError } = await supabase.from("workout_executions" as any)
         .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() } as any)
         .select("id").single();
+      const execution = executionRaw as { id?: string } | null;
       if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
       setQuickExecutionId(String(execution.id));
 
