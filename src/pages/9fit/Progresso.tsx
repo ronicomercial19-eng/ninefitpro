@@ -335,7 +335,7 @@ export default function NineFitProgresso() {
           <p className="text-sm font-semibold flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Recordes Recentes
           </p>
-          {prs.length > 0 && <button onClick={() => navigate("/9fit/progresso/recordes")} className="text-xs text-primary">Ver todos</button>}
+          {prs.length > 0 && <span className="text-xs text-muted-foreground">{prs.length} registro{prs.length > 1 ? "s" : ""}</span>}
         </div>
         {prs.length > 0 ? (
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">

@@ -16,7 +16,7 @@ const MODULES: ModuleDef[] = [
   { key: "mensagens",   label: "Mensagens",     sub: "Chat 9ZAP",         icon: MessageSquare,  path: "/9fit/mensagens",       group: "SOCIAL" },
   { key: "ron",         label: "O Ron",         sub: "Neural Coach",      icon: Brain,          path: "/9fit/ron",             group: "SOCIAL" },
   { key: "primepass",   label: "PrimePass",     sub: "Elite Access",      icon: Crown,          path: "/9fit/primepass",       group: "ELITE" },
-  { key: "9store",      label: "9Store",        sub: "Performance Shop",  icon: ShoppingBag,    path: "/9fit/store",           group: "ELITE" },
+  { key: "9store",      label: "9Store",        sub: "Performance Shop",  icon: ShoppingBag,    path: "/9fit/native-system?app=store",           group: "ELITE" },
   { key: "elitebio",    label: "9PRIME Bio",    sub: "LongeVita",         icon: Sparkles,       path: "/9fit/elite-bio",       group: "ELITE" },
   { key: "smarttreino", label: "SmartTreino",   sub: "Periodização IA",   icon: Dumbbell,       path: "/9fit/train",           group: "PERFORMANCE" },
   { key: "planejamento",label: "SmartPeriodizer", sub: "Ondas & Plano",   icon: CalendarRange,  path: "/9fit/planejamento",    group: "PERFORMANCE" },
