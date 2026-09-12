@@ -77,15 +77,16 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
     if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
     setLoading(true);
     try {
-      // 1) Oferta antes do treino (não bloqueia)
+      // 1) Oferta antes do treino (não bloqueia) — colunas reais de monetization_offers
       const { data: prod } = await supabase
-        .from("monetization_offers" as any)
-        .select("*")
-        .eq("active", true)
-        .or(`slug.eq.audience_49,goal.eq.${a.goal}`)
+        .from("monetization_offers")
+        .select("id,name,description,category,slug,checkout_url,thumbnail_url")
+        .eq("status", "active")
+        .or(`slug.eq.audience_49,category.eq.${a.goal}`)
+        .order("priority", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setInfoproduct(prod);
+      setInfoproduct(prod as any);
 
       // 2) TREINO RÁPIDO via RPC canônica (Bloco A)
       const { data, error } = await supabase.rpc("fn_treino_rapido" as any, {
