@@ -83,6 +83,7 @@ export default function NineFitPlanejamento() {
     } else {
       setHasRemotePlan(false);
     }
+    setPlanLoading(false);
   }
 
   async function syncNow() {
