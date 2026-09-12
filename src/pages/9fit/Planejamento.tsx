@@ -24,16 +24,28 @@ export default function NineFitPlanejamento() {
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);
   const [hasRemotePlan, setHasRemotePlan] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [planError, setPlanError] = useState<string | null>(null);
   const { mark } = useActivationProgress();
 
   async function loadPlan() {
     if (!athleteId) return;
+    setPlanLoading(true);
+    setPlanError(null);
     // Source of truth: vw_athlete_periodizacao_ativa (unifica athlete_periodizations + periodization_plans_remote)
-    const { data } = await supabase
+    const { data, error: planErr } = await supabase
       .from("vw_athlete_periodizacao_ativa" as any)
       .select("plan_name, waves, macrocycle, mesocycle, source, periodization_id, current_phase")
       .eq("athlete_id", athleteId)
       .maybeSingle();
+
+    if (planErr) {
+      console.error("[Planejamento] loadPlan:", planErr);
+      setPlanError("Não foi possível carregar seu planejamento agora.");
+      setPlanLoading(false);
+      return;
+    }
+
 
     const row = data as any;
     let wavesFound: RemoteWave[] | null = null;
