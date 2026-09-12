@@ -130,6 +130,15 @@ export default function NineFitHub() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <WeeklyRecapPrompt />
+      {hubLoading && (
+        <p className="px-4 pt-3 text-[11px] text-muted-foreground">Carregando seus dados…</p>
+      )}
+      {hubError && (
+        <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-destructive">{hubError}</p>
+          <button onClick={() => void loadHubData()} className="text-xs text-primary shrink-0">Tentar de novo</button>
+        </div>
+      )}
       {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
       <HeroSyncSection
         name={name}
