@@ -58,7 +58,6 @@ import NineFitKitchen from "./pages/9fit/Kitchen";
 import NineFitRecovery from "./pages/9fit/Recovery";
 import NineFitProtocolo from "./pages/9fit/Protocolo";
 import NineFitPlans from "./pages/9fit/Plans";
-import NineFitPrime from "./pages/9fit/Prime";
 import NineFitOferta from "./pages/9fit/Oferta";
 import NineFitCheckout from "./pages/9fit/Checkout";
 import NineFitCheckoutSuccess from "./pages/9fit/CheckoutSuccess";
