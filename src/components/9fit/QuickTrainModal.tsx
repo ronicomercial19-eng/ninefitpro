@@ -77,15 +77,16 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
     if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
     setLoading(true);
     try {
-      // 1) Oferta antes do treino (não bloqueia)
+      // 1) Oferta antes do treino (não bloqueia) — colunas reais de monetization_offers
       const { data: prod } = await supabase
-        .from("monetization_offers" as any)
-        .select("*")
-        .eq("active", true)
-        .or(`slug.eq.audience_49,goal.eq.${a.goal}`)
+        .from("monetization_offers")
+        .select("id,name,description,category,slug,checkout_url,thumbnail_url")
+        .eq("status", "active")
+        .or(`slug.eq.audience_49,category.eq.${a.goal}`)
+        .order("priority", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setInfoproduct(prod);
+      setInfoproduct(prod as any);
 
       // 2) TREINO RÁPIDO via RPC canônica (Bloco A)
       const { data, error } = await supabase.rpc("fn_treino_rapido" as any, {
@@ -101,9 +102,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
       // Insere workout_executions in_progress (start)
-      const { data: execution, error: executionError } = await supabase.from("workout_executions" as any)
+      const { data: executionRaw, error: executionError } = await supabase.from("workout_executions" as any)
         .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() } as any)
         .select("id").single();
+      const execution = executionRaw as { id?: string } | null;
       if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
       setQuickExecutionId(String(execution.id));
 

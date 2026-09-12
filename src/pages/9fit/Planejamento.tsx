@@ -24,16 +24,28 @@ export default function NineFitPlanejamento() {
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);
   const [hasRemotePlan, setHasRemotePlan] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [planError, setPlanError] = useState<string | null>(null);
   const { mark } = useActivationProgress();
 
   async function loadPlan() {
     if (!athleteId) return;
+    setPlanLoading(true);
+    setPlanError(null);
     // Source of truth: vw_athlete_periodizacao_ativa (unifica athlete_periodizations + periodization_plans_remote)
-    const { data } = await supabase
+    const { data, error: planErr } = await supabase
       .from("vw_athlete_periodizacao_ativa" as any)
       .select("plan_name, waves, macrocycle, mesocycle, source, periodization_id, current_phase")
       .eq("athlete_id", athleteId)
       .maybeSingle();
+
+    if (planErr) {
+      console.error("[Planejamento] loadPlan:", planErr);
+      setPlanError("Não foi possível carregar seu planejamento agora.");
+      setPlanLoading(false);
+      return;
+    }
+
 
     const row = data as any;
     let wavesFound: RemoteWave[] | null = null;
@@ -71,6 +83,7 @@ export default function NineFitPlanejamento() {
     } else {
       setHasRemotePlan(false);
     }
+    setPlanLoading(false);
   }
 
   async function syncNow() {
@@ -144,6 +157,18 @@ export default function NineFitPlanejamento() {
           Aluno
         </span>
       </div>
+
+      {planLoading && (
+        <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>
+      )}
+      {planError && (
+        <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-destructive">{planError}</p>
+          <button onClick={() => void loadPlan()} className="text-xs text-primary shrink-0">Tentar de novo</button>
+        </div>
+      )}
+
+
 
       {/* Periodização */}
       <div className="mx-4 mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">

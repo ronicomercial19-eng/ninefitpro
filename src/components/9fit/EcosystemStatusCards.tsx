@@ -131,7 +131,7 @@ export function EcosystemStatusCards({ data }: EcosystemStatusCardsProps) {
 
         {/* Premium Card */}
         <button
-          onClick={() => navigate("/9fit/premium")}
+          onClick={() => navigate("/9fit/prime")}
           className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-sm p-4 text-left hover:border-yellow-500/50 transition-all group"
         >
           <div className="flex items-start justify-between mb-3">

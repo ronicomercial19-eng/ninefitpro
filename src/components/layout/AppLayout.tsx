@@ -33,7 +33,20 @@ const routeLabels: Record<string, string> = {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
-  const { isTrainer } = useAuth();
+  const { isTrainer, loading, user, userRole } = useAuth();
+
+  // Aguarda o papel do usuário carregar antes de decidir o acesso,
+  // senão um professor legítimo é redirecionado no primeiro render.
+  if (loading || (user && userRole === null)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Verificando seu acesso…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isTrainer) return <Navigate to="/9fit/hub" replace />;
   

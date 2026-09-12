@@ -302,7 +302,7 @@ export default function NineFitTrain() {
           <div className="glass-mission rounded-2xl p-6 text-center">
             <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
             <p className="text-sm">{athleteError}</p>
-            <button onClick={() => navigate("/9fit/perfil")} className="mt-3 rounded-lg border border-primary/40 px-4 py-2 text-xs text-primary">Ir para o perfil</button>
+            <button onClick={() => navigate("/9fit/profile")} className="mt-3 rounded-lg border border-primary/40 px-4 py-2 text-xs text-primary">Ir para o perfil</button>
           </div>
         ) : loadError ? (
           <div className="glass-mission rounded-2xl p-6 text-center">
