@@ -12,6 +12,7 @@ import { detectPain } from "@/services/pain/detectPain";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useCredits } from "@/hooks/useCredits";
 import { toast } from "sonner";
+import { useSendZap, useZapMessages, useZapThread } from "@/hooks/use-ninezap-chat";
 
 const RON_ACTIONS = [
   { label: "Criar treino", route: "/9fit/train?from=ron" },
@@ -45,6 +46,9 @@ export default function NineFitRon() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { state } = useUserState();
+  const zapThread = useZapThread(user?.id, `Atendimento — ${user?.user_metadata?.full_name || "Aluno"}`);
+  const zapMessages = useZapMessages(zapThread.data);
+  const sendZap = useSendZap(zapThread.data, user?.id);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -87,6 +91,16 @@ export default function NineFitRon() {
       }
     })();
   }, [user?.id, autoTriggered, autoCtx, state]);
+
+  useEffect(() => {
+    if (!zapMessages.data?.length) return;
+    setMessages(zapMessages.data.map((message) => ({
+      id: message.id,
+      role: message.sender_type === "user" ? "user" : "assistant",
+      content: message.body,
+      created_at: message.created_at,
+    })));
+  }, [zapMessages.data]);
 
   // Realtime: novas mensagens entram sozinhas
   useRealtimeTable(
@@ -182,18 +196,19 @@ export default function NineFitRon() {
       return;
     }
 
-    const result = await withCredit("ron_chat", async () => {
-      const history = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
-      const [{ data: performance }, { data: safety }, { data: diet }] = await Promise.all([
-        supabase.from("vw_fitpro_performance_overview" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
-        supabase.from("vw_fitpro_safety_context" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
-        supabase.from("vw_fitpro_diet_context" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
-      ]);
-      const { data } = await supabase.functions.invoke("ai-coach", {
-        body: { mode: "chat", message: userMsg, userId: user.id, history, context: { performance, safety, diet } },
-      });
-      return (data as any)?.data?.content || (data as any)?.content || "Aguardando mais sinais do seu corpo.";
-    });
+    if (!zapThread.data) {
+      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: "Não consegui abrir o canal 9ZAP agora. Tente novamente em instantes." }));
+      setSending(false);
+      return;
+    }
+
+    let result: string | null = userMsg;
+    try {
+      await sendZap.mutateAsync(userMsg);
+    } catch (error) {
+      console.error("[Ron] 9ZAP send failed", error);
+      result = null;
+    }
 
     if (result === null) {
       // FIX QA Master #5: antes mostrava "Recarregue" sem dizer onde;
@@ -212,12 +227,7 @@ export default function NineFitRon() {
       return;
     }
 
-    setMessages((p) => {
-      const out = [...p];
-      out[out.length - 1] = { role: "assistant", content: result };
-      return out;
-    });
-    await persist("assistant", result);
+    setMessages((p) => p.slice(0, -1));
     setSending(false);
   };
 
