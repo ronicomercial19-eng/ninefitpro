@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Image as ImageIcon } from "lucide-react";
+import { ChevronRight, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MODULE_IMAGES } from "@/assets/modules";
 
@@ -94,8 +94,19 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
   };
 
   if (loading) return <section className="space-y-4" aria-busy="true"><div className="h-5 w-40 bg-muted animate-pulse" /><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[1, 2].map((key) => <div key={key} className="h-48 bg-card border border-white/10 animate-pulse" />)}</div></section>;
-  if (loadError) return <section className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-muted-foreground">{loadError}</section>;
-  if (!items.length) return null;
+  if (loadError) return (
+    <section className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-muted-foreground flex items-center justify-between gap-3">
+      <span>{loadError}</span>
+      <button type="button" onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 text-primary font-semibold shrink-0">
+        <RefreshCw className="w-3.5 h-3.5" /> Tentar novamente
+      </button>
+    </section>
+  );
+  if (!items.length) return (
+    <section className="border border-white/10 bg-card/40 p-5 text-sm text-muted-foreground">
+      Nenhum módulo disponível nesta categoria.
+    </section>
+  );
 
   return (
     <section className="space-y-4">
@@ -122,14 +133,19 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
 
       <div className={gridClass}>
         {visibleItems.map((m) => {
-          const src = MODULE_IMAGES[m.key] || m.hero_image;
+          // A imagem cadastrada no módulo é a fonte individual do card;
+          // o asset local é somente fallback para dados legados sem imagem.
+          const src = m.hero_image || MODULE_IMAGES[m.key];
           const status = statusByKey[m.key];
           const online = status === "online";
           const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
-          const target = iframeByKey[m.key] || m.cta_route || fallbackRoutes[m.key];
+          const target = iframeByKey[m.key] || fallbackRoutes[m.key] || m.cta_route;
+          const canOpen = Boolean(target);
           return (
             <button
               key={m.id}
+              type="button"
+              disabled={!canOpen}
               onClick={() => {
                 // Fonte real de navegação: o iframe_url do conector quando existe
                 // (reflete o alvo de integração vivo), com cta_route como
@@ -139,7 +155,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                 else navigate(target);
               }}
               aria-label={`${m.name}: ${label}. Abrir módulo`}
-              className={`group neural-node text-left overflow-hidden transition-all duration-300 ${variant === "rail" ? "min-w-[280px] snap-start" : ""}`}
+              className={`group neural-node text-left overflow-hidden transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${variant === "rail" ? "min-w-[280px] snap-start" : ""}`}
             >
               {/* glow on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
