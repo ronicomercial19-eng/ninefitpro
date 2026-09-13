@@ -27,12 +27,23 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
   const [items, setItems] = useState<PhysioModule[]>([]);
   const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
     let q = supabase.from("physio_modules").select("*").eq("status", "active").order("display_order");
     if (category) q = q.eq("category", category);
-    q.then(async ({ data }) => {
+    q.then(async ({ data, error }) => {
+      if (cancelled) return;
+      if (error) {
+        setLoadError("Não foi possível carregar o ecossistema.");
+        setLoading(false);
+        return;
+      }
       const list = (data ?? []) as any[];
       setItems(list);
       const keys = list.map((m) => m.connector_key).filter(Boolean);
@@ -45,19 +56,45 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
       list.forEach((m) => {
           if (m.connector_key) {
             const c = connectorByKey.get(m.connector_key);
-            map[m.key] = !/^https?:\/\//i.test(m.cta_route || "") || c?.status === "active" ? "online" : "waiting";
+            const route = m.cta_route || "";
+            const hasTarget = Boolean(route || c?.iframe_url);
+            const isInternal = route.startsWith("/");
+            map[m.key] = !hasTarget || (!isInternal && c?.status !== "active") ? "not_configured" : "online";
             iframeMap[m.key] = c?.iframe_url || null;
           } else map[m.key] = "not_configured";
         });
-      setStatusByKey(map);
-      setIframeByKey(iframeMap);
+      if (!cancelled) {
+        setStatusByKey(map);
+        setIframeByKey(iframeMap);
+        setLoading(false);
+      }
     });
+    return () => { cancelled = true; };
   }, [category]);
 
   const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
   const [expanded, setExpanded] = useState(false);
   const visibleItems = expanded ? items : items.slice(0, 2);
+  const gridClass = variant === "rail"
+    ? "flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1"
+    : "grid grid-cols-1 sm:grid-cols-2 gap-3";
 
+  const fallbackRoutes: Record<string, string> = {
+    store: "/9fit/native-system?app=store",
+    zap: "/9fit/ron",
+    events: "/9fit/staff",
+    planejamento: "/9fit/planejamento",
+    ajuste_treino: "/9fit/ajuste-treino",
+    progress: "/9fit/progresso",
+    foods: "/9fit/foods",
+    healthflix: "/9fit/healthflix",
+    habitflow: "/9fit/habit-flow",
+    staff: "/9fit/staff",
+    ron: "/9fit/ron",
+  };
+
+  if (loading) return <section className="space-y-4" aria-busy="true"><div className="h-5 w-40 bg-muted animate-pulse" /><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[1, 2].map((key) => <div key={key} className="h-48 bg-card border border-white/10 animate-pulse" />)}</div></section>;
+  if (loadError) return <section className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-muted-foreground">{loadError}</section>;
   if (!items.length) return null;
 
   return (
@@ -83,12 +120,13 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
         </header>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className={gridClass}>
         {visibleItems.map((m) => {
           const src = MODULE_IMAGES[m.key] || m.hero_image;
           const status = statusByKey[m.key];
           const online = status === "online";
           const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
+          const target = iframeByKey[m.key] || m.cta_route || fallbackRoutes[m.key];
           return (
             <button
               key={m.id}
@@ -96,13 +134,12 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                 // Fonte real de navegação: o iframe_url do conector quando existe
                 // (reflete o alvo de integração vivo), com cta_route como
                 // fallback para módulos sem conector configurado.
-                const target = iframeByKey[m.key] || m.cta_route;
                 if (!target) return;
                 if (/^https?:\/\//i.test(target)) navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(m.name)}`);
                 else navigate(target);
               }}
               aria-label={`${m.name}: ${label}. Abrir módulo`}
-              className="group neural-node text-left overflow-hidden transition-all duration-300"
+              className={`group neural-node text-left overflow-hidden transition-all duration-300 ${variant === "rail" ? "min-w-[280px] snap-start" : ""}`}
             >
               {/* glow on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
