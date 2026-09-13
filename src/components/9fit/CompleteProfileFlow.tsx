@@ -14,10 +14,14 @@ import { useActivationProgress } from "@/hooks/useActivationProgress";
  *  3) Incentivo ao primeiro treino + compartilhar
  *  4) Oferta consultoria (somente após 3 dias consecutivos)
  *  5) Recompensa 7 dias (PrimePass 1 mês + ID Card Gold)
+ *
+ * editOnly (13/09): quando true, abre direto na etapa 1 (Dados+foto) e ao
+ * salvar fecha na hora — usado pelo botão "Ajustar" do DigitalIDCard, sem
+ * forçar o aluno a passar pelas etapas de ativação de novo.
  */
-interface Props { open: boolean; onClose: () => void; }
+interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
 
-export function CompleteProfileFlow({ open, onClose }: Props) {
+export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { mark } = useActivationProgress();
@@ -31,6 +35,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
 
   useEffect(() => {
     if (!open || !user?.id) return;
+    setStep(0);
     (async () => {
       const { data: ath } = await supabase.from("athletes").select("*").eq("user_id", user.id).maybeSingle();
       if (ath) {
@@ -42,6 +47,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
           age: (ath as any).age || "",
         });
       }
+      if (editOnly) return; // não precisa de streak/workouts pra só editar dados
       // Streak: dias consecutivos com check-in
       const { data: ck } = await (supabase as any)
         .from("ninefit_checkins")
@@ -63,7 +69,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
         .eq("user_id", user.id);
       setWorkoutsDone(count || 0);
     })();
-  }, [open, user?.id]);
+  }, [open, user?.id, editOnly]);
 
   if (!open) return null;
 
@@ -96,11 +102,15 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
       if (resolvedAthleteId) {
         await supabase.from("athlete_profile_snapshots" as any).insert({
           athlete_id: resolvedAthleteId,
-          source: "profile_complete",
+          source: editOnly ? "profile_adjusted" : "profile_complete",
           snapshot_data: { ...profile, photo: photoUrl, at: new Date().toISOString() },
         } as any);
       }
       toast.success("Perfil salvo");
+      if (editOnly) {
+        onClose();
+        return;
+      }
       mark('profile_complete');
       next();
     } catch {
@@ -132,17 +142,21 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
           initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Completar Perfil</p>
-              <p className="text-xs text-muted-foreground">Etapa {step + 1} de 5</p>
+              <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
+                {editOnly ? "Ajustar Perfil" : "Completar Perfil"}
+              </p>
+              {!editOnly && <p className="text-xs text-muted-foreground">Etapa {step + 1} de 5</p>}
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-lg border border-white/10 grid place-items-center">
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="h-1 rounded-full bg-white/5 mb-5 overflow-hidden">
-            <div className="h-full bg-primary transition-all" style={{ width: `${((step + 1) / 5) * 100}%` }} />
-          </div>
+          {!editOnly && (
+            <div className="h-1 rounded-full bg-white/5 mb-5 overflow-hidden">
+              <div className="h-full bg-primary transition-all" style={{ width: `${((step + 1) / 5) * 100}%` }} />
+            </div>
+          )}
 
           {step === 0 && (
             <div className="space-y-3">
@@ -165,12 +179,12 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
               </label>
               <button onClick={saveProfile} disabled={saving}
                 className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 disabled:opacity-60">
-                {saving ? "Salvando..." : "Salvar e continuar"}
+                {saving ? "Salvando..." : editOnly ? "Atualizar" : "Salvar e continuar"}
               </button>
             </div>
           )}
 
-          {step === 1 && (
+          {!editOnly && step === 1 && (
             <div className="space-y-4">
               <p className="font-display text-lg flex items-center gap-2"><Dumbbell className="w-5 h-5 text-primary" /> Seu plano está pronto</p>
               <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
@@ -183,7 +197,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
             </div>
           )}
 
-          {step === 2 && (
+          {!editOnly && step === 2 && (
             <div className="space-y-4">
               <p className="font-display text-lg flex items-center gap-2"><Share2 className="w-5 h-5 text-primary" /> Primeiro treino</p>
               <p className="text-sm text-muted-foreground">Registrar e compartilhar seu primeiro treino acelera resultados em 3x.</p>
@@ -193,7 +207,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
             </div>
           )}
 
-          {step === 3 && (
+          {!editOnly && step === 3 && (
             <div className="space-y-4">
               <p className="font-display text-lg flex items-center gap-2"><MessageCircle className="w-5 h-5 text-primary" /> Consultoria</p>
               {streakDays >= 3 && workoutsDone >= 3 ? (
@@ -213,7 +227,7 @@ export function CompleteProfileFlow({ open, onClose }: Props) {
             </div>
           )}
 
-          {step === 4 && (
+          {!editOnly && step === 4 && (
             <div className="space-y-4">
               <p className="font-display text-lg flex items-center gap-2"><Trophy className="w-5 h-5 text-primary" /> Recompensa 7 dias</p>
               {streakDays >= 7 ? (
