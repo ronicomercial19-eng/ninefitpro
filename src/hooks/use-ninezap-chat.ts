@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type ZapMessage = {
   id: string;
   thread_id: string;
-  sender_type: "user" | "agent" | "operator" | string;
+  sender_type: "student" | "trainer" | "agent" | "operator" | string;
   body: string;
   created_at: string;
   external_id?: string | null;
@@ -61,7 +61,7 @@ export function useSendZap(threadId?: string, userId?: string) {
           thread_id: threadId,
           body,
           external_id: `fitpro:msg:${crypto.randomUUID()}`,
-          sender_type: "user",
+          sender_type: "student",
           sender_external_id: `fitpro:user:${userId}`,
           attachments: [],
         },

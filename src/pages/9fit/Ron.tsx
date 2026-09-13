@@ -96,7 +96,7 @@ export default function NineFitRon() {
     if (!zapMessages.data?.length) return;
     setMessages(zapMessages.data.map((message) => ({
       id: message.id,
-      role: message.sender_type === "user" ? "user" : "assistant",
+      role: message.sender_type === "student" || message.sender_type === "user" ? "user" : "assistant",
       content: message.body,
       created_at: message.created_at,
     })));
