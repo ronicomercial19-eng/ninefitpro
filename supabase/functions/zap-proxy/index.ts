@@ -8,8 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-const ZAP_BASE = (Deno.env.get("NINEZAP_BASE_URL") ||
-  "https://project--77259b3e-ad02-40dd-b522-75d1dcbd4ed9.lovable.app") + "/api/public/zap";
+const configuredZapBase = (Deno.env.get("NINEZAP_BASE_URL") || "https://core-stride-os.lovable.app").replace(/\/+$/, "");
+const ZAP_BASE = configuredZapBase.endsWith("/api/public/zap")
+  ? configuredZapBase
+  : `${configuredZapBase}/api/public/zap`;
 const TENANT = Deno.env.get("NINEZAP_TENANT") || "fitpro";
 
 const json = (s: number, b: unknown) =>
