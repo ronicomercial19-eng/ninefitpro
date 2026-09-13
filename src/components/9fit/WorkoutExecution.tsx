@@ -391,28 +391,45 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     }
 
     setPersisting(true);
-    const { data, error } = await supabase.rpc("fn_complete_workout_execution" as any, {
-      p_execution_id: executionId,
-      p_duration_seconds: workoutSeconds,
-    } as any);
-    setPersisting(false);
+    try {
+      const { data, error } = await supabase.rpc("fn_complete_workout_execution" as any, {
+        p_execution_id: executionId,
+        p_duration_seconds: workoutSeconds,
+      } as any);
 
-    if (error || !(data as any)?.ok) {
-      toast.error((data as any)?.error === "no_completed_sets"
-        ? "Conclua ao menos uma série antes de finalizar."
-        : "Não foi possível concluir o treino.");
-      return;
+      if (error) {
+        const message = error.message?.toLowerCase() ?? "";
+        const sessionLost = message.includes("access_denied") || message.includes("jwt") || message.includes("auth");
+        setExecutionError(error.message);
+        toast.error(sessionLost
+          ? "Sua sessão do treino expirou. Reabra o treino e tente concluir novamente."
+          : `Não foi possível concluir: ${error.message}`);
+        return;
+      }
+
+      if (!(data as any)?.ok) {
+        toast.error((data as any)?.error === "no_completed_sets"
+          ? "Conclua ao menos uma série antes de finalizar."
+          : `Não foi possível concluir: ${(data as any)?.error || "resposta inválida do servidor"}`);
+        return;
+      }
+
+      if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+      await mirrorEvent("workout_completed", {
+        execution_id: executionId,
+        training_id: training.id,
+        training_name: liveTraining.training_name,
+        duration_seconds: workoutSeconds,
+        completed_sets: (data as any).completed_sets,
+      });
+      setShowPSE(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "erro inesperado";
+      setExecutionError(message);
+      toast.error(`Não foi possível concluir: ${message}`);
+    } finally {
+      setPersisting(false);
     }
-
-    if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
-    await mirrorEvent("workout_completed", {
-      execution_id: executionId,
-      training_id: training.id,
-      training_name: liveTraining.training_name,
-      duration_seconds: workoutSeconds,
-      completed_sets: (data as any).completed_sets,
-    });
-    setShowPSE(true);
   };
 
   // For link training, open only after the component has mounted.
