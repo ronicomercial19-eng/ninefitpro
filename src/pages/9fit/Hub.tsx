@@ -25,6 +25,7 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
+import { HubCommandDeck } from "@/components/9fit/HubCommandDeck";
 
 
 export default function NineFitHub() {
@@ -57,29 +58,23 @@ export default function NineFitHub() {
     setHubLoading(true);
     setHubError(null);
     try {
-      // PROMPT 1 — dados reais via vw_hub_status
-      const { error: hubErr } = await supabase
-        .from("vw_hub_status" as any)
-        .select("*")
-        .eq("athlete_id", athleteId)
-        .maybeSingle();
-      if (hubErr) throw hubErr;
+      // Leituras independentes: uma view indisponível não congela a home inteira.
+      const [hubResult, performanceResult, libraryResult] = await Promise.all([
+        supabase.from("vw_hub_status" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
+        supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle(),
+        supabase.from("student_library_assignments").select("id", { count: "exact", head: true }).eq("athlete_id", athleteId).is("completed_at", null),
+      ]);
 
-      const { data: performance, error: perfErr } = await supabase
-        .from("vw_fitpro_performance_overview" as any)
-        .select("plan_title")
-        .eq("athlete_id", athleteId)
-        .maybeSingle();
-      if (perfErr) throw perfErr;
-      setPerformancePlanTitle((performance as any)?.plan_title || null);
-
-      const { count, error: countErr } = await supabase
-        .from("student_library_assignments")
-        .select("id", { count: "exact", head: true })
-        .eq("athlete_id", athleteId)
-        .is("completed_at", null);
-      if (countErr) throw countErr;
-      setProtocolCount(count || 0);
+      setPerformancePlanTitle((performanceResult.data as any)?.plan_title || null);
+      setProtocolCount(libraryResult.count || 0);
+      if (hubResult.error || performanceResult.error || libraryResult.error) {
+        console.warn("[Hub] algumas fontes não responderam", {
+          hub: hubResult.error?.message,
+          performance: performanceResult.error?.message,
+          library: libraryResult.error?.message,
+        });
+        setHubError("Alguns sinais estão sincronizando; o restante da home continua disponível.");
+      }
     } catch (e: any) {
       console.error("[Hub] loadHubData:", e);
       setHubError("Não foi possível carregar seus dados agora.");
@@ -148,6 +143,14 @@ export default function NineFitHub() {
         lastUpdate={liveScores?.sync.observed_at ?? undefined}
       />
 
+      <HubCommandDeck
+        name={name}
+        syncScore={liveScores?.sync.value ?? null}
+        scoreStatus={scoreStatus}
+        weekly={weekly}
+        hasPlan={Boolean(performancePlanTitle)}
+      />
+
 
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics vitals={liveScores?.vitals} />
@@ -205,7 +208,6 @@ export default function NineFitHub() {
               <p className="text-label">SEU PROTOCOLO</p>
               <p className="text-sm font-semibold">
                 {protocolCount} conteúdo{protocolCount > 1 ? "s" : ""}
-                {protocolCount > 1 ? "s" : ""}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
