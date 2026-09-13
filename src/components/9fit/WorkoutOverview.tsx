@@ -228,7 +228,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
       {/* Start Button */}
       <Button
         onClick={onStart}
-        className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base hover:bg-primary/90 transition-all"
+        className="w-full nine-pro-gradient nine-pro-clip text-primary-foreground font-black uppercase py-6 text-base hover:opacity-90 transition-opacity"
       >
         <Play className="w-5 h-5 mr-2" />
         Iniciar Treino

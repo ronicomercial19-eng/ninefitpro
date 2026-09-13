@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Play, Loader2, Dumbbell, Lock, Check } from "lucide-react";
 import { toast } from "sonner";
-import { useAthleteScores } from "@/hooks/useAthleteScores";
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -28,8 +27,6 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
   const [days, setDays] = useState<DayPlan[]>([]);
   const [phase, setPhase] = useState<string>("");
   const [match, setMatch] = useState<number>(0);
-  const [completing, setCompleting] = useState<string | null>(null);
-  const { refresh: refreshScores } = useAthleteScores(athleteId);
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
@@ -71,11 +68,6 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [athleteId, loadWeek]);
-
-  const completeDay = (d: DayPlan) => {
-    // A conclusão passa pelo player para garantir séries persistidas e XP validado.
-    onExecuteToday(d);
-  };
 
   // FIX (player guiado): mapa de nomes técnicos de status para rótulo legível.
   // fn_get_week_workouts retorna o status bruto da periodização (active,
@@ -131,17 +123,13 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                   <Check className="w-3.5 h-3.5" /> Concluído
                 </span>
               ) : d.status !== "rest" && d.exercises.length > 0 ? (
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <button onClick={() => onExecuteToday(d)}
-                    className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold flex items-center gap-1">
+                    className="nine-pro-gradient nine-pro-clip text-primary-foreground px-4 py-2 text-xs font-bold flex items-center gap-1">
                     <Play className="w-3.5 h-3.5" /> Executar
                   </button>
                   {isToday && (
-                    <button onClick={() => completeDay(d)} disabled={completing === d.date}
-                      className="rounded-full border border-primary/50 text-primary px-4 py-2 text-xs font-bold flex items-center gap-1 disabled:opacity-40">
-                      {completing === d.date ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                      Abrir execução
-                    </button>
+                    <span className="text-[10px] uppercase tracking-wider text-primary/80">Hoje</span>
                   )}
                 </div>
               ) : (

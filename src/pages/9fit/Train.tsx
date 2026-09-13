@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, addDays, startOfWeek } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Dumbbell, Loader2 } from "lucide-react";
+import { Dumbbell } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -138,9 +136,10 @@ export default function NineFitTrain() {
 
   const fetchCompletedCount = async (aid: string) => {
     const { count } = await supabase
-      .from("workout_progress")
+      .from("workout_executions" as any)
       .select("id", { count: "exact", head: true })
-      .or(`aluno_id.eq.${aid},athlete_id.eq.${aid}`);
+      .eq("athlete_id", aid)
+      .eq("status", "completed");
     setCompletedCount(count || 0);
   };
 
@@ -266,7 +265,7 @@ export default function NineFitTrain() {
       {/* Internal sub-tabs */}
       {flow === "HOME" && (
         <div className="px-4 mb-3">
-          <div className="glass-mission rounded-full p-1 flex gap-1">
+          <div className="glass-mission p-1 flex gap-1 nine-pro-clip">
             {[
               { k: "train", l: "Hoje", I: DumbIcon },
               { k: "semana", l: "Semana", I: Calendar },
@@ -280,8 +279,8 @@ export default function NineFitTrain() {
                   else if (k === "protocol") navigate("/9fit/protocolo");
                   else setSubTab(k as any);
                 }}
-                className={`flex-1 py-2 rounded-full text-[10px] font-display uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${
-                  subTab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                className={`flex-1 py-2 text-[10px] font-display uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 nine-pro-clip ${
+                  subTab === k ? "nine-pro-gradient text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 <I className="w-3.5 h-3.5" />
@@ -326,7 +325,7 @@ export default function NineFitTrain() {
         ) : (
           <>
             <button onClick={() => setQuickOpen(true)}
-              className="w-full mb-3 rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 font-bold text-primary hover:bg-primary/[0.14] transition">
+              className="w-full mb-3 border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 font-bold text-primary hover:bg-primary/[0.14] transition nine-pro-clip">
               <Zap className="w-4 h-4" /> TREINO RÁPIDO (3 perguntas)
             </button>
             <WorkoutHome
@@ -343,7 +342,7 @@ export default function NineFitTrain() {
         {flow === "HOME" && (
           <div className="mt-6 space-y-6">
             <DynamicOffers category="training" compact />
-            <EcosystemGrid category="training" />
+            <EcosystemGrid category="performance" />
           </div>
         )}
       </div>

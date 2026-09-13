@@ -79,6 +79,7 @@ export function DailyProtocol() {
         await supabase.from("daily_tasks" as any).insert(
           missing.map((m) => ({
             user_id: user.id,
+            task_date: today,
             task_key: m.key,
             title: m.title,
             xp_reward: 25,

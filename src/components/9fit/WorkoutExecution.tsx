@@ -415,12 +415,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     setShowPSE(true);
   };
 
-  // For link training
-  if (liveTraining.training_type === 'link' && liveTraining.html_file_url) {
-    window.open(liveTraining.html_file_url, '_blank');
-    onBack();
-    return null;
-  }
+  // For link training, open only after the component has mounted.
+  useEffect(() => {
+    if (liveTraining.training_type === "link" && liveTraining.html_file_url) {
+      window.open(liveTraining.html_file_url, "_blank", "noopener,noreferrer");
+      onBack();
+    }
+  }, [liveTraining.training_type, liveTraining.html_file_url, onBack]);
+
+  if (liveTraining.training_type === "link" && liveTraining.html_file_url) return null;
 
   // P0: nunca abrir o player nem iniciar cronômetro sem execução persistida.
   if (!executionId || executionError) {
