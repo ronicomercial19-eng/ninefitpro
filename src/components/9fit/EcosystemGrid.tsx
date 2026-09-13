@@ -29,6 +29,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,8 +61,14 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
             const hasTarget = Boolean(route || c?.iframe_url);
             const isInternal = route.startsWith("/");
             map[m.key] = !hasTarget || (!isInternal && c?.status !== "active") ? "not_configured" : "online";
-            iframeMap[m.key] = c?.iframe_url || null;
-          } else map[m.key] = "not_configured";
+            // Nunca direcionar o usuário para um iframe pendente/inativo.
+            iframeMap[m.key] = c?.status === "active" ? c?.iframe_url || null : null;
+          } else {
+            // Módulos nativos não dependem de connector externo para estar
+            // disponíveis: uma rota interna válida já representa o destino.
+            map[m.key] = m.cta_route?.startsWith("/") ? "online" : "not_configured";
+            iframeMap[m.key] = null;
+          }
         });
       if (!cancelled) {
         setStatusByKey(map);
@@ -70,7 +77,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
       }
     });
     return () => { cancelled = true; };
-  }, [category]);
+  }, [category, reloadToken]);
 
   const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
   const [expanded, setExpanded] = useState(false);
@@ -97,7 +104,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
   if (loadError) return (
     <section className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-muted-foreground flex items-center justify-between gap-3">
       <span>{loadError}</span>
-      <button type="button" onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 text-primary font-semibold shrink-0">
+      <button type="button" onClick={() => setReloadToken((value) => value + 1)} className="inline-flex items-center gap-1.5 text-primary font-semibold shrink-0">
         <RefreshCw className="w-3.5 h-3.5" /> Tentar novamente
       </button>
     </section>
@@ -141,6 +148,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
           const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
           const target = iframeByKey[m.key] || fallbackRoutes[m.key] || m.cta_route;
           const canOpen = Boolean(target);
+          const fallbackImage = MODULE_IMAGES[m.key];
+          const accessibilityLabel = canOpen ? "Abrir módulo" : "Módulo indisponível";
           return (
             <button
               key={m.id}
@@ -154,7 +163,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                 if (/^https?:\/\//i.test(target)) navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(m.name)}`);
                 else navigate(target);
               }}
-              aria-label={`${m.name}: ${label}. Abrir módulo`}
+              aria-label={`${m.name}: ${label}. ${accessibilityLabel}`}
               className={`group neural-node text-left overflow-hidden transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${variant === "rail" ? "min-w-[280px] snap-start" : ""}`}
             >
               {/* glow on hover */}
@@ -167,6 +176,13 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                     src={src}
                     alt={m.name}
                     loading="lazy"
+                    onError={(event) => {
+                      if (fallbackImage && event.currentTarget.src !== fallbackImage) {
+                        event.currentTarget.src = fallbackImage;
+                      } else {
+                        event.currentTarget.style.display = "none";
+                      }
+                    }}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
