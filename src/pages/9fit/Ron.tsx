@@ -68,6 +68,9 @@ export default function NineFitRon() {
   const endRef = useRef<HTMLDivElement>(null);
   const autoCtx = params.get("context");
   const autoTriggered = params.get("auto") === "1";
+  const channelConnecting = zapThread.isLoading;
+  const channelError = zapThread.isError;
+  const channelReady = Boolean(zapThread.data) && !channelError;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -209,8 +212,8 @@ export default function NineFitRon() {
       return;
     }
 
-    if (!zapThread.data) {
-      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: "Não consegui abrir o canal 9ZAP agora. Tente novamente em instantes." }));
+    if (!channelReady) {
+      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: channelConnecting ? "Ainda estou conectando ao canal 9ZAP. Tente novamente em alguns segundos." : "O canal 9ZAP está indisponível. Verifique a integração e toque em Reconectar." , action: { label: "Reconectar 9ZAP", route: "/9fit/ron" } }));
       setSending(false);
       return;
     }
@@ -229,6 +232,7 @@ export default function NineFitRon() {
             })
           : await sendZap.mutateAsync(userMsg);
         if (needsCredit && dispatched === null) blockedByCredits = true;
+        if (!blockedByCredits) toast.success("Mensagem enviada ao RON", { description: needsCredit ? "Ficha reservada para esta ação." : "Aguardando resposta…" });
       }
     } catch (error) {
       console.error("[Ron] 9ZAP send failed", error);
@@ -253,7 +257,7 @@ export default function NineFitRon() {
     }
 
     if (result === null) {
-      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: "Não consegui abrir o canal 9ZAP agora. Tente novamente em instantes." }));
+      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: "O canal 9ZAP não confirmou o envio. Sua mensagem não foi considerada concluída; tente novamente." }));
       setSending(false);
       return;
     }
@@ -269,7 +273,8 @@ export default function NineFitRon() {
         <p className="fit-os-label">9FIT // NEURAL COACH</p>
         <h1 className="text-display text-3xl text-foreground mt-1">RON</h1>
         <p className="text-sm text-primary mt-1">Seu assistente de treino contextual</p>
-        <p className="text-xs text-muted-foreground mt-1">Observando. Aprendendo. Contextual. · Fichas: {remaining}</p>
+        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><span className={`h-2 w-2 rounded-full ${channelReady ? "bg-emerald-400" : channelConnecting ? "animate-pulse bg-amber-400" : "bg-destructive"}`} />{channelReady ? "Canal 9ZAP conectado" : channelConnecting ? "Conectando ao 9ZAP…" : "9ZAP indisponível"}<span className="ml-auto">Fichas: {remaining}</span></div>
+        {channelError && <button type="button" onClick={() => void zapThread.refetch()} className="mt-2 text-[11px] font-semibold text-primary underline underline-offset-4">Reconectar canal</button>}
       </div>
 
       <div className="px-5 mb-4">
@@ -309,7 +314,7 @@ export default function NineFitRon() {
       </div>
 
       <div className="px-5 pt-2 sticky bottom-20 bg-background/80 backdrop-blur-md">
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="mb-2 grid grid-cols-2 gap-2">
           {RON_ACTIONS.map((action) => (
             <button key={action.route} onClick={() => navigate(action.route)} className="rounded-xl border border-primary/25 bg-primary/[0.06] px-3 py-2 text-[11px] font-semibold text-primary hover:bg-primary/[0.12] transition-colors">
               {action.label}
@@ -337,12 +342,13 @@ export default function NineFitRon() {
           />
           <button
             onClick={send}
-            disabled={sending}
+            disabled={sending || !channelReady}
             className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
           </button>
         </div>
+        <p className="mt-1 px-3 text-[10px] text-muted-foreground">Perguntas e leitura de contexto são livres. Pedidos de plano, treino ou análise completa usam uma ficha.</p>
       </div>
 
       <BottomNavigation />

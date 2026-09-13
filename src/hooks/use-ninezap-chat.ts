@@ -18,6 +18,8 @@ export function useZapThread(userId?: string, subject = "Atendimento FitPro") {
     queryKey: ["zap", "thread", userId],
     enabled: Boolean(userId),
     staleTime: Infinity,
+    retry: 2,
+    retryDelay: 1200,
     queryFn: async () => {
       const externalKey = `fitpro:user:${userId!}`;
       const existing = await invokeZap(`threads&external_key=${encodeURIComponent(externalKey)}`);
