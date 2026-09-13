@@ -18,6 +18,8 @@ interface Props {
   showAll?: boolean;
 }
 
+const HIDDEN_NATIVE_KEYS = new Set(["train", "smarttreino", "smartperiodizer", "planejamento", "ajuste", "ajuste_treino", "ajuste-treino"]);
+
 /**
  * Ecosystem Grid — Native redesign (no mocks).
  * - Reads physio_modules + api_connectors (real status)
@@ -46,7 +48,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         setLoading(false);
         return;
       }
-      const list = (data ?? []) as any[];
+      const list = (data ?? []).filter((module: any) => !HIDDEN_NATIVE_KEYS.has(String(module.key).toLowerCase())) as any[];
       setItems(list);
       const keys = list.map((m) => m.connector_key).filter(Boolean);
       const { data: conns } = keys.length

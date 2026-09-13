@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 interface TrainingAssignment {
   id: string;
+  daily_workout_id?: string;
   training_name: string;
   training_description?: string;
   start_date: string;
@@ -244,9 +245,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         }
         setCompletedSets(restored); setWeights(restoredWeights); return;
       }
-      const { data, error } = await supabase.rpc("fn_start_workout_execution" as any, {
-        p_assignment_id: training.id,
-      } as any);
+      const { data, error } = training.daily_workout_id
+        ? await supabase.rpc("fn_start_daily_workout_execution" as any, {
+            p_daily_workout_id: training.daily_workout_id,
+          } as any)
+        : await supabase.rpc("fn_start_workout_execution" as any, {
+            p_assignment_id: training.id,
+          } as any);
       if (cancelled) return;
       if (error || !data) {
         setExecutionError("Não foi possível iniciar uma execução persistente.");

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LucideIcon, Users, Brain, Crown, ShoppingBag, TrendingUp, Dumbbell, Film, Apple, MessageSquare, Sparkles, Library, CalendarRange, Heart, ChefHat, Activity } from "lucide-react";
+import { LucideIcon, Users, Brain, Crown, ShoppingBag, TrendingUp, Film, Apple, MessageSquare, Sparkles, Library, Heart, ChefHat } from "lucide-react";
 
 interface ModuleDef {
   key: string;
@@ -18,10 +18,7 @@ const MODULES: ModuleDef[] = [
   { key: "primepass",   label: "PrimePass",     sub: "Elite Access",      icon: Crown,          path: "/9fit/primepass",       group: "ELITE" },
   { key: "9store",      label: "9Store",        sub: "Performance Shop",  icon: ShoppingBag,    path: "/9fit/native-system?app=store",           group: "ELITE" },
   { key: "elitebio",    label: "9PRIME Bio",    sub: "LongeVita",         icon: Sparkles,       path: "/9fit/elite-bio",       group: "ELITE" },
-  { key: "smarttreino", label: "SmartTreino",   sub: "Periodização IA",   icon: Dumbbell,       path: "/9fit/train",           group: "PERFORMANCE" },
-  { key: "planejamento",label: "SmartPeriodizer", sub: "Ondas & Plano",   icon: CalendarRange,  path: "/9fit/planejamento",    group: "PERFORMANCE" },
   { key: "progresso",   label: "Progress Tracker", sub: "Stats & Forecast", icon: TrendingUp,   path: "/9fit/progresso",       group: "PERFORMANCE" },
-  { key: "ajuste",      label: "Ajuste IA",     sub: "Treino do dia",     icon: Activity,       path: "/9fit/ajuste-treino",   group: "PERFORMANCE" },
   { key: "healthflix",  label: "HealthFlix",    sub: "Streaming Fit",     icon: Film,           path: "/9fit/healthflix",      group: "WELLNESS" },
   { key: "9foods",      label: "9Foods",        sub: "Nutri-Log",         icon: Apple,          path: "/9fit/foods",            group: "WELLNESS" },
   { key: "kitchen",     label: "9KITCHEN",      sub: "Receitas Pro",      icon: ChefHat,        path: "/9fit/kitchen",         group: "WELLNESS" },

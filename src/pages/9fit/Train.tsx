@@ -20,6 +20,7 @@ import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react"
 
 interface TrainingAssignment {
   id: string;
+  daily_workout_id?: string;
   training_name: string;
   training_description?: string;
   start_date: string;
@@ -200,6 +201,7 @@ export default function NineFitTrain() {
 
     setSelectedTraining({
       id: day.id || `week-${day.date}`,
+      daily_workout_id: day.id,
       training_name: day.day_name || "Treino do dia",
       start_date: day.date,
       is_active: true,
