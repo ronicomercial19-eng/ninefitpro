@@ -1,73 +1,24 @@
-import { useEffect, useRef, useState } from "react";
-import { MapPin, Play, Square, Share2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapPin, Play, Share2, Square, Timer, Zap } from "lucide-react";
+import html2canvas from "html2canvas";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+type Point = { lat: number; lon: number };
+
 export default function NineFitMove() {
-  const [running, setRunning] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [distance, setDistance] = useState(0);
-  const [activitySaved, setActivitySaved] = useState(false);
-  const watchRef = useRef<number | null>(null);
-  const lastRef = useRef<GeolocationPosition | null>(null);
-
+  const [running, setRunning] = useState(false); const [seconds, setSeconds] = useState(0); const [distance, setDistance] = useState(0); const [points, setPoints] = useState<Point[]>([]); const [gpsStatus, setGpsStatus] = useState("GPS pronto"); const [activitySaved, setActivitySaved] = useState(false);
+  const watchRef = useRef<number | null>(null); const lastRef = useRef<Point | null>(null); const mapRef = useRef<HTMLDivElement>(null);
   useEffect(() => () => { if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current); }, []);
-
-  const start = () => {
-    if (!navigator.geolocation) { toast.error("GPS não disponível neste dispositivo"); return; }
-    setActivitySaved(false);
-    setRunning(true);
-    watchRef.current = navigator.geolocation.watchPosition((pos) => {
-      if (lastRef.current) {
-        const toRad = (v: number) => v * Math.PI / 180;
-        const dLat = toRad(pos.coords.latitude - lastRef.current.coords.latitude);
-        const dLon = toRad(pos.coords.longitude - lastRef.current.coords.longitude);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lastRef.current.coords.latitude)) * Math.cos(toRad(pos.coords.latitude)) * Math.sin(dLon / 2) ** 2;
-        setDistance((d) => d + 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-      }
-      lastRef.current = pos;
-    }, () => toast.error("Não foi possível acessar sua localização"), { enableHighAccuracy: true });
-  };
-
-  const stop = async () => {
-    setRunning(false);
-    if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current);
-    watchRef.current = null;
-    lastRef.current = null;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { toast.error("Entre na sua conta para salvar a corrida"); return; }
-    const { error } = await supabase.from("bio_activity_logs").insert({
-      user_id: user.id,
-      distance_m: Math.round(distance * 1000),
-      source: "move_gps",
-    });
-    if (error) { toast.error("Não foi possível salvar a corrida"); return; }
-    setActivitySaved(true);
-    toast.success("Corrida registrada. Revise antes de compartilhar.");
-  };
-
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
-
-  const share = async () => {
-    const text = `Minha corrida 9FIT: ${distance.toFixed(2)} km em ${Math.floor(seconds / 60)} min.`;
-    try {
-      if (navigator.share) await navigator.share({ title: "Minha corrida 9FIT", text });
-      else await navigator.clipboard?.writeText(text);
-      toast.success("Resumo pronto para compartilhar");
-    } catch {
-      toast.error("Compartilhamento cancelado");
-    }
-  };
-
-  return <div className="min-h-screen bg-background pb-28">
-    <div className="px-5 pt-8"><p className="text-label">9FIT · MOVE</p><h1 className="text-display text-3xl mt-1">Corrida</h1><p className="text-sm text-muted-foreground mt-1">GPS, ritmo e evolução em um só lugar.</p></div>
-    <div className="px-5 mt-6"><div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center"><MapPin className="mx-auto text-primary mb-3" /><p className="text-5xl font-display">{distance.toFixed(2)} <span className="text-lg">km</span></p><p className="text-sm text-muted-foreground mt-2">{String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}</p></div></div>
-    <div className="px-5 mt-4 grid grid-cols-2 gap-3"><button onClick={running ? stop : start} className="rounded-xl bg-primary text-primary-foreground py-3 font-semibold flex justify-center gap-2">{running ? <Square className="w-4" /> : <Play className="w-4" />} {running ? "Finalizar" : "Iniciar GPS"}</button><button onClick={share} disabled={running || distance === 0 || !activitySaved} className="rounded-xl border border-primary/40 text-primary py-3 font-semibold flex justify-center gap-2 disabled:opacity-40"><Share2 className="w-4" /> Compartilhar</button></div>
-    <BottomNavigation />
-  </div>;
+  useEffect(() => { if (!running) return; const id = window.setInterval(() => setSeconds((s) => s + 1), 1000); return () => window.clearInterval(id); }, [running]);
+  const addPoint = (pos: GeolocationPosition) => { const next = { lat: pos.coords.latitude, lon: pos.coords.longitude }; if (lastRef.current) { const r = Math.PI / 180; const dLat = (next.lat - lastRef.current.lat) * r; const dLon = (next.lon - lastRef.current.lon) * r; const a = Math.sin(dLat / 2) ** 2 + Math.cos(lastRef.current.lat * r) * Math.cos(next.lat * r) * Math.sin(dLon / 2) ** 2; setDistance((d) => d + 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))); } lastRef.current = next; setPoints((current) => [...current, next].slice(-500)); setGpsStatus(pos.coords.accuracy ? `GPS ativo · ±${Math.round(pos.coords.accuracy)}m` : "GPS ativo"); };
+  const start = () => { if (!navigator.geolocation) { toast.error("GPS não disponível neste dispositivo"); return; } setActivitySaved(false); setPoints([]); setDistance(0); setSeconds(0); setGpsStatus("Buscando sinal GPS…"); setRunning(true); watchRef.current = navigator.geolocation.watchPosition(addPoint, () => { setGpsStatus("GPS bloqueado"); toast.error("Permita a localização para desenhar sua rota"); }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }); };
+  const stop = async () => { setRunning(false); if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current); watchRef.current = null; lastRef.current = null; setGpsStatus("Corrida finalizada"); const { data: { user } } = await supabase.auth.getUser(); if (!user) { toast.error("Entre na sua conta para salvar a corrida"); return; } const { error } = await supabase.from("bio_activity_logs").insert({ user_id: user.id, distance_m: Math.round(distance * 1000), source: "move_gps" }); if (error) { toast.error("Não foi possível salvar a corrida"); return; } setActivitySaved(true); toast.success("Corrida registrada com rota"); };
+  const pace = distance > 0 ? seconds / 60 / distance : 0;
+  const route = useMemo(() => { if (points.length < 2) return ""; const minLat = Math.min(...points.map((p) => p.lat)); const maxLat = Math.max(...points.map((p) => p.lat)); const minLon = Math.min(...points.map((p) => p.lon)); const maxLon = Math.max(...points.map((p) => p.lon)); const latSpan = Math.max(maxLat - minLat, 0.00001); const lonSpan = Math.max(maxLon - minLon, 0.00001); return points.map((p) => `${10 + ((p.lon - minLon) / lonSpan) * 80},${90 - ((p.lat - minLat) / latSpan) * 80}`).join(" "); }, [points]);
+  const share = async () => { const text = `Minha corrida 9FIT: ${distance.toFixed(2)} km em ${Math.floor(seconds / 60)} min · ritmo ${pace ? pace.toFixed(2) : "—"} min/km.`; try { const canvas = mapRef.current ? await html2canvas(mapRef.current, { backgroundColor: "#111214" }) : null; const blob = canvas ? await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png")) : null; if (navigator.share && blob && typeof File !== "undefined") await navigator.share({ title: "Minha corrida 9FIT", text, files: [new File([blob], "corrida-9fit.png", { type: "image/png" })] }); else if (navigator.share) await navigator.share({ title: "Minha corrida 9FIT", text }); else await navigator.clipboard?.writeText(text); toast.success("Resumo da corrida pronto para compartilhar"); } catch { toast.error("Compartilhamento cancelado"); } };
+  return <div className="fit-os-grid min-h-screen bg-background pb-28"><div className="px-5 pt-8"><p className="fit-os-label">9FIT // MOVE</p><h1 className="text-display text-3xl mt-1">Corrida</h1><p className="text-sm text-muted-foreground mt-1">GPS, rota, ritmo e evolução em um só lugar.</p></div><div ref={mapRef} className="mx-5 mt-6 fit-os-panel h-64 bg-[#111214]"><div className="absolute inset-0 opacity-30" style={{ backgroundImage: "linear-gradient(#f97316 1px, transparent 1px), linear-gradient(90deg, #f97316 1px, transparent 1px)", backgroundSize: "32px 32px" }} />{route ? <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full"><polyline points={route} fill="none" stroke="#ff6b2c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg> : <div className="absolute inset-0 grid place-content-center text-center"><MapPin className="mx-auto mb-2 text-primary" /><p className="text-sm text-muted-foreground">{running ? "Aguardando os primeiros pontos…" : "Inicie o GPS para desenhar sua rota"}</p></div>}<div className="absolute left-3 top-3 flex items-center gap-2 bg-black/60 px-2 py-1 text-[10px] text-primary"><span className={`h-2 w-2 rounded-full ${running ? "animate-pulse bg-emerald-400" : "bg-primary"}`} />{gpsStatus}</div></div><div className="mx-5 mt-4 grid grid-cols-3 gap-2 text-center"><Stat icon={<MapPin />} label="DISTÂNCIA" value={`${distance.toFixed(2)} km`} /><Stat icon={<Timer />} label="TEMPO" value={`${String(Math.floor(seconds / 60)).padStart(2, "0")} min`} /><Stat icon={<Zap />} label="RITMO" value={pace ? `${pace.toFixed(2)} /km` : "—"} /></div><div className="mx-5 mt-4 grid grid-cols-2 gap-3"><button onClick={running ? stop : start} className="nine-pro-clip bg-primary py-3 font-semibold text-primary-foreground flex justify-center gap-2">{running ? <Square className="w-4" /> : <Play className="w-4" />} {running ? "Finalizar" : "Iniciar GPS"}</button><button onClick={share} disabled={running || distance === 0 || !activitySaved} className="nine-pro-clip border border-primary/40 text-primary py-3 font-semibold flex justify-center gap-2 disabled:opacity-40"><Share2 className="w-4" /> Compartilhar rota</button></div>{activitySaved && <p className="mx-5 mt-3 text-center text-xs text-primary">Corrida salva · rota pronta para compartilhar</p>}<BottomNavigation /></div>;
 }
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="fit-os-panel p-3"><div className="flex justify-center text-primary">{icon}</div><p className="mt-1 text-[9px] tracking-widest text-muted-foreground">{label}</p><p className="mt-1 text-sm font-bold text-foreground">{value}</p></div>; }
