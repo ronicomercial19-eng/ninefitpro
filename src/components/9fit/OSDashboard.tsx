@@ -71,7 +71,7 @@ export function OSDashboard() {
 
       {/* Ecossistema atalhos */}
       <section className="fit-os-panel fit-os-grid bg-card/40 p-4">
-        <p className="fit-os-label mb-1">Atalhos do sistema</p><p className="font-display text-xl mb-3">Ecossistema</p>
+        <div className="mb-3 flex items-end justify-between"><div><p className="fit-os-label mb-1">Atalhos do sistema</p><p className="font-display text-xl">Ecossistema</p></div><button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button></div>
         <div className="grid grid-cols-2 gap-3">
           {[
             { I: Dumbbell, label: 'Train', route: '/9fit/train' },
