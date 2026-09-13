@@ -15,6 +15,7 @@ interface Props {
   category?: string;
   variant?: "grid" | "rail";
   showHeader?: boolean;
+  showAll?: boolean;
 }
 
 /**
@@ -23,7 +24,7 @@ interface Props {
  * - Quiet Luxury: night surface, amber performance accent and teal recovery cues
  * - Online pulse, Syne display, DM Mono labels
  */
-export function EcosystemGrid({ category, variant = "grid", showHeader = true }: Props) {
+export function EcosystemGrid({ category, variant = "grid", showHeader = true, showAll = false }: Props) {
   const [items, setItems] = useState<PhysioModule[]>([]);
   const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
@@ -81,7 +82,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
 
   const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
   const [expanded, setExpanded] = useState(false);
-  const visibleItems = expanded ? items : items.slice(0, 2);
+  const visibleItems = showAll || expanded ? items : items.slice(0, 2);
   const gridClass = variant === "rail"
     ? "flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1"
     : "grid grid-cols-1 sm:grid-cols-2 gap-3";
@@ -126,7 +127,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
               {activeCount}/{items.length} online
             </p>
           </div>
-          {items.length > 2 && (
+          {items.length > 2 && !showAll && (
             <button
               onClick={() => setExpanded((value) => !value)}
               aria-expanded={expanded}
