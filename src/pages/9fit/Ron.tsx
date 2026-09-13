@@ -28,6 +28,19 @@ const SUGGESTIONS = [
   "O que meu HRV indica?",
 ];
 
+// Conversa, leitura de contexto e registro operacional ficam livres.
+// Ficha só é necessária quando o pedido dispara uma geração/análise pesada.
+const RON_CREDIT_PATTERNS = [
+  /\b(cri(ar|e)|mont(ar|e)|ger(ar|e)|prescrev(a|er)|planej(ar|e))\b.*\b(treino|planilha|dieta|plano|protocolo)\b/i,
+  /\b(treino|planilha|dieta|plano|protocolo)\b.*\b(cri(ar|e)|mont(ar|e)|ger(ar|e)|personaliz(ar|e)|ajust(ar|e))\b/i,
+  /\b(analis(ar|e)|relat[oó]rio|avalia[cç][aã]o completa|interpreta[rç])\b.*\b(meu|minha|dados|semana|progresso|corpo|performance)\b/i,
+  /\b(pdf|export(ar|e)|prescri[cç][aã]o|periodiza[cç][aã]o completa)\b/i,
+];
+
+function ronRequestNeedsCredit(message: string) {
+  return RON_CREDIT_PATTERNS.some((pattern) => pattern.test(message));
+}
+
 interface Msg {
   id?: string;
   role: "user" | "assistant" | "system";
@@ -202,27 +215,44 @@ export default function NineFitRon() {
       return;
     }
 
+    const needsCredit = ronRequestNeedsCredit(userMsg);
+    let blockedByCredits = false;
     let result: string | null = userMsg;
     try {
-      await sendZap.mutateAsync(userMsg);
+      if (needsCredit && !athleteId) {
+        blockedByCredits = true;
+      } else {
+        const dispatched = needsCredit
+          ? await withCredit(`ron:${userMsg.slice(0, 80)}`, async () => {
+              await sendZap.mutateAsync(userMsg);
+              return true;
+            })
+          : await sendZap.mutateAsync(userMsg);
+        if (needsCredit && dispatched === null) blockedByCredits = true;
+      }
     } catch (error) {
       console.error("[Ron] 9ZAP send failed", error);
       result = null;
     }
 
-    if (result === null) {
-      // FIX QA Master #5: antes mostrava "Recarregue" sem dizer onde;
-      // agora explica o saldo e a mensagem vira uma ação clicável para
-      // a tela real de créditos (/9fit/aulas-creditos).
+    if (blockedByCredits) {
       setMessages((p) => {
         const out = [...p];
         out[out.length - 1] = {
           role: "assistant",
-          content: "Suas fichas de conversa acabaram por enquanto. Toque abaixo para ver seu plano e recarregar — assim que renovar, retomamos de onde paramos.",
+          content: athleteId
+            ? `Esse pedido usa uma ficha de ação do RON. Você tem ${remaining} disponível(is). Recarregue para eu executar e entregar o resultado completo.`
+            : "Preciso sincronizar seu perfil para validar as fichas antes de executar esse pedido.",
           action: { label: "Ver planos e recarregar", route: "/9fit/aulas-creditos" },
         };
         return out;
       });
+      setSending(false);
+      return;
+    }
+
+    if (result === null) {
+      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: "Não consegui abrir o canal 9ZAP agora. Tente novamente em instantes." }));
       setSending(false);
       return;
     }
@@ -237,7 +267,7 @@ export default function NineFitRon() {
       <div className="px-5 pt-8 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT · RON</p>
         <h1 className="text-display text-3xl text-foreground mt-1">Copiloto biológico</h1>
-        <p className="text-xs text-muted-foreground mt-1">Observando. Aprendendo. Contextual.</p>
+        <p className="text-xs text-muted-foreground mt-1">Observando. Aprendendo. Contextual. · Fichas: {remaining}</p>
       </div>
 
       <div className="px-5 mb-4">
