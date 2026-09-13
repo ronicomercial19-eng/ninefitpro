@@ -38,9 +38,9 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
             </span>
           </div>
 
-          <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_128px] sm:items-center">
+          <div className="mt-3 grid grid-cols-[1fr_112px] items-center gap-3">
             <div>
-              <h2 className="max-w-[250px] text-xl font-black leading-tight text-foreground">{name}, {headline}</h2>
+              <h2 className="text-lg font-black leading-tight text-foreground">{name}, {headline}</h2>
               <p className="mt-1 text-xs text-muted-foreground">Uma ação agora muda a leitura do seu próximo ciclo.</p>
             </div>
             <SyncDial score={scoreReady ? Math.round(syncScore!) : null} />

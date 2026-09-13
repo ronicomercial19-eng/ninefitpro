@@ -138,6 +138,13 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
         </header>
       )}
 
+      {expanded && (
+        <div className="fit-os-panel fit-os-grid mb-2 p-4">
+          <p className="fit-os-label">Native ecosystem / overview</p>
+          <p className="mt-1 text-sm font-semibold text-foreground">Escolha um módulo para continuar</p>
+          <p className="mt-1 text-xs text-muted-foreground">Cada módulo tem uma função própria. Sem sobrepor o comando principal do Hub.</p>
+        </div>
+      )}
       <div className={gridClass}>
         {visibleItems.map((m) => {
           // A imagem cadastrada no módulo é a fonte individual do card;

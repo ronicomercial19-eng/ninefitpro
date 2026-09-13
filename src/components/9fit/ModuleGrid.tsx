@@ -23,7 +23,7 @@ const MODULES: ModuleDef[] = [
   { key: "progresso",   label: "Progress Tracker", sub: "Stats & Forecast", icon: TrendingUp,   path: "/9fit/progresso",       group: "PERFORMANCE" },
   { key: "ajuste",      label: "Ajuste IA",     sub: "Treino do dia",     icon: Activity,       path: "/9fit/ajuste-treino",   group: "PERFORMANCE" },
   { key: "healthflix",  label: "HealthFlix",    sub: "Streaming Fit",     icon: Film,           path: "/9fit/healthflix",      group: "WELLNESS" },
-  { key: "9foods",      label: "9Foods",        sub: "Nutri-Log",         icon: Apple,          path: "/9fit/dieta",           group: "WELLNESS" },
+  { key: "9foods",      label: "9Foods",        sub: "Nutri-Log",         icon: Apple,          path: "/9fit/foods",            group: "WELLNESS" },
   { key: "kitchen",     label: "9KITCHEN",      sub: "Receitas Pro",      icon: ChefHat,        path: "/9fit/kitchen",         group: "WELLNESS" },
   { key: "recovery",    label: "9RECOVERY",     sub: "Recuperação",       icon: Heart,          path: "/9fit/recovery",        group: "WELLNESS" },
   { key: "biblioteca",  label: "Biblioteca",    sub: "Conteúdo do prof",  icon: Library,        path: "/9fit/biblioteca",      group: "WELLNESS" },

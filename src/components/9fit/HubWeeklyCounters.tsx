@@ -12,7 +12,7 @@ export function HubWeeklyCounters({ treinos, nutri, minutos }: Props) {
   const items = [
     { label: "TREINO",  value: treinos, suffix: "/sem", Icon: Dumbbell, cta: "Registrar",  route: "/9fit/train" },
     { label: "NUTRI",   value: nutri,   suffix: "/sem", Icon: Apple,    cta: "Logar",      route: "/9fit/foods" },
-    { label: "MOVE",    value: minutos, suffix: "min",  Icon: Activity, cta: "Adicionar",  route: "/9fit/habit-flow" },
+    { label: "MOVE",    value: minutos, suffix: "min",  Icon: Activity, cta: "Correr",  route: "/9fit/move" },
   ];
 
   return (
