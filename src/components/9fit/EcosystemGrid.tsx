@@ -81,8 +81,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   }, [category, reloadToken]);
 
   const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
-  const [expanded, setExpanded] = useState(false);
-  const visibleItems = showAll || expanded ? items : items.slice(0, 2);
+  const visibleItems = showAll ? items : items.slice(0, 2);
   const gridClass = variant === "rail"
     ? "flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1"
     : "grid grid-cols-1 sm:grid-cols-2 gap-3";
@@ -129,23 +128,16 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           </div>
           {items.length > 2 && !showAll && (
             <button
-              onClick={() => setExpanded((value) => !value)}
-              aria-expanded={expanded}
+              onClick={() => navigate("/9fit/modules")}
+              aria-label="Abrir tela com todos os módulos"
               className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5"
             >
-              {expanded ? "Recolher" : `Ver todos (${items.length})`}
+              {`Ver todos (${items.length})`}
             </button>
           )}
         </header>
       )}
 
-      {expanded && (
-        <div className="fit-os-panel fit-os-grid mb-2 p-4">
-          <p className="fit-os-label">Native ecosystem / overview</p>
-          <p className="mt-1 text-sm font-semibold text-foreground">Escolha um módulo para continuar</p>
-          <p className="mt-1 text-xs text-muted-foreground">Cada módulo tem uma função própria. Sem sobrepor o comando principal do Hub.</p>
-        </div>
-      )}
       <div className={gridClass}>
         {visibleItems.map((m) => {
           // A imagem cadastrada no módulo é a fonte individual do card;
