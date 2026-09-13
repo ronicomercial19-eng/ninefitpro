@@ -78,9 +78,9 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
   };
 
   return (
-    <div className="surface-card p-5">
-      <div className="flex items-center gap-5">
-        <div className="relative w-full h-full aspect-square shrink-0">
+    <div className="surface-card p-4 sm:p-5">
+      <div className="flex items-center gap-4 sm:gap-5">
+        <div className="relative h-32 w-32 sm:h-36 sm:w-36 shrink-0">
           <motion.div className="absolute inset-0 rounded-full" style={ringStyle}
             initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -89,7 +89,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
             <span className="text-[10px] text-muted-foreground mt-1">/ 100{status === "stale" ? " · desatualizado" : ""}</span>
           </div>
         </div>
-        <div className="flex-1 space-y-2 text-sm">
+        <div className="min-w-0 flex-1 space-y-2.5 text-sm">
           {breakdown ? <>
             <Row label="Treino" value={breakdown.treino} />
             <Row label="Nutrição" value={breakdown.nutri} />
@@ -105,8 +105,8 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
 
 function Row({ label, value }: { label: string; value: number | null }) {
   const width = value === null ? 0 : Math.min(100, Math.max(0, value));
-  return <div className="flex items-center justify-between gap-2">
-    <span className="text-xs text-muted-foreground">{label}</span>
+  return <div className="flex min-w-0 items-center justify-between gap-2">
+    <span className="w-[70px] shrink-0 truncate text-xs text-muted-foreground">{label}</span>
     <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
       <div className="h-full bg-primary" style={{ width: `${width}%` }} />
     </div>

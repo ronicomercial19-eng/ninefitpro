@@ -43,13 +43,14 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
         <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           className="text-display text-3xl sm:text-5xl leading-tight max-w-md mb-6 text-foreground">{headline}</motion.h1>
         <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
-          className="flex items-end gap-4">
-          <div className="w-40 h-40 sm:w-48 sm:h-48">
+          className="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+          <div className="w-full max-w-[360px] shrink-0">
             <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} />
           </div>
-          <div className="pb-4">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-1">{name}</p>
-            <p className="text-xs text-muted-foreground max-w-[180px] leading-snug">HRV · sono · treino · nutrição · hidratação</p>
+          <div className="min-w-0 border-l border-white/10 pl-4 pb-1 sm:max-w-[190px] sm:pl-5">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-primary/80 mb-1">Perfil conectado</p>
+            <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">HRV · sono · treino · nutrição · hidratação</p>
           </div>
         </motion.div>
       </div>
