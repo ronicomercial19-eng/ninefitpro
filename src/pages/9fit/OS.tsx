@@ -1,7 +1,6 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { OSDashboard } from "@/components/9fit/OSDashboard";
 import { RonBubble } from "@/components/9fit/RonBubble";
-import { HubCommandDeck } from "@/components/9fit/HubCommandDeck";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
@@ -21,8 +20,13 @@ export default function NineFitOS() {
   }, [athleteId]);
   return (
     <div className="fit-os-grid min-h-screen bg-background pb-28">
-      <HubCommandDeck name={name} syncScore={scores?.sync.value ?? null} scoreStatus={status} weekly={scores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 }} hasPlan={hasPlan} />
-      <OSDashboard />
+      <OSDashboard
+        name={name}
+        syncScore={scores?.sync.value ?? null}
+        scoreStatus={status}
+        weekly={scores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 }}
+        hasPlan={hasPlan}
+      />
       <RonBubble />
       <BottomNavigation />
     </div>
