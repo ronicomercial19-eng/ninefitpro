@@ -35,7 +35,7 @@ export default function NineFitPlanejamento() {
     // Source of truth: vw_athlete_periodizacao_ativa (unifica athlete_periodizations + periodization_plans_remote)
     const { data, error: planErr } = await supabase
       .from("vw_athlete_periodizacao_ativa" as any)
-      .select("plan_name, waves, macrocycle, mesocycle, source, periodization_id, current_phase")
+      .select("plan_name, waves, macrocycle, mesocycle, source, plan_id, current_phase")
       .eq("athlete_id", athleteId)
       .maybeSingle();
 
@@ -77,7 +77,7 @@ export default function NineFitPlanejamento() {
       }
       setWaves(wavesFound);
       setPlanName(row.plan_name || "Periodização SmartPeriodizer");
-      setPeriodizationId(row.periodization_id || null);
+      setPeriodizationId(row.plan_id || null);
       setCurrentPhase(row.current_phase || null);
       setHasRemotePlan(true);
     } else {
@@ -89,9 +89,17 @@ export default function NineFitPlanejamento() {
   async function syncNow() {
     if (!athleteId) return;
     setSyncing(true);
-    await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
-    setSyncing(false);
-    loadPlan();
+    setPlanError(null);
+    try {
+      const { error } = await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
+      if (error) throw error;
+      await loadPlan();
+    } catch (error: any) {
+      console.error("[Planejamento] syncNow:", error);
+      setPlanError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
+    } finally {
+      setSyncing(false);
+    }
   }
 
   useEffect(() => {

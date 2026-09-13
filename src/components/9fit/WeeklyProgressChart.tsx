@@ -62,13 +62,13 @@ export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
 
     const { data: nut } = await supabase
       .from("nutrition_logs")
-      .select("logged_at")
+      .select("date")
       .eq("athlete_id", athleteId)
-      .gte("logged_at", weekStartStr)
-      .lte("logged_at", weekEndStr);
+      .gte("date", weekStartStr)
+      .lte("date", weekEndStr);
     (nut || []).forEach((d: any) => {
-      if (!d.logged_at) return;
-      const key = d.logged_at.slice(0, 10);
+      if (!d.date) return;
+      const key = String(d.date).slice(0, 10);
       nutrition[key] = (nutrition[key] || 0) + 1;
     });
 
