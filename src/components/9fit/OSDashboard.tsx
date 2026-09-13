@@ -10,10 +10,20 @@ import { ActiveSkillsBadge } from './ActiveSkillsBadge';
 import { QuickCheckIn } from './QuickCheckIn';
 import { DynamicOffers } from './DynamicOffers';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
+import { HubCommandDeck } from './HubCommandDeck';
+import type { HubScoreStatus } from '@/hooks/useAthleteScores';
 
 interface RankRow { name: string; pts: number; self?: boolean }
 
-export function OSDashboard() {
+interface OSDashboardProps {
+  name: string;
+  syncScore: number | null;
+  scoreStatus: HubScoreStatus;
+  weekly: { treinos: number; nutri: number; minutos: number };
+  hasPlan: boolean;
+}
+
+export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: OSDashboardProps) {
   const { user, profile } = useAuth();
   const { athleteName } = useAthleteId();
   const navigate = useNavigate();
@@ -22,7 +32,7 @@ export function OSDashboard() {
   const [ranking, setRanking] = useState<RankRow[]>([]);
   const [eventIdx, setEventIdx] = useState(0);
 
-  const name = (athleteName || profile?.full_name || user?.email?.split('@')[0] || 'Atleta').split(' ')[0];
+  const topBarName = (athleteName || profile?.full_name || user?.email?.split(' ')[0] || name || 'Atleta').split(' ')[0];
 
   useEffect(() => {
     (async () => {
@@ -69,24 +79,13 @@ export function OSDashboard() {
         </button>
       </div>
 
-      {/* Ecossistema atalhos */}
-      <section className="fit-os-panel fit-os-grid bg-card/40 p-4">
-        <div className="mb-3 flex items-end justify-between"><div><p className="fit-os-label mb-1">Atalhos do sistema</p><p className="font-display text-xl">Ecossistema</p></div><button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button></div>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { I: Dumbbell, label: 'Train', route: '/9fit/train' },
-            { I: Share2, label: 'Hub', route: '/9fit/hub' },
-            { I: Users, label: 'Staff', route: '/9fit/staff' },
-            { I: Tag, label: 'Market', route: '/9fit/protocols' },
-          ].map(({ I, label, route }) => (
-            <button key={label} onClick={() => navigate(route)}
-              className="fit-os-panel border-primary/30 bg-white/[0.02] py-3 flex items-center justify-center gap-2 hover:bg-primary/[0.06] transition">
-              <I className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">{label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* Calibração diária (emoji quiz) */}
+      <EmojiCalibrationQuiz />
+
+      {/* Comando do dia */}
+      <div className="-mx-4">
+        <HubCommandDeck name={name} syncScore={syncScore} scoreStatus={scoreStatus} weekly={weekly} hasPlan={hasPlan} />
+      </div>
 
       {/* Ranking Global */}
       <section className="fit-os-panel bg-card/30 p-4">
@@ -109,14 +108,30 @@ export function OSDashboard() {
       {/* Inteligência ativa */}
       <ActiveSkillsBadge />
 
-      {/* Calibração diária (emoji quiz) */}
-      <EmojiCalibrationQuiz />
-
       {/* Ativação */}
       <ActivationMissionCard />
 
       {/* Check-in */}
       <QuickCheckIn />
+
+      {/* Ecossistema atalhos */}
+      <section className="fit-os-panel fit-os-grid bg-card/40 p-4">
+        <div className="mb-3 flex items-end justify-between"><div><p className="fit-os-label mb-1">Atalhos do sistema</p><p className="font-display text-xl">Ecossistema</p></div><button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button></div>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { I: Dumbbell, label: 'Train', route: '/9fit/train' },
+            { I: Share2, label: 'Hub', route: '/9fit/hub' },
+            { I: Users, label: 'Staff', route: '/9fit/staff' },
+            { I: Tag, label: 'Market', route: '/9fit/protocols' },
+          ].map(({ I, label, route }) => (
+            <button key={label} onClick={() => navigate(route)}
+              className="fit-os-panel border-primary/30 bg-white/[0.02] py-3 flex items-center justify-center gap-2 hover:bg-primary/[0.06] transition">
+              <I className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Destaques */}
       <section className="fit-os-panel bg-card/30 p-4">
