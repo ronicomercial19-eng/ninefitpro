@@ -13,7 +13,7 @@ export function HubFloatingMetrics({ vitals }: Props) {
   const metrics: Metric[] = [
     { key: "water", label: "ÁGUA", unit: "ml", max: 2500, Icon: Droplet, data: vitals?.water ?? missing, ctaRoute: "/9fit/foods" },
     { key: "hrv", label: "HRV", unit: "ms", max: 80, Icon: Activity, data: vitals?.hrv ?? missing, ctaRoute: "/9fit/os" },
-    { key: "cal", label: "KCAL", unit: "kcal", max: 2400, Icon: Flame, data: vitals?.calories ?? missing, ctaRoute: "/9fit/stats" },
+    { key: "cal", label: "KCAL", unit: "kcal", max: 2400, Icon: Flame, data: vitals?.calories ?? missing, ctaRoute: "/9fit/progresso" },
     { key: "hr", label: "BPM", unit: "bpm", max: 100, Icon: Heart, data: vitals?.heart_rate ?? missing, ctaRoute: "/9fit/os" },
   ];
   return <div className="px-4 -mt-6 relative z-10"><div className="grid grid-cols-4 gap-2">{metrics.map((metric, index) => <MetricCard key={metric.key} metric={metric} delay={index * 0.08} />)}</div></div>;
