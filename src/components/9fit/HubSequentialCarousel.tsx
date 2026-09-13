@@ -74,7 +74,7 @@ const PlayFront = () => (
 );
 
 const MODULES: ModuleDef[] = [
-  { id: "stats",  label: "Performance",    display: "STATS",  style: "outline-orange", route: "/9fit/stats",         Front: StatsFront },
+  { id: "stats",  label: "Performance",    display: "STATS",  style: "outline-orange", route: "/9fit/progresso",     Front: StatsFront },
   { id: "habit",  label: "Daily Protocol", display: "HABIT",  style: "solid-white",    route: "/9fit/os",            Front: HabitFront },
   { id: "tribos", label: "Comunidade",     display: "TRIBOS", style: "outline-white",  route: "/9fit/community",     Front: TribosFront },
   { id: "intell", label: "SmartTreino",    display: "INTELL", style: "solid-white",    route: "/9fit/train",         Front: IntelFront },
