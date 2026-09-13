@@ -113,7 +113,7 @@ export default function NineFitBiblioteca() {
                 {thumb ? (
                   <img src={thumb} alt={title} className="w-full h-full object-cover" loading="lazy" />
                 ) : (
-                  {locked ? <Lock className="w-6 h-6 text-muted-foreground" /> : it.playerUrl ? <Play className="w-6 h-6 text-primary" /> : <BookOpen className="w-6 h-6 text-muted-foreground" />}
+                  locked ? <Lock className="w-6 h-6 text-muted-foreground" /> : it.playerUrl ? <Play className="w-6 h-6 text-primary" /> : <BookOpen className="w-6 h-6 text-muted-foreground" />
                 )}
               </div>
               <div className="px-2 py-2">
