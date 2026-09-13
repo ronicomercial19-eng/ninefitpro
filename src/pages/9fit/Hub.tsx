@@ -4,8 +4,11 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
+import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
 import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
 import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
+import { HubRonCard } from "@/components/9fit/HubRonCard";
+import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { RonBubble } from "@/components/9fit/RonBubble";
 import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
 import { QuickMoodInput } from "@/components/9fit/QuickMoodInput";
@@ -22,7 +25,6 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
-import { HubCommandDeck } from "@/components/9fit/HubCommandDeck";
 
 
 export default function NineFitHub() {
@@ -131,15 +133,14 @@ export default function NineFitHub() {
           <button onClick={() => void loadHubData()} className="text-xs text-primary shrink-0">Tentar de novo</button>
         </div>
       )}
-      {/* 1. COMMAND DECK — entrada principal contextual e acionável */}
-      <HubCommandDeck
+      {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
+      <HeroSyncSection
         name={name}
         syncScore={liveScores?.sync.value ?? null}
         scoreStatus={scoreStatus}
-        weekly={weekly}
-        hasPlan={Boolean(performancePlanTitle)}
+        breakdown={breakdown}
+        lastUpdate={liveScores?.sync.observed_at ?? undefined}
       />
-
 
       {/* 2. FLOATING METRICS — glass sensors */}
       <HubFloatingMetrics vitals={liveScores?.vitals} />
@@ -147,7 +148,12 @@ export default function NineFitHub() {
       {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
       <QuickMoodInput onLogged={invalidate} />
 
-      {/* 3. ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
+      {/* 3. RON & PRESENÇA — card inteligente substitui tip simples */}
+      <div className="px-4 mt-8">
+        <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
+      </div>
+
+      {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
       <div className="px-4 mt-6 space-y-3">
         <ActivationMissionCard />
         <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
@@ -212,6 +218,12 @@ export default function NineFitHub() {
       {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
       <div id="ecosystem-grid" className="px-4 mt-8">
         <EcosystemGrid />
+      </div>
+
+      {/* Carrossel sequencial legado */}
+      <div className="px-4 mt-6">
+        <p className="text-label mb-3">DESTAQUES</p>
+        <HubSequentialCarousel />
       </div>
 
       <RonBubble />
