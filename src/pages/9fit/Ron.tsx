@@ -232,6 +232,7 @@ export default function NineFitRon() {
       }
     } catch (error) {
       console.error("[Ron] 9ZAP send failed", error);
+      toast.error("O 9ZAP não respondeu", { description: error instanceof Error ? error.message : "Verifique a integração e tente novamente." });
       result = null;
     }
 

@@ -30,7 +30,7 @@ export function useZapThread(userId?: string, subject = "Atendimento FitPro") {
         body: { subject, external_key: externalKey, context: { user_id: userId }, participants: [] },
       });
       if (created.error) throw created.error;
-      const id = (created.data as { thread?: { id?: string } })?.thread?.id;
+      const id = (created.data as { thread?: { id?: string }; id?: string })?.thread?.id || (created.data as { id?: string })?.id;
       if (!id) throw new Error("9ZAP não retornou o id da thread");
       return id;
     },

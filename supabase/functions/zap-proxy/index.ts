@@ -65,7 +65,9 @@ Deno.serve(async (req) => {
       return json(r.status, r.data);
     }
     if (action === "threads" && req.method === "GET") {
-      const qs = url.search.replace(/^\?/, "");
+      const params = new URLSearchParams(url.search);
+      params.delete("action");
+      const qs = params.toString();
       const query = qs ? `?${qs}` : "";
       const r = await zapFetch(`/threads${query}`, { method: "GET", rawBody: query });
       return json(r.status, r.data);
