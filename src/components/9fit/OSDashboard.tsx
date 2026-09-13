@@ -17,13 +17,12 @@ export function OSDashboard() {
   const { user, profile } = useAuth();
   const { athleteName } = useAthleteId();
   const navigate = useNavigate();
-  const { totalXp, level, syncScore } = useEngrenagem();
+  const { totalXp } = useEngrenagem();
 
   const [ranking, setRanking] = useState<RankRow[]>([]);
   const [eventIdx, setEventIdx] = useState(0);
 
   const name = (athleteName || profile?.full_name || user?.email?.split('@')[0] || 'Atleta').split(' ')[0];
-  const classTier = totalXp > 2000 ? 'Elite Trainer' : totalXp > 800 ? 'Pro' : 'Iniciante';
 
   useEffect(() => {
     (async () => {
@@ -69,40 +68,6 @@ export function OSDashboard() {
           <Settings className="w-4 h-4 text-foreground" />
         </button>
       </div>
-
-      {/* Personal ID Card */}
-      <section className="fit-os-panel bg-card/60 p-5 shadow-[0_0_40px_-16px_hsl(var(--primary)/0.6)]">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground">Personal ID Card</p>
-            <div className="mt-3 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-primary font-display text-lg">
-                {name[0]}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Olá,</p>
-                <p className="font-display text-2xl leading-none">{name}</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-3"><span className="font-semibold text-foreground">Nível:</span> {level}</p>
-            <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">Classe:</span> {classTier}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Sync Score</p>
-            <div className="relative w-24 h-24 mt-1">
-              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
-                <circle cx="18" cy="18" r="15" stroke="hsl(var(--primary))" strokeWidth="3" fill="none"
-                  strokeDasharray={`${(syncScore || 0) * 0.94} 100`} strokeLinecap="round"
-                  style={{ filter: 'drop-shadow(0 0 6px hsl(var(--primary)/0.6))' }} />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center font-display text-2xl">
-                {Math.round(syncScore || 0)}%
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Ecossistema atalhos */}
       <section className="fit-os-panel fit-os-grid bg-card/40 p-4">
