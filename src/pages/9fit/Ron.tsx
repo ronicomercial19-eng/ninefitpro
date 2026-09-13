@@ -263,15 +263,16 @@ export default function NineFitRon() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-28 flex flex-col">
+    <div className="fit-os-grid min-h-screen bg-background pb-28 flex flex-col">
       <div className="px-5 pt-8 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT · RON</p>
-        <h1 className="text-display text-3xl text-foreground mt-1">Copiloto biológico</h1>
+        <p className="fit-os-label">9FIT // NEURAL COACH</p>
+        <h1 className="text-display text-3xl text-foreground mt-1">RON</h1>
+        <p className="text-sm text-primary mt-1">Seu assistente de treino contextual</p>
         <p className="text-xs text-muted-foreground mt-1">Observando. Aprendendo. Contextual. · Fichas: {remaining}</p>
       </div>
 
       <div className="px-5 mb-4">
-        <div className="relative h-32 rounded-2xl overflow-hidden flex items-center justify-center border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl">
+        <div className="fit-os-panel relative h-32 overflow-hidden flex items-center justify-center bg-card/70 backdrop-blur-xl">
           <div
             className="absolute inset-0 opacity-60"
             style={{ background: "var(--halo-primary)" }}

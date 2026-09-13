@@ -164,7 +164,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                 else navigate(target);
               }}
               aria-label={`${m.name}: ${label}. ${accessibilityLabel}`}
-              className={`group neural-node text-left overflow-hidden transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${variant === "rail" ? "min-w-[280px] snap-start" : ""}`}
+              className={`group fit-os-panel text-left overflow-hidden transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${variant === "rail" ? "min-w-[280px] snap-start" : ""}`}
             >
               {/* glow on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -202,7 +202,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true }:
                 </div>
               </div>
 
-              <div className="p-4 flex items-center justify-between gap-3">
+              <div className="fit-os-grid p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-display font-black italic text-sm leading-tight text-foreground truncate">
                     {m.name}

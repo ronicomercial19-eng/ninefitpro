@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Activity, ArrowUpRight, Brain, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
+import { ArrowUpRight, Brain, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
 
@@ -38,12 +38,12 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
             </span>
           </div>
 
-          <div className="mt-3 flex items-end justify-between gap-4">
+          <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_128px] sm:items-center">
             <div>
               <h2 className="max-w-[250px] text-xl font-black leading-tight text-foreground">{name}, {headline}</h2>
               <p className="mt-1 text-xs text-muted-foreground">Uma ação agora muda a leitura do seu próximo ciclo.</p>
             </div>
-            <Activity className="mb-1 h-8 w-8 shrink-0 text-primary/70" />
+            <SyncDial score={scoreReady ? Math.round(syncScore!) : null} />
           </div>
 
           <button type="button" onClick={() => navigate(primaryRoute)} className="mt-4 flex w-full items-center justify-between gap-3 bg-primary px-4 py-3 text-left font-bold text-primary-foreground transition-opacity hover:opacity-90 nine-pro-clip">
@@ -69,6 +69,22 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
       </div>
     </section>
   );
+}
+
+function SyncDial({ score }: { score: number | null }) {
+  const value = score ?? 0;
+  const circumference = 2 * Math.PI * 42;
+  return <div className="relative mx-auto h-28 w-28">
+    <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
+      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" className="text-white/10" />
+      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary transition-all duration-700" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - value / 100)} />
+    </svg>
+    <div className="absolute inset-0 grid place-content-center text-center">
+      <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Sync</span>
+      <strong className="text-2xl font-black text-foreground">{score === null ? "—" : score}</strong>
+      <span className="font-mono text-[8px] text-muted-foreground">/100</span>
+    </div>
+  </div>;
 }
 
 function CommandMetric({ label, value, suffix, progress }: { label: string; value: number; suffix: string; progress: number }) {

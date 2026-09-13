@@ -307,6 +307,10 @@
   .journey-card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, hsl(var(--primary) / .08), transparent 48%); }
   .neural-node { @apply relative rounded-2xl border border-white/[0.08] bg-elevated p-4 transition-all duration-200; }
   .neural-node:hover { border-color: hsl(var(--primary) / .45); transform: translateY(-2px); }
+  .fit-os-grid { background-image: linear-gradient(hsl(var(--primary) / .055) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / .055) 1px, transparent 1px); background-size: 28px 28px; }
+  .fit-os-panel { @apply relative overflow-hidden border border-white/[0.1] bg-card/80; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); }
+  .fit-os-panel::before { content: ""; @apply absolute left-0 right-8 top-0 h-px bg-primary/70; }
+  .fit-os-label { @apply font-mono text-[9px] uppercase tracking-[0.24em] text-primary; }
   .metric-hero { @apply text-5xl font-display tracking-tight tabular-nums; }
   .action-primary { @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:opacity-90; }
 
