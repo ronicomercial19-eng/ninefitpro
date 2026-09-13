@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Shield, Zap, Share2, X } from 'lucide-react';
+import { Shield, Zap, Share2, X, Pencil } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShareableCard } from '@/components/9fit/ShareableCard';
+import { CompleteProfileFlow } from '@/components/9fit/CompleteProfileFlow';
 
 interface Props {
   name: string;
@@ -10,12 +11,18 @@ interface Props {
   syncScore: number;
   totalXP: number;
   streak: number;
+  avatarUrl?: string | null;
+  age?: number | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
 }
 
-export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, totalXP, streak }: Props) {
+export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, totalXP, streak, avatarUrl, age, heightCm, weightKg }: Props) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
   const levelProgress = (totalXP % 1000) / 10;
   const [showShare, setShowShare] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
+  const hasBioData = Boolean(age || heightCm || weightKg);
 
   return (
     <>
@@ -33,6 +40,13 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
             <span className="text-[10px] font-data tracking-[0.3em] text-muted-foreground">9FIT · ID CARD</span>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setAdjusting(true)}
+                aria-label="Ajustar dados do perfil"
+                className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
                 onClick={() => setShowShare(true)}
                 aria-label="Compartilhar ID Card"
                 className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary"
@@ -44,8 +58,12 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-elevated border border-white/10 flex items-center justify-center">
-              <span className="font-display text-2xl text-foreground">{initials}</span>
+            <div className="w-16 h-16 rounded-2xl bg-elevated border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display text-2xl text-foreground">{initials}</span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-display text-xl truncate">{name}</p>
@@ -57,6 +75,22 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
               </div>
             </div>
           </div>
+
+          {/* Dados físicos (da etapa 1 do Completar Perfil) */}
+          {hasBioData ? (
+            <div className="grid grid-cols-3 gap-2">
+              <BioChip label="Idade" value={age ? `${age}a` : '—'} />
+              <BioChip label="Altura" value={heightCm ? `${heightCm}cm` : '—'} />
+              <BioChip label="Peso" value={weightKg ? `${weightKg}kg` : '—'} />
+            </div>
+          ) : (
+            <button
+              onClick={() => setAdjusting(true)}
+              className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.03] py-2.5 text-[11px] text-primary font-semibold"
+            >
+              Completar idade/altura/peso
+            </button>
+          )}
 
           {/* XP bar */}
           <div>
@@ -108,6 +142,9 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Ajustar dados: reabre só a etapa 1 do wizard, fecha ao salvar, sem repassar pelas etapas de ativação */}
+      <CompleteProfileFlow open={adjusting} onClose={() => setAdjusting(false)} editOnly />
     </>
   );
 }
@@ -123,6 +160,15 @@ function Stat({ label, value, suffix, icon }: { label: string; value: number | s
         {value}
         {suffix && <span className="text-xs text-muted-foreground ml-0.5">{suffix}</span>}
       </p>
+    </div>
+  );
+}
+
+function BioChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] py-2 text-center">
+      <p className="text-[8px] tracking-widest uppercase text-muted-foreground">{label}</p>
+      <p className="text-sm font-display text-foreground">{value}</p>
     </div>
   );
 }
