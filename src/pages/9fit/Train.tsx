@@ -10,7 +10,6 @@ import { WorkoutOverview } from "@/components/9fit/WorkoutOverview";
 import { WorkoutExecution } from "@/components/9fit/WorkoutExecution";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { UpsellBanner } from "@/components/9fit/UpsellBanner";
-import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
 import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
@@ -342,7 +341,6 @@ export default function NineFitTrain() {
         {flow === "HOME" && (
           <div className="mt-6 space-y-6">
             <DynamicOffers category="training" compact />
-            <EcosystemGrid category="performance" />
           </div>
         )}
       </div>
