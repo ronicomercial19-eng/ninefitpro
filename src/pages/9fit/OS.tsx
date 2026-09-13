@@ -20,7 +20,7 @@ export default function NineFitOS() {
       .then(({ data }) => setHasPlan(Boolean((data as any)?.plan_title)));
   }, [athleteId]);
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="fit-os-grid min-h-screen bg-background pb-28">
       <HubCommandDeck name={name} syncScore={scores?.sync.value ?? null} scoreStatus={status} weekly={scores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 }} hasPlan={hasPlan} />
       <OSDashboard />
       <RonBubble />

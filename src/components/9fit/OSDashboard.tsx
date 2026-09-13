@@ -54,7 +54,7 @@ export function OSDashboard() {
   const ev = events[eventIdx];
 
   return (
-    <div className="px-4 pt-4 space-y-5">
+    <div className="px-4 pt-2 space-y-6">
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <button onClick={() => navigate('/9fit/profile')} className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
@@ -71,7 +71,7 @@ export function OSDashboard() {
       </div>
 
       {/* Personal ID Card */}
-      <section className="rounded-3xl border border-primary/40 bg-card/40 p-5 shadow-[0_0_40px_-16px_hsl(var(--primary)/0.6)]">
+      <section className="fit-os-panel bg-card/60 p-5 shadow-[0_0_40px_-16px_hsl(var(--primary)/0.6)]">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">Personal ID Card</p>
@@ -105,8 +105,8 @@ export function OSDashboard() {
       </section>
 
       {/* Ecossistema atalhos */}
-      <section className="rounded-3xl border border-primary/30 bg-card/30 p-4">
-        <p className="font-display text-xl mb-3">Ecossistema</p>
+      <section className="fit-os-panel fit-os-grid bg-card/40 p-4">
+        <p className="fit-os-label mb-1">Atalhos do sistema</p><p className="font-display text-xl mb-3">Ecossistema</p>
         <div className="grid grid-cols-2 gap-3">
           {[
             { I: Dumbbell, label: 'Train', route: '/9fit/train' },
@@ -115,7 +115,7 @@ export function OSDashboard() {
             { I: Tag, label: 'Market', route: '/9fit/protocols' },
           ].map(({ I, label, route }) => (
             <button key={label} onClick={() => navigate(route)}
-              className="rounded-2xl border border-primary/30 bg-white/[0.02] py-3 flex items-center justify-center gap-2 hover:bg-primary/[0.06] transition">
+              className="fit-os-panel border-primary/30 bg-white/[0.02] py-3 flex items-center justify-center gap-2 hover:bg-primary/[0.06] transition">
               <I className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold">{label}</span>
             </button>
@@ -124,7 +124,7 @@ export function OSDashboard() {
       </section>
 
       {/* Ranking Global */}
-      <section className="rounded-3xl border border-primary/30 bg-card/30 p-4">
+      <section className="fit-os-panel bg-card/30 p-4">
         <div className="flex items-center justify-between mb-3">
           <p className="font-display text-xl">Ranking Global</p>
           <Trophy className="w-5 h-5 text-primary" />
@@ -154,8 +154,8 @@ export function OSDashboard() {
       <QuickCheckIn />
 
       {/* Destaques */}
-      <section className="rounded-3xl border border-primary/30 bg-card/30 p-4">
-        <p className="font-display text-xl mb-3">Destaques</p>
+      <section className="fit-os-panel bg-card/30 p-4">
+        <p className="fit-os-label mb-1">Próxima ação</p><p className="font-display text-xl mb-3">Destaques</p>
         <div className="rounded-2xl border border-primary/30 bg-white/[0.02] p-4 flex items-center gap-3">
           <button onClick={() => setEventIdx((i) => (i - 1 + events.length) % events.length)}
             className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center">
