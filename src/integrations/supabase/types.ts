@@ -4568,6 +4568,117 @@ export type Database = {
           },
         ]
       }
+      diet_meal_items: {
+        Row: {
+          created_at: string
+          descricao_original: string
+          diet_meal_id: string
+          eh_alternativa: boolean
+          food_id: string | null
+          id: string
+          kcal_calculado: number
+          ordem: number
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          descricao_original: string
+          diet_meal_id: string
+          eh_alternativa?: boolean
+          food_id?: string | null
+          id?: string
+          kcal_calculado?: number
+          ordem?: number
+          quantidade?: number
+        }
+        Update: {
+          created_at?: string
+          descricao_original?: string
+          diet_meal_id?: string
+          eh_alternativa?: boolean
+          food_id?: string | null
+          id?: string
+          kcal_calculado?: number
+          ordem?: number
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_meal_items_diet_meal_id_fkey"
+            columns: ["diet_meal_id"]
+            isOneToOne: false
+            referencedRelation: "diet_meals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diet_meal_items_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diet_meals: {
+        Row: {
+          carbo_g: number | null
+          created_at: string
+          diet_assignment_id: string
+          gordura_g: number | null
+          horario_previsto: string | null
+          id: string
+          kcal: number
+          nome: string
+          ordem: number
+          origem: string
+          proteina_g: number | null
+          updated_at: string
+        }
+        Insert: {
+          carbo_g?: number | null
+          created_at?: string
+          diet_assignment_id: string
+          gordura_g?: number | null
+          horario_previsto?: string | null
+          id?: string
+          kcal?: number
+          nome: string
+          ordem?: number
+          origem?: string
+          proteina_g?: number | null
+          updated_at?: string
+        }
+        Update: {
+          carbo_g?: number | null
+          created_at?: string
+          diet_assignment_id?: string
+          gordura_g?: number | null
+          horario_previsto?: string | null
+          id?: string
+          kcal?: number
+          nome?: string
+          ordem?: number
+          origem?: string
+          proteina_g?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_meals_diet_assignment_id_fkey"
+            columns: ["diet_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "student_diet_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diet_meals_diet_assignment_id_fkey"
+            columns: ["diet_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["diet_assignment_id"]
+          },
+        ]
+      }
       ecosystem_config: {
         Row: {
           config_key: string
@@ -5488,6 +5599,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      foods: {
+        Row: {
+          carbo_g_por_unidade: number | null
+          created_at: string
+          fonte: string | null
+          gordura_g_por_unidade: number | null
+          id: string
+          kcal_por_unidade: number
+          nome: string
+          proteina_g_por_unidade: number | null
+          unidade_padrao: string
+        }
+        Insert: {
+          carbo_g_por_unidade?: number | null
+          created_at?: string
+          fonte?: string | null
+          gordura_g_por_unidade?: number | null
+          id?: string
+          kcal_por_unidade: number
+          nome: string
+          proteina_g_por_unidade?: number | null
+          unidade_padrao: string
+        }
+        Update: {
+          carbo_g_por_unidade?: number | null
+          created_at?: string
+          fonte?: string | null
+          gordura_g_por_unidade?: number | null
+          id?: string
+          kcal_por_unidade?: number
+          nome?: string
+          proteina_g_por_unidade?: number | null
+          unidade_padrao?: string
+        }
+        Relationships: []
       }
       generated_workout_plans: {
         Row: {
@@ -21231,6 +21378,15 @@ export type Database = {
       }
       fn_get_access_level: { Args: { p_athlete_id: string }; Returns: Json }
       fn_get_athlete_scores: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_get_athlete_timeline: {
+        Args: { p_athlete_id: string; p_limit?: number }
+        Returns: {
+          detail: Json
+          event_date: string
+          event_type: string
+          title: string
+        }[]
+      }
       fn_get_historico_performance: {
         Args: { p_athlete_id: string }
         Returns: Json
@@ -21254,6 +21410,10 @@ export type Database = {
         Returns: Json
       }
       fn_get_recordes: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_get_ron_progresso_screen: {
+        Args: { p_athlete_id: string }
+        Returns: Json
+      }
       fn_get_treino_dia: {
         Args: { p_athlete_id: string; p_data?: string }
         Returns: Json
@@ -21380,6 +21540,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      fn_start_daily_workout_execution: {
+        Args: { p_daily_workout_id: string }
+        Returns: string
       }
       fn_start_workout_execution: {
         Args: { p_assignment_id: string }
