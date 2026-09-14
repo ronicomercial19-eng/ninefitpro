@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PDIWizard } from "@/components/9fit/PDIWizard";
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
+import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
+import { useEngrenagem } from "@/hooks/useEngrenagem";
 
 interface MenuItem {
   icon: any;
@@ -19,14 +21,23 @@ interface MenuItem {
   badgeStyle?: "neon" | "outline";
 }
 
+interface AthleteBio {
+  avatar_url: string | null;
+  age: number | null;
+  height_cm: number | null;
+  weight_kg: number | null;
+}
+
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
+  const { totalXp, level, syncScore, streak } = useEngrenagem();
   const [staffOnline, setStaffOnline] = useState(3);
   const [nextInvoice, setNextInvoice] = useState("12/11");
   const [planTier, setPlanTier] = useState("Aluno Premium");
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
 
   useEffect(() => {
     (async () => {
@@ -38,6 +49,17 @@ export default function NineFitProfile() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("athletes")
+        .select("avatar_url, age, height_cm, weight_kg")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) setBio(data as any);
+    })();
+  }, [user?.id, completeOpen]); // recarrega ao fechar o wizard (Completar/Ajustar)
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
@@ -62,17 +84,22 @@ export default function NineFitProfile() {
         <div className="w-9 h-9" />
       </header>
 
-      {/* Profile */}
-      <section className="px-4 mt-5 flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full border-2 border-primary bg-white/5 grid place-items-center font-display text-2xl text-primary">
-          {displayName[0]?.toUpperCase()}
-        </div>
-        <div className="flex-1">
-          <p className="font-display text-2xl">{displayName}</p>
-          <p className="text-primary font-semibold text-sm flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" /> {planTier}
-          </p>
-        </div>
+      {/* ID Card — foto/idade/altura/peso da etapa 1 do Completar Perfil + level/sync/streak/xp */}
+      <section className="px-4 mt-5">
+        <DigitalIDCard
+          name={displayName}
+          level={level}
+          syncScore={syncScore}
+          totalXP={totalXp}
+          streak={streak}
+          avatarUrl={bio.avatar_url}
+          age={bio.age}
+          heightCm={bio.height_cm}
+          weightKg={bio.weight_kg}
+        />
+        <p className="text-primary font-semibold text-sm flex items-center gap-1.5 mt-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary" /> {planTier}
+        </p>
       </section>
 
       {/* Menu */}
@@ -109,10 +136,12 @@ export default function NineFitProfile() {
           className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
           <Share2 className="w-4 h-4" /> Compartilhar meu ID Card
         </button>
-        <button onClick={() => setCompleteOpen(true)}
-          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
-          <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
-        </button>
+        {!bio.age && !bio.height_cm && !bio.weight_kg && (
+          <button onClick={() => setCompleteOpen(true)}
+            className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
+            <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
+          </button>
+        )}
         <button onClick={() => setPdiOpen(true)}
           className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
           <Brain className="w-4 h-4" /> Calibrar IA (PDI)
