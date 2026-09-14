@@ -7,13 +7,16 @@ import { toast } from "sonner";
 
 /**
  * Auto-registro do aluno entre avaliações oficiais do professor.
- * Grava via fn_registrar_peso_avulso(p_athlete_id, p_peso, p_data) — função
- * validada no dossiê "Ponte Progress Tracker ↔ FitPro" (13/09), que insere em
- * avaliacoes_unificadas com origem='peso_avulso' e já entra automaticamente
- * na Tendência e no histórico consumidos por fn_get_ron_progresso_screen.
- * Se o aluno também informar %gordura (medida própria, balança), completamos
- * o mesmo registro com um update pontual — a função em si não recebe esse
- * campo, só peso.
+ * Grava via fn_registrar_peso_avulso(p_athlete_id, p_peso, p_data, p_gordura) —
+ * função validada no dossiê "Ponte Progress Tracker ↔ FitPro" (13/09), que
+ * insere em avaliacoes_unificadas com origem='peso_avulso' e já entra
+ * automaticamente na Tendência e no histórico consumidos por
+ * fn_get_ron_progresso_screen.
+ * QA (14/09): %gordura era gravado com um UPDATE direto na tabela depois do
+ * insert, mas não existe policy de UPDATE pra atleta em avaliacoes_unificadas
+ * — a RLS bloqueava silenciosamente e o campo nunca era salvo de fato.
+ * Corrigido: p_gordura agora é parâmetro da própria função SECURITY DEFINER,
+ * gravado no mesmo INSERT.
  */
 export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
   const { athleteId } = useAthleteId();
@@ -29,30 +32,18 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
     }
     setSaving(true);
 
-    const { data: registroId, error } = await supabase.rpc("fn_registrar_peso_avulso" as any, {
+    const { error } = await supabase.rpc("fn_registrar_peso_avulso" as any, {
       p_athlete_id: athleteId,
       p_peso: Number(peso),
+      p_gordura: gordura ? Number(gordura) : null,
     });
 
+    setSaving(false);
     if (error) {
-      setSaving(false);
       toast.error("Erro ao salvar check-in");
       return;
     }
 
-    // %gordura é opcional e não faz parte da assinatura de fn_registrar_peso_avulso —
-    // completa o mesmo registro recém-criado quando o aluno informar.
-    if (gordura && registroId) {
-      const { error: updateError } = await supabase
-        .from("avaliacoes_unificadas" as any)
-        .update({ gordura_corporal: Number(gordura) })
-        .eq("id", registroId as string);
-      if (updateError) {
-        console.error("[CheckinCorporalCard] Falha ao gravar %gordura no registro:", updateError);
-      }
-    }
-
-    setSaving(false);
     toast.success("Check-in registrado");
     setOpen(false);
     setPeso(""); setGordura("");
