@@ -8,9 +8,35 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SeriesPoint { label: string; value: number; oficial: boolean }
-interface StrengthBar { name: string; kg: number; delta: number }
+interface StrengthBar { name: string; kg: number; delta: number; unidade: string }
 interface PrItem { exercicio: string; valor: number; unidade: string; data: string; delta: number | null }
 interface RunItem { distanceKm: number; date: string }
+
+// Formato de retorno de fn_get_ron_progresso_screen(p_athlete_id uuid) — ver dossiê
+// "Ponte Progress Tracker ↔ FitPro" (13/09). Uma única RPC entrega todos os blocos
+// da tela; nada aqui mais é montado a partir de queries soltas nas tabelas base.
+interface RonProgressoScreen {
+  avaliacao_atual?: {
+    score_atual?: number | null;
+    score_primeira_do_periodo?: number | null;
+    delta_pp?: number | null;
+    data?: string | null;
+  };
+  composicao_corporal?: {
+    gordura_corporal?: number | null;
+    massa_muscular?: number | null;
+  };
+  forca_total?: {
+    total_kg?: number | null;
+    tem_sets_registrados?: boolean;
+  };
+  tendencia_gordura_60d?: { data: string; valor: number }[];
+  progressao_forca?: { exercicio: string; data: string; valor: number; unidade: string }[];
+  recordes_recentes?: { exercicio: string; data: string; valor: number; unidade: string }[];
+  corridas_recentes?: { data: string; distancia_km: number; fonte?: string }[];
+  metas?: { metrica?: string; valor_meta?: number; status?: string }[];
+  insights?: string[];
+}
 
 export default function NineFitProgresso() {
   const navigate = useNavigate();
@@ -21,150 +47,104 @@ export default function NineFitProgresso() {
   const [scoreTrend, setScoreTrend] = useState<number | null>(null);
   const [gordura, setGordura] = useState<number | null>(null);
   const [musculo, setMusculo] = useState<number | null>(null);
-  const [gorduraOficial, setGorduraOficial] = useState(true);
   const [metaGordura, setMetaGordura] = useState<number | null>(null);
   const [prs, setPrs] = useState<PrItem[]>([]);
   const [insights, setInsights] = useState<string[]>([]);
   const [runs, setRuns] = useState<RunItem[]>([]);
+  const [temSetsRegistrados, setTemSetsRegistrados] = useState(false);
+  const [forcaTotalKg, setForcaTotalKg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!athleteId) { setLoading(false); return; }
     setLoading(true);
-    // Últimas avaliações — inclui oficiais (professor/API) E auto-registro do aluno.
-    // "oficial" = origem != 'self_checkin' → só essas contam pra score/composição
-    // detalhada; o self_checkin entra na curva de peso/gordura pra dar mais pontos
-    // de referência entre uma avaliação oficial e outra.
-    const since = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
-    const { data: avals } = await supabase
-      .from("avaliacoes_unificadas" as any)
-      .select("data_avaliacao, gordura_corporal, massa_muscular, score_global, origem")
-      .eq("athlete_id", athleteId)
-      .gte("data_avaliacao", since)
-      .order("data_avaliacao");
-    const rows = (avals as any[]) || [];
 
-    const points = rows
-      .filter((r) => r.gordura_corporal != null)
-      .map((r) => ({
-        label: new Date(r.data_avaliacao).toLocaleDateString("pt-BR", { month: "short", day: "2-digit" }),
-        value: Number(r.gordura_corporal),
-        oficial: r.origem !== "self_checkin",
-      }));
-    setBodyfat(points);
+    const { data, error } = await supabase.rpc("fn_get_ron_progresso_screen" as any, {
+      p_athlete_id: athleteId,
+    });
 
-    // Score e composição detalhada só vêm de avaliação oficial (self_checkin não mede tudo isso)
-    const oficiais = rows.filter((r) => r.origem !== "self_checkin");
-    if (oficiais.length > 0) {
-      const last = oficiais[oficiais.length - 1];
-      setGordura(last.gordura_corporal != null ? Number(last.gordura_corporal) : null);
-      setMusculo(last.massa_muscular != null ? Number(last.massa_muscular) : null);
-      setGorduraOficial(true);
-      if (last.score_global != null) {
-        setScore(Math.round(Number(last.score_global)));
-        const first = oficiais.find((r) => r.score_global != null);
-        if (first && first !== last && first.score_global != null) {
-          setScoreTrend(Math.round(Number(last.score_global) - Number(first.score_global)));
-        }
-      }
-    } else if (points.length > 0) {
-      // Sem avaliação oficial ainda, mas tem auto-registro — mostra com aviso
-      setGordura(points[points.length - 1].value);
-      setGorduraOficial(false);
+    if (error) {
+      console.error("[Progresso] fn_get_ron_progresso_screen falhou:", error);
+      setLoading(false);
+      return;
     }
 
-    // Meta de % de gordura, se o aluno tiver cadastrado em Metas
-    const { data: metaGord } = await supabase
-      .from("metas_progresso" as any)
-      .select("valor_meta")
-      .eq("athlete_id", athleteId)
-      .ilike("metrica", "%gordura%")
-      .eq("status", "ativa")
-      .limit(1)
-      .maybeSingle();
-    setMetaGordura(metaGord ? Number((metaGord as any).valor_meta) : null);
+    const screen = (data as RonProgressoScreen) || {};
 
-    // Progressão de força real (workout_exercise_sets)
-    const { data: sets } = await supabase
-      .from("workout_exercise_sets" as any)
-      .select("exercise_name, weight_kg, created_at")
-      .order("created_at", { ascending: false })
-      .limit(300);
-    const byExercise = new Map<string, number[]>();
-    ((sets as any[]) || []).forEach((s) => {
-      const k = (s.exercise_name || "").toLowerCase();
-      const w = Number(s.weight_kg || 0);
-      if (!k || w <= 0) return;
-      if (!byExercise.has(k)) byExercise.set(k, []);
-      byExercise.get(k)!.push(w);
+    // Avaliação atual / score
+    setScore(screen.avaliacao_atual?.score_atual != null ? Math.round(screen.avaliacao_atual.score_atual) : null);
+    setScoreTrend(screen.avaliacao_atual?.delta_pp != null ? Math.round(screen.avaliacao_atual.delta_pp) : null);
+
+    // Composição corporal
+    setGordura(screen.composicao_corporal?.gordura_corporal ?? null);
+    setMusculo(screen.composicao_corporal?.massa_muscular ?? null);
+
+    // Força total (card do topo)
+    setForcaTotalKg(screen.forca_total?.total_kg ?? null);
+    setTemSetsRegistrados(!!screen.forca_total?.tem_sets_registrados);
+
+    // Tendência de gordura 60d
+    const bfPoints: SeriesPoint[] = (screen.tendencia_gordura_60d || []).map((p) => ({
+      label: new Date(p.data).toLocaleDateString("pt-BR", { month: "short", day: "2-digit" }),
+      value: Number(p.valor),
+      oficial: true,
+    }));
+    setBodyfat(bfPoints);
+
+    // Progressão de força — agrupa o histórico plano por exercício,
+    // valor atual = registro mais recente, delta = atual - primeiro do período
+    const forcaHist = screen.progressao_forca || [];
+    const byExercicio = new Map<string, { data: string; valor: number; unidade: string }[]>();
+    forcaHist.forEach((r) => {
+      if (!byExercicio.has(r.exercicio)) byExercicio.set(r.exercicio, []);
+      byExercicio.get(r.exercicio)!.push(r);
     });
-    const aliases: Record<string, string> = { supino: "Supino", agachamento: "Agachamento", puxada: "Puxada" };
     const strengthNext: StrengthBar[] = [];
-    Object.entries(aliases).forEach(([key, label]) => {
-      let all: number[] = [];
-      for (const [k, arr] of byExercise.entries()) if (k.includes(key)) all = all.concat(arr);
-      if (all.length === 0) return;
-      const max = Math.max(...all);
-      const baseline = all.slice(-Math.min(5, all.length));
-      const avgBaseline = baseline.reduce((a, b) => a + b, 0) / baseline.length;
-      strengthNext.push({ name: label, kg: Math.round(max), delta: Math.round(max - avgBaseline) });
+    byExercicio.forEach((rows, exercicio) => {
+      const sorted = [...rows].sort((a, b) => a.data.localeCompare(b.data));
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      strengthNext.push({
+        name: exercicio,
+        kg: Math.round(last.valor),
+        delta: Math.round(last.valor - first.valor),
+        unidade: last.unidade || "kg",
+      });
     });
     setStrength(strengthNext);
 
-    // PRs reais mais recentes
-    const { data: prData } = await supabase
-      .from("personal_records" as any)
-      .select("exercicio, valor, unidade, data_pr")
-      .eq("athlete_id", athleteId)
-      .order("data_pr", { ascending: false })
-      .limit(6);
-    const prRows = (prData as any[]) || [];
-    const prItems: PrItem[] = [];
-    for (const r of prRows.slice(0, 2)) {
-      const previous = prRows.find((p) => p.exercicio === r.exercicio && p.data_pr < r.data_pr);
-      prItems.push({
+    // Recordes recentes — delta vs. registro anterior do mesmo exercício em progressao_forca
+    const prItems: PrItem[] = (screen.recordes_recentes || []).map((r) => {
+      const hist = (byExercicio.get(r.exercicio) || [])
+        .filter((h) => h.data < r.data)
+        .sort((a, b) => b.data.localeCompare(a.data));
+      const previous = hist[0];
+      return {
         exercicio: r.exercicio,
         valor: Number(r.valor),
         unidade: r.unidade || "kg",
-        data: new Date(r.data_pr).toLocaleDateString("pt-BR"),
+        data: new Date(r.data).toLocaleDateString("pt-BR"),
         delta: previous ? Number(r.valor) - Number(previous.valor) : null,
-      });
-    }
+      };
+    });
     setPrs(prItems);
 
-    // Corridas do Move — fonte canônica bio_activity_logs, sem fallback sintético
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const { data: runData } = await supabase
-        .from("bio_activity_logs")
-        .select("distance_m, recorded_at, source")
-        .eq("user_id", authUser.id)
-        .eq("source", "move_gps")
-        .order("recorded_at", { ascending: false })
-        .limit(10);
-      setRuns(((runData as any[]) || []).map((r) => ({
-        distanceKm: Number(r.distance_m || 0) / 1000,
-        date: new Date(r.recorded_at).toLocaleDateString("pt-BR"),
-      })));
-    } else {
-      setRuns([]);
-    }
+    // Corridas recentes
+    setRuns((screen.corridas_recentes || []).map((r) => ({
+      distanceKm: Number(r.distancia_km || 0),
+      date: new Date(r.data).toLocaleDateString("pt-BR"),
+    })));
 
-    // Insights: só afirmações que dá pra provar com o dado que acabamos de buscar
-    const ins: string[] = [];
-    if (strengthNext.length > 0) {
-      const top = [...strengthNext].sort((a, b) => b.delta - a.delta)[0];
-      if (top.delta > 0) ins.push(`Seu ${top.name.toLowerCase()} evoluiu ${top.delta}kg no período analisado.`);
-    }
-    if (points.length >= 2) {
-      const diff = points[0].value - points[points.length - 1].value;
-      if (diff > 0) ins.push(`Redução de ${diff.toFixed(1)}pp de gordura corporal nas últimas avaliações.`);
-      else if (diff < 0) ins.push(`Gordura corporal subiu ${Math.abs(diff).toFixed(1)}pp desde a última avaliação — vale revisar dieta/treino com seu professor.`);
-    }
-    if (prItems.length > 0) {
-      ins.push(`Último recorde: ${prItems[0].exercicio} em ${prItems[0].data}.`);
-    }
-    setInsights(ins);
+    // Meta de % de gordura, se cadastrada em Metas
+    const metaGord = (screen.metas || []).find((m) =>
+      (m.metrica || "").toLowerCase().includes("gordura") && m.status !== "concluida"
+    );
+    setMetaGordura(metaGord?.valor_meta != null ? Number(metaGord.valor_meta) : null);
+
+    // Insights personalizados — já vêm prontos do backend
+    setInsights(screen.insights || []);
+
+    setLoading(false);
   }, [athleteId]);
 
   useEffect(() => { load(); }, [load]);
@@ -176,8 +156,6 @@ export default function NineFitProgresso() {
   const span = Math.max(1, maxV - minV);
   const xStep = hasCurve ? (W - pad * 2) / (bodyfat.length - 1) : 0;
   const pts = bodyfat.map((p, i) => `${pad + i * xStep},${H - pad - ((p.value - minV) / span) * (H - pad * 2)}`).join(" ");
-  const hasSelfCheckin = bodyfat.some((p) => !p.oficial);
-  const forcaTotal = strength.reduce((s, b) => s + b.delta, 0);
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -211,20 +189,18 @@ export default function NineFitProgresso() {
             </svg>
           </div>
           <div className="flex justify-between text-[9px] mt-1">
-            <span><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%${!gorduraOficial ? "*" : ""}` : "—"}</span>
+            <span><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%` : "—"}</span>
             <span><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo}%` : "—"}</span>
           </div>
-          {!gorduraOficial && gordura != null && (
-            <p className="text-[8px] text-muted-foreground mt-1">*auto-registro, sem avaliação oficial ainda</p>
-          )}
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
           <p className="text-[10px] text-muted-foreground">Força Total</p>
           <p className="text-2xl font-display mt-1">
-            {strength.length > 0 ? `${forcaTotal >= 0 ? "+" : ""}${forcaTotal}` : "—"}<span className="text-base">kg</span>
+            {temSetsRegistrados && forcaTotalKg != null ? `${forcaTotalKg >= 0 ? "+" : ""}${forcaTotalKg}` : "—"}
+            {temSetsRegistrados && forcaTotalKg != null && <span className="text-base">kg</span>}
           </p>
-          {strength.length > 0 ? (
-            forcaTotal >= 0 ? <TrendingUp className="w-3 h-3 text-primary mt-1" /> : <TrendingDown className="w-3 h-3 text-destructive mt-1" />
+          {temSetsRegistrados && forcaTotalKg != null ? (
+            forcaTotalKg >= 0 ? <TrendingUp className="w-3 h-3 text-primary mt-1" /> : <TrendingDown className="w-3 h-3 text-destructive mt-1" />
           ) : (
             <p className="text-[9px] text-muted-foreground mt-1">Sem sets registrados</p>
           )}
@@ -269,20 +245,13 @@ export default function NineFitProgresso() {
                     key={i}
                     cx={pad + i * xStep}
                     cy={H - pad - ((p.value - minV) / span) * (H - pad * 2)}
-                    r={p.oficial ? 3 : 2.5}
-                    fill={p.oficial ? "hsl(var(--primary))" : "transparent"}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={p.oficial ? 0 : 1.5}
+                    r={3}
+                    fill="hsl(var(--primary))"
                   />
                 ))}
               </svg>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="flex gap-2 text-[9px] text-muted-foreground overflow-x-auto">
-                  {bodyfat.map((p, i) => <span key={i}>• {p.label}</span>)}
-                </div>
-                {hasSelfCheckin && (
-                  <span className="text-[8px] text-muted-foreground shrink-0 ml-2">● oficial &nbsp; ○ auto-registro</span>
-                )}
+              <div className="mt-2 flex gap-2 text-[9px] text-muted-foreground overflow-x-auto">
+                {bodyfat.map((p, i) => <span key={i}>• {p.label}</span>)}
               </div>
             </>
           ) : (
@@ -316,8 +285,8 @@ export default function NineFitProgresso() {
                   <div className="h-full bg-primary" style={{ width: `${Math.min(100, s.kg / 2)}%` }} />
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="font-display text-lg">{s.kg}<span className="text-xs">kg</span></p>
-                  <p className={`text-xs ${s.delta >= 0 ? "text-primary" : "text-destructive"}`}>{s.delta >= 0 ? "+" : ""}{s.delta}kg</p>
+                  <p className="font-display text-lg">{s.kg}<span className="text-xs">{s.unidade}</span></p>
+                  <p className={`text-xs ${s.delta >= 0 ? "text-primary" : "text-destructive"}`}>{s.delta >= 0 ? "+" : ""}{s.delta}{s.unidade}</p>
                 </div>
               </div>
             ))}

@@ -7,10 +7,13 @@ import { toast } from "sonner";
 
 /**
  * Auto-registro do aluno entre avaliações oficiais do professor.
- * Escreve em avaliacoes_unificadas com origem='self_checkin' — dado leve
- * (peso + %gordura opcional via balança própria), nunca substitui a
- * avaliação oficial do professor (origem='manual'/'api'), só complementa
- * a tendência entre uma avaliação física e outra.
+ * Grava via fn_registrar_peso_avulso(p_athlete_id, p_peso, p_data) — função
+ * validada no dossiê "Ponte Progress Tracker ↔ FitPro" (13/09), que insere em
+ * avaliacoes_unificadas com origem='peso_avulso' e já entra automaticamente
+ * na Tendência e no histórico consumidos por fn_get_ron_progresso_screen.
+ * Se o aluno também informar %gordura (medida própria, balança), completamos
+ * o mesmo registro com um update pontual — a função em si não recebe esse
+ * campo, só peso.
  */
 export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
   const { athleteId } = useAthleteId();
@@ -25,15 +28,31 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("avaliacoes_unificadas" as any).insert({
-      athlete_id: athleteId,
-      data_avaliacao: new Date().toISOString().slice(0, 10),
-      peso: Number(peso),
-      gordura_corporal: gordura ? Number(gordura) : null,
-      origem: "self_checkin",
+
+    const { data: registroId, error } = await supabase.rpc("fn_registrar_peso_avulso" as any, {
+      p_athlete_id: athleteId,
+      p_peso: Number(peso),
     });
+
+    if (error) {
+      setSaving(false);
+      toast.error("Erro ao salvar check-in");
+      return;
+    }
+
+    // %gordura é opcional e não faz parte da assinatura de fn_registrar_peso_avulso —
+    // completa o mesmo registro recém-criado quando o aluno informar.
+    if (gordura && registroId) {
+      const { error: updateError } = await supabase
+        .from("avaliacoes_unificadas" as any)
+        .update({ gordura_corporal: Number(gordura) })
+        .eq("id", registroId as string);
+      if (updateError) {
+        console.error("[CheckinCorporalCard] Falha ao gravar %gordura no registro:", updateError);
+      }
+    }
+
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar check-in"); return; }
     toast.success("Check-in registrado");
     setOpen(false);
     setPeso(""); setGordura("");
