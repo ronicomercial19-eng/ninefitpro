@@ -113,20 +113,30 @@ export default function NineFitProgresso() {
     });
     setStrength(strengthNext);
 
-    // Recordes recentes — delta vs. registro anterior do mesmo exercício em progressao_forca
-    const prItems: PrItem[] = (screen.recordes_recentes || []).map((r) => {
+    // Recordes recentes — fn_get_ron_progresso_screen devolve as últimas 5 linhas
+    // BRUTAS de personal_records, sem deduplicar por exercício. Isso significa que
+    // um recorde já superado (ex: Supino 80kg de 25/07) continua aparecendo ao lado
+    // do que o quebrou (Supino 100kg de 30/08) — achado em QA (14/09) comparando a
+    // resposta real da função com a tabela personal_records da Fernanda. Corrigido
+    // aqui: mantém só a entrada mais recente por exercício (a lista já vem ordenada
+    // DESC por data, então a primeira ocorrência de cada exercício é a atual).
+    const seen = new Set<string>();
+    const prItems: PrItem[] = [];
+    for (const r of screen.recordes_recentes || []) {
+      if (seen.has(r.exercicio)) continue;
+      seen.add(r.exercicio);
       const hist = (byExercicio.get(r.exercicio) || [])
         .filter((h) => h.data < r.data)
         .sort((a, b) => b.data.localeCompare(a.data));
       const previous = hist[0];
-      return {
+      prItems.push({
         exercicio: r.exercicio,
         valor: Number(r.valor),
         unidade: r.unidade || "kg",
         data: new Date(r.data).toLocaleDateString("pt-BR"),
         delta: previous ? Number(r.valor) - Number(previous.valor) : null,
-      };
-    });
+      });
+    }
     setPrs(prItems);
 
     // Corridas recentes
