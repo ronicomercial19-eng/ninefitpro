@@ -58,6 +58,16 @@ export default function AIAnalysisPage() {
         .order('data_avaliacao', { ascending: false })
         .limit(5);
 
+      // QA (15/09): antes ia sempre workoutsCompleted: 0 fixo, fazendo a IA
+      // achar que o aluno nunca treinou. Agora conta de verdade em
+      // workout_executions (mesma tabela usada por fn_get_ron_progresso_screen
+      // pra "Força Total" e por fn_get_athlete_timeline).
+      const { count: workoutsCount } = await supabase
+        .from('workout_executions')
+        .select('id', { count: 'exact', head: true })
+        .eq('athlete_id', selectedStudent)
+        .eq('status', 'completed');
+
       const { data: result, error } = await supabase.functions.invoke('ai-coach', {
         body: {
           type: 'analyze_progress',
@@ -66,7 +76,7 @@ export default function AIAnalysisPage() {
             name: student.name,
             goal: student.primary_goal,
             assessments: assessments || [],
-            workoutsCompleted: 0,
+            workoutsCompleted: workoutsCount || 0,
             avgFrequency: student.weekly_frequency,
           },
         },
