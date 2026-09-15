@@ -4,6 +4,7 @@ import { AchievementShareSheet, type Achievement } from "@/components/9fit/Achie
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAthleteScores } from "@/hooks/useAthleteScores";
 import { Loader2 } from "lucide-react";
 
 const templates = [
@@ -26,15 +27,16 @@ export default function NineFitCompartilhar() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const { data: athleteData } = await supabase.from("athletes" as any).select("id,name,sync_score").eq("user_id", user.id).maybeSingle();
+      const { data: athleteData } = await supabase.from("athletes" as any).select("id,name").eq("user_id", user.id).maybeSingle();
       const athlete = athleteData as any;
       if (!athlete?.id) { setLoading(false); return; }
-      const [{ data: executions }, { data: records }] = await Promise.all([
+      const [{ data: executions }, { data: records }, snapshot] = await Promise.all([
         supabase.from("workout_executions" as any).select("id").eq("athlete_id", athlete.id).eq("status", "completed"),
         supabase.from("personal_records" as any).select("exercicio,valor,unidade").eq("athlete_id", athlete.id).order("data_pr", { ascending: false }).limit(1),
+        getAthleteScores(),
       ]);
       const latest = records?.[0] as any;
-      setStats({ name: athlete.name || "Aluno 9FIT", score: athlete.sync_score == null ? null : Number(athlete.sync_score), workouts: executions?.length || 0, record: latest ? String(latest.exercicio) + " · " + String(latest.valor) + String(latest.unidade || "kg") : null });
+      setStats({ name: athlete.name || snapshot?.athlete?.name || "Aluno 9FIT", score: snapshot?.sync.value == null ? null : Number(snapshot.sync.value), workouts: executions?.length || 0, record: latest ? String(latest.exercicio) + " · " + String(latest.valor) + String(latest.unidade || "kg") : null });
       setLoading(false);
     })();
   }, [user?.id]);
