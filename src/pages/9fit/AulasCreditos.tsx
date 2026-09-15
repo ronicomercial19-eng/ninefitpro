@@ -67,6 +67,7 @@ export default function AulasCreditos() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [classesPerMonth, setClassesPerMonth] = useState(0);
+  const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [extractFilter, setExtractFilter] = useState<"all" | "completed" | "no_show" | "scheduled" | "cancelled">("all");
 
   // Schedule form
@@ -94,6 +95,17 @@ export default function AulasCreditos() {
   }, [athleteId]);
 
   const fetchPlan = useCallback(async () => {
+    if (!athleteId) return;
+    const { data: credits } = await supabase
+      .from("student_credits")
+      .select("total_credits, used_credits")
+      .eq("student_id", athleteId)
+      .maybeSingle();
+    if (credits) {
+      setCreditsRemaining(Math.max(0, credits.total_credits - credits.used_credits));
+      setClassesPerMonth(credits.total_credits);
+      return;
+    }
     if (!user?.email) return;
     const { data } = await supabase
       .from("user_plans")
@@ -104,7 +116,7 @@ export default function AulasCreditos() {
       .limit(1)
       .maybeSingle();
     setClassesPerMonth((data as any)?.classes_per_month || 0);
-  }, [user?.email]);
+  }, [athleteId, user?.email]);
 
   useEffect(() => {
     fetchAppointments();
@@ -153,21 +165,21 @@ export default function AulasCreditos() {
       const { data: athleteRow } = await supabase
         .from("athletes").select("coach_id").eq("id", athleteId).maybeSingle();
 
-      const { error } = await supabase.from("appointments").insert({
-        student_id: athleteId,
-        teacher_id: (athleteRow as any)?.coach_id || user?.id,
-        scheduled_at: when.toISOString(),
-        duration: 60,
-        status: "scheduled" as const,
-        appointment_type: "aula",
-        title: `Aula — ${athleteName || ""}`.trim(),
-        notes: notes || null,
+      const { data: result, error } = await supabase.rpc("fn_create_staff_appointment" as any, {
+        p_athlete_id: athleteId,
+        p_teacher_id: (athleteRow as any)?.coach_id || user?.id || null,
+        p_title: `Aula — ${athleteName || ""}`.trim(),
+        p_scheduled_at: when.toISOString(),
+        p_duration: 60,
+        p_appointment_type: "aula",
+        p_notes: notes || null,
       });
       if (error) throw error;
 
-      toast.success("Aula agendada. Confirme presença até 1h antes do horário.");
+      setCreditsRemaining(typeof (result as any)?.credits_remaining === "number" ? (result as any).credits_remaining : creditsRemaining);
+      toast.success("Aula reservada e crédito separado. Confirme presença até 1h antes do horário.");
       setDate(""); setTime(""); setNotes("");
-      fetchAppointments();
+      await Promise.all([fetchAppointments(), fetchPlan()]);
     } catch (e: any) {
       toast.error("Erro ao agendar: " + e.message);
     } finally {
