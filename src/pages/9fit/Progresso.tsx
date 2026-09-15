@@ -5,6 +5,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { MetasSection } from "@/components/9fit/MetasSection";
 import { CheckinCorporalCard } from "@/components/9fit/CheckinCorporalCard";
 import { RecordesSection } from "@/components/9fit/RecordesSection";
+import { HistoricoCompletoModal } from "@/components/9fit/HistoricoCompletoModal";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -382,6 +383,10 @@ export default function NineFitProgresso() {
           )}
         </div>
       </div>
+
+      {/* Histórico completo — fn_get_athlete_timeline, existia pronta desde o
+          dossiê original mas não estava ligada a nenhum botão até o QA (14/09) */}
+      <HistoricoCompletoModal athleteId={athleteId} />
 
       <button onClick={() => navigate("/9fit/planejamento")}
         className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 text-primary font-semibold">
