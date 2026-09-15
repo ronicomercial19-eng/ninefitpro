@@ -15,6 +15,7 @@ type Ex = {
   reps_range: string;
   rest_seconds: number;
   video_url?: string | null;
+  new_exercise_name?: string;
 };
 
 export default function NineFitAjusteTreino() {
@@ -61,8 +62,23 @@ export default function NineFitAjusteTreino() {
   useEffect(() => { loadToday(); /* eslint-disable-next-line */ }, [athleteId]);
 
   const runCopilot = async () => {
-    const r = await generate({ workoutName, workoutType: "hipertrofia" });
+    const r = await generate({ workoutName: `${workoutName} — ${exercises.map((exercise) => exercise.name).join(", ")}`, workoutType: "hipertrofia" });
     if (r) toast.success("FitCopilot analisou seu treino");
+  };
+
+  const applyCopilotSuggestion = () => {
+    if (!adjustment) return;
+    let applied = 0;
+    adjustment.swaps.forEach((swap) => {
+      const target = exercises.find((exercise) => exercise.name.toLowerCase() === swap.from.toLowerCase())
+        ?? exercises.find((exercise) => exercise.name.toLowerCase().includes(swap.from.toLowerCase()));
+      if (target) {
+        patch(target.id, { new_exercise_name: swap.to });
+        applied += 1;
+      }
+    });
+    if (applied) toast.success(`${applied} sugestão(ões) pronta(s) para salvar`);
+    else toast.info("O FitCopilot não encontrou uma troca compatível no treino atual.");
   };
 
   const patch = (id: string, delta: Partial<Ex>) => {
@@ -80,6 +96,7 @@ export default function NineFitAjusteTreino() {
         sets: changes.sets,
         reps_range: changes.reps_range,
         rest_seconds: changes.rest_seconds,
+        new_exercise_name: changes.new_exercise_name,
       }));
       const { data, error } = await supabase.rpc("fn_ajustar_treino_dia" as any, {
         p_athlete_id: athleteId,
@@ -87,6 +104,9 @@ export default function NineFitAjusteTreino() {
         p_changes: arrayDeAlteracoes as any,
       });
       if (error) throw error;
+      if ((data as any)?.success === false) {
+        throw new Error((data as any)?.error || "O ajuste não foi aplicado");
+      }
       const updated = (data as any)?.exercises;
       if (Array.isArray(updated)) {
         setExercises(updated.map((r: any) => ({
@@ -229,6 +249,12 @@ export default function NineFitAjusteTreino() {
                 </>
               )}
             </div>
+            {!loading && adjustment && adjustment.swaps.length > 0 && (
+              <button type="button" onClick={applyCopilotSuggestion}
+                className="mt-3 w-full rounded-xl border border-primary/40 bg-primary/10 py-2 text-xs font-bold text-primary">
+                Aplicar sugestões ao treino
+              </button>
+            )}
           </div>
         </div>
       )}

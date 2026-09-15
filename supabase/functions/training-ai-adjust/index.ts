@@ -1,6 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { loadUserParameters, adjustForPDI } from "../_shared/pdi.ts";
+
+async function loadUserParameters(supabase: any, userId: string) {
+  const { data } = await supabase.from("user_parameters").select("*").eq("user_id", userId).maybeSingle();
+  return data;
+}
+
+function adjustForPDI(base: { volume: number; intensity: number }, pdi: any, label: string) {
+  const notes: string[] = [];
+  let volume = base.volume;
+  let intensity = base.intensity;
+  if (label === "recovery") { volume *= 0.4; intensity *= 0.5; notes.push("recovery_day"); }
+  if (label === "light") { volume *= 0.7; intensity *= 0.75; notes.push("light_day"); }
+  if (pdi) {
+    volume *= 0.6 + (pdi.volume_tolerance / 10) * 0.6;
+    if (pdi.recovery_rate === "slow") { volume *= 0.85; notes.push("slow_recovery_dampener"); }
+    if (pdi.discomfort_tolerance === "conservative") intensity *= 0.9;
+    if (pdi.discomfort_tolerance === "aggressive") intensity *= 1.05;
+  }
+  return { volume: Math.round(volume), intensity: Math.round(intensity), notes };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,7 +58,7 @@ serve(async (req) => {
     const authedUserId = claims.claims.sub as string;
 
     const body = await req.json();
-    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE } = body ?? {};
+    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE, exercises } = body ?? {};
     const userId = authedUserId; // trust JWT, not body
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -63,6 +82,7 @@ ${pdiBlock}`;
 Perfil: nível ${profile?.level ?? "?"}, experiência ${profile?.experience ?? "?"}.
 Estado fisiológico: HRV ${bio?.hrv ?? "—"} | Sono(min) ${bio?.sleep ?? "—"} | Recovery ${bio?.recovery ?? "—"}.
 RPE recente: ${recentRPE ?? "—"}.
+Exercícios atuais: ${Array.isArray(exercises) && exercises.length ? exercises.join(", ") : "não informado"}.
 Skills ativas: ${skills || "nenhuma"}.
 
 Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação curta — RESPEITE o PDI acima.`;

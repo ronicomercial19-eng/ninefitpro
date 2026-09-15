@@ -24,6 +24,7 @@ export interface TrainingAgentContext {
   workoutName?: string;
   workoutType?: string;
   recentRPE?: number;
+  exercises?: string[];
 }
 
 export async function requestAdaptiveAdjustment(
@@ -38,6 +39,7 @@ export async function requestAdaptiveAdjustment(
         workoutName: ctx.workoutName,
         workoutType: ctx.workoutType,
         recentRPE: ctx.recentRPE,
+        exercises: ctx.exercises,
         bio: skillCtx.bio,
         profile: skillCtx.profile,
         activeSkills: skillCtx.activeSkills.map((s) => ({ slug: s.slug, category: s.category })),
