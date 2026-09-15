@@ -743,10 +743,14 @@ export type Database = {
           duration: number | null
           gym_class_id: string | null
           id: string
+          integration_status: string
           location: string | null
           notes: string | null
           recurrence_pattern: Json | null
           scheduled_at: string
+          staff_booking_id: string | null
+          staff_method_id: string | null
+          staff_professional_id: string | null
           status: Database["public"]["Enums"]["appointment_status"] | null
           student_id: string
           teacher_id: string | null
@@ -761,10 +765,14 @@ export type Database = {
           duration?: number | null
           gym_class_id?: string | null
           id?: string
+          integration_status?: string
           location?: string | null
           notes?: string | null
           recurrence_pattern?: Json | null
           scheduled_at: string
+          staff_booking_id?: string | null
+          staff_method_id?: string | null
+          staff_professional_id?: string | null
           status?: Database["public"]["Enums"]["appointment_status"] | null
           student_id: string
           teacher_id?: string | null
@@ -779,10 +787,14 @@ export type Database = {
           duration?: number | null
           gym_class_id?: string | null
           id?: string
+          integration_status?: string
           location?: string | null
           notes?: string | null
           recurrence_pattern?: Json | null
           scheduled_at?: string
+          staff_booking_id?: string | null
+          staff_method_id?: string | null
+          staff_professional_id?: string | null
           status?: Database["public"]["Enums"]["appointment_status"] | null
           student_id?: string
           teacher_id?: string | null
@@ -7054,7 +7066,7 @@ export type Database = {
       }
       metas_progresso: {
         Row: {
-          aluno_id: string
+          aluno_id: string | null
           athlete_id: string | null
           created_at: string
           exercicio: string | null
@@ -7070,7 +7082,7 @@ export type Database = {
           valor_meta: number
         }
         Insert: {
-          aluno_id: string
+          aluno_id?: string | null
           athlete_id?: string | null
           created_at?: string
           exercicio?: string | null
@@ -7086,7 +7098,7 @@ export type Database = {
           valor_meta: number
         }
         Update: {
-          aluno_id?: string
+          aluno_id?: string | null
           athlete_id?: string | null
           created_at?: string
           exercicio?: string | null
@@ -21354,6 +21366,20 @@ export type Database = {
         }[]
       }
       fn_core_os_check_inactive_athletes: { Args: never; Returns: undefined }
+      fn_create_staff_appointment: {
+        Args: {
+          p_appointment_type?: string
+          p_athlete_id: string
+          p_duration?: number
+          p_notes?: string
+          p_scheduled_at: string
+          p_staff_method_id?: string
+          p_staff_professional_id?: string
+          p_teacher_id: string
+          p_title: string
+        }
+        Returns: Json
+      }
       fn_current_athlete_id: { Args: never; Returns: string }
       fn_dispensar_lembrete_perfil: {
         Args: { p_athlete_id: string }
@@ -21454,6 +21480,15 @@ export type Database = {
             Returns: Json
           }
       fn_processar_e_catalogar_planilhas: { Args: never; Returns: Json }
+      fn_registrar_peso_avulso: {
+        Args: {
+          p_athlete_id: string
+          p_data?: string
+          p_gordura?: number
+          p_peso: number
+        }
+        Returns: string
+      }
       fn_registrar_recorde: {
         Args: {
           p_athlete_id: string
