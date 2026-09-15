@@ -12,6 +12,7 @@ interface WeeklyTrainingViewProps {
 
 type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; video_url?: string | null };
 type DayPlan = {
+  id?: string;
   date: string;
   day_label: string;
   status: "rest" | "planned" | "completed" | "in_progress";
@@ -41,6 +42,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       setMatch(Number(payload.match_percentage || 0));
       const week: any[] = payload.week || [];
       setDays(week.map((d: any) => ({
+        id: d.id || d.daily_workout_id || d.workout_id,
         date: d.workout_date || d.date,
         day_label: d.day_name || d.day_label || DAY_LABELS[new Date(d.workout_date || d.date).getDay()],
         status: d.status || "planned",
