@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -14,24 +15,62 @@ import {
   Lock, 
   Palette, 
   Save,
-  Camera
+  Camera,
+  Check
 } from 'lucide-react';
+
+const DEFAULT_NOTIFICATIONS = {
+  email: true,
+  push: true,
+  sms: false,
+  newStudent: true,
+  paymentReminder: true,
+};
 
 export default function SettingsPage() {
   const { profile, user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     email: user?.email || '',
     phone: profile?.phone || '',
   });
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    sms: false,
-    newStudent: true,
-    paymentReminder: true,
-  });
+  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
+
+  // QA (15/09): antes essas preferências viviam só em useState — "Salvar
+  // Preferências" mostrava um toast falso sem gravar nada. Agora persiste em
+  // profiles.notification_preferences.
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('profiles')
+      .select('notification_preferences')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!error && data?.notification_preferences) {
+          setNotifications({ ...DEFAULT_NOTIFICATIONS, ...(data.notification_preferences as any) });
+        }
+      });
+  }, [user?.id]);
+
+  const handleSaveNotifications = async () => {
+    if (!user?.id) return;
+    setSavingNotifications(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ notification_preferences: notifications })
+      .eq('user_id', user.id);
+    setSavingNotifications(false);
+
+    if (error) {
+      toast.error('Erro ao salvar preferências: ' + error.message);
+      return;
+    }
+    toast.success('Preferências salvas!');
+  };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,8 +280,8 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Button onClick={() => toast.success('Preferências salvas!')}>
-                Salvar Preferências
+              <Button onClick={handleSaveNotifications} disabled={savingNotifications}>
+                {savingNotifications ? 'Salvando...' : 'Salvar Preferências'}
               </Button>
             </CardContent>
           </Card>
@@ -296,16 +335,36 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="space-y-4">
                   <h4 className="font-medium">Tema</h4>
+                  {/* QA (15/09): botões sem onClick, tema nunca mudava de verdade.
+                      Agora usam next-themes (ThemeProvider montado em main.tsx). */}
                   <div className="grid grid-cols-3 gap-4">
-                    <Button variant="outline" className="h-20 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setTheme('light')}
+                      className={`h-20 flex flex-col gap-2 relative ${theme === 'light' ? 'border-primary ring-1 ring-primary' : ''}`}
+                    >
+                      {theme === 'light' && <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />}
                       <div className="w-8 h-8 rounded bg-white border"></div>
                       <span className="text-xs">Claro</span>
                     </Button>
-                    <Button variant="outline" className="h-20 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setTheme('dark')}
+                      className={`h-20 flex flex-col gap-2 relative ${theme === 'dark' ? 'border-primary ring-1 ring-primary' : ''}`}
+                    >
+                      {theme === 'dark' && <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />}
                       <div className="w-8 h-8 rounded bg-slate-900"></div>
                       <span className="text-xs">Escuro</span>
                     </Button>
-                    <Button variant="outline" className="h-20 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setTheme('system')}
+                      className={`h-20 flex flex-col gap-2 relative ${theme === 'system' ? 'border-primary ring-1 ring-primary' : ''}`}
+                    >
+                      {theme === 'system' && <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />}
                       <div className="w-8 h-8 rounded bg-gradient-to-r from-white to-slate-900"></div>
                       <span className="text-xs">Sistema</span>
                     </Button>
