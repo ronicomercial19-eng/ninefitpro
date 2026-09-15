@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,12 @@ import { Plus, Search, Bot, Trash2, Copy, Eye, Loader2 } from 'lucide-react';
 import { AITrainingQuestionnaire } from '@/components/ai-training/AITrainingQuestionnaire';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DOMPurify from 'dompurify';
 
 interface AITraining {
-  id: number;
+  id: string;
   name: string;
   html: string;
   data: any;
@@ -18,11 +19,40 @@ interface AITraining {
 }
 
 export default function AITrainingPage() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [aiTrainings, setAiTrainings] = useState<AITraining[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [previewTraining, setPreviewTraining] = useState<AITraining | null>(null);
+
+  // QA (15/09): antes esses treinos só viviam em useState — sumiam ao
+  // recarregar a página. Agora persistem em ai_training_generations.
+  const loadTrainings = async () => {
+    if (!user?.id) { setLoadingList(false); return; }
+    setLoadingList(true);
+    const { data, error } = await supabase
+      .from('ai_training_generations' as any)
+      .select('id, student_name, html, request_data, created_at')
+      .eq('coach_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[AITrainingPage] falha ao carregar histórico:', error);
+    } else {
+      setAiTrainings((data || []).map((row: any) => ({
+        id: row.id,
+        name: `Treino IA - ${row.student_name}`,
+        html: row.html,
+        data: row.request_data,
+        createdAt: row.created_at,
+      })));
+    }
+    setLoadingList(false);
+  };
+
+  useEffect(() => { loadTrainings(); }, [user?.id]);
 
   const handleQuestionnaireComplete = async (data: any) => {
     setGenerating(true);
@@ -53,12 +83,29 @@ export default function AITrainingPage() {
            </div>`
         : `<pre style="white-space:pre-wrap;color:#F2F0EC">${JSON.stringify(payload, null, 2)}</pre>`;
 
+      if (!user?.id) throw new Error('Sessão não encontrada');
+
+      const { data: saved, error: saveError } = await supabase
+        .from('ai_training_generations' as any)
+        .insert({
+          coach_id: user.id,
+          athlete_id: data.studentId || data.aluno_id || null,
+          student_name: data.studentName || 'Aluno',
+          html,
+          request_data: data,
+        })
+        .select('id, student_name, html, request_data, created_at')
+        .single();
+
+      if (saveError) throw saveError;
+
+      const row: any = saved;
       const newTraining: AITraining = {
-        id: Date.now(),
-        name: `Treino IA - ${data.studentName}`,
-        html,
-        data,
-        createdAt: new Date().toISOString(),
+        id: row.id,
+        name: `Treino IA - ${row.student_name}`,
+        html: row.html,
+        data: row.request_data,
+        createdAt: row.created_at,
       };
 
       setAiTrainings(prev => [newTraining, ...prev]);
@@ -77,8 +124,16 @@ export default function AITrainingPage() {
     toast.success('HTML do treino copiado para a área de transferência!');
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string) => {
+    const previous = aiTrainings;
     setAiTrainings(prev => prev.filter(t => t.id !== id));
+    const { error } = await supabase.from('ai_training_generations' as any).delete().eq('id', id);
+    if (error) {
+      console.error('[AITrainingPage] falha ao remover:', error);
+      setAiTrainings(previous);
+      toast.error('Erro ao remover treino');
+      return;
+    }
     toast.success('Treino removido');
   };
 
@@ -149,6 +204,12 @@ export default function AITrainingPage() {
         </CardContent>
       </Card>
 
+      {loadingList && !generating && (
+        <div className="text-center text-sm text-muted-foreground py-6">
+          <Loader2 className="w-5 h-5 mx-auto animate-spin mb-2" /> Carregando histórico...
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTrainings.map((training) => (
           <Card key={training.id} className="hover:shadow-lg transition-shadow">
@@ -183,7 +244,7 @@ export default function AITrainingPage() {
         ))}
       </div>
 
-      {!generating && filteredTrainings.length === 0 && (
+      {!generating && !loadingList && filteredTrainings.length === 0 && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
