@@ -154,11 +154,14 @@ Deno.serve(async (req) => {
         lead_id: freelancer_id,
         concluido: false,
       };
-      const { error } = await supabase.from("actions").insert(payload);
+      const { data: action, error } = await supabase.from("actions").insert(payload).select("id").single();
+      if (error) {
+        console.error("staff booking persistence failed", error);
+        return json({ ok: false, error: "booking_persistence_failed" }, 502);
+      }
       return json({
         ok: true,
-        booking: { freelancer_id, method, slot, client_id, client_name, hub, persisted: !error },
-        warning: error?.message,
+        booking: { id: action.id, freelancer_id, method, slot, client_id, client_name, hub },
       });
     }
 

@@ -5,7 +5,7 @@ import {
   Calendar as CalendarIcon, Clock, CheckCircle2, XCircle, AlertCircle,
   Loader2, ChevronRight, History, CalendarDays, Activity, Sparkles,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -62,6 +62,10 @@ export default function AulasCreditos() {
   const { user } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const staffProfessionalId = searchParams.get("staff_professional_id");
+  const staffMethodId = searchParams.get("staff_method_id");
+  const staffHub = searchParams.get("hub");
 
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,8 +177,36 @@ export default function AulasCreditos() {
         p_duration: 60,
         p_appointment_type: "aula",
         p_notes: notes || null,
+        p_staff_professional_id: staffProfessionalId,
+        p_staff_method_id: staffMethodId,
       });
       if (error) throw error;
+
+      const appointmentId = (result as any)?.appointment_id;
+      if (appointmentId && staffProfessionalId) {
+        const { data: external, error: externalError } = await supabase.functions.invoke("staff-api/booking", {
+          body: {
+            action: "booking",
+            freelancer_id: staffProfessionalId,
+            method: staffMethodId || "aula",
+            slot: when.toISOString(),
+            client_id: athleteId,
+            client_name: athleteName,
+            hub: staffHub,
+            notes: notes || undefined,
+          },
+        });
+
+        if (externalError || !(external as any)?.ok) {
+          await supabase.from("appointments").update({ integration_status: "failed" }).eq("id", appointmentId);
+          throw new Error("A reserva local foi criada, mas a confirmação com o Staff falhou. Tente sincronizar novamente.");
+        }
+
+        await supabase.from("appointments").update({
+          staff_booking_id: (external as any)?.booking?.id || null,
+          integration_status: "confirmed",
+        }).eq("id", appointmentId);
+      }
 
       setCreditsRemaining(typeof (result as any)?.credits_remaining === "number" ? (result as any).credits_remaining : creditsRemaining);
       toast.success("Aula reservada e crédito separado. Confirme presença até 1h antes do horário.");
