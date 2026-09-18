@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronRight, Trophy, Footprints } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { MetasSection } from "@/components/9fit/MetasSection";
@@ -161,13 +161,16 @@ export default function NineFitProgresso() {
 
   useEffect(() => { load(); }, [load]);
 
-  const W = 320, H = 110, pad = 8;
+  const W = 320, H = 150, pad = 22;
   const hasCurve = bodyfat.length > 1;
   const maxV = Math.max(...bodyfat.map((p) => p.value), 1);
   const minV = Math.min(...bodyfat.map((p) => p.value), 0);
   const span = Math.max(1, maxV - minV);
   const xStep = hasCurve ? (W - pad * 2) / (bodyfat.length - 1) : 0;
   const pts = bodyfat.map((p, i) => `${pad + i * xStep},${H - pad - ((p.value - minV) / span) * (H - pad * 2)}`).join(" ");
+  const sparkW = 180, sparkH = 48, sparkPad = 3;
+  const sparkStep = hasCurve ? (sparkW - sparkPad * 2) / (bodyfat.length - 1) : 0;
+  const sparkPts = bodyfat.map((p, i) => `${sparkPad + i * sparkStep},${sparkH - sparkPad - ((p.value - minV) / span) * (sparkH - sparkPad * 2)}`).join(" ");
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -184,43 +187,63 @@ export default function NineFitProgresso() {
       </div>
 
       {/* Top cards */}
-      <div className="px-4 mt-4 grid grid-cols-3 gap-2.5">
-        <div className="rounded-2xl border border-primary/50 bg-primary/[0.06] p-3 shadow-[0_0_28px_-12px_hsl(var(--primary)/0.6)]">
-          <p className="text-[10px] text-muted-foreground">Avaliação Atual</p>
-          <p className="text-3xl font-display text-foreground mt-1">{score != null ? `${score}%` : "—"}</p>
-          <p className="text-[10px] text-primary mt-1">
-            {scoreTrend != null ? `${scoreTrend >= 0 ? "+" : ""}${scoreTrend}% no período` : "Sem histórico ainda"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-          <p className="text-[10px] text-muted-foreground mb-1">Composição Corporal</p>
-          <div className="flex items-center justify-center">
-            <svg viewBox="0 0 60 60" className="w-14 h-14">
-              <polygon points="30,6 52,22 44,50 16,50 8,22"
-                fill="hsl(var(--primary)/0.25)" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+      <div className="px-4 mt-4 grid grid-cols-5 gap-2.5">
+        <div className="relative col-span-3 min-h-[174px] overflow-hidden rounded-2xl border border-primary/50 bg-primary/[0.06] p-4 shadow-[0_0_28px_-12px_hsl(var(--primary)/0.6)]">
+          <div className="relative z-10">
+            <p className="text-[10px] uppercase text-muted-foreground">Avaliação Atual</p>
+            <p className="mt-2 text-5xl font-display tabular-nums text-foreground">{score != null ? `${score}%` : "—"}</p>
+            <p className="mt-2 text-[10px] font-medium text-primary">
+              {scoreTrend != null ? `${scoreTrend >= 0 ? "+" : ""}${scoreTrend}% no período` : "Sem histórico ainda"}
+            </p>
+          </div>
+          {hasCurve && (
+            <svg
+              viewBox={`0 0 ${sparkW} ${sparkH}`}
+              className="absolute inset-x-3 bottom-2 h-12 w-[calc(100%-1.5rem)] opacity-50"
+              aria-hidden="true"
+            >
+              <polyline
+                points={sparkPts}
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="2"
+                vectorEffect="non-scaling-stroke"
+              />
             </svg>
-          </div>
-          <div className="flex justify-between text-[9px] mt-1">
-            <span><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%` : "—"}</span>
-            <span><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo}%` : "—"}</span>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-          <p className="text-[10px] text-muted-foreground">Força Total</p>
-          <p className="text-2xl font-display mt-1">
-            {temSetsRegistrados && forcaTotalKg != null ? `${forcaTotalKg >= 0 ? "+" : ""}${forcaTotalKg}` : "—"}
-            {temSetsRegistrados && forcaTotalKg != null && <span className="text-base">kg</span>}
-          </p>
-          {temSetsRegistrados && forcaTotalKg != null ? (
-            forcaTotalKg >= 0 ? <TrendingUp className="w-3 h-3 text-primary mt-1" /> : <TrendingDown className="w-3 h-3 text-destructive mt-1" />
-          ) : (
-            <p className="text-[9px] text-muted-foreground mt-1">Sem sets registrados</p>
           )}
+        </div>
+        <div className="col-span-2 grid grid-rows-2 gap-2.5">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <p className="text-[10px] text-muted-foreground">Composição Corporal</p>
+            <div className="mt-2 flex items-center gap-2">
+              <svg viewBox="0 0 60 60" className="h-9 w-9 shrink-0" aria-hidden="true">
+                <polygon points="30,6 52,22 44,50 16,50 8,22"
+                  fill="hsl(var(--primary)/0.25)" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+              </svg>
+              <div className="min-w-0 space-y-0.5 text-[9px]">
+                <p><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%` : "—"}</p>
+                <p><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo}%` : "—"}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <p className="text-[10px] text-muted-foreground">Força Total</p>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <p className="text-2xl font-display tabular-nums">
+                {temSetsRegistrados && forcaTotalKg != null ? `${forcaTotalKg >= 0 ? "+" : ""}${forcaTotalKg}` : "—"}
+                {temSetsRegistrados && forcaTotalKg != null && <span className="text-xs">kg</span>}
+              </p>
+              {temSetsRegistrados && forcaTotalKg != null && (
+                forcaTotalKg >= 0 ? <TrendingUp className="h-3.5 w-3.5 text-primary" /> : <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+              )}
+            </div>
+            {!temSetsRegistrados && <p className="mt-0.5 text-[9px] text-muted-foreground">Sem sets registrados</p>}
+          </div>
         </div>
       </div>
 
       {/* Composição Corporal — area chart */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-8">
         <p className="text-sm font-semibold flex items-center gap-2 mb-2">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Composição Corporal
         </p>
@@ -243,7 +266,7 @@ export default function NineFitProgresso() {
           </div>
           {hasCurve ? (
             <>
-              <svg viewBox={`0 0 ${W} ${H}`} className="w-full mt-3">
+              <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Tendência de gordura corporal nos últimos 60 dias">
                 <defs>
                   <linearGradient id="bf" x1="0" x2="0" y1="0" y2="1">
                     <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
@@ -252,15 +275,26 @@ export default function NineFitProgresso() {
                 </defs>
                 <polygon points={`${pad},${H - pad} ${pts} ${W - pad},${H - pad}`} fill="url(#bf)" />
                 <polyline points={pts} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
-                {bodyfat.map((p, i) => (
-                  <circle
-                    key={i}
-                    cx={pad + i * xStep}
-                    cy={H - pad - ((p.value - minV) / span) * (H - pad * 2)}
-                    r={3}
-                    fill="hsl(var(--primary))"
-                  />
-                ))}
+                {bodyfat.map((p, i) => {
+                  const cx = pad + i * xStep;
+                  const cy = H - pad - ((p.value - minV) / span) * (H - pad * 2);
+                  const isLast = i === bodyfat.length - 1;
+                  return (
+                    <g key={i}>
+                      <circle cx={cx} cy={cy} r={3} fill="hsl(var(--primary))" />
+                      <text
+                        x={cx + (isLast ? -5 : 5)}
+                        y={Math.max(10, cy - 7)}
+                        textAnchor={isLast ? "end" : "start"}
+                        fill="hsl(var(--foreground))"
+                        fontSize="8"
+                        fontWeight="600"
+                      >
+                        {p.value.toFixed(1)}%
+                      </text>
+                    </g>
+                  );
+                })}
               </svg>
               <div className="mt-2 flex gap-2 text-[9px] text-muted-foreground overflow-x-auto">
                 {bodyfat.map((p, i) => <span key={i}>• {p.label}</span>)}
@@ -281,25 +315,26 @@ export default function NineFitProgresso() {
       <MetasSection />
 
       {/* Progressão de Força */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-8">
         <p className="text-sm font-semibold flex items-center gap-2 mb-2">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Progressão de Força
         </p>
         {strength.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             {strength.map((s) => (
-              <div key={s.name} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs">{s.name}</p>
-                  <TrendingUp className="w-3 h-3 text-primary" />
+              <div key={s.name} className="flex min-w-0 flex-col items-center">
+                <div className="flex h-36 w-full flex-col items-center justify-end">
+                  <span className={`mb-1 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tabular-nums ${s.delta >= 0 ? "border-primary/35 bg-primary/10 text-primary" : "border-destructive/35 bg-destructive/10 text-destructive"}`}>
+                    {s.delta >= 0 ? "+" : ""}{s.delta}{s.unidade}
+                  </span>
+                  <div
+                    className="w-9 min-h-2 rounded-t-md bg-primary shadow-[0_0_18px_-6px_hsl(var(--primary)/0.8)]"
+                    style={{ height: `${Math.max(8, Math.min(100, (s.kg / 150) * 100))}%` }}
+                    aria-label={`${s.name}: ${s.kg}${s.unidade}`}
+                  />
                 </div>
-                <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden">
-                  <div className="h-full bg-primary" style={{ width: `${Math.min(100, s.kg / 2)}%` }} />
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="font-display text-lg">{s.kg}<span className="text-xs">{s.unidade}</span></p>
-                  <p className={`text-xs ${s.delta >= 0 ? "text-primary" : "text-destructive"}`}>{s.delta >= 0 ? "+" : ""}{s.delta}{s.unidade}</p>
-                </div>
+                <p className="mt-2 text-center text-[10px] leading-tight text-muted-foreground break-words">{s.name}</p>
+                <p className="mt-1 font-display text-lg tabular-nums">{s.kg}<span className="text-[10px]">{s.unidade}</span></p>
               </div>
             ))}
           </div>
@@ -311,10 +346,10 @@ export default function NineFitProgresso() {
       </div>
 
       {/* Histórico de Performance — recordes reais */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-8">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-semibold flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Recordes Recentes
+          <p className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <Trophy className="h-4 w-4" /> Recordes Recentes
           </p>
           <div className="flex items-center gap-3">
             {prs.length > 0 && <span className="text-xs text-muted-foreground">{prs.length} registro{prs.length > 1 ? "s" : ""}</span>}
@@ -324,8 +359,8 @@ export default function NineFitProgresso() {
         {prs.length > 0 ? (
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
             {prs.map((it, i) => (
-              <div key={i} className="min-w-[60%] rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                <p className="text-[10px] text-muted-foreground">{it.exercicio} • {it.data}</p>
+              <div key={i} className="min-w-[60%] rounded-2xl border border-primary/45 bg-primary/[0.07] p-4 shadow-[0_12px_30px_-24px_hsl(var(--primary)/0.9)]">
+                <p className="flex items-center gap-1.5 text-[10px] text-primary/80"><Trophy className="h-3 w-3" /> {it.exercicio} • {it.data}</p>
                 <div className="flex items-end justify-between mt-2">
                   <div>
                     <p className="font-display text-xl">{it.valor}{it.unidade}</p>
@@ -347,14 +382,14 @@ export default function NineFitProgresso() {
       </div>
 
       {/* Corridas registradas no Move */}
-      <div className="px-4 mt-6">
-        <p className="text-sm font-semibold flex items-center gap-2 mb-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Corridas recentes
+      <div className="px-4 mt-8">
+        <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-neon-cyan">
+          <Footprints className="h-4 w-4" /> Corridas recentes
         </p>
         {runs.length > 0 ? (
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
             {runs.map((run, i) => (
-              <div key={`${run.date}-${i}`} className="min-w-[45%] rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <div key={`${run.date}-${i}`} className="min-w-[45%] rounded-2xl border border-[hsl(var(--neural)/0.32)] bg-[hsl(var(--neural)/0.06)] p-3">
                 <p className="text-[10px] text-muted-foreground">{run.date}</p>
                 <p className="font-display text-xl mt-1">{run.distanceKm.toFixed(2)}<span className="text-xs"> km</span></p>
                 <p className="text-[10px] text-muted-foreground mt-1">GPS · Move</p>
@@ -369,7 +404,7 @@ export default function NineFitProgresso() {
       </div>
 
       {/* Insights */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-8">
         <p className="text-sm font-semibold flex items-center gap-2 mb-2 text-primary">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Insights Personalizados
         </p>
@@ -389,7 +424,7 @@ export default function NineFitProgresso() {
       <HistoricoCompletoModal athleteId={athleteId} />
 
       <button onClick={() => navigate("/9fit/planejamento")}
-        className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 text-primary font-semibold">
+        className="mx-4 mt-8 w-[calc(100%-2rem)] rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 text-primary font-semibold">
         Ver Planejamento Completo <ChevronRight className="w-4 h-4" />
       </button>
 
