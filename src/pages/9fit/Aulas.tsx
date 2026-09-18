@@ -89,10 +89,22 @@ export default function NineFitAulas() {
     });
 
     if (error) {
-      toast.error("Erro ao agendar aula");
+      // QA Fase F (16/09): capacidade agora é travada de verdade no banco
+      // (trigger fn_reserve_class_slot) e agendamento duplicado é bloqueado
+      // por unique index — surfaça a mensagem real em vez de um erro
+      // genérico, já que agora existem casos específicos pra explicar.
+      if (error.message?.includes("Turma lotada")) {
+        toast.error("Essa turma acabou de lotar. Escolha outro horário.");
+      } else if (error.code === "23505") {
+        toast.error("Você já está agendado nessa aula.");
+      } else {
+        toast.error("Erro ao agendar aula");
+      }
+      await fetchClasses(); // recarrega vagas reais, podem ter mudado
     } else {
       toast.success("Aula agendada com sucesso!");
       fetchBookings();
+      fetchClasses();
     }
 
     setBookingLoading(null);
@@ -114,6 +126,7 @@ export default function NineFitAulas() {
     } else {
       toast.success("Agendamento cancelado");
       fetchBookings();
+      fetchClasses(); // vaga liberada pelo trigger fn_release_class_slot
     }
 
     setBookingLoading(null);
