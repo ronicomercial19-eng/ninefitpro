@@ -23,17 +23,18 @@ export default function NineFitSocial() {
 
   const fetchAchievements = async () => {
     try {
-      const { data } = await supabase
-        .from("athletes")
-        .select("id, name, total_xp, level")
-        .gt("total_xp", 0)
-        .order("total_xp", { ascending: false })
-        .limit(20);
+      // QA Fase F (16/09): antes lia `athletes` direto, mas a RLS só deixa
+      // cada atleta ver a própria linha — esse "Ranking" nunca mostrou
+      // ninguém além do próprio usuário. fn_get_leaderboard() é SECURITY
+      // DEFINER, deliberadamente pública dentro do app (só nome+xp+level,
+      // nada sensível) — mesma função usada no Ranking Global da Home.
+      const { data, error } = await supabase.rpc("fn_get_leaderboard" as any, { p_limit: 20 });
+      if (error) throw error;
 
       if (data) {
-        const feed: Achievement[] = data.map((a) => ({
+        const feed: Achievement[] = (data as any[]).map((a) => ({
           id: a.id,
-          name: a.name.split(" ")[0],
+          name: (a.name || "—").split(" ")[0],
           level: a.level || 1,
           total_xp: a.total_xp || 0,
           type: (a.level || 1) >= 5 ? "level_up" : "workout" as const,
