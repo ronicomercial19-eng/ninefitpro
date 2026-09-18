@@ -95,7 +95,7 @@ export function MetasSection() {
   if (loading) return null;
 
   return (
-    <div className="px-4 mt-6">
+    <div className="px-4 mt-8">
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-semibold flex items-center gap-2">
           <Target className="w-3.5 h-3.5 text-primary" /> Metas
