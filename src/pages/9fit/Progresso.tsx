@@ -33,6 +33,7 @@ interface RonProgressoScreen {
     tem_sets_registrados?: boolean;
   };
   tendencia_gordura_60d?: { data: string; valor: number }[];
+  score_historico?: { data: string; valor: number }[];
   progressao_forca?: { exercicio: string; data: string; valor: number; unidade: string }[];
   recordes_recentes?: { exercicio: string; data: string; valor: number; unidade: string }[];
   corridas_recentes?: { data: string; distancia_km: number; fonte?: string }[];
@@ -44,6 +45,7 @@ export default function NineFitProgresso() {
   const navigate = useNavigate();
   const { athleteId, error: athleteError } = useAthleteId();
   const [bodyfat, setBodyfat] = useState<SeriesPoint[]>([]);
+  const [scoreHistory, setScoreHistory] = useState<SeriesPoint[]>([]);
   const [strength, setStrength] = useState<StrengthBar[]>([]);
   const [score, setScore] = useState<number | null>(null);
   const [scoreTrend, setScoreTrend] = useState<number | null>(null);
@@ -92,6 +94,14 @@ export default function NineFitProgresso() {
       oficial: true,
     }));
     setBodyfat(bfPoints);
+
+    // Evolução completa do score global
+    const scorePoints: SeriesPoint[] = (screen.score_historico || []).map((p) => ({
+      label: new Date(p.data).toLocaleDateString("pt-BR", { month: "short", day: "2-digit" }),
+      value: Number(p.valor),
+      oficial: true,
+    }));
+    setScoreHistory(scorePoints);
 
     // Progressão de força — agrupa o histórico plano por exercício,
     // valor atual = registro mais recente, delta = atual - primeiro do período
@@ -171,6 +181,12 @@ export default function NineFitProgresso() {
   const sparkW = 180, sparkH = 48, sparkPad = 3;
   const sparkStep = hasCurve ? (sparkW - sparkPad * 2) / (bodyfat.length - 1) : 0;
   const sparkPts = bodyfat.map((p, i) => `${sparkPad + i * sparkStep},${sparkH - sparkPad - ((p.value - minV) / span) * (sparkH - sparkPad * 2)}`).join(" ");
+  const hasScoreCurve = scoreHistory.length > 1;
+  const scoreMaxV = Math.max(...scoreHistory.map((p) => p.value), 1);
+  const scoreMinV = Math.min(...scoreHistory.map((p) => p.value), 0);
+  const scoreSpan = Math.max(1, scoreMaxV - scoreMinV);
+  const scoreXStep = hasScoreCurve ? (W - pad * 2) / (scoreHistory.length - 1) : 0;
+  const scorePts = scoreHistory.map((p, i) => `${pad + i * scoreXStep},${H - pad - ((p.value - scoreMinV) / scoreSpan) * (H - pad * 2)}`).join(" ");
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -401,6 +417,56 @@ export default function NineFitProgresso() {
             Suas corridas registradas no Move aparecerão aqui.
           </div>
         )}
+      </div>
+
+      {/* Evolução completa do score global */}
+      <div className="px-4 mt-8">
+        <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Evolução do Score
+        </p>
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          {hasScoreCurve ? (
+            <>
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Evolução do score global ao longo do tempo">
+                <defs>
+                  <linearGradient id="score-history" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
+                    <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <polygon points={`${pad},${H - pad} ${scorePts} ${W - pad},${H - pad}`} fill="url(#score-history)" />
+                <polyline points={scorePts} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
+                {scoreHistory.map((p, i) => {
+                  const cx = pad + i * scoreXStep;
+                  const cy = H - pad - ((p.value - scoreMinV) / scoreSpan) * (H - pad * 2);
+                  const isLast = i === scoreHistory.length - 1;
+                  return (
+                    <g key={i}>
+                      <circle cx={cx} cy={cy} r={3} fill="hsl(var(--primary))" />
+                      <text
+                        x={cx + (isLast ? -5 : 5)}
+                        y={Math.max(10, cy - 7)}
+                        textAnchor={isLast ? "end" : "start"}
+                        fill="hsl(var(--foreground))"
+                        fontSize="8"
+                        fontWeight="600"
+                      >
+                        {p.value.toFixed(0)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+              <div className="mt-2 flex gap-2 overflow-x-auto text-[9px] text-muted-foreground">
+                {scoreHistory.map((p, i) => <span key={i}>• {p.label}</span>)}
+              </div>
+            </>
+          ) : (
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              Ainda não há dados suficientes pra montar a evolução do score.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Insights */}
