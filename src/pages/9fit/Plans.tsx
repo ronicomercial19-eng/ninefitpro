@@ -57,12 +57,6 @@ const OUTCOME_FEATURES: Record<string, { tagline: string; bullets: string[]; acc
   },
 };
 
-const TESTIMONIALS = [
-  { name: 'Marina S.', role: '4 meses no PRIME', text: '+8kg de massa magra e meu sono melhorou em 3 semanas. Nunca consegui isso sozinha.' },
-  { name: 'Diego R.', role: 'PRO há 6 meses', text: 'A periodização é cirúrgica. Sinto que o app entende meu corpo melhor que eu.' },
-  { name: 'Carla M.', role: 'PRIME', text: 'O RON me chama quando eu vacilo. Virou parte da minha rotina, não mais uma cobrança.' },
-];
-
 const FAQ = [
   { q: 'Posso cancelar quando quiser?', a: 'Sim. Cancele em 1 clique direto pelo app. Sem multa, sem fidelidade, sem ligação.' },
   { q: 'Como funciona o teste grátis?', a: 'Você tem 7 dias completos para usar todas as features do plano escolhido. Se cancelar dentro do período, não é cobrado nada.' },
@@ -99,6 +93,19 @@ export default function Plans() {
     await trackMonetizationEvent('start_trial', plan.id, 'dedicated_screen', { cycle });
     navigate('/9fit/primepass?plan=' + encodeURIComponent(plan.id) + '&cycle=' + cycle);
   };
+
+  // QA Fase F (16/09): o toggle de ciclo mostrava "ECONOMIZE 25%" fixo pra
+  // qualquer plano, mas o desconto real do anual varia por plano (~24% no
+  // PRO, ~17% no PRIME hoje). Calculado a partir do plano com maior desconto
+  // real em vez de um número fixo que nem sempre bate.
+  const maxYearlyDiscountPct = plans.length
+    ? Math.max(
+        0,
+        ...plans
+          .filter((p) => p.price_monthly > 0)
+          .map((p) => Math.round(100 - (p.price_yearly / (p.price_monthly * 12)) * 100)),
+      )
+    : 0;
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -148,9 +155,11 @@ export default function Plans() {
               )}
             >
               Anual
-              <span className="text-[9px] bg-green-500/25 text-green-300 px-2 py-0.5 rounded-full font-bold">
-                ECONOMIZE 25%
-              </span>
+              {maxYearlyDiscountPct > 0 && (
+                <span className="text-[9px] bg-green-500/25 text-green-300 px-2 py-0.5 rounded-full font-bold">
+                  ECONOMIZE ATÉ {maxYearlyDiscountPct}%
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -254,41 +263,6 @@ export default function Plans() {
             })}
           </div>
         )}
-
-        {/* Social proof */}
-        <section className="mb-16">
-          <div className="text-center mb-8">
-            <p className="text-[10px] tracking-[0.35em] uppercase text-primary/80 font-semibold mb-2">
-              + 12 mil atletas evoluindo
-            </p>
-            <h2 className="text-2xl md:text-3xl font-display tracking-tight text-foreground">
-              Resultados que falam por si.
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="rounded-2xl p-5 bg-card/30 border border-white/[0.06] backdrop-blur-xl"
-              >
-                <div className="flex gap-0.5 mb-3">
-                  {[...Array(5)].map((_, k) => (
-                    <Star key={k} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-sm text-foreground/90 leading-relaxed mb-4">"{t.text}"</p>
-                <div className="text-[11px]">
-                  <p className="font-semibold text-foreground">{t.name}</p>
-                  <p className="text-muted-foreground">{t.role}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
 
         {/* FAQ */}
         <section className="mb-16 max-w-2xl mx-auto">
