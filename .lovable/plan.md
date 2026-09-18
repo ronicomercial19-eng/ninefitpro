@@ -1,22 +1,15 @@
-# Evolução visual da tela Progresso
+# Evolução do Score em Progresso
 
 ## Objetivo
-Melhorar a hierarquia e a leitura da tela sem remover conteúdo, alterar consultas, estados ou ações existentes.
+Adicionar o histórico completo do score global entre “Corridas recentes” e “Insights Personalizados”, sem alterar as seções ou dados atuais.
 
-## Alterações
-- Reorganizar o resumo superior em uma grade 3/2: Avaliação Atual em destaque e Composição Corporal/Força Total compactas e empilhadas.
-- Adicionar uma sparkline discreta ao card principal usando a série de gordura já carregada, sem criar dados simulados.
-- Ampliar o gráfico de gordura para 150px e exibir o valor junto de cada ponto.
-- Não desenhar massa muscular histórica enquanto a resposta atual fornecer apenas o valor mais recente.
-- Substituir as barras horizontais de força por um gráfico vertical comparativo, limitado visualmente a 150 kg, com badges de variação.
-- Destacar recordes com troféu e tratamento laranja/dourado; diferenciar corridas com ícone e tratamento neural/azulado.
-- Aumentar o espaçamento entre as seções principais e o respiro do card superior em destaque.
-
-## Preservação funcional
-- Manter `fn_get_ron_progresso_screen`, transformação de dados, loading, erros, estados vazios, metas, check-in, histórico, criação de recorde e navegação sem mudanças.
-- Manter `RecordesSection` apenas como ação de criação; a lista continuará vindo da RPC principal.
+## Implementação
+- Ampliar o tipo de retorno da tela com `score_historico: { data: string; valor: number }[]`.
+- Criar estado próprio e preencher no `load()` com datas em PT-BR e valores numéricos, seguindo o fluxo da tendência de gordura.
+- Renderizar um gráfico SVG com linha, pontos e área em gradiente, calculado pela série completa com escala dinâmica de mínimo e máximo.
+- Exibir uma mensagem de dados insuficientes quando houver menos de dois registros.
+- Manter o card no padrão visual existente e exatamente na posição solicitada.
 
 ## Validação
-- Executar o typecheck do projeto.
+- Executar a verificação de tipos.
 - Executar o build completo.
-- Conferir a tela em viewport mobile e desktop, verificando legibilidade, ausência de sobreposição e presença de todas as seções.
