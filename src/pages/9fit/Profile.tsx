@@ -33,8 +33,6 @@ export default function NineFitProfile() {
   const { user, profile, logout } = useAuth();
   const { totalXp, level, syncScore, streak } = useEngrenagem();
   const [staffOnline, setStaffOnline] = useState(3);
-  const [nextInvoice, setNextInvoice] = useState("12/11");
-  const [planTier, setPlanTier] = useState("Aluno Premium");
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
@@ -63,6 +61,13 @@ export default function NineFitProfile() {
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
+  // QA Fase F (16/09): "Aluno Premium" e "Próxima fatura: 12/11" eram
+  // hardcoded pra TODO usuário — não existe nenhuma coluna de plano/assinatura
+  // em athletes, e a tabela payments está zerada (zero pagamentos processados
+  // no sistema todo até hoje). Mostrar "Premium" pra quem nunca pagou nada é
+  // uma alegação falsa sobre a própria assinatura da pessoa. Enquanto não
+  // existir uma fonte real de entitlement, o item fica honesto em vez de
+  // inventar status.
   const items: MenuItem[] = [
     { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} online`, badgeStyle: "neon" },
     { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
@@ -70,7 +75,7 @@ export default function NineFitProfile() {
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
     { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
     { icon: Share2, label: "Compartilhar", sub: "Cards de progresso e conquistas", route: "/9fit/compartilhar" },
-    { icon: CreditCard, label: "Pagamento & Plano", sub: `Próxima fatura: ${nextInvoice}`, route: "/9fit/primepass" },
+    { icon: CreditCard, label: "Pagamento & Plano", sub: "Gerencie sua assinatura", route: "/9fit/primepass" },
   ];
 
   return (
@@ -97,9 +102,6 @@ export default function NineFitProfile() {
           heightCm={bio.height_cm}
           weightKg={bio.weight_kg}
         />
-        <p className="text-primary font-semibold text-sm flex items-center gap-1.5 mt-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" /> {planTier}
-        </p>
       </section>
 
       {/* Menu */}
