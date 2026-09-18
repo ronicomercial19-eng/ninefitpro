@@ -35,12 +35,17 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
   const topBarName = (athleteName || profile?.full_name || user?.email?.split(' ')[0] || name || 'Atleta').split(' ')[0];
 
   useEffect(() => {
+    // QA Fase F (16/09): antes lia `athletes` direto, mas a RLS só deixa cada
+    // atleta ver a própria linha — "Ranking Global" nunca mostrou concorrentes
+    // de verdade pra ninguém. fn_get_leaderboard() é SECURITY DEFINER,
+    // deliberadamente pública dentro do app (só nome + xp, nada sensível).
     (async () => {
-      const { data } = await supabase
-        .from('athletes')
-        .select('name, total_xp')
-        .order('total_xp', { ascending: false, nullsFirst: false })
-        .limit(20);
+      const { data, error } = await supabase.rpc('fn_get_leaderboard' as any, { p_limit: 20 });
+      if (error) {
+        console.error('[OSDashboard] fn_get_leaderboard falhou:', error);
+        setRanking([{ name, pts: totalXp, self: true }]);
+        return;
+      }
       const rows = (data || []) as any[];
       const top: RankRow[] = rows.slice(0, 3).map((r) => ({
         name: (r.name || '—').split(' ')[0],
