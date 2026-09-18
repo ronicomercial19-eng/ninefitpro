@@ -51,7 +51,7 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
   };
 
   return (
-    <div className="px-4 mt-4">
+    <div className="px-4 mt-8">
       <button
         onClick={() => setOpen(true)}
         className="w-full rounded-2xl border border-dashed border-white/15 p-3.5 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition"
