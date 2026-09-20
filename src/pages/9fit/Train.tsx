@@ -17,6 +17,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
 import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react";
+import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBanner";
 
 interface TrainingAssignment {
   id: string;
@@ -250,6 +251,8 @@ export default function NineFitTrain() {
           {flow === "HOME" ? "MEUS TREINOS" : "VISÃO GERAL"}
         </h1>
       </div>
+
+      <TrainingAdjustmentBanner />
 
       {/* Upsell contextual no topo de Train */}
       <div className="px-4 mb-3">

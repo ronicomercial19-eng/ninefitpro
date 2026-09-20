@@ -63,7 +63,9 @@ export function useSendZap(threadId?: string, userId?: string) {
           thread_id: threadId,
           body,
           external_id: `fitpro:msg:${crypto.randomUUID()}`,
-          sender_type: "user",
+          // O Core 9ZAP aceita os papéis do contrato de integração:
+          // student | trainer. "user" causa 400 no envio.
+          sender_type: "student",
           sender_external_id: `fitpro:user:${userId}`,
           attachments: [],
         },
