@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { 
-  Dumbbell, Play, Calendar, ChevronRight, Zap, 
-  Clock, Target, TrendingUp, Shield
+  Dumbbell, Play, Calendar, Zap, 
+  Clock, Target, Shield
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 
 interface TrainingAssignment {
   id: string;
@@ -33,6 +31,14 @@ const supportLevels = [
   { label: "Assistido", desc: "Apoio completo", icon: "🤝" },
 ];
 
+/**
+ * Redesign Nine Pro v2 (14/09): "número ao vivo grande como hero" — treinos
+ * realizados vira o elemento de maior peso visual da tela (protagonista,
+ * com glow radial atrás), no lugar de ficar espremido entre outras 2
+ * métricas do mesmo tamanho. Só o card de protocolo e o próximo treino
+ * recomendado brilham; o resto (nível de suporte, treinos seguintes) fica
+ * contido — glow com propósito, não decoração repetida.
+ */
 export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWorkout, onStartQuick }: WorkoutHomeProps) {
   const [supportLevel, setSupportLevel] = useState([1]);
   const currentSupport = supportLevels[supportLevel[0]];
@@ -43,9 +49,13 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
 
   return (
     <div className="space-y-6">
-      {/* Protocol Header */}
-      <div className="journey-card p-5">
-        <div className="flex items-start justify-between mb-4">
+      {/* Protocol Header — Realizados vira o hero da tela */}
+      <div className="journey-card p-5 relative overflow-hidden">
+        <div
+          className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.25), transparent 70%)" }}
+        />
+        <div className="relative flex items-start justify-between mb-4">
           <div>
             <p className="text-[10px] text-primary uppercase tracking-widest font-bold mb-1">Meu Protocolo</p>
             <h2 className="text-xl font-black italic uppercase tracking-tight text-foreground">
@@ -55,32 +65,33 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
               Treinador • 9FIT PRO
             </p>
           </div>
-          <div className="w-12 h-12 bg-primary/20 rounded-sm flex items-center justify-center">
+          <div className="w-12 h-12 bg-primary/20 rounded-sm flex items-center justify-center shrink-0">
             <Target className="w-6 h-6 text-primary" />
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-background/50 rounded-sm p-3 text-center">
-            <Calendar className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Início</p>
-            <p className="text-sm font-bold text-foreground">{startDate}</p>
+        {/* Hero number */}
+        <div className="relative text-center py-2 mb-3">
+          <p className="font-display leading-none tracking-tight text-foreground" style={{ fontSize: "64px", textShadow: "0 0 40px hsl(var(--primary) / 0.35)" }}>
+            {completedCount}
+          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mt-1">Treinos realizados</p>
+        </div>
+
+        {/* Contexto secundário, contido */}
+        <div className="relative flex items-center justify-center gap-6 pt-3 border-t border-white/[0.06]">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="w-3.5 h-3.5" />
+            <span className="text-xs">Início {startDate}</span>
           </div>
-          <div className="bg-background/50 rounded-sm p-3 text-center">
-            <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Realizados</p>
-            <p className="text-sm font-bold text-foreground">{completedCount}</p>
-          </div>
-          <div className="bg-background/50 rounded-sm p-3 text-center">
-            <Zap className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Nível</p>
-            <p className="text-sm font-bold text-foreground">{currentSupport.icon}</p>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Zap className="w-3.5 h-3.5" />
+            <span className="text-xs">{currentSupport.icon} {currentSupport.label}</span>
           </div>
         </div>
       </div>
 
-      {/* Support Level */}
+      {/* Support Level — contido */}
       <div className="neural-node p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-primary" />
@@ -99,7 +110,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
         </div>
       </div>
 
-      {/* Workout Cards */}
+      {/* Workout Cards — só o próximo (index 0) brilha */}
       <div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
           <Dumbbell className="w-4 h-4 text-primary" />
@@ -116,15 +127,23 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
             {trainings.map((training, i) => {
               const exerciseCount = training.training_data?.exercise_count || 0;
               const duration = training.training_data?.estimated_duration || 45;
+              const isNext = i === 0;
 
               return (
                 <button
                   key={training.id}
                   onClick={() => onSelectWorkout(training)}
-                  className="w-full neural-node p-4 text-left hover:border-primary/50 transition-all group"
+                  className={`w-full p-4 text-left transition-all group ${
+                    isNext
+                      ? "neural-node border-primary/50"
+                      : "neural-node hover:border-primary/50"
+                  }`}
+                  style={isNext ? { boxShadow: "0 0 24px -8px hsl(var(--primary) / 0.4)" } : undefined}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-primary/10 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <div className={`w-14 h-14 rounded-sm flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isNext ? "bg-primary/20" : "bg-primary/10 group-hover:bg-primary/20"
+                    }`}>
                       <Dumbbell className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -147,8 +166,10 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
                         </span>
                       </div>
                     </div>
-                    <div className="w-10 h-10 bg-primary rounded-sm flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Play className="w-5 h-5 text-primary-foreground" />
+                    <div className={`w-10 h-10 rounded-sm flex items-center justify-center transition-transform group-hover:scale-105 ${
+                      isNext ? "bg-primary" : "border border-border bg-transparent"
+                    }`}>
+                      <Play className={`w-5 h-5 ${isNext ? "text-primary-foreground" : "text-muted-foreground"}`} />
                     </div>
                   </div>
                 </button>
