@@ -13,6 +13,7 @@ import AIAnalysisPage from "./pages/AIAnalysisPage";
 import Assessment from "./pages/Assessment";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import TrainingAdjustmentsPage from "./pages/TrainingAdjustmentsPage";
 import ExercisesPage from "./pages/ExercisesPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -244,6 +245,9 @@ const App = () => (
                   <RonProfessorPage />
                 </AppLayout>
               </PrivateRoute>
+            } />
+            <Route path="/app/ajustes-treino" element={
+              <PrivateRoute><AppLayout><TrainingAdjustmentsPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/nexus" element={
               <PrivateRoute>
