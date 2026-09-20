@@ -19,6 +19,7 @@ interface CatalogItem {
 export default function NineFitHealthFlix() {
   const { athleteId, athleteName } = useAthleteId();
   const [items, setItems] = useState<CatalogItem[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [openingEmbed, setOpeningEmbed] = useState(false);
@@ -26,6 +27,7 @@ export default function NineFitHealthFlix() {
   useEffect(() => {
     (async () => {
       setLoading(true);
+    setLoadError(false);
       try {
         const { data, error } = await supabase.functions.invoke("healthflix-proxy?action=content", { method: "GET" as any });
         const list = (!error && (data as any)?.items) ? (data as any).items : [];
@@ -131,7 +133,14 @@ export default function NineFitHealthFlix() {
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
           </div>
         )}
-        {!loading && items.length === 0 && (
+        {!loading && loadError && (
+          <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
+            <Film className="w-6 h-6 text-destructive mb-2" />
+            <p className="text-xs text-muted-foreground">Não foi possível carregar o catálogo.</p>
+            <button onClick={() => athleteId && loadCatalog(athleteId)} className="mt-3 text-xs text-primary underline">Tentar novamente</button>
+          </div>
+        )}
+        {!loading && !loadError && items.length === 0 && (
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
             <Film className="w-6 h-6 text-primary mb-2" />
             <p className="text-xs text-muted-foreground">Catálogo HealthFlix indisponível no momento.</p>
