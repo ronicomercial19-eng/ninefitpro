@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity, Sparkles, Grid3x3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { useEngrenagem } from '@/hooks/useEngrenagem';
@@ -11,6 +11,7 @@ import { QuickCheckIn } from './QuickCheckIn';
 import { DynamicOffers } from './DynamicOffers';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 import { HubCommandDeck } from './HubCommandDeck';
+import { CollapsibleRow } from './CollapsibleRow';
 import type { HubScoreStatus } from '@/hooks/useAthleteScores';
 
 interface RankRow { name: string; pts: number; self?: boolean }
@@ -23,6 +24,14 @@ interface OSDashboardProps {
   hasPlan: boolean;
 }
 
+/**
+ * Redesign Nine Pro v2 (14/09): "uma decisão por tela, navegação progressiva".
+ * Só o Comando do dia (HubCommandDeck) fica aberto e com brilho — é a única
+ * decisão que a Home pede agora. Calibração diária, Ranking, Inteligência
+ * ativa, Ativação, Check-in e Ecossistema viram resumo de 1 linha
+ * (CollapsibleRow), que expande in-place sem sair da tela. Nada foi removido
+ * — só a sequência e o peso visual mudaram (princípio 04: arquitetura preservada).
+ */
 export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: OSDashboardProps) {
   const { user, profile } = useAuth();
   const { athleteName } = useAthleteId();
@@ -60,17 +69,17 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     })();
   }, [name, totalXp]);
 
-
   const events = [
     { label: 'Desafio de Força', cta: 'Participar', route: '/9fit/community' },
     { label: 'Recovery Week', cta: 'Ativar', route: '/9fit/elite-bio' },
   ];
   const ev = events[eventIdx];
+  const myRankPos = ranking.findIndex((r) => r.self) + 1;
 
   return (
-    <div className="px-4 pt-2 space-y-6">
+    <div className="px-4 pt-2 space-y-2.5">
       {/* Top bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-2">
         <button onClick={() => navigate('/9fit/profile')} className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
           <Menu className="w-4 h-4 text-foreground" />
         </button>
@@ -84,21 +93,22 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </button>
       </div>
 
-      {/* Calibração diária (emoji quiz) */}
-      <EmojiCalibrationQuiz />
+      {/* Calibração diária — resumida (pedido do Rony: ordem mantida, peso visual reduzido) */}
+      <CollapsibleRow label="Como você está hoje?">
+        <EmojiCalibrationQuiz />
+      </CollapsibleRow>
 
-      {/* Comando do dia */}
-      <div className="-mx-4">
+      {/* Comando do dia — único bloco aberto e com brilho da tela */}
+      <div className="-mx-4 pt-1">
         <HubCommandDeck name={name} syncScore={syncScore} scoreStatus={scoreStatus} weekly={weekly} hasPlan={hasPlan} />
       </div>
 
-      {/* Ranking Global */}
-      <section className="fit-os-panel bg-card/30 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-display text-xl">Ranking Global</p>
-          <Trophy className="w-5 h-5 text-primary" />
-        </div>
-        <div className="space-y-2">
+      {/* Ranking Global — resumido */}
+      <CollapsibleRow
+        icon={<Trophy className="w-4 h-4 text-primary shrink-0" />}
+        label={myRankPos > 0 ? `Você é #${myRankPos} no ranking` : 'Ranking global'}
+      >
+        <div className="space-y-2 pt-1">
           {ranking.map((r, i) => (
             <div key={i} className={`flex items-center justify-between text-sm rounded-xl px-3 py-2 ${
               r.self ? 'bg-primary/10 border border-primary/40 text-primary' : ''
@@ -108,20 +118,29 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
             </div>
           ))}
         </div>
-      </section>
+      </CollapsibleRow>
 
-      {/* Inteligência ativa */}
-      <ActiveSkillsBadge />
+      {/* Inteligência ativa — resumida */}
+      <CollapsibleRow icon={<Sparkles className="w-4 h-4 text-primary shrink-0" />} label="Inteligência ativa">
+        <ActiveSkillsBadge />
+      </CollapsibleRow>
 
-      {/* Ativação */}
-      <ActivationMissionCard />
+      {/* Ativação — resumida */}
+      <CollapsibleRow label="Sua ativação">
+        <ActivationMissionCard />
+      </CollapsibleRow>
 
-      {/* Check-in */}
-      <QuickCheckIn />
+      {/* Check-in — resumido */}
+      <CollapsibleRow label="Check-in rápido">
+        <QuickCheckIn />
+      </CollapsibleRow>
 
-      {/* Ecossistema atalhos */}
-      <section className="fit-os-panel fit-os-grid bg-card/40 p-4">
-        <div className="mb-3 flex items-end justify-between"><div><p className="fit-os-label mb-1">Atalhos do sistema</p><p className="font-display text-xl">Ecossistema</p></div><button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button></div>
+      {/* Ecossistema — resumido */}
+      <CollapsibleRow icon={<Grid3x3 className="w-4 h-4 text-muted-foreground shrink-0" />} label="Ecossistema · 4 módulos">
+        <div className="flex items-end justify-between mb-3">
+          <p className="fit-os-label">Atalhos do sistema</p>
+          <button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {[
             { I: Dumbbell, label: 'Train', route: '/9fit/train' },
@@ -136,9 +155,9 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
             </button>
           ))}
         </div>
-      </section>
+      </CollapsibleRow>
 
-      {/* Destaques */}
+      {/* Destaques — mantido como carrossel horizontal (já compacto, não compete em altura) */}
       <section className="fit-os-panel bg-card/30 p-4">
         <p className="fit-os-label mb-1">Próxima ação</p><p className="font-display text-xl mb-3">Destaques</p>
         <div className="rounded-2xl border border-primary/30 bg-white/[0.02] p-4 flex items-center gap-3">
