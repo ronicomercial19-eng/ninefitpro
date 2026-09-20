@@ -18,7 +18,6 @@ import {
   Cpu,
   Film,
   Activity,
-  ClipboardCheck,
   Atom
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,7 +40,6 @@ const menuItems = [
   { title: 'Alunos', url: '/app/alunos', icon: Users },
   { title: 'Exercícios', url: '/app/exercicios', icon: Dumbbell },
   { title: 'SmartTreino', url: '/app/smart-treino', icon: Zap },
-  { title: 'Ajustes dos alunos', url: '/app/ajustes-treino', icon: ClipboardCheck },
   { title: 'SmartPeriodizer', url: '/app/smart-periodizer', icon: CalendarClock },
   { title: 'FitCopilot', url: '/app/fit-copilot', icon: Cpu },
   { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
