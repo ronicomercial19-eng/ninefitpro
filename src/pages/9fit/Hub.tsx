@@ -18,9 +18,10 @@ import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
 import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
+import { CollapsibleRow } from "@/components/9fit/CollapsibleRow";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Library } from "lucide-react";
+import { ChevronRight, Library, Radar as RadarIcon, Flame } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
@@ -133,7 +134,7 @@ export default function NineFitHub() {
           <button onClick={() => void loadHubData()} className="text-xs text-primary shrink-0">Tentar de novo</button>
         </div>
       )}
-      {/* 1. HERO SYNC — full bleed B&W + halo (score via RPC realtime) */}
+      {/* 1. HERO SYNC — único elemento aberto/protagonista da tela (redesign Nine Pro v2) */}
       <HeroSyncSection
         name={name}
         syncScore={liveScores?.sync.value ?? null}
@@ -142,56 +143,52 @@ export default function NineFitHub() {
         lastUpdate={liveScores?.sync.observed_at ?? undefined}
       />
 
-      {/* 2. FLOATING METRICS — glass sensors */}
-      <HubFloatingMetrics vitals={liveScores?.vitals} />
-
-      {/* 2.5 QUICK MOOD INPUT — fecha core loop */}
-      <QuickMoodInput onLogged={invalidate} />
-
-      {/* 3. RON & PRESENÇA — card inteligente substitui tip simples */}
-      <div className="px-4 mt-8">
+      {/* 2. RON — convite ativo, mantido aberto (2º elemento com destaque da tela) */}
+      <div className="px-4 mt-6">
         <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
       </div>
 
-      {/* 3.5 ATIVAÇÃO — card único (fluxo /9fit/ativacao) */}
-      <div className="px-4 mt-6 space-y-3">
-        <ActivationMissionCard />
-        <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
-        {performancePlanTitle && <p className="text-[11px] text-muted-foreground">Plano ativo: <span className="text-foreground">{performancePlanTitle}</span></p>}
-      </div>
+      {/* Tudo abaixo vira resumo de 1 linha (navegação progressiva) — nada removido,
+          só peso visual reduzido: métricas/humor, ativação, protocolo/radar/upsell,
+          próxima aula e ofertas. */}
+      <div className="px-4 mt-4 space-y-2.5">
+        <CollapsibleRow icon={<Flame className="w-4 h-4 text-primary shrink-0" />} label={`Treino ${weekly.treinos} · Nutri ${weekly.nutri} · Move ${weekly.minutos}min`}>
+          <HubFloatingMetrics vitals={liveScores?.vitals} />
+          <div className="mt-3">
+            <QuickMoodInput onLogged={invalidate} />
+          </div>
+        </CollapsibleRow>
 
+        <CollapsibleRow label="Sua ativação">
+          <ActivationMissionCard />
+          <div className="mt-3">
+            <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
+          </div>
+          {performancePlanTitle && <p className="text-[11px] text-muted-foreground mt-2">Plano ativo: <span className="text-foreground">{performancePlanTitle}</span></p>}
+        </CollapsibleRow>
 
-      {/* 4. DAILY PROTOCOL — premium fisiológico */}
-      <div className="px-4 mt-8">
-        <DailyProtocol />
-      </div>
+        <CollapsibleRow icon={<RadarIcon className="w-4 h-4 text-muted-foreground shrink-0" />} label="Radar semanal · Protocolo do dia">
+          <DailyProtocol />
+          <div className="mt-4">
+            <WeeklyRadar3D current={breakdown} />
+          </div>
+          <div className="mt-4">
+            <UpsellBanner
+              context="hub_upsell"
+              storageKey="hub_after_protocol"
+              variant="amber"
+              headline="Desbloqueie protocolos premium e RON v9 completo"
+              cta="Testar 7 dias grátis"
+            />
+          </div>
+        </CollapsibleRow>
 
-      {/* 4.5 UPSELL — após protocolo (mais alta intenção) */}
-      <div className="px-4 mt-6">
-        <UpsellBanner
-          context="hub_upsell"
-          storageKey="hub_after_protocol"
-          variant="amber"
-          headline="Desbloqueie protocolos premium e RON v9 completo"
-          cta="Testar 7 dias grátis"
-        />
-      </div>
-
-
-
-      {/* 5. RADAR 5D 3D */}
-      <div className="px-4 mt-8">
-        <WeeklyRadar3D current={breakdown} />
-      </div>
-
-      {/* 6. PROTOCOL ACTIVE */}
-      {protocolCount > 0 && (
-        <div className="px-4 mt-6">
+        {protocolCount > 0 && (
           <button
             onClick={() => navigate("/9fit/protocolo")}
-            className="w-full rounded-2xl p-4 flex items-center gap-3 border border-white/[0.06] bg-white/[0.04] backdrop-blur-xl hover:border-primary/30 transition-colors text-left"
+            className="w-full fit-os-panel bg-card/30 p-4 flex items-center gap-3 hover:border-primary/30 transition-colors text-left"
           >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Library className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
@@ -202,21 +199,19 @@ export default function NineFitHub() {
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
-        </div>
-      )}
+        )}
 
-      {/* Check-in da próxima aula → fluxo Staff */}
-      <div className="px-4 mt-6">
-        <QuickCheckIn />
-      </div>
+        <CollapsibleRow label="Próxima aula · check-in">
+          <QuickCheckIn />
+        </CollapsibleRow>
 
-      {/* Ofertas dinâmicas */}
-      <div className="px-4 mt-6">
-        <DynamicOffers compact />
+        <CollapsibleRow label="Ofertas pra você">
+          <DynamicOffers compact />
+        </CollapsibleRow>
       </div>
 
       {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
-      <div id="ecosystem-grid" className="px-4 mt-8">
+      <div id="ecosystem-grid" className="px-4 mt-6">
         <EcosystemGrid />
       </div>
 
