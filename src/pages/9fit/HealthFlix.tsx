@@ -137,7 +137,7 @@ export default function NineFitHealthFlix() {
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
             <Film className="w-6 h-6 text-destructive mb-2" />
             <p className="text-xs text-muted-foreground">Não foi possível carregar o catálogo.</p>
-            <button onClick={() => athleteId && loadCatalog(athleteId)} className="mt-3 text-xs text-primary underline">Tentar novamente</button>
+            <button onClick={() => window.location.reload()} className="mt-3 text-xs text-primary underline">Tentar novamente</button>
           </div>
         )}
         {!loading && !loadError && items.length === 0 && (
