@@ -1,10 +1,12 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { useState } from "react";
 
 /**
  * Foods — embed do app ninefoods (PROMPT 3).
  * Iframe ocupa viewport completo abaixo da TopBar e acima da BottomNavigation.
  */
 export default function NineFitFoods() {
+  const [embedError, setEmbedError] = useState(false);
   return (
     <div className="min-h-screen" style={{ background: "#090909" }}>
       <iframe
