@@ -44,7 +44,7 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
 
   if (!open) return null;
   const step = STEPS[i];
-  const value = (draft[step.key] ?? params[step.key]) as any;
+  const value = draft[step.key] ?? params[step.key];
 
   const next = async () => {
     if (i < STEPS.length - 1) { setI(i + 1); return; }
@@ -52,20 +52,20 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
     const { error } = await save(draft);
     if (!error && user?.id) {
       try {
-        const { data: link } = await (supabase as any)
+        const { data: link } = await supabase
           .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
-        let athleteId = (link as any)?.athlete_id ?? null;
+        let athleteId = link?.athlete_id ?? null;
         if (!athleteId) {
           const { data: ath } = await supabase.from("athletes").select("id").eq("user_id", user.id).maybeSingle();
           athleteId = ath?.id ?? null;
         }
         if (athleteId) {
-          await supabase.from("athlete_pdi_history" as any).insert({
+          await supabase.from("athlete_pdi_history").insert({
             athlete_id: athleteId,
-            pdi_data: { ...params, ...draft } as any,
-          } as any);
+            pdi_data: { ...params, ...draft },
+          });
         }
-      } catch (e) { console.warn("[PDIWizard] history:", e); }
+      } catch (e: unknown) { console.warn("[PDIWizard] history:", e); }
     }
     setSaving(false);
     if (error) return toast.error("Erro ao salvar PDI");
@@ -73,7 +73,7 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
     onComplete?.(); onClose();
   };
 
-  const set = (v: any) => setDraft((d) => ({ ...d, [step.key]: v }));
+  const set = (v: UserParameters[typeof step.key]) => setDraft((d) => ({ ...d, [step.key]: v }));
   const toggleMulti = (v: string) => {
     const arr: string[] = Array.isArray(value) ? [...value] : [];
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -146,3 +146,4 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
     </AnimatePresence>
   );
 }
+
