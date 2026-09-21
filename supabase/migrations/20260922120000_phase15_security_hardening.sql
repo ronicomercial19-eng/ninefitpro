@@ -69,3 +69,5 @@ END $$;
 
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.handle_new_user_role() FROM PUBLIC, anon, authenticated;
+
+REVOKE ALL ON FUNCTION public.validate_partner_key(text) FROM PUBLIC, anon, authenticated;
