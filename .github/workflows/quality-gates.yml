@@ -22,8 +22,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm install --no-audit --no-fund\n        # TODO: restore npm ci after regenerating the drifted package-lock.json.
+      - run: npm install --no-audit --no-fund
+        # TODO: restore npm ci after regenerating the drifted package-lock.json.
       - run: npm run typecheck
+      - run: npm run qa:fase2
       - run: npm run build
         if: ${{ always() }}
       - name: Lint baseline (informational until legacy debt is cleared)
