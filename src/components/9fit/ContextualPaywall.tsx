@@ -77,11 +77,11 @@ export function ContextualPaywall({ open, onClose, context, headline, subline, c
     if (!open) return;
     (async () => {
       const { data } = await supabase
-        .from('subscription_plans' as any)
+        .from('subscription_plans')
         .select('*')
         .in('id', ['pro', 'prime'])
         .order('display_order');
-      setPlans((data as any) || []);
+      setPlans(data || []);
       trackMonetizationEvent('view_paywall', null, context);
     })();
   }, [open, context]);
@@ -200,3 +200,4 @@ export function ContextualPaywall({ open, onClose, context, headline, subline, c
     </AnimatePresence>
   );
 }
+
