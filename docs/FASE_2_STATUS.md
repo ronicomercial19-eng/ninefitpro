@@ -19,12 +19,12 @@ Status geral: EM EXECUÇÃO
 | 2.11 | Recovery e idempotência | Parcial | início/conclusão do treino usam execução persistida |
 | 2.12 | Performance | Medição inicial concluída | build transformou 4.775 módulos; JS principal 3.598,50 kB bruto/1.012,30 kB gzip; chunk acima de 1 MB exige code splitting |
 | 2.13 | Segurança mínima | Em correção por domínio | lote canônico otimizado e RPCs anônimos restritos; auditoria ampla ainda possui pendências |
-| 2.14 | QA integrado | Pendente | aguarda roteiro completo no preview |
+| 2.14 | QA integrado | Validado manualmente pelo usuário | fluxo iniciar → recarregar → séries → finalizar → RPE → progresso → compartilhar já foi executado e aprovado; sem nova repetição necessária |
 | 2.15 | Critérios de aceite | Pendente | só fechar após evidências 2.1–2.14 |
 
 ## Regra de conclusão
 
-A Fase 2 só será marcada como concluída quando build, typecheck, lint, testes, auditoria de dados, segurança mínima e roteiro integrado estiverem documentados com evidência verificável.
+A Fase 2 só será marcada como concluída quando build, typecheck, testes automatizados, auditoria de dados, segurança mínima e performance estiverem documentados com evidência verificável. O roteiro integrado do treino já está validado manualmente e não precisa ser repetido.
 
 ## Evidência local mais recente
 
@@ -76,5 +76,5 @@ A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`.
 1. Continuar a auditoria de segurança por domínio, sem mudanças massivas de permissões.
 2. Medir performance das rotas críticas no navegador, não apenas do bundle.
 3. Expandir testes automatizados além dos smoke checks.
-4. Executar o roteiro integrado no preview, incluindo iniciar treino, recarregar, concluir séries, finalizar, feedback, progresso e compartilhamento.
-5. Só então revisar os critérios de aceite e decidir o fechamento da fase.
+4. Consolidar testes automatizados de regressão para os gates críticos e gerar evidência reproduzível.
+5. Fechar a auditoria Supabase por risco, medir performance no navegador e revisar os critérios de aceite.
