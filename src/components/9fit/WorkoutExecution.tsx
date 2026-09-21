@@ -261,7 +261,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [persisting, setPersisting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [executionAttempt, setExecutionAttempt] = useState(0);
-  const [executionStatus, setExecutionStatus] = useState<WorkoutExecutionStatus>('started');
+  const [executionStatus, setExecutionStatus] = useState<WorkoutExecutionStatus>('in_progress');
 
   useEffect(() => {
     let cancelled = false;
@@ -289,7 +289,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .from("workout_executions")
         .select("id")
         .eq("athlete_id", athleteId)
-        .in("status", ["started", "in_progress", "paused"])
+        .in("status", ["in_progress"])
         .order("created_at", { ascending: false })
         .limit(1);
 
