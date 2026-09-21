@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Flame, Clock, Star, Trophy, TrendingUp, ChevronRight, Zap, Heart, Share2, Copy, Share2
+  Flame, Clock, Star, Trophy, TrendingUp, ChevronRight, Zap, Heart, Share2
 } from "lucide-react";
 
 interface PostWorkoutModalProps {
@@ -140,7 +140,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
 
       setXpGained(xp);
       setCaloriesBurned(cal);
-      setShareMessage(`Treino concluído: ${trainingName}\\nRPE: ${rpe}/10\\nDuração: ${duration} min\\nCalorias: ${cal} kcal\\nXP: +${xp}`);\n      setStep("summary");
+      setShareMessage(`Treino concluído: ${trainingName}\nRPE: ${rpe}/10\nDuração: ${duration} min\nCalorias: ${cal} kcal\nXP: +${xp}`);\n      setStep("summary");
     } catch (e) {
       toast.error("Erro ao salvar progresso");
       console.warn("[PostWorkout] erro inesperado:", e);
