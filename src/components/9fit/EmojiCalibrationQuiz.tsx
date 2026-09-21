@@ -52,14 +52,14 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
       const score = Math.round((total / (QUESTIONS.length * 5)) * 100);
       try {
         if (user?.id) {
-          await supabase.from("user_preferences" as any).upsert({
+          await supabase.from("user_preferences").upsert({
             user_id: user.id,
             daily_calibration: { ...next, score, date: new Date().toISOString() },
             updated_at: new Date().toISOString(),
           });
         }
         if (athleteId) {
-          await supabase.from("bio_recovery_state" as any).insert({
+          await supabase.from("bio_recovery_state").insert({
             athlete_id: athleteId,
             score,
             recorded_at: new Date().toISOString(),
@@ -119,3 +119,4 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
     </div>
   );
 }
+
