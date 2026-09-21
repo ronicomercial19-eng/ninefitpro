@@ -68,15 +68,15 @@ export function DailyProtocol() {
     (async () => {
       const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
-        .from("daily_tasks" as any)
+        .from("daily_tasks")
         .select("*")
         .eq("user_id", user.id)
         .eq("task_date", today);
 
-      const existing = ((data as any[]) || []) as Task[];
+      const existing: Task[] = data || [];
       const missing = DEFAULT_TASKS.filter((d) => !existing.find((t) => t.task_key === d.key));
       if (missing.length) {
-        await supabase.from("daily_tasks" as any).insert(
+        await supabase.from("daily_tasks").insert(
           missing.map((m) => ({
             user_id: user.id,
             task_date: today,
@@ -86,11 +86,11 @@ export function DailyProtocol() {
           }))
         );
         const { data: refreshed } = await supabase
-          .from("daily_tasks" as any)
+          .from("daily_tasks")
           .select("*")
           .eq("user_id", user.id)
           .eq("task_date", today);
-        const list = ((refreshed as any[]) || []) as Task[];
+        const list: Task[] = refreshed || [];
         list.sort(
           (a, b) =>
             DEFAULT_TASKS.findIndex((d) => d.key === a.task_key) -
@@ -113,7 +113,7 @@ export function DailyProtocol() {
     if (task.completed || working) return;
     setWorking(task.id);
     const { error } = await supabase
-      .from("daily_tasks" as any)
+      .from("daily_tasks")
       .update({ completed: true, completed_at: new Date().toISOString() })
       .eq("id", task.id);
     if (error) {
@@ -123,7 +123,7 @@ export function DailyProtocol() {
     }
     if (user?.id) {
       supabase
-        .from("master_registry" as any)
+        .from("master_registry")
         .insert({
           user_id: user.id,
           event_type: "daily_protocol_step",
@@ -240,3 +240,4 @@ export function DailyProtocol() {
     </div>
   );
 }
+
