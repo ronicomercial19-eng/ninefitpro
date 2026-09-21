@@ -18,7 +18,7 @@ Status geral: EM EXECUÇÃO
 | 2.10 | Mocks e dados falsos | Em auditoria | Progresso consulta RPC real; avaliações oficiais vêm de `avaliacoes_unificadas` |
 | 2.11 | Recovery e idempotência | Parcial | início/conclusão do treino usam execução persistida |
 | 2.12 | Performance | Medição inicial concluída | build transformou 4.775 módulos; JS principal 3.598,50 kB bruto/1.012,30 kB gzip; chunk acima de 1 MB exige code splitting |
-| 2.13 | Segurança mínima | Auditoria encontrou pendências críticas | advisors Supabase registrou 9 views SECURITY DEFINER, 157 funções SECURITY DEFINER executáveis por anon, 11 tabelas RLS sem policy e 28 funções com search_path mutável; requer revisão por domínio |
+| 2.13 | Segurança mínima | Auditoria encontrou pendências críticas | advisors registrou 9 views SECURITY DEFINER, 157 funções SECURITY DEFINER executáveis por anon, 11 tabelas RLS sem policy e 28 funções com search_path mutável |
 | 2.14 | QA integrado | Pendente | aguarda roteiro completo no preview |
 | 2.15 | Critérios de aceite | Pendente | só fechar após evidências 2.1–2.14 |
 
@@ -42,7 +42,7 @@ O lint global permanece pendente por débito legado. A última medição registr
 
 ## Auditoria Supabase
 
-A auditoria de segurança e performance foi executada no projeto `mfrydtrzjxscbkaiwfnw`. O resultado não é um motivo para alterar permissões em massa automaticamente: há funções e políticas de domínios diferentes, e uma mudança ampla poderia quebrar fluxos existentes. O próximo lote deve começar pelo domínio canônico do treino, revisar cada função/view, aplicar correções em migration versionada e repetir os advisors.
+A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`. O lote de performance identificou 8 foreign keys sem índice. Foi criada e aplicada a migration `20260921170000_phase2_cover_foreign_key_indexes.sql`; após a aplicação, o advisor não lista mais `unindexed_foreign_keys`. Permanecem warnings de initplan de RLS, policies permissivas múltiplas e itens de segurança que exigem revisão por domínio.
 
 ## Próximos bloqueios da Fase 2
 
