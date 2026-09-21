@@ -29,6 +29,18 @@ export async function getCurrentUser(): Promise<ApiResponse<any>> {
 
 export async function getUserRole(userId: string): Promise<ApiResponse<string>> {
   try {
+    const { data: identity, error: identityError } = await supabase
+      .from('vw_current_identity')
+      .select('roles, profile_role')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!identityError && identity) {
+      const roles = Array.isArray(identity.roles) ? identity.roles as Array<{ role?: string }> : [];
+      const role = roles[0]?.role ?? identity.profile_role;
+      if (role) return { success: true, data: role, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
+    }
+
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -96,3 +108,4 @@ export const authQueryKeys = {
   role: (userId: string) => ['auth', 'role', userId] as const,
   profile: (userId: string) => ['auth', 'profile', userId] as const,
 };
+
