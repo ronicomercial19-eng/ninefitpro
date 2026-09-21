@@ -26,6 +26,22 @@ interface StudentProfile {
   coach_id?: string;
 }
 
+interface CanonicalIdentity {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  profile_role: string;
+  is_active: boolean | null;
+  first_access_completed: boolean;
+  athlete_id: string | null;
+  aluno_id: string | null;
+  coach_id: string | null;
+  athlete_name: string | null;
+  athlete_email: string | null;
+  athlete_activated: boolean | null;
+  roles: Array<{ role: string }>;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -99,8 +115,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-      if (!error && data) setProfile(data);
+      const { data, error } = await supabase
+        .from('vw_current_identity')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!error && data) {
+        const identity = data as unknown as CanonicalIdentity;
+        setProfile({
+          id: identity.user_id,
+          user_id: identity.user_id,
+          email: identity.email,
+          full_name: identity.full_name,
+          role: identity.profile_role,
+          phone: null,
+          avatar_url: null,
+          is_active: identity.is_active ?? true,
+        });
+        if (identity.roles?.length) setUserRole(identity.roles[0].role);
+        if (identity.athlete_id && identity.athlete_name) {
+          setStudentProfile({
+            id: identity.athlete_id,
+            email: identity.athlete_email,
+            name: identity.athlete_name,
+            activated: identity.athlete_activated,
+            coach_id: identity.coach_id ?? undefined,
+          });
+        }
+        return;
+      }
+
+      const fallback = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
+      if (!fallback.error && fallback.data) setProfile(fallback.data);
     } catch (error) { console.error('Error in fetchUserProfile:', error); }
   };
 
@@ -183,3 +229,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={{ user, profile, studentProfile, session, userRole, login, register, logout, loading, isSuperAdmin, isAdmin, isTrainer, isStudent }}>{children}</AuthContext.Provider>;
 };
+
