@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
   ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
@@ -204,7 +204,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const currentExercise = exercises[currentIdx];
 
   // Load initial override + subscribe to realtime changes on daily_workouts
-  const refreshDaily = async () => {
+  const refreshDaily = useCallback(async () => {
     const { data } = await supabase
       .from("daily_workouts")
       .select("changes_json, override_locked, updated_at")
@@ -214,7 +214,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (data?.changes_json) setDailyOverride(data.changes_json);
   };
 
-  useEffect(() => { refreshDaily(); /* eslint-disable-next-line */ }, [athleteId]);
+  useEffect(() => { void refreshDaily(); }, [refreshDaily]);
 
   useRealtimeTable(
     { table: "daily_workouts", filter: `athlete_id=eq.${athleteId}`, enabled: !!athleteId },
@@ -337,7 +337,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     })();
 
     return () => { cancelled = true; };
-  }, [training.id, executionAttempt]);
+  }, [training.id, training.execution_id, training.daily_workout_id, athleteId, todayISO, executionAttempt]);
 
   // HTML content (for html-type trainings) — só carrega quando o player
   // guiado não conseguiu resolver exercícios de nenhuma forma (fallback final)
@@ -376,7 +376,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       setTimerInitial(currentExercise.rest_seconds);
       setTimerSeconds(currentExercise.rest_seconds);
     }
-  }, [currentIdx]);
+  }, [currentIdx, currentExercise?.rest_seconds, isStructured]);
 
   // Load HTML content — só como último recurso, quando não há exercícios
   // estruturados nem estáticos nem resolvidos via prescrever_treino, e a
