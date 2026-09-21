@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle, Clock, MapPin, Loader2, Users } from "lucide-react";
@@ -23,11 +23,7 @@ export function QuickCheckIn() {
   const [loading, setLoading] = useState(true);
   const [checkingIn, setCheckingIn] = useState(false);
 
-  useEffect(() => {
-    if (user) fetchNextClass();
-  }, [user]);
-
-  const fetchNextClass = async () => {
+  const fetchNextClass = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("class_bookings")
@@ -39,7 +35,7 @@ export function QuickCheckIn() {
       .limit(1);
 
     if (data && data.length > 0) {
-      const b = data[0] as any;
+      const b = data[0];
       setNextClass({
         bookingId: b.id,
         classId: b.class_id,
@@ -50,7 +46,11 @@ export function QuickCheckIn() {
       });
     }
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) fetchNextClass();
+  }, [user, fetchNextClass]);
 
   const handleCheckIn = async () => {
     if (!nextClass) return;
@@ -65,29 +65,29 @@ export function QuickCheckIn() {
 
       if (user) {
         // Resolver athlete_id via athlete_auth_link, fallback athletes
-        const { data: link } = await (supabase as any)
+        const { data: link } = await supabase
           .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
-        let athleteId: string | null = (link as any)?.athlete_id ?? null;
+        let athleteId: string | null = link?.athlete_id ?? null;
         if (!athleteId) {
           const { data: ath } = await supabase.from("athletes").select("id").eq("user_id", user.id).maybeSingle();
           athleteId = ath?.id ?? null;
         }
         if (athleteId) {
-          await supabase.rpc("fn_award_xp" as any, {
+          await supabase.rpc("fn_award_xp", {
             p_athlete_id: athleteId, p_amount: 50, p_source: "check_in",
             p_metadata: { booking_id: nextClass.bookingId },
           });
-          await supabase.from("ninefit_checkins" as any).insert({
+          await supabase.from("ninefit_checkins").insert({
             aluno_id: athleteId,
             athlete_id: athleteId,
             data_checkin: new Date().toISOString().split("T")[0],
             tipo: "aula",
             treinos_semana: 1,
-          } as any);
-          await supabase.from("athlete_planning_history" as any).insert({
+          });
+          await supabase.from("athlete_planning_history").insert({
             athlete_id: athleteId,
-            sync_data: { source: "checkin", class_id: nextClass.classId, at: new Date().toISOString() } as any,
-          } as any);
+            sync_data: { source: "checkin", class_id: nextClass.classId, at: new Date().toISOString() },
+          });
         }
       }
 
@@ -162,3 +162,4 @@ export function QuickCheckIn() {
     </div>
   );
 }
+
