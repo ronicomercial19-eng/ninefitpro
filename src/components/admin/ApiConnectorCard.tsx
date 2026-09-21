@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2, AlertTriangle, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+interface ConnectorConfig {
+  apikey_hint?: string;
+  last_sync?: string;
+}
+
+interface ConnectorPayload {
+  key: string;
+  provider: string;
+  auth_mode: string;
+  endpoint: string | null;
+  iframe_url: string | null;
+  status: "active";
+  secret_ref?: string;
+  config: ConnectorConfig;
+}
 
 interface Props {
   moduleKey: string;
@@ -43,9 +59,7 @@ export function ApiConnectorCard(props: Props) {
   const [probeStatus, setProbeStatus] = useState<"unknown" | "ok" | "fail">("unknown");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [moduleKey]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
       .from("api_connectors")
@@ -58,11 +72,16 @@ export function ApiConnectorCard(props: Props) {
       setConnected(data.status === "active");
       setUpdatedAt(data.updated_at);
       // never re-show secret; only hint
-      const hint = (data.config as any)?.apikey_hint;
+      const config = data.config && typeof data.config === "object" && !Array.isArray(data.config)
+        ? data.config as ConnectorConfig
+        : null;
+      const hint = config?.apikey_hint;
       if (hint) setApiKey(`••••${hint}`);
     }
     setLoading(false);
-  }
+  }, [moduleKey]);
+
+  useEffect(() => { load(); }, [load]);
 
   const save = async () => {
     const clean = apiKey.startsWith("••••") ? null : apiKey.trim();
@@ -70,7 +89,7 @@ export function ApiConnectorCard(props: Props) {
       toast.error("Informe a API Key"); return;
     }
     const hint = clean ? clean.slice(-4) : (apiKey.startsWith("••••") ? apiKey.slice(-4) : null);
-    const payload: any = {
+    const payload: ConnectorPayload = {
       key: moduleKey,
       provider: provider ?? moduleKey,
       auth_mode: authMode,
@@ -101,7 +120,7 @@ export function ApiConnectorCard(props: Props) {
       if (error) throw error;
       setProbeStatus("ok");
       toast.success("Conexão validada ✓");
-    } catch (e: any) {
+    } catch (e: unknown) {
       setProbeStatus("fail");
       toast.warning("Endpoint não respondeu — verifique credenciais");
     } finally {
@@ -127,8 +146,9 @@ export function ApiConnectorCard(props: Props) {
         .eq("key", moduleKey);
       toast.success("Sincronizado");
       load();
-    } catch (e: any) {
-      toast.error(e?.message || "Falha na sincronização");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Falha na sincronização";
+      toast.error(message);
     } finally { setSyncing(false); }
   };
 
