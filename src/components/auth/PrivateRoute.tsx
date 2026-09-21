@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[];
 }
 
-export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const { user, loading, profile, logout } = useAuth();
+export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) => {
+  const { user, loading, profile, userRole, logout } = useAuth();
   const [profileTimedOut, setProfileTimedOut] = useState(false);
 
   useEffect(() => {
@@ -43,5 +44,10 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     </div>;
   }
 
+  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+    return <Navigate to="/9fit/hub" replace />;
+  }
+
   return <>{children}</>;
 };
+
