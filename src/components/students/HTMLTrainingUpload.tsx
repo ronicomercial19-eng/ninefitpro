@@ -176,10 +176,11 @@ export function HTMLTrainingUpload({
 
       toast.success(`Treino HTML "${trainingName}" enviado com sucesso para ${studentName}!`);
       onUploadSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro no upload:', err);
-      setError(err.message || 'Erro ao fazer upload do treino');
-      toast.error(err.message || 'Erro ao fazer upload');
+      const message = err instanceof Error ? err.message : 'Erro ao fazer upload do treino';
+      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
