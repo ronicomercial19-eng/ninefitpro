@@ -36,6 +36,23 @@ type Exercise = {
 };
 
 type Modelo = { name?: string; objective?: string; stimulus?: string };
+type Offer = {
+  id: string;
+  name?: string | null;
+  title?: string | null;
+  description?: string | null;
+  category?: string | null;
+  slug?: string | null;
+  checkout_url?: string | null;
+  thumbnail_url?: string | null;
+  price_cents?: number | null;
+  price?: number | null;
+};
+type QuickTrainingPayload = {
+  modelos?: Modelo[];
+  exercises?: Exercise[];
+  exercicios?: Exercise[];
+};
 
 // FIX (bug real 4 — Treino Rápido não entrava no player guiado): o modal
 // listava os exercícios com link de vídeo abrindo em nova aba (YouTube) e
@@ -56,7 +73,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [modelos, setModelos] = useState<Modelo[]>([]);
-  const [infoproduct, setInfoproduct] = useState<any>(null);
+  const [infoproduct, setInfoproduct] = useState<Offer | null>(null);
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
   const [quickExecutionId, setQuickExecutionId] = useState<string | null>(null);
@@ -86,10 +103,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .order("priority", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setInfoproduct(prod as any);
+      setInfoproduct(prod);
 
       // 2) TREINO RÁPIDO via RPC canônica (Bloco A)
-      const { data, error } = await supabase.rpc("fn_treino_rapido" as any, {
+      const { data, error } = await supabase.rpc("fn_treino_rapido", {
         p_athlete_id: athleteId,
         p_objetivo: a.goal,
         p_tempo_min: parseInt(a.time, 10),
@@ -97,13 +114,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       });
       if (error) throw error;
 
-      const payload: any = data || {};
+      const payload = (data || {}) as QuickTrainingPayload;
       setModelos((payload.modelos || []) as Modelo[]);
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
       // Insere workout_executions in_progress (start)
-      const { data: executionRaw, error: executionError } = await supabase.from("workout_executions" as any)
-        .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() } as any)
+      const { data: executionRaw, error: executionError } = await supabase.from("workout_executions")
+        .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() })
         .select("id").single();
       const execution = executionRaw as { id?: string } | null;
       if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
@@ -111,9 +128,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
 
       setShowingOffer(!!prod);
       setStep(3);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[QuickTrain] fn_treino_rapido:", e);
-      toast.error(e?.message || "Não foi possível montar o treino agora.");
+      const message = e instanceof Error ? e.message : "Não foi possível montar o treino agora.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
