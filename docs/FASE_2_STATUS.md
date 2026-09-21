@@ -32,7 +32,7 @@ Clone do `main` em 21/09/2026:
 
 - `tsc --noEmit`: passou.
 - `scripts/qa-fase2.mjs`: passou, 6/6 verificações.
-- `vite build`: passou, 4.775 módulos transformados.
+- `vite build`: passou novamente, 4.775 módulos transformados; bundle principal 3.599,04 kB bruto/1.012,55 kB gzip; warnings de importação mista de `html2canvas` e chunk acima de 1 MB.
 - Warnings restantes: importação mista de `html2canvas` e chunk JavaScript acima de 1 MB.
 - `CompleteProfileFlow.tsx`: passou em ESLint sem erros ou warnings.
 - `sdk/healthflix-sdk.ts`: passou em ESLint; contratos de transporte não usam mais `any`.
@@ -73,8 +73,8 @@ A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`.
 
 ## Próximos bloqueios da Fase 2
 
-1. Continuar a auditoria de segurança por domínio, sem mudanças massivas de permissões.
-2. Medir performance das rotas críticas no navegador, não apenas do bundle.
-3. Expandir testes automatizados além dos smoke checks.
-4. Consolidar testes automatizados de regressão para os gates críticos e gerar evidência reproduzível.
-5. Fechar a auditoria Supabase por risco, medir performance no navegador e revisar os critérios de aceite.
+1. Consolidar testes automatizados de regressão para os gates críticos e gerar evidência reproduzível.
+2. Medir performance das rotas críticas no navegador e avaliar o bundle de 3.599 kB.
+3. Revisar persistência, recovery e critérios de aceite com evidência automatizada.
+4. Fechar os critérios de aceite da Fase 2.
+5. Como último bloco, concluir a auditoria de segurança Supabase por risco, sem mudanças massivas de permissões.
