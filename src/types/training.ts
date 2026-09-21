@@ -61,11 +61,9 @@ export interface DailyWorkout {
 }
 
 export type WorkoutExecutionStatus =
-  | 'started'
   | 'in_progress'
-  | 'paused'
   | 'completed'
-  | 'cancelled';
+  | 'skipped';
 
 export interface WorkoutExecutionContract {
   execution_id: string;
