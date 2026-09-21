@@ -25,18 +25,18 @@ async function buildWeeklyRecap(athleteId: string, userId: string): Promise<Achi
   const sinceIso = since.toISOString();
 
   const [{ count: workouts }, { count: prs }, { data: scores }] = await Promise.all([
-    supabase.from("workout_executions" as any).select("id", { count: "exact", head: true })
+    supabase.from("workout_executions").select("id", { count: "exact", head: true })
       .eq("athlete_id", athleteId).eq("status", "completed").gte("completed_at", sinceIso),
-    supabase.from("personal_records" as any).select("id", { count: "exact", head: true })
+    supabase.from("personal_records").select("id", { count: "exact", head: true })
       .eq("athlete_id", athleteId).gte("created_at", sinceIso),
-    supabase.from("sync_score_logs" as any).select("score")
+    supabase.from("sync_score_logs").select("score")
       .eq("user_id", userId).gte("created_at", sinceIso).order("created_at", { ascending: false }),
   ]);
 
   const workoutCount = workouts ?? 0;
   const prCount = prs ?? 0;
   const avgScore = scores && scores.length > 0
-    ? Math.round(scores.reduce((s, r: any) => s + Number(r.score || 0), 0) / scores.length)
+    ? Math.round(scores.reduce((s, r) => s + Number(r.score || 0), 0) / scores.length)
     : null;
 
   // Nunca mostrar recap vazio — exige pelo menos 1 atividade real na semana
@@ -81,3 +81,4 @@ export function WeeklyRecapPrompt() {
 
   return <AchievementShareSheet achievement={achievement} onClose={() => setAchievement(null)} />;
 }
+
