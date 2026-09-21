@@ -39,10 +39,11 @@ Clone do `main` em 21/09/2026:
 - `ContextualPaywall.tsx`: passou em ESLint e TypeScript após tipar a consulta de planos.
 - `DailyProtocol.tsx`: passou em ESLint e TypeScript após tipar queries de tarefas e registry.
 - `DynamicOffers.tsx`: passou em ESLint e TypeScript após tipar a resposta de ofertas.
+- `EcosystemGrid.tsx`: passou em ESLint e TypeScript após tipar módulos e conectores.
 
 ## Lint global
 
-O lint global permanece pendente por débito legado. A última medição registrada foi de 782 problemas: 738 erros e 44 warnings. Os lotes tipados do SDK HealthFlix, paywall, protocolo diário e ofertas reduziram 31 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
+O lint global permanece pendente por débito legado. A última medição registrada foi de 778 problemas: 734 erros e 44 warnings. Os lotes tipados do SDK HealthFlix, paywall, protocolo diário, ofertas e ecossistema reduziram 35 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
 
 ## Auditoria Supabase
 
