@@ -8,10 +8,11 @@
 - `fn_map_phase_category`, `fn_check_catalog_published_complete` e `is_admin()` receberam `search_path` fixo.
 - A sobrecarga sem argumentos de `is_admin()` deixou de ser executável por clientes.
 - `_goal_defaults` e as 11 tabelas internas receberam RLS e política explícita de negação para `anon`/`authenticated`.
+- Três RPCs legados/internos sem uso no cliente tiveram o acesso de cliente revogado: `_selecionar_exercicios_bloco`, `audit_alunos_changes` e `deprecated_prescrever_treino_rapido`.
 
 ## Advisor de segurança restante
 
-- 171 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
+- 168 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
 - 1 função de integração (`validate_partner_key`) ainda executável por `anon`.
 - Extensões `vector` e `btree_gin` no schema `public`.
 - Políticas que permitem acesso anônimo em tabelas legadas/compatibilidade.
