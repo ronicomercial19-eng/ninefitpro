@@ -39,15 +39,15 @@ export function ShareButton({
     let templateAccent: string | null = null;
     try {
       const { data: tpl } = await supabase
-        .from("social_share_templates" as any)
+        .from("social_share_templates")
         .select("slug, accent_color, name")
         .eq("active", true)
         .eq("content_type", contentType)
         .limit(1)
         .maybeSingle();
       if (tpl) {
-        templateSlug = (tpl as any).slug;
-        templateAccent = (tpl as any).accent_color;
+        templateSlug = tpl.slug;
+        templateAccent = tpl.accent_color;
       }
     } catch { /* templates são opcionais */ }
 
@@ -67,15 +67,15 @@ export function ShareButton({
       setTimeout(() => setDone(false), 2500);
 
       if (user) {
-        await supabase.from("share_events" as any).insert({
+        await supabase.from("share_events").insert({
           user_id: user.id, channel, content_type: contentType,
           content_id: contentId ?? null, reward_xp: rewardXp,
         });
         const { data: a } = await supabase.from("athletes")
           .select("id").eq("user_id", user.id).maybeSingle();
         if (a?.id) {
-          await supabase.rpc("fn_award_xp" as any, {
-            p_athlete_id: (a as any).id,
+          await supabase.rpc("fn_award_xp", {
+            p_athlete_id: a.id,
             p_amount: rewardXp,
             p_source: `share:${channel}:${contentType}${templateSlug ? `:${templateSlug}` : ""}`,
             p_metadata: { content_id: contentId ?? null, template: templateSlug },
@@ -83,8 +83,8 @@ export function ShareButton({
           toast.success(`+${rewardXp} XP por compartilhar!`);
         }
       }
-    } catch (err: any) {
-      if (err?.name !== "AbortError") toast.error("Não foi possível compartilhar");
+    } catch (err: unknown) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) toast.error("Não foi possível compartilhar");
     } finally {
       setSharing(false);
     }
