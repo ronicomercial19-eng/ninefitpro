@@ -237,7 +237,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .eq("id", training.id)
         .maybeSingle();
       if (data) {
-        setLiveTraining(data as any);
+        setLiveTraining(data as unknown as TrainingAssignment);
         toast.info("Treino atualizado pelo seu professor");
       }
     },
