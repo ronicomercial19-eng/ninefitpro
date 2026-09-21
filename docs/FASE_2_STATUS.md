@@ -77,4 +77,4 @@ A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`.
 1. Consolidar testes automatizados de regressão para os gates críticos e gerar evidência reproduzível.
 2. Revisar persistência, recovery e critérios de aceite com evidência automatizada; o gate do bundle já passou.
 4. Fechar os critérios de aceite da Fase 2.
-5. Como último bloco, concluir a auditoria de segurança Supabase por risco, sem mudanças massivas de permissões.
+5. Como último bloco, continuar a auditoria de segurança Supabase por risco; o primeiro lote de views e RPCs internos já foi corrigido e verificado.
