@@ -51,6 +51,7 @@ Clone do `main` em 21/09/2026:
 - `QuickCheckIn.tsx`: passou em ESLint e TypeScript após tipar queries, RPC e callback de carregamento.
 - `MetasSection.tsx`: passou em ESLint e TypeScript após tipar queries de metas e estabilizar o carregamento.
 - `WeeklyRecapPrompt.tsx`: passou em ESLint e TypeScript após tipar as consultas do resumo semanal.
+- `WeeklyTrainingView.tsx`: passou em ESLint e TypeScript após tipar o contrato do RPC semanal e dos exercícios.
 
 ## Lint global
 
