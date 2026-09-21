@@ -7,17 +7,18 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Flame, Clock, Star, Trophy, TrendingUp, ChevronRight, Zap, Heart
+  Flame, Clock, Star, Trophy, TrendingUp, ChevronRight, Zap, Heart, Share2
 } from "lucide-react";
 
 interface PostWorkoutModalProps {
   open: boolean;
   onClose: () => void;
   athleteId: string;
+  executionId: string | null;
   trainingName: string;
 }
 
-type Step = "pse" | "summary";
+type Step = "pse" | "summary" | "share";
 
 const RPE_LABELS: Record<number, { label: string; emoji: string; color: string }> = {
   1: { label: "Muito Fácil", emoji: "😴", color: "text-green-400" },
@@ -32,7 +33,7 @@ const RPE_LABELS: Record<number, { label: string; emoji: string; color: string }
   10: { label: "Máximo", emoji: "💀", color: "text-red-600" },
 };
 
-export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: PostWorkoutModalProps) {
+export function PostWorkoutModal({ open, onClose, athleteId, executionId, trainingName }: PostWorkoutModalProps) {
   const [step, setStep] = useState<Step>("pse");
   const [rpe, setRpe] = useState(5);
   const [duration, setDuration] = useState(45);
@@ -52,9 +53,27 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
       setNotes("");
       fetchLastRpe();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const fetchLastRpe = async () => {
+    // Fonte de verdade: workout_executions
+    const { data: exec } = await supabase
+      .from("workout_executions")
+      .select("rpe")
+      .eq("athlete_id", athleteId)
+      .eq("status", "completed")
+      .not("rpe", "is", null)
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (exec?.rpe != null) {
+      setLastRpe(Number(exec.rpe));
+      return;
+    }
+
+    // Fallback legado
     const { data } = await supabase
       .from("workout_progress")
       .select("rpe")
@@ -63,32 +82,37 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
       .order("completed_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (data?.rpe) setLastRpe(data.rpe as number);
+    if (data?.rpe != null) setLastRpe(Number(data.rpe));
   };
 
   const handleSubmit = async () => {
+    if (!executionId) {
+      toast.error("Não foi possível identificar a sessão de treino. Tente novamente.");
+      return;
+    }
     setSaving(true);
     try {
-      const todayDate = new Date().toISOString().split("T")[0];
+      const cal = calculatedCalories;
 
-      // Check duplicate
-      const { data: existing } = await supabase
-        .from("workout_progress")
-        .select("id")
-        .eq("aluno_id", athleteId)
-        .eq("training_name", trainingName)
-        .eq("date", todayDate)
-        .maybeSingle();
+      // 1) Fonte de verdade: workout_executions
+      const { error: execError } = await supabase
+        .from("workout_executions")
+        .update({
+          rpe,
+          rating: rpe,
+          notes: notes || null,
+          duration_minutes: duration,
+        })
+        .eq("id", executionId);
 
-      if (existing) {
-        toast.info("Você já concluiu este treino hoje! 💪");
-        onClose();
+      if (execError) {
+        toast.error(`Não foi possível salvar seu treino: ${execError.message}`);
         return;
       }
 
-      const cal = calculatedCalories;
-
-      await supabase.from("workout_progress").insert({
+      // 2) Compatibilidade legada — nunca bloqueia
+      const todayDate = new Date().toISOString().split("T")[0];
+      const { error: legacyError } = await supabase.from("workout_progress").insert({
         aluno_id: athleteId,
         exercise_name: trainingName,
         training_name: trainingName,
@@ -100,24 +124,47 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
         sets: 0,
         reps: 0,
         date: todayDate,
-      } as any);
+      });
+      if (legacyError) console.warn("[PostWorkout] legacy workout_progress insert falhou:", legacyError.message);
 
-      // Award XP (base 100 + RPE bonus) via fn_award_xp
+      // 3) XP — não bloqueia o pós-treino
       const xp = 100 + (rpe > 7 ? 50 : rpe > 4 ? 25 : 0);
-      await supabase.rpc("fn_award_xp" as any, {
+      const { error: xpError } = await supabase.rpc("fn_award_xp", {
         p_athlete_id: athleteId,
         p_amount: xp,
         p_source: "workout_completed",
         p_metadata: { training_name: trainingName, rpe, duration_minutes: duration },
       });
+      if (xpError) console.warn("[PostWorkout] fn_award_xp falhou:", xpError.message);
 
       setXpGained(xp);
       setCaloriesBurned(cal);
       setStep("summary");
-    } catch {
+    } catch (e) {
       toast.error("Erro ao salvar progresso");
+      console.warn("[PostWorkout] erro inesperado:", e);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const shareText =
+    `Treino concluído: ${trainingName}\n` +
+    `RPE ${rpe}/10 · ${duration} min · ${caloriesBurned} kcal · +${xpGained} XP\n` +
+    `Rumo à próxima sessão! 💪 #9FIT`;
+
+  const handleShare = async () => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "Treino concluído · 9FIT", text: shareText });
+        toast.success("Resultado compartilhado!");
+        return;
+      }
+      await navigator.clipboard.writeText(shareText);
+      toast.success("Resumo copiado! Cole onde quiser compartilhar.");
+    } catch (e) {
+      const aborted = e instanceof DOMException && e.name === "AbortError";
+      if (!aborted) toast.error("Não foi possível compartilhar agora.");
     }
   };
 
@@ -130,7 +177,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
   const rpeInfo = RPE_LABELS[rpe];
 
   return (
-    <Dialog open={open} onOpenChange={() => { if (step === "summary") onClose(); }}>
+    <Dialog open={open} onOpenChange={() => { if (step !== "pse") onClose(); }}>
       <DialogContent className="max-w-md mx-auto bg-background border-border p-0 rounded-sm overflow-hidden">
         {step === "pse" ? (
           <div className="p-6 space-y-6">
@@ -210,7 +257,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
-        ) : (
+        ) : step === "summary" ? (
           /* Summary Step */
           <div className="p-6 space-y-6 text-center">
             <div>
@@ -252,9 +299,58 @@ export function PostWorkoutModal({ open, onClose, athleteId, trainingName }: Pos
               </div>
             )}
 
-            <Button onClick={onClose} className="w-full bg-primary text-primary-foreground font-bold py-6">
-              Fechar
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={() => setStep("share")}
+                className="w-full bg-primary text-primary-foreground font-bold py-6"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Compartilhar resultado
+              </Button>
+              <Button onClick={onClose} variant="ghost" className="w-full text-muted-foreground font-bold">
+                Agora não
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* Share Step */
+          <div className="p-6 space-y-6 text-center">
+            <div>
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Share2 className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-xl font-black uppercase tracking-tight text-foreground">Mostre seu resultado</h2>
+              <p className="text-xs text-muted-foreground mt-1">{trainingName}</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-sm p-4 grid grid-cols-2 gap-3 text-left">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">RPE</p>
+                <p className="text-lg font-black text-foreground">{rpe}/10</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">Duração</p>
+                <p className="text-lg font-black text-foreground">{duration} min</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">Calorias</p>
+                <p className="text-lg font-black text-foreground">{caloriesBurned} kcal</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">XP</p>
+                <p className="text-lg font-black text-foreground">+{xpGained}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button onClick={handleShare} className="w-full bg-primary text-primary-foreground font-bold py-6">
+                <Share2 className="w-4 h-4 mr-2" />
+                Compartilhar
+              </Button>
+              <Button onClick={onClose} variant="ghost" className="w-full text-muted-foreground font-bold">
+                Concluir
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>

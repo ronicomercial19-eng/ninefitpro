@@ -770,7 +770,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       </div>
 
       <PostWorkoutModal open={showPSE} onClose={() => { setShowPSE(false); onFinish(); }}
-        athleteId={athleteId} trainingName={liveTraining.training_name} />
+        athleteId={athleteId} executionId={executionId} trainingName={liveTraining.training_name} />
     </div>
   );
 }
