@@ -76,7 +76,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   const [embedded, setEmbedded] = useState(false);
   const [playerLoaded, setPlayerLoaded] = useState(false);
 
-  const p = assignment.payload || {};
+  const p = useMemo(() => assignment.payload ?? {}, [assignment.payload]);
   const url = assignment.access_url || assignment.player_url || assignment.download_url || p.episodeUrl || p.playerUrl || null;
   const playerUrl = assignment.player_url || p.playerUrl || url;
   const downloadUrl = assignment.download_url || p.downloadUrl || p.pdfUrl || null;
@@ -112,7 +112,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
       }
       setLoaded(true);
     })();
-  }, [assignment.id]);
+  }, [assignment.id, assignment.access_url, assignment.player_url, assignment.download_url, assignment.content_type]);
 
   const canComplete = isInfoproduto
     ? (playerUrl ? embedded && playerLoaded : !!htmlContent)
