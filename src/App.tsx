@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
 import AgendaPage from "./pages/AgendaPage";
 import AITrainingPage from "./pages/AITrainingPage";
 import AIChatPage from "./pages/AIChatPage";
