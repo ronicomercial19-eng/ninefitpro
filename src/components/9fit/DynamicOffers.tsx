@@ -26,7 +26,7 @@ export function DynamicOffers({ category, max = 3, compact = false }: { category
       .order("priority", { ascending: false })
       .limit(max);
     if (category) q = q.eq("category", category);
-    q.then(({ data }) => setOffers((data ?? []) as any));
+    q.then(({ data }) => setOffers(data ?? []));
   }, [category, max]);
 
   if (!offers.length) return null;
@@ -70,3 +70,4 @@ export function DynamicOffers({ category, max = 3, compact = false }: { category
     </section>
   );
 }
+
