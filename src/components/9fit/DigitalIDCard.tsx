@@ -21,16 +21,19 @@ interface Props {
  * Redesign Nine Pro v2 (21/09): card de identidade simplificado — 1 barra de
  * XP só como decisão principal; Sync e Streak viram texto de apoio numa
  * linha, não 3 caixas de "Stat" competindo em peso visual com o nível.
- * "Completar perfil" já vem embutido no próprio card (dashed button) quando
- * faltam dados físicos — não é um botão solto em outro lugar da tela.
- * Paleta contida a preto/laranja (holográfico do fundo trocado de
- * laranja+roxo pra laranja+âmbar).
+ * "Completar perfil" é o CTA embutido no próprio card quando faltam dados
+ * físicos (não é mais um botão duplicado solto em Profile.tsx) — abre o
+ * fluxo completo de 5 etapas (com a recompensa de streak) na 1ª vez; o lápis
+ * no topo do card abre só a etapa 1 (editOnly) pra ajustes pontuais depois.
+ * Paleta contida a preto/laranja (holográfico trocado de laranja+roxo pra
+ * laranja+âmbar).
  */
 export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, totalXP, streak, avatarUrl, age, heightCm, weightKg }: Props) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
   const levelProgress = (totalXP % 1000) / 10;
   const [showShare, setShowShare] = useState(false);
-  const [adjusting, setAdjusting] = useState(false);
+  const [adjusting, setAdjusting] = useState(false); // lápis — só etapa 1 (editOnly)
+  const [completing, setCompleting] = useState(false); // CTA embutido — fluxo completo de 5 etapas
   const hasBioData = Boolean(age || heightCm || weightKg);
 
   return (
@@ -85,7 +88,7 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
             </div>
           </div>
 
-          {/* Dados físicos (da etapa 1 do Completar Perfil) — ou CTA embutido pra completar */}
+          {/* Dados físicos (da etapa 1 do Completar Perfil) — ou CTA embutido pro fluxo completo */}
           {hasBioData ? (
             <div className="grid grid-cols-3 gap-2">
               <BioChip label="Idade" value={age ? `${age}a` : '—'} />
@@ -94,10 +97,10 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
             </div>
           ) : (
             <button
-              onClick={() => setAdjusting(true)}
+              onClick={() => setCompleting(true)}
               className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.03] py-2.5 text-[11px] text-primary font-semibold"
             >
-              Completar perfil (idade/altura/peso)
+              Completar perfil (5 etapas)
             </button>
           )}
 
@@ -153,8 +156,10 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
         )}
       </AnimatePresence>
 
-      {/* Ajustar dados: reabre só a etapa 1 do wizard, fecha ao salvar, sem repassar pelas etapas de ativação */}
+      {/* Lápis: reabre só a etapa 1 do wizard, fecha ao salvar */}
       <CompleteProfileFlow open={adjusting} onClose={() => setAdjusting(false)} editOnly />
+      {/* CTA embutido (sem dados ainda): fluxo completo de 5 etapas, com recompensa de streak */}
+      <CompleteProfileFlow open={completing} onClose={() => setCompleting(false)} />
     </>
   );
 }
