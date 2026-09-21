@@ -50,6 +50,7 @@ Clone do `main` em 21/09/2026:
 - `NineFitTopBar.tsx`: passou em ESLint e TypeScript após estabilizar o callback de notificações.
 - `QuickCheckIn.tsx`: passou em ESLint e TypeScript após tipar queries, RPC e callback de carregamento.
 - `MetasSection.tsx`: passou em ESLint e TypeScript após tipar queries de metas e estabilizar o carregamento.
+- `WeeklyRecapPrompt.tsx`: passou em ESLint e TypeScript após tipar as consultas do resumo semanal.
 
 ## Lint global
 
