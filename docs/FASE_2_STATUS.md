@@ -43,10 +43,11 @@ Clone do `main` em 21/09/2026:
 - `MissionCompleteOverlay.tsx`: passou em ESLint e TypeScript após tipar o evento de XP.
 - `QuickMoodInput.tsx`: passou em ESLint e TypeScript após tipar o registro de humor.
 - `HistoricoCompletoModal.tsx`: passou em ESLint e TypeScript após tipar o retorno da timeline.
+- `NutritionLogForm.tsx`: passou em ESLint e TypeScript após tipar a resposta do progress-sync.
 
 ## Lint global
 
-O lint global permanece pendente por débito legado. A última medição registrada foi de 774 problemas: 730 erros e 44 warnings. Os lotes tipados do SDK HealthFlix, paywall, protocolo diário, ofertas, ecossistema, overlay, humor e histórico reduziram 39 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
+O lint global permanece pendente por débito legado. A última medição registrada foi de 772 problemas: 728 erros e 44 warnings. Os lotes tipados do SDK HealthFlix, paywall, protocolo diário, ofertas, ecossistema, overlay, humor, histórico e nutrição reduziram 41 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
 
 ## Auditoria Supabase
 
