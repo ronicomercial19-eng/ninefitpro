@@ -28,3 +28,7 @@ Esses itens não foram mascarados como concluídos. A próxima etapa deve tratar
 
 
 Também foram restringidas funções internas de trigger, auditoria e notificações que não são chamadas pelo cliente.
+
+## Regressão de permissões
+
+Verificação pós-hardening confirmou `EXECUTE` para `authenticated` nos RPCs críticos de início/conclusão de treino, salvamento de séries, semana, hub, progresso RON, timeline, painel profissional, ativação e prescrição. Nenhum desses fluxos foi bloqueado.
