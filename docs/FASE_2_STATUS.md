@@ -7,7 +7,7 @@ Status geral: EM EXECUÇÃO
 | Subfase | Escopo | Estado | Evidência atual |
 |---|---|---|---|
 | 2.1 | Build e ambiente | Validado localmente | `vite build` passou no `main` atual; warnings de bundle documentados |
-| 2.2 | TypeScript e lint | TypeScript validado; lint pendente | `tsc --noEmit` passou; lint segue informativo por débito legado |
+| 2.2 | TypeScript e lint | TypeScript validado; lint pendente | `tsc --noEmit` passou; lint segue informativo por débito legado; execução local: 845 problemas (797 erros, 48 warnings) |
 | 2.3 | Rotas | Em auditoria | rotas centralizadas em src/App.tsx |
 | 2.4 | Loading, erro e vazio | Parcial validado | AppErrorBoundary; Progresso possui erro e retry; demais telas em auditoria |
 | 2.5 | Persistência e recovery | Parcial | execução de treino reidratada após reload |
@@ -26,3 +26,4 @@ Status geral: EM EXECUÇÃO
 
 A Fase 2 só será marcada como concluída quando build, typecheck, lint, testes, auditoria de dados, segurança mínima e roteiro integrado estiverem documentados com evidência verificável.
 \n## Evidência local mais recente\n\nClone do `main` em 21/09/2026: `tsc --noEmit` passou, `scripts/qa-fase2.mjs` passou (6/6), `vite build` passou. O build emitiu apenas warnings de chunk > 1 MB e importação mista de `html2canvas`.\n
+## Lint — evidência local\n\nExecução de `eslint .` no clone do `main`: 845 problemas, sendo 797 erros e 48 warnings. O principal grupo é `@typescript-eslint/no-explicit-any`; há também warnings de dependências de hooks.\n
