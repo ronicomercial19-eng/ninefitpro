@@ -90,7 +90,7 @@ export interface HealthFlixEvent {
   fitpro_professor_id?: string;
   entity_type: string;
   entity_id: string;
-  payload?: Record<string, any>;
+  payload?: Record<string, unknown>;
 }
 
 export class HealthFlixError extends Error {
@@ -228,16 +228,16 @@ export class HealthFlixClient {
   /**
    * Healthcheck
    */
-  async health() {
+  async health(): Promise<unknown> {
     return this.fetch("GET", "/fitpro-health", null, false);
   }
 
-  private async requestWithRetry(
+  private async requestWithRetry<T>(
     method: "GET" | "POST",
     path: string,
-    body: any,
-    fallbackError: { code: string; userMessage: string }
-  ): Promise<any> {
+    body: Record<string, unknown> | null,
+    fallbackError: { code: HealthFlixError["code"]; userMessage: string }
+  ): Promise<T> {
     let lastError: HealthFlixError | null = null;
 
     for (let attempt = 0; attempt < this.retryConfig.maxAttempts; attempt++) {
@@ -266,19 +266,19 @@ export class HealthFlixClient {
     throw (
       lastError ||
       new HealthFlixError(
-        fallbackError.code as any,
+        fallbackError.code,
         fallbackError.userMessage,
         "Max retries exceeded"
       )
     );
   }
 
-  private async fetch(
+  private async fetch<T>(
     method: "GET" | "POST",
     path: string,
-    body: any,
+    body: Record<string, unknown> | null,
     requireAuth: boolean
-  ): Promise<any> {
+  ): Promise<T> {
     const url = this.baseUrl + path;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -297,8 +297,12 @@ export class HealthFlixClient {
       });
 
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        const errorMsg = errorBody.error || response.statusText;
+        const errorBody: unknown = await response.json().catch(() => ({}));
+        const errorMsg =
+          typeof errorBody === "object" && errorBody !== null &&
+          "error" in errorBody && typeof errorBody.error === "string"
+            ? errorBody.error
+            : response.statusText;
 
         if (response.status === 401) {
           throw new HealthFlixError(
@@ -340,3 +344,4 @@ export class HealthFlixClient {
     }
   }
 }
+
