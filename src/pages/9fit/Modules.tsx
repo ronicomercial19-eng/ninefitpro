@@ -18,7 +18,8 @@ export default function NineFitModules() {
       </div>
     </header>
     <main className="mx-5 mt-5">
-      <EcosystemGrid showHeader={false} showAll />
+      {/* variant="dense" (21/09): listagem compacta em vez dos cards grandes de imagem - feedback do Rony: grid expandido estava pesado/cansativo */}
+      <EcosystemGrid showHeader={false} showAll variant="dense" />
     </main>
     <BottomNavigation />
   </div>;
