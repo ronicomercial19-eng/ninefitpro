@@ -32,3 +32,4 @@ A Fase 2 só será marcada como concluída quando build, typecheck, lint, testes
 ## Fluxo crítico — lint fechado\n\nApós tipagem dos contratos e correção das dependências de hooks, `WorkoutExecution.tsx` passou em TypeScript e ESLint sem erros ou warnings no clone do `main`.\n
 ## Lint global — atualização\n\nApós limpar o fluxo crítico, o lint global passou de 845 para 816 problemas: 772 erros e 44 warnings. A redução foi de 29 problemas sem alteração do comportamento do treino.\n
 ## Lint global — pós-Tailwind\n\nApós tipar o `tailwind.config.ts`, o lint global ficou em 815 problemas: 771 erros e 44 warnings.\n
+## Lint global — pós-AchievementShareSheet\n\nApós tipar a detecção da Web Share API, o lint global ficou em 814 problemas: 770 erros e 44 warnings.\n
