@@ -1,0 +1,14 @@
+-- Remove herança de EXECUTE via PUBLIC; mantém somente authenticated.
+REVOKE EXECUTE ON FUNCTION public._selecionar_exercicios_bloco(uuid, text[], integer, integer) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.calcular_sync_score_real(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.fn_treino_rapido(uuid, integer, text, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.fn_treino_rapido(uuid, text, integer, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.fn_resolver_aluno_id() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.fn_ajustar_treino_real(uuid, uuid) FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public._selecionar_exercicios_bloco(uuid, text[], integer, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.calcular_sync_score_real(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_treino_rapido(uuid, integer, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_treino_rapido(uuid, text, integer, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_resolver_aluno_id() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_ajustar_treino_real(uuid, uuid) TO authenticated;
