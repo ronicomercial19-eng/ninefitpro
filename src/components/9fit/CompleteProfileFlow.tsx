@@ -20,7 +20,7 @@ import { useActivationProgress } from "@/hooks/useActivationProgress";
  * forçar o aluno a passar pelas etapas de ativação de novo.
  */
 interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
-interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }
+interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }\ninterface LegacyAthleteRow { id: string; full_name?: string | null; height_cm?: number | null; weight_kg?: number | null; age?: number | null; }
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
@@ -40,12 +40,12 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
     (async () => {
       const { data: ath } = await supabase.from("athletes").select("*").eq("user_id", user.id).maybeSingle();
       if (ath) {
-        setAthleteId((ath as any).id);
+        setAthleteId((ath as unknown as LegacyAthleteRow).id);
         setProfile({
-          full_name: (ath as any).full_name || "",
-          height_cm: (ath as any).height_cm || "",
-          weight_kg: (ath as any).weight_kg || "",
-          age: (ath as any).age || "",
+          full_name: (ath as unknown as LegacyAthleteRow).full_name || "",
+          height_cm: (ath as unknown as LegacyAthleteRow).height_cm || "",
+          weight_kg: (ath as unknown as LegacyAthleteRow).weight_kg || "",
+          age: (ath as unknown as LegacyAthleteRow).age || "",
         });
       }
       if (editOnly) return; // não precisa de streak/workouts pra só editar dados
