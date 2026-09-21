@@ -87,3 +87,10 @@ BEGIN
     EXECUTE format('REVOKE ALL ON FUNCTION %I.%I(%s) FROM PUBLIC, anon, authenticated', r.nspname, r.proname, r.args);
   END LOOP;
 END $$;
+
+REVOKE ALL ON FUNCTION public.get_aluno_context_smarttreino(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_athlete_by_email(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_forca_progressao(uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_healthflix_feed(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.resolve_aluno_by_external(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.tem_periodizacao_ativa(uuid) FROM PUBLIC, anon, authenticated;
