@@ -49,6 +49,7 @@ Clone do `main` em 21/09/2026:
 - `NineFitLayout.tsx`: passou em ESLint e TypeScript após tipar a consulta do activation gate.
 - `NineFitTopBar.tsx`: passou em ESLint e TypeScript após estabilizar o callback de notificações.
 - `QuickCheckIn.tsx`: passou em ESLint e TypeScript após tipar queries, RPC e callback de carregamento.
+- `MetasSection.tsx`: passou em ESLint e TypeScript após tipar queries de metas e estabilizar o carregamento.
 
 ## Lint global
 
