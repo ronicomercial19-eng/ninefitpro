@@ -123,7 +123,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
     }
   };
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     if (charRef.current) {
       charRef.current.removeEventListener("characteristicvaluechanged", handleHeartRate);
     }
@@ -144,7 +144,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
 
     setState("disconnected");
     setBpm(0);
-  };
+  }, [handleHeartRate, onSessionData]);
 
   useEffect(() => {
     if (state === "connected" && isWorkoutActive) setState("active");
@@ -152,7 +152,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
 
   useEffect(() => {
     return () => { disconnect(); };
-  }, []);
+  }, [disconnect]);
 
   if (state === "disconnected") {
     return (
