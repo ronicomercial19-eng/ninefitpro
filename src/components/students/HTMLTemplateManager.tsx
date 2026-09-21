@@ -91,7 +91,9 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
       if (error) throw error;
       toast.success('Template atualizado!');
       setViewMode(null);
-    } catch (e: any) { toast.error('Erro: ' + e.message); }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido';
+      toast.error('Erro: ' + message); }
     finally { setSaving(false); }
   };
 
@@ -105,7 +107,7 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
         training_type: 'html',
         html_file_url: assignTemplate.html_file_url,
         html_file_path: assignTemplate.html_file_path,
-        training_data: { source: 'template_copy', original_id: assignTemplate.id } as any,
+        training_data: { source: 'template_copy', original_id: assignTemplate.id },
         start_date: new Date().toISOString().split('T')[0],
         is_active: true,
         created_by: (await supabase.auth.getUser()).data.user?.id || '',
@@ -115,7 +117,9 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
       setShowAssign(false);
       setAssignAthleteId('');
       fetchData();
-    } catch (e: any) { toast.error('Erro: ' + e.message); }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido';
+      toast.error('Erro: ' + message); }
     finally { setSaving(false); }
   };
 
