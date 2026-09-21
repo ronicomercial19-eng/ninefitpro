@@ -1,0 +1,6 @@
+{
+  "name": "9FIT PRO",
+  "description": "Plataforma para Personal Trainers com gestão de alunos, treinos com IA, avaliações físicas e gamificação.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

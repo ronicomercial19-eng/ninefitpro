@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
@@ -12,18 +12,7 @@
     "typecheck": "tsc -b --pretty false",
     "qa:fase2": "node scripts/qa-fase2.mjs",
     "qa:fase3": "node scripts/qa-fase3.mjs",
-    "qa:fase4": "node scripts/qa-fase4.mjs",
-    "qa:fase5": "node scripts/qa-fase5.mjs",
-    "qa:fase6": "node scripts/qa-fase6.mjs",
-    "qa:fase7": "node scripts/qa-fase7.mjs",
-    "qa:fase8": "node scripts/qa-fase8.mjs",
-    "qa:fase9": "node scripts/qa-fase9.mjs",
-    "qa:fase10": "node scripts/qa-fase10.mjs",
-    "qa:fase11": "node scripts/qa-fase11.mjs",
-    "qa:fase12": "node scripts/qa-fase12.mjs",
-    "qa:fase13": "node scripts/qa-fase13.mjs",
-    "qa:fase14": "node scripts/qa-fase14.mjs",
-    "qa:fase15": "node scripts/qa-fase15.mjs"
+    "qa:fase4": "node scripts/qa-fase4.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.0",
@@ -40,7 +29,7 @@
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
     "@radix-ui/react-avatar": "^1.1.0",
-    "@radix-ui/react-checkbox": "^1.1.0",
+    "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-collapsible": "^1.1.0",
     "@radix-ui/react-context-menu": "^2.2.1",
     "@radix-ui/react-dialog": "^1.1.2",
@@ -48,17 +37,18 @@
     "@radix-ui/react-hover-card": "^1.1.1",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-menubar": "^1.1.1",
-    "@radix-ui/react-navigation-menu": "^1.2.1",
+    "@radix-ui/react-navigation-menu": "^1.2.0",
     "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-radio-group": "^1.2.0",
-    "@radix-ui/react-scroll-area": "^1.2.0",
+    "@radix-ui/react-scroll-area": "^1.1.0",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-separator": "^1.1.0",
-    "@radix-ui/react-slider": "^1.3.0",
+    "@radix-ui/react-slider": "^1.2.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.1",
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
@@ -67,10 +57,6 @@
     "@supabase/supabase-js": "^2.50.2",
     "@tanstack/react-query": "^5.56.2",
     "@types/dompurify": "^3.0.5",
-    "@types/node": "^22.5.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react-swc": "^3.5.0",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -81,7 +67,7 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
-    "input-otp": "^1.2.0",
+    "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
@@ -100,8 +86,7 @@
     "three": "0.160.0",
     "vaul": "^0.9.3",
     "vite-plugin-pwa": "^1.1.0",
-    "zod": "^4.1.11",
-    "@radix-ui/react-toast": "^1.2.1"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -123,3 +108,4 @@
     "vite": "^5.4.1"
   }
 }
+

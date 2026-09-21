@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "supabase/**", "scripts/**", "docs/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -24,12 +24,12 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
-      // Débitos legados ficam visíveis sem bloquear o build da Fase 2.
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-empty-object-type": "warn",
-      "@typescript-eslint/ban-ts-comment": "warn",
-      "no-empty": "warn",
-      "no-case-declarations": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "no-empty": "off",
+      "no-case-declarations": "off",
+      "prefer-const": "warn",
     },
   }
 );

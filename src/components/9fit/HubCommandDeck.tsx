@@ -15,54 +15,87 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
   const navigate = useNavigate();
   const hasWorkout = weekly.treinos > 0;
   const scoreReady = typeof syncScore === "number" && scoreStatus === "available";
-  const headline = hasWorkout ? "Seu ritmo já está em movimento." : hasPlan ? "Seu próximo passo está pronto." : "Vamos calibrar seu primeiro passo.";
+  const headline = hasWorkout ? "Seu ritmo está em movimento." : hasPlan ? "Seu próximo passo está pronto." : "Vamos calibrar seu primeiro passo.";
   const primaryLabel = hasWorkout ? "Abrir treino de hoje" : hasPlan ? "Abrir meu plano" : "Começar ativação";
   const primaryRoute = hasWorkout ? "/9fit/train" : hasPlan ? "/9fit/planejamento" : "/9fit/ativacao";
   const consistency = Math.min(100, Math.round((weekly.treinos / 5) * 100));
 
   return (
-    <section className="px-4 mt-5" aria-label="Comando do dia">
-      <div className="relative overflow-hidden border border-primary/30 bg-card/70 p-4 sm:p-5 nine-pro-clip">
-        <div className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(hsl(var(--primary) / .08) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / .08) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
-        <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
+    <section className="w-full" aria-label="Comando do dia">
+      <div className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0c0d10] p-3.5 sm:p-4.5 shadow-xl transition-all">
+        {/* Hairline subtle top light */}
+        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
+
         <div className="relative">
+          {/* Header do Card */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center border border-primary/40 bg-primary/10 nine-pro-clip">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-primary/40 bg-primary/10">
+                <Sparkles className="h-3 w-3 text-primary" />
               </span>
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">Comando do dia</p>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-primary">
+                Comando do Dia
+              </span>
             </div>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-              {scoreReady ? `sync ${Math.round(syncScore!)}` : "calibrando"}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${scoreReady ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+              <span className="font-mono text-[9.5px] uppercase tracking-wider text-neutral-400 font-medium">
+                {scoreReady ? `SYNC ${Math.round(syncScore!)}` : "CALIBRANDO"}
+              </span>
+            </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-[1fr_112px] items-center gap-3">
+          {/* Grid Principal: Chamada + Dial Compacto */}
+          <div className="mt-2.5 grid grid-cols-[1fr_96px] sm:grid-cols-[1fr_104px] items-center gap-3">
             <div>
-              <h2 className="text-lg font-black leading-tight text-foreground">{name}, {headline}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Uma ação agora muda a leitura do seu próximo ciclo.</p>
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-white leading-snug font-display">
+                {name}, {headline}
+              </h2>
+              <p className="mt-0.5 text-[11.5px] text-neutral-400 leading-normal">
+                Uma ação agora recalibra a leitura do seu próximo ciclo.
+              </p>
             </div>
             <SyncDial score={scoreReady ? Math.round(syncScore!) : null} />
           </div>
 
-          <button type="button" onClick={() => navigate(primaryRoute)} className="mt-4 flex w-full items-center justify-between gap-3 bg-primary px-4 py-3 text-left font-bold text-primary-foreground transition-opacity hover:opacity-90 nine-pro-clip">
-            <span className="flex items-center gap-2"><Dumbbell className="h-4 w-4" /> {primaryLabel}</span>
-            <ArrowUpRight className="h-4 w-4" />
+          {/* Botão de Ação Primária */}
+          <button
+            type="button"
+            onClick={() => navigate(primaryRoute)}
+            className="mt-3 flex w-full items-center justify-between gap-2.5 rounded-lg bg-primary hover:bg-primary/90 px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-primary-foreground transition-all active:scale-[0.99] shadow-sm"
+          >
+            <span className="flex items-center gap-2">
+              <Dumbbell className="h-3.5 w-3.5" />
+              <span>{primaryLabel}</span>
+            </span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          {/* Métricas Semanais — Números Elegantes & Labels Nítidos */}
+          <div className="mt-2.5 grid grid-cols-3 gap-2">
             <CommandMetric label="Treinos" value={weekly.treinos} suffix="sem" progress={consistency} />
-            <CommandMetric label="Minutos" value={weekly.minutos} suffix="sem" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
+            <CommandMetric label="Minutos" value={weekly.minutos} suffix="min" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
             <CommandMetric label="Nutrição" value={weekly.nutri} suffix="reg" progress={Math.min(100, weekly.nutri * 20)} />
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => navigate("/9fit/ron?context=hub_command")} className="flex items-center gap-2 border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-[11px] font-semibold text-foreground hover:border-primary/40 nine-pro-clip">
-              <Brain className="h-3.5 w-3.5 text-primary" /> Perguntar ao RON
+          {/* Ações Secundárias Compactas */}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => navigate("/9fit/ron?context=hub_command")}
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
+            >
+              <Brain className="h-3.5 w-3.5 text-primary" />
+              <span>Perguntar ao RON</span>
             </button>
-            <button type="button" onClick={() => navigate("/9fit/ativacao")} className="flex items-center gap-2 border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-[11px] font-semibold text-foreground hover:border-primary/40 nine-pro-clip">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Registrar sinal
+            <button
+              type="button"
+              onClick={() => navigate("/9fit/ativacao")}
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              <span>Registrar sinal</span>
             </button>
           </div>
         </div>
@@ -73,26 +106,56 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
 
 function SyncDial({ score }: { score: number | null }) {
   const value = score ?? 0;
-  const circumference = 2 * Math.PI * 42;
-  return <div className="relative mx-auto h-28 w-28">
-    <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
-      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" className="text-white/10" />
-      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary transition-all duration-700" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - value / 100)} />
-    </svg>
-    <div className="absolute inset-0 grid place-content-center text-center">
-      <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Sync</span>
-      <strong className="text-2xl font-black text-foreground">{score === null ? "—" : score}</strong>
-      <span className="font-mono text-[8px] text-muted-foreground">/100</span>
+  const circumference = 2 * Math.PI * 36;
+  return (
+    <div className="relative mx-auto h-24 w-24">
+      <svg viewBox="0 0 88 88" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="44" cy="44" r="36" fill="none" stroke="currentColor" strokeWidth="4" className="text-white/10" />
+        <circle
+          cx="44"
+          cy="44"
+          r="36"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          className="text-primary transition-all duration-700"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - value / 100)}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-neutral-400 font-semibold">SYNC</span>
+        <span className="text-xl sm:text-2xl font-bold tracking-tight text-white tabular-nums font-mono leading-none my-0.5">
+          {score === null ? "—" : score}
+        </span>
+        <span className="font-mono text-[8.5px] text-neutral-500 tracking-wider font-medium">/ 100</span>
+      </div>
     </div>
-  </div>;
+  );
 }
 
 function CommandMetric({ label, value, suffix, progress }: { label: string; value: number; suffix: string; progress: number }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="border border-white/10 bg-black/20 p-2.5">
-      <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-black text-foreground">{value}<span className="ml-1 text-[9px] font-normal text-muted-foreground">{suffix}</span></p>
-      <div className="mt-1 h-1 overflow-hidden bg-white/10"><div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} /></div>
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2 sm:p-2.5 transition-all"
+    >
+      <p className="text-[9.5px] font-mono font-semibold uppercase tracking-[0.16em] text-neutral-400">
+        {label}
+      </p>
+      <div className="mt-1 flex items-baseline gap-1">
+        <span className="text-base sm:text-lg font-bold tracking-tight text-white tabular-nums font-mono leading-none">
+          {value}
+        </span>
+        <span className="text-[9.5px] font-mono font-medium text-neutral-500 lowercase">
+          {suffix}
+        </span>
+      </div>
+      <div className="mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+      </div>
     </motion.div>
   );
 }
