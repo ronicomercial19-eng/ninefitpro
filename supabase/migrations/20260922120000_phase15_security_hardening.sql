@@ -17,3 +17,20 @@ REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.is_admin() FROM anon, authenticated;
 
 ALTER TABLE public._goal_defaults ENABLE ROW LEVEL SECURITY;
+
+DO $$
+DECLARE
+  t text;
+  tables text[] := ARRAY[
+    '_goal_defaults','_temp_html_extraction','fitpro_healthflix_assignments',
+    'fitpro_healthflix_progress','fitpro_smartperiodizer_events','integration_secrets',
+    'training_adjustment_deliveries','training_adjustment_feedback',
+    'training_adjustment_recommendations','training_automation_items',
+    'training_automation_runs','training_feedback_signals'
+  ];
+BEGIN
+  FOREACH t IN ARRAY tables LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "deny direct client access" ON public.%I', t);
+    EXECUTE format('CREATE POLICY "deny direct client access" ON public.%I FOR ALL TO anon, authenticated USING (false) WITH CHECK (false)', t);
+  END LOOP;
+END $$;
