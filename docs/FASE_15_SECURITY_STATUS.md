@@ -12,7 +12,7 @@
 
 ## Advisor de segurança restante
 
-- 156 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
+- 117 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
 - 1 função de integração (`validate_partner_key`) ainda executável por `anon`.
 - Extensões `vector` e `btree_gin` no schema `public`.
 - Políticas que permitem acesso anônimo em tabelas legadas/compatibilidade.
@@ -25,3 +25,6 @@
 - 144 índices não utilizados e 1 tabela sem chave primária.
 
 Esses itens não foram mascarados como concluídos. A próxima etapa deve tratar RPCs por grupo de uso, validar os fluxos após cada revogação e só então atualizar o status final da Fase 15.
+
+
+Também foram restringidas funções internas de trigger, auditoria e notificações que não são chamadas pelo cliente.
