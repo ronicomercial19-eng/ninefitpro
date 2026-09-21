@@ -261,7 +261,7 @@ const App = () => (
               <PrivateRoute><AppLayout><TrainingAdjustmentsPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/nexus" element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={["admin", "super_admin"]}>
                 <AppLayout>
                   <NexusPage />
                 </AppLayout>
@@ -329,13 +329,13 @@ const App = () => (
             <Route path="/9fit/native-system" element={<NineFitNativeSystem />} />
 
             <Route path="/app/monetizacao" element={
-              <PrivateRoute><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
+              <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/skills" element={
-              <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
+              <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/modelos-ninefit" element={
-              <PrivateRoute><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>
+              <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>
             } />
 
             <Route path="*" element={<NotFound />} />
