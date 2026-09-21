@@ -15,6 +15,7 @@ import { CollapsibleRow } from './CollapsibleRow';
 import type { HubScoreStatus } from '@/hooks/useAthleteScores';
 
 interface RankRow { name: string; pts: number; self?: boolean }
+interface LeaderboardRow { name: string | null; total_xp: number | null }
 
 interface OSDashboardProps {
   name: string;
@@ -54,13 +55,13 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     // de verdade pra ninguém. fn_get_leaderboard() é SECURITY DEFINER,
     // deliberadamente pública dentro do app (só nome + xp, nada sensível).
     (async () => {
-      const { data, error } = await supabase.rpc('fn_get_leaderboard' as any, { p_limit: 20 });
+      const { data, error } = await supabase.rpc('fn_get_leaderboard', { p_limit: 20 });
       if (error) {
         console.error('[OSDashboard] fn_get_leaderboard falhou:', error);
         setRanking([{ name, pts: totalXp, self: true }]);
         return;
       }
-      const rows = (data || []) as any[];
+      const rows = (data || []) as LeaderboardRow[];
       const top: RankRow[] = rows.slice(0, 3).map((r) => ({
         name: (r.name || '—').split(' ')[0],
         pts: Number(r.total_xp || 0),
@@ -204,3 +205,4 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     </div>
   );
 }
+
