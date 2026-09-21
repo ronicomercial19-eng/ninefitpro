@@ -38,3 +38,16 @@ END $$;
 REVOKE ALL ON FUNCTION public._selecionar_exercicios_bloco(uuid, text[], integer, integer) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.audit_alunos_changes() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.deprecated_prescrever_treino_rapido(uuid, text, integer, text) FROM PUBLIC, anon, authenticated;
+
+REVOKE ALL ON FUNCTION public.auto_link_annual_plan() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.auto_link_athlete_on_signup() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.calcular_periodizacao_correspondencia(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.calcular_sync_score_real(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.check_and_create_pr_from_assessment(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.ensure_current_user_profile() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.ensure_plano_treino_gerado(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gerar_blocos_protocolo_dia(uuid, date) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gerar_modelo_treino(uuid, text, text, jsonb) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gerar_plano_contingencia(uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.sync_fitpro_snapshot() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.sync_subapp_from_plan() FROM PUBLIC, anon, authenticated;
