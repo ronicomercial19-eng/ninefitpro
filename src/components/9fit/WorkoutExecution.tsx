@@ -13,6 +13,7 @@ import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { toast } from "sonner";
+import type { WorkoutExecutionStatus } from "@/types/training";
 
 
 interface WorkoutExercise {
@@ -260,12 +261,14 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [persisting, setPersisting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [executionAttempt, setExecutionAttempt] = useState(0);
+  const [executionStatus, setExecutionStatus] = useState<WorkoutExecutionStatus>('started');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (training.execution_id) {
         setExecutionId(training.execution_id);
+        setExecutionStatus('in_progress');
         const { data: savedSets, error: setsError } = await supabase.from("workout_exercise_sets")
           .select("exercise_order, set_number, completed, actual_weight")
           .eq("execution_id", training.execution_id);
@@ -316,6 +319,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
       const id = String(data);
       setExecutionId(id);
+      setExecutionStatus('in_progress');
       const { data: savedSets, error: setsError } = await supabase
         .from("workout_exercise_sets")
         .select("exercise_order, set_number, completed, actual_weight")
@@ -476,6 +480,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       }
 
       if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+      setExecutionStatus('completed');
       await mirrorEvent("workout_completed", {
         execution_id: executionId,
         training_id: training.id,
@@ -795,7 +800,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
         {/* Finish */}
         <div className="px-4 py-3">
-          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting}
+          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting || executionStatus === 'completed'}
             className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">
             {persisting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
             {persisting ? "Salvando..." : "Concluir Treino"}
@@ -808,3 +813,4 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     </div>
   );
 }
+
