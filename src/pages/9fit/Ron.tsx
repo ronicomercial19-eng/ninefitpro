@@ -213,7 +213,23 @@ export default function NineFitRon() {
     }
 
     if (!channelReady) {
-      setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: channelConnecting ? "Ainda estou conectando ao canal 9ZAP. Tente novamente em alguns segundos." : "O canal 9ZAP está indisponível. Verifique a integração e toque em Reconectar." , action: { label: "Reconectar 9ZAP", route: "/9fit/ron" } }));
+      // Fallback direto para o motor de IA do FitPro quando o 9ZAP estiver
+      // indisponível. Mantém o chat funcional sem expor secrets no browser.
+      const { data: fallback, error: fallbackError } = await supabase.functions.invoke("ai-coach", {
+        body: {
+          mode: "chat",
+          message: userMsg,
+          history: messages.filter((message) => message.role !== "system").slice(-20).map((message) => ({ role: message.role, content: message.content })),
+          data: athleteId ? { athleteId } : undefined,
+        },
+      });
+      const fallbackContent = (fallback as any)?.data?.content;
+      if (!fallbackError && typeof fallbackContent === "string" && fallbackContent.trim()) {
+        setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: fallbackContent }));
+        await persist("assistant", fallbackContent);
+      } else {
+        setMessages((p) => p.slice(0, -1).concat({ role: "assistant", content: channelConnecting ? "Ainda estou conectando ao RON. Tente novamente em alguns segundos." : "O RON está temporariamente indisponível.", action: { label: "Tentar novamente", route: "/9fit/ron" } }));
+      }
       setSending(false);
       return;
     }
