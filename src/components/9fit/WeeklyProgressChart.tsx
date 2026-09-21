@@ -28,6 +28,12 @@ interface Metrics {
   hydrationAvg: number;
 }
 
+interface RegistryEvent {
+  event_type: string;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
   const { user } = useAuth();
   const [m, setM] = useState<Metrics>({
@@ -54,7 +60,7 @@ export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
       .eq("status", "completed")
       .gte("completed_at", weekStartStr)
       .lte("completed_at", weekEndStr);
-    (ex || []).forEach((d: any) => {
+    (ex || []).forEach((d) => {
       if (!d.completed_at) return;
       const key = d.completed_at.slice(0, 10);
       training[key] = (training[key] || 0) + 1;
@@ -66,7 +72,7 @@ export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
       .eq("athlete_id", athleteId)
       .gte("date", weekStartStr)
       .lte("date", weekEndStr);
-    (nut || []).forEach((d: any) => {
+    (nut || []).forEach((d) => {
       if (!d.date) return;
       const key = String(d.date).slice(0, 10);
       nutrition[key] = (nutrition[key] || 0) + 1;
@@ -76,12 +82,12 @@ export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
     let sleepAvg = 0, mobilityAvg = 0, hydrationAvg = 0;
     if (user?.id) {
       const { data: events } = await supabase
-        .from("master_registry" as any)
+        .from("master_registry")
         .select("event_type, payload, created_at")
         .eq("user_id", user.id)
         .gte("created_at", `${weekStartStr}T00:00:00Z`)
         .lte("created_at", `${weekEndStr}T23:59:59Z`);
-      const arr = (events as any[]) || [];
+      const arr = (events || []) as unknown as RegistryEvent[];
       const score = (type: string, field: string) => {
         const vals = arr.filter((e) => e.event_type === type).map((e) => Number(e.payload?.[field] ?? 0)).filter((n) => n > 0);
         if (!vals.length) return 0;
@@ -167,3 +173,4 @@ export function WeeklyProgressChart({ athleteId }: WeeklyProgressChartProps) {
     </div>
   );
 }
+
