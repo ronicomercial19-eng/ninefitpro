@@ -10,6 +10,13 @@ interface OverlayState {
   newLevel?: number;
 }
 
+interface XpAwardedDetail {
+  xp?: number;
+  action?: string;
+  leveledUp?: boolean;
+  newLevel?: number;
+}
+
 /**
  * Global overlay that listens to 9fit:xp_awarded / 9fit:level_up and shows
  * a premium mission-complete burst. Mounted once at the App root.
@@ -18,16 +25,17 @@ export function MissionCompleteOverlay() {
   const [s, setS] = useState<OverlayState>({ open: false, xp: 0 });
 
   useEffect(() => {
-    const onXp = (e: any) => {
-      const xp = e?.detail?.xp ?? 0;
+    const onXp = (event: Event) => {
+      const detail = (event as CustomEvent<XpAwardedDetail>).detail;
+      const xp = detail?.xp ?? 0;
       // Only show overlay for meaningful awards (>=50) to avoid noise
       if (xp >= 50) {
         setS({
           open: true,
           xp,
-          action: e?.detail?.action,
-          leveledUp: !!e?.detail?.leveledUp,
-          newLevel: e?.detail?.newLevel,
+          action: detail?.action,
+          leveledUp: !!detail?.leveledUp,
+          newLevel: detail?.newLevel,
         });
       }
     };
@@ -96,3 +104,4 @@ export function MissionCompleteOverlay() {
     </div>
   );
 }
+
