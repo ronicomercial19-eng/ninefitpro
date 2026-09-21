@@ -7,10 +7,10 @@ const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 interface WeeklyTrainingViewProps {
   athleteId: string;
-  onExecuteToday: (workout: any) => void;
+  onExecuteToday: (workout: DayPlan) => void;
 }
 
-type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; video_url?: string | null };
+type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; video_url?: string | null; gif_url?: string | null };
 type DayPlan = {
   id?: string;
   date: string;
@@ -18,6 +18,31 @@ type DayPlan = {
   status: "rest" | "planned" | "completed" | "in_progress";
   exercises: DayExercise[];
 };
+
+interface WeekPayload {
+  phase_status?: string;
+  match_percentage?: number;
+  week?: Array<{
+    id?: string;
+    daily_workout_id?: string;
+    workout_id?: string;
+    workout_date?: string;
+    date?: string;
+    day_name?: string;
+    day_label?: string;
+    status?: DayPlan["status"];
+    exercises?: Array<{
+      id?: string;
+      name?: string;
+      sets?: number | string;
+      reps_range?: string;
+      reps?: string;
+      rest_seconds?: number;
+      video_url?: string | null;
+      gif_url?: string | null;
+    }>;
+  }>;
+}
 
 /**
  * Bloco C — Treinos da Semana.
@@ -35,18 +60,18 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
     if (!athleteId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("fn_get_week_workouts" as any, { p_athlete_id: athleteId });
+      const { data, error } = await supabase.rpc("fn_get_week_workouts", { p_athlete_id: athleteId });
       if (error) throw error;
-      const payload: any = data || {};
+      const payload = (data || {}) as WeekPayload;
       setPhase(String(payload.phase_status || ""));
       setMatch(Number(payload.match_percentage || 0));
-      const week: any[] = payload.week || [];
-      setDays(week.map((d: any) => ({
+      const week = payload.week || [];
+      setDays(week.map((d) => ({
         id: d.id || d.daily_workout_id || d.workout_id,
         date: d.workout_date || d.date,
         day_label: d.day_name || d.day_label || DAY_LABELS[new Date(d.workout_date || d.date).getDay()],
         status: d.status || "planned",
-        exercises: (d.exercises || []).map((e: any) => ({
+        exercises: (d.exercises || []).map((e) => ({
           id: e.id,
           name: e.name,
           sets: e.sets,
@@ -175,3 +200,4 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
     </div>
   );
 }
+
