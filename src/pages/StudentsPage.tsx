@@ -55,11 +55,27 @@ export default function StudentsPage() {
         return;
       }
 
-      // Buscar da tabela athletes (onde os alunos são cadastrados)
+      // A view canônica resolve quais atletas pertencem ao profissional atual.
+      // Os detalhes continuam vindo de athletes para preservar o contrato visual.
+      const { data: relationshipRows, error: relationshipError } = await supabase
+        .from('vw_current_relationships')
+        .select('athlete_id')
+        .eq('relationship_role', 'professional');
+
+      if (relationshipError) throw relationshipError;
+      const athleteIds = (relationshipRows || [])
+        .map((row) => row.athlete_id)
+        .filter((id): id is string => Boolean(id));
+
+      if (athleteIds.length === 0) {
+        setStudents([]);
+        return;
+      }
+
       const { data: athletesData, error: athletesError } = await supabase
         .from('athletes')
         .select('*')
-        .eq('coach_id', user.id)
+        .in('id', athleteIds)
         .order('created_at', { ascending: false });
 
       if (athletesError) throw athletesError;
@@ -295,3 +311,4 @@ export default function StudentsPage() {
     </div>
   );
 }
+
