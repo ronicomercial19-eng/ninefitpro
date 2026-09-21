@@ -94,3 +94,11 @@ REVOKE ALL ON FUNCTION public.get_forca_progressao(uuid, text) FROM PUBLIC, anon
 REVOKE ALL ON FUNCTION public.get_healthflix_feed(uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.resolve_aluno_by_external(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.tem_periodizacao_ativa(uuid) FROM PUBLIC, anon, authenticated;
+
+REVOKE ALL ON FUNCTION public.fn_aplicar_protocolo_9x9x9(uuid, text, date) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.fn_forcar_catalogar_planilhas_resiliente() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.fn_send_event_to_supra(text, uuid, jsonb, numeric) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.iniciar_trial_prime(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.notificar_falta_periodizacao(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.prescrever_treino_html(uuid, date) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.prescrever_treino_partner(uuid, date) FROM PUBLIC, anon, authenticated;
