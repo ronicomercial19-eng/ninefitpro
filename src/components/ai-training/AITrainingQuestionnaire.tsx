@@ -9,14 +9,38 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Brain, ArrowRight, ArrowLeft } from 'lucide-react';
 
+interface AITrainingQuestionnaireData {
+  studentName: string;
+  age: string;
+  gender: string;
+  primaryGoal: string;
+  secondaryGoals: string[];
+  targetDate: string;
+  experienceLevel: string;
+  trainingHistory: string;
+  currentActivities: string;
+  weeklyFrequency: string;
+  sessionDuration: string;
+  trainingEnvironment: string;
+  availableEquipment: string[];
+  healthConditions: string;
+  injuries: string;
+  medications: string;
+  restrictions: string;
+  preferredExercises: string;
+  avoidedExercises: string;
+  trainingStyle: string;
+  additionalNotes: string;
+}
+
 interface AITrainingQuestionnaireProps {
-  onComplete: (data: any) => void;
+  onComplete: (data: AITrainingQuestionnaireData) => void;
   onCancel: () => void;
 }
 
 export function AITrainingQuestionnaire({ onComplete, onCancel }: AITrainingQuestionnaireProps) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AITrainingQuestionnaireData>({
     // Informações do Aluno
     studentName: '',
     age: '',
