@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity, Sparkles, Grid3x3 } from 'lucide-react';
+import { Settings, Menu, Dumbbell, Share2, Users, Tag, Trophy, ChevronLeft, ChevronRight, Activity, Sparkles, Grid3x3, Smile, Rocket, CalendarCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { useEngrenagem } from '@/hooks/useEngrenagem';
@@ -31,6 +31,10 @@ interface OSDashboardProps {
  * ativa, Ativação, Check-in e Ecossistema viram resumo de 1 linha
  * (CollapsibleRow), que expande in-place sem sair da tela. Nada foi removido
  * — só a sequência e o peso visual mudaram (princípio 04: arquitetura preservada).
+ *
+ * Ajuste (20/09, feedback "sem vida, sem cor"): cada linha ganhou ícone +
+ * cor de acento própria (tile com gradiente/glow), pra ter identidade visual
+ * mesmo fechada, em vez de ícones cinza soltos.
  */
 export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: OSDashboardProps) {
   const { user, profile } = useAuth();
@@ -93,8 +97,12 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </button>
       </div>
 
-      {/* Calibração diária — resumida (pedido do Rony: ordem mantida, peso visual reduzido) */}
-      <CollapsibleRow label="Como você está hoje?">
+      {/* Calibração diária — resumida, acento violeta (humor/mente) */}
+      <CollapsibleRow
+        icon={<Smile className="w-4 h-4" />}
+        accent="262 83% 68%"
+        label="Como você está hoje?"
+      >
         <EmojiCalibrationQuiz />
       </CollapsibleRow>
 
@@ -103,9 +111,10 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         <HubCommandDeck name={name} syncScore={syncScore} scoreStatus={scoreStatus} weekly={weekly} hasPlan={hasPlan} />
       </div>
 
-      {/* Ranking Global — resumido */}
+      {/* Ranking Global — resumido, acento dourado */}
       <CollapsibleRow
-        icon={<Trophy className="w-4 h-4 text-primary shrink-0" />}
+        icon={<Trophy className="w-4 h-4" />}
+        accent="45 95% 58%"
         label={myRankPos > 0 ? `Você é #${myRankPos} no ranking` : 'Ranking global'}
       >
         <div className="space-y-2 pt-1">
@@ -120,23 +129,23 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </div>
       </CollapsibleRow>
 
-      {/* Inteligência ativa — resumida */}
-      <CollapsibleRow icon={<Sparkles className="w-4 h-4 text-primary shrink-0" />} label="Inteligência ativa">
+      {/* Inteligência ativa — resumida, acento roxo neural */}
+      <CollapsibleRow icon={<Sparkles className="w-4 h-4" />} accent="280 75% 62%" label="Inteligência ativa">
         <ActiveSkillsBadge />
       </CollapsibleRow>
 
-      {/* Ativação — resumida */}
-      <CollapsibleRow label="Sua ativação">
+      {/* Ativação — resumida, acento verde crescimento */}
+      <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="150 70% 45%" label="Sua ativação">
         <ActivationMissionCard />
       </CollapsibleRow>
 
-      {/* Check-in — resumido */}
-      <CollapsibleRow label="Check-in rápido">
+      {/* Check-in — resumido, acento ciano */}
+      <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="190 90% 55%" label="Check-in rápido">
         <QuickCheckIn />
       </CollapsibleRow>
 
-      {/* Ecossistema — resumido */}
-      <CollapsibleRow icon={<Grid3x3 className="w-4 h-4 text-muted-foreground shrink-0" />} label="Ecossistema · 4 módulos">
+      {/* Ecossistema — resumido, acento laranja da marca */}
+      <CollapsibleRow icon={<Grid3x3 className="w-4 h-4" />} accent="18 100% 59%" label="Ecossistema · 4 módulos">
         <div className="flex items-end justify-between mb-3">
           <p className="fit-os-label">Atalhos do sistema</p>
           <button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button>
