@@ -3,8 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from "recharts";
 
+interface AssessmentRecord {
+  assessment_date: string;
+  upper_pull_before?: number | null;
+  upper_pull_after?: number | null;
+  upper_push_before?: number | null;
+  upper_push_after?: number | null;
+  lower_pull_before?: number | null;
+  lower_pull_after?: number | null;
+  lower_push_before?: number | null;
+  lower_push_after?: number | null;
+  core_resistance_before?: number | null;
+  core_resistance_after?: number | null;
+}
+
 interface AssessmentChartProps {
-  assessments: any[];
+  assessments: AssessmentRecord[];
 }
 
 export const AssessmentChart = ({ assessments }: AssessmentChartProps) => {
@@ -87,7 +101,7 @@ export const AssessmentChart = ({ assessments }: AssessmentChartProps) => {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={assessments.reverse()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <LineChart data={[...assessments].reverse()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="assessment_date"
