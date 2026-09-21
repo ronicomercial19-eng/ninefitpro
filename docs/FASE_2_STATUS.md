@@ -44,6 +44,7 @@ Clone do `main` em 21/09/2026:
 - `QuickMoodInput.tsx`: passou em ESLint e TypeScript após tipar o registro de humor.
 - `HistoricoCompletoModal.tsx`: passou em ESLint e TypeScript após tipar o retorno da timeline.
 - `NutritionLogForm.tsx`: passou em ESLint e TypeScript após tipar a resposta do progress-sync.
+- `OSDashboard.tsx`: passou em ESLint e TypeScript após tipar o leaderboard.
 
 ## Lint global
 
