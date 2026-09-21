@@ -1,6 +1,23 @@
  import { useState, useEffect } from 'react';
  import { Play, Loader2, Video, ImageOff } from 'lucide-react';
  import { getExerciseVideo } from '@/services/exerciseVideoService';
+
+ function getYoutubeEmbedUrl(value: string): string | null {
+   try {
+     const url = new URL(value);
+     const host = url.hostname.replace(/^www\./, '').toLowerCase();
+     let id = '';
+     if (host === 'youtu.be') id = url.pathname.slice(1);
+     else if (host === 'youtube.com' || host === 'm.youtube.com') {
+       if (url.pathname === '/watch') id = url.searchParams.get('v') || '';
+       else if (url.pathname.startsWith('/embed/')) id = url.pathname.split('/')[2] || '';
+       else if (url.pathname.startsWith('/shorts/')) id = url.pathname.split('/')[2] || '';
+     }
+     return id ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}` : null;
+   } catch {
+     return null;
+   }
+ }
  
  interface ExerciseVideoPlayerProps {
    exerciseId: string;
@@ -90,6 +107,31 @@
      );
    }
  
+   const youtubeEmbedUrl = videoUrl ? getYoutubeEmbedUrl(videoUrl) : null;
+
+   // YouTube não é reproduzível pela tag <video>; usa embed controlado.
+   if (youtubeEmbedUrl && (playing || !gifUrl)) {
+     return (
+       <div className={`relative ${className}`}>
+         <iframe
+           src={youtubeEmbedUrl}
+           title={exerciseName}
+           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+           allowFullScreen
+           className="w-full h-full min-h-48 rounded-sm border-0"
+         />
+         {gifUrl && (
+           <button
+             onClick={() => setPlaying(false)}
+             className="absolute top-2 right-2 p-2 bg-black/50 rounded-sm hover:bg-black/70 transition-colors"
+           >
+             <Video className="w-4 h-4 text-white" />
+           </button>
+         )}
+       </div>
+     );
+   }
+
    // Show video player
    if (videoUrl && (playing || !gifUrl)) {
      return (
