@@ -6,6 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+interface WorkoutExercise {
+  exercise_id?: string;
+  name?: string;
+  sets?: number | string;
+  reps?: number | string;
+  rest_seconds?: number;
+  gif_url?: string | null;
+  external_video_id?: string | null;
+  training_day?: string;
+  override_locked?: boolean;
+}
+
+interface WorkoutProtocol {
+  objective?: string;
+  method?: string;
+  weekly_frequency?: number | string;
+  observations?: string;
+}
+
+interface WorkoutTrainingData {
+  exercises?: WorkoutExercise[];
+  exercise_count?: number;
+  estimated_duration?: number | string;
+  requested_duration_min?: number | string;
+  xp_reward?: number | string;
+  protocol?: WorkoutProtocol;
+  source?: string;
+}
+
 interface TrainingAssignment {
   id: string;
   training_name: string;
@@ -15,7 +44,7 @@ interface TrainingAssignment {
   is_active: boolean;
   training_type?: string;
   html_file_url?: string;
-  training_data?: any;
+  training_data?: WorkoutTrainingData;
 }
 
 interface WorkoutOverviewProps {
@@ -35,7 +64,8 @@ const WEEKDAYS = [
 ];
 
 export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewProps) {
-  const exercises = training.training_data?.exercises || [];
+  const trainingData = training.training_data;
+  const exercises = useMemo(() => trainingData?.exercises ?? [], [trainingData]);
   const exerciseCount = exercises.length || training.training_data?.exercise_count || 0;
   const duration = training.training_data?.estimated_duration ?? training.training_data?.requested_duration_min ?? null;
   const protocol = training.training_data?.protocol;
@@ -46,9 +76,9 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
 
   // Group exercises by training_day
   const byDay = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    const map: Record<string, WorkoutExercise[]> = {};
     WEEKDAYS.forEach(d => map[d.key] = []);
-    exercises.forEach((ex: any) => {
+    exercises.forEach((ex) => {
       const day = ex.training_day || "segunda";
       if (!map[day]) map[day] = [];
       map[day].push(ex);
@@ -175,7 +205,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
                       <p className="text-[10px] mt-1">Nenhum exercício para {d.label}</p>
                     </div>
                   ) : (
-                    dayExercises.map((ex: any, idx: number) => (
+                    dayExercises.map((ex, idx) => (
                       <div key={ex.exercise_id || idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-sm border border-border/50">
                         {ex.gif_url ? (
                           <img src={ex.gif_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
