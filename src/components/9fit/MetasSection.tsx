@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Target, Plus, X, Check } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,18 +45,18 @@ export function MetasSection() {
   const [celebrating, setCelebrating] = useState<Meta | null>(null);
   const [form, setForm] = useState({ titulo: "", metrica: "peso", valor_inicial: "", valor_meta: "", unidade: "kg" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!athleteId) return;
     const { data } = await supabase
-      .from("metas_progresso" as any)
+      .from("metas_progresso")
       .select("*")
       .eq("athlete_id", athleteId)
       .order("created_at", { ascending: false });
-    setMetas(((data as any[]) || []) as Meta[]);
+    setMetas(data || []);
     setLoading(false);
-  };
+  }, [athleteId]);
 
-  useEffect(() => { load(); }, [athleteId]);
+  useEffect(() => { load(); }, [load]);
 
   const createMeta = async () => {
     if (!athleteId || !form.titulo || !form.valor_inicial || !form.valor_meta) {
@@ -64,7 +64,7 @@ export function MetasSection() {
       return;
     }
     const valorInicial = Number(form.valor_inicial);
-    const { error } = await supabase.from("metas_progresso" as any).insert({
+    const { error } = await supabase.from("metas_progresso").insert({
       athlete_id: athleteId,
       titulo: form.titulo,
       metrica: form.metrica,
@@ -84,7 +84,7 @@ export function MetasSection() {
     const atualizado = { ...m, valor_atual: novoValor };
     const achieved = isAchieved(atualizado) && m.status !== "concluida";
     const { error } = await supabase
-      .from("metas_progresso" as any)
+      .from("metas_progresso")
       .update({ valor_atual: novoValor, status: achieved ? "concluida" : "ativa" })
       .eq("id", m.id);
     if (error) { toast.error("Erro ao atualizar"); return; }
@@ -229,3 +229,4 @@ export function MetasSection() {
     </div>
   );
 }
+
