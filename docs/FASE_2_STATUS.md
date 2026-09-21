@@ -36,10 +36,11 @@ Clone do `main` em 21/09/2026:
 - Warnings restantes: importação mista de `html2canvas` e chunk JavaScript acima de 1 MB.
 - `CompleteProfileFlow.tsx`: passou em ESLint sem erros ou warnings.
 - `sdk/healthflix-sdk.ts`: passou em ESLint; contratos de transporte não usam mais `any`.
+- `ContextualPaywall.tsx`: passou em ESLint e TypeScript após tipar a consulta de planos.
 
 ## Lint global
 
-O lint global permanece pendente por débito legado. A última medição registrada foi de 792 problemas: 748 erros e 44 warnings. O lote do SDK HealthFlix reduziu 21 ocorrências. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
+O lint global permanece pendente por débito legado. A última medição registrada foi de 790 problemas: 746 erros e 44 warnings. O lote do SDK HealthFlix e do paywall reduziu 23 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
 
 ## Auditoria Supabase
 
