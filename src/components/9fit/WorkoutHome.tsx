@@ -5,6 +5,11 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
+interface TrainingData {
+  exercise_count?: number;
+  estimated_duration?: number;
+}
+
 interface TrainingAssignment {
   id: string;
   training_name: string;
@@ -14,7 +19,7 @@ interface TrainingAssignment {
   is_active: boolean;
   training_type?: string;
   html_file_url?: string;
-  training_data?: any;
+  training_data?: TrainingData;
 }
 
 interface WorkoutHomeProps {
