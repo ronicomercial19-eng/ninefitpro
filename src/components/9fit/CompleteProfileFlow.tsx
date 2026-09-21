@@ -20,7 +20,8 @@ import { useActivationProgress } from "@/hooks/useActivationProgress";
  * forçar o aluno a passar pelas etapas de ativação de novo.
  */
 interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
-interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }\ninterface LegacyAthleteRow { id: string; full_name?: string | null; height_cm?: number | null; weight_kg?: number | null; age?: number | null; }
+interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }
+interface LegacyAthleteRow { id: string; full_name?: string | null; height_cm?: number | null; weight_kg?: number | null; age?: number | null; }
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
