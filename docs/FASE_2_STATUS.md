@@ -18,7 +18,7 @@ Status geral: EM EXECUÇÃO
 | 2.10 | Mocks e dados falsos | Em auditoria | Progresso consulta RPC real; avaliações oficiais vêm de `avaliacoes_unificadas` |
 | 2.11 | Recovery e idempotência | Validado no fluxo de treino | início/conclusão usam execução persistida e a conclusão é coberta pelo smoke test |
 | 2.12 | Performance | Validado no gate de bundle | PWA gerada; maior JS 3.603.094 bytes bruto/1.012.554 bytes gzip, dentro dos limites definidos; code splitting segue melhoria futura |
-| 2.13 | Segurança mínima | Em execução — bloco final | índices, RLS canônico, views e RPCs internos foram endurecidos; advisor ainda aponta pendências de domínio amplo |
+| 2.13 | Segurança mínima | Em execução — bloco final | índices, RLS canônico, views e RPCs internos/de alto impacto foram endurecidos; advisor ainda aponta pendências de domínio amplo |
 | 2.14 | QA integrado | Validado pelo usuário | fluxo iniciar → recarregar → séries → finalizar → RPE → progresso → compartilhamento foi validado manualmente |
 | 2.15 | Critérios de aceite | Pendente | só fechar após evidências 2.1–2.14 |
 
@@ -43,7 +43,7 @@ O lint global permanece pendente por débito legado. A medição atual foi de 65
 
 ## Auditoria Supabase
 
-A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`. O lote de performance identificou 8 foreign keys sem índice. Foi criada e aplicada a migration `20260921170000_phase2_cover_foreign_key_indexes.sql`; após a aplicação, o advisor não lista mais `unindexed_foreign_keys`. Permanecem warnings de initplan de RLS, policies permissivas múltiplas e itens de segurança que exigem revisão por domínio.
+A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`. O lote de performance identificou 8 foreign keys sem índice. Foi criada e aplicada a migration `20260921170000_phase2_cover_foreign_key_indexes.sql`; após a aplicação, o advisor não lista mais `unindexed_foreign_keys`. A migration `20260921220000_phase2_restrict_high_impact_workout_rpcs.sql` restringiu cinco RPCs de alto impacto a `authenticated`; a verificação SQL confirmou `anon_execute=false` e `authenticated_execute=true`. Após esse lote, o advisor registra 147 funções SECURITY DEFINER executáveis por anon, 7 views SECURITY DEFINER e 25 funções com `search_path` mutável. Permanecem warnings de initplan de RLS, policies permissivas múltiplas e itens de segurança que exigem revisão por domínio.
 
 ## Próximas pendências da Fase 2
 
