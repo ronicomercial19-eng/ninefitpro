@@ -21,7 +21,7 @@ import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
 import { CollapsibleRow } from "@/components/9fit/CollapsibleRow";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Library, Radar as RadarIcon, Flame } from "lucide-react";
+import { ChevronRight, Library, Radar as RadarIcon, Flame, Rocket, CalendarCheck, Gift } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
@@ -149,17 +149,17 @@ export default function NineFitHub() {
       </div>
 
       {/* Tudo abaixo vira resumo de 1 linha (navegação progressiva) — nada removido,
-          só peso visual reduzido: métricas/humor, ativação, protocolo/radar/upsell,
-          próxima aula e ofertas. */}
+          só peso visual reduzido. Cada linha com ícone + cor de acento própria
+          (feedback 20/09: "sem vida, sem cor"). */}
       <div className="px-4 mt-4 space-y-2.5">
-        <CollapsibleRow icon={<Flame className="w-4 h-4 text-primary shrink-0" />} label={`Treino ${weekly.treinos} · Nutri ${weekly.nutri} · Move ${weekly.minutos}min`}>
+        <CollapsibleRow icon={<Flame className="w-4 h-4" />} accent="18 100% 59%" label={`Treino ${weekly.treinos} · Nutri ${weekly.nutri} · Move ${weekly.minutos}min`}>
           <HubFloatingMetrics vitals={liveScores?.vitals} />
           <div className="mt-3">
             <QuickMoodInput onLogged={invalidate} />
           </div>
         </CollapsibleRow>
 
-        <CollapsibleRow label="Sua ativação">
+        <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="150 70% 45%" label="Sua ativação">
           <ActivationMissionCard />
           <div className="mt-3">
             <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
@@ -167,7 +167,7 @@ export default function NineFitHub() {
           {performancePlanTitle && <p className="text-[11px] text-muted-foreground mt-2">Plano ativo: <span className="text-foreground">{performancePlanTitle}</span></p>}
         </CollapsibleRow>
 
-        <CollapsibleRow icon={<RadarIcon className="w-4 h-4 text-muted-foreground shrink-0" />} label="Radar semanal · Protocolo do dia">
+        <CollapsibleRow icon={<RadarIcon className="w-4 h-4" />} accent="200 90% 55%" label="Radar semanal · Protocolo do dia">
           <DailyProtocol />
           <div className="mt-4">
             <WeeklyRadar3D current={breakdown} />
@@ -188,8 +188,16 @@ export default function NineFitHub() {
             onClick={() => navigate("/9fit/protocolo")}
             className="w-full fit-os-panel bg-card/30 p-4 flex items-center gap-3 hover:border-primary/30 transition-colors text-left"
           >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Library className="w-5 h-5 text-primary" />
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border"
+              style={{
+                background: 'linear-gradient(135deg, hsl(280 75% 62% / 0.30), hsl(280 75% 62% / 0.06))',
+                borderColor: 'hsl(280 75% 62% / 0.35)',
+                boxShadow: '0 0 14px -4px hsl(280 75% 62% / 0.55)',
+                color: 'hsl(280 75% 62%)',
+              }}
+            >
+              <Library className="w-4 h-4" />
             </div>
             <div className="flex-1">
               <p className="text-label">SEU PROTOCOLO</p>
@@ -201,11 +209,11 @@ export default function NineFitHub() {
           </button>
         )}
 
-        <CollapsibleRow label="Próxima aula · check-in">
+        <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="190 90% 55%" label="Próxima aula · check-in">
           <QuickCheckIn />
         </CollapsibleRow>
 
-        <CollapsibleRow label="Ofertas pra você">
+        <CollapsibleRow icon={<Gift className="w-4 h-4" />} accent="330 80% 62%" label="Ofertas pra você">
           <DynamicOffers compact />
         </CollapsibleRow>
       </div>
