@@ -60,6 +60,23 @@ export interface DailyWorkout {
   cool_down: Exercise[];
 }
 
+export type WorkoutExecutionStatus =
+  | 'started'
+  | 'in_progress'
+  | 'paused'
+  | 'completed'
+  | 'cancelled';
+
+export interface WorkoutExecutionContract {
+  execution_id: string;
+  athlete_id: string;
+  workout_id: string | null;
+  status: WorkoutExecutionStatus;
+  started_at: string;
+  completed_at?: string | null;
+  execution_attempt: number;
+}
+
 export interface TrainingPlan {
   metadata: {
     version: string;
@@ -101,3 +118,4 @@ export interface TrainingPlan {
     deload_frequency_weeks: number;
   };
 }
+
