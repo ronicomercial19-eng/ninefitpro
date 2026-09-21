@@ -58,7 +58,7 @@ Clone do `main` em 21/09/2026:
 
 ## Lint global
 
-O lint global permanece pendente por débito legado. A última medição registrada foi de 723 problemas: 682 erros e 41 warnings. Os lotes tipados do check-in, metas, recap semanal, treino semanal, progresso semanal, recordes, PDI e `WorkoutHome`, junto dos anteriores, reduziram 91 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
+O lint global permanece pendente por débito legado. A última medição registrada foi de 722 problemas: 681 erros e 41 warnings. Os lotes tipados do check-in, metas, recap semanal, treino semanal, progresso semanal, recordes, PDI e `WorkoutHome`, junto dos anteriores, reduziram 91 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
 
 ## Auditoria Supabase
 
