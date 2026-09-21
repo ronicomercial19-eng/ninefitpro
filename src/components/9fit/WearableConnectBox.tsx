@@ -4,6 +4,34 @@ import { Button } from "@/components/ui/button";
 
 type WearableState = "disconnected" | "connecting" | "connected" | "active";
 
+interface BluetoothCharacteristicLike extends EventTarget {
+  startNotifications(): Promise<BluetoothCharacteristicLike>;
+}
+
+interface BluetoothServerLike {
+  connect(): Promise<BluetoothServerLike>;
+  getPrimaryService(uuid: string): Promise<BluetoothServiceLike>;
+}
+
+interface BluetoothServiceLike {
+  getCharacteristic(uuid: string): Promise<BluetoothCharacteristicLike>;
+}
+
+interface BluetoothDeviceLike extends EventTarget {
+  gatt?: BluetoothServerLike;
+}
+
+interface BluetoothLike {
+  requestDevice(options: {
+    filters: Array<{ services: string[] }>;
+    optionalServices: string[];
+  }): Promise<BluetoothDeviceLike>;
+}
+
+type HeartRateEvent = Event & {
+  target: EventTarget & { value?: DataView | null };
+};
+
 interface WearableConnectBoxProps {
   isWorkoutActive?: boolean;
   onHeartRateUpdate?: (bpm: number) => void;
@@ -15,8 +43,8 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
   const [bpm, setBpm] = useState(0);
   const [zone, setZone] = useState("");
   const [error, setError] = useState("");
-  const deviceRef = useRef<any>(null);
-  const charRef = useRef<any>(null);
+  const deviceRef = useRef<BluetoothDeviceLike | null>(null);
+  const charRef = useRef<BluetoothCharacteristicLike | null>(null);
   const bpmHistoryRef = useRef<number[]>([]);
   const startTimeRef = useRef<number>(0);
 
@@ -40,7 +68,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
   };
 
   const handleHeartRate = useCallback((event: Event) => {
-    const value = (event.target as any).value;
+    const value = (event as HeartRateEvent).target.value;
     if (!value) return;
     const flags = value.getUint8(0);
     const is16Bit = flags & 0x01;
@@ -53,7 +81,8 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
   }, [onHeartRateUpdate]);
 
   const connect = async () => {
-    if (!(navigator as any).bluetooth) {
+    const bluetooth = (navigator as Navigator & { bluetooth?: BluetoothLike }).bluetooth;
+    if (!bluetooth) {
       setError("Bluetooth não suportado neste dispositivo");
       return;
     }
@@ -62,7 +91,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
     setError("");
 
     try {
-      const device = await (navigator as any).bluetooth.requestDevice({
+      const device = await bluetooth.requestDevice({
         filters: [{ services: ["heart_rate"] }],
         optionalServices: ["heart_rate"],
       });
@@ -86,8 +115,8 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
       bpmHistoryRef.current = [];
 
       if (isWorkoutActive) setState("active");
-    } catch (err: any) {
-      if (err.name !== "NotFoundError") {
+    } catch (err: unknown) {
+      if (!(err instanceof DOMException && err.name === "NotFoundError")) {
         setError("Erro ao conectar. Tente novamente.");
       }
       setState("disconnected");
