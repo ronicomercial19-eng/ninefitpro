@@ -56,7 +56,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         .eq("user_id", user.id)
         .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
         .order("created_at", { ascending: false });
-      const days = new Set(((ck as any[]) || []).map((r) => new Date(r.created_at).toDateString()));
+      const days = new Set((ck || []).map((r) => new Date(r.created_at).toDateString()));
       let streak = 0;
       for (let i = 0; i < 14; i++) {
         const d = new Date(Date.now() - i * 86400000).toDateString();
@@ -65,7 +65,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
       setStreakDays(streak);
       // Workouts realizados
       const { count } = await supabase
-        .from("workout_executions" as any)
+        .from("workout_executions")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
       setWorkoutsDone(count || 0);
@@ -101,11 +101,11 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         resolvedAthleteId = (link as any)?.athlete_id ?? null;
       }
       if (resolvedAthleteId) {
-        await supabase.from("athlete_profile_snapshots" as any).insert({
+        await supabase.from("athlete_profile_snapshots").insert({
           athlete_id: resolvedAthleteId,
           source: editOnly ? "profile_adjusted" : "profile_complete",
           snapshot_data: { ...profile, photo: photoUrl, at: new Date().toISOString() },
-        } as any);
+        });
       }
       toast.success("Perfil salvo");
       if (editOnly) {
@@ -122,11 +122,11 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
   const claimReward = async () => {
     if (!athleteId) return;
     try {
-      await supabase.rpc("fn_award_xp" as any, {
+      await supabase.rpc("fn_award_xp", {
         p_athlete_id: athleteId, p_amount: 500, p_source: "complete_profile_7d",
         p_metadata: { reward: "primepass_1m+gold" },
       });
-      await supabase.from("user_achievements" as any).insert({
+      await supabase.from("user_achievements").insert({
         user_id: user?.id, achievement_type: "consistency_7d",
         title: "7 dias de consistência", description: "PrimePass 1 mês + ID Card Gold",
       });
