@@ -32,7 +32,7 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
     }
     setSaving(true);
 
-    const { error } = await supabase.rpc("fn_registrar_peso_avulso" as any, {
+    const { error } = await supabase.rpc("fn_registrar_peso_avulso", {
       p_athlete_id: athleteId,
       p_peso: Number(peso),
       p_gordura: gordura ? Number(gordura) : null,
