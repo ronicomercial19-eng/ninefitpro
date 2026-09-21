@@ -35,7 +35,7 @@ const checks = [
   ["Pós-treino conectado", workout.includes("PostWorkoutModal") && workout.includes("p_execution_id")],
   ["Progresso via RPC real", progresso.includes("fn_get_ron_progresso_screen")],
   ["Retry do progresso", progresso.includes("Tentar novamente")],
-  ["Feedback pós-treino", postWorkout.includes("fn_record_workout_feedback") || postWorkout.includes("feedback")],
+  ["Feedback pós-treino", postWorkout.includes("avg_rpe") && postWorkout.includes("workout_progress")],
   ["Compartilhamento", share.includes("share_events") && share.includes("navigator.share")],
 ];
 
