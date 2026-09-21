@@ -37,10 +37,11 @@ Clone do `main` em 21/09/2026:
 - `CompleteProfileFlow.tsx`: passou em ESLint sem erros ou warnings.
 - `sdk/healthflix-sdk.ts`: passou em ESLint; contratos de transporte não usam mais `any`.
 - `ContextualPaywall.tsx`: passou em ESLint e TypeScript após tipar a consulta de planos.
+- `DailyProtocol.tsx`: passou em ESLint e TypeScript após tipar queries de tarefas e registry.
 
 ## Lint global
 
-O lint global permanece pendente por débito legado. A última medição registrada foi de 790 problemas: 746 erros e 44 warnings. O lote do SDK HealthFlix e do paywall reduziu 23 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
+O lint global permanece pendente por débito legado. A última medição registrada foi de 783 problemas: 739 erros e 44 warnings. Os lotes tipados do SDK HealthFlix, paywall e protocolo diário reduziram 30 ocorrências no total. A prioridade é reduzir por lotes tipados, sem substituições mecânicas que alterem o comportamento.
 
 ## Auditoria Supabase
 
