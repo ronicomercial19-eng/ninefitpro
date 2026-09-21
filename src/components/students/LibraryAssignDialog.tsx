@@ -8,6 +8,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+interface LibraryPayload {
+  id?: string;
+  slug?: string;
+  thumbnailUrl?: string;
+  thumbnail_url?: string;
+  playerUrl?: string;
+  executarUrl?: string;
+  episodeUrl?: string;
+  accessUrl?: string;
+  access_url?: string;
+  downloadUrl?: string;
+  download_url?: string;
+  pdfUrl?: string;
+}
+
 interface LibraryItem {
   id?: string;
   external_id?: string;
@@ -16,7 +31,7 @@ interface LibraryItem {
   name: string;
   thumbnail_url?: string | null;
   player_url?: string | null;
-  payload?: any;
+  payload?: LibraryPayload;
 }
 
 interface Athlete { id: string; name: string; email?: string | null; }
@@ -36,7 +51,7 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
   useEffect(() => {
     if (!open) return;
     supabase.from("athletes").select("id, name, email").order("name").limit(500)
-      .then(({ data }) => setAthletes((data as any) || []));
+      .then(({ data }) => setAthletes(data || []));
   }, [open]);
 
   const handleAssign = async () => {
@@ -46,7 +61,7 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
     }
     setLoading(true);
     try {
-      const p = item.payload || {};
+      const p = item.payload ?? {};
       const content_ref = item.slug || item.external_id || p.id || p.slug || item.name;
 
       // Prefer real image thumbnails over page URLs
@@ -69,13 +84,14 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
         payload: p,
         notes: notes || null,
         assigned_by: user?.id,
-      } as any);
+      });
       if (error) throw error;
       toast.success(`${item.name} atribuído!`);
       onOpenChange(false);
       setAthleteId(""); setNotes("");
-    } catch (e: any) {
-      toast.error(e?.message?.includes("duplicate") ? "Já atribuído a este aluno" : (e?.message || "Erro ao atribuir"));
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Erro ao atribuir";
+      toast.error(message.includes("duplicate") ? "Já atribuído a este aluno" : message);
     } finally {
       setLoading(false);
     }
