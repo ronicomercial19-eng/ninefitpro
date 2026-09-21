@@ -1,6 +1,6 @@
 import { Bell, Menu, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -14,7 +14,7 @@ export function NineFitTopBar() {
   const { remaining } = useCredits(athleteId);
   const [unread, setUnread] = useState(0);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!user?.id) return;
     const { count } = await supabase
       .from("notifications")
@@ -22,9 +22,9 @@ export function NineFitTopBar() {
       .eq("user_id", user.id)
       .eq("is_read", false);
     setUnread(count ?? 0);
-  };
+  }, [user?.id]);
 
-  useEffect(() => { refresh(); }, [user?.id]);
+  useEffect(() => { refresh(); }, [refresh]);
 
   useRealtimeTable(
     { table: "notifications", filter: user?.id ? `user_id=eq.${user.id}` : undefined, enabled: !!user?.id },
@@ -83,3 +83,4 @@ export function NineFitTopBar() {
     </div>
   );
 }
+
