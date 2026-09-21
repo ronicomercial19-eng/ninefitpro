@@ -34,3 +34,7 @@ BEGIN
     EXECUTE format('CREATE POLICY "deny direct client access" ON public.%I FOR ALL TO anon, authenticated USING (false) WITH CHECK (false)', t);
   END LOOP;
 END $$;
+
+REVOKE ALL ON FUNCTION public._selecionar_exercicios_bloco(uuid, text[], integer, integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_alunos_changes() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.deprecated_prescrever_treino_rapido(uuid, text, integer, text) FROM PUBLIC, anon, authenticated;
