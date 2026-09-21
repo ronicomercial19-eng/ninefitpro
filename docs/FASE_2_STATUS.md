@@ -53,6 +53,7 @@ Clone do `main` em 21/09/2026:
 - `WeeklyRecapPrompt.tsx`: passou em ESLint e TypeScript após tipar as consultas do resumo semanal.
 - `WeeklyTrainingView.tsx`: passou em ESLint e TypeScript após tipar o contrato do RPC semanal e dos exercícios.
 - `WeeklyProgressChart.tsx`: passou em ESLint e TypeScript após tipar os dados de execução, nutrição e registry.
+- `RecordesSection.tsx`: passou em TypeScript e eliminou os casts não tipados do registro de recorde; resta apenas um warning de export de constante para Fast Refresh.
 
 ## Lint global
 
