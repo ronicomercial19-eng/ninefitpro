@@ -54,13 +54,13 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         setLoading(false);
         return;
       }
-      const list = (data ?? []).filter((module: any) => !HIDDEN_NATIVE_KEYS.has(String(module.key).toLowerCase())) as any[];
+      const list = (data ?? []).filter((module) => !HIDDEN_NATIVE_KEYS.has(String(module.key).toLowerCase()));
       setItems(list);
       const keys = list.map((m) => m.connector_key).filter(Boolean);
       const { data: conns } = keys.length
         ? await supabase.from("api_connectors").select("key, status, iframe_url").in("key", keys)
-        : { data: [] as any[] };
-      const connectorByKey = new Map((conns || []).map((c: any) => [c.key, c]));
+        : { data: [] };
+      const connectorByKey = new Map((conns || []).map((c) => [c.key, c]));
       const map: Record<string, "online" | "waiting" | "not_configured"> = {};
       const iframeMap: Record<string, string | null> = {};
       list.forEach((m) => {
@@ -270,3 +270,4 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     </section>
   );
 }
+
