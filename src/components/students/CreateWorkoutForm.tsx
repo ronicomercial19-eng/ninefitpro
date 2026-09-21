@@ -134,7 +134,7 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
     setPrescribed(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const updateExercise = (idx: number, field: keyof PrescribedExercise, value: any) => {
+  const updateExercise = <K extends keyof PrescribedExercise>(idx: number, field: K, value: PrescribedExercise[K]) => {
     setPrescribed(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
   };
 
@@ -167,7 +167,7 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
           rest_seconds: p.rest_seconds,
           tempo: p.tempo,
           notes: p.notes,
-          training_day: (p as any).training_day || selectedDays[0] || "segunda",
+          training_day: p.training_day || selectedDays[0] || "segunda",
           override_locked: false,
         })),
         training_days: selectedDays,
@@ -194,9 +194,10 @@ export function CreateWorkoutForm({ studentId, studentName, onSuccess, onCancel 
         exercise_count: prescribed.length,
       }, studentId);
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Erro ao salvar treino: " + (err.message || ""));
+      const message = err instanceof Error ? err.message : "";
+      toast.error("Erro ao salvar treino: " + message);
     } finally {
       setSaving(false);
     }
