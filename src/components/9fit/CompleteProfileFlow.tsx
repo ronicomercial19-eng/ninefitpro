@@ -1,24 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Camera, Dumbbell, Share2, MessageCircle, Trophy, Check, ArrowRight } from "lucide-react";
+import { X, Camera, Dumbbell, Share2, MessageCircle, Trophy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useActivationProgress } from "@/hooks/useActivationProgress";
 
-/**
- * Wizard pós-onboarding "Completar Perfil" — 5 etapas sequenciais:
- *  1) Dados + foto
- *  2) Plano gerado pelo sistema (treino diário do objetivo)
- *  3) Incentivo ao primeiro treino + compartilhar
- *  4) Oferta consultoria (somente após 3 dias consecutivos)
- *  5) Recompensa 7 dias (PrimePass 1 mês + ID Card Gold)
- *
- * editOnly (13/09): quando true, abre direto na etapa 1 (Dados+foto) e ao
- * salvar fecha na hora — usado pelo botão "Ajustar" do DigitalIDCard, sem
- * forçar o aluno a passar pelas etapas de ativação de novo.
- */
 interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
 interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }
 interface LegacyAthleteRow { id: string; full_name?: string | null; height_cm?: number | null; weight_kg?: number | null; age?: number | null; }
@@ -41,17 +29,17 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
     (async () => {
       const { data: ath } = await supabase.from("athletes").select("*").eq("user_id", user.id).maybeSingle();
       if (ath) {
-        setAthleteId((ath as unknown as LegacyAthleteRow).id);
+        const legacyAth = ath as unknown as LegacyAthleteRow;
+        setAthleteId(legacyAth.id);
         setProfile({
-          full_name: (ath as unknown as LegacyAthleteRow).full_name || "",
-          height_cm: (ath as unknown as LegacyAthleteRow).height_cm || "",
-          weight_kg: (ath as unknown as LegacyAthleteRow).weight_kg || "",
-          age: (ath as unknown as LegacyAthleteRow).age || "",
+          full_name: legacyAth.full_name || "",
+          height_cm: legacyAth.height_cm || "",
+          weight_kg: legacyAth.weight_kg || "",
+          age: legacyAth.age || "",
         });
       }
-      if (editOnly) return; // não precisa de streak/workouts pra só editar dados
-      // Streak: dias consecutivos com check-in
-      const { data: ck } = await (supabase as any)
+      if (editOnly) return;
+      const { data: ck } = await supabase
         .from("ninefit_checkins")
         .select("created_at")
         .eq("user_id", user.id)
@@ -64,7 +52,6 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         if (days.has(d)) streak++; else break;
       }
       setStreakDays(streak);
-      // Workouts realizados
       const { count } = await supabase
         .from("workout_executions")
         .select("id", { count: "exact", head: true })
@@ -94,12 +81,11 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         ...(photoUrl ? { avatar_url: photoUrl } : {}),
       }).eq("user_id", user.id);
 
-      // Resolver athlete_id via athlete_auth_link
       let resolvedAthleteId = athleteId;
       if (!resolvedAthleteId) {
-        const { data: link } = await (supabase as any)
+        const { data: link } = await supabase
           .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
-        resolvedAthleteId = (link as any)?.athlete_id ?? null;
+        resolvedAthleteId = link?.athlete_id ?? null;
       }
       if (resolvedAthleteId) {
         await supabase.from("athlete_profile_snapshots").insert({
@@ -113,7 +99,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         onClose();
         return;
       }
-      mark('profile_complete');
+      mark("profile_complete");
       next();
     } catch {
       toast.error("Erro ao salvar perfil");
