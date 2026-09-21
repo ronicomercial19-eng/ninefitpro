@@ -31,7 +31,7 @@ A Fase 2 só será marcada como concluída quando build, typecheck, testes autom
 Clone do `main` em 21/09/2026:
 
 - `tsc --noEmit`: passou.
-- `scripts/qa-fase2.mjs`: passou, 6/6 verificações.
+- `scripts/qa-fase2.mjs`: passou, 11/11 verificações, cobrindo boundary, rotas, execução canônica, reidratação, conclusão, pós-treino, RPE, progresso e compartilhamento.
 - `vite build`: passou novamente, 4.775 módulos transformados; bundle principal 3.599,04 kB bruto/1.012,55 kB gzip; warnings de importação mista de `html2canvas` e chunk acima de 1 MB.
 - Warnings restantes: importação mista de `html2canvas` e chunk JavaScript acima de 1 MB.
 - `CompleteProfileFlow.tsx`: passou em ESLint sem erros ou warnings.
