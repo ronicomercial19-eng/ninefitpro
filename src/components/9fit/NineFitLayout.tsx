@@ -88,15 +88,15 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       if (firstAccessDone && !onFirstAccess) {
         try {
           const { data: athlete } = await supabase
-            .from('athletes')
-            .select('id')
+            .from('vw_current_identity')
+            .select('athlete_id')
             .eq('user_id', session.user.id)
             .maybeSingle();
-          if (athlete?.id) {
+          if (athlete?.athlete_id) {
             const { data: act } = await supabase
               .from('athlete_activation')
               .select('finished_at')
-              .eq('athlete_id', athlete.id)
+              .eq('athlete_id', athlete.athlete_id)
               .maybeSingle();
             const finished = act?.finished_at;
             if (!finished && !onAtivacao && !onOnboarding) {
