@@ -245,13 +245,35 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         }
         setCompletedSets(restored); setWeights(restoredWeights); return;
       }
-      const { data, error } = training.daily_workout_id
-        ? await supabase.rpc("fn_start_daily_workout_execution" as any, {
-            p_daily_workout_id: training.daily_workout_id,
-          } as any)
-        : await supabase.rpc("fn_start_workout_execution" as any, {
-            p_assignment_id: training.id,
-          } as any);
+      // Reidrata uma execução aberta após reload antes de criar outra.
+      // Para a entrada Semana/diária, a chave é atleta + data; para atribuição,
+      // a chave é assignment_id. Isso evita perder o treino em andamento.
+      let existingQuery = supabase
+        .from("workout_executions")
+        .select("id")
+        .eq("athlete_id", athleteId)
+        .in("status", ["started", "in_progress", "paused"])
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      existingQuery = training.daily_workout_id
+        ? existingQuery.eq("workout_date", todayISO).is("assignment_id", null)
+        : existingQuery.eq("assignment_id", training.id);
+
+      const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+      if (existingError) {
+        console.warn("[WorkoutExecution] falha ao recuperar execução aberta:", existingError);
+      }
+
+      const { data, error } = existing?.id
+        ? { data: existing.id, error: null }
+        : training.daily_workout_id
+          ? await supabase.rpc("fn_start_daily_workout_execution" as any, {
+              p_daily_workout_id: training.daily_workout_id,
+            } as any)
+          : await supabase.rpc("fn_start_workout_execution" as any, {
+              p_assignment_id: training.id,
+            } as any);
       if (cancelled) return;
       if (error || !data) {
         setExecutionError("Não foi possível iniciar uma execução persistente.");
