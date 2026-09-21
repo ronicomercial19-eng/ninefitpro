@@ -32,9 +32,10 @@ interface OSDashboardProps {
  * (CollapsibleRow), que expande in-place sem sair da tela. Nada foi removido
  * — só a sequência e o peso visual mudaram (princípio 04: arquitetura preservada).
  *
- * Ajuste (20/09, feedback "sem vida, sem cor"): cada linha ganhou ícone +
- * cor de acento própria (tile com gradiente/glow), pra ter identidade visual
- * mesmo fechada, em vez de ícones cinza soltos.
+ * Ajuste (20/09→21/09): paleta de acentos contida a pedido do Rony —
+ * "banco: preto, laranja em tons diferentes, dourado/roxo só se necessário".
+ * Verde/ciano/rosa saíram; só variações de laranja + dourado (Ranking) +
+ * roxo (Inteligência ativa, por ser IA) se mantiveram.
  */
 export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: OSDashboardProps) {
   const { user, profile } = useAuth();
@@ -97,10 +98,10 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </button>
       </div>
 
-      {/* Calibração diária — resumida, acento violeta (humor/mente) */}
+      {/* Calibração diária — resumida, laranja âmbar */}
       <CollapsibleRow
         icon={<Smile className="w-4 h-4" />}
-        accent="262 83% 68%"
+        accent="30 95% 52%"
         label="Como você está hoje?"
       >
         <EmojiCalibrationQuiz />
@@ -111,7 +112,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         <HubCommandDeck name={name} syncScore={syncScore} scoreStatus={scoreStatus} weekly={weekly} hasPlan={hasPlan} />
       </div>
 
-      {/* Ranking Global — resumido, acento dourado */}
+      {/* Ranking Global — resumido, acento dourado (conquista/ranking) */}
       <CollapsibleRow
         icon={<Trophy className="w-4 h-4" />}
         accent="45 95% 58%"
@@ -129,23 +130,23 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </div>
       </CollapsibleRow>
 
-      {/* Inteligência ativa — resumida, acento roxo neural */}
-      <CollapsibleRow icon={<Sparkles className="w-4 h-4" />} accent="280 75% 62%" label="Inteligência ativa">
+      {/* Inteligência ativa — resumida, acento roxo (IA) */}
+      <CollapsibleRow icon={<Sparkles className="w-4 h-4" />} accent="280 70% 62%" label="Inteligência ativa">
         <ActiveSkillsBadge />
       </CollapsibleRow>
 
-      {/* Ativação — resumida, acento verde crescimento */}
-      <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="150 70% 45%" label="Sua ativação">
+      {/* Ativação — resumida, laranja queimado */}
+      <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="12 85% 50%" label="Sua ativação">
         <ActivationMissionCard />
       </CollapsibleRow>
 
-      {/* Check-in — resumido, acento ciano */}
-      <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="190 90% 55%" label="Check-in rápido">
+      {/* Check-in — resumido, laranja da marca */}
+      <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="18 100% 59%" label="Check-in rápido">
         <QuickCheckIn />
       </CollapsibleRow>
 
-      {/* Ecossistema — resumido, acento laranja da marca */}
-      <CollapsibleRow icon={<Grid3x3 className="w-4 h-4" />} accent="18 100% 59%" label="Ecossistema · 4 módulos">
+      {/* Ecossistema — resumido, laranja-vermelho */}
+      <CollapsibleRow icon={<Grid3x3 className="w-4 h-4" />} accent="20 100% 50%" label="Ecossistema · 4 módulos">
         <div className="flex items-end justify-between mb-3">
           <p className="fit-os-label">Atalhos do sistema</p>
           <button type="button" onClick={() => navigate('/9fit/modules')} className="text-[10px] font-semibold uppercase tracking-widest text-primary">Ver módulos</button>
