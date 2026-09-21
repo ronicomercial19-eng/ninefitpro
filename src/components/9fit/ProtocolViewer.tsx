@@ -5,6 +5,28 @@ import { Check, ExternalLink, ArrowLeft, FileText, Video, Globe, PlayCircle, Lay
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type ProtocolModule = string | {
+  title?: string;
+  name?: string;
+  label?: string;
+  duration?: string | number;
+};
+
+interface ProtocolPayload {
+  episodeUrl?: string;
+  playerUrl?: string;
+  downloadUrl?: string;
+  pdfUrl?: string;
+  thumbnailUrl?: string;
+  duration?: string | number;
+  level?: string;
+  modules?: ProtocolModule[];
+  estrutura?: ProtocolModule[];
+  structure?: ProtocolModule[];
+  guidelines?: string[];
+  diretrizes?: string[];
+}
+
 interface Assignment {
   id: string;
   athlete_id: string;
@@ -18,7 +40,7 @@ interface Assignment {
   notes?: string | null;
   progress_pct?: number | null;
   completed_at?: string | null;
-  payload?: any;
+  payload?: ProtocolPayload;
 }
 
 const buildIframeSrc = (html: string) => {
@@ -37,7 +59,7 @@ const buildIframeSrc = (html: string) => {
 
 const isImgUrl = (u?: string | null) => !!u && /\.(jpg|jpeg|png|webp|gif|avif)(\?|$)/i.test(u);
 
-const moduleLabel = (module: any) => {
+const moduleLabel = (module: ProtocolModule) => {
   if (typeof module === "string") return module;
   if (!module || typeof module !== "object") return "Módulo do protocolo";
   return module.title || module.name || module.label || "Módulo do protocolo";
@@ -64,16 +86,16 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   const isPdf = !!url && /\.pdf$/i.test(url);
   const isVideo = assignment.content_type === 'video' || (!!url && /(youtube|vimeo|\.mp4)/i.test(url));
 
-  const modules: any[] = useMemo(() => {
-    if (Array.isArray(p.modules)) return p.modules;
-    if (Array.isArray(p.estrutura)) return p.estrutura;
-    if (Array.isArray(p.structure)) return p.structure;
+  const modules: ProtocolModule[] = useMemo(() => {
+    if (p.modules) return p.modules;
+    if (p.estrutura) return p.estrutura;
+    if (p.structure) return p.structure;
     return [];
   }, [p]);
 
   const guidelines: string[] = useMemo(() => {
-    if (Array.isArray(p.guidelines)) return p.guidelines;
-    if (Array.isArray(p.diretrizes)) return p.diretrizes;
+    if (p.guidelines) return p.guidelines;
+    if (p.diretrizes) return p.diretrizes;
     return [];
   }, [p]);
 
@@ -111,7 +133,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
       if (error) throw error;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        supabase.from("master_registry" as any).insert({
+        supabase.from("master_registry").insert({
           user_id: user.id,
           event_type: "protocol_completed",
           source: "library",
@@ -120,8 +142,9 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
       }
       toast.success("Protocolo concluído.");
       onComplete();
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao marcar como concluído");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Erro ao marcar como concluído";
+      toast.error(message);
     } finally {
       setMarking(false);
     }
@@ -216,7 +239,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
               <Layers className="w-3 h-3" /> Estrutura
             </p>
             <ol className="space-y-2">
-              {modules.map((m: any, i: number) => (
+              {modules.map((m, i) => (
                 <li key={i} className="flex gap-3 items-start text-sm">
                   <span className="text-primary font-bold w-6 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                   <span className="flex-1">
