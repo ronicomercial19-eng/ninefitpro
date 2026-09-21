@@ -51,3 +51,18 @@ REVOKE ALL ON FUNCTION public.gerar_modelo_treino(uuid, text, text, jsonb) FROM 
 REVOKE ALL ON FUNCTION public.gerar_plano_contingencia(uuid, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.sync_fitpro_snapshot() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.sync_subapp_from_plan() FROM PUBLIC, anon, authenticated;
+
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) args
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.prosecdef
+      AND (p.proname LIKE 'trg_%' OR p.proname LIKE 'trigger_%'
+        OR p.proname LIKE 'fn_core_os_%' OR p.proname LIKE 'fn_notify_%'
+        OR p.proname IN ('log_audit','log_event','log_periodization_changes'))
+  LOOP
+    EXECUTE format('REVOKE ALL ON FUNCTION %I.%I(%s) FROM PUBLIC, anon, authenticated', r.nspname, r.proname, r.args);
+  END LOOP;
+END $$;
