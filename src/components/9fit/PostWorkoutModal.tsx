@@ -100,7 +100,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
         .from("workout_executions")
         .update({
           avg_rpe: rpe,
-          rating: rpe,
+          rating: Math.min(5, Math.max(1, Math.ceil(rpe / 2))),
           notes: notes || null,
           duration_minutes: duration,
         })
