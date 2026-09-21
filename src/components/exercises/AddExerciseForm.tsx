@@ -43,8 +43,9 @@ export function AddExerciseForm({ onSuccess, onCancel }: AddExerciseFormProps) {
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('exercicios').getPublicUrl(path);
       return urlData.publicUrl;
-    } catch (e: any) {
-      toast.error('Erro no upload: ' + e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido';
+      toast.error('Erro no upload: ' + message);
       return null;
     } finally { setUploading(false); }
   };
@@ -62,8 +63,9 @@ export function AddExerciseForm({ onSuccess, onCancel }: AddExerciseFormProps) {
       if (error) throw error;
       toast.success('Exercício adicionado!');
       onSuccess();
-    } catch (error: any) {
-      toast.error('Erro: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro: ' + message);
     } finally { setLoading(false); }
   };
 
