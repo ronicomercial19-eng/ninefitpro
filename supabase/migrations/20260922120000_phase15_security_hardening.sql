@@ -71,3 +71,19 @@ REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated
 REVOKE ALL ON FUNCTION public.handle_new_user_role() FROM PUBLIC, anon, authenticated;
 
 REVOKE ALL ON FUNCTION public.validate_partner_key(text) FROM PUBLIC, anon, authenticated;
+
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) args
+    FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.prosecdef
+      AND (p.proname LIKE 'recalc\\_%' OR p.proname LIKE 'recalculate\\_%'
+        OR p.proname LIKE 'snapshot\\_%' OR p.proname LIKE 'seed\\_%'
+        OR p.proname LIKE 'fn_on\\_%' OR p.proname LIKE 'fn_processar\\_%'
+        OR p.proname LIKE 'fn_recalc\\_%' OR p.proname LIKE 'fn_sync\\_%')
+  LOOP
+    EXECUTE format('REVOKE ALL ON FUNCTION %I.%I(%s) FROM PUBLIC, anon, authenticated', r.nspname, r.proname, r.args);
+  END LOOP;
+END $$;
