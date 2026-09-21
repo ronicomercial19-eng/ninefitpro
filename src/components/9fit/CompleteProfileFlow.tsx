@@ -19,14 +19,14 @@ import { useActivationProgress } from "@/hooks/useActivationProgress";
  * salvar fecha na hora — usado pelo botão "Ajustar" do DigitalIDCard, sem
  * forçar o aluno a passar pelas etapas de ativação de novo.
  */
-interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
+interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }\ninterface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { mark } = useActivationProgress();
   const [step, setStep] = useState(0);
-  const [profile, setProfile] = useState<any>({ full_name: "", height_cm: "", weight_kg: "", age: "" });
+  const [profile, setProfile] = useState<ProfileForm>({ full_name: "", height_cm: "", weight_kg: "", age: "" });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [streakDays, setStreakDays] = useState(0);
   const [workoutsDone, setWorkoutsDone] = useState(0);
