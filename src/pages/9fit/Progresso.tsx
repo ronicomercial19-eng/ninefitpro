@@ -65,7 +65,7 @@ export default function NineFitProgresso() {
     setLoading(true);
     setLoadError(null);
 
-    const { data, error } = await supabase.rpc("fn_get_ron_progresso_screen" as any, {
+    const { data, error } = await supabase.rpc("fn_get_ron_progresso_screen", {
       p_athlete_id: athleteId,
     });
 
