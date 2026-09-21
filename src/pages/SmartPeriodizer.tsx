@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { ApiConnectorCard } from '@/components/admin/ApiConnectorCard';
+import { smartPeriodizerRequest } from '@/services/smartperiodizer.service';
 
 export default function SmartPeriodizer() {
+  const [connection, setConnection] = useState<'checking' | 'online' | 'offline'>('checking');
+
+  useEffect(() => {
+    smartPeriodizerRequest({ path: '/health' })
+      .then(() => setConnection('online'))
+      .catch(() => setConnection('offline'));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -13,6 +22,10 @@ export default function SmartPeriodizer() {
           <h1 className="text-2xl font-bold text-foreground">SmartPeriodizer</h1>
           <p className="text-sm text-muted-foreground">Periodização inteligente via API</p>
         </div>
+      </div>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className={`h-2 w-2 rounded-full ${connection === 'online' ? 'bg-emerald-500' : connection === 'offline' ? 'bg-destructive' : 'bg-amber-500 animate-pulse'}`} />
+        {connection === 'online' ? 'Contrato SmartPeriodizer conectado' : connection === 'offline' ? 'Contrato SmartPeriodizer indisponível' : 'Verificando contrato SmartPeriodizer…'}
       </div>
       <ApiConnectorCard
         moduleKey="smart_periodizer"

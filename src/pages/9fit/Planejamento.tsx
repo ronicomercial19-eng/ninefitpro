@@ -9,6 +9,7 @@ import { useWorkoutOfTheDay } from "@/hooks/useWorkoutOfTheDay";
 import { loadCarryProjection, type ProgressionPoint } from "@/services/training/loadProgression";
 import { supabase } from "@/integrations/supabase/client";
 import { useActivationProgress } from "@/hooks/useActivationProgress";
+import { smartPeriodizerRequest } from "@/services/smartperiodizer.service";
 
 type RemoteWave = { label?: string; week?: number; focus?: string; volume?: string; intensity?: string; pct?: number; status?: string };
 const FALLBACK_CYCLES: RemoteWave[] = [];
@@ -91,12 +92,18 @@ export default function NineFitPlanejamento() {
     setSyncing(true);
     setPlanError(null);
     try {
-      const { error } = await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
-      if (error) throw error;
+      await smartPeriodizerRequest({
+        path: "/v1/fitpro/planejamento/sync",
+        method: "POST",
+        payload: { fitpro_student_id: athleteId },
+      });
       await loadPlan();
     } catch (error: any) {
       console.error("[Planejamento] syncNow:", error);
-      setPlanError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
+      // Compatibilidade com instalações antigas do conector.
+      const { error: fallbackError } = await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
+      if (fallbackError) setPlanError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
+      else await loadPlan();
     } finally {
       setSyncing(false);
     }
