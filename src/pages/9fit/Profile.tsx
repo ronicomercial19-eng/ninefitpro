@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut, Brain, UserCheck, Share2,
+  ChevronRight, ExternalLink, Flame, LogOut, Brain, Share2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +57,7 @@ export default function NineFitProfile() {
         .maybeSingle();
       if (data) setBio(data as any);
     })();
-  }, [user?.id, completeOpen]); // recarrega ao fechar o wizard (Completar/Ajustar)
+  }, [user?.id, completeOpen]); // recarrega ao fechar o wizard (aberto pelo próprio ID Card)
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
@@ -89,7 +89,8 @@ export default function NineFitProfile() {
         <div className="w-9 h-9" />
       </header>
 
-      {/* ID Card — foto/idade/altura/peso da etapa 1 do Completar Perfil + level/sync/streak/xp */}
+      {/* ID Card — decisão principal da tela: 1 barra de XP, dados físicos ou
+          CTA de completar perfil já embutido, Sync/Streak como texto de apoio */}
       <section className="px-4 mt-5">
         <DigitalIDCard
           name={displayName}
@@ -132,18 +133,12 @@ export default function NineFitProfile() {
         ))}
       </div>
 
-      {/* CTAs */}
+      {/* CTAs — "Completar perfil" saiu daqui: já está embutido no ID Card acima */}
       <div className="px-4 mt-6 space-y-3">
         <button onClick={() => navigate("/9fit/compartilhar?template=id_card")}
           className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
           <Share2 className="w-4 h-4" /> Compartilhar meu ID Card
         </button>
-        {!bio.age && !bio.height_cm && !bio.weight_kg && (
-          <button onClick={() => setCompleteOpen(true)}
-            className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
-            <UserCheck className="w-4 h-4" /> Completar perfil (5 etapas)
-          </button>
-        )}
         <button onClick={() => setPdiOpen(true)}
           className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
           <Brain className="w-4 h-4" /> Calibrar IA (PDI)
