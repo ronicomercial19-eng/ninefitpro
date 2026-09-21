@@ -1,5 +1,5 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Users } from "lucide-react";
 
 export default function Community() {
   const url = "https://ninefit-community-flow.lovable.app";
@@ -17,13 +17,13 @@ export default function Community() {
           </a>
         </div>
       </div>
-      <div className="flex-1 px-4">
-        <iframe
-          src={url}
-          className="w-full h-[calc(100vh-180px)] rounded-xl border border-white/5 bg-card"
-          title="9FIT Community"
-          allow="clipboard-write; fullscreen"
-        />
+      <div className="flex-1 px-4 grid place-items-center">
+        <div className="w-full max-w-lg rounded-2xl border border-primary/20 bg-card p-6 text-center">
+          <Users className="mx-auto mb-3 w-8 h-8 text-primary" />
+          <h2 className="font-semibold">Community via API</h2>
+          <p className="mt-2 text-sm text-muted-foreground">O módulo está pronto para consumo por API. Falta apenas cadastrar a chave pública do Community no Supabase do FitPro para carregar posts e grupos aqui.</p>
+          <a href={url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm text-primary underline"><ExternalLink className="w-3 h-3" /> Abrir temporariamente</a>
+        </div>
       </div>
       <BottomNavigation />
     </div>

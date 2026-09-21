@@ -15,7 +15,6 @@ type Offer = {
   description?: string;
   category: string;
   checkout_url?: string;
-  iframe_url?: string;
   thumbnail_url?: string;
   status: "active" | "inactive" | "draft";
   priority: number;
@@ -90,7 +89,7 @@ export default function MonetizacaoPage() {
                     <Badge variant={o.status === "active" ? "default" : "outline"}>{o.status}</Badge>
                     <span className="text-xs text-muted-foreground">prio {o.priority}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{o.category} · {o.iframe_url ? "iframe" : o.checkout_url ? "link" : "—"}</p>
+            <p className="text-xs text-muted-foreground">{o.category} · {o.checkout_url ? "API/link" : "checkout pendente"}</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setEditing(o)}>Editar</Button>
                 <Button variant="ghost" size="icon" onClick={() => remove(o.id!)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
@@ -110,7 +109,6 @@ export default function MonetizacaoPage() {
               <div className="space-y-1"><Label>Categoria</Label><Input value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} /></div>
               <div className="space-y-1 md:col-span-2"><Label>Descrição</Label><Textarea rows={3} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
               <div className="space-y-1"><Label>Checkout URL</Label><Input value={editing.checkout_url ?? ""} onChange={(e) => setEditing({ ...editing, checkout_url: e.target.value })} placeholder="https://..." /></div>
-              <div className="space-y-1"><Label>Iframe URL (9Pay)</Label><Input value={editing.iframe_url ?? ""} onChange={(e) => setEditing({ ...editing, iframe_url: e.target.value })} placeholder="https://checkout.9pay..." /></div>
               <div className="space-y-1"><Label>Thumbnail URL</Label><Input value={editing.thumbnail_url ?? ""} onChange={(e) => setEditing({ ...editing, thumbnail_url: e.target.value })} /></div>
               <div className="space-y-1"><Label>Prioridade</Label><Input type="number" value={editing.priority} onChange={(e) => setEditing({ ...editing, priority: Number(e.target.value) })} /></div>
               <div className="space-y-1"><Label>Status</Label>

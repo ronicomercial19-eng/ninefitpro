@@ -2,7 +2,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
-import { Play, Film, ExternalLink, Loader2, Maximize2 } from "lucide-react";
+import { Play, Film, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -17,12 +17,10 @@ interface CatalogItem {
 }
 
 export default function NineFitHealthFlix() {
-  const { athleteId, athleteName } = useAthleteId();
+  const { athleteId } = useAthleteId();
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
-  const [openingEmbed, setOpeningEmbed] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -60,46 +58,6 @@ export default function NineFitHealthFlix() {
     return Array.from(set);
   }, [items]);
 
-  async function openFullHealthFlix(view: "library" | "home" = "library") {
-    if (!athleteId) { toast.error("Aguarde carregar seu perfil"); return; }
-    setOpeningEmbed(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("healthflix-proxy?action=context", {
-        body: {
-          fitpro_student_id: athleteId,
-          role: "student",
-          view,
-          name: athleteName,
-        },
-      });
-      if (error) throw error;
-      const url = (data as any)?.embed_url;
-      if (!url) throw new Error("embed_url ausente");
-      setEmbedUrl(url);
-    } catch (e: any) {
-      toast.error(e?.message || "Falha ao abrir HealthFlix");
-    } finally {
-      setOpeningEmbed(false);
-    }
-  }
-
-  if (embedUrl) {
-    return (
-      <div className="fixed inset-0 z-50 bg-black flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <p className="text-[10px] font-data tracking-[0.4em] text-primary">HEALTHFLIX</p>
-          <button onClick={() => setEmbedUrl(null)} className="text-xs text-muted-foreground hover:text-foreground">Fechar</button>
-        </div>
-        <iframe
-          src={embedUrl}
-          className="flex-1 w-full bg-black"
-          sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-presentation"
-          allow="autoplay; fullscreen; encrypted-media"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
@@ -109,14 +67,7 @@ export default function NineFitHealthFlix() {
       </div>
 
       <div className="px-4 mb-3">
-        <button
-          onClick={() => openFullHealthFlix("library")}
-          disabled={openingEmbed}
-          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 font-bold text-primary disabled:opacity-50"
-        >
-          {openingEmbed ? <Loader2 className="w-4 h-4 animate-spin" /> : <Maximize2 className="w-4 h-4" />}
-          ABRIR HEALTHFLIX COMPLETO
-        </button>
+        <p className="w-full rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 text-center text-xs font-bold text-primary">CATÁLOGO HEALTHFLIX VIA API</p>
       </div>
 
       {categories.length > 0 && (
@@ -149,7 +100,7 @@ export default function NineFitHealthFlix() {
         {items.map((v, i) => (
           <motion.button
             key={v.id}
-            onClick={() => openFullHealthFlix("library")}
+            onClick={() => toast.info("Conteúdo selecionado; reprodução via API será ativada quando o player do conector estiver configurado.")}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
