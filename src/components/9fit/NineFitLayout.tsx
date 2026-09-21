@@ -47,7 +47,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       if (!firstAccessDone) {
         try {
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('vw_current_identity')
             .select('first_access_completed')
             .eq('user_id', session.user.id)
             .maybeSingle();
