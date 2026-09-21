@@ -14,7 +14,8 @@
     "qa:fase3": "node scripts/qa-fase3.mjs",
     "qa:fase4": "node scripts/qa-fase4.mjs",
     "qa:fase5": "node scripts/qa-fase5.mjs",
-    "qa:fase6": "node scripts/qa-fase6.mjs"
+    "qa:fase6": "node scripts/qa-fase6.mjs",
+    "qa:fase7": "node scripts/qa-fase7.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.0",
