@@ -12,8 +12,8 @@
 
 ## Advisor de segurança restante
 
-- 115 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
-- 1 função de integração (`validate_partner_key`) ainda executável por `anon`.
+- 114 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
+- A função de integração `validate_partner_key` foi fechada para clientes; o Edge Function `fitpro-api` valida a chave diretamente com `service_role`.
 - Extensões `vector` e `btree_gin` no schema `public`.
 - Políticas que permitem acesso anônimo em tabelas legadas/compatibilidade.
 - OTP acima de uma hora, proteção contra senhas vazadas desativada e atualização de Postgres disponível.
