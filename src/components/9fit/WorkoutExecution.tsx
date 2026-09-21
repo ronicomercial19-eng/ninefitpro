@@ -211,8 +211,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       .eq("athlete_id", athleteId)
       .eq("workout_date", todayISO)
       .maybeSingle();
-    if (data?.changes_json) setDailyOverride(data.changes_json);
-  };
+    if (data?.changes_json) setDailyOverride(data.changes_json as DailyOverride);
+  }, [athleteId, todayISO]);
 
   useEffect(() => { void refreshDaily(); }, [refreshDaily]);
 
