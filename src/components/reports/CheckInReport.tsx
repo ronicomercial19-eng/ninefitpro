@@ -9,6 +9,19 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface BookingWithClass {
+  id: string;
+  user_email: string;
+  status: string;
+  check_in_at: string | null;
+  booking_time: string | null;
+  gym_classes: {
+    class_name: string;
+    class_datetime: string;
+    location: string;
+  } | null;
+}
+
 interface CheckInRecord {
   id: string;
   user_email: string;
@@ -39,7 +52,7 @@ export function CheckInReport() {
 
     if (data) {
       setRecords(
-        data.map((d: any) => ({
+        data.map((d: BookingWithClass) => ({
           id: d.id,
           user_email: d.user_email,
           status: d.status,
