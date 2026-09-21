@@ -304,7 +304,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         : training.daily_workout_id
           ? await supabase.rpc("fn_start_daily_workout_execution", {
               p_daily_workout_id: training.daily_workout_id,
-            } as any)
+            })
           : await supabase.rpc("fn_start_workout_execution", {
               p_assignment_id: training.id,
             });
