@@ -47,6 +47,7 @@ Clone do `main` em 21/09/2026:
 - `OSDashboard.tsx`: passou em ESLint e TypeScript após tipar o leaderboard.
 - `EmojiCalibrationQuiz.tsx`: passou em ESLint e TypeScript após tipar as persistências de calibração.
 - `NineFitLayout.tsx`: passou em ESLint e TypeScript após tipar a consulta do activation gate.
+- `NineFitTopBar.tsx`: passou em ESLint e TypeScript após estabilizar o callback de notificações.
 
 ## Lint global
 
