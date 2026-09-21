@@ -82,10 +82,11 @@ export function AdicionarAlunoForm({ onStudentAdded, onCancel }: AdicionarAlunoF
 
       toast.success('Aluno adicionado com sucesso!');
       onStudentAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao adicionar aluno:', error);
-      if (error.message?.includes('23505')) toast.error('Já existe um aluno com este email');
-      else toast.error('Erro ao adicionar aluno: ' + (error.message || 'Erro desconhecido'));
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      if (message.includes('23505')) toast.error('Já existe um aluno com este email');
+      else toast.error('Erro ao adicionar aluno: ' + message);
     } finally { setLoading(false); }
   };
 
