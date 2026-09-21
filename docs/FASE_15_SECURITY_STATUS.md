@@ -12,7 +12,7 @@
 
 ## Advisor de segurança restante
 
-- 168 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
+- 156 funções `SECURITY DEFINER` ainda executáveis por `authenticated`; precisam de classificação individual antes de revogar, porque várias são chamadas pelo produto.
 - 1 função de integração (`validate_partner_key`) ainda executável por `anon`.
 - Extensões `vector` e `btree_gin` no schema `public`.
 - Políticas que permitem acesso anônimo em tabelas legadas/compatibilidade.
