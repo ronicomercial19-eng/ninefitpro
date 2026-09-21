@@ -67,6 +67,7 @@ import NineFitAtivacao from "./pages/9fit/Ativacao";
 import NineFitPlanejamento from "./pages/9fit/Planejamento";
 import NineFitBiblioteca from "./pages/9fit/Biblioteca";
 import NineFitProgresso from "./pages/9fit/Progresso";
+import NineFitPosturaPro from "./pages/9fit/PosturaPro";
 import NineFitNativeSystem from "./pages/9fit/NativeSystem";
 import NineFitAvaliacaoGuiada from "./pages/9fit/AvaliacaoGuiada";
 import NineFitCompartilhar from "./pages/9fit/Compartilhar";
@@ -313,6 +314,7 @@ const App = () => (
             <Route path="/9fit/planejamento" element={<NineFitLayout><NineFitPlanejamento /></NineFitLayout>} />
             <Route path="/9fit/biblioteca" element={<NineFitLayout><NineFitBiblioteca /></NineFitLayout>} />
             <Route path="/9fit/progresso" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
+            <Route path="/9fit/postura-pro" element={<NineFitLayout><NineFitPosturaPro /></NineFitLayout>} />
             <Route path="/9fit/progresso/recordes" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
             <Route path="/9fit/premium" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/billing" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
