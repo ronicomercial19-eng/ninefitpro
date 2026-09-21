@@ -7,7 +7,15 @@ interface TimelineEvent {
   event_date: string;
   event_type: "assessment" | "workout" | "pr" | string;
   title: string;
-  detail: Record<string, any>;
+  detail: {
+    score_global?: number | null;
+    peso?: number | null;
+    gordura_corporal?: number | null;
+    origem?: string | null;
+    total_volume_kg?: number | null;
+    valor?: number | string | null;
+    unidade?: string | null;
+  };
 }
 
 const ICONS: Record<string, JSX.Element> = {
@@ -52,7 +60,7 @@ export function HistoricoCompletoModal({ athleteId }: { athleteId: string | null
     setLoading(true);
     setErrorMsg(null);
 
-    const { data, error } = await supabase.rpc("fn_get_athlete_timeline" as any, {
+    const { data, error } = await supabase.rpc("fn_get_athlete_timeline", {
       p_athlete_id: athleteId,
       p_limit: 40,
     });
@@ -123,3 +131,4 @@ export function HistoricoCompletoModal({ athleteId }: { athleteId: string | null
     </>
   );
 }
+
