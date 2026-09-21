@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
-import { ExerciseVideoPlayer } from "@/components/exercises/ExerciseVideoPlayer";
+import { ExerciseVideoPlayer, getYoutubeEmbedUrl } from "@/components/exercises/ExerciseVideoPlayer";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -561,12 +561,23 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                   />
                 ) : currentExercise.video_url ? (
                   <div className="aspect-video bg-black">
-                    <iframe
-                      src={currentExercise.video_url}
-                      className="w-full h-full border-0"
-                      allowFullScreen
-                      title={currentExercise.name}
-                    />
+                    {getYoutubeEmbedUrl(currentExercise.video_url) ? (
+                      <iframe
+                        src={getYoutubeEmbedUrl(currentExercise.video_url) as string}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        title={currentExercise.name}
+                      />
+                    ) : (
+                      <video
+                        src={currentExercise.video_url}
+                        controls
+                        playsInline
+                        className="w-full h-full object-cover"
+                        title={currentExercise.name}
+                      />
+                    )}
                   </div>
                 ) : currentExercise.gif_url ? (
                   <img src={currentExercise.gif_url} alt="" className="w-full h-48 object-cover" />
