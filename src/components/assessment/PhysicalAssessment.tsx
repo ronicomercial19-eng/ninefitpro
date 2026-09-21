@@ -10,6 +10,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AssessmentChart } from "./AssessmentChart";
 
+interface AssessmentRecord {
+  assessment_date: string;
+  created_at?: string;
+  user_id?: string;
+  professor_id?: string;
+  upper_pull_before?: number | null;
+  upper_pull_after?: number | null;
+  upper_push_before?: number | null;
+  upper_push_after?: number | null;
+  lower_pull_before?: number | null;
+  lower_pull_after?: number | null;
+  lower_push_before?: number | null;
+  lower_push_after?: number | null;
+  core_resistance_before?: number | null;
+  core_resistance_after?: number | null;
+  notes?: string | null;
+}
+
 interface AssessmentData {
   upper_pull_before: number;
   upper_push_before: number;
@@ -27,7 +45,7 @@ interface AssessmentData {
 export const PhysicalAssessment = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [assessments, setAssessments] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentRecord[]>([]);
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentData>({
     upper_pull_before: 0,
     upper_push_before: 0,
