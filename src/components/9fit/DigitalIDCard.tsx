@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Zap, Share2, X, Pencil } from 'lucide-react';
+import { Shield, Share2, X, Pencil } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShareableCard } from '@/components/9fit/ShareableCard';
 import { CompleteProfileFlow } from '@/components/9fit/CompleteProfileFlow';
@@ -17,6 +17,15 @@ interface Props {
   weightKg?: number | null;
 }
 
+/**
+ * Redesign Nine Pro v2 (21/09): card de identidade simplificado — 1 barra de
+ * XP só como decisão principal; Sync e Streak viram texto de apoio numa
+ * linha, não 3 caixas de "Stat" competindo em peso visual com o nível.
+ * "Completar perfil" já vem embutido no próprio card (dashed button) quando
+ * faltam dados físicos — não é um botão solto em outro lugar da tela.
+ * Paleta contida a preto/laranja (holográfico do fundo trocado de
+ * laranja+roxo pra laranja+âmbar).
+ */
 export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, totalXP, streak, avatarUrl, age, heightCm, weightKg }: Props) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
   const levelProgress = (totalXP % 1000) / 10;
@@ -27,12 +36,12 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
   return (
     <>
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-card shadow-elevated">
-        {/* Holographic gradient */}
+        {/* Holográfico — laranja + âmbar, sem roxo */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 20% 0%, hsl(var(--primary) / 0.35), transparent 55%), radial-gradient(circle at 100% 100%, hsl(var(--neural) / 0.25), transparent 60%)',
+              'radial-gradient(circle at 20% 0%, hsl(var(--primary) / 0.35), transparent 55%), radial-gradient(circle at 100% 100%, hsl(30 95% 52% / 0.20), transparent 60%)',
           }}
         />
         <div className="relative p-6 space-y-5">
@@ -76,7 +85,7 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
             </div>
           </div>
 
-          {/* Dados físicos (da etapa 1 do Completar Perfil) */}
+          {/* Dados físicos (da etapa 1 do Completar Perfil) — ou CTA embutido pra completar */}
           {hasBioData ? (
             <div className="grid grid-cols-3 gap-2">
               <BioChip label="Idade" value={age ? `${age}a` : '—'} />
@@ -88,11 +97,11 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
               onClick={() => setAdjusting(true)}
               className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.03] py-2.5 text-[11px] text-primary font-semibold"
             >
-              Completar idade/altura/peso
+              Completar perfil (idade/altura/peso)
             </button>
           )}
 
-          {/* XP bar */}
+          {/* XP bar — única barra, decisão principal do card */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[9px] tracking-widest uppercase text-muted-foreground">XP NEXT LEVEL</span>
@@ -106,11 +115,12 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <Stat label="Sync" value={syncScore} suffix="%" />
-            <Stat label="Streak" value={streak} suffix="d" />
-            <Stat label="Class" value={classTier.slice(0, 4).toUpperCase()} icon={<Zap className="w-3 h-3 text-primary" />} />
-          </div>
+          {/* Sync/Streak — texto de apoio, não competem com a barra de XP */}
+          <p className="text-[11px] text-muted-foreground text-center pt-1">
+            Sync <span className="text-foreground font-semibold">{syncScore}%</span>
+            <span className="mx-2 text-white/15">·</span>
+            Streak <span className="text-foreground font-semibold">{streak}d</span>
+          </p>
         </div>
       </div>
 
@@ -146,21 +156,6 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
       {/* Ajustar dados: reabre só a etapa 1 do wizard, fecha ao salvar, sem repassar pelas etapas de ativação */}
       <CompleteProfileFlow open={adjusting} onClose={() => setAdjusting(false)} editOnly />
     </>
-  );
-}
-
-function Stat({ label, value, suffix, icon }: { label: string; value: number | string; suffix?: string; icon?: React.ReactNode }) {
-  return (
-    <div className="surface-elevated p-3">
-      <div className="flex items-center gap-1 mb-1">
-        <span className="text-[9px] tracking-widest uppercase text-muted-foreground">{label}</span>
-        {icon}
-      </div>
-      <p className="font-display text-lg text-foreground">
-        {value}
-        {suffix && <span className="text-xs text-muted-foreground ml-0.5">{suffix}</span>}
-      </p>
-    </div>
   );
 }
 
