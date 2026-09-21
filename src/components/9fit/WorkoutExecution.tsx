@@ -218,7 +218,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   useRealtimeTable(
     { table: "daily_workouts", filter: `athlete_id=eq.${athleteId}`, enabled: !!athleteId },
-    (payload: any) => {
+    (payload: { new?: Record<string, unknown> }) => {
       const row = payload.new;
       if (row?.workout_date === todayISO && row?.changes_json) {
         setDailyOverride(row.changes_json);
