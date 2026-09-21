@@ -14,7 +14,6 @@ interface PostWorkoutModalProps {
   open: boolean;
   onClose: () => void;
   athleteId: string;
-  executionId: string | null;
   trainingName: string;
   executionId: string;
 }
@@ -42,7 +41,8 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
   const [saving, setSaving] = useState(false);
   const [xpGained, setXpGained] = useState(0);
   const [caloriesBurned, setCaloriesBurned] = useState(0);
-  const [lastRpe, setLastRpe] = useState<number | null>(null);\n  const [shareMessage, setShareMessage] = useState("");
+  const [lastRpe, setLastRpe] = useState<number | null>(null);
+  const [shareMessage, setShareMessage] = useState("");
 
   const calculatedCalories = Math.round(duration * rpe * 1.2);
 
@@ -140,7 +140,12 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
 
       setXpGained(xp);
       setCaloriesBurned(cal);
-      setShareMessage(`Treino concluído: ${trainingName}\nRPE: ${rpe}/10\nDuração: ${duration} min\nCalorias: ${cal} kcal\nXP: +${xp}`);\n      setStep("summary");
+      setShareMessage(`Treino concluído: ${trainingName}
+RPE: ${rpe}/10
+Duração: ${duration} min
+Calorias: ${cal} kcal
+XP: +${xp}`);
+      setStep("summary");
     } catch (e) {
       toast.error("Erro ao salvar progresso");
       console.warn("[PostWorkout] erro inesperado:", e);
@@ -150,8 +155,10 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
   };
 
   const shareText =
-    `Treino concluído: ${trainingName}\n` +
-    `RPE ${rpe}/10 · ${duration} min · ${caloriesBurned} kcal · +${xpGained} XP\n` +
+    `Treino concluído: ${trainingName}
+` +
+    `RPE ${rpe}/10 · ${duration} min · ${caloriesBurned} kcal · +${xpGained} XP
+` +
     `Rumo à próxima sessão! 💪 #9FIT`;
 
   const handleShare = async () => {
