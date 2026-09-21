@@ -3,6 +3,7 @@ import { Activity, CalendarClock, ClipboardCheck, Dumbbell, LineChart, UserRound
 import { ApiConnectorCard } from '@/components/admin/ApiConnectorCard';
 import TrainingAdjustmentsPage from './TrainingAdjustmentsPage';
 import { useNavigate } from 'react-router-dom';
+import { EcosystemGrid } from '@/components/9fit/EcosystemGrid';
 
 export default function SmartTreinoPage() {
   const navigate = useNavigate();
@@ -55,6 +56,18 @@ export default function SmartTreinoPage() {
 
       <section id="ajustes" className="-mx-6 border-t border-border bg-background/50 pt-2">
         <TrainingAdjustmentsPage embedded />
+      </section>
+
+      <section className="space-y-4 border-t border-border pt-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-primary">Ecossistema compartilhado</p>
+          <h2 className="text-xl font-bold">Módulos disponíveis para professor e aluno</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Esta lista usa a mesma fonte de módulos e conectores do front do aluno. Um módulo só aparece como online
+            quando existe destino interno válido ou conector ativo no Supabase.
+          </p>
+        </div>
+        <EcosystemGrid showAll variant="dense" />
       </section>
     </div>
   );

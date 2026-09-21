@@ -74,8 +74,8 @@ export async function awardXP(
       .eq('user_id', user.id)
       .maybeSingle();
 
-    let prevXp = (athlete as any)?.total_xp ?? 0;
-    let prevLevel = (athlete as any)?.level ?? levelFromXP(prevXp);
+    const prevXp = (athlete as any)?.total_xp ?? 0;
+    const prevLevel = (athlete as any)?.level ?? levelFromXP(prevXp);
     let newTotal = prevXp + xp;
     let newLevel = levelFromXP(newTotal);
     let leveledUp = newLevel > prevLevel;

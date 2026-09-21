@@ -105,13 +105,27 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .maybeSingle();
       setInfoproduct(prod);
 
-      // 2) TREINO RÁPIDO via RPC canônica (Bloco A)
-      const { data, error } = await supabase.rpc("fn_treino_rapido", {
-        p_athlete_id: athleteId,
-        p_objetivo: a.goal,
-        p_tempo_min: parseInt(a.time, 10),
-        p_equipamento: a.equipment,
+      // 2) SmartTreino oficial via proxy server-side; mantém fallback para
+      // a RPC canônica enquanto a Edge Function estiver sendo publicada.
+      let { data, error } = await supabase.functions.invoke("smartreino-proxy", {
+        body: {
+          path: "/fitpro-quick-workout",
+          payload: {
+            student_external_id: athleteId,
+            respostas: { tempo_min: parseInt(a.time, 10), foco: a.goal, equipamento: a.equipment, energia: "media" },
+          },
+        },
       });
+      if (error) {
+        const fallback = await supabase.rpc("fn_treino_rapido", {
+          p_athlete_id: athleteId,
+          p_objetivo: a.goal,
+          p_tempo_min: parseInt(a.time, 10),
+          p_equipamento: a.equipment,
+        });
+        data = fallback.data;
+        error = fallback.error;
+      }
       if (error) throw error;
 
       const payload = (data || {}) as QuickTrainingPayload;

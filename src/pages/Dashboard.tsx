@@ -12,6 +12,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { loadCoachStudentsPerformance } from '@/integrations/coachStudentPerformance';
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 
 interface DashboardStats {
   totalClients: number;
@@ -217,6 +218,21 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              Módulos integrados
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Catálogo compartilhado com o front do aluno. O status é lido dos módulos e conectores ativos no Supabase.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <EcosystemGrid showAll variant="dense" />
+          </CardContent>
+        </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
