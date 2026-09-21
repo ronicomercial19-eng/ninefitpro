@@ -94,11 +94,11 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             .maybeSingle();
           if (athlete?.id) {
             const { data: act } = await supabase
-              .from('athlete_activation' as any)
+              .from('athlete_activation')
               .select('finished_at')
               .eq('athlete_id', athlete.id)
               .maybeSingle();
-            const finished = (act as any)?.finished_at;
+            const finished = act?.finished_at;
             if (!finished && !onAtivacao && !onOnboarding) {
               navigate('/9fit/ativacao');
               return;
@@ -175,3 +175,4 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     </>
   );
 }
+
