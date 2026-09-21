@@ -26,7 +26,13 @@ const QUICK_MEALS = [
 // marcador semanal de Nutrição no Comando do dia reflitam refeições reais.
 // Sem isso o insert em nutrition_logs acontecia isolado e o marcador ficava
 // sempre zerado, mesmo com refeições registradas.
-async function notifyNutritionLog(payload: Record<string, any>) {
+interface ProgressSyncResponse {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+}
+
+async function notifyNutritionLog(payload: Record<string, unknown>): Promise<ProgressSyncResponse | { success: false; error: "no_session" }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
   if (!token) return { success: false, error: "no_session" as const };
@@ -36,7 +42,7 @@ async function notifyNutritionLog(payload: Record<string, any>) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (error) return { success: false, error: error.message };
-  return data as { success: boolean; data?: any; error?: string };
+  return (data as ProgressSyncResponse | null) ?? { success: false, error: "empty_response" };
 }
 
 export function NutritionLogForm({ open, onClose, athleteId, onSaved }: NutritionLogFormProps) {
@@ -158,3 +164,4 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
     </Dialog>
   );
 }
+
