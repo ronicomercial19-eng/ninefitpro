@@ -33,7 +33,7 @@ export function QuickMoodInput({ onLogged }: Props) {
     if (!user?.id || busy !== null) return;
     setBusy(lvl.score);
     try {
-      await supabase.from('sync_score_logs' as any).insert({
+      await supabase.from('sync_score_logs').insert({
         user_id: user.id,
         score: lvl.score,
         feedback_text: lvl.feedback,
@@ -82,3 +82,4 @@ export function QuickMoodInput({ onLogged }: Props) {
     </motion.div>
   );
 }
+
