@@ -37,6 +37,8 @@ const LABEL: Record<string, string> = {
   flexibilidade: "Flexibilidade",
 };
 
+interface RecordeResponse { ok?: boolean; error?: string }
+
 /**
  * Ação de registrar novo recorde (botão + modal).
  * Restaurado a partir da versão original — agora SOMENTE a ação de criar,
@@ -70,7 +72,7 @@ export function RecordesSection({
     }
     setSaving(true);
     try {
-      const { data, error } = await supabase.rpc("fn_registrar_recorde" as any, {
+      const { data, error } = await supabase.rpc("fn_registrar_recorde", {
         p_athlete_id: athleteId,
         p_categoria: categoria,
         p_teste: teste,
@@ -78,13 +80,14 @@ export function RecordesSection({
         p_unidade: unidade,
       });
       if (error) throw error;
-      if (!(data as any)?.ok) throw new Error((data as any)?.error || "Falha ao registrar");
+      const result = data as RecordeResponse | null;
+      if (!result?.ok) throw new Error(result?.error || "Falha ao registrar");
       toast.success("Recorde registrado");
       setOpen(false);
       setValor("");
       onSaved?.();
-    } catch (e: any) {
-      toast.error(e?.message || "Não foi possível salvar o recorde");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar o recorde");
     } finally {
       setSaving(false);
     }
@@ -112,7 +115,7 @@ export function RecordesSection({
               {Object.keys(CATEGORIAS).map((c) => (
                 <button
                   key={c}
-                  onClick={() => { setCategoria(c as any); setTeste(CATEGORIAS[c][0].teste); }}
+                  onClick={() => { const nextCategoria = c as keyof typeof CATEGORIAS; setCategoria(nextCategoria); setTeste(CATEGORIAS[nextCategoria][0].teste); }}
                   className={`py-2.5 rounded-xl text-xs font-semibold border ${
                     categoria === c ? "border-primary text-primary bg-primary/10" : "border-white/10 text-muted-foreground"
                   }`}
@@ -157,3 +160,4 @@ export function RecordesSection({
     </>
   );
 }
+
