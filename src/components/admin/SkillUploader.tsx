@@ -4,6 +4,28 @@ import { Upload, FileJson, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface RawSkill {
+  slug?: unknown;
+  name?: unknown;
+  description?: unknown;
+  category?: unknown;
+  tags?: unknown;
+  version?: unknown;
+  status?: unknown;
+  content?: unknown;
+}
+
+interface SkillPayload {
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  tags: string[];
+  version: number;
+  status: string;
+  content: Record<string, unknown>;
+}
+
 /**
  * Upload de Skills via arquivo JSON.
  * Aceita um objeto { slug, name, category, description?, tags?, content }
@@ -18,32 +40,33 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
     setBusy(true); setCount(null);
     try {
       const txt = await f.text();
-      const raw = JSON.parse(txt);
+      const raw: unknown = JSON.parse(txt);
       const list = (Array.isArray(raw) ? raw : [raw])
-        .filter((s) => s && s.slug && s.name);
+        .filter((s): s is RawSkill => typeof s === "object" && s !== null && "slug" in s && "name" in s);
       if (!list.length) { toast.error("Nenhuma skill válida no arquivo"); return; }
 
-      const payload = list.map((s: any) => ({
+      const payload: SkillPayload[] = list.map((s) => ({
         slug: String(s.slug),
         name: String(s.name),
         description: s.description ?? null,
         category: s.category ?? "general",
         tags: Array.isArray(s.tags) ? s.tags : [],
         version: Number(s.version) || 1,
-        status: (s.status as any) ?? "draft",
-        content: s.content ?? {},
+        status: typeof s.status === "string" ? s.status : "draft",
+        content: typeof s.content === "object" && s.content !== null && !Array.isArray(s.content) ? s.content as Record<string, unknown> : {},
       }));
 
       const { error } = await supabase
         .from("skills")
-        .upsert(payload as any, { onConflict: "slug" });
+        .upsert(payload, { onConflict: "slug" });
 
       if (error) throw error;
       setCount(payload.length);
       toast.success(`${payload.length} skill(s) importadas`);
       onDone?.();
-    } catch (e: any) {
-      toast.error(e?.message || "Falha ao importar JSON");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Falha ao importar JSON";
+      toast.error(message);
     } finally {
       setBusy(false);
     }
