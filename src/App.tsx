@@ -83,6 +83,7 @@ import Protocols from "./pages/9fit/Protocols";
 import NineFitSettings from "./pages/9fit/Settings";
 import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
 import PosturaProPage from "./pages/admin/PosturaProPage";
+import CommunityAdminPage from "./pages/admin/CommunityAdminPage";
 import NexusPage from "./pages/admin/NexusPage";
 import RonProfessorPage from "./pages/admin/RonProfessorPage";
 import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
@@ -333,6 +334,7 @@ const App = () => (
             <Route path="/app/monetizacao" element={
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
             } />
+            <Route path="/app/community" element={<PrivateRoute><AppLayout><CommunityAdminPage /></AppLayout></PrivateRoute>} />
             <Route path="/app/skills" element={
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
             } />
