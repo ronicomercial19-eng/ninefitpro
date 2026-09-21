@@ -152,7 +152,7 @@ export function AchievementShareSheet({
   const { athleteName } = useAthleteId();
   const [showName, setShowName] = useState(false);
   const { share, sharing } = useShareEvent(achievement?.contentType ?? "goal_achieved");
-  const canNativeShare = typeof navigator !== "undefined" && !!(navigator as any).share;
+  const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const handleShare = async () => {
     if (!achievement) return;
