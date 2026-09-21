@@ -302,12 +302,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       const { data, error } = existing?.id
         ? { data: existing.id, error: null }
         : training.daily_workout_id
-          ? await supabase.rpc("fn_start_daily_workout_execution" as any, {
+          ? await supabase.rpc("fn_start_daily_workout_execution", {
               p_daily_workout_id: training.daily_workout_id,
             } as any)
-          : await supabase.rpc("fn_start_workout_execution" as any, {
+          : await supabase.rpc("fn_start_workout_execution", {
               p_assignment_id: training.id,
-            } as any);
+            });
       if (cancelled) return;
       if (error || !data) {
         setExecutionError("Não foi possível iniciar uma execução persistente.");
@@ -422,7 +422,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
     const exercise = exercises[exerciseIdx] ?? {};
     const parsedReps = Number.parseInt(String(exercise.reps ?? exercise.reps_range ?? ""), 10);
-    const { error } = await supabase.rpc("fn_save_workout_set" as any, {
+    const { error } = await supabase.rpc("fn_save_workout_set", {
       p_execution_id: executionId,
       p_exercise_name: String(exercise.name ?? "Exercício"),
       p_exercise_order: exerciseIdx,
@@ -433,7 +433,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       p_planned_reps: String(exercise.reps ?? exercise.reps_range ?? ""),
       p_rest_seconds: exercise.rest_seconds ?? null,
       p_tempo: exercise.tempo ?? null,
-    } as any);
+    });
     setPersisting(false);
 
     if (error) {
@@ -453,10 +453,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
     setPersisting(true);
     try {
-      const { data, error } = await supabase.rpc("fn_complete_workout_execution" as any, {
+      const { data, error } = await supabase.rpc("fn_complete_workout_execution", {
         p_execution_id: executionId,
         p_duration_seconds: workoutSeconds,
-      } as any);
+      });
 
       if (error) {
         const message = error.message?.toLowerCase() ?? "";
@@ -468,10 +468,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         return;
       }
 
-      if (!(data as any)?.ok) {
-        toast.error((data as any)?.error === "no_completed_sets"
+      if (!(data && typeof data === "object" && "ok" in data && data.ok)) {
+        toast.error((data && typeof data === "object" && "error" in data && data.error === "no_completed_sets")
           ? "Conclua ao menos uma série antes de finalizar."
-          : `Não foi possível concluir: ${(data as any)?.error || "resposta inválida do servidor"}`);
+          : `Não foi possível concluir: ${(data && typeof data === "object" && "error" in data ? String(data.error) : "resposta inválida do servidor")}`);
         return;
       }
 
@@ -481,7 +481,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         training_id: training.id,
         training_name: liveTraining.training_name,
         duration_seconds: workoutSeconds,
-        completed_sets: (data as any).completed_sets,
+        completed_sets: (data && typeof data === "object" && "completed_sets" in data ? data.completed_sets : 0),
       });
       setShowPSE(true);
     } catch (err) {
@@ -689,7 +689,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             {/* Exercise List Mini */}
             <div className="space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Todos os exercícios</p>
-              {exercises.map((ex: any, idx: number) => {
+              {exercises.map((ex, idx: number) => {
                 const allDone = (completedSets[`${idx}`] || []).length > 0 &&
                   (completedSets[`${idx}`] || []).every(Boolean);
                 return (
