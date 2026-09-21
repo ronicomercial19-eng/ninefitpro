@@ -89,7 +89,6 @@ import NineFitTemplateLibraryPage from "./pages/admin/NineFitTemplateLibraryPage
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { EcoEmbed } from "./components/9fit/EcoEmbed";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
-import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -349,3 +348,4 @@ const App = () => (
 );
 
 export default App;
+
