@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +44,7 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
   const [assignAthleteId, setAssignAthleteId] = useState('');
   const [assignTemplate, setAssignTemplate] = useState<Template | null>(null);
 
-  useEffect(() => { fetchData(); }, [studentId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const query = supabase.from('student_training_assignments')
       .select('id, training_name, html_file_url, html_file_path, student_id, is_active, created_at')
@@ -63,7 +61,9 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
     if (templatesRes.data) setTemplates(templatesRes.data as Template[]);
     if (athletesRes.data) setAthletes(athletesRes.data);
     setLoading(false);
-  };
+  }, [studentId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleView = async (template: Template) => {
     setSelectedTemplate(template);
