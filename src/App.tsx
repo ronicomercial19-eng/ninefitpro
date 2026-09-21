@@ -88,8 +88,19 @@ import NineFitTemplateLibraryPage from "./pages/admin/NineFitTemplateLibraryPage
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { EcoEmbed } from "./components/9fit/EcoEmbed";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
+import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+    mutations: { retry: 1 },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
