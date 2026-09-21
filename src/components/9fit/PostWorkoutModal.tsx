@@ -99,7 +99,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
       const { error: execError } = await supabase
         .from("workout_executions")
         .update({
-          rpe,
+          avg_rpe: rpe,
           rating: rpe,
           notes: notes || null,
           duration_minutes: duration,
