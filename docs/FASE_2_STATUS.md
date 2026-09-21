@@ -32,6 +32,7 @@ Clone do `main` em 21/09/2026:
 
 - `tsc --noEmit`: passou.
 - `scripts/qa-fase2.mjs`: passou, 11/11 verificações, cobrindo boundary, rotas, execução canônica, reidratação, conclusão, pós-treino, RPE, progresso e compartilhamento.
+- `scripts/performance-fase2.mjs`: passou; PWA presente, maior JS 3.603.094 bytes bruto/1.012.554 bytes gzip, dentro dos limites de 4 MB/1,2 MB.
 - `vite build`: passou novamente, 4.775 módulos transformados; bundle principal 3.599,04 kB bruto/1.012,55 kB gzip; warnings de importação mista de `html2canvas` e chunk acima de 1 MB.
 - Warnings restantes: importação mista de `html2canvas` e chunk JavaScript acima de 1 MB.
 - `CompleteProfileFlow.tsx`: passou em ESLint sem erros ou warnings.
@@ -74,7 +75,6 @@ A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`.
 ## Próximos bloqueios da Fase 2
 
 1. Consolidar testes automatizados de regressão para os gates críticos e gerar evidência reproduzível.
-2. Medir performance das rotas críticas no navegador e avaliar o bundle de 3.599 kB.
-3. Revisar persistência, recovery e critérios de aceite com evidência automatizada.
+2. Revisar persistência, recovery e critérios de aceite com evidência automatizada; o gate do bundle já passou.
 4. Fechar os critérios de aceite da Fase 2.
 5. Como último bloco, concluir a auditoria de segurança Supabase por risco, sem mudanças massivas de permissões.
