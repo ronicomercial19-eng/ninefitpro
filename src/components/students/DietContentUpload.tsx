@@ -181,7 +181,7 @@ export function DietContentUpload({
       let htmlUrl = '';
       let htmlPath = '';
       let dietType = '';
-      let dietData: any = {};
+      let dietData: Record<string, string | number> = {};
 
       if (contentType === 'link') {
         // Store link directly
@@ -285,10 +285,11 @@ export function DietContentUpload({
       
       toast.success(`Dieta "${dietName}" (${typeLabels[contentType]}) enviada para ${studentName}!`);
       onUploadSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro no upload:', err);
-      setError(err.message || 'Erro ao enviar dieta');
-      toast.error(err.message || 'Erro ao enviar');
+      const message = err instanceof Error ? err.message : 'Erro ao enviar dieta';
+      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -597,3 +598,4 @@ export function DietContentUpload({
     </div>
   );
 }
+
