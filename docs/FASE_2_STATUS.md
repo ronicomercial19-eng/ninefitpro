@@ -32,7 +32,7 @@ Clone do `main` em 21/09/2026:
 
 - `tsc --noEmit`: passou.
 - `scripts/qa-fase2.mjs`: passou, 11/11 verificações.
-- `vite build`: passou, 4.775 módulos transformados.
+- `vite build`: passou após remover import duplicado de `AppErrorBoundary` em `App.tsx` (commit `61cb2883`), com 4.775 módulos transformados.
 - `scripts/performance-fase2.mjs`: passou; maior bundle bruto 3.603.094 bytes e gzip 1.012.554 bytes.
 - Warnings restantes: importação mista de `html2canvas` e chunk JavaScript acima de 1 MB.
 - `CompleteProfileFlow.tsx`: passou em ESLint sem erros ou warnings.
@@ -43,7 +43,7 @@ O lint global permanece pendente por débito legado. A medição atual foi de 65
 
 ## Auditoria Supabase
 
-A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`. O lote de performance identificou 8 foreign keys sem índice. Foi criada e aplicada a migration `20260921170000_phase2_cover_foreign_key_indexes.sql`; após a aplicação, o advisor não lista mais `unindexed_foreign_keys`. A migration `20260921220000_phase2_restrict_high_impact_workout_rpcs.sql` restringiu cinco RPCs de alto impacto a `authenticated`; a verificação SQL confirmou `anon_execute=false` e `authenticated_execute=true`. Após esse lote, o advisor registra 147 funções SECURITY DEFINER executáveis por anon, 7 views SECURITY DEFINER e 25 funções com `search_path` mutável. Permanecem warnings de initplan de RLS, policies permissivas múltiplas e itens de segurança que exigem revisão por domínio.
+A auditoria foi executada no projeto `mfrydtrzjxscbkaiwfnw`. O lote de performance identificou 8 foreign keys sem índice. Foi criada e aplicada a migration `20260921170000_phase2_cover_foreign_key_indexes.sql`; após a aplicação, o advisor não lista mais `unindexed_foreign_keys`. As migrations `20260921220000_phase2_restrict_high_impact_workout_rpcs.sql` e `20260921221000_phase2_restrict_internal_credits_periodization_rpcs.sql` restringiram dez RPCs de alto impacto/internos a `authenticated`; as verificações SQL confirmaram `anon_execute=false` e `authenticated_execute=true`. Após esses lotes, o advisor registra 142 funções SECURITY DEFINER executáveis por anon, 7 views SECURITY DEFINER e 25 funções com `search_path` mutável. Permanecem warnings de initplan de RLS, policies permissivas múltiplas e itens de segurança que exigem revisão por domínio.
 
 ## Próximas pendências da Fase 2
 
