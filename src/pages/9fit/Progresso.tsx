@@ -57,11 +57,13 @@ export default function NineFitProgresso() {
   const [runs, setRuns] = useState<RunItem[]>([]);
   const [temSetsRegistrados, setTemSetsRegistrados] = useState(false);
   const [forcaTotalKg, setForcaTotalKg] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);\n  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!athleteId) { setLoading(false); return; }
     setLoading(true);
+    setLoadError(null);
 
     const { data, error } = await supabase.rpc("fn_get_ron_progresso_screen" as any, {
       p_athlete_id: athleteId,
@@ -69,6 +71,7 @@ export default function NineFitProgresso() {
 
     if (error) {
       console.error("[Progresso] fn_get_ron_progresso_screen falhou:", error);
+      setLoadError("Não foi possível carregar seus dados reais de progresso.");
       setLoading(false);
       return;
     }
@@ -196,7 +199,23 @@ export default function NineFitProgresso() {
         <TrendingUp className="w-7 h-7 text-primary" />
       </div>
       {loading && <p className="px-4 mt-3 text-xs text-muted-foreground">Carregando seus dados reais…</p>}
-      {athleteError && <p className="px-4 mt-3 text-xs text-destructive">{athleteError}</p>}\n      {loadError && (\n        <div className="mx-4 mt-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-4">\n          <p className="text-sm text-destructive">{loadError}</p>\n          <button onClick={load} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive">\n            <RotateCcw className="h-3.5 w-3.5" /> Tentar novamente\n          </button>\n        </div>\n      )}
+      {athleteError && <p className="px-4 mt-3 text-xs text-destructive">{athleteError}</p>}
+      {loadError && (
+        <div className="mx-4 mt-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <button onClick={load} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive">
+            <RotateCcw className="h-3.5 w-3.5" /> Tentar novamente
+          </button>
+        </div>
+      )}
+      {loadError && (
+        <div className="mx-4 mt-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <button onClick={load} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive">
+            <RotateCcw className="h-3.5 w-3.5" /> Tentar novamente
+          </button>
+        </div>
+      )}
       <div className="px-4 mt-1">
         <div className="h-[2px] w-32 bg-primary/70" />
         <p className="text-xs text-muted-foreground mt-2">Módulo 9FIT PRO</p>
