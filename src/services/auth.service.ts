@@ -37,7 +37,9 @@ export async function getUserRole(userId: string): Promise<ApiResponse<string>> 
 
     if (!identityError && identity) {
       const roles = Array.isArray(identity.roles) ? identity.roles as Array<{ role?: string }> : [];
-      const role = roles[0]?.role ?? identity.profile_role;
+      // `profiles.role` is the canonical application role. The role array is
+      // retained as a compatibility fallback while legacy rows are reconciled.
+      const role = identity.profile_role ?? roles[0]?.role;
       if (role) return { success: true, data: role, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
     }
 
