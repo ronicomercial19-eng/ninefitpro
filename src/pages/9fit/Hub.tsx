@@ -149,8 +149,8 @@ export default function NineFitHub() {
       </div>
 
       {/* Tudo abaixo vira resumo de 1 linha (navegação progressiva) — nada removido,
-          só peso visual reduzido. Cada linha com ícone + cor de acento própria
-          (feedback 20/09: "sem vida, sem cor"). */}
+          só peso visual reduzido. Paleta contida (21/09): laranja em tons +
+          dourado/roxo só onde faz sentido (ofertas=dourado/promo, protocolo=roxo/premium). */}
       <div className="px-4 mt-4 space-y-2.5">
         <CollapsibleRow icon={<Flame className="w-4 h-4" />} accent="18 100% 59%" label={`Treino ${weekly.treinos} · Nutri ${weekly.nutri} · Move ${weekly.minutos}min`}>
           <HubFloatingMetrics vitals={liveScores?.vitals} />
@@ -159,7 +159,7 @@ export default function NineFitHub() {
           </div>
         </CollapsibleRow>
 
-        <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="150 70% 45%" label="Sua ativação">
+        <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="12 85% 50%" label="Sua ativação">
           <ActivationMissionCard />
           <div className="mt-3">
             <HubWeeklyCounters treinos={weekly.treinos} nutri={weekly.nutri} minutos={weekly.minutos} />
@@ -167,7 +167,7 @@ export default function NineFitHub() {
           {performancePlanTitle && <p className="text-[11px] text-muted-foreground mt-2">Plano ativo: <span className="text-foreground">{performancePlanTitle}</span></p>}
         </CollapsibleRow>
 
-        <CollapsibleRow icon={<RadarIcon className="w-4 h-4" />} accent="200 90% 55%" label="Radar semanal · Protocolo do dia">
+        <CollapsibleRow icon={<RadarIcon className="w-4 h-4" />} accent="30 95% 52%" label="Radar semanal · Protocolo do dia">
           <DailyProtocol />
           <div className="mt-4">
             <WeeklyRadar3D current={breakdown} />
@@ -191,10 +191,10 @@ export default function NineFitHub() {
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border"
               style={{
-                background: 'linear-gradient(135deg, hsl(280 75% 62% / 0.30), hsl(280 75% 62% / 0.06))',
-                borderColor: 'hsl(280 75% 62% / 0.35)',
-                boxShadow: '0 0 14px -4px hsl(280 75% 62% / 0.55)',
-                color: 'hsl(280 75% 62%)',
+                background: 'linear-gradient(135deg, hsl(280 70% 62% / 0.30), hsl(280 70% 62% / 0.06))',
+                borderColor: 'hsl(280 70% 62% / 0.35)',
+                boxShadow: '0 0 14px -4px hsl(280 70% 62% / 0.55)',
+                color: 'hsl(280 70% 62%)',
               }}
             >
               <Library className="w-4 h-4" />
@@ -209,11 +209,11 @@ export default function NineFitHub() {
           </button>
         )}
 
-        <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="190 90% 55%" label="Próxima aula · check-in">
+        <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="20 100% 50%" label="Próxima aula · check-in">
           <QuickCheckIn />
         </CollapsibleRow>
 
-        <CollapsibleRow icon={<Gift className="w-4 h-4" />} accent="330 80% 62%" label="Ofertas pra você">
+        <CollapsibleRow icon={<Gift className="w-4 h-4" />} accent="45 95% 58%" label="Ofertas pra você">
           <DynamicOffers compact />
         </CollapsibleRow>
       </div>
