@@ -9,7 +9,7 @@ const navItems = [
   { icon: Cpu, label: "INÍCIO", path: "/9fit/os" },
   { icon: Dumbbell, label: "TREINOS", path: "/9fit/train" },
   { icon: Bot, label: "RON", path: "/9fit/ron", center: true },
-  { icon: LayoutGrid, label: "MEU DIA", path: "/9fit/hub" },
+  { icon: LayoutGrid, label: "MEU PAINEL", path: "/9fit/hub" },
   { icon: User, label: "PERFIL", path: "/9fit/profile" },
 ];
 

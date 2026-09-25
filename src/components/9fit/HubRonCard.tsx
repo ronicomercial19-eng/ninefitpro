@@ -82,7 +82,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
               <Zap className="w-3 h-3 text-[#FF6600]" />
               {syncScore === null
                 ? "Calibrando"
-                : `${Math.round(syncScore)}% sincronizado${scoreStatus === "stale" ? " (última leitura)" : ""}`}
+                : `${Math.round(syncScore)}% SYNC${scoreStatus === "stale" ? " (última leitura)" : ""}`}
             </span>
           </div>
 
