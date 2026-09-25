@@ -95,6 +95,43 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
               {reasoning}
             </p>
           )}
+
+          {/* Atalhos Rápidos Operacionais do Concierge */}
+          <div className="mt-3.5 pt-3 border-t border-white/10 flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge'));
+              }}
+              className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-primary/20 text-primary border border-primary/30 hover:bg-primary hover:text-black transition-all flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              Concierge
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge', { detail: { prompt: "Sincronize os treinos da minha semana na minha Google Agenda" } }));
+              }}
+              className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10 hover:text-white transition-all flex items-center gap-1"
+            >
+              📅 Google Agenda
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge', { detail: { prompt: "Registre 500ml de água que acabei de tomar" } }));
+              }}
+              className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10 hover:text-white transition-all flex items-center gap-1"
+            >
+              💧 +500ml Água
+            </button>
+          </div>
         </div>
 
         {/* Botão de expansão tátil com halo */}

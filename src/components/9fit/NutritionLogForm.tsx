@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Utensils } from "lucide-react";
+import { Plus, Utensils, Sparkles } from "lucide-react";
 
 interface NutritionLogFormProps {
   open: boolean;
@@ -117,6 +117,26 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
             Registrar Refeição
           </DialogTitle>
         </DialogHeader>
+
+        {/* Assistente RON Concierge */}
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            window.dispatchEvent(
+              new CustomEvent("9fit:open-ron-concierge", {
+                detail: { prompt: "Quero registrar uma refeição e conferir o balanço de macronutrientes do dia." }
+              })
+            );
+          }}
+          className="w-full flex items-center justify-between p-2.5 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/20 text-xs font-semibold text-primary transition-all cursor-pointer"
+        >
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Ditar por voz ou pedir sugestão ao RON IA
+          </span>
+          <span className="text-[10px] text-muted-foreground">Abrir →</span>
+        </button>
 
         {/* Quick meals */}
         <div className="flex flex-wrap gap-2">

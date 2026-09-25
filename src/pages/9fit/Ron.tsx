@@ -36,13 +36,19 @@ import {
   getAccessToken,
 } from "@/services/googleAuth";
 import { RonCalendarModal } from "@/components/9fit/RonCalendarModal";
+import {
+  executeRonAction,
+  RonAction,
+  getRonOperationalData,
+} from "@/services/ronOperationalCore";
 
 const RON_ACTIONS = [
   { label: "📅 Agendar Treino", actionKey: "calendar_schedule" },
   { label: "⚡ Sincronizar Semana", actionKey: "calendar_sync" },
-  { label: "Criar treino", route: "/9fit/train?from=ron" },
-  { label: "Criar planilha", route: "/9fit/planejamento?from=ron" },
-  { label: "Ver progresso", route: "/9fit/progresso?from=ron" },
+  { label: "💧 +500ml de Água", actionKey: "log_water" },
+  { label: "🏋️ Iniciar Treino", route: "/9fit/train?from=ron" },
+  { label: "🥗 Registrar Refeição", route: "/9fit/diet?from=ron" },
+  { label: "📈 Ver Progresso", route: "/9fit/progresso?from=ron" },
 ];
 
 const SUGGESTIONS = [
@@ -51,6 +57,8 @@ const SUGGESTIONS = [
   "Sincronizar treinos da semana na minha agenda",
   "O que meu HRV e fadiga indicam?",
   "Próximo treino recomendado para meu estado",
+  "Registrar 500ml de água consumida",
+  "Estou sentindo desconforto no ombro, adaptar treino",
 ];
 
 const RON_CREDIT_PATTERNS = [
@@ -70,6 +78,7 @@ interface Msg {
   content: string;
   created_at?: string;
   action?: { label: string; route?: string; onTrigger?: string };
+  actions?: RonAction[];
   calendarAction?: {
     summary: string;
     date?: string;
@@ -375,6 +384,8 @@ export default function NineFitRon() {
             stateLabel: STATE_LABEL[state],
             remainingCredits: remaining,
             calendarConnected: Boolean(googleToken),
+            currentPage: "/9fit/ron",
+            operationalData: getRonOperationalData(),
           },
         }),
       });
@@ -385,6 +396,7 @@ export default function NineFitRon() {
 
       const data = await response.json();
       const replyContent = data.content;
+      const returnedActions: RonAction[] = data.actions || [];
 
       // Attach action CTA if relevant to calendar
       let calendarAction: Msg["action"] | undefined = undefined;
@@ -401,6 +413,7 @@ export default function NineFitRon() {
           role: "assistant",
           content: replyContent,
           action: calendarAction,
+          actions: returnedActions,
         };
         return out;
       });
@@ -421,8 +434,16 @@ export default function NineFitRon() {
     }
   };
 
-  const handleActionClick = (action: { label: string; route?: string; onTrigger?: string }) => {
-    if (action.onTrigger === "open_calendar" || action.label.includes("Google Agenda")) {
+  const handleActionClick = (action: { label: string; route?: string; onTrigger?: string; actionKey?: string }) => {
+    if (action.actionKey === "log_water") {
+      executeRonAction({ type: "LOG_WATER", title: "+500ml de Água", payload: { amountMl: 500 } });
+      return;
+    }
+    if (action.actionKey === "calendar_sync") {
+      executeRonAction({ type: "SYNC_WEEK_CALENDAR", title: "Sincronizar Semana" });
+      return;
+    }
+    if (action.actionKey === "calendar_schedule" || action.onTrigger === "open_calendar" || action.label.includes("Google Agenda")) {
       if (!googleToken) {
         handleGoogleConnect();
       } else {
@@ -583,6 +604,35 @@ export default function NineFitRon() {
                 {m.action.label}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
+            )}
+
+            {/* Structured Operational Actions from RON Brain */}
+            {m.actions && m.actions.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {m.actions.map((act, actIdx) => (
+                  <button
+                    key={actIdx}
+                    onClick={() =>
+                      executeRonAction(act, {
+                        navigate,
+                        onCalendarOpen: () => setCalendarModalOpen(true),
+                      })
+                    }
+                    className="w-full text-left p-2.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-all flex items-center justify-between group cursor-pointer shadow-sm"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="text-xs font-bold text-white group-hover:text-primary transition-colors flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-primary shrink-0" />
+                        {act.title}
+                      </p>
+                      {act.description && (
+                        <p className="text-[10px] text-muted-foreground truncate">{act.description}</p>
+                      )}
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         ))}

@@ -248,6 +248,34 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
       </div>
 
       {/* =========================================================================
+          CENTRAL NEURAL RON — CONEXÃO DIRETA COM O TREINO
+         ========================================================================= */}
+      <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-black to-[#0a0b10] p-3.5 flex items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">RON CONCIERGE</span>
+              <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ONLINE</span>
+            </div>
+            <p className="text-xs text-neutral-200 truncate mt-0.5">
+              Dúvidas em séries, RPE ou desconforto articular? Ajuste em tempo real.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge', { detail: { prompt: "Estou na tela de treinos. Analise meu treino de hoje e me oriente sobre cadência, descanso e cargas ideais." } }))}
+          className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:brightness-110 transition-all flex items-center gap-1 shadow-md shadow-primary/20 cursor-pointer"
+        >
+          Consultar
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* =========================================================================
           GRADE DE TREINOS DO PLANO
          ========================================================================= */}
       <div className="space-y-2.5">
