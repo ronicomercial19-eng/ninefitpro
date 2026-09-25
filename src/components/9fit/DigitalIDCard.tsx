@@ -7,7 +7,7 @@ import { CompleteProfileFlow } from '@/components/9fit/CompleteProfileFlow';
 interface Props {
   name: string;
   level: number;
-  classTier?: string;
+  classTier?: string | null;
   syncScore: number;
   totalXP: number;
   streak: number;
@@ -28,7 +28,7 @@ interface Props {
  * Paleta contida a preto/laranja (holográfico trocado de laranja+roxo pra
  * laranja+âmbar).
  */
-export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, totalXP, streak, avatarUrl, age, heightCm, weightKg }: Props) {
+export function DigitalIDCard({ name, level, classTier, syncScore, totalXP, streak, avatarUrl, age, heightCm, weightKg }: Props) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
   const levelProgress = (totalXP % 1000) / 10;
   const [showShare, setShowShare] = useState(false);
@@ -83,7 +83,7 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
                 <span className="text-[10px] font-bold tracking-widest uppercase text-primary">
                   LVL {level}
                 </span>
-                <span className="text-[10px] tracking-widest uppercase text-muted-foreground">· {classTier}</span>
+                <span className="text-[10px] tracking-widest uppercase text-muted-foreground">· {classTier || 'Classe indisponível'}</span>
               </div>
             </div>
           </div>
