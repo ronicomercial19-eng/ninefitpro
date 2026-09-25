@@ -55,6 +55,7 @@ export default function NineFitAtivacao() {
   const [goal, setGoal] = useState('Hipertrofia e Definição');
   const [frequency, setFrequency] = useState(4);
   const [restrictions, setRestrictions] = useState('');
+  const [equipment, setEquipment] = useState('home');
 
   // Generation
   const [generating, setGenerating] = useState(false);
@@ -102,7 +103,7 @@ export default function NineFitAtivacao() {
     e.preventDefault();
     try {
       await advanceStep('assessment', {
-        goal, experience_level: level, weekly_frequency: frequency, restrictions,
+        goal, experience_level: level, weekly_frequency: frequency, restrictions, equipment,
       });
       setUiState('generation');
     } catch {
@@ -121,7 +122,7 @@ export default function NineFitAtivacao() {
         p_athlete_id: athleteId,
         p_objetivo: goal,
         p_tempo_min: 40,
-        p_equipamento: null,
+        p_equipamento: equipment,
       });
       if (error) throw error;
       const arr = (data as any)?.exercises;
@@ -415,6 +416,16 @@ export default function NineFitAtivacao() {
               onSubmit={handleSaveAssessment}
               className="bg-card/70 border border-border rounded-3xl p-8 space-y-6"
             >
+              <div>
+                <label className="text-xs font-mono uppercase tracking-wider text-muted-foreground block mb-2">Equipamento disponível</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[['home', 'Casa'], ['gym', 'Academia'], ['mixed', 'Misto']].map(([value, label]) => (
+                    <button type="button" key={value} onClick={() => setEquipment(value)}
+                      className={cn('py-2.5 rounded-xl border text-sm font-semibold transition', equipment === value ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/40 border-border hover:border-primary/50')}>{label}</button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <p className="text-[10px] font-mono text-primary uppercase tracking-widest font-black">Etapa 01</p>
                 <h2 className="text-2xl font-black tracking-tight mt-1">Ficha Técnica</h2>
