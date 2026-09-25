@@ -2,7 +2,7 @@
  import { Play, Loader2, Video, ImageOff } from 'lucide-react';
  import { getExerciseVideo } from '@/services/exerciseVideoService';
 
- export function getYoutubeEmbedUrl(value: string): string | null {
+ function getYoutubeEmbedUrl(value: string): string | null {
    try {
      const url = new URL(value);
      const host = url.hostname.replace(/^www\./, '').toLowerCase();
