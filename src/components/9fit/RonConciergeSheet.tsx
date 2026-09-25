@@ -274,6 +274,7 @@ export function RonConciergeSheet() {
     }
     if (path.includes("/diet")) {
       return [
+        { label: "Scanner de Alimentos IA", prompt: "Como funciona o Scanner de Alimentos IA para calcular macros pela câmera?" },
         { label: "+500ml de Água", prompt: "Registre 500ml de água que acabei de tomar" },
         { label: "Registrar Refeição", prompt: "Comi 200g de frango grelhado e 150g de arroz no almoço, registre no meu diário" },
         { label: "Janela pré-treino", prompt: "Qual o melhor timing e alimentos para comer antes do treino de hoje?" }

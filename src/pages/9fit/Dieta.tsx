@@ -18,7 +18,10 @@ import {
   FileText,
   X,
   Calendar,
-  Trash2
+  Trash2,
+  Camera,
+  ScanLine,
+  Sparkles
 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +33,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NutritionLogForm } from "@/components/9fit/NutritionLogForm";
+import { FoodScannerModal } from "@/components/9fit/FoodScannerModal";
 
 interface DietAssignment {
   id: string;
@@ -120,6 +124,7 @@ export default function NineFitDieta() {
   const [dietContent, setDietContent] = useState<string>('');
   const [loadingContent, setLoadingContent] = useState(false);
   const [showLogForm, setShowLogForm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   
   // Real nutrition tracking from nutrition_logs
   const [consumed, setConsumed] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
@@ -183,6 +188,13 @@ export default function NineFitDieta() {
   };
 
   useEffect(() => { fetchAssignedDiets(); if (athleteId) supabase.from("vw_fitpro_diet_context" as any).select("diet_mode,diet_data").eq("athlete_id", athleteId).maybeSingle().then(({ data }) => { const row: any = data || {}; setDietMode(row.diet_mode || "self_guided"); const goal = Number(row.diet_data?.calories_goal || row.diet_data?.daily_calories || 0); if (goal > 0) setCaloriesGoal(goal); }); }, [athleteId]);
+
+  // Listener para abertura do scanner via evento global
+  useEffect(() => {
+    const onOpenScanner = () => setShowScanner(true);
+    window.addEventListener("9fit:open-food-scanner", onOpenScanner);
+    return () => window.removeEventListener("9fit:open-food-scanner", onOpenScanner);
+  }, []);
 
   // Realtime: re-fetch when diet assignments change for this student
   useRealtimeTable(
@@ -290,20 +302,78 @@ export default function NineFitDieta() {
           <DietaSkeleton />
         </div>
       ) : assignedDiets.length === 0 ? (
-        <div className="px-4 space-y-6">
+        <div className="px-4 space-y-5">
+          {/* Scanner de Alimentos IA Banner */}
+          <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
+                <ScanLine className="w-5 h-5 animate-pulse" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
+                  NOVO // SCANNER DE ALIMENTO IA
+                </span>
+                <p className="text-sm font-bold text-white truncate">Escanear Prato ou Rótulo</p>
+                <p className="text-[11px] text-neutral-400 truncate">Foto rápida calcula calorias e macros</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setShowScanner(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shrink-0 text-xs shadow cursor-pointer"
+            >
+              <Camera className="w-3.5 h-3.5 mr-1.5" />
+              Escanear
+            </Button>
+          </div>
+
           <div className="bg-card border border-border rounded-sm p-5">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Modo {dietMode === "self_guided" ? "autoguiado" : "sem plano ativo"}</p>
             <h2 className="text-lg font-bold text-foreground mt-1">Construa sua consistência alimentar</h2>
             <p className="text-sm text-muted-foreground mt-2">Registre refeições, acompanhe médias e ajuste suas escolhas com apoio do RON.</p>
           </div>
           <div className="bg-card border border-border rounded-sm p-4">
-            <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Calorias registradas hoje</span><Button size="sm" onClick={() => setShowLogForm(true)}><Plus className="w-3 h-3 mr-1" />Registrar</Button></div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Calorias registradas hoje</span>
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" onClick={() => setShowScanner(true)} className="bg-primary text-primary-foreground font-semibold text-xs">
+                  <Camera className="w-3.5 h-3.5 mr-1" />Escanear
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowLogForm(true)} className="text-xs">
+                  <Plus className="w-3 h-3 mr-1" />Manual
+                </Button>
+              </div>
+            </div>
             <p className="text-2xl font-bold text-foreground mt-2">{consumed.calories} kcal</p>
             <p className="text-xs text-muted-foreground mt-1">Meta inicial: {caloriesGoal} kcal</p>
           </div>
         </div>
       ) : (
         <div className="px-4 space-y-6">
+          {/* Scanner de Alimentos IA Banner */}
+          <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
+                <ScanLine className="w-5 h-5 animate-pulse" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
+                  NOVO // SCANNER DE ALIMENTO IA
+                </span>
+                <p className="text-sm font-bold text-white truncate">Escanear Prato ou Rótulo</p>
+                <p className="text-[11px] text-neutral-400 truncate">Calcule proteínas, calorias e porções</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setShowScanner(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shrink-0 text-xs shadow cursor-pointer"
+            >
+              <Camera className="w-3.5 h-3.5 mr-1.5" />
+              Escanear
+            </Button>
+          </div>
+
           {/* Assigned Diets Section */}
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
@@ -361,9 +431,14 @@ export default function NineFitDieta() {
                 <Flame className="w-4 h-4 text-primary" />
                 Acompanhamento Diário
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setShowLogForm(true)} className="border-primary text-primary hover:bg-primary/10">
-                <Plus className="w-3 h-3 mr-1" />Registrar
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" onClick={() => setShowScanner(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs cursor-pointer">
+                  <Camera className="w-3.5 h-3.5 mr-1" />Escanear
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowLogForm(true)} className="border-primary text-primary hover:bg-primary/10 text-xs cursor-pointer">
+                  <Plus className="w-3 h-3 mr-1" />Manual
+                </Button>
+              </div>
             </div>
 
             {/* Calorie Progress Bar */}
@@ -498,14 +573,34 @@ export default function NineFitDieta() {
         />
       )}
 
-      {/* FAB for adding meal */}
+      {/* Food Scanner Modal */}
       {athleteId && (
-        <button
-          onClick={() => setShowLogForm(true)}
-          className="fixed bottom-24 right-4 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-40"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
+        <FoodScannerModal
+          open={showScanner}
+          onClose={() => setShowScanner(false)}
+          athleteId={athleteId}
+          onSaved={() => athleteId && fetchNutritionLogs(athleteId)}
+        />
+      )}
+
+      {/* Floating Action Buttons */}
+      {athleteId && (
+        <div className="fixed bottom-24 right-4 flex flex-col gap-2.5 z-40">
+          <button
+            onClick={() => setShowScanner(true)}
+            className="w-12 h-12 bg-[#12131a] border border-primary/50 text-primary rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+            title="Escanear Prato / Alimento com IA"
+          >
+            <Camera className="w-5 h-5 animate-pulse" />
+          </button>
+          <button
+            onClick={() => setShowLogForm(true)}
+            className="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+            title="Registrar Refeição Manualmente"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        </div>
       )}
 
       <BottomNavigation />

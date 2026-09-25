@@ -76,8 +76,8 @@ export const APP_KNOWLEDGE_GRAPH = {
     {
       path: "/9fit/diet",
       name: "Nutrição & Dieta",
-      description: "Diário alimentar, registro de refeições, balanço de macronutrientes (Proteína, Carboidrato, Gordura), calorias e hidratação.",
-      primaryEntities: ["NutritionLogForm", "HydrationTracker"]
+      description: "Diário alimentar, Scanner de Alimentos IA (visão computacional para prato e rótulo), balanço de macronutrientes (Proteína, Carboidrato, Gordura), calorias e hidratação.",
+      primaryEntities: ["NutritionLogForm", "FoodScannerModal", "HydrationTracker"]
     },
     {
       path: "/9fit/recovery",

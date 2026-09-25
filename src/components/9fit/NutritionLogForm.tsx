@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Utensils, Sparkles } from "lucide-react";
+import { Plus, Utensils, Sparkles, Camera } from "lucide-react";
 
 interface NutritionLogFormProps {
   open: boolean;
@@ -117,6 +117,22 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
             Registrar Refeição
           </DialogTitle>
         </DialogHeader>
+
+        {/* Scanner de Alimentos IA */}
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            window.dispatchEvent(new CustomEvent("9fit:open-food-scanner"));
+          }}
+          className="w-full flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/40 hover:bg-primary/25 text-xs font-bold text-white transition-all cursor-pointer shadow-sm"
+        >
+          <span className="flex items-center gap-1.5 text-primary">
+            <Camera className="w-4 h-4" />
+            Escanear prato ou rótulo com Câmera IA
+          </span>
+          <span className="text-[10px] text-primary">Abrir Scanner →</span>
+        </button>
 
         {/* Assistente RON Concierge */}
         <button
