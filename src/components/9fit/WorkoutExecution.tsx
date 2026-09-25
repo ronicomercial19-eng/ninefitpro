@@ -455,6 +455,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       return;
     }
 
+    const hasCompletedSet = Object.values(completedSets).some((sets) => sets.some(Boolean));
+    const hasPartialExercise = exercises.some((exercise, index) => {
+      const done = completedSets[String(index)] || [];
+      return done.some(Boolean) && !done.every(Boolean);
+    });
+    if (hasCompletedSet && hasPartialExercise && !window.confirm("Você concluiu apenas parte das séries. Deseja finalizar como treino parcial?")) return;
+
     setPersisting(true);
     try {
       const { data, error } = await supabase.rpc("fn_complete_workout_execution", {
