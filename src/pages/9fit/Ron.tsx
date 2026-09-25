@@ -63,6 +63,7 @@ export default function NineFitRon() {
   const zapMessages = useZapMessages(zapThread.data);
   const sendZap = useSendZap(zapThread.data, user?.id);
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -80,7 +81,7 @@ export default function NineFitRon() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("ai_chat_messages" as any)
         .select("id, role, content, created_at")
         .eq("user_id", user.id)
@@ -89,6 +90,12 @@ export default function NineFitRon() {
         // 200 messages and discarded the current conversation.
         .order("created_at", { ascending: false })
         .limit(200);
+      if (error) {
+        setHistoryError("Não foi possível carregar o histórico do RON.");
+        setMessages([{ role: "assistant", content: "O histórico está temporariamente indisponível. Você ainda pode enviar uma nova mensagem." }]);
+        return;
+      }
+      setHistoryError(null);
       const hist = ((data as any[]) || []).reverse();
       if (hist.length === 0) {
         setMessages([{ role: "assistant", content: "Eu sou o RON. Memória persistente ativa. O que vamos otimizar agora?" }]);
@@ -306,6 +313,7 @@ export default function NineFitRon() {
         <h1 className="text-display text-3xl text-foreground mt-1">RON</h1>
         <p className="text-sm text-primary mt-1">Seu assistente de treino contextual</p>
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><span className={`h-2 w-2 rounded-full ${channelReady ? "bg-emerald-400" : channelConnecting ? "animate-pulse bg-amber-400" : "bg-destructive"}`} />{channelReady ? "Canal 9ZAP conectado" : channelConnecting ? "Conectando ao 9ZAP…" : "9ZAP indisponível"}<span className="ml-auto">Fichas: {remaining}</span></div>
+        {historyError && <button type="button" onClick={() => window.location.reload()} className="mt-2 text-[11px] font-semibold text-primary underline underline-offset-4">Recarregar histórico</button>}
         {channelError && <button type="button" onClick={() => void zapThread.refetch()} className="mt-2 text-[11px] font-semibold text-primary underline underline-offset-4">Reconectar canal</button>}
       </div>
 
