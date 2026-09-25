@@ -20,7 +20,7 @@ const ROWS: Array<{
   { key: "missao_avaliacao",       label: "Avaliação inicial feita",     cta: "Fazer avaliação", route: "/9fit/avaliacao-guiada" },
   { key: "missao_plano",           label: "Primeiro plano gerado",       cta: "Gerar plano",     route: "/9fit/planejamento" },
   { key: "missao_primeiro_treino", label: "Primeiro treino registrado",  cta: "Registrar agora", route: "/9fit/train" },
-  { key: "missao_3dias",           label: "3+ dias no Meu painel",       cta: "Abrir Meu painel", route: "/9fit/hub" },
+  { key: "missao_3dias",           label: "3+ dias ativos",              cta: "Abrir Hoje",       route: "/9fit/hub" },
   { key: "missao_7dias",           label: "7 dias de consistência",      cta: "Ver progresso",   route: "/9fit/progresso" },
 ];
 
