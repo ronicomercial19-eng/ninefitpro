@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users, Check, X, Loader2 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -51,6 +51,7 @@ export default function NineFitAulas() {
       .select("*")
       .gte("class_datetime", start)
       .lte("class_datetime", `${end}T23:59:59`)
+      .gte("class_datetime", new Date().toISOString())
       .order("class_datetime");
 
     if (!error && data) {
@@ -79,6 +80,13 @@ export default function NineFitAulas() {
     }
 
     setBookingLoading(classId);
+
+    const selectedClass = classes.find((item) => item.id === classId);
+    if (!selectedClass || isBefore(new Date(selectedClass.class_datetime), new Date())) {
+      toast.error("Só é possível agendar aulas futuras.");
+      setBookingLoading(null);
+      return;
+    }
 
     const { error } = await supabase.from("class_bookings").insert({
       class_id: classId,
