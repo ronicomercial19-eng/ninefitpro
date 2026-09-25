@@ -16,7 +16,7 @@ export function TrainingAdjustmentBanner() {
 
   const load = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("notifications").select("id,related_id,title,message").eq("user_id", user.id).eq("type", "training_adjustment").eq("is_read", false).order("created_at", { ascending: false }).limit(1);
+    const { data } = await supabase.from("notifications").select("id,related_id,title,message").eq("user_id", user.id).eq("type", "training_adjustment" as never).eq("is_read", false).order("created_at", { ascending: false }).limit(1);
     setItem((data?.[0] as AdjustmentNotification | undefined) ?? null);
   }, [user]);
 
