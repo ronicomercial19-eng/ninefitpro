@@ -22,7 +22,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci --no-audit --no-fund
+      # This repository intentionally does not commit an npm lockfile; use install
+      # so the quality gate can run from the package manifest on every branch.
+      - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run qa:fase2
       - run: npm run build
