@@ -18,13 +18,16 @@ export function useCredits(athleteId?: string | null) {
   const refresh = useCallback(async () => {
     if (!athleteId) { setState(empty); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("athlete_credits" as any)
       .select("credits_total, credits_used, credits_remaining, plan_type")
       .eq("athlete_id", athleteId)
       .maybeSingle();
     const row: any = data;
-    if (row) setState({
+    if (error) {
+      setState(empty);
+      toast.error("Não foi possível carregar suas fichas. Tente novamente.");
+    } else if (row) setState({
       total: row.credits_total ?? 0,
       used: row.credits_used ?? 0,
       remaining: row.credits_remaining ?? 0,
@@ -57,7 +60,11 @@ export function useCredits(athleteId?: string | null) {
       p_athlete_id: athleteId, p_amount: cost, p_reason: reason,
     });
     const res: any = data;
-    if (error || !res?.ok) {
+    if (error) {
+      toast.error("Não foi possível validar suas fichas. Tente novamente.");
+      return null;
+    }
+    if (!res?.ok) {
       toast.error("Fichas insuficientes. Recarregue para continuar.");
       return null;
     }
