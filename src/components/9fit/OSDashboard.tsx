@@ -590,8 +590,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {[
-                        { I: Dumbbell, label: 'Train', desc: 'Treinos e Séries', route: '/9fit/train' },
-                        { I: Share2, label: 'Hub', desc: 'Centro do Atleta', route: '/9fit/hub' },
+                        { I: Dumbbell, label: 'Treinos', desc: 'Treinos e séries', route: '/9fit/train' },
+                        { I: Share2, label: 'Resumo', desc: 'Centro do atleta', route: '/9fit/hub' },
                         { I: Users, label: 'Staff', desc: 'Personal & Equipe', route: '/9fit/staff' },
                         { I: Tag, label: 'Market', desc: 'Protocolos & Planos', route: '/9fit/protocols' },
                       ].map(({ I, label, desc, route }) => (
