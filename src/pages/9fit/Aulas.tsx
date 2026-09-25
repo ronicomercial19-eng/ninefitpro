@@ -13,6 +13,8 @@ interface GymClass {
   class_datetime: string;
   location: string;
   instructor_name: string | null;
+  instructor_id?: string | null;
+  service_id?: string | null;
   available_slots: number;
   description: string | null;
 }
@@ -90,6 +92,8 @@ export default function NineFitAulas() {
 
     const { error } = await supabase.from("class_bookings").insert({
       class_id: classId,
+      instructor_id: selectedClass?.instructor_id ?? null,
+      service_id: selectedClass?.service_id ?? null,
       user_id: user.id,
       user_email: user.email || "",
       status: "confirmed",
