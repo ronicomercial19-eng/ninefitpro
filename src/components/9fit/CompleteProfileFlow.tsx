@@ -12,6 +12,12 @@ interface ProfileForm { full_name: string; height_cm: string | number; weight_kg
 interface AthleteRow { id: string; name?: string | null; altura_cm?: number | null; peso_kg?: number | null; age?: number | null; avatar_url?: string | null; }
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { mark } = useActivationProgress();
@@ -131,18 +137,19 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
 
   return (
     <AnimatePresence>
-      <motion.div className="fixed inset-0 z-50 bg-black/85 flex items-end sm:items-center justify-center p-4"
+      <motion.div role="dialog" aria-modal="true" aria-labelledby="complete-profile-title" className="fixed inset-0 z-50 bg-black/85 flex items-end sm:items-center justify-center p-4"
+        onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
         <motion.div className="w-full max-w-md rounded-3xl border border-primary/40 bg-card p-5 max-h-[90vh] overflow-y-auto"
           initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
+              <p id="complete-profile-title" className="text-[10px] uppercase tracking-widest text-primary font-bold">
                 {editOnly ? "Ajustar Perfil" : "Completar Perfil"}
               </p>
               {!editOnly && <p className="text-xs text-muted-foreground">Etapa {step + 1} de 5</p>}
             </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-lg border border-white/10 grid place-items-center">
+            <button aria-label="Fechar completar perfil" onClick={onClose} className="w-8 h-8 rounded-lg border border-white/10 grid place-items-center">
               <X className="w-4 h-4" />
             </button>
           </div>
