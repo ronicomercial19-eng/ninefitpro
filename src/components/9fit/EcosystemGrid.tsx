@@ -525,7 +525,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           const src = m.hero_image || MODULE_IMAGES[m.key];
           const status = statusByKey[m.key] || "online";
           const online = status === "online";
-          const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
+          const label = online ? "Disponível" : status === "not_configured" ? "Ainda não configurado" : "Em preparação";
           const target =
             iframeByKey[m.key] || fallbackRoutes[m.key] || MODULE_META[m.key]?.defaultRoute || m.cta_route;
           const canOpen = Boolean(target);
