@@ -36,8 +36,9 @@ export function useCredits(athleteId?: string | null) {
 
   useEffect(() => {
     if (!athleteId) return;
+    const channelName = `credits-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const ch = supabase
-      .channel(`credits-${athleteId}`)
+      .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "athlete_credits", filter: `athlete_id=eq.${athleteId}` }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };

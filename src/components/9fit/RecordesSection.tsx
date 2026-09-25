@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerPersonalRecordToast } from "./PersonalRecordToast";
 
 /** Catálogo de testes por categoria — base para o fluxo de novo recorde. */
 export const CATEGORIAS: Record<string, { teste: string; unidade: string }[]> = {
@@ -83,6 +84,11 @@ export function RecordesSection({
       const result = data as RecordeResponse | null;
       if (!result?.ok) throw new Error(result?.error || "Falha ao registrar");
       toast.success("Recorde registrado");
+      triggerPersonalRecordToast({
+        exerciseName: teste,
+        newValue: v,
+        unit: unidade,
+      });
       setOpen(false);
       setValor("");
       onSaved?.();

@@ -20,7 +20,7 @@ export function HubWeeklyCounters({ treinos, nutri, minutos }: Props) {
       {items.map(({ label, value, suffix, Icon, cta, route }) => {
         const zero = !value || value === 0;
         return (
-          <div key={label} className="surface-card p-3 flex flex-col items-center text-center">
+          <div key={label} className="surface-card hub-card-interactive p-3 flex flex-col items-center text-center">
             <Icon className="w-4 h-4 text-primary mb-1" />
             <p className="text-label">{label}</p>
             <p className={`font-data text-2xl ${zero ? "text-muted-foreground" : "text-foreground"}`}>

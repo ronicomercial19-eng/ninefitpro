@@ -69,8 +69,9 @@ export const useAthleteActivation = (athleteId: string | undefined) => {
     fetchActivation();
 
     // 2) Realtime subscription
+    const channelName = `activation:${athleteId}:${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`activation:${athleteId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {

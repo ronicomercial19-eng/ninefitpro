@@ -19,7 +19,7 @@ export function ActivationMissionCard() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={() => navigate('/9fit/ativacao')}
-      className="w-full text-left relative rounded-2xl p-5 bg-gradient-to-br from-primary/[0.14] via-card/60 to-card/40 border border-primary/30 backdrop-blur-xl overflow-hidden hover:border-primary/50 transition"
+      className="w-full text-left relative hub-card-interactive rounded-2xl p-5 bg-gradient-to-br from-primary/[0.14] via-card/60 to-card/40 border border-primary/30 backdrop-blur-xl overflow-hidden hover:border-primary/50 transition"
     >
       <div className="absolute -top-16 -right-16 w-40 h-40 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
       <div className="relative flex items-center gap-3">

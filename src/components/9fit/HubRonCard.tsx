@@ -1,9 +1,9 @@
-import { Sparkles, ChevronRight, Activity } from "lucide-react";
+import { Sparkles, ChevronRight, Brain, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useUserState } from "@/hooks/useUserState";
 import { STATE_LABEL, STATE_COLOR, STATE_INSIGHT } from "@/services/adaptiveState";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
+import { useTiltCard } from "@/hooks/useTiltCard";
 
 interface Props {
   syncScore: number | null;
@@ -14,46 +14,97 @@ interface Props {
 export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   const navigate = useNavigate();
   const { state, reasoning } = useUserState();
-  const color = STATE_COLOR[state];
+  const color = STATE_COLOR[state] || "#FF6600";
   const insights = STATE_INSIGHT[state];
   const reliable = scoreStatus === "available" && syncScore !== null;
   const insight = reliable
     ? insights[Math.abs(Math.round(syncScore)) % insights.length] ?? insights[0]
     : scoreStatus === "stale"
-    ? "Seus sinais estão desatualizados. Registre uma nova leitura antes de ajustar o plano."
+    ? "Seus sinais precisam de nova leitura para calibrar o plano de hoje."
     : scoreStatus === "offline"
-    ? "Sem conexão agora. Não vou interpretar dados incompletos."
-    : "Ainda estamos reunindo dados para uma leitura confiável do seu dia.";
+    ? "Sem conexão agora. Modo offline mantendo a rotina segura."
+    : "Processando seus sinais para a leitura biométrica do seu dia.";
 
-  return <motion.button initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-    onClick={() => navigate(`/9fit/ron?context=hub_card&state=${state}`)}
-    className="w-full text-left rounded-2xl p-4 border backdrop-blur-xl relative overflow-hidden transition-all hover:scale-[1.005] active:scale-[0.99]"
-    style={{ borderColor: color + "40", background: `linear-gradient(135deg, ${color}10 0%, transparent 70%), hsl(var(--card) / 0.45)` }}>
-    <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full blur-3xl opacity-30 pointer-events-none"
-      style={{ background: color }} aria-hidden />
-    <div className="flex items-start gap-3 relative">
-      <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: color + "20", border: `1px solid ${color}55` }}>
-        <Sparkles className="w-4 h-4" style={{ color }} />
-      </motion.div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-[9px] tracking-[0.3em] uppercase font-bold" style={{ color }}>RON • PRESENÇA</span>
-          <span className="text-[8px] tracking-[0.2em] uppercase font-bold px-1.5 py-px rounded"
-            style={{ color, background: color + "15" }}>{STATE_LABEL[state]}</span>
+  const tiltRef = useTiltCard<HTMLButtonElement>({
+    haloColor: `${color}45`,
+    maxTilt: 5,
+    scale: 1.012,
+  });
+
+  return (
+    <button
+      ref={tiltRef}
+      type="button"
+      onClick={() => navigate(`/9fit/ron?context=hub_card&state=${state}`)}
+      className="w-full text-left hub-card-interactive rounded-2xl border p-4 sm:p-5 relative overflow-hidden group border-white/10 hover:border-primary/40 bg-gradient-to-r from-[#121318] via-[#0d0e12] to-[#0b0b0e] cursor-pointer shadow-xl shadow-black/60 transition-all duration-300"
+      style={{
+        boxShadow: `0 8px 30px -10px ${color}25`,
+      }}
+    >
+      {/* Luz Periférica & Halo Dinâmico */}
+      <div
+        className="absolute inset-0 opacity-15 pointer-events-none transition-opacity duration-500 group-hover:opacity-30"
+        style={{
+          background: `radial-gradient(circle at 10% 20%, ${color}, transparent 65%)`,
+        }}
+      />
+
+      {/* Hairline luminoso sutil com a cor de estado do Ron */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[1.5px] opacity-60 group-hover:opacity-100 transition-opacity"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+        }}
+      />
+
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {/* Header limpo e sofisticado do Mentor */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span
+              className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 rounded-full font-bold border transition-all"
+              style={{
+                background: `${color}18`,
+                borderColor: `${color}35`,
+                color,
+              }}
+            >
+              <Brain className="w-3 h-3" />
+              RON IA · {STATE_LABEL[state]}
+            </span>
+
+            <span className="flex items-center gap-1 text-[10px] font-mono text-[#FF6600]">
+              <Sparkles className="w-3 h-3 text-[#FF6600]" />
+              Gemini 3.8
+            </span>
+
+            <span className="flex items-center gap-1 text-[10px] font-mono text-neutral-400">
+              <Zap className="w-3 h-3 text-[#FF6600]" />
+              {syncScore === null
+                ? "Calibrando"
+                : `${Math.round(syncScore)}% sync${scoreStatus === "stale" ? " (obs)" : ""}`}
+            </span>
+          </div>
+
+          <p className="font-display text-base sm:text-lg font-semibold leading-snug text-white group-hover:text-white/95">
+            {name ? `${name}, ` : ""}{insight}
+          </p>
+
+          {reasoning && (
+            <p className="text-xs text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
+              {reasoning}
+            </p>
+          )}
         </div>
-        <p className="text-[14px] text-foreground font-semibold leading-snug mb-2">{name ? `${name}, ` : ""}{insight}</p>
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1"><Activity className="w-3 h-3" style={{ color }} />
-            {syncScore === null ? "Sync em calibração" : `Sync ${Math.round(syncScore)}${scoreStatus === "stale" ? " · desatualizado" : ""}`}
-          </span>
-          {reliable && <><span className="opacity-60">·</span><span className="truncate">{reasoning}</span></>}
+
+        {/* Botão de expansão tátil com halo */}
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border border-white/10 group-hover:border-white/30 bg-white/[0.04] transition-all mt-0.5"
+          style={{ color }}
+        >
+          <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </div>
-        <p className="text-[11px] mt-2.5 font-semibold tracking-wide inline-flex items-center gap-1" style={{ color }}>
-          Conversar com o RON <ChevronRight className="w-3.5 h-3.5" />
-        </p>
       </div>
-    </div>
-  </motion.button>;
+    </button>
+  );
 }

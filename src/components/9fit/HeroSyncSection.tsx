@@ -15,45 +15,44 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
   const headline =
     scoreStatus === "offline" ? "Você está sem conexão. O último estado não será recalculado." :
     scoreStatus === "error" ? "Não foi possível atualizar seus dados agora." :
-    scoreStatus === "loading" ? "Atualizando seus sinais…" :
+    scoreStatus === "loading" ? "Atualizando seus sinais biométricos…" :
     !measured ? "Seu sistema ainda está em calibração." :
     scoreStatus === "stale" ? "Seus dados precisam de uma nova leitura." :
-    syncScore >= 80 ? "Seu plano está em boa consistência." :
+    syncScore >= 80 ? "Seu plano está em máxima consistência." :
     syncScore >= 60 ? "Seu ritmo está estável. Vamos manter a consistência." :
-    "Há pouco sinal recente para ajustar seu plano com segurança.";
+    "Há pouco sinal recente para calibrar seu plano com precisão.";
 
   const timestamp = lastUpdate
-    ? new Date(lastUpdate).toLocaleString("pt-BR")
-    : scoreStatus === "offline" ? "offline"
-    : scoreStatus === "error" ? "erro de atualização"
-    : scoreStatus === "loading" ? "atualizando"
-    : "calibrando";
+    ? new Date(lastUpdate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : scoreStatus === "offline" ? "OFFLINE"
+    : scoreStatus === "error" ? "ERRO"
+    : scoreStatus === "loading" ? "ATUALIZANDO"
+    : "CALIBRANDO";
 
-  return <section className="journey-card relative w-full overflow-hidden">
-    <div className="relative aspect-[3/4] sm:aspect-[16/9] w-full">
-      <div className="absolute inset-0 bg-cover bg-center grayscale"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80')" }} aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/40" />
-      <div className="absolute inset-0 opacity-80" style={{ background: "var(--halo-primary)", mixBlendMode: "screen" }} aria-hidden />
-      <div className="relative h-full flex flex-col justify-end pb-10 px-6">
-        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="text-[10px] tracking-[0.4em] uppercase text-primary/80 font-data mb-2">
-          9FIT · HUB · {timestamp}
-        </motion.p>
-        <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          className="text-display text-3xl sm:text-5xl leading-tight max-w-md mb-6 text-foreground">{headline}</motion.h1>
-        <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
-          className="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
-          <div className="w-full max-w-[360px] shrink-0">
-            <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} />
-          </div>
-          <div className="min-w-0 border-l border-white/10 pl-4 pb-1 sm:max-w-[190px] sm:pl-5">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-primary/80 mb-1">Perfil conectado</p>
-            <p className="text-sm font-semibold text-foreground truncate">{name}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">HRV · sono · treino · nutrição · hidratação</p>
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  </section>;
+  return (
+    <section className="relative w-full px-4 pt-4 pb-2">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-4"
+      >
+        <div className="flex items-center justify-between text-[11px] font-mono tracking-widest text-muted-foreground uppercase">
+          <span className="text-primary font-bold">NINE PRO · FIT OS</span>
+          <span>{timestamp}</span>
+        </div>
+
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-mono">
+            {name ? `Olá, ${name}` : "Sincronia diária"}
+          </p>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-0.5 leading-tight">
+            {headline}
+          </h1>
+        </div>
+
+        <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} />
+      </motion.div>
+    </section>
+  );
 }

@@ -58,13 +58,21 @@ export function UpsellBanner({
   return (
     <>
       <AnimatePresence>
-        <motion.button
+        <motion.div
+          role="button"
+          tabIndex={0}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           onClick={() => setPaywallOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setPaywallOpen(true);
+            }
+          }}
           className={cn(
-            'w-full rounded-2xl p-3.5 flex items-center gap-3 backdrop-blur-xl text-left transition-all hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden',
+            'w-full rounded-2xl p-3.5 flex items-center gap-3 backdrop-blur-xl text-left transition-all hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden cursor-pointer select-none',
             className,
           )}
           style={{
@@ -87,13 +95,14 @@ export function UpsellBanner({
           </div>
           <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           <button
+            type="button"
             onClick={dismiss}
             aria-label="Dispensar"
-            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center text-muted-foreground"
+            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center text-muted-foreground z-10"
           >
             <X className="w-3 h-3" />
           </button>
-        </motion.button>
+        </motion.div>
       </AnimatePresence>
       <ContextualPaywall open={paywallOpen} onClose={() => setPaywallOpen(false)} context={context} />
     </>

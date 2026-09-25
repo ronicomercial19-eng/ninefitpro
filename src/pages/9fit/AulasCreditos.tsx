@@ -130,8 +130,9 @@ export default function AulasCreditos() {
   // Realtime
   useEffect(() => {
     if (!athleteId) return;
+    const channelName = `appts-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const ch = supabase
-      .channel(`appts-${athleteId}`)
+      .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "appointments", filter: `student_id=eq.${athleteId}` },
         () => fetchAppointments())
       .subscribe();

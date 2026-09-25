@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, Droplet, Dumbbell, Utensils, Award, Brain, Play, Pause } from "lucide-react";
+import { useTiltCard } from "@/hooks/useTiltCard";
 
 type ModuleDef = {
   id: string;
@@ -98,6 +99,13 @@ export function HubSequentialCarousel() {
 
   const m = MODULES[idx];
 
+  const tiltRef = useTiltCard<HTMLDivElement>({
+    maxTilt: 4.5,
+    scale: 1.012,
+    haloColor: "rgba(255, 102, 0, 0.28)",
+    haloSize: "320px",
+  });
+
   const textStyle: React.CSSProperties =
     m.style === "outline-orange"
       ? { WebkitTextStroke: "1.5px hsl(20 100% 50%)", color: "transparent" }
@@ -108,7 +116,10 @@ export function HubSequentialCarousel() {
       : { color: "hsl(0 0% 96%)" };
 
   return (
-    <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-black border border-primary/20">
+    <div
+      ref={tiltRef}
+      className="hub-card-interactive relative w-full h-56 rounded-2xl overflow-hidden bg-black border border-primary/20 transition-all duration-300"
+    >
       {/* gradient bg */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,hsla(20,100%,50%,0.18),transparent_60%)]" />
 

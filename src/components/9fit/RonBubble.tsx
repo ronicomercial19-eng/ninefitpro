@@ -44,7 +44,7 @@ export function RonBubble() {
               </motion.div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <p className="text-[9px] tracking-[0.25em] uppercase text-primary/80 font-semibold">RON</p>
+                  <p className="text-[9px] tracking-[0.25em] uppercase text-primary/80 font-semibold">RON · GEMINI</p>
                   <span
                     className="text-[8px] tracking-[0.2em] uppercase font-bold px-1.5 py-px rounded"
                     style={{ color: STATE_COLOR[state], background: STATE_COLOR[state] + '15' }}

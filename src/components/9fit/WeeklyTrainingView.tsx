@@ -89,7 +89,8 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
   useEffect(() => {
     loadWeek();
     if (!athleteId) return;
-    const ch = supabase.channel(`weekly-${athleteId}`)
+    const channelName = `weekly-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
+    const ch = supabase.channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "daily_workouts", filter: `athlete_id=eq.${athleteId}` }, loadWeek)
       .on("postgres_changes", { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` }, loadWeek)
       .subscribe();
@@ -133,63 +134,134 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       {!loading && days.map((d, i) => {
         const isToday = d.date === todayISO;
         const isDone = d.status === "completed";
+        const isRest = d.status === "rest";
+        const exerciseCount = d.exercises?.length || 0;
+
         return (
-          <div key={d.date + i}
-            className={`rounded-2xl border p-4 ${isToday ? "border-primary/60 bg-primary/[0.06]" : "border-white/10 bg-white/[0.03]"} ${isDone ? "opacity-70" : ""}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
-                  D{i + 1} · {d.day_label} {isToday && "· HOJE"} {isDone && "· ✔"}
-                </p>
-                <p className="font-display text-lg">
-                  {d.status === "rest" ? "Descanso" : `${d.exercises.length} exercícios`}
-                </p>
-              </div>
-              {isDone ? (
-                <span className="rounded-full bg-primary/20 text-primary px-3 py-1 text-xs font-bold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" /> Concluído
-                </span>
-              ) : d.status !== "rest" && d.exercises.length > 0 ? (
-                <div className="flex items-center gap-2">
-                  <button onClick={() => onExecuteToday(d)}
-                    className="nine-pro-gradient nine-pro-clip text-primary-foreground px-4 py-2 text-xs font-bold flex items-center gap-1">
-                    <Play className="w-3.5 h-3.5" /> Executar
-                  </button>
-                  {isToday && (
-                    <span className="text-[10px] uppercase tracking-wider text-primary/80">Hoje</span>
+          <div
+            key={d.date + i}
+            className={`relative rounded-xl overflow-hidden border transition-all duration-300 group shadow-lg ${
+              isToday
+                ? "border-primary/50 shadow-primary/10"
+                : "border-white/[0.08] hover:border-white/20"
+            } ${isDone ? "opacity-75" : ""}`}
+          >
+            {/* Fundo Retangular Escuro com Gradiente Direcional e Vinheta */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0c0d12] via-[#0f1118] to-[#0a0b0f] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff06_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+            
+            {/* Hairline luminoso sutil no topo do card ativo */}
+            {isToday && (
+              <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+            )}
+
+            {/* Layout em Grid / Split Horizontal no estilo da referência */}
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 min-h-[140px]">
+              {/* Coluna Esquerda (7 cols): Destaque Tipográfico, Headline e Descrição */}
+              <div className="p-4 sm:p-5 md:col-span-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-white/[0.06] bg-gradient-to-br from-black/40 to-transparent">
+                <div>
+                  {/* Eyebrow técnico laranja / tracking largo */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-mono tracking-[0.25em] text-primary font-bold uppercase">
+                      DIA 0{i + 1} // {d.day_label.toUpperCase()}
+                    </span>
+                    {isToday && (
+                      <span className="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[8px] font-mono font-bold tracking-wider uppercase border border-primary/30 animate-pulse">
+                        HOJE
+                      </span>
+                    )}
+                    {isDone && (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold tracking-wider uppercase border border-emerald-500/30">
+                        CONCLUÍDO
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Headline de Alto Impacto: tipografia robusta, clean, sem serafins */}
+                  <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white font-display leading-tight">
+                    {isRest ? "Recuperação Ativa & Descanso" : `Sessão de Força ${d.day_label}`}
+                  </h3>
+
+                  {/* Descrição do Treino */}
+                  <p className="text-xs text-neutral-400 mt-1.5 line-clamp-2 max-w-md font-normal leading-relaxed">
+                    {isRest
+                      ? "Dia planejado para regeneração miofascial, hidratação celular e adaptação neural dos ciclos anteriores."
+                      : `Prescrição neuromotora com ${exerciseCount} blocos de exercícios calibrados para o seu objetivo.`}
+                  </p>
+                </div>
+
+                {/* Métricas e Ação na Base */}
+                <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-white/[0.05]">
+                  <div className="flex items-center gap-3 text-[10px] font-mono text-neutral-400">
+                    <span className="flex items-center gap-1">
+                      <Dumbbell className="w-3 h-3 text-primary" />
+                      {isRest ? "0 Exercícios" : `${exerciseCount} Exercícios`}
+                    </span>
+                    {!isRest && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-primary" />
+                          {new Date(d.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {!isRest && (
+                    <button
+                      type="button"
+                      onClick={() => onExecuteToday(d)}
+                      className="py-2 px-4 rounded-lg font-bold text-xs flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>{isDone ? "Refazer Treino" : "Executar Treino"}</span>
+                    </button>
                   )}
                 </div>
-              ) : (
-                <div className="text-muted-foreground"><Lock className="w-4 h-4" /></div>
-              )}
-            </div>
+              </div>
 
-            {/* FIX (player guiado): cada exercício também abre o player
-                guiado no exercício certo em vez do link do YouTube em nova
-                aba — clicar em qualquer item leva direto para a execução
-                posicionada nesse exercício. */}
-            {d.exercises?.length > 0 && (
-              <ul className="space-y-1.5 mt-3">
-                {d.exercises.slice(0, 8).map((e, j) => (
-                  <li key={j}>
-                    <button
-                      onClick={() => onExecuteToday(d)}
-                      className="w-full flex items-center gap-2 text-xs text-left hover:text-primary transition-colors"
-                    >
-                      <Dumbbell className="w-3 h-3 text-muted-foreground shrink-0" />
-                      <span className="flex-1 truncate">{e.name}</span>
-                      {(e.sets || e.reps) && (
-                        <span className="text-muted-foreground">{e.sets}{e.reps ? `×${e.reps}` : ""}</span>
-                      )}
-                      {e.video_url && <Play className="w-3 h-3 text-primary shrink-0" />}
-                    </button>
-                  </li>
-                ))}
-                {d.exercises.length > 8 && (
-                  <li className="text-[10px] text-muted-foreground pl-5">+ {d.exercises.length - 8} exercícios</li>
+              {/* Coluna Direita (5 cols): Grid de Itens / Exercícios com Checkmark no padrão da imagem */}
+              <div className="p-4 sm:p-5 md:col-span-5 flex flex-col justify-center bg-black/20">
+                {isRest ? (
+                  <div className="text-center py-4 text-neutral-500">
+                    <p className="text-xs font-mono uppercase tracking-widest text-neutral-400">STATUS DO DIA</p>
+                    <p className="text-sm text-neutral-300 mt-1">Nenhum exercício programado</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-2">
+                    {d.exercises.slice(0, 4).map((e, j) => (
+                      <button
+                        key={j}
+                        type="button"
+                        onClick={() => onExecuteToday(d)}
+                        className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-primary/40 transition-all text-left cursor-pointer group/item"
+                      >
+                        {/* Checkmark Laranja no padrão da imagem enviada */}
+                        <Check className="w-3.5 h-3.5 text-primary shrink-0 stroke-[2.5]" />
+                        <span className="text-xs font-bold text-neutral-200 tracking-wide uppercase truncate group-hover/item:text-primary transition-colors flex-1 font-display">
+                          {e.name}
+                        </span>
+                        {(e.sets || e.reps) && (
+                          <span className="text-[10px] font-mono text-neutral-400 shrink-0">
+                            {e.sets}{e.reps ? `×${e.reps}` : ""}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                    {d.exercises.length > 4 && (
+                      <button
+                        type="button"
+                        onClick={() => onExecuteToday(d)}
+                        className="text-[10px] font-mono uppercase tracking-widest text-primary/80 hover:text-primary pt-1 text-left pl-2 cursor-pointer transition-colors"
+                      >
+                        + {d.exercises.length - 4} exercícios prescritos
+                      </button>
+                    )}
+                  </div>
                 )}
-              </ul>
-            )}
+              </div>
+            </div>
           </div>
         );
       })}

@@ -349,7 +349,112 @@
   .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
   .animate-pulse-slow { animation: pulseSlow 2.4s ease-in-out infinite; }
   .animate-spin-slow { animation: spin 3s linear infinite; }
-  .animate-shimmer {
+  .animate-ping-slow { animation: pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+  .animate-float-subtle { animation: floatSubtle 4s ease-in-out infinite; }
+  .animate-glow-breathe { animation: glowBreathe 3s ease-in-out infinite; }
+
+  /* Micro-interações táteis e brilho periférico nos cards */
+  .hub-card-interactive {
+    position: relative;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    will-change: transform, box-shadow;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease-out, border-color 0.28s ease-out;
+    --halo-x: 50%;
+    --halo-y: 50%;
+    --halo-opacity: 0;
+    --halo-color: rgba(255, 102, 0, 0.24);
+    --halo-size: 320px;
+  }
+  .hub-card-interactive::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: radial-gradient(var(--halo-size, 320px) circle at var(--halo-x, 50%) var(--halo-y, 50%), var(--halo-color, rgba(255, 102, 0, 0.24)), transparent 72%);
+    opacity: var(--halo-opacity, 0);
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 0.3s ease-out;
+  }
+  .hub-card-interactive:hover,
+  .hub-card-interactive:focus-within,
+  .hub-card-interactive:focus-visible {
+    --halo-opacity: 1;
+    transform: perspective(1000px) rotateX(1.8deg) translateY(-3px) scale(1.012);
+    box-shadow: 
+      0 0 0 1px rgba(255, 102, 0, 0.35),
+      0 0 32px -4px rgba(255, 102, 0, 0.3),
+      0 16px 36px -8px rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 102, 0, 0.45) !important;
+    outline: none;
+  }
+  .hub-card-interactive:active {
+    transform: perspective(1000px) scale(0.99) translateY(-1px);
+    box-shadow: 
+      0 0 16px -2px rgba(255, 102, 0, 0.35),
+      0 8px 20px -4px rgba(0, 0, 0, 0.85);
+  }
+
+  /* Squircle tátil orgânico estilo FitOS Console */
+  .squircle-interactive {
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform, box-shadow;
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s ease-out, border-color 0.24s ease-out;
+    --halo-x: 50%;
+    --halo-y: 50%;
+    --halo-opacity: 0;
+    --halo-color: rgba(255, 102, 0, 0.32);
+    --halo-size: 180px;
+  }
+  .squircle-interactive:hover,
+  .squircle-interactive:focus-visible {
+    transform: perspective(600px) rotateX(2.2deg) translateY(-3px) scale(1.03);
+    box-shadow: 
+      0 0 0 1px rgba(255, 102, 0, 0.35),
+      0 0 24px -2px rgba(255, 102, 0, 0.32),
+      0 12px 24px -6px rgba(0, 0, 0, 0.75);
+    border-color: rgba(255, 102, 0, 0.45) !important;
+    outline: none;
+  }
+  .squircle-interactive:active {
+    transform: perspective(600px) translateY(0px) scale(0.96);
+  }
+  .squircle-interactive::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: radial-gradient(var(--halo-size, 180px) circle at var(--halo-x, 50%) var(--halo-y, 50%), var(--halo-color, rgba(255, 102, 0, 0.32)), transparent 70%);
+    opacity: var(--halo-opacity, 0);
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.25s ease-out;
+  }
+  .squircle-interactive:hover,
+  .squircle-interactive:focus-visible {
+    box-shadow: 0 0 22px -2px rgba(255, 102, 0, 0.35), 0 8px 24px -4px rgba(0,0,0,0.8);
+    border-color: rgba(255, 102, 0, 0.5) !important;
+    outline: none;
+  }
+  .squircle-interactive:active {
+    transform: scale(0.94);
+  }
+
+  /* Pódio 3D Isométrico */
+  .podium-card {
+    @apply relative transition-all duration-300 ease-out rounded-2xl;
+    background: radial-gradient(120% 120% at 50% 10%, #15161c 0%, #0c0d11 60%, #07070a 100%);
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.9), inset 0 1px 0 0 rgba(255,255,255,0.08);
+  }
+  .podium-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 36px -8px rgba(0,0,0,0.95), 0 0 28px -4px rgba(255,102,0,0.3), inset 0 1px 0 0 rgba(255,102,0,0.4);
+    border-color: rgba(255,102,0,0.45) !important;
+  }
+
+  .title-9fit {
     animation: shimmer 1.6s infinite;
     background: linear-gradient(90deg,
       hsl(var(--card)) 0%,
@@ -388,6 +493,18 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+@keyframes pingSlow {
+  0% { transform: scale(1); opacity: 0.9; }
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes floatSubtle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes glowBreathe {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(255,102,0,0.5)); opacity: 0.9; }
+  50% { filter: drop-shadow(0 0 24px rgba(255,102,0,0.85)); opacity: 1; }
 }
 
 ::-webkit-scrollbar { width: 6px; }

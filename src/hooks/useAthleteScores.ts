@@ -165,8 +165,9 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     window.addEventListener("offline", onOffline);
     window.addEventListener("online", onOnline);
 
+    const channelName = `hub-snapshot:${athleteId}:${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`hub-snapshot:${athleteId}`)
+      .channel(channelName)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs" },
         (payload: any) => {
           const userId = payload?.new?.user_id;

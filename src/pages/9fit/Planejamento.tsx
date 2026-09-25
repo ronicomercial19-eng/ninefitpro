@@ -115,8 +115,9 @@ export default function NineFitPlanejamento() {
     loadPlan();
 
     // Realtime: reage a mudanças em athlete_periodizations e periodization_plans_remote
+    const channelName = `athlete-periodization-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`athlete-periodization-${athleteId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "athlete_periodizations", filter: `athlete_id=eq.${athleteId}` },
