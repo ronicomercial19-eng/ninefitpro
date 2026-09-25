@@ -70,7 +70,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
       localStorage.setItem(STORAGE_KEY, new Date().toDateString());
       setDone(true);
       onComplete?.(score);
-      toast.success(`Sync calibrada: ${score}%`);
+      toast.success(`SYNC atualizada: ${score}%`);
       window.dispatchEvent(new CustomEvent("9fit:sync_updated", { detail: { score } }));
     }
   };
@@ -82,8 +82,8 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
           <Check className="w-4 h-4 text-primary" />
         </div>
         <div>
-          <p className="text-xs uppercase tracking-widest text-primary font-bold">Sync calibrada hoje</p>
-          <p className="text-xs text-muted-foreground">Volte amanhã para recalibrar o sistema.</p>
+          <p className="text-xs uppercase tracking-widest text-primary font-bold">SYNC atualizada hoje</p>
+          <p className="text-xs text-muted-foreground">Volte amanhã para fazer um novo check-in.</p>
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   return (
     <div className="rounded-2xl border border-primary/30 bg-card/30 p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Calibração diária</p>
+        <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Check-in diário</p>
         <p className="text-[10px] text-muted-foreground font-data">{step + 1}/{QUESTIONS.length}</p>
       </div>
       <AnimatePresence mode="wait">

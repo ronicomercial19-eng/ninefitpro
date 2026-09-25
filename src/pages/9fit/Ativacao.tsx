@@ -429,7 +429,7 @@ export default function NineFitAtivacao() {
               <div>
                 <p className="text-[10px] font-mono text-primary uppercase tracking-widest font-black">Etapa 01</p>
                 <h2 className="text-2xl font-black tracking-tight mt-1">Ficha Técnica</h2>
-                <p className="text-sm text-muted-foreground mt-1">Precisamos entender seu perfil para calibrar o motor de treino.</p>
+                <p className="text-sm text-muted-foreground mt-1">Precisamos entender seu perfil para ajustar seu plano de treino.</p>
               </div>
 
               <div>

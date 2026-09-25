@@ -13,10 +13,10 @@ interface EmptyStateProps {
 
 // "Vazio com peso" — copy editorial canônico
 const PRESETS: Record<NonNullable<EmptyStateProps['variant']>, { icon: LucideIcon; title: string; description: string }> = {
-  'no-coach':    { icon: UserPlus, title: 'O sistema ainda não te conhece',     description: 'Complete seu onboarding para o RON começar a calibrar.' },
+  'no-coach':    { icon: UserPlus, title: 'Vamos começar pelo seu perfil',     description: 'Responda algumas perguntas para o RON entender seu momento.' },
   'no-protocol': { icon: Library,  title: 'Nenhum protocolo atribuído',         description: 'Explore a biblioteca ou aguarde seu coach atribuir um.' },
   'ron-only':    { icon: Brain,    title: 'RON disponível. Humanos: a caminho.', description: 'Enquanto isso, converse com seu copiloto neural.' },
-  'no-data':     { icon: Sparkles, title: 'Sem dados ainda. RON está observando.', description: 'Os primeiros sinais aparecem assim que você registrar atividade.' },
+  'no-data':     { icon: Sparkles, title: 'Ainda não há dados por aqui', description: 'Registre uma atividade para acompanhar sua evolução.' },
   'no-history':  { icon: Inbox,    title: 'Sem histórico por aqui',             description: 'Quando você começar, sua jornada vai aparecer neste espaço.' },
   'custom':      { icon: Sparkles, title: '',                                    description: '' },
 };
