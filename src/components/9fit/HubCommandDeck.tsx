@@ -126,7 +126,7 @@ function SyncDial({ score }: { score: number | null }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-neutral-400 font-semibold">SYNC</span>
+        <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-neutral-400 font-semibold">SINCRONIZAÇÃO</span>
         <span className="text-xl sm:text-2xl font-bold tracking-tight text-white tabular-nums font-mono leading-none my-0.5">
           {score === null ? "—" : score}
         </span>

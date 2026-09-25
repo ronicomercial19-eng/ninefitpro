@@ -107,7 +107,7 @@ export function DigitalIDCard({ name, level, classTier, syncScore, totalXP, stre
           {/* XP bar — única barra, decisão principal do card */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] tracking-widest uppercase text-muted-foreground">XP NEXT LEVEL</span>
+              <span className="text-[9px] tracking-widest uppercase text-muted-foreground">XP para o próximo nível</span>
               <span className="text-[10px] font-data text-foreground">{totalXP.toLocaleString('pt-BR')} XP</span>
             </div>
             <div className="h-1.5 rounded-full bg-elevated overflow-hidden">
