@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
   ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
@@ -13,7 +13,42 @@ import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { toast } from "sonner";
+import type { WorkoutExecutionStatus } from "@/types/training";
 
+
+interface WorkoutExercise {
+  exercise_id?: string;
+  name?: string;
+  sets?: number;
+  reps?: string | number;
+  rest_seconds?: number;
+  tempo?: string;
+  target_muscles?: string[];
+  notes?: string;
+  video_url?: string;
+  gif_url?: string;
+  training_day?: string;
+  override_locked?: boolean;
+  [key: string]: unknown;
+}
+
+interface TrainingData { exercises?: WorkoutExercise[]; }
+interface PrescricaoExercise {
+  id?: string;
+  nome?: string;
+  series?: number;
+  reps?: string | number;
+  descanso?: string | number;
+  cadencia?: string;
+  grupo_muscular?: string;
+  nota_tecnica?: string;
+}
+interface PrescricaoResult { treino?: Record<string, PrescricaoExercise[]>; }
+interface DailyOverride {
+  exercises?: WorkoutExercise[];
+  intensity_pct?: number;
+  fatigue_adjustment?: number;
+}
 
 interface TrainingAssignment {
   id: string;
@@ -25,7 +60,7 @@ interface TrainingAssignment {
   is_active: boolean;
   training_type?: string;
   html_file_url?: string;
-  training_data?: any;
+  training_data?: TrainingData;
   execution_id?: string;
 }
 
@@ -39,11 +74,11 @@ interface WorkoutExecutionProps {
 // FIX SISTEMA (guided player como destino padrão): converte o retorno de
 // prescrever_treino (blocos reset/neural/integracao/bloco9) no mesmo shape
 // de exercises[] que o componente já consome quando training_type='structured'.
-function flattenPrescricao(resultado: any): any[] {
+function flattenPrescricao(resultado: PrescricaoResult): WorkoutExercise[] {
   const t = resultado?.treino;
   if (!t) return [];
   const blocos = ['neural', 'bloco9', 'integracao', 'reset'];
-  const out: any[] = [];
+  const out: WorkoutExercise[] = [];
   for (const bloco of blocos) {
     const lista = Array.isArray(t[bloco]) ? t[bloco] : [];
     for (const ex of lista) {
@@ -86,14 +121,14 @@ const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta"
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
   // Live training data + realtime patches from daily_workouts.changes_json
   const [liveTraining, setLiveTraining] = useState<TrainingAssignment>(training);
-  const [dailyOverride, setDailyOverride] = useState<any>(null);
+  const [dailyOverride, setDailyOverride] = useState<DailyOverride | null>(null);
 
   const todayKey = WEEKDAY_KEYS[new Date().getDay()];
   const todayISO = new Date().toISOString().slice(0, 10);
 
   // Apply daily override (from ajuste-treino) on top of base exercises
   const baseExercises = liveTraining.training_data?.exercises || [];
-  const todayBase = baseExercises.filter((e: any) => e.training_day === todayKey);
+  const todayBase = baseExercises.filter((e) => e.training_day === todayKey);
   const baseList = todayBase.length > 0 ? todayBase : baseExercises;
 
   // FIX SISTEMA: exercícios resolvidos dinamicamente via prescrever_treino
@@ -108,7 +143,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   // iframe antigo aparecia no lugar do player guiado mesmo quando a
   // resolução ia funcionar — era exatamente o "abriu e não teve player".
   const hasStaticExercisesInit = baseExercises.length > 0;
-  const [resolvedExercises, setResolvedExercises] = useState<any[] | null>(null);
+  const [resolvedExercises, setResolvedExercises] = useState<WorkoutExercise[] | null>(null);
   const [resolvingPlayer, setResolvingPlayer] = useState(
     liveTraining.training_type !== 'link' && !hasStaticExercisesInit,
   );
@@ -126,7 +161,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     (async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const { data, error } = await supabase.rpc('prescrever_treino' as any, {
+        const { data, error } = await supabase.rpc('prescrever_treino', {
           p_aluno_id: athleteId,
           p_data: today,
         });
@@ -149,7 +184,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     if (Array.isArray(dailyOverride.exercises)) return dailyOverride.exercises;
     if (dailyOverride.intensity_pct || dailyOverride.fatigue_adjustment) {
       const factor = (dailyOverride.intensity_pct ?? 100) / 100;
-      return source.map((e: any) => ({
+      return source.map((e) => ({
         ...e,
         sets: Math.max(1, Math.round((e.sets || 3) + (dailyOverride.fatigue_adjustment ?? 0))),
         _adjusted: true,
@@ -170,21 +205,21 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const currentExercise = exercises[currentIdx];
 
   // Load initial override + subscribe to realtime changes on daily_workouts
-  const refreshDaily = async () => {
+  const refreshDaily = useCallback(async () => {
     const { data } = await supabase
       .from("daily_workouts")
       .select("changes_json, override_locked, updated_at")
       .eq("athlete_id", athleteId)
       .eq("workout_date", todayISO)
       .maybeSingle();
-    if (data?.changes_json) setDailyOverride(data.changes_json);
-  };
+    if (data?.changes_json) setDailyOverride(data.changes_json as DailyOverride);
+  }, [athleteId, todayISO]);
 
-  useEffect(() => { refreshDaily(); /* eslint-disable-next-line */ }, [athleteId]);
+  useEffect(() => { void refreshDaily(); }, [refreshDaily]);
 
   useRealtimeTable(
     { table: "daily_workouts", filter: `athlete_id=eq.${athleteId}`, enabled: !!athleteId },
-    (payload: any) => {
+    (payload: { new?: Record<string, unknown> }) => {
       const row = payload.new;
       if (row?.workout_date === todayISO && row?.changes_json) {
         setDailyOverride(row.changes_json);
@@ -203,7 +238,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .eq("id", training.id)
         .maybeSingle();
       if (data) {
-        setLiveTraining(data as any);
+        setLiveTraining(data as unknown as TrainingAssignment);
         toast.info("Treino atualizado pelo seu professor");
       }
     },
@@ -226,12 +261,14 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [persisting, setPersisting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [executionAttempt, setExecutionAttempt] = useState(0);
+  const [executionStatus, setExecutionStatus] = useState<WorkoutExecutionStatus>('in_progress');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (training.execution_id) {
         setExecutionId(training.execution_id);
+        setExecutionStatus('in_progress');
         const { data: savedSets, error: setsError } = await supabase.from("workout_exercise_sets")
           .select("exercise_order, set_number, completed, actual_weight")
           .eq("execution_id", training.execution_id);
@@ -252,7 +289,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .from("workout_executions")
         .select("id")
         .eq("athlete_id", athleteId)
-        .in("status", ["started", "in_progress", "paused"])
+        .in("status", ["in_progress"])
         .order("created_at", { ascending: false })
         .limit(1);
 
@@ -268,12 +305,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       const { data, error } = existing?.id
         ? { data: existing.id, error: null }
         : training.daily_workout_id
-          ? await supabase.rpc("fn_start_daily_workout_execution" as any, {
+          ? await supabase.rpc("fn_start_daily_workout_execution", {
               p_daily_workout_id: training.daily_workout_id,
-            } as any)
-          : await supabase.rpc("fn_start_workout_execution" as any, {
+            })
+          : await supabase.rpc("fn_start_workout_execution", {
               p_assignment_id: training.id,
-            } as any);
+            });
       if (cancelled) return;
       if (error || !data) {
         setExecutionError("Não foi possível iniciar uma execução persistente.");
@@ -282,6 +319,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
       const id = String(data);
       setExecutionId(id);
+      setExecutionStatus('in_progress');
       const { data: savedSets, error: setsError } = await supabase
         .from("workout_exercise_sets")
         .select("exercise_order, set_number, completed, actual_weight")
@@ -303,7 +341,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     })();
 
     return () => { cancelled = true; };
-  }, [training.id, executionAttempt]);
+  }, [training.id, training.execution_id, training.daily_workout_id, athleteId, todayISO, executionAttempt]);
 
   // HTML content (for html-type trainings) — só carrega quando o player
   // guiado não conseguiu resolver exercícios de nenhuma forma (fallback final)
@@ -342,7 +380,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       setTimerInitial(currentExercise.rest_seconds);
       setTimerSeconds(currentExercise.rest_seconds);
     }
-  }, [currentIdx]);
+  }, [currentIdx, currentExercise?.rest_seconds, isStructured]);
 
   // Load HTML content — só como último recurso, quando não há exercícios
   // estruturados nem estáticos nem resolvidos via prescrever_treino, e a
@@ -388,7 +426,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
     const exercise = exercises[exerciseIdx] ?? {};
     const parsedReps = Number.parseInt(String(exercise.reps ?? exercise.reps_range ?? ""), 10);
-    const { error } = await supabase.rpc("fn_save_workout_set" as any, {
+    const { error } = await supabase.rpc("fn_save_workout_set", {
       p_execution_id: executionId,
       p_exercise_name: String(exercise.name ?? "Exercício"),
       p_exercise_order: exerciseIdx,
@@ -399,7 +437,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       p_planned_reps: String(exercise.reps ?? exercise.reps_range ?? ""),
       p_rest_seconds: exercise.rest_seconds ?? null,
       p_tempo: exercise.tempo ?? null,
-    } as any);
+    });
     setPersisting(false);
 
     if (error) {
@@ -419,10 +457,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
     setPersisting(true);
     try {
-      const { data, error } = await supabase.rpc("fn_complete_workout_execution" as any, {
+      const { data, error } = await supabase.rpc("fn_complete_workout_execution", {
         p_execution_id: executionId,
         p_duration_seconds: workoutSeconds,
-      } as any);
+      });
 
       if (error) {
         const message = error.message?.toLowerCase() ?? "";
@@ -434,20 +472,21 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         return;
       }
 
-      if (!(data as any)?.ok) {
-        toast.error((data as any)?.error === "no_completed_sets"
+      if (!(data && typeof data === "object" && "ok" in data && data.ok)) {
+        toast.error((data && typeof data === "object" && "error" in data && data.error === "no_completed_sets")
           ? "Conclua ao menos uma série antes de finalizar."
-          : `Não foi possível concluir: ${(data as any)?.error || "resposta inválida do servidor"}`);
+          : `Não foi possível concluir: ${(data && typeof data === "object" && "error" in data ? String(data.error) : "resposta inválida do servidor")}`);
         return;
       }
 
       if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+      setExecutionStatus('completed');
       await mirrorEvent("workout_completed", {
         execution_id: executionId,
         training_id: training.id,
         training_name: liveTraining.training_name,
         duration_seconds: workoutSeconds,
-        completed_sets: (data as any).completed_sets,
+        completed_sets: (data && typeof data === "object" && "completed_sets" in data ? data.completed_sets : 0),
       });
       setShowPSE(true);
     } catch (err) {
@@ -655,7 +694,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             {/* Exercise List Mini */}
             <div className="space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Todos os exercícios</p>
-              {exercises.map((ex: any, idx: number) => {
+              {exercises.map((ex, idx: number) => {
                 const allDone = (completedSets[`${idx}`] || []).length > 0 &&
                   (completedSets[`${idx}`] || []).every(Boolean);
                 return (
@@ -698,6 +737,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         )}
       </div>
 
+      {isStructured && <>
       {/* Bottom Controls */}
       <div className="flex-shrink-0 bg-card border-t border-border">
         {/* Rest Timer */}
@@ -761,16 +801,18 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
         {/* Finish */}
         <div className="px-4 py-3">
-          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting}
+          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting || executionStatus === 'completed'}
             className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">
             {persisting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
             {persisting ? "Salvando..." : "Concluir Treino"}
           </Button>
         </div>
       </div>
+      </>}
 
       <PostWorkoutModal open={showPSE} onClose={() => { setShowPSE(false); onFinish(); }}
-        athleteId={athleteId} trainingName={liveTraining.training_name} />
+        athleteId={athleteId} executionId={executionId} trainingName={liveTraining.training_name} />
     </div>
   );
 }
+

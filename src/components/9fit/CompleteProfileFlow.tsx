@@ -9,7 +9,7 @@ import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
 interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }
-interface LegacyAthleteRow { id: string; full_name?: string | null; height_cm?: number | null; weight_kg?: number | null; age?: number | null; }
+interface AthleteRow { id: string; name?: string | null; altura_cm?: number | null; peso_kg?: number | null; age?: number | null; avatar_url?: string | null; }
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
@@ -28,21 +28,22 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
     setStep(0);
     (async () => {
       const { data: ath } = await supabase.from("athletes").select("*").eq("user_id", user.id).maybeSingle();
+      const resolvedAthleteId = (ath as unknown as AthleteRow | null)?.id || null;
       if (ath) {
-        const legacyAth = ath as unknown as LegacyAthleteRow;
-        setAthleteId(legacyAth.id);
+        const athlete = ath as unknown as AthleteRow;
+        setAthleteId(athlete.id);
         setProfile({
-          full_name: legacyAth.full_name || "",
-          height_cm: legacyAth.height_cm || "",
-          weight_kg: legacyAth.weight_kg || "",
-          age: legacyAth.age || "",
+          full_name: athlete.name || "",
+          height_cm: athlete.altura_cm || "",
+          weight_kg: athlete.peso_kg || "",
+          age: athlete.age || "",
         });
       }
       if (editOnly) return;
       const { data: ck } = await supabase
         .from("ninefit_checkins")
         .select("created_at")
-        .eq("user_id", user.id)
+        .eq("athlete_id", resolvedAthleteId || "")
         .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
         .order("created_at", { ascending: false });
       const days = new Set((ck || []).map((r) => new Date(r.created_at).toDateString()));
@@ -55,7 +56,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
       const { count } = await supabase
         .from("workout_executions")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("athlete_id", resolvedAthleteId || "");
       setWorkoutsDone(count || 0);
     })();
   }, [open, user?.id, editOnly]);
@@ -73,13 +74,14 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         const { error: upErr } = await supabase.storage.from("avatars").upload(path, photoFile, { upsert: true });
         if (!upErr) photoUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
       }
-      await supabase.from("athletes").update({
-        full_name: profile.full_name,
-        height_cm: profile.height_cm ? Number(profile.height_cm) : null,
-        weight_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
+      const { error: athleteError } = await supabase.from("athletes").update({
+        name: profile.full_name,
+        altura_cm: profile.height_cm ? Number(profile.height_cm) : null,
+        peso_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
         age: profile.age ? Number(profile.age) : null,
         ...(photoUrl ? { avatar_url: photoUrl } : {}),
       }).eq("user_id", user.id);
+      if (athleteError) throw athleteError;
 
       let resolvedAthleteId = athleteId;
       if (!resolvedAthleteId) {
@@ -88,11 +90,12 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         resolvedAthleteId = link?.athlete_id ?? null;
       }
       if (resolvedAthleteId) {
-        await supabase.from("athlete_profile_snapshots").insert({
+        const { error: snapshotError } = await supabase.from("athlete_profile_snapshots").insert({
           athlete_id: resolvedAthleteId,
           source: editOnly ? "profile_adjusted" : "profile_complete",
           snapshot_data: { ...profile, photo: photoUrl, at: new Date().toISOString() },
         });
+        if (snapshotError) throw snapshotError;
       }
       toast.success("Perfil salvo");
       if (editOnly) {
@@ -113,10 +116,14 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         p_athlete_id: athleteId, p_amount: 500, p_source: "complete_profile_7d",
         p_metadata: { reward: "primepass_1m+gold" },
       });
-      await supabase.from("user_achievements").insert({
-        user_id: user?.id, achievement_type: "consistency_7d",
-        title: "7 dias de consistência", description: "PrimePass 1 mês + ID Card Gold",
+      const { error: achievementError } = await supabase.from("user_achievements").insert({
+        athlete_id: athleteId,
+        user_email: user?.email || "",
+        achievement_type: "consistency_7d",
+        achievement_name: "7 dias de consistência",
+        description: "PrimePass 1 mês + ID Card Gold",
       });
+      if (achievementError) throw achievementError;
       toast.success("🏆 Recompensa desbloqueada: PrimePass 1 mês + ID Card Gold");
       onClose();
     } catch { toast.error("Erro ao resgatar recompensa"); }

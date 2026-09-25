@@ -32,7 +32,12 @@ export function useActivationFlow() {
   const [advancing, setAdvancing] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!athleteId) return;
+    if (!athleteId) {
+      setRow(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const { data } = await supabase
       .from('athlete_activation' as any)
       .select('*')
@@ -61,6 +66,7 @@ export function useActivationFlow() {
         });
         if (error) {
           console.error('[activation_advance]', step, error);
+          throw error;
         }
         await refresh();
         return data;
@@ -78,7 +84,10 @@ export function useActivationFlow() {
       const { data, error } = await supabase.rpc('activation_finish' as any, {
         p_athlete_id: athleteId,
       });
-      if (error) console.error('[activation_finish]', error);
+      if (error) {
+        console.error('[activation_finish]', error);
+        throw error;
+      }
       await refresh();
       return data;
     } finally {

@@ -24,7 +24,7 @@ export default function NineFitOS() {
         name={name}
         syncScore={scores?.sync.value ?? null}
         scoreStatus={status}
-        weekly={scores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 }}
+        weekly={scores?.weekly ?? { treinos: null, nutri: null, minutos: null }}
         hasPlan={hasPlan}
       />
       <RonBubble />

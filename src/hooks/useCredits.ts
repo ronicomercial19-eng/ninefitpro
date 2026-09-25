@@ -16,7 +16,8 @@ export function useCredits(athleteId?: string | null) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!athleteId) { setLoading(false); return; }
+    if (!athleteId) { setState(empty); setLoading(false); return; }
+    setLoading(true);
     const { data } = await supabase
       .from("athlete_credits" as any)
       .select("credits_total, credits_used, credits_remaining, plan_type")
@@ -36,12 +37,11 @@ export function useCredits(athleteId?: string | null) {
 
   useEffect(() => {
     if (!athleteId) return;
-    const channelName = `credits-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
-    const ch = supabase
-      .channel(channelName)
-      .on("postgres_changes", { event: "*", schema: "public", table: "athlete_credits", filter: `athlete_id=eq.${athleteId}` }, () => refresh())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    // Credits are a read model for the chat gate. Polling avoids a Realtime
+    // channel race that previously mounted the RON route with a blank screen
+    // (`cannot add postgres_changes callbacks ... after subscribe()`).
+    const timer = window.setInterval(() => { void refresh(); }, 30_000);
+    return () => window.clearInterval(timer);
   }, [athleteId, refresh]);
 
   /**
@@ -49,7 +49,10 @@ export function useCredits(athleteId?: string | null) {
    * Se saldo insuficiente → mostra toast e retorna null (bloqueia).
    */
   const withCredit = useCallback(async <T,>(reason: string, fn: () => Promise<T>, cost = 1): Promise<T | null> => {
-    if (!athleteId) return await fn();
+    if (!athleteId) {
+      toast.error("Perfil de atleta indisponível. Entre novamente para continuar.");
+      return null;
+    }
     const { data, error } = await supabase.rpc("fn_consume_credit" as any, {
       p_athlete_id: athleteId, p_amount: cost, p_reason: reason,
     });
