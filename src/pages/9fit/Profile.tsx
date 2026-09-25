@@ -72,7 +72,7 @@ export default function NineFitProfile() {
   // existir uma fonte real de entitlement, o item fica honesto em vez de
   // inventar status.
   const items: MenuItem[] = [
-    { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: staffOnline == null ? "Carregando" : `${staffOnline} online`, badgeStyle: "neon" },
+    { icon: Users, label: "Equipe", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: staffOnline == null ? "Carregando" : `${staffOnline} disponíveis`, badgeStyle: "neon" },
     { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },

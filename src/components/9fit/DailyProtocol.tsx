@@ -25,7 +25,7 @@ const DEFAULT_TASKS = [
   },
   {
     key: "elite_training",
-    title: "Elite Training",
+    title: "Treino avançado",
     duration: "45 min",
     Icon: Dumbbell,
     why: "Treino estruturado para avançar com consistência conforme seu plano.",

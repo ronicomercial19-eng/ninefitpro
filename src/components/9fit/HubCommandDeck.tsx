@@ -42,7 +42,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
             <div className="flex items-center gap-1.5">
               <span className={`h-1.5 w-1.5 rounded-full ${scoreReady ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
               <span className="font-mono text-[9.5px] uppercase tracking-wider text-neutral-400 font-medium">
-                {scoreReady ? `SYNC ${Math.round(syncScore!)}` : "CALIBRANDO"}
+                {scoreReady ? `SINCRONIZAÇÃO ${Math.round(syncScore!)}` : "CALIBRANDO"}
               </span>
             </div>
           </div>
