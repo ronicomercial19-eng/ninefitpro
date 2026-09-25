@@ -2,14 +2,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
   ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
-  Loader2, Check, Sparkles, Gauge, Maximize2
+  Loader2, Check, Sparkles, Gauge
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
-import { FocusMode } from "./FocusMode";
-import { triggerPersonalRecordToast } from "./PersonalRecordToast";
 import { ExerciseVideoPlayer, getYoutubeEmbedUrl } from "@/components/exercises/ExerciseVideoPlayer";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
@@ -264,35 +262,6 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [executionAttempt, setExecutionAttempt] = useState(0);
   const [executionStatus, setExecutionStatus] = useState<WorkoutExecutionStatus>('in_progress');
-  const [focusModeOpen, setFocusModeOpen] = useState(false);
-  const [knownRecords, setKnownRecords] = useState<Record<string, number>>({});
-
-  // Carga inicial dos recordes pessoais do aluno para detecção instantânea de PRs
-  useEffect(() => {
-    if (!athleteId) return;
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from("personal_records")
-          .select("exercicio, valor, unidade")
-          .or(`athlete_id.eq.${athleteId},aluno_id.eq.${athleteId}`);
-        if (data && Array.isArray(data)) {
-          const map: Record<string, number> = {};
-          for (const row of data) {
-            if (row.exercicio && typeof row.valor === "number") {
-              const k = row.exercicio.trim().toLowerCase();
-              if (!map[k] || row.valor > map[k]) {
-                map[k] = row.valor;
-              }
-            }
-          }
-          setKnownRecords(map);
-        }
-      } catch (e) {
-        console.warn("[WorkoutExecution] Falha ao recuperar recordes pessoais:", e);
-      }
-    })();
-  }, [athleteId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -477,51 +446,6 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       toast.error("Não foi possível salvar esta série. Tente novamente.");
     } else {
       setExecutionError(null);
-
-      // Verificação e disparo automático de Recorde Pessoal (PR)
-      if (next[setIdx]) {
-        const exName = String(exercise.name ?? "Exercício");
-        const exKey = exName.trim().toLowerCase();
-        const currentActualWeight = weights[exerciseIdx] ?? 20;
-        const previousPr = knownRecords[exKey];
-
-        if (currentActualWeight > 0) {
-          if (previousPr !== undefined && currentActualWeight > previousPr) {
-            triggerPersonalRecordToast({
-              exerciseName: exName,
-              newValue: currentActualWeight,
-              previousValue: previousPr,
-              unit: "kg",
-            });
-            setKnownRecords(prev => ({ ...prev, [exKey]: currentActualWeight }));
-            void supabase.from("personal_records").insert({
-              athlete_id: athleteId,
-              aluno_id: athleteId,
-              exercicio: exName,
-              valor: currentActualWeight,
-              unidade: "kg",
-              tipo: "carga",
-              data_pr: new Date().toISOString().split("T")[0],
-            });
-          } else if (previousPr === undefined && currentActualWeight >= 15) {
-            triggerPersonalRecordToast({
-              exerciseName: exName,
-              newValue: currentActualWeight,
-              unit: "kg",
-            });
-            setKnownRecords(prev => ({ ...prev, [exKey]: currentActualWeight }));
-            void supabase.from("personal_records").insert({
-              athlete_id: athleteId,
-              aluno_id: athleteId,
-              exercicio: exName,
-              valor: currentActualWeight,
-              unidade: "kg",
-              tipo: "carga",
-              data_pr: new Date().toISOString().split("T")[0],
-            });
-          }
-        }
-      }
     }
   };
 
@@ -530,6 +454,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       toast.error(executionError ?? "A execução ainda não está pronta.");
       return;
     }
+
+    const hasCompletedSet = Object.values(completedSets).some((sets) => sets.some(Boolean));
+    const hasPartialExercise = exercises.some((exercise, index) => {
+      const done = completedSets[String(index)] || [];
+      return done.some(Boolean) && !done.every(Boolean);
+    });
+    if (hasCompletedSet && hasPartialExercise && !window.confirm("Você concluiu apenas parte das séries. Deseja finalizar como treino parcial?")) return;
 
     setPersisting(true);
     try {
@@ -612,25 +543,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         </button>
         <div className="text-center">
           <p className="text-xs text-primary font-bold uppercase tracking-widest">Em Execução</p>
-          <p className="text-sm font-bold text-foreground truncate max-w-[170px] sm:max-w-[240px]">{liveTraining.training_name}</p>
+          <p className="text-sm font-bold text-foreground truncate max-w-[200px]">{liveTraining.training_name}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {isStructured && currentExercise && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFocusModeOpen(true)}
-              className="h-8 gap-1.5 px-2.5 rounded-lg border-[#FF6600]/40 bg-[#FF6600]/10 text-[#FF6600] hover:bg-[#FF6600]/20 font-mono text-xs font-bold"
-              title="Ativar Modo Foco (Maximiza exercício e oculta distrações)"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Modo Foco</span>
-            </Button>
-          )}
-          <div className="flex items-center gap-1 text-primary">
-            <Timer className="w-4 h-4" />
-            <span className="text-sm font-mono font-bold">{formatTime(workoutSeconds)}</span>
-          </div>
+        <div className="flex items-center gap-1 text-primary">
+          <Timer className="w-4 h-4" />
+          <span className="text-sm font-mono font-bold">{formatTime(workoutSeconds)}</span>
         </div>
       </div>
 
@@ -827,6 +744,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         )}
       </div>
 
+      {isStructured && <>
       {/* Bottom Controls */}
       <div className="flex-shrink-0 bg-card border-t border-border">
         {/* Rest Timer */}
@@ -897,41 +815,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           </Button>
         </div>
       </div>
-
-      {/* Focus Mode Component */}
-      {isStructured && currentExercise && (
-        <FocusMode
-          isOpen={focusModeOpen}
-          onClose={() => setFocusModeOpen(false)}
-          exercise={currentExercise}
-          currentIdx={currentIdx}
-          totalExercises={exercises.length}
-          currentWeight={currentWeight}
-          onWeightChange={setWeight}
-          completedSets={completedSets[`${currentIdx}`] || []}
-          onToggleSet={(setIdx) => toggleSet(currentIdx, setIdx)}
-          onNextExercise={() => setCurrentIdx((i) => Math.min(exercises.length - 1, i + 1))}
-          onPrevExercise={() => setCurrentIdx((i) => Math.max(0, i - 1))}
-          canNext={currentIdx < exercises.length - 1}
-          canPrev={currentIdx > 0}
-          timerSeconds={timerSeconds}
-          timerRunning={timerRunning}
-          timerInitial={timerInitial}
-          onResetTimer={() => {
-            setTimerSeconds(timerInitial);
-            setTimerRunning(false);
-          }}
-          onToggleTimer={() => setTimerRunning(!timerRunning)}
-          onSetTimerPreset={(s) => {
-            setTimerInitial(s);
-            setTimerSeconds(s);
-            setTimerRunning(false);
-          }}
-          workoutSeconds={workoutSeconds}
-          onFinishWorkout={handleFinishWorkout}
-          persisting={persisting}
-        />
-      )}
+      </>}
 
       <PostWorkoutModal open={showPSE} onClose={() => { setShowPSE(false); onFinish(); }}
         athleteId={athleteId} executionId={executionId} trainingName={liveTraining.training_name} />

@@ -212,11 +212,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    const currentUserId = user?.id;
     try { mirrorEvent('logout', {}, null, user?.email ?? null); } catch {}
     await supabase.auth.signOut();
     try {
       localStorage.removeItem('ninefit_token');
       localStorage.removeItem('ninefit_user_id');
+      // Remove only this user's persisted 9FIT state; never leak it into the next session.
+      if (currentUserId) {
+        const userSuffix = `:${currentUserId}`;
+        for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+          const key = localStorage.key(i);
+          if (key && (key.endsWith(userSuffix) || key.includes(`.${currentUserId}.`))) localStorage.removeItem(key);
+        }
+      }
       sessionStorage.removeItem('ninefit_redirect_attempted');
     } catch {}
     setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null);

@@ -376,8 +376,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         console.error("[EcosystemGrid] Load error:", err);
         if (!cancelled) {
           setItems(CANONICAL_MODULES);
-          const fallbackStatus: Record<string, "online"> = {};
-          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "online"; });
+          const fallbackStatus: Record<string, "not_configured"> = {};
+          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "not_configured"; });
           setStatusByKey(fallbackStatus);
           setLoading(false);
         }
@@ -390,7 +390,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     };
   }, [category, reloadToken]);
 
-  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length || items.length;
+  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
   const visibleItems = showAll ? items : items.slice(0, 2);
   const gridClass =
     variant === "rail"

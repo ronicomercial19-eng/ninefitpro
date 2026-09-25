@@ -17,22 +17,33 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Support() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [ticket, setTicket] = useState({ name: '', email: '', subject: '', message: '' });
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      // Simulate ticket submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: created, error } = await supabase.from('support_tickets' as any).insert({
+        requester_user_id: user?.id ?? null,
+        requester_name: ticket.name,
+        requester_email: ticket.email,
+        subject: ticket.subject,
+        message: ticket.message,
+        status: 'open',
+      }).select('id').single();
+      if (error) throw error;
       toast({
         title: "Ticket criado!",
-        description: "Nossa equipe responderá em breve.",
+        description: `Protocolo ${created?.id ?? 'registrado'}. Nossa equipe responderá em breve.`,
       });
+      setTicket({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
       toast({
         title: "Erro",
@@ -240,23 +251,25 @@ export default function Support() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nome</Label>
-                      <Input id="name" placeholder="Seu nome completo" required />
+                      <Input id="name" value={ticket.name} onChange={(e) => setTicket({ ...ticket, name: e.target.value })} placeholder="Seu nome completo" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="seu@email.com" required />
+                      <Input id="email" type="email" value={ticket.email} onChange={(e) => setTicket({ ...ticket, email: e.target.value })} placeholder="seu@email.com" required />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="subject">Assunto</Label>
-                    <Input id="subject" placeholder="Descreva brevemente o problema" required />
+                    <Input id="subject" value={ticket.subject} onChange={(e) => setTicket({ ...ticket, subject: e.target.value })} placeholder="Descreva brevemente o problema" required />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="message">Mensagem</Label>
                     <Textarea 
                       id="message" 
+                      value={ticket.message}
+                      onChange={(e) => setTicket({ ...ticket, message: e.target.value })}
                       placeholder="Descreva detalhadamente seu problema ou dúvida"
                       rows={6}
                       required

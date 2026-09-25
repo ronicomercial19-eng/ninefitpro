@@ -22,13 +22,20 @@ export function useAthleteId(): UseAthleteIdResult {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchAthleteId = async () => {
+      setLoading(true);
+      setError(null);
+      setAthleteId(null);
+      setAthleteName(null);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          setError("Sessão expirada. Entre novamente para acessar seu perfil.");
-          setLoading(false);
+          if (!cancelled) {
+            setError("Sessão expirada. Entre novamente para acessar seu perfil.");
+            setLoading(false);
+          }
           return;
         }
 
@@ -43,9 +50,11 @@ export function useAthleteId(): UseAthleteIdResult {
 
         if (directAthlete) {
           console.log('[useAthleteId] Found via user_id:', directAthlete.id);
-          setAthleteId(directAthlete.id);
-          setAthleteName(directAthlete.name);
-          setLoading(false);
+          if (!cancelled) {
+            setAthleteId(directAthlete.id);
+            setAthleteName(directAthlete.name);
+            setLoading(false);
+          }
           return;
         }
 
@@ -66,9 +75,11 @@ export function useAthleteId(): UseAthleteIdResult {
             .eq('id', linkData.athlete_id)
             .maybeSingle();
           
-          setAthleteId(linkData.athlete_id);
-          setAthleteName(athlete?.name || null);
-          setLoading(false);
+          if (!cancelled) {
+            setAthleteId(linkData.athlete_id);
+            setAthleteName(athlete?.name || null);
+            setLoading(false);
+          }
           return;
         }
 
@@ -82,24 +93,37 @@ export function useAthleteId(): UseAthleteIdResult {
 
           if (emailAthlete) {
             console.log('[useAthleteId] Found via email:', emailAthlete.id);
-            setAthleteId(emailAthlete.id);
-            setAthleteName(emailAthlete.name);
-            setLoading(false);
+            if (!cancelled) {
+              setAthleteId(emailAthlete.id);
+              setAthleteName(emailAthlete.name);
+              setLoading(false);
+            }
             return;
           }
         }
 
         console.log('[useAthleteId] No athlete found for this user');
-        setError('Perfil de atleta não encontrado');
-        setLoading(false);
+        if (!cancelled) {
+          setError('Perfil de atleta não encontrado');
+          setLoading(false);
+        }
       } catch (err) {
         console.error('[useAthleteId] Error:', err);
-        setError('Erro ao buscar perfil');
-        setLoading(false);
+        if (!cancelled) {
+          setError('Erro ao buscar perfil');
+          setLoading(false);
+        }
       }
     };
 
     fetchAthleteId();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      void fetchAthleteId();
+    });
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   return { athleteId, athleteName, loading, error };

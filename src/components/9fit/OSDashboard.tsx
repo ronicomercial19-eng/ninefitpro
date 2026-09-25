@@ -44,7 +44,7 @@ interface OSDashboardProps {
   name: string;
   syncScore: number | null;
   scoreStatus: HubScoreStatus;
-  weekly: { treinos: number; nutri: number; minutos: number };
+  weekly: { treinos: number | null; nutri: number | null; minutos: number | null };
   hasPlan: boolean;
 }
 
@@ -135,7 +135,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     {
       id: 'nutricional' as const,
       name: 'Nutrição & Dieta',
-      subtitle: `${weekly.nutri} refeições registradas`,
+      subtitle: weekly.nutri === null ? "Dados semanais indisponíveis" : `${weekly.nutri} refeições registradas`,
       status: '9Foods',
       description: 'Janela anabólica, síntese de aminoácidos e equilíbrio de macronutrientes.'
     },
@@ -149,8 +149,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     {
       id: 'comportamental' as const,
       name: 'Consistência',
-      subtitle: `${weekly.treinos}/5 treinos no ciclo`,
-      status: `${weekly.treinos}/5 Sem`,
+      subtitle: weekly.treinos === null ? "Dados semanais indisponíveis" : `${weekly.treinos}/5 treinos no ciclo`,
+      status: weekly.treinos === null ? "—" : `${weekly.treinos}/5 Sem`,
       description: 'Consistência do microciclo, disciplina de horários e rituais diários.'
     },
     {
@@ -508,7 +508,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                       </div>
                       <div>
                         <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">REFEIÇÕES</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri} registradas</span>
+                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri === null ? "—" : `${weekly.nutri} registradas`}</span>
                       </div>
                       <div>
                         <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">HIDRATAÇÃO</span>

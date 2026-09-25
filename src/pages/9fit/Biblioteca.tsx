@@ -101,7 +101,9 @@ export default function NineFitBiblioteca() {
           return (
             <motion.a
               key={(it.id || title) + i}
-              href={locked ? "/9fit/planos" : url || "#"}
+              href={locked ? "/9fit/planos" : url || undefined}
+              aria-disabled={!locked && !url}
+              onClick={!locked && !url ? (event) => event.preventDefault() : undefined}
               target={!locked && url ? "_blank" : undefined}
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}

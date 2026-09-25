@@ -24,14 +24,16 @@ export function QuickCheckIn() {
   const [checkingIn, setCheckingIn] = useState(false);
 
   const fetchNextClass = useCallback(async () => {
-    if (!user) return;
+    if (!user) { setNextClass(null); setLoading(false); return; }
+    const now = new Date().toISOString();
     const { data } = await supabase
       .from("class_bookings")
-      .select("id, class_id, check_in_at, gym_classes(class_name, class_datetime, location)")
+      .select("id, class_id, check_in_at, gym_classes!inner(class_name, class_datetime, location)")
       .or(`user_id.eq.${user.id},user_email.eq.${user.email}`)
       .eq("status", "confirmed")
       .is("check_in_at", null)
-      .order("booking_time", { ascending: true })
+      .gte("gym_classes.class_datetime", now)
+      .order("class_datetime", { ascending: true, referencedTable: "gym_classes" })
       .limit(1);
 
     if (data && data.length > 0) {
@@ -44,7 +46,7 @@ export function QuickCheckIn() {
         location: b.gym_classes?.location || "",
         checkedIn: !!b.check_in_at,
       });
-    }
+    } else setNextClass(null);
     setLoading(false);
   }, [user]);
 
