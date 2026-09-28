@@ -18,6 +18,7 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
+import { Info } from "lucide-react";
 
 const hubStaggerContainer = {
   hidden: { opacity: 0 },

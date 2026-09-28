@@ -297,6 +297,7 @@ const CANONICAL_MODULES: PhysioModule[] = [
  * inteira. Reserva a intensidade visual pros 2 cards de teaser na Home/Hub.
  */
 export function EcosystemGrid({ category, variant = "grid", showHeader = true, showAll = false }: Props) {
+  const [showOverlay, setShowOverlay] = useState(false);
   const [items, setItems] = useState<PhysioModule[]>([]);
   const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
@@ -505,7 +506,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           </div>
           {items.length > 2 && !showAll && (
             <button
-              onClick={() => navigate("/9fit/modules")}
+              onClick={() => setShowOverlay(true)}
               aria-label="Abrir tela com todos os módulos"
               className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5 hover:text-primary/80 transition-colors cursor-pointer"
             >
@@ -514,6 +515,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           )}
         </header>
       )}
+
+      <EcosystemOverlay open={showOverlay} onClose={() => setShowOverlay(false)} />
 
       <motion.div
         variants={containerVariants}

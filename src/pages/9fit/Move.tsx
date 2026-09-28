@@ -105,6 +105,7 @@ export default function NineFitMove() {
           // Mandatory solution attribution ID
           internalUsageAttributionIds: [SOLUTION_ATTRIBUTION_ID],
         } as any);
+        console.log("[NineFitMove] Map instance created:", map);
 
         mapInstanceRef.current = map;
 
