@@ -74,8 +74,10 @@ export function WeeklyRecapPrompt() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const recap = await buildWeeklyRecap(athleteId, user.id);
-      window.localStorage.setItem(STORAGE_KEY, weekKey); // marca como visto mesmo se vazio, pra não checar toda hora
-      if (recap) setAchievement(recap);
+      if (recap) {
+        window.localStorage.setItem(STORAGE_KEY, weekKey);
+        setAchievement(recap);
+      }
     })();
   }, [athleteId]);
 

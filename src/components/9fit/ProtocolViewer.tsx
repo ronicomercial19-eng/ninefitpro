@@ -75,6 +75,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   const [loaded, setLoaded] = useState(false);
   const [embedded, setEmbedded] = useState(false);
   const [playerLoaded, setPlayerLoaded] = useState(false);
+  const [openedAt, setOpenedAt] = useState<number | null>(null);
 
   const p = useMemo(() => assignment.payload ?? {}, [assignment.payload]);
   const url = assignment.access_url || assignment.player_url || assignment.download_url || p.episodeUrl || p.playerUrl || null;
@@ -115,7 +116,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   }, [assignment.id, assignment.access_url, assignment.player_url, assignment.download_url, assignment.content_type]);
 
   const canComplete = isInfoproduto
-    ? (playerUrl ? embedded && playerLoaded : !!htmlContent)
+    ? (playerUrl ? embedded && playerLoaded && !!openedAt : !!htmlContent)
     : (loaded && (!!htmlContent || !!url));
 
   const markDone = async () => {
@@ -189,7 +190,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
         <div className="grid grid-cols-1 gap-2">
           {playerUrl && (
             <Button
-              onClick={() => setEmbedded(true)}
+              onClick={() => { setEmbedded(true); setOpenedAt(Date.now()); }}
               className="h-14 bg-primary text-primary-foreground text-base font-bold tracking-wide"
             >
               <PlayCircle className="w-5 h-5 mr-2" /> ABRIR PLAYER

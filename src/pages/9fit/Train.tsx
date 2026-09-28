@@ -21,6 +21,7 @@ import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBa
 interface TrainingAssignment {
   id: string;
   daily_workout_id?: string;
+  execution_id?: string;
   training_name: string;
   training_description?: string;
   start_date: string;
@@ -30,6 +31,8 @@ interface TrainingAssignment {
   html_file_url?: string;
   training_data?: any;
 }
+
+const QUICK_TRAINING_STORAGE_KEY = "9fit_quick_training";
 
 type WorkoutFlow = "HOME" | "OVERVIEW" | "EXECUTION";
 
@@ -64,10 +67,23 @@ export default function NineFitTrain() {
   // handoff silenciosamente). Ao chegar aqui com state.quickTraining, abre
   // direto no WorkoutExecution.
   useEffect(() => {
-    const quick = (location.state as any)?.quickTraining;
+    let quick = (location.state as any)?.quickTraining;
+    if (!quick && typeof window !== "undefined") {
+      const stored = window.sessionStorage.getItem(QUICK_TRAINING_STORAGE_KEY);
+      if (stored) {
+        try {
+          quick = JSON.parse(stored);
+        } catch {
+          window.sessionStorage.removeItem(QUICK_TRAINING_STORAGE_KEY);
+        }
+      }
+    }
     if (quick) {
       setSelectedTraining(quick);
       setFlow("EXECUTION");
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(QUICK_TRAINING_STORAGE_KEY);
+      }
       // Limpa o state da entrada de histórico para não reabrir em back/forward
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -144,13 +160,19 @@ export default function NineFitTrain() {
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
-    const exercises = training.training_data?.exercises;
+    const supportLevel = typeof window !== "undefined"
+      ? window.localStorage.getItem("9fit_support_level") || undefined
+      : undefined;
+    const withSupport = supportLevel
+      ? { ...training, training_data: { ...(training.training_data || {}), support_level: supportLevel } }
+      : training;
+    const exercises = withSupport.training_data?.exercises;
     if (training.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
       toast.info("Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca.");
       navigate("/9fit/biblioteca");
       return;
     }
-    setSelectedTraining(training);
+    setSelectedTraining(withSupport);
     setFlow("OVERVIEW");
   };
 
@@ -206,7 +228,10 @@ export default function NineFitTrain() {
       start_date: day.date,
       is_active: true,
       training_type: "structured",
-      training_data: { exercises },
+      training_data: {
+        exercises,
+        support_level: typeof window !== "undefined" ? window.localStorage.getItem("9fit_support_level") || undefined : undefined,
+      },
     });
     setFlow("EXECUTION");
   };

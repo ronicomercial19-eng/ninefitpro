@@ -44,17 +44,18 @@ export default function NineFitAjusteTreino() {
         .eq("workout_date", today)
         .maybeSingle();
       if (!(dw as any)?.id) { setExercises([]); return; }
-      const { data: rows } = await supabase
+      const { data: rows, error } = await supabase
         .from("workout_exercises" as any)
-        .select("*")
+        .select("id,exercise_id,sets,reps_range,rest_seconds,exercises(name,video_url,gif_url)")
         .eq("daily_workout_id", (dw as any).id);
+      if (error) throw error;
       setExercises(((rows as any[]) || []).map((r: any) => ({
         id: r.exercise_id || r.id,
-        name: r.exercise_name || r.name,
+        name: r.exercises?.name || r.exercise_name || r.name || "Exercício",
         sets: r.sets ?? 3,
         reps_range: r.reps_range ?? r.reps ?? "10-12",
         rest_seconds: r.rest_seconds ?? 60,
-        video_url: r.video_url,
+        video_url: r.exercises?.video_url || r.video_url,
       })));
     } finally { setReloading(false); }
   };
@@ -135,9 +136,12 @@ export default function NineFitAjusteTreino() {
   // leva ao mesmo player guiado (WorkoutExecution via Train.tsx) já
   // posicionado no treino de hoje, mantendo o ajuste como tela separada.
   const openInGuidedPlayer = () => {
-    sessionStorage.setItem("9fit_quick_training", JSON.stringify({
+    const quickTraining = {
+      id: `adjusted-${today}`,
       training_name: workoutName,
       start_date: today,
+      is_active: true,
+      training_type: "structured",
       training_data: {
         exercises: exercises.map((e) => ({
           exercise_id: e.id,
@@ -148,8 +152,9 @@ export default function NineFitAjusteTreino() {
           video_url: e.video_url,
         })),
       },
-    }));
-    navigate("/9fit/train?quick=1");
+    };
+    sessionStorage.setItem("9fit_quick_training", JSON.stringify(quickTraining));
+    navigate("/9fit/train?quick=1", { state: { quickTraining } });
   };
 
   return (

@@ -370,8 +370,51 @@ export default function NineFitRon() {
       lower.includes("sincronizar semana") ||
       lower.includes("marcar treino");
 
-    // 3. Call server-side Gemini Bot endpoint
+    const needsCredit = ronRequestNeedsCredit(text);
+    if (needsCredit && !athleteId) {
+      setMessages((p) => p.slice(0, -1).concat({
+        role: "assistant",
+        content: "Preciso sincronizar seu perfil para validar as fichas antes de executar esse pedido.",
+        action: { label: "Ver perfil", route: "/9fit/profile" },
+      }));
+      setSending(false);
+      return;
+    }
+
+    const askAiCoach = async () => {
+      const { data: fallback, error: fallbackError } = await supabase.functions.invoke("ai-coach", {
+        body: {
+          mode: "chat",
+          message: text,
+          history: messages.filter((message) => message.role !== "system").slice(-20).map((message) => ({ role: message.role, content: message.content })),
+          data: athleteId ? { athleteId } : undefined,
+        },
+      });
+      if (fallbackError) throw fallbackError;
+      const fallbackContent = (fallback as any)?.data?.content || (fallback as any)?.content || (fallback as any)?.reply;
+      if (typeof fallbackContent !== "string" || !fallbackContent.trim()) {
+        throw new Error("RON não retornou resposta.");
+      }
+      return fallbackContent.trim();
+    };
+
+    // 3. Call server-side Gemini Bot endpoint. If the local Gemini route is
+    // unavailable, fall back to the deployed ai-coach Edge Function so RON
+    // remains functional even while RON/9ZAP connectors are pending.
     try {
+      if (needsCredit) {
+        const reserved = await withCredit(`ron:${text.slice(0, 80)}`, async () => true);
+        if (reserved === null) {
+          setMessages((p) => p.slice(0, -1).concat({
+            role: "assistant",
+            content: `Esse pedido usa uma ficha de ação do RON. Você tem ${remaining} disponível(is). Recarregue para eu executar e entregar o resultado completo.`,
+            action: { label: "Ver planos e recarregar", route: "/9fit/aulas-creditos" },
+          }));
+          setSending(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/gemini/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -422,13 +465,25 @@ export default function NineFitRon() {
       speakText(replyContent);
     } catch (err: any) {
       console.warn("[Gemini API Fallback]:", err);
-      const fallbackMsg =
-        "Estou processando as diretrizes através do motor neural do Gemini 3.8 Flash. Verifique sua conexão e tente novamente em instantes.";
-      setMessages((p) => {
-        const out = [...p];
-        out[out.length - 1] = { role: "assistant", content: fallbackMsg };
-        return out;
-      });
+      try {
+        const fallbackMsg = await askAiCoach();
+        setMessages((p) => {
+          const out = [...p];
+          out[out.length - 1] = { role: "assistant", content: fallbackMsg };
+          return out;
+        });
+        await persist("assistant", fallbackMsg);
+        speakText(fallbackMsg);
+      } catch (fallbackError) {
+        console.error("[RON ai-coach fallback failed]", fallbackError);
+        const fallbackMsg =
+          "Estou processando as diretrizes pelo motor neural do RON. Verifique sua conexão e tente novamente em instantes.";
+        setMessages((p) => {
+          const out = [...p];
+          out[out.length - 1] = { role: "assistant", content: fallbackMsg };
+          return out;
+        });
+      }
     } finally {
       setSending(false);
     }

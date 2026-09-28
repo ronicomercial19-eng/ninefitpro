@@ -35,7 +35,7 @@ interface WorkoutExercise {
   [key: string]: unknown;
 }
 
-interface TrainingData { exercises?: WorkoutExercise[]; }
+interface TrainingData { exercises?: WorkoutExercise[]; support_level?: string; }
 interface PrescricaoExercise {
   id?: string;
   nome?: string;
@@ -120,6 +120,11 @@ function injectMobileViewport(html: string): string {
 }
 
 const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+const SUPPORT_LABELS: Record<string, string> = {
+  solo: "Solo",
+  guided: "Guiado",
+  assisted: "Assistido",
+};
 
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
   // Live training data + realtime patches from daily_workouts.changes_json
@@ -667,6 +672,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           {typeof dailyOverride.fatigue_adjustment === "number" && (
             <span className="font-bold">• fadiga {dailyOverride.fatigue_adjustment > 0 ? "+" : ""}{dailyOverride.fatigue_adjustment}</span>
           )}
+        </div>
+      )}
+
+      {liveTraining.training_data?.support_level && (
+        <div className="mx-4 mb-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground">
+          <Gauge className="w-3.5 h-3.5 text-primary" />
+          Modo de assistência: <span className="font-bold text-foreground">{SUPPORT_LABELS[liveTraining.training_data.support_level] || liveTraining.training_data.support_level}</span>
         </div>
       )}
 

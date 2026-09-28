@@ -67,26 +67,38 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
     if (!user?.id) return;
     setSaving(true);
     try {
+      let resolvedAthleteId = athleteId;
+      if (!resolvedAthleteId) {
+        const { data: athlete } = await supabase
+          .from("athletes")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        resolvedAthleteId = athlete?.id ?? null;
+      }
+      if (!resolvedAthleteId) {
+        const { data: link } = await supabase
+          .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
+        resolvedAthleteId = link?.athlete_id ?? null;
+      }
+      if (!resolvedAthleteId) throw new Error("Atleta não encontrado para este usuário.");
+
       let photoUrl: string | null = null;
       if (photoFile) {
         const path = `${user.id}/avatar-${Date.now()}.${photoFile.name.split(".").pop()}`;
         const { error: upErr } = await supabase.storage.from("avatars").upload(path, photoFile, { upsert: true });
         if (!upErr) photoUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
       }
-      await supabase.from("athletes").update({
+      const { error: athleteError } = await supabase.from("athletes").update({
         full_name: profile.full_name,
         height_cm: profile.height_cm ? Number(profile.height_cm) : null,
         weight_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
         age: profile.age ? Number(profile.age) : null,
         ...(photoUrl ? { avatar_url: photoUrl } : {}),
-      }).eq("user_id", user.id);
+}).eq("id", resolvedAthleteId);
+      if (athleteError) throw athleteError;
 
-      let resolvedAthleteId = athleteId;
-      if (!resolvedAthleteId) {
-        const { data: link } = await supabase
-          .from("athlete_auth_link").select("athlete_id").eq("user_id", user.id).maybeSingle();
-        resolvedAthleteId = link?.athlete_id ?? null;
-      }
+      setAthleteId(resolvedAthleteId);
       if (resolvedAthleteId) {
         await supabase.from("athlete_profile_snapshots").insert({
           athlete_id: resolvedAthleteId,

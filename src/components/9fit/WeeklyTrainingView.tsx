@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Play, Loader2, Dumbbell, Lock, Check } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Play, Loader2, Dumbbell, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -16,6 +16,7 @@ type DayPlan = {
   date: string;
   day_label: string;
   status: "rest" | "planned" | "completed" | "in_progress";
+  execution_id?: string;
   exercises: DayExercise[];
 };
 
@@ -31,6 +32,7 @@ interface WeekPayload {
     day_name?: string;
     day_label?: string;
     status?: DayPlan["status"];
+    execution_id?: string;
     exercises?: Array<{
       id?: string;
       name?: string;
@@ -53,14 +55,28 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
   const [days, setDays] = useState<DayPlan[]>([]);
   const [phase, setPhase] = useState<string>("");
   const [match, setMatch] = useState<number>(0);
+  const [weekStart, setWeekStart] = useState(() => {
+    const date = new Date();
+    const day = date.getDay() || 7;
+    date.setDate(date.getDate() + 1 - day);
+    return date.toISOString().slice(0, 10);
+  });
 
   const todayISO = new Date().toISOString().slice(0, 10);
+  const shiftWeek = (delta: number) => {
+    const date = new Date(`${weekStart}T00:00:00`);
+    date.setDate(date.getDate() + delta * 7);
+    setWeekStart(date.toISOString().slice(0, 10));
+  };
 
   const loadWeek = useCallback(async () => {
     if (!athleteId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("fn_get_week_workouts", { p_athlete_id: athleteId });
+      const { data, error } = await supabase.rpc("fn_get_week_workouts" as any, {
+        p_athlete_id: athleteId,
+        p_week_start: weekStart,
+      });
       if (error) throw error;
       const payload = (data || {}) as WeekPayload;
       setPhase(String(payload.phase_status || ""));
@@ -71,6 +87,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
         date: d.workout_date || d.date,
         day_label: d.day_name || d.day_label || DAY_LABELS[new Date(d.workout_date || d.date).getDay()],
         status: d.status || "planned",
+        execution_id: d.execution_id,
         exercises: (d.exercises || []).map((e) => ({
           id: e.id,
           name: e.name,
@@ -84,7 +101,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
     } catch (e) {
       console.error("[WeeklyTrainingView] fn_get_week_workouts", e);
     } finally { setLoading(false); }
-  }, [athleteId]);
+  }, [athleteId, weekStart]);
 
   useEffect(() => {
     loadWeek();
@@ -116,6 +133,27 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
             Fase: <span className="text-foreground font-semibold">{phaseLabel}</span>
             {match > 0 && <> · Aderência {match}%</>}
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => shiftWeek(-1)}
+            className="w-8 h-8 rounded-lg border border-white/10 grid place-items-center text-muted-foreground hover:text-foreground"
+            aria-label="Semana anterior"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {new Date(`${weekStart}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+          </span>
+          <button
+            type="button"
+            onClick={() => shiftWeek(1)}
+            className="w-8 h-8 rounded-lg border border-white/10 grid place-items-center text-muted-foreground hover:text-foreground"
+            aria-label="Próxima semana"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 

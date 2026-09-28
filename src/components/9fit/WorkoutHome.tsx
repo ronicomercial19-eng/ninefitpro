@@ -9,6 +9,7 @@ import trainHeroBanner from "@/assets/images/train_hero_banner_1790011808035.jpg
 interface TrainingData {
   exercise_count?: number;
   estimated_duration?: number;
+  support_level?: string;
 }
 
 interface TrainingAssignment {
@@ -32,13 +33,18 @@ interface WorkoutHomeProps {
 }
 
 const supportLevels = [
-  { label: "Solo", desc: "Execução autônoma", icon: "🔥" },
-  { label: "Guiado", desc: "Orientações e cadência Ron AI", icon: "📋" },
-  { label: "Assistido", desc: "Apoio do treinador dedicado", icon: "🤝" },
+  { key: "solo", label: "Solo", desc: "Execução autônoma", icon: "🔥" },
+  { key: "guided", label: "Guiado", desc: "Orientações e cadência Ron AI", icon: "📋" },
+  { key: "assisted", label: "Assistido", desc: "Apoio do treinador dedicado", icon: "🤝" },
 ];
 
 export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWorkout, onStartQuick }: WorkoutHomeProps) {
-  const [supportLevel, setSupportLevel] = useState([1]);
+  const [supportLevel, setSupportLevel] = useState(() => {
+    if (typeof window === "undefined") return [1];
+    const saved = window.localStorage.getItem("9fit_support_level");
+    const index = supportLevels.findIndex((level) => level.key === saved);
+    return [index >= 0 ? index : 1];
+  });
   const currentSupport = supportLevels[supportLevel[0]];
 
   const activeWorkout = trainings[0];
@@ -121,7 +127,12 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
 
           <button
             type="button"
-            onClick={() => activeWorkout ? onSelectWorkout(activeWorkout) : onStartQuick()}
+            onClick={() => activeWorkout
+              ? onSelectWorkout({
+                  ...activeWorkout,
+                  training_data: { ...(activeWorkout.training_data || {}), support_level: currentSupport.key },
+                })
+              : onStartQuick()}
             className="py-3 px-6 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all active:scale-95 cursor-pointer shrink-0 self-stretch sm:self-end"
           >
             <Play className="w-4 h-4 fill-current" />
@@ -235,7 +246,11 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
 
         <Slider
           value={supportLevel}
-          onValueChange={setSupportLevel}
+          onValueChange={(value) => {
+            setSupportLevel(value);
+            const next = supportLevels[value[0]]?.key || "guided";
+            if (typeof window !== "undefined") window.localStorage.setItem("9fit_support_level", next);
+          }}
           max={2}
           step={1}
           className="my-3"
