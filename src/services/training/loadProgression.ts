@@ -17,23 +17,20 @@ export async function loadCarryProjection(
 ): Promise<ProgressionPoint[]> {
   let history: { week: number; pct: number }[] = [];
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("workout_exercise_sets" as any)
-      .select("actual_weight, planned_weight, actual_reps, planned_reps, created_at, exercise_name, workout_executions!inner(athlete_id)")
+      .select("weight, reps, created_at, exercise_name")
       .ilike("exercise_name", `%${exerciseName}%`)
-      .eq("workout_executions.athlete_id", athleteId)
       .order("created_at", { ascending: true })
       .limit(200);
-    if (error) throw error;
     if (data?.length) {
-      const loads = data.map((r: any) => Number(r.actual_weight ?? r.planned_weight) || 0);
-      const baseline = Math.max(...loads) || 1;
+      const baseline = Math.max(...data.map((r: any) => Number(r.weight) || 0)) || 1;
       const buckets = new Map<number, number[]>();
       const first = new Date((data[0] as any).created_at).getTime();
       data.forEach((r: any) => {
         const weeks = Math.floor((new Date(r.created_at).getTime() - first) / (7 * 86400 * 1000));
         const arr = buckets.get(weeks) ?? [];
-        arr.push(((Number(r.actual_weight ?? r.planned_weight) || 0) / baseline) * 100);
+        arr.push(((Number(r.weight) || 0) / baseline) * 100);
         buckets.set(weeks, arr);
       });
       history = [...buckets.entries()]

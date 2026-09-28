@@ -76,10 +76,11 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [infoproduct, setInfoproduct] = useState<Offer | null>(null);
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
+  const [quickExecutionId, setQuickExecutionId] = useState<string | null>(null);
 
   const reset = () => {
     setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
-    setExercises([]); setModelos([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false);
+    setExercises([]); setModelos([]); setInfoproduct(null); setOfferSeen(false); setShowingOffer(false); setQuickExecutionId(null);
   };
 
   const pick = async (k: keyof Answers, v: string) => {
@@ -131,6 +132,14 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       setModelos((payload.modelos || []) as Modelo[]);
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
+      // Insere workout_executions in_progress (start)
+      const { data: executionRaw, error: executionError } = await supabase.from("workout_executions")
+        .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() })
+        .select("id").single();
+      const execution = executionRaw as { id?: string } | null;
+      if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
+      setQuickExecutionId(String(execution.id));
+
       setShowingOffer(!!prod);
       setStep(3);
     } catch (e: unknown) {
@@ -147,27 +156,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   // state (não storage — funciona em Safari modo privado). O
   // WorkoutExecution existente cuida de séries, cronômetro, vídeo inline e
   // só concede XP quando execução real (sets) é registrada.
-  const startGuidedWorkout = async () => {
-    if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
-    const { data: executionRaw, error: executionError } = await supabase.from("workout_executions")
-      .insert({
-        athlete_id: athleteId,
-        workout_date: new Date().toISOString().split("T")[0],
-        phase_name: "quick",
-        status: "in_progress",
-        started_at: new Date().toISOString(),
-      })
-      .select("id")
-      .single();
-    const execution = executionRaw as { id?: string } | null;
-    if (executionError || !execution?.id) {
-      toast.error("Não foi possível iniciar o treino rápido.");
-      return;
-    }
-
+  const startGuidedWorkout = () => {
     const quickTraining = {
       id: `quick-${Date.now()}`,
-      execution_id: String(execution.id),
+      execution_id: quickExecutionId,
       training_name: `Treino Rápido · ${answers.goal}`,
       training_type: "structured",
       is_active: true,
@@ -175,7 +167,6 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       training_data: {
         estimated_duration: Number.parseInt(answers.time, 10),
         requested_duration_min: Number.parseInt(answers.time, 10),
-        support_level: typeof window !== "undefined" ? window.localStorage.getItem("9fit_support_level") || undefined : undefined,
         exercises: exercises.map((e) => ({
           exercise_id: e.id,
           name: e.name,
@@ -188,6 +179,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         })),
       },
     };
+    if (!quickExecutionId) { toast.error("A execução ainda não está pronta. Tente novamente."); return; }
     onClose();
     reset();
     navigate("/9fit/train", { state: { quickTraining } });

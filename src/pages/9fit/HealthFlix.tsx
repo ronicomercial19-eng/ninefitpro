@@ -8,8 +8,6 @@ import { toast } from "sonner";
 
 interface CatalogItem {
   id: string;
-  external_id?: string | null;
-  slug?: string | null;
   title: string;
   category?: string | null;
   level?: string | null;
@@ -18,25 +16,9 @@ interface CatalogItem {
   video_url?: string | null;
 }
 
-function normalizePlayerUrl(item: CatalogItem) {
-  if (!item.video_url) return null;
-  try {
-    const url = new URL(item.video_url);
-    const looksGeneric = /\/programs\/?$/.test(url.pathname) || /healthflix/i.test(url.hostname);
-    if (looksGeneric) {
-      url.searchParams.set("content_id", item.external_id || item.id);
-      if (item.slug) url.searchParams.set("slug", item.slug);
-    }
-    return url.toString();
-  } catch {
-    return item.video_url;
-  }
-}
-
 export default function NineFitHealthFlix() {
   const { athleteId } = useAthleteId();
   const [items, setItems] = useState<CatalogItem[]>([]);
-  const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -48,37 +30,21 @@ export default function NineFitHealthFlix() {
         const { data, error } = await supabase.functions.invoke("healthflix-proxy?action=content", { method: "GET" as any });
         const list = (!error && (data as any)?.items) ? (data as any).items : [];
         if (list.length > 0) {
-          setItems(list.map((item: any) => ({
-            id: String(item.id || item.external_id || item.slug),
-            external_id: item.external_id || item.externalId || null,
-            slug: item.slug || null,
-            title: item.title || item.name || "Conteúdo HealthFlix",
-            category: item.category || null,
-            level: item.level || null,
-            duration: item.duration || item.duration_label || null,
-            thumbnail: item.thumbnail || item.thumbnail_url || item.thumbnailUrl || null,
-            video_url: item.video_url || item.player_url || item.playerUrl || item.url || null,
-          })));
+          setItems(list);
         } else {
           // Fallback: lê direto de library_items (aceita 'videos' e 'video')
           const { data: rows } = await supabase
             .from("library_items" as any)
-            .select("id, external_id, slug, name, category, thumbnail_url, player_url, payload, type")
+            .select("id, external_id, name, category, thumbnail_url, player_url, type")
             .in("type", ["videos", "video", "streaming", "aula"])
             .order("synced_at", { ascending: false })
             .limit(120);
           setItems(((rows as any[]) || []).map((r) => ({
-            id: r.id,
-            external_id: r.external_id,
-            slug: r.slug,
-            title: r.name,
-            category: r.category,
-            thumbnail: r.thumbnail_url,
-            video_url: r.payload?.video_url || r.payload?.playerUrl || r.payload?.url || r.player_url,
+            id: r.id, title: r.name, category: r.category,
+            thumbnail: r.thumbnail_url, video_url: r.player_url,
           })));
         }
       } catch {
-        setLoadError(true);
         toast.error("Não foi possível carregar o catálogo HealthFlix");
       } finally {
         setLoading(false);
@@ -134,7 +100,7 @@ export default function NineFitHealthFlix() {
         {items.map((v, i) => (
           <motion.button
             key={v.id}
-onClick={() => normalizePlayerUrl(v) ? setSelected(v) : toast.info("Este conteúdo ainda não possui player configurado.")}
+            onClick={() => toast.info("Conteúdo selecionado; reprodução via API será ativada quando o player do conector estiver configurado.")}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
@@ -160,20 +126,6 @@ onClick={() => normalizePlayerUrl(v) ? setSelected(v) : toast.info("Este conteú
           </motion.button>
         ))}
       </div>
-
-      {selected && normalizePlayerUrl(selected) && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Reproduzir ${selected.title}`}>
-          <div className="w-full max-w-3xl rounded-2xl bg-card border border-white/10 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <p className="text-sm font-semibold truncate">{selected.title}</p>
-              <button type="button" aria-label="Fechar player" onClick={() => setSelected(null)} className="text-xs text-primary">Fechar</button>
-            </div>
-            <div className="aspect-video bg-black">
-              <iframe title={selected.title} src={normalizePlayerUrl(selected) as string} className="w-full h-full" allowFullScreen />
-            </div>
-          </div>
-        </div>
-      )}
 
       <BottomNavigation />
     </div>

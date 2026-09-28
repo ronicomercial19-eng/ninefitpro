@@ -30,22 +30,22 @@ import {
   SOLUTION_ATTRIBUTION_ID,
 } from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
+import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
 
 type LatLng = { lat: number; lng: number };
 
-// Rota urbana demonstrativa de alta fidelidade (Avenida Paulista / Jardins, São Paulo)
 const DEMO_ROUTE_WAYPOINTS: LatLng[] = [
-  { lat: -23.56149, lng: -46.65588 }, // MASP
+  { lat: -23.56149, lng: -46.65588 }, 
   { lat: -23.56214, lng: -46.65492 },
-  { lat: -23.56298, lng: -46.65365 }, // Al. Ministro Rocha Azevedo
+  { lat: -23.56298, lng: -46.65365 },
   { lat: -23.56382, lng: -46.65237 },
-  { lat: -23.56468, lng: -46.65108 }, // Rua Peixoto Gomide
+  { lat: -23.56468, lng: -46.65108 },
   { lat: -23.56554, lng: -46.64979 },
-  { lat: -23.56639, lng: -46.64851 }, // Gazeta
+  { lat: -23.56639, lng: -46.64851 },
   { lat: -23.56725, lng: -46.64722 },
-  { lat: -23.56811, lng: -46.64593 }, // Trianon
+  { lat: -23.56811, lng: -46.64593 },
   { lat: -23.56897, lng: -46.64464 },
-  { lat: -23.56983, lng: -46.64335 }, // Metrô Brigadeiro
+  { lat: -23.56983, lng: -46.64335 },
   { lat: -23.57069, lng: -46.64206 },
   { lat: -23.57155, lng: -46.64077 },
 ];
@@ -53,7 +53,6 @@ const DEMO_ROUTE_WAYPOINTS: LatLng[] = [
 export default function NineFitMove() {
   const { user } = useAuth();
 
-  // Estados de execução
   const [running, setRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -67,7 +66,6 @@ export default function NineFitMove() {
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [voiceAudio, setVoiceAudio] = useState(true);
 
-  // Referências para Google Maps e Geolocation
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
@@ -82,7 +80,6 @@ export default function NineFitMove() {
   const lastGeocodedCoordRef = useRef<LatLng | null>(null);
   const captureCardRef = useRef<HTMLDivElement>(null);
 
-  // Inicializa o Google Maps
   useEffect(() => {
     let mounted = true;
 
@@ -91,7 +88,6 @@ export default function NineFitMove() {
         const g = await loadGoogleMaps();
         if (!mounted || !mapElementRef.current) return;
 
-        // Posição inicial default (São Paulo Paulista ou localização inicial)
         const defaultCenter = { lat: -23.56149, lng: -46.65588 };
 
         const map = new g.maps.Map(mapElementRef.current, {
@@ -102,14 +98,12 @@ export default function NineFitMove() {
           zoomControl: false,
           gestureHandling: "greedy",
           mapId: undefined,
-          // Mandatory solution attribution ID
           internalUsageAttributionIds: [SOLUTION_ATTRIBUTION_ID],
         } as any);
         console.log("[NineFitMove] Map instance created:", map);
 
         mapInstanceRef.current = map;
 
-        // Polyline de alta visibilidade (Neon Orange 9FIT)
         polylineRef.current = new g.maps.Polyline({
           map,
           path: [],
@@ -118,7 +112,6 @@ export default function NineFitMove() {
           strokeWeight: 6,
         });
 
-        // Tentar obter localização inicial para centralizar o mapa
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -130,9 +123,7 @@ export default function NineFitMove() {
               mapInstanceRef.current.setCenter(posLatLng);
               updateStreetName(posLatLng.lat, posLatLng.lng, true);
             },
-            () => {
-              // Permissão ainda não concedida, mantém default
-            },
+            () => {},
             { enableHighAccuracy: true, timeout: 5000 }
           );
         }
@@ -155,7 +146,6 @@ export default function NineFitMove() {
     };
   }, []);
 
-  // Timer do cronômetro da corrida
   useEffect(() => {
     if (!running || isPaused) return;
     const interval = window.setInterval(() => {
@@ -164,17 +154,14 @@ export default function NineFitMove() {
     return () => window.clearInterval(interval);
   }, [running, isPaused]);
 
-  // Atualiza geocodificação reversa para capturar a rua atual
   const updateStreetName = useCallback(
     async (lat: number, lng: number, force = false) => {
       const now = Date.now();
-      // Throttling: máximo uma requisição a cada 8 segundos ou mudança significativa
       if (!force && now - lastGeocodeTimeRef.current < 8000) return;
 
       if (lastGeocodedCoordRef.current && !force) {
         const dLat = Math.abs(lat - lastGeocodedCoordRef.current.lat);
         const dLng = Math.abs(lng - lastGeocodedCoordRef.current.lng);
-        // Se deslocou menos de ~25 metros, não gasta requisição
         if (dLat < 0.00025 && dLng < 0.00025) return;
       }
 
@@ -188,7 +175,6 @@ export default function NineFitMove() {
     []
   );
 
-  // Função central para processar novos pontos de localização (GPS real ou Simulado)
   const handleNewCoordinate = useCallback(
     (lat: number, lng: number, speedMps?: number | null, accuracy?: number | null) => {
       const g = window.google;
@@ -201,7 +187,6 @@ export default function NineFitMove() {
         setGpsAccuracy(Math.round(accuracy));
       }
 
-      // Calcula distância em relação ao ponto anterior
       if (lastCoordRef.current) {
         const lastGoogleLatLng = new g.maps.LatLng(
           lastCoordRef.current.lat,
@@ -215,7 +200,6 @@ export default function NineFitMove() {
             currentGoogleLatLng
           );
         } else {
-          // Haversine fallback
           const R = 6371000;
           const dLat = ((lat - lastCoordRef.current.lat) * Math.PI) / 180;
           const dLng = ((lng - lastCoordRef.current.lng) * Math.PI) / 180;
@@ -228,7 +212,6 @@ export default function NineFitMove() {
           deltaMeters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        // Filtro de jitter: se a precisão do GPS for baixa e delta < 2.5m, ignora
         if (deltaMeters > 2.0) {
           setDistanceKm((prev) => {
             const nextDist = prev + deltaMeters / 1000;
@@ -237,28 +220,23 @@ export default function NineFitMove() {
         }
       }
 
-      // Calcula velocidade em km/h
       let instantSpeedKmh = 0;
       if (speedMps !== null && speedMps !== undefined && speedMps >= 0) {
         instantSpeedKmh = Math.round(speedMps * 3.6 * 10) / 10;
       } else if (lastCoordRef.current) {
-        // Estimativa se GPS não fornecer speed nativo
-        instantSpeedKmh = 10.2; // Velocidade típica de corrida moderada
+        instantSpeedKmh = 10.2; 
       }
 
       setCurrentSpeedKmh(instantSpeedKmh);
       setMaxSpeedKmh((prev) => Math.max(prev, instantSpeedKmh));
 
-      // Atualiza coordenadas da rota
       pathCoordinatesRef.current.push(currentLatLng);
       lastCoordRef.current = currentLatLng;
 
-      // Atualiza a Polyline desenhada no Google Maps
       if (polylineRef.current) {
         polylineRef.current.getPath().push(currentGoogleLatLng);
       }
 
-      // Adiciona ponto de largada se for o primeiro ponto
       if (!startMarkerRef.current) {
         startMarkerRef.current = new g.maps.Marker({
           position: currentLatLng,
@@ -275,7 +253,6 @@ export default function NineFitMove() {
         });
       }
 
-      // Atualiza marcador dinâmico da posição atual com pulso
       if (!currentMarkerRef.current) {
         currentMarkerRef.current = new g.maps.Marker({
           position: currentLatLng,
@@ -295,16 +272,13 @@ export default function NineFitMove() {
         currentMarkerRef.current.setPosition(currentLatLng);
       }
 
-      // Centraliza e acompanha a câmera no mapa
       mapInstanceRef.current.panTo(currentLatLng);
 
-      // Atualiza nome da rua em tempo real
       updateStreetName(lat, lng);
     },
     [updateStreetName]
   );
 
-  // Iniciar GPS Real
   const startRealGps = () => {
     if (!navigator.geolocation) {
       toast.error("GPS não disponível ou suportado neste navegador.");
@@ -358,7 +332,6 @@ export default function NineFitMove() {
     );
   };
 
-  // Iniciar Modo Demonstração / Simulação de Rota (Ideal para testes em desktop)
   const startSimulation = () => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
@@ -397,16 +370,14 @@ export default function NineFitMove() {
     simIntervalRef.current = window.setInterval(() => {
       simIndexRef.current += 1;
       if (simIndexRef.current >= DEMO_ROUTE_WAYPOINTS.length) {
-        simIndexRef.current = 0; // loop
+        simIndexRef.current = 0;
       }
       const pt = DEMO_ROUTE_WAYPOINTS[simIndexRef.current];
-      // Varia ligeiramente a velocidade para realismo esportivo (10.5 a 12.8 km/h)
       const mockSpeedMps = 2.9 + Math.sin(simIndexRef.current) * 0.4;
       handleNewCoordinate(pt.lat, pt.lng, mockSpeedMps, 4);
     }, 2500);
   };
 
-  // Pausar corrida
   const togglePause = () => {
     setIsPaused((prev) => {
       const next = !prev;
@@ -419,7 +390,6 @@ export default function NineFitMove() {
     });
   };
 
-  // Parar corrida e salvar no Supabase
   const stopAndSave = async () => {
     setRunning(false);
     setIsPaused(false);
@@ -434,9 +404,8 @@ export default function NineFitMove() {
     }
 
     const finalDistanceMeters = Math.round(distanceKm * 1000);
-    const avgPaceMinutes = distanceKm > 0 ? seconds / 60 / distanceKm : 0;
     const avgSpeed = distanceKm > 0 ? (distanceKm / (seconds / 3600)) : 0;
-    const caloriesBurned = Math.round(distanceKm * 65); // Estimativa padrão ~65 kcal/km
+    const caloriesBurned = Math.round(distanceKm * 65);
 
     try {
       const {
@@ -444,20 +413,15 @@ export default function NineFitMove() {
       } = await supabase.auth.getUser();
 
       if (currentUser) {
-        const { error } = await supabase.from("bio_activity_logs").insert({
+        await supabase.from("bio_activity_logs").insert({
           user_id: currentUser.id,
           distance_m: finalDistanceMeters,
           calories: caloriesBurned,
           source: "move_gps",
           recorded_at: new Date().toISOString(),
         });
-
-        if (error) {
-          console.warn("[Save Run Error]:", error);
-        }
       }
 
-      // Salva no histórico local persistente para visualização offline instantânea
       const localHistory = JSON.parse(
         localStorage.getItem("9fit_move_history") || "[]"
       );
@@ -474,7 +438,6 @@ export default function NineFitMove() {
       });
       localStorage.setItem("9fit_move_history", JSON.stringify(localHistory.slice(0, 20)));
 
-      // Emite evento para atualizar contadores semanais de MOVE e XP no Hub
       emitNexus("9fit:mission_completed", { missionId: "move_session", xp: 100 });
       emitNexus("9fit:run:finished", {
         distanceKm,
@@ -491,7 +454,6 @@ export default function NineFitMove() {
     }
   };
 
-  // Recentrar mapa na posição atual do atleta
   const recenterMap = () => {
     if (lastCoordRef.current && mapInstanceRef.current) {
       mapInstanceRef.current.panTo(lastCoordRef.current);
@@ -500,7 +462,6 @@ export default function NineFitMove() {
     }
   };
 
-  // Cálculo de Pace formatado (min'seg"/km)
   const formattedPace = useMemo(() => {
     if (distanceKm <= 0.05 || seconds < 10) return "—'—\"";
     const paceTotalSeconds = seconds / distanceKm;
@@ -509,7 +470,6 @@ export default function NineFitMove() {
     return `${paceMin}'${String(paceSec).padStart(2, "0")}"`;
   }, [distanceKm, seconds]);
 
-  // Tempo formatado HH:MM:SS ou MM:SS
   const formattedTime = useMemo(() => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -520,13 +480,10 @@ export default function NineFitMove() {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }, [seconds]);
 
-  // Calorias estimadas
   const estimatedCalories = Math.round(distanceKm * 65);
 
-  // Compartilhamento
   const share = async () => {
     const text = `🔥 Minha corrida no 9FIT MOVE:\n📍 ${currentStreet}\n📏 ${distanceKm.toFixed(2)} km em ${formattedTime}\n⚡ Ritmo médio: ${formattedPace} /km\n🔥 ${estimatedCalories} kcal gastas!`;
-
     try {
       const canvas = captureCardRef.current
         ? await html2canvas(captureCardRef.current, { backgroundColor: "#0c0d12" })
@@ -553,7 +510,8 @@ export default function NineFitMove() {
   };
 
   return (
-    <div className="fit-os-grid min-h-screen bg-[#07080b] pb-28 text-foreground selection:bg-primary/30">
+    <div className="min-h-screen bg-[#07080b] pb-28 text-foreground selection:bg-primary/30">
+      <MapDiagnostics />
       {/* Top Header */}
       <div className="px-5 pt-8 pb-3 flex items-center justify-between">
         <div>
@@ -573,7 +531,6 @@ export default function NineFitMove() {
           </p>
         </div>
 
-        {/* Botão de voz */}
         <button
           type="button"
           onClick={() => setVoiceAudio(!voiceAudio)}
@@ -712,7 +669,6 @@ export default function NineFitMove() {
       <div className="mx-5 mt-4 space-y-2.5">
         {!running ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {/* LIGAR GPS REAL */}
             <button
               type="button"
               onClick={startRealGps}
@@ -721,8 +677,6 @@ export default function NineFitMove() {
               <Play className="w-5 h-5 fill-current" />
               LIGAR O GPS & INICIAR
             </button>
-
-            {/* MODO SIMULAÇÃO (DEMO PAULISTA) */}
             <button
               type="button"
               onClick={startSimulation}
@@ -734,7 +688,6 @@ export default function NineFitMove() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5">
-            {/* PAUSAR / RETOMAR */}
             <button
               type="button"
               onClick={togglePause}
@@ -743,8 +696,6 @@ export default function NineFitMove() {
               {isPaused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4" />}
               {isPaused ? "Retomar" : "Pausar"}
             </button>
-
-            {/* FINALIZAR */}
             <button
               type="button"
               onClick={stopAndSave}
@@ -756,7 +707,6 @@ export default function NineFitMove() {
           </div>
         )}
 
-        {/* COMPARTILHAR OU CONSULTAR RON */}
         {activitySaved && (
           <div className="pt-2 flex flex-col gap-2">
             <button
@@ -767,7 +717,6 @@ export default function NineFitMove() {
               <Share2 className="w-4 h-4" />
               Compartilhar Resumo da Rota
             </button>
-
             <button
               type="button"
               onClick={() => {
@@ -793,7 +742,6 @@ export default function NineFitMove() {
         )}
       </div>
 
-      {/* DICA DE PERFORMANCE DESPORTIVA */}
       <div className="mx-5 mt-5 p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-neutral-400">
         <div className="flex items-center gap-2 text-white font-semibold mb-1">
           <Award className="w-4 h-4 text-primary" />

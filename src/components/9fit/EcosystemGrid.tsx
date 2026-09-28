@@ -44,6 +44,7 @@ interface Props {
   variant?: "grid" | "rail" | "dense";
   showHeader?: boolean;
   showAll?: boolean;
+  onModuleSelect?: (m: PhysioModule) => void;
 }
 
 // Canonical icon & color mapping for 9FIT modules matching the print
@@ -297,7 +298,7 @@ const CANONICAL_MODULES: PhysioModule[] = [
  * card grande com hero_image faz sentido pra 2 destaques, não pra uma lista
  * inteira. Reserva a intensidade visual pros 2 cards de teaser na Home/Hub.
  */
-export function EcosystemGrid({ category, variant = "grid", showHeader = true, showAll = false }: Props) {
+export function EcosystemGrid({ category, variant = "grid", showHeader = true, showAll = false, onModuleSelect }: Props) {
   const [showOverlay, setShowOverlay] = useState(false);
   const [items, setItems] = useState<PhysioModule[]>([]);
   const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
@@ -537,7 +538,9 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           const accessibilityLabel = canOpen ? "Abrir módulo" : "Módulo indisponível";
           const handleOpen = () => {
             if (!target) return;
-            if (/^https?:\/\//i.test(target))
+            if (onModuleSelect) {
+              onModuleSelect(m);
+            } else if (/^https?:\/\//i.test(target))
               navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(m.name)}`);
             else navigate(target);
           };

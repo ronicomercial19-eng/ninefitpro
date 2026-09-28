@@ -12,6 +12,7 @@ export async function getGoogleMapsApiKey(): Promise<string> {
   if (cachedApiKey) return cachedApiKey;
 
   const envKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  console.log("[GoogleMapsLoader] Environment API Key:", envKey ? "Exists" : "Missing");
   if (envKey && typeof envKey === "string" && envKey.trim().length > 10) {
     cachedApiKey = envKey.trim();
     return cachedApiKey;

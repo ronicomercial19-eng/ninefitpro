@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, Check } from "lucide-react";
 import { useUserParameters, UserParameters } from "@/hooks/useUserParameters";
@@ -42,12 +42,6 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
   const [draft, setDraft] = useState<Partial<UserParameters>>({});
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    setI(0);
-    setDraft({});
-  }, [open]);
-
   if (!open) return null;
   const step = STEPS[i];
   const value = draft[step.key] ?? params[step.key];
@@ -69,12 +63,6 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
           await supabase.from("athlete_pdi_history").insert({
             athlete_id: athleteId,
             pdi_data: { ...params, ...draft },
-          });
-          await supabase.from("master_registry").insert({
-            user_id: user.id,
-            event_type: "pdi_calibrated",
-            source: "fitpro",
-            payload: { athlete_id: athleteId },
           });
         }
       } catch (e: unknown) { console.warn("[PDIWizard] history:", e); }
