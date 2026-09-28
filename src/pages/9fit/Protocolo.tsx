@@ -4,13 +4,15 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { ProtocolViewer, ProtocolListItem } from "@/components/9fit/ProtocolViewer";
-import { Library } from "lucide-react";
+import { Library, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Protocolo() {
   const { athleteId } = useAthleteId();
   const [items, setItems] = useState<any[]>([]);
   const [active, setActive] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [applyingNineLima, setApplyingNineLima] = useState(false);
 
   const load = async () => {
     if (!athleteId) return;
@@ -33,6 +35,28 @@ export default function Protocolo() {
   const activeItems = items.filter(i => !i.completed_at);
   const doneItems = items.filter(i => i.completed_at);
 
+  const applyNineLima = async () => {
+    if (!athleteId) {
+      toast.error("Perfil do atleta ainda não carregou. Tente novamente em alguns segundos.");
+      return;
+    }
+    setApplyingNineLima(true);
+    const { error } = await supabase.rpc("fn_aplicar_protocolo_9x9x9" as any, {
+      p_athlete_id: athleteId,
+      p_protocol_id: "nine-lima",
+      p_data: new Date().toISOString().slice(0, 10),
+    });
+    setApplyingNineLima(false);
+    if (error) {
+      console.error("[Protocolo] fn_aplicar_protocolo_9x9x9", error);
+      toast.error("Não foi possível aplicar o protocolo NINE/LIMA", { description: error.message || "Verifique seu acesso e tente novamente." });
+      return;
+    }
+    toast.success("Protocolo NINE/LIMA aplicado ao seu ciclo.");
+    await load();
+  };
+
+
   return (
     <div className="min-h-screen bg-background pb-28">
       <div className="px-4 pt-6 pb-3">
@@ -42,6 +66,25 @@ export default function Protocolo() {
       </div>
 
       <div className="px-4">
+        <div className="mb-4 rounded-3xl border border-primary/30 bg-primary/[0.07] p-4 shadow-[0_16px_40px_-24px_hsl(var(--primary)/0.7)]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-primary font-bold">NINE/LIMA</p>
+              <h2 className="mt-1 font-display text-lg text-foreground">Protocolo base inteligente</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Aplica o protocolo NINE/LIMA no ciclo atual usando seu perfil de atleta.</p>
+            </div>
+            <button
+              type="button"
+              onClick={applyNineLima}
+              disabled={applyingNineLima || !athleteId}
+              className="shrink-0 rounded-2xl bg-primary px-3.5 py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center gap-2"
+            >
+              {applyingNineLima ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              Ativar
+            </button>
+          </div>
+        </div>
+
         {active ? (
           <ProtocolViewer
             assignment={active}

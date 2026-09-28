@@ -495,9 +495,9 @@ export default function NineFitDieta() {
 
       {/* Fullscreen Diet Viewer Dialog */}
       <Dialog open={!!selectedDiet} onOpenChange={() => setSelectedDiet(null)}>
-        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-white rounded-none border-none">
+        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-[#0f0f0f] text-foreground rounded-none border-none">
           {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b bg-background flex-shrink-0">
+          <div className="flex items-center justify-between p-3 border-b border-primary/20 bg-[#0f0f0f] flex-shrink-0">
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-sm truncate">{selectedDiet?.diet_name}</h3>
               <p className="text-xs text-muted-foreground">
@@ -528,7 +528,7 @@ export default function NineFitDieta() {
           </div>
           
           {/* Content */}
-          <div className="flex-1 overflow-auto" style={{ height: 'calc(100dvh - 60px)' }}>
+          <div className="flex-1 overflow-auto bg-[#0f0f0f]" style={{ height: 'calc(100dvh - 60px)' }}>
             {loadingContent ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />

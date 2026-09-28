@@ -5,6 +5,7 @@ import { useProactiveRon } from '@/hooks/useProactiveRon';
 import { useUserState } from '@/hooks/useUserState';
 import { STATE_LABEL, STATE_COLOR } from '@/services/adaptiveState';
 import { RonConciergeSheet } from './RonConciergeSheet';
+import { useBlockingOverlay } from '@/hooks/useBlockingOverlay';
 
 /**
  * Bubble flutuante e Launcher Global do RON — canto inferior direito, acima do BottomNav.
@@ -15,6 +16,7 @@ export function RonBubble() {
   const { tip, dismiss } = useProactiveRon();
   const { state } = useUserState();
   const [minimized, setMinimized] = useState(false);
+  const blockedByOverlay = useBlockingOverlay();
 
   const openConcierge = (prompt?: string) => {
     window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge', { detail: { prompt } }));
@@ -22,7 +24,7 @@ export function RonBubble() {
 
   return (
     <>
-      <div className="fixed bottom-24 right-3.5 z-40 flex flex-col items-end gap-2 pointer-events-none">
+      {!blockedByOverlay && <div data-ron-concierge="true" className="fixed bottom-32 right-3.5 z-40 flex flex-col items-end gap-2 pointer-events-none">
         {/* Dica Proativa Contextual do RON */}
         <AnimatePresence>
           {tip && !minimized && (
@@ -98,7 +100,7 @@ export function RonBubble() {
             </span>
           </div>
         </motion.button>
-      </div>
+      </div>}
 
       {/* Componente Global de Concierge */}
       <RonConciergeSheet />

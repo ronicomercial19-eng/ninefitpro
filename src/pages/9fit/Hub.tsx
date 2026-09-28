@@ -8,7 +8,6 @@ import { SyncScoreDiagnosisModal } from "@/components/9fit/SyncScoreDiagnosisMod
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
-import { RonBubble } from "@/components/9fit/RonBubble";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { FitOSConsoleDock } from "@/components/9fit/FitOSConsoleDock";
@@ -218,7 +217,6 @@ export default function NineFitHub() {
         </motion.div>
       </motion.div>
 
-      <RonBubble />
       <BottomNavigation />
 
       <ContextualPaywall

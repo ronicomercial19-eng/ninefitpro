@@ -26,21 +26,35 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (!athleteId || !peso) {
-      toast.error("Informe pelo menos o peso");
+    const parsedPeso = Number(String(peso).replace(",", "."));
+    const parsedGordura = gordura ? Number(String(gordura).replace(",", ".")) : null;
+
+    if (!athleteId) {
+      toast.error("Perfil do atleta ainda não carregou. Tente novamente em alguns segundos.");
       return;
     }
+    if (!Number.isFinite(parsedPeso) || parsedPeso <= 0) {
+      toast.error("Informe um peso válido para salvar o check-in.");
+      return;
+    }
+    if (parsedGordura !== null && (!Number.isFinite(parsedGordura) || parsedGordura < 0 || parsedGordura > 80)) {
+      toast.error("Informe um percentual de gordura válido ou deixe em branco.");
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase.rpc("fn_registrar_peso_avulso", {
       p_athlete_id: athleteId,
-      p_peso: Number(peso),
-      p_gordura: gordura ? Number(gordura) : null,
+      p_peso: parsedPeso,
+      p_data: new Date().toISOString().slice(0, 10),
+      p_gordura: parsedGordura,
     });
 
     setSaving(false);
     if (error) {
-      toast.error("Erro ao salvar check-in");
+      console.error("[CheckinCorporalCard] fn_registrar_peso_avulso", error);
+      toast.error("Erro ao salvar check-in", { description: error.message || "Verifique sua conexão e tente novamente." });
       return;
     }
 

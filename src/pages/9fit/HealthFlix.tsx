@@ -2,7 +2,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
-import { Play, Film, Loader2 } from "lucide-react";
+import { Play, Film, Loader2, X, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -14,6 +14,22 @@ interface CatalogItem {
   duration?: string | null;
   thumbnail?: string | null;
   video_url?: string | null;
+  external_id?: string | null;
+  slug?: string | null;
+}
+
+function normalizePlayerUrl(item: CatalogItem) {
+  if (!item.video_url) return null;
+  try {
+    const url = new URL(item.video_url);
+    if (/healthflix/i.test(url.hostname + url.pathname) && !url.searchParams.has("content_id")) {
+      url.searchParams.set("content_id", item.external_id || item.id);
+      if (item.slug) url.searchParams.set("slug", item.slug);
+    }
+    return url.toString();
+  } catch {
+    return item.video_url;
+  }
 }
 
 export default function NineFitHealthFlix() {
@@ -21,6 +37,7 @@ export default function NineFitHealthFlix() {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<CatalogItem | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -35,16 +52,19 @@ export default function NineFitHealthFlix() {
           // Fallback: lê direto de library_items (aceita 'videos' e 'video')
           const { data: rows } = await supabase
             .from("library_items" as any)
-            .select("id, external_id, name, category, thumbnail_url, player_url, type")
+            .select("id, external_id, slug, name, category, thumbnail_url, player_url, type")
             .in("type", ["videos", "video", "streaming", "aula"])
             .order("synced_at", { ascending: false })
             .limit(120);
           setItems(((rows as any[]) || []).map((r) => ({
-            id: r.id, title: r.name, category: r.category,
+            id: String(r.id || r.external_id || r.slug), title: r.name, category: r.category,
+            external_id: r.external_id || null, slug: r.slug || null,
             thumbnail: r.thumbnail_url, video_url: r.player_url,
           })));
         }
-      } catch {
+      } catch (error) {
+        console.error("[HealthFlix] catálogo", error);
+        setLoadError(true);
         toast.error("Não foi possível carregar o catálogo HealthFlix");
       } finally {
         setLoading(false);
@@ -100,7 +120,7 @@ export default function NineFitHealthFlix() {
         {items.map((v, i) => (
           <motion.button
             key={v.id}
-            onClick={() => toast.info("Conteúdo selecionado; reprodução via API será ativada quando o player do conector estiver configurado.")}
+            onClick={() => normalizePlayerUrl(v) ? setSelected(v) : toast.info("Este conteúdo ainda não possui player configurado.")}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
@@ -126,6 +146,29 @@ export default function NineFitHealthFlix() {
           </motion.button>
         ))}
       </div>
+
+
+      {selected && normalizePlayerUrl(selected) && (
+        <div className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-md p-3 sm:p-6 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Reproduzir ${selected.title}`}>
+          <div className="w-full max-w-5xl h-[78dvh] rounded-3xl border border-primary/30 bg-[#0f0f0f] shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between gap-3 border-b border-primary/20 px-4 py-3 bg-[#0f0f0f]">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate text-white">{selected.title}</p>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">HealthFlix Player</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={normalizePlayerUrl(selected) as string} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40" aria-label="Abrir em nova aba">
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button onClick={() => setSelected(null)} className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-primary/40" aria-label="Fechar player">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <iframe title={selected.title} src={normalizePlayerUrl(selected) as string} className="w-full flex-1 bg-black border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+          </div>
+        </div>
+      )}
 
       <BottomNavigation />
     </div>

@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { ArrowRight, ExternalLink, X } from "lucide-react";
 import { EcosystemGrid } from "./EcosystemGrid";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // You might want to move this to a shared types file
 interface PhysioModule {
@@ -25,6 +26,7 @@ interface EcosystemOverlayProps {
 
 export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
   const [selectedModule, setSelectedModule] = useState<PhysioModule | null>(null);
+  const navigate = useNavigate();
 
   // Variantes de movimento para controle fino da transição
   const containerVariants = {
@@ -55,11 +57,11 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md p-4 pt-12 overflow-y-auto"
+          className="fixed inset-0 z-[75] bg-[#050505]/95 backdrop-blur-xl p-4 pt-12 overflow-y-auto"
         >
           <button
             onClick={() => selectedModule ? setSelectedModule(null) : onClose()}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 z-10 p-2 rounded-full border border-white/10 bg-white/10 hover:bg-white/20 transition-colors text-white"
           >
             <X className="w-6 h-6" />
           </button>
@@ -74,14 +76,35 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
                   animate="visible"
                   exit="exit"
                   transition={{ duration: 0.3 }}
-                  className="bg-card p-6 rounded-2xl border border-white/10"
+                  className="bg-[#0f0f0f] p-6 rounded-3xl border border-primary/25 shadow-2xl shadow-black/60"
                 >
                   <h3 className="text-2xl font-bold text-white mb-4">{selectedModule.name}</h3>
                   <p className="text-neutral-400 mb-6">{selectedModule.description}</p>
                   {selectedModule.iframe_url ? (
-                    <iframe src={selectedModule.iframe_url} className="w-full h-96 rounded-xl" />
+                    <iframe src={selectedModule.iframe_url} title={selectedModule.name} className="w-full h-[62dvh] rounded-2xl border border-white/10 bg-black" />
+                  ) : selectedModule.cta_route ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = selectedModule.cta_route as string;
+                        onClose();
+                        setSelectedModule(null);
+                        if (/^https?:\/\//i.test(target)) {
+                          navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(selectedModule.name)}`);
+                        } else {
+                          navigate(target);
+                        }
+                      }}
+                      className="w-full rounded-2xl border border-primary/30 bg-primary/[0.08] hover:bg-primary/15 px-4 py-4 text-left text-white transition flex items-center justify-between gap-3"
+                    >
+                      <span>
+                        <span className="block text-sm font-bold">Abrir {selectedModule.name}</span>
+                        <span className="block text-xs text-muted-foreground mt-0.5">Mantém a sessão ativa e entra no módulo funcional.</span>
+                      </span>
+                      {/^(https?:)?\/\//i.test(selectedModule.cta_route || "") ? <ExternalLink className="w-5 h-5 text-primary" /> : <ArrowRight className="w-5 h-5 text-primary" />}
+                    </button>
                   ) : (
-                    <div className="text-white">Conteúdo do {selectedModule.name} aqui.</div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-muted-foreground">Módulo disponível, mas sem rota configurada.</div>
                   )}
                 </motion.div>
               ) : (
@@ -93,7 +116,11 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
                   exit="exit"
                   transition={{ duration: 0.3 }}
                 >
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white mb-8">Ecosistema</h2>
+                    <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.28 }} className="mb-8 rounded-3xl border border-primary/20 bg-primary/[0.06] p-5 shadow-[0_20px_70px_-36px_hsl(var(--primary)/0.75)]">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-primary font-bold">9FIT ECOSYSTEM</p>
+                      <h2 className="mt-1 text-3xl font-black italic uppercase tracking-tighter text-white">Todos os módulos</h2>
+                      <p className="mt-1 text-xs text-muted-foreground">Escolha o módulo e entre direto mantendo sua sessão ativa.</p>
+                    </motion.div>
                     <EcosystemGrid showHeader={false} showAll={true} variant="grid" onModuleSelect={(m) => { setSelectedModule(m); }} />
                 </motion.div>
               )}
