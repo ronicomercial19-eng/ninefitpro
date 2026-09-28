@@ -49,10 +49,10 @@ export default function EliteBioHackingPage() {
       <div className="px-4 mt-6">
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4 text-center">
-            <p className="text-[10px] font-data tracking-widest text-primary/80">EM BREVE</p>
-            <p className="text-sm font-display uppercase mt-1">Integração com Wearables · HRV · Sono</p>
+            <p className="text-[10px] font-data tracking-widest text-primary/80">STATUS OPERACIONAL</p>
+            <p className="text-sm font-display uppercase mt-1">Wearables · HRV · Sono</p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Dados sincronizados em tempo real para protocolos adaptativos.
+              Quando seus conectores estiverem ativos, os sinais entram aqui para adaptar os protocolos.
             </p>
           </CardContent>
         </Card>

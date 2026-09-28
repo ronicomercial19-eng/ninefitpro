@@ -51,10 +51,10 @@ export default function NineFitPrimePass() {
       {state === "READY" && (
         <>
           <div className="px-4 mb-4 grid grid-cols-2 gap-3">
-            <Pillar icon={Dna} label="Assinatura" tag={snapshot?.entitlement === "active" ? "Ativa" : snapshot?.entitlement === "trial" ? "Em teste" : "Indisponível"} />
+            <Pillar icon={Dna} label="Assinatura" tag={snapshot?.entitlement === "active" ? "Ativa" : snapshot?.entitlement === "trial" ? "Em teste" : "Aguardando ativação"} />
             <Pillar icon={Zap} label="Performance" tag={snapshot?.syncScore == null ? "Sem dados" : `Sync ${snapshot.syncScore}%`} />
-            <Pillar icon={Brain} label="Recuperação" tag={snapshot?.recovery == null ? "Indisponível" : `${snapshot.recovery}%`} />
-            <Pillar icon={Activity} label="Protocolo" tag={snapshot?.activeProtocol || "Indisponível"} />
+            <Pillar icon={Brain} label="Recuperação" tag={snapshot?.recovery == null ? "Sem leitura recente" : `${snapshot.recovery}%`} />
+            <Pillar icon={Activity} label="Protocolo" tag={snapshot?.activeProtocol || "Sem protocolo ativo"} />
           </div>
 
           <div className="px-4 mb-4">

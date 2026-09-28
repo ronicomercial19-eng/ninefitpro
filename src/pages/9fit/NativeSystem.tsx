@@ -8,7 +8,7 @@ export default function NineFitNativeSystem() {
   const appKey = params.get("app") ?? "fitness-place";
   const app = getEmbeddedApp(appKey) ?? getEmbeddedApp("fitness-place")!;
 
-  // Sem URL nativa ainda → mostra fallback (em integração + WhatsApp)
+  // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
   const showFallback = !app.url;
 
   return (
@@ -35,9 +35,9 @@ export default function NineFitNativeSystem() {
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
           <div className="space-y-2">
-            <h1 className="font-display text-2xl">{app.label} em integração</h1>
+            <h1 className="font-display text-2xl">{app.label}</h1>
             <p className="text-sm text-muted-foreground max-w-sm">
-              {app.description ?? "Este módulo será disponibilizado de forma nativa em breve."}
+              {app.description ?? "Este módulo ainda não tem URL operacional configurada. Use o atendimento para continuar sem perder contexto."}
             </p>
           </div>
           {app.fallback?.type === "whatsapp" && (

@@ -34,7 +34,7 @@ import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
 
 type LatLng = { lat: number; lng: number };
 
-const DEMO_ROUTE_WAYPOINTS: LatLng[] = [
+const LOCAL_SIMULATION_WAYPOINTS: LatLng[] = [
   { lat: -23.56149, lng: -46.65588 }, 
   { lat: -23.56214, lng: -46.65492 },
   { lat: -23.56298, lng: -46.65365 },
@@ -51,6 +51,7 @@ const DEMO_ROUTE_WAYPOINTS: LatLng[] = [
 ];
 
 export default function NineFitMove() {
+  const showSimulationControls = import.meta.env.DEV;
   const { user } = useAuth();
 
   const [running, setRunning] = useState(false);
@@ -321,7 +322,7 @@ export default function NineFitMove() {
       (err) => {
         console.warn("[GPS Error]", err);
         toast.warning(
-          "Sinal de GPS fraco ou não autorizado. Você pode ativar o 'Modo Demonstração' abaixo para testar a rota!"
+          "Sinal de GPS fraco ou não autorizado. Verifique a permissão de localização do navegador."
         );
       },
       {
@@ -361,20 +362,20 @@ export default function NineFitMove() {
       currentMarkerRef.current = null;
     }
 
-    toast.info("Modo Demonstração ativado: Simulando corrida pela Av. Paulista.");
+    toast.info("Simulação local ativada.");
 
     simIndexRef.current = 0;
-    const firstPoint = DEMO_ROUTE_WAYPOINTS[0];
+    const firstPoint = LOCAL_SIMULATION_WAYPOINTS[0];
     handleNewCoordinate(firstPoint.lat, firstPoint.lng, 3.2, 5);
 
     simIntervalRef.current = window.setInterval(() => {
       simIndexRef.current += 1;
-      if (simIndexRef.current >= DEMO_ROUTE_WAYPOINTS.length) {
+      if (simIndexRef.current >= LOCAL_SIMULATION_WAYPOINTS.length) {
         simIndexRef.current = 0;
       }
-      const pt = DEMO_ROUTE_WAYPOINTS[simIndexRef.current];
-      const mockSpeedMps = 2.9 + Math.sin(simIndexRef.current) * 0.4;
-      handleNewCoordinate(pt.lat, pt.lng, mockSpeedMps, 4);
+      const pt = LOCAL_SIMULATION_WAYPOINTS[simIndexRef.current];
+      const simulatedSpeedMps = 2.9 + Math.sin(simIndexRef.current) * 0.4;
+      handleNewCoordinate(pt.lat, pt.lng, simulatedSpeedMps, 4);
     }, 2500);
   };
 
@@ -677,14 +678,16 @@ export default function NineFitMove() {
               <Play className="w-5 h-5 fill-current" />
               LIGAR O GPS & INICIAR
             </button>
-            <button
-              type="button"
-              onClick={startSimulation}
-              className="w-full py-4 rounded-xl font-semibold border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4" />
-              Modo Simulação / Demo (Desktop)
-            </button>
+            {showSimulationControls && (
+              <button
+                type="button"
+                onClick={startSimulation}
+                className="w-full py-4 rounded-xl font-semibold border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                Simulação local
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5">

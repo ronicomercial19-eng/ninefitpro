@@ -70,8 +70,10 @@ const MEAL_CATEGORIES = [
   "Ceia / Pós-Treino",
 ];
 
-// Exemplos rápidos para testes imediatos sem webcam
-const DEMO_PRESETS = [
+// Exemplos locais de desenvolvimento sem webcam
+const showLocalPresets = import.meta.env.DEV;
+
+const LOCAL_SCAN_PRESETS = [
   {
     label: "Frango, Arroz & Feijão",
     desc: "Prato tradicional brasileiro de almoço",
@@ -279,19 +281,25 @@ export function FoodScannerModal({
       }
     } catch (err: any) {
       console.warn("[FoodScanner error]", err);
-      // Fallback gracioso para teste imediato
-      const fallback = DEMO_PRESETS[0].data;
-      setScanResult(fallback);
-      setEditedDishName(fallback.dishName);
-      setSelectedCategory("Almoço");
-      toast.info("Análise concluída com estimativa inteligente do 9FIT.");
+      if (showLocalPresets) {
+        const fallback = LOCAL_SCAN_PRESETS[0].data;
+        setScanResult(fallback);
+        setEditedDishName(fallback.dishName);
+        setSelectedCategory("Almoço");
+        toast.info("Análise local gerada para desenvolvimento.");
+      } else {
+        setScanResult(null);
+        toast.error("Não foi possível analisar a imagem", {
+          description: "Tire outra foto com mais luz ou registre a refeição manualmente.",
+        });
+      }
     } finally {
       setIsScanning(false);
     }
   };
 
-  // Usar preset de demonstração
-  const handleUsePreset = (preset: typeof DEMO_PRESETS[0]) => {
+  // Usar preset local
+  const handleUsePreset = (preset: typeof LOCAL_SCAN_PRESETS[0]) => {
     stopCamera();
     setCapturedImage(preset.url);
     setScanResult(preset.data);
@@ -727,27 +735,28 @@ export function FoodScannerModal({
                   />
                 </div>
 
-                {/* Presets Rápidos de Demonstração (Para Desktop / Testes Rápidos) */}
-                <div className="pt-2 border-t border-white/10">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block mb-2">
-                    OU TESTE COM EXEMPLOS PRÉ-CONFIGURADOS (DEMO):
-                  </span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {DEMO_PRESETS.map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleUsePreset(preset)}
-                        className="p-2 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/50 text-left transition-all group"
-                      >
-                        <p className="text-[11px] font-bold text-white group-hover:text-primary truncate">
-                          {preset.label}
-                        </p>
-                        <p className="text-[9px] text-neutral-400 truncate mt-0.5">{preset.desc}</p>
-                      </button>
-                    ))}
+                {showLocalPresets && (
+                  <div className="pt-2 border-t border-white/10">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block mb-2">
+                      Exemplos locais de desenvolvimento:
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {LOCAL_SCAN_PRESETS.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleUsePreset(preset)}
+                          className="p-2 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/50 text-left transition-all group"
+                        >
+                          <p className="text-[11px] font-bold text-white group-hover:text-primary truncate">
+                            {preset.label}
+                          </p>
+                          <p className="text-[9px] text-neutral-400 truncate mt-0.5">{preset.desc}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               /* Ações de Confirmação e Registro */

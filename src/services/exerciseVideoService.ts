@@ -15,9 +15,9 @@
    thumbnail?: string;
  }
  
- // Placeholder for external API configuration
- const EXTERNAL_API_URL = ''; // Will be set when API is integrated
- const EXTERNAL_API_KEY = ''; // Will be stored in secrets
+ // Configuração opcional de API externa. Sem essas variáveis, o serviço usa apenas o cache Supabase.
+ const EXTERNAL_API_URL = (import.meta.env.VITE_EXERCISE_VIDEO_API_URL as string | undefined) || '';
+ const EXTERNAL_API_KEY = (import.meta.env.VITE_EXERCISE_VIDEO_API_KEY as string | undefined) || ''
  
  /**
   * Fetches exercise video from cache (Supabase) or external API
@@ -66,12 +66,11 @@
  }
  
  /**
-  * Fetches video from external API (placeholder implementation)
-  * This will be implemented when the external API is integrated
+  * Busca vídeo em API externa quando configurada por ambiente.
   */
  async function fetchFromExternalAPI(externalVideoId: string): Promise<ExternalVideoResponse | null> {
    if (!EXTERNAL_API_URL || !EXTERNAL_API_KEY) {
-     console.log('External video API not configured');
+     console.info('External video API not configured; using Supabase cache only');
      return null;
    }
  
