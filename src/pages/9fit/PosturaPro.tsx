@@ -28,7 +28,6 @@ export default function NineFitPosturaPro() {
     const missing = SIDES.filter((side) => !files[side]);
     if (missing.length) return toast.error(`Envie: ${missing.join(", ")}`);
     setSaving(true);
-    const uploadedPaths: string[] = [];
     try {
       const urls: Record<string, string> = {};
       for (const side of SIDES) {
@@ -36,7 +35,6 @@ export default function NineFitPosturaPro() {
         const path = `${user.id}/${Date.now()}_${side}_${file.name}`;
         const { error } = await supabase.storage.from("assessments").upload(path, file, { upsert: true });
         if (error) throw error;
-        uploadedPaths.push(path);
         urls[`${side}_url`] = supabase.storage.from("assessments").getPublicUrl(path).data.publicUrl;
       }
       const { data: scan, error } = await supabase.from("postura_scans" as any).insert({ user_id: user.id, ...urls, status: "pending" }).select("id").single();
@@ -47,7 +45,6 @@ export default function NineFitPosturaPro() {
       setFiles({});
       await load();
     } catch (error: any) {
-      if (uploadedPaths.length) await supabase.storage.from("assessments").remove(uploadedPaths);
       toast.error(error?.message || "Não foi possível enviar a análise");
     } finally { setSaving(false); }
   }

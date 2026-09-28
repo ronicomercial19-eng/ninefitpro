@@ -67,20 +67,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined;
-          if (id.includes('/three/') || id.includes('@react-three')) return 'vendor-3d';
-          if (id.includes('/recharts/') || id.includes('/chart.js/')) return 'vendor-charts';
-          if (id.includes('/html2canvas/')) return 'vendor-capture';
-          if (id.includes('/firebase/')) return 'vendor-firebase';
-          if (id.includes('/@supabase/')) return 'vendor-supabase';
-          if (id.includes('/framer-motion/')) return 'vendor-motion';
-          return undefined;
-        },
-      },
-    },
+    // Sem manualChunks manuais: separar react/react-dom em um chunk fixo quebrava a
+    // ordem de inicialização entre os chunks (tela branca / "Cannot read properties of undefined").
+    // O Rollup faz o code-splitting automático com ordem correta.
     chunkSizeWarningLimit: 1000
   }
 }));

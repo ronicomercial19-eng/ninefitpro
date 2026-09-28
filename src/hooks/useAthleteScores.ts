@@ -24,7 +24,7 @@ export interface HubSnapshot {
     mob: HubMetric;
     hidr: HubMetric;
   };
-  weekly: { treinos: number | null; nutri: number | null; minutos: number | null };
+  weekly: { treinos: number; nutri: number; minutos: number };
   vitals: {
     water: HubMetric;
     hrv: HubMetric;
@@ -69,12 +69,6 @@ function count(value: unknown): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-function countOrNull(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
 function mapPayload(raw: unknown): HubSnapshot | null {
   if (!raw || typeof raw !== "object") return null;
   const value = raw as Record<string, any>;
@@ -98,9 +92,9 @@ function mapPayload(raw: unknown): HubSnapshot | null {
       hidr: mapMetric(dimensions.hidr),
     },
     weekly: {
-      treinos: countOrNull(weekly.treinos),
-      nutri: countOrNull(weekly.nutri),
-      minutos: countOrNull(weekly.minutos),
+      treinos: count(weekly.treinos),
+      nutri: count(weekly.nutri),
+      minutos: count(weekly.minutos),
     },
     vitals: {
       water: mapMetric(vitals.water),
@@ -153,7 +147,6 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       setError(null);
     } catch (err: any) {
       console.error("[useAthleteScores] error:", err);
-      setData(null);
       setStatus("error");
       setError(err?.message ?? "Não foi possível carregar o Hub.");
     }
@@ -172,8 +165,9 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     window.addEventListener("offline", onOffline);
     window.addEventListener("online", onOnline);
 
+    const channelName = `hub-snapshot:${athleteId}:${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`hub-snapshot:${athleteId}`)
+      .channel(channelName)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs" },
         (payload: any) => {
           const userId = payload?.new?.user_id;

@@ -28,7 +28,7 @@ export function ActiveSkillsBadge() {
         ))}
       </div>
       <p className="text-[10px] text-muted-foreground mt-2">
-        {skills.length} recurso(s) ajustando suas recomendações em tempo real.
+        {skills.length} skill(s) calibrando suas recomendações em tempo real.
       </p>
     </div>
   );

@@ -45,7 +45,7 @@ export default function NineFitStaff() {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, full_name, role, avatar_url")
-        .in("role", ["admin", "super_admin", "professor", "trainer", "nutritionist"] as any)
+        .in("role", ["admin", "professor"] as any)
         .eq("is_active", true)
         .limit(40);
       if (error) {

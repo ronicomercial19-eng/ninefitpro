@@ -105,10 +105,9 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <AppErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
         <Toaster />
         <Sonner />
         <MissionCompleteOverlay />
@@ -347,10 +346,9 @@ const App = () => (
           </Routes>
           </SovereignBootstrap>
         </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </AppErrorBoundary>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );
 
 export default App;

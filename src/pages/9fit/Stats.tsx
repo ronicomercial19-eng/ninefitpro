@@ -14,7 +14,7 @@ interface Achievement { id: string; name: string; description: string; unlocked:
 export default function NineFitStats() {
   const { athleteId, loading: athleteLoading } = useAthleteId();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<{ totalCalories: number | null; streak: number | null; totalWorkouts: number | null; totalXP: number | null; level: number | null }>({ totalCalories: null, streak: null, totalWorkouts: null, totalXP: null, level: null });
+  const [stats, setStats] = useState({ totalCalories: 0, streak: 0, totalWorkouts: 0, totalXP: 0, level: 1 });
   const [weeklyData, setWeeklyData] = useState<WeekDay[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [prediction, setPrediction] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function NineFitStats() {
       const statsResult = await getAthleteStats(id);
       if (statsResult.success && statsResult.data) {
         const { totalWorkouts, totalCalories, currentStreak, level, totalXp } = statsResult.data;
-        setStats({ totalCalories: totalCalories ?? null, streak: currentStreak ?? null, totalWorkouts: totalWorkouts ?? null, totalXP: totalXp ?? null, level: level ?? null });
+        setStats({ totalCalories, streak: currentStreak, totalWorkouts, totalXP: totalXp, level });
       }
 
       const progressResult = await getWorkoutProgress(id);
@@ -70,12 +70,12 @@ export default function NineFitStats() {
     finally { setLoading(false); }
   };
 
-  const xpProgress = stats.totalXP == null ? 0 : ((stats.totalXP % 500) / 500) * 100;
+  const xpProgress = ((stats.totalXP % 500) / 500) * 100;
   const statCards = [
-    { label: "Total Calorias", value: stats.totalCalories == null ? "—" : stats.totalCalories.toLocaleString(), icon: Flame, color: "text-orange-500" },
-    { label: "Sequência", value: stats.streak == null ? "—" : String(stats.streak), icon: Calendar, color: "text-primary" },
-    { label: "Treinos", value: stats.totalWorkouts == null ? "—" : String(stats.totalWorkouts), icon: Dumbbell, color: "text-blue-400" },
-    { label: "XP Total", value: stats.totalXP == null ? "—" : stats.totalXP.toLocaleString(), icon: Star, color: "text-yellow-500" },
+    { label: "Total Calorias", value: stats.totalCalories.toLocaleString(), icon: Flame, color: "text-orange-500" },
+    { label: "Sequência", value: String(stats.streak), icon: Calendar, color: "text-primary" },
+    { label: "Treinos", value: String(stats.totalWorkouts), icon: Dumbbell, color: "text-blue-400" },
+    { label: "XP Total", value: stats.totalXP.toLocaleString(), icon: Star, color: "text-yellow-500" },
   ];
 
   if (loading || athleteLoading) return <div className="min-h-screen bg-background pb-24 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /><BottomNavigation /></div>;
@@ -83,7 +83,7 @@ export default function NineFitStats() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="px-4 pt-6 pb-4"><h1 className="text-2xl font-black italic uppercase tracking-tighter text-foreground">Progresso</h1></div>
-      <div className="px-4 mb-6"><div className="bg-card border border-border rounded-sm p-4"><div className="flex items-center justify-between mb-2"><span className="text-sm font-bold text-foreground flex items-center gap-2"><Star className="w-4 h-4 text-yellow-500" />Nível {stats.level ?? "—"}</span><span className="text-xs text-muted-foreground">{stats.totalXP == null ? "—" : `${stats.totalXP % 500}/500`} XP</span></div><div className="w-full h-2 bg-muted rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-yellow-500 to-primary rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} /></div></div></div>
+      <div className="px-4 mb-6"><div className="bg-card border border-border rounded-sm p-4"><div className="flex items-center justify-between mb-2"><span className="text-sm font-bold text-foreground flex items-center gap-2"><Star className="w-4 h-4 text-yellow-500" />Nível {stats.level}</span><span className="text-xs text-muted-foreground">{stats.totalXP % 500}/500 XP</span></div><div className="w-full h-2 bg-muted rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-yellow-500 to-primary rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} /></div></div></div>
       {prediction && <div className="px-4 mb-6"><div className="bg-primary/10 border border-primary/30 rounded-sm p-4 flex items-start gap-3"><TrendingUp className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" /><div><p className="text-sm font-bold text-foreground">Previsão de Resultados</p><p className="text-xs text-muted-foreground mt-1">Neste ritmo, você está {prediction}</p></div></div></div>}
       <div className="grid grid-cols-2 gap-3 px-4 mb-8">{statCards.map((stat) => <div key={stat.label} className="bg-card border border-border rounded-sm p-4 min-w-0"><stat.icon className={`w-5 h-5 ${stat.color} mb-2`} /><p className="text-2xl font-black text-foreground truncate">{stat.value}</p><p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{stat.label}</p></div>)}</div>
       <div className="px-4 mb-8"><h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-4">Atividade Semanal</h2><div className="bg-card border border-border rounded-sm p-4"><div className="flex items-end justify-between h-32 gap-2">{weeklyData.map((day) => <div key={day.day} className="flex-1 flex flex-col items-center gap-2 min-w-0"><div className="w-full flex-1 flex items-end"><div className={`w-full rounded-sm transition-all ${day.value > 0 ? "bg-primary" : "bg-muted"}`} style={{ height: `${Math.max(day.value, 4)}%` }} /></div><span className="text-[10px] text-muted-foreground uppercase truncate">{day.day}</span></div>)}</div></div></div>

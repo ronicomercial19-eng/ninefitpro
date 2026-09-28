@@ -130,11 +130,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
 
       const payload = (data || {}) as QuickTrainingPayload;
       setModelos((payload.modelos || []) as Modelo[]);
-      const resolvedExercises = (payload.exercises || payload.exercicios || []) as Exercise[];
-      if (resolvedExercises.length === 0) {
-        throw new Error("O servidor não retornou exercícios compatíveis. Ajuste os filtros e tente novamente.");
-      }
-      setExercises(resolvedExercises);
+      setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
       // Insere workout_executions in_progress (start)
       const { data: executionRaw, error: executionError } = await supabase.from("workout_executions")

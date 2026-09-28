@@ -41,8 +41,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       const onOnboarding  = path.includes('onboarding');
 
       // --- 1. First-access gate ---
-      const firstAccessKey = `9fit_first_access_completed:${session.user.id}`;
-      const localCompleted = localStorage.getItem(firstAccessKey) === 'true';
+      const localCompleted = localStorage.getItem('9fit_first_access_completed') === 'true';
       let firstAccessDone = localCompleted;
 
       if (!firstAccessDone) {

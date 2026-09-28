@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Dumbbell } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,7 +15,7 @@ import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
-import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar } from "lucide-react";
+import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar, ArrowUpRight, Dumbbell } from "lucide-react";
 import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBanner";
 
 interface TrainingAssignment {
@@ -189,9 +188,14 @@ export default function NineFitTrain() {
     }));
 
     if (exercises.length === 0) {
-      // Nunca abrir uma atribuição de outro dia: isso cria um treino falso.
-      // O Quick Train só prossegue se a RPC retornar exercícios reais.
-      setQuickOpen(true);
+      // Sem exercícios estruturados nesse dia — fallback ao fluxo antigo
+      // (primeira atribuição ativa) só quando não há nada para executar direto.
+      if (trainings[0]) {
+        setSelectedTraining(trainings[0]);
+        setFlow("OVERVIEW");
+      } else {
+        setQuickOpen(true);
+      }
       return;
     }
 
@@ -238,19 +242,35 @@ export default function NineFitTrain() {
   }
 
   return (
-    <div className="min-h-screen gradient-mission pb-28">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // TRAIN</p>
-        <h1 className="text-massive text-3xl text-foreground mt-1">
-          {flow === "HOME" ? "MEUS TREINOS" : "VISÃO GERAL"}
+    <div className="min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
+      {/* Hairline luminoso e ambiência */}
+      <div className="fixed top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none z-20" />
+      <div className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[520px] h-[320px] bg-primary/[0.04] rounded-full blur-[130px] pointer-events-none z-0" />
+
+      {/* Header High-Ticket */}
+      <div className="px-4 pt-5 pb-2.5 relative z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <p className="text-[9.5px] font-mono tracking-[0.25em] text-primary font-bold uppercase">
+              9FIT // PROTOCOLOS DE TREINO
+            </p>
+          </div>
+          <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
+            {athleteName || "ATLETA 9FIT"}
+          </span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-white mt-1">
+          {flow === "HOME" ? "Prescrições & Sessões" : "Visão Geral da Sessão"}
         </h1>
       </div>
 
-      <TrainingAdjustmentBanner />
+      <div className="px-4 relative z-10">
+        <TrainingAdjustmentBanner />
+      </div>
 
       {/* Upsell contextual no topo de Train */}
-      <div className="px-4 mb-3">
+      <div className="px-4 mb-3 relative z-10">
         <UpsellBanner
           context="feature_locked"
           storageKey="train_top"
@@ -260,53 +280,70 @@ export default function NineFitTrain() {
         />
       </div>
 
-
-      {/* Internal sub-tabs */}
+      {/* Sub-tabs no padrão Pill Segmented Control High-Ticket */}
       {flow === "HOME" && (
-        <div className="px-4 mb-3">
-          <div className="glass-mission p-1 flex gap-1 nine-pro-clip">
+        <div className="px-4 mb-3.5 relative z-10">
+          <div className="rounded-xl bg-[#0f1015] border border-white/[0.08] p-1 grid grid-cols-4 gap-1 shadow-inner">
             {[
               { k: "train", l: "Hoje", I: DumbIcon },
               { k: "semana", l: "Semana", I: Calendar },
               { k: "protocol", l: "Protocolo", I: Target },
               { k: "healthflix", l: "Streaming", I: Film },
-            ].map(({ k, l, I }) => (
-              <button
-                key={k}
-                onClick={() => {
-                  if (k === "healthflix") navigate("/9fit/healthflix");
-                  else if (k === "protocol") navigate("/9fit/protocolo");
-                  else setSubTab(k as any);
-                }}
-                className={`flex-1 py-2 text-[10px] font-display uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 nine-pro-clip ${
-                  subTab === k ? "nine-pro-gradient text-primary-foreground" : "text-muted-foreground"
-                }`}
-              >
-                <I className="w-3.5 h-3.5" />
-                {l}
-              </button>
-            ))}
+            ].map(({ k, l, I }) => {
+              const isActive = subTab === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => {
+                    if (k === "healthflix") navigate("/9fit/healthflix");
+                    else if (k === "protocol") navigate("/9fit/protocolo");
+                    else setSubTab(k as any);
+                  }}
+                  className={`py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-md font-bold"
+                      : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <I className="w-3.5 h-3.5" />
+                  <span>{l}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
-      <div className="px-4">
+      <div className="px-4 relative z-10">
         {loading || athleteLoading ? (
           <div className="space-y-3">
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : athleteError ? (
-          <div className="glass-mission rounded-2xl p-6 text-center">
+          <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
             <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-sm">{athleteError}</p>
-            <button onClick={() => navigate("/9fit/profile")} className="mt-3 rounded-lg border border-primary/40 px-4 py-2 text-xs text-primary">Ir para o perfil</button>
+            <p className="text-sm text-neutral-300">{athleteError}</p>
+            <button 
+              type="button"
+              onClick={() => navigate("/9fit/profile")} 
+              className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
+            >
+              Ir para o perfil
+            </button>
           </div>
         ) : loadError ? (
-          <div className="glass-mission rounded-2xl p-6 text-center">
+          <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
             <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-sm">Não foi possível carregar seus treinos.</p>
-            <button onClick={() => athleteId && fetchTrainings(athleteId)} className="mt-3 rounded-lg border border-primary/40 px-4 py-2 text-xs text-primary">Tentar novamente</button>
+            <p className="text-sm text-neutral-300">Não foi possível carregar seus treinos.</p>
+            <button 
+              type="button"
+              onClick={() => athleteId && fetchTrainings(athleteId)} 
+              className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
+            >
+              Tentar novamente
+            </button>
           </div>
         ) : flow === "OVERVIEW" && selectedTraining ? (
           <WorkoutOverview
@@ -323,10 +360,31 @@ export default function NineFitTrain() {
           />
         ) : (
           <>
-            <button onClick={() => setQuickOpen(true)}
-              className="w-full mb-3 border border-primary/40 bg-primary/[0.08] py-3 flex items-center justify-center gap-2 font-bold text-primary hover:bg-primary/[0.14] transition nine-pro-clip">
-              <Zap className="w-4 h-4" /> TREINO RÁPIDO (3 perguntas)
+            {/* Botão Treino Rápido High-Ticket */}
+            <button 
+              type="button"
+              onClick={() => setQuickOpen(true)}
+              className="w-full mb-3.5 p-3 rounded-xl border border-primary/30 hover:border-primary/60 bg-gradient-to-r from-primary/[0.12] via-[#121319] to-primary/[0.06] flex items-center justify-between transition-all group cursor-pointer shadow-lg active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
+                  <Zap className="w-4 h-4 fill-primary" />
+                </div>
+                <div className="text-left">
+                  <span className="text-xs font-bold text-white block group-hover:text-primary transition-colors">
+                    Calibrar Treino Rápido
+                  </span>
+                  <span className="text-[10px] font-mono text-neutral-400 block">
+                    Ajuste dinâmico por tempo disponível e energia (3 etapas)
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-primary">
+                <span>Calibrar</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </div>
             </button>
+
             <WorkoutHome
               trainings={trainings}
               athleteName={athleteName || "Atleta"}

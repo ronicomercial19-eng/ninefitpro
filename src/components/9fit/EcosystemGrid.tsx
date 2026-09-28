@@ -376,8 +376,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         console.error("[EcosystemGrid] Load error:", err);
         if (!cancelled) {
           setItems(CANONICAL_MODULES);
-          const fallbackStatus: Record<string, "not_configured"> = {};
-          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "not_configured"; });
+          const fallbackStatus: Record<string, "online"> = {};
+          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "online"; });
           setStatusByKey(fallbackStatus);
           setLoading(false);
         }
@@ -390,7 +390,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     };
   }, [category, reloadToken]);
 
-  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
+  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length || items.length;
   const visibleItems = showAll ? items : items.slice(0, 2);
   const gridClass =
     variant === "rail"
@@ -525,7 +525,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           const src = m.hero_image || MODULE_IMAGES[m.key];
           const status = statusByKey[m.key] || "online";
           const online = status === "online";
-          const label = online ? "Disponível" : status === "not_configured" ? "Ainda não configurado" : "Em preparação";
+          const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
           const target =
             iframeByKey[m.key] || fallbackRoutes[m.key] || MODULE_META[m.key]?.defaultRoute || m.cta_route;
           const canOpen = Boolean(target);

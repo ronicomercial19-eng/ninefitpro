@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,7 +20,6 @@ interface NotificationRow {
 }
 
 export function NotificationBell() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { supported, subscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const [items, setItems] = useState<NotificationRow[]>([]);
@@ -58,11 +56,6 @@ export function NotificationBell() {
     setItems(prev => prev.map(i => i.id === id ? { ...i, is_read: true } : i));
   };
 
-  const openNotification = async (notification: NotificationRow) => {
-    await markAsRead(notification.id);
-    if (notification.action_url?.startsWith("/")) navigate(notification.action_url);
-  };
-
   const markAllAsRead = async () => {
     if (!user || unreadCount === 0) return;
     await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
@@ -72,7 +65,7 @@ export function NotificationBell() {
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) fetchNotifications(); }}>
       <PopoverTrigger asChild>
-        <button aria-label={unreadCount > 0 ? `Notificações, ${unreadCount} não lidas` : "Notificações"} className="relative w-10 h-10 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center">
+        <button className="relative w-10 h-10 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center">
           <Bell className="w-4 h-4 text-foreground" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center">
@@ -103,7 +96,7 @@ export function NotificationBell() {
           ) : items.map(n => (
             <button
               key={n.id}
-              onClick={() => void openNotification(n)}
+              onClick={() => markAsRead(n.id)}
               className={`w-full text-left px-3 py-3 border-b border-border/50 hover:bg-white/[0.02] transition ${!n.is_read ? "bg-primary/5" : ""}`}
             >
               <div className="flex items-start gap-2">

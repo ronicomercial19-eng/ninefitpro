@@ -1,31 +1,52 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
-import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
-import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { RonBubble } from "@/components/9fit/RonBubble";
-import { ActivationMissionCard } from "@/components/9fit/ActivationMissionCard";
-import { QuickMoodInput } from "@/components/9fit/QuickMoodInput";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
-import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
-import { DynamicOffers } from "@/components/9fit/DynamicOffers";
-import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
-import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
-import { CollapsibleRow } from "@/components/9fit/CollapsibleRow";
+import { FitOSConsoleDock } from "@/components/9fit/FitOSConsoleDock";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Library, Radar as RadarIcon, Flame, Rocket, CalendarCheck, Gift } from "lucide-react";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
+
+const hubStaggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.09,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const hubStaggerItem = {
+  hidden: {
+    opacity: 0,
+    scale: 0.96,
+    y: 18,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 280,
+      damping: 24,
+      mass: 0.85,
+    },
+  },
+};
 
 
 export default function NineFitHub() {
@@ -51,16 +72,10 @@ export default function NineFitHub() {
     mob: liveScores?.dimensions.mob.value ?? null,
     hidr: liveScores?.dimensions.hidr.value ?? null,
   };
-  const weekly = liveScores?.weekly ?? null;
+  const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
 
-  const loadHubData = useCallback(async () => {
-    if (!athleteId) {
-      setHubLoading(false);
-      setHubError("Perfil de atleta indisponível. Entre novamente para sincronizar seus dados.");
-      setPerformancePlanTitle(null);
-      setProtocolCount(0);
-      return;
-    }
+  const loadHubData = async () => {
+    if (!athleteId) return;
     setHubLoading(true);
     setHubError(null);
     try {
@@ -87,9 +102,9 @@ export default function NineFitHub() {
     } finally {
       setHubLoading(false);
     }
-  }, [athleteId]);
+  };
 
-  useEffect(() => { void loadHubData(); }, [loadHubData]);
+  useEffect(() => { loadHubData(); }, [athleteId, user?.id]);
 
   useRealtimeTable(
     {
@@ -140,100 +155,52 @@ export default function NineFitHub() {
           <button onClick={() => void loadHubData()} className="text-xs text-primary shrink-0">Tentar de novo</button>
         </div>
       )}
-      {/* 1. HERO SYNC — único elemento aberto/protagonista da tela (redesign Nine Pro v2) */}
-      <HeroSyncSection
-        name={name}
-        syncScore={liveScores?.sync.value ?? null}
-        scoreStatus={scoreStatus}
-        breakdown={breakdown}
-        lastUpdate={liveScores?.sync.observed_at ?? undefined}
-      />
+      {/* Grid de Cards com Stagger Orgânico e Escala Responsiva via Framer Motion */}
+      <motion.div
+        variants={hubStaggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="w-full space-y-6"
+      >
+        {/* 1. HERO SYNC — único elemento aberto/protagonista da tela (redesign Nine Pro v2) */}
+        <motion.div variants={hubStaggerItem}>
+          <HeroSyncSection
+            name={name}
+            syncScore={liveScores?.sync.value ?? null}
+            scoreStatus={scoreStatus}
+            breakdown={breakdown}
+            lastUpdate={liveScores?.sync.observed_at ?? undefined}
+          />
+        </motion.div>
 
-      {/* 2. RON — convite ativo, mantido aberto (2º elemento com destaque da tela) */}
-      <div className="px-4 mt-6">
-        <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
-      </div>
+        {/* 2. RON — convite ativo, mantido aberto (2º elemento com destaque da tela) */}
+        <motion.div variants={hubStaggerItem} className="px-4">
+          <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
+        </motion.div>
 
-      {/* Tudo abaixo vira resumo de 1 linha (navegação progressiva) — nada removido,
-          só peso visual reduzido. Paleta contida (21/09): laranja em tons +
-          dourado/roxo só onde faz sentido (ofertas=dourado/promo, protocolo=roxo/premium). */}
-      <div className="px-4 mt-4 space-y-2.5">
-        <CollapsibleRow icon={<Flame className="w-4 h-4" />} accent="18 100% 59%" label={weekly ? `Treino ${weekly.treinos} · Nutri ${weekly.nutri} · Move ${weekly.minutos}min` : "Treino — · Nutri — · Move —"}>
-          <HubFloatingMetrics vitals={liveScores?.vitals} />
-          <div className="mt-3">
-            <QuickMoodInput onLogged={invalidate} />
-          </div>
-        </CollapsibleRow>
+        {/* 3. HUD MODULAR & DOCK DE COMANDOS (FIT OS CONSOLE) */}
+        <motion.div variants={hubStaggerItem} className="px-4">
+          <FitOSConsoleDock
+            weekly={weekly}
+            liveScoresVitals={liveScores?.vitals}
+            invalidateUserState={invalidate}
+            performancePlanTitle={performancePlanTitle}
+            breakdown={breakdown}
+            protocolCount={protocolCount}
+          />
+        </motion.div>
 
-        <CollapsibleRow icon={<Rocket className="w-4 h-4" />} accent="12 85% 50%" label="Sua ativação">
-          <ActivationMissionCard />
-          <div className="mt-3">
-          <HubWeeklyCounters treinos={weekly?.treinos ?? null} nutri={weekly?.nutri ?? null} minutos={weekly?.minutos ?? null} />
-          </div>
-          {performancePlanTitle && <p className="text-[11px] text-muted-foreground mt-2">Plano ativo: <span className="text-foreground">{performancePlanTitle}</span></p>}
-        </CollapsibleRow>
+        {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
+        <motion.div variants={hubStaggerItem} id="ecosystem-grid" className="px-4">
+          <EcosystemGrid />
+        </motion.div>
 
-        <CollapsibleRow icon={<RadarIcon className="w-4 h-4" />} accent="30 95% 52%" label="Radar semanal · Protocolo do dia">
-          <DailyProtocol />
-          <div className="mt-4">
-            <WeeklyRadar3D current={breakdown} />
-          </div>
-          <div className="mt-4">
-            <UpsellBanner
-              context="hub_upsell"
-              storageKey="hub_after_protocol"
-              variant="amber"
-              headline="Desbloqueie protocolos premium e RON v9 completo"
-              cta="Testar 7 dias grátis"
-            />
-          </div>
-        </CollapsibleRow>
-
-        {protocolCount > 0 && (
-          <button
-            onClick={() => navigate("/9fit/protocolo")}
-            className="w-full fit-os-panel bg-card/30 p-4 flex items-center gap-3 hover:border-primary/30 transition-colors text-left"
-          >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border"
-              style={{
-                background: 'linear-gradient(135deg, hsl(280 70% 62% / 0.30), hsl(280 70% 62% / 0.06))',
-                borderColor: 'hsl(280 70% 62% / 0.35)',
-                boxShadow: '0 0 14px -4px hsl(280 70% 62% / 0.55)',
-                color: 'hsl(280 70% 62%)',
-              }}
-            >
-              <Library className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="text-label">SEU PROTOCOLO</p>
-              <p className="text-sm font-semibold">
-                {protocolCount} conteúdo{protocolCount > 1 ? "s" : ""}
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-        )}
-
-        <CollapsibleRow icon={<CalendarCheck className="w-4 h-4" />} accent="20 100% 50%" label="Próxima aula · check-in">
-          <QuickCheckIn />
-        </CollapsibleRow>
-
-        <CollapsibleRow icon={<Gift className="w-4 h-4" />} accent="45 95% 58%" label="Ofertas pra você">
-          <DynamicOffers compact />
-        </CollapsibleRow>
-      </div>
-
-      {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
-      <div id="ecosystem-grid" className="px-4 mt-6">
-        <EcosystemGrid />
-      </div>
-
-      {/* Carrossel sequencial legado */}
-      <div className="px-4 mt-6">
-        <p className="text-label mb-3">DESTAQUES</p>
-        <HubSequentialCarousel />
-      </div>
+        {/* Carrossel sequencial legado */}
+        <motion.div variants={hubStaggerItem} className="px-4">
+          <p className="text-label mb-3">DESTAQUES</p>
+          <HubSequentialCarousel />
+        </motion.div>
+      </motion.div>
 
       <RonBubble />
       <BottomNavigation />

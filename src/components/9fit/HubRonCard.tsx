@@ -75,14 +75,14 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-[#FF6600]">
               <Sparkles className="w-3 h-3 text-[#FF6600]" />
-              Assistente inteligente
+              Gemini 3.8
             </span>
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-neutral-400">
               <Zap className="w-3 h-3 text-[#FF6600]" />
               {syncScore === null
                 ? "Calibrando"
-                : `${Math.round(syncScore)}% SYNC${scoreStatus === "stale" ? " (última leitura)" : ""}`}
+                : `${Math.round(syncScore)}% sync${scoreStatus === "stale" ? " (obs)" : ""}`}
             </span>
           </div>
 

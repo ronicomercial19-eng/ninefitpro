@@ -173,9 +173,6 @@ function Scene({ values, prev }: { values: number[]; prev?: number[] }) {
 export function WeeklyRadar3D({ current, previous }: Props) {
   const [error, setError] = useState(false);
   const rawValues = [current.treino, current.nutri, current.sono, current.mob, current.hidr];
-  if (rawValues.every((value) => value === null)) {
-    return <div className="surface-card p-4"><p className="text-label">RADAR 5D · SEMANA</p><p className="text-xs text-muted-foreground mt-4 text-center">Dados semanais indisponíveis para montar o radar.</p></div>;
-  }
   const values = rawValues.map((value) => value ?? 0);
   const prevValues = previous
     ? [previous.treino, previous.nutri, previous.sono, previous.mob, previous.hidr].map((value) => value ?? 0)

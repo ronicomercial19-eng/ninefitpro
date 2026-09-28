@@ -48,7 +48,7 @@ export function PersonalIDCard({ name, level, classTier, syncScore, streak, tota
 
           <div className="relative">
             <div className="flex items-end justify-between mb-1.5">
-              <span className="text-[9px] font-data tracking-[0.25em] text-muted-foreground">ÍNDICE DE SINCRONIA</span>
+              <span className="text-[9px] font-data tracking-[0.25em] text-muted-foreground">SYNC SCORE</span>
               <span className="text-massive text-2xl text-primary">{syncScore}%</span>
             </div>
             <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -69,7 +69,7 @@ export function PersonalIDCard({ name, level, classTier, syncScore, streak, tota
           <div className="space-y-2">
             <Row label="Aderência" value="87%" />
             <Row label="Recuperação" value="92%" />
-              <Row label="Bio-Sync" value="ATIVO" highlight />
+            <Row label="Bio-Sync" value="ONLINE" highlight />
             <Row label="Protocolo" value={classTier.toUpperCase()} />
           </div>
           <p className="text-[9px] font-data text-muted-foreground">Toque para voltar</p>

@@ -11,7 +11,6 @@ export default function NineFitOferta() {
   const navigate = useNavigate();
   const [offer, setOffer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!offerId) return;
@@ -19,14 +18,13 @@ export default function NineFitOferta() {
       .from("monetization_offers")
       .select("*")
       .eq("id", offerId)
-      .eq("status", "active")
       .maybeSingle()
-      .then(({ data, error }) => { setOffer(data); setLoadError(error?.message ?? null); setLoading(false); });
+      .then(({ data }) => { setOffer(data); setLoading(false); });
     trackMonetizationEvent("view_paywall", offerId, "dedicated_screen");
   }, [offerId]);
 
   if (loading) return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
-  if (!offer) return <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">{loadError ? "Não foi possível carregar esta oferta." : "Oferta não encontrada"}</div>;
+  if (!offer) return <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">Oferta não encontrada</div>;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -40,7 +38,6 @@ export default function NineFitOferta() {
           <img src={offer.thumbnail_url} alt={offer.name} className="rounded-xl border border-border w-full" />
         )}
         <p className="text-muted-foreground">{offer.description}</p>
-        {(offer.price_display || offer.price || offer.billing_cycle) && <p className="text-lg font-bold text-primary">{offer.price_display ?? (offer.price != null ? `R$ ${Number(offer.price).toFixed(2)}` : "Plano ativo")} {offer.billing_cycle ? `· ${offer.billing_cycle}` : ""}</p>}
         <Card className="p-6 border-primary/30 bg-card">
           <Button
             size="lg"

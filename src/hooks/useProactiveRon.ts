@@ -51,7 +51,7 @@ export function useProactiveRon() {
 
       const candidates: ProactiveTip[] = [];
       if (hour >= 7 && hour < 10 && sync < 60) {
-        candidates.push({ id: 'morning-low-sync', text: 'Sua manhã começou abaixo da média. Quer ajustar seu dia?', cta: 'Conversar' });
+        candidates.push({ id: 'morning-low-sync', text: 'Seu sistema acordou abaixo da média. Vamos calibrar?', cta: 'Conversar' });
       }
       if (hour >= 17 && hour < 20 && !trainedToday) {
         candidates.push({ id: 'afternoon-no-workout', text: 'Ainda dá tempo. 35 min é tudo que você precisa hoje.', cta: 'Ver treino' });

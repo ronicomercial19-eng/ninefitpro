@@ -11,7 +11,6 @@ import { PDIWizard } from "@/components/9fit/PDIWizard";
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
 import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
-import { useAthleteId } from "@/hooks/useAthleteId";
 
 interface MenuItem {
   icon: any;
@@ -25,42 +24,40 @@ interface MenuItem {
 interface AthleteBio {
   avatar_url: string | null;
   age: number | null;
-  altura_cm: number | null;
-  peso_kg: number | null;
+  height_cm: number | null;
+  weight_kg: number | null;
 }
 
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
   const { totalXp, level, syncScore, streak } = useEngrenagem();
-  const { athleteId } = useAthleteId();
-  const [staffOnline, setStaffOnline] = useState<number | null>(null);
+  const [staffOnline, setStaffOnline] = useState(3);
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
-  const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, altura_cm: null, peso_kg: null });
+  const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
 
   useEffect(() => {
     (async () => {
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true })
-        .in("role", ["professor", "admin", "super_admin", "trainer", "nutritionist"] as any)
-        .eq("is_active", true);
-      if (!error) setStaffOnline(count || 0);
+        .in("role", ["professor", "admin"] as any);
+      if (count) setStaffOnline(Math.min(9, Math.max(1, Math.round(count / 3))));
     })();
   }, []);
 
   useEffect(() => {
-    if (!athleteId) return;
+    if (!user?.id) return;
     (async () => {
       const { data } = await supabase
         .from("athletes")
-        .select("avatar_url, age, altura_cm, peso_kg")
-        .eq("id", athleteId)
+        .select("avatar_url, age, height_cm, weight_kg")
+        .eq("user_id", user.id)
         .maybeSingle();
       if (data) setBio(data as any);
     })();
-  }, [athleteId, completeOpen]); // recarrega ao fechar o wizard (aberto pelo próprio ID Card)
+  }, [user?.id, completeOpen]); // recarrega ao fechar o wizard (aberto pelo próprio ID Card)
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
@@ -72,7 +69,7 @@ export default function NineFitProfile() {
   // existir uma fonte real de entitlement, o item fica honesto em vez de
   // inventar status.
   const items: MenuItem[] = [
-    { icon: Users, label: "Equipe", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: staffOnline == null ? "Carregando" : `${staffOnline} disponíveis`, badgeStyle: "neon" },
+    { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} online`, badgeStyle: "neon" },
     { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
@@ -103,8 +100,8 @@ export default function NineFitProfile() {
           streak={streak}
           avatarUrl={bio.avatar_url}
           age={bio.age}
-          heightCm={bio.altura_cm}
-          weightKg={bio.peso_kg}
+          heightCm={bio.height_cm}
+          weightKg={bio.weight_kg}
         />
       </section>
 

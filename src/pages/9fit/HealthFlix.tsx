@@ -1,6 +1,7 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { Play, Film, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -16,8 +17,8 @@ interface CatalogItem {
 }
 
 export default function NineFitHealthFlix() {
+  const { athleteId } = useAthleteId();
   const [items, setItems] = useState<CatalogItem[]>([]);
-  const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -99,7 +100,7 @@ export default function NineFitHealthFlix() {
         {items.map((v, i) => (
           <motion.button
             key={v.id}
-            onClick={() => v.video_url ? setSelected(v) : toast.info("Este conteúdo ainda não possui player configurado.")}
+            onClick={() => toast.info("Conteúdo selecionado; reprodução via API será ativada quando o player do conector estiver configurado.")}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
@@ -125,20 +126,6 @@ export default function NineFitHealthFlix() {
           </motion.button>
         ))}
       </div>
-
-      {selected && selected.video_url && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Reproduzir ${selected.title}`}>
-          <div className="w-full max-w-3xl rounded-2xl bg-card border border-white/10 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <p className="text-sm font-semibold truncate">{selected.title}</p>
-              <button type="button" aria-label="Fechar player" onClick={() => setSelected(null)} className="text-xs text-primary">Fechar</button>
-            </div>
-            <div className="aspect-video bg-black">
-              <iframe title={selected.title} src={selected.video_url} className="w-full h-full" allowFullScreen />
-            </div>
-          </div>
-        </div>
-      )}
 
       <BottomNavigation />
     </div>

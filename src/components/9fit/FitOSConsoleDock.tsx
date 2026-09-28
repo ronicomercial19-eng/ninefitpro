@@ -81,10 +81,10 @@ export function FitOSConsoleDock({
     },
     protocol: {
       key: "protocol",
-      tag: "PLANO NINE PRO",
+      tag: "PRESCRIÇÃO NINE PRO",
       title: "Treinos",
       subtitle: `${protocolCount || 4} conteúdos ativos cadastrados`,
-      statusText: "PLANO ATIVO",
+      statusText: "PRESCRIÇÃO ATIVA",
       telemetryBadge: `${protocolCount || 4} Ativos`,
       icon: Dumbbell,
       accentColor: "#10B981",
@@ -204,7 +204,7 @@ export function FitOSConsoleDock({
         <div className="flex items-center justify-between px-1">
           <span className="text-[10px] font-mono tracking-[0.25em] text-[#FF6600] uppercase font-bold flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5" />
-            AÇÕES & SINAIS
+            COMANDOS & SINAIS
           </span>
           <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider">
             TOQUE PARA ABRIR EM SPLASH

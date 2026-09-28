@@ -7,19 +7,18 @@ interface Props {
   name: string;
   syncScore: number | null;
   scoreStatus: HubScoreStatus;
-  weekly: { treinos: number | null; nutri: number | null; minutos: number | null };
+  weekly: { treinos: number; nutri: number; minutos: number };
   hasPlan: boolean;
 }
 
 export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }: Props) {
   const navigate = useNavigate();
-  const hasWorkout = (weekly.treinos ?? 0) > 0;
-  const weeklyKnown = weekly.treinos !== null && weekly.nutri !== null && weekly.minutos !== null;
+  const hasWorkout = weekly.treinos > 0;
   const scoreReady = typeof syncScore === "number" && scoreStatus === "available";
   const headline = hasWorkout ? "Seu ritmo está em movimento." : hasPlan ? "Seu próximo passo está pronto." : "Vamos calibrar seu primeiro passo.";
   const primaryLabel = hasWorkout ? "Abrir treino de hoje" : hasPlan ? "Abrir meu plano" : "Começar ativação";
   const primaryRoute = hasWorkout ? "/9fit/train" : hasPlan ? "/9fit/planejamento" : "/9fit/ativacao";
-  const consistency = weekly.treinos === null ? 0 : Math.min(100, Math.round((weekly.treinos / 5) * 100));
+  const consistency = Math.min(100, Math.round((weekly.treinos / 5) * 100));
 
   return (
     <section className="w-full" aria-label="Comando do dia">
@@ -75,9 +74,9 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
 
           {/* Métricas Semanais — Números Elegantes & Labels Nítidos */}
           <div className="mt-2.5 grid grid-cols-3 gap-2">
-            <CommandMetric label="Treinos" value={weekly.treinos ?? "—"} suffix={weeklyKnown ? "sem" : ""} progress={consistency} />
-            <CommandMetric label="Minutos" value={weekly.minutos ?? "—"} suffix={weeklyKnown ? "min" : ""} progress={weekly.minutos === null ? 0 : Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
-            <CommandMetric label="Nutrição" value={weekly.nutri ?? "—"} suffix={weeklyKnown ? "reg" : ""} progress={weekly.nutri === null ? 0 : Math.min(100, weekly.nutri * 20)} />
+            <CommandMetric label="Treinos" value={weekly.treinos} suffix="sem" progress={consistency} />
+            <CommandMetric label="Minutos" value={weekly.minutos} suffix="min" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
+            <CommandMetric label="Nutrição" value={weekly.nutri} suffix="reg" progress={Math.min(100, weekly.nutri * 20)} />
           </div>
 
           {/* Ações Secundárias Compactas */}
@@ -126,7 +125,7 @@ function SyncDial({ score }: { score: number | null }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-neutral-400 font-semibold">SINCRONIZAÇÃO</span>
+        <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-neutral-400 font-semibold">SYNC</span>
         <span className="text-xl sm:text-2xl font-bold tracking-tight text-white tabular-nums font-mono leading-none my-0.5">
           {score === null ? "—" : score}
         </span>
@@ -136,7 +135,7 @@ function SyncDial({ score }: { score: number | null }) {
   );
 }
 
-function CommandMetric({ label, value, suffix, progress }: { label: string; value: number | string; suffix: string; progress: number }) {
+function CommandMetric({ label, value, suffix, progress }: { label: string; value: number; suffix: string; progress: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
