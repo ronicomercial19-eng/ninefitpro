@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { SyncScoreDiagnosisModal } from "@/components/9fit/SyncScoreDiagnosisModal";
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
@@ -55,6 +56,7 @@ export default function NineFitHub() {
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
   const { data: liveScores, status: scoreStatus, refresh: refreshScores } = useAthleteScores(athleteId);
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
@@ -163,7 +165,7 @@ export default function NineFitHub() {
         className="w-full space-y-6"
       >
         {/* 1. HERO SYNC — único elemento aberto/protagonista da tela (redesign Nine Pro v2) */}
-        <motion.div variants={hubStaggerItem}>
+        <motion.div variants={hubStaggerItem} className="relative">
           <HeroSyncSection
             name={name}
             syncScore={liveScores?.sync.value ?? null}
@@ -171,7 +173,20 @@ export default function NineFitHub() {
             breakdown={breakdown}
             lastUpdate={liveScores?.sync.observed_at ?? undefined}
           />
+          <button 
+            onClick={() => setShowDiagnosis(true)}
+            className="absolute top-4 right-4 p-2 bg-background/50 rounded-full backdrop-blur"
+            title="Diagnóstico de Sincronia"
+          >
+             <Info className="w-4 h-4 text-primary" />
+          </button>
         </motion.div>
+
+        <SyncScoreDiagnosisModal 
+           open={showDiagnosis} 
+           onClose={() => setShowDiagnosis(false)}
+           score={liveScores?.sync.value ?? 0}
+        />
 
         {/* 2. RON — convite ativo, mantido aberto (2º elemento com destaque da tela) */}
         <motion.div variants={hubStaggerItem} className="px-4">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PdiRoadmapView } from "@/components/9fit/PdiRoadmapView";
 import { ChevronLeft, Sparkles, Calendar as CalIcon, RefreshCw, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -18,6 +19,7 @@ export default function NineFitPlanejamento() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
   const { today: workoutToday } = useWorkoutOfTheDay();
+
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
   const [waves, setWaves] = useState<RemoteWave[]>(FALLBACK_CYCLES);
   const [planName, setPlanName] = useState<string>("Periodização Científica");
@@ -33,7 +35,6 @@ export default function NineFitPlanejamento() {
     if (!athleteId) return;
     setPlanLoading(true);
     setPlanError(null);
-    // Source of truth: vw_athlete_periodizacao_ativa (unifica athlete_periodizations + periodization_plans_remote)
     const { data, error: planErr } = await supabase
       .from("vw_athlete_periodizacao_ativa" as any)
       .select("plan_name, waves, macrocycle, mesocycle, source, plan_id, current_phase")
@@ -46,7 +47,6 @@ export default function NineFitPlanejamento() {
       setPlanLoading(false);
       return;
     }
-
 
     const row = data as any;
     let wavesFound: RemoteWave[] | null = null;
@@ -66,15 +66,12 @@ export default function NineFitPlanejamento() {
     }
 
     if (wavesFound && wavesFound.length) {
-      // marcar apenas na primeira detecção de plano remoto (evita chamadas repetidas)
       const FIRST_PLAN_KEY = "9fit_first_plan_marked";
       if (!hasRemotePlan && !localStorage.getItem(FIRST_PLAN_KEY)) {
         try {
           mark("first_plan");
           localStorage.setItem(FIRST_PLAN_KEY, "1");
-        } catch (err) {
-          // não bloquear a UX
-        }
+        } catch (err) {}
       }
       setWaves(wavesFound);
       setPlanName(row.plan_name || "Periodização SmartPeriodizer");
@@ -100,7 +97,6 @@ export default function NineFitPlanejamento() {
       await loadPlan();
     } catch (error: any) {
       console.error("[Planejamento] syncNow:", error);
-      // Compatibilidade com instalações antigas do conector.
       const { error: fallbackError } = await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
       if (fallbackError) setPlanError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
       else await loadPlan();
@@ -113,31 +109,14 @@ export default function NineFitPlanejamento() {
     if (!athleteId) return;
     loadCarryProjection(athleteId).then(setPoints);
     loadPlan();
-
-    // Realtime: reage a mudanças em athlete_periodizations e periodization_plans_remote
     const channelName = `athlete-periodization-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "athlete_periodizations", filter: `athlete_id=eq.${athleteId}` },
-        () => loadPlan()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "periodization_plans_remote", filter: `athlete_id=eq.${athleteId}` },
-        () => loadPlan()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "periodization_annual_plans", filter: `athlete_id=eq.${athleteId}` },
-        () => loadPlan()
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "athlete_periodizations", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
+      .on("postgres_changes", { event: "*", schema: "public", table: "periodization_plans_remote", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
+      .on("postgres_changes", { event: "*", schema: "public", table: "periodization_annual_plans", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [athleteId]);
 
   const monthDays = useMemo(() => {
@@ -153,14 +132,10 @@ export default function NineFitPlanejamento() {
     return [padding + idx * xStep, H - padding - ((val / maxY) * (H - padding * 2))] as const;
   };
   const polyProjected = points.map((p, i) => xy(p, i, "projectedPct").join(",")).join(" ");
-  const polyReal = points
-    .filter((p) => p.realPct != null)
-    .map((p, i) => xy(p, i, "realPct").join(","))
-    .join(" ");
+  const polyReal = points.filter((p) => p.realPct != null).map((p, i) => xy(p, i, "realPct").join(",")).join(" ");
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
-      {/* Top bar */}
       <div className="px-4 pt-6 flex items-center gap-2">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
           <ChevronLeft className="w-5 h-5" />
@@ -169,14 +144,11 @@ export default function NineFitPlanejamento() {
           <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT PRO // PLANEJAMENTO</p>
           <h1 className="text-3xl font-display tracking-tight">Planejamento</h1>
         </div>
-        <span className="text-[11px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1">
-          Aluno
-        </span>
       </div>
+      
+      <PdiRoadmapView />
 
-      {planLoading && (
-        <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>
-      )}
+      {planLoading && <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>}
       {planError && (
         <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
           <p className="text-xs text-destructive">{planError}</p>
@@ -184,13 +156,10 @@ export default function NineFitPlanejamento() {
         </div>
       )}
 
-
-
-      {/* Periodização */}
       <div className="mx-4 mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
         <div className="flex items-center justify-between">
           <p className="text-primary font-semibold text-sm">{planName}</p>
-          <button onClick={syncNow} disabled={syncing} className="text-[10px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1 flex items-center gap-1 disabl[...]" title="sincronizar">
+          <button onClick={syncNow} disabled={syncing} className="text-[10px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1 flex items-center gap-1" title="sincronizar">
             {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
             Sincronizar
           </button>
@@ -208,16 +177,7 @@ export default function NineFitPlanejamento() {
             const t = isToday(d);
             const isWorkoutDay = workoutToday && isSameDay(d, new Date(workoutToday.date));
             return (
-              <div
-                key={d.toISOString()}
-                className={`aspect-square rounded-lg flex items-center justify-center font-medium text-xs ${
-                  t
-                    ? "bg-primary text-primary-foreground"
-                    : isWorkoutDay
-                    ? "bg-primary/30 text-primary border border-primary/40"
-                    : "bg-white/[0.03] text-foreground/70"
-                }`}
-              >
+              <div key={d.toISOString()} className={`aspect-square rounded-lg flex items-center justify-center font-medium text-xs ${t ? "bg-primary text-primary-foreground" : isWorkoutDay ? "bg-primary/30 text-primary border border-primary/40" : "bg-white/[0.03] text-foreground/70"}`}>
                 {format(d, "d")}
               </div>
             );
@@ -225,7 +185,6 @@ export default function NineFitPlanejamento() {
         </div>
       </div>
 
-      {/* Ondas */}
       <div className="mt-6 px-4">
         <h2 className="text-xl font-display mb-3">Ondas {hasRemotePlan ? "(SmartPeriodizer)" : "Adaptativas"}</h2>
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
@@ -235,14 +194,7 @@ export default function NineFitPlanejamento() {
             const label = c.label || `Onda ${c.week ?? i + 1}`;
             const [head, tail] = label.split(" • ");
             return (
-              <div
-                key={i}
-                className={`snap-start min-w-[230px] rounded-2xl p-4 border ${
-                  isActive
-                    ? "border-primary/60 bg-primary/[0.06] shadow-[0_0_30px_-12px_hsl(var(--primary)/0.6)]"
-                    : "border-white/10 bg-white/[0.03]"
-                }`}
-              >
+              <div key={i} className={`snap-start min-w-[230px] rounded-2xl p-4 border ${isActive ? "border-primary/60 bg-primary/[0.06] shadow-[0_0_30px_-12px_hsl(var(--primary)/0.6)]" : "border-white/10 bg-white/[0.03]"}`}>
                 <p className="text-xs text-muted-foreground">{head}</p>
                 {tail && <p className="text-sm font-semibold">{tail}</p>}
                 {c.focus && <p className="text-xs text-muted-foreground mt-2">Foco: {c.focus}</p>}
@@ -253,18 +205,10 @@ export default function NineFitPlanejamento() {
                     <div className="relative w-12 h-12">
                       <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                         <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
-                        <circle
-                          cx="18" cy="18" r="15"
-                          stroke="hsl(var(--primary))" strokeWidth="3" fill="none"
-                          strokeDasharray={`${(c.pct ?? 0) * 0.94} 100`}
-                          strokeLinecap="round"
-                        />
+                        <circle cx="18" cy="18" r="15" stroke="hsl(var(--primary))" strokeWidth="3" fill="none" strokeDasharray={`${(c.pct ?? 0) * 0.94} 100`} strokeLinecap="round" />
                       </svg>
                       <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">{c.pct ?? 0}%</span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground leading-tight">
-                      IA ajustou carga com<br/>base no seu RM
-                    </p>
                   </div>
                 )}
                 {isDone && <p className="mt-3 text-emerald-400 text-lg">✓</p>}
@@ -274,63 +218,33 @@ export default function NineFitPlanejamento() {
         </div>
       </div>
 
-      {/* Progresso */}
       <div className="mt-6 mx-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
         <h2 className="text-xl font-display mb-1">Progresso do Ciclo</h2>
-        <p className="text-xs text-muted-foreground mb-3">Evolução de Carga • Agachamento</p>
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-          <defs>
+           <defs>
             <linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
               <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0" />
             </linearGradient>
           </defs>
-          {polyProjected && (
-            <polygon
-              points={`${padding},${H - padding} ${polyProjected} ${W - padding},${H - padding}`}
-              fill="url(#fill)"
-            />
-          )}
-          {polyProjected && (
-            <polyline points={polyProjected} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
-          )}
-          {polyReal && (
-            <polyline points={polyReal} fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="1.5" strokeDasharray="3 3" />
-          )}
+          {polyProjected && <polygon points={`${padding},${H - padding} ${polyProjected} ${W - padding},${H - padding}`} fill="url(#fill)" />}
+          {polyProjected && <polyline points={polyProjected} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />}
+          {polyReal && <polyline points={polyReal} fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="1.5" strokeDasharray="3 3" />}
           {points.map((p, i) => {
             const [x, y] = xy(p, i, "projectedPct");
             return <circle key={i} cx={x} cy={y} r="3" fill="hsl(var(--primary))" />;
           })}
         </svg>
         <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-          {points.map((p) => (
-            <span key={p.label}>{p.label}</span>
-          ))}
-        </div>
-        <div className="mt-3 flex gap-4 text-[11px]">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-muted-foreground" /> Real</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary" /> Projetado pela IA</span>
+          {points.map((p) => <span key={p.label}>{p.label}</span>)}
         </div>
       </div>
 
-      {/* CTA */}
-      <button
-        onClick={() => navigate("/9fit/train")}
-        className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl bg-primary text-primary-foreground py-4 font-semibold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--prima[...]"
-      >
+      <button onClick={() => navigate("/9fit/train")} className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl bg-primary text-primary-foreground py-4 font-semibold flex items-center justify-center gap-2">
         <CalIcon className="w-5 h-5" />
         Ver Plano Completo da Semana
       </button>
-      {workoutToday && (
-        <p className="mt-2 text-center text-[11px] text-muted-foreground">
-          Próximo treino: {format(new Date(workoutToday.date), "dd/MM")} • {workoutToday.label} • {workoutToday.durationMin} min
-        </p>
-      )}
-
-      <p className="mt-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-1.5">
-        <Sparkles className="w-3 h-3 text-primary" /> IA gerou seu plano baseado em 14 métricas
-      </p>
-
+      {workoutToday && <p className="mt-2 text-center text-[11px] text-muted-foreground">Próximo treino: {format(new Date(workoutToday.date), "dd/MM")} • {workoutToday.label}</p>}
       <BottomNavigation />
     </div>
   );

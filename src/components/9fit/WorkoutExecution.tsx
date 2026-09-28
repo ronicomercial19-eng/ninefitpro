@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
   ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
-  Loader2, Check, Sparkles, Gauge, Maximize2
+  Loader2, Check, Sparkles, Gauge, Maximize2, Settings2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WearableConnectBox } from "./WearableConnectBox";
 import { PostWorkoutModal } from "./PostWorkoutModal";
+import { TrainingAdjustmentBanner } from "./TrainingAdjustmentBanner";
 import { FocusMode } from "./FocusMode";
 import { triggerPersonalRecordToast } from "./PersonalRecordToast";
 import { ExerciseVideoPlayer, getYoutubeEmbedUrl } from "@/components/exercises/ExerciseVideoPlayer";
@@ -124,6 +125,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   // Live training data + realtime patches from daily_workouts.changes_json
   const [liveTraining, setLiveTraining] = useState<TrainingAssignment>(training);
   const [dailyOverride, setDailyOverride] = useState<DailyOverride | null>(null);
+  const [showAdjustment, setShowAdjustment] = useState(false);
 
   const todayKey = WEEKDAY_KEYS[new Date().getDay()];
   const todayISO = new Date().toISOString().slice(0, 10);
@@ -627,12 +629,30 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
               <span className="hidden sm:inline">Modo Foco</span>
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAdjustment(true)}
+            className="h-8 w-8 p-0 text-foreground"
+            title="Ajuste Rápido"
+          >
+            <Settings2 className="w-5 h-5" />
+          </Button>
+
           <div className="flex items-center gap-1 text-primary">
             <Timer className="w-4 h-4" />
             <span className="text-sm font-mono font-bold">{formatTime(workoutSeconds)}</span>
           </div>
         </div>
       </div>
+
+      {showAdjustment && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm p-4 flex items-center justify-center">
+          <div className="w-full max-w-sm bg-card rounded-xl p-4">
+             <TrainingAdjustmentBanner onClose={() => setShowAdjustment(false)} />
+          </div>
+        </div>
+      )}
 
       {/* Wearable */}
       <div className="px-4 py-2 flex-shrink-0">
