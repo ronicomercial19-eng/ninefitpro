@@ -32,9 +32,10 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   });
 
   return (
-    <button
-      ref={tiltRef}
-      type="button"
+    <div
+      ref={tiltRef as any}
+      role="button"
+      tabIndex={0}
       onClick={() => navigate(`/9fit/ron?context=hub_card&state=${state}`)}
       className="w-full text-left hub-card-interactive rounded-2xl border p-4 sm:p-5 relative overflow-hidden group border-white/10 hover:border-primary/40 bg-gradient-to-r from-[#121318] via-[#0d0e12] to-[#0b0b0e] cursor-pointer shadow-xl shadow-black/60 transition-all duration-300"
       style={{
@@ -142,6 +143,6 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-    </button>
+    </div>
   );
 }

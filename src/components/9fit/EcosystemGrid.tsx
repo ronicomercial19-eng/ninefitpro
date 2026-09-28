@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MODULE_IMAGES } from "@/assets/modules";
 import { useTiltCard } from "@/hooks/useTiltCard";
+import { EcosystemOverlay } from "./EcosystemOverlay";
 
 interface PhysioModule {
   id: string;
