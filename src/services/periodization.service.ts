@@ -109,7 +109,7 @@ export async function getTrainingPhases(modelId: string): Promise<ApiResponse<an
     const result = await supabase
       .from('training_phases')
       .select('*')
-      .eq('periodization_model_id', modelId);
+      .eq('periodization_model_id' as any, modelId);
 
     const { data, error } = result as { data: any[] | null; error: any };
     if (error) return { success: false, error: { code: 'FETCH_ERROR', message: error.message } };

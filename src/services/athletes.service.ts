@@ -114,7 +114,7 @@ export async function activateAthlete(id: string, userId: string, markPasswordCh
       updateData.password_changed = true;
     }
 
-    const { data, error } = await supabase.from('athletes').update(updateData).eq('id', id).select().single();
+    const { data, error } = await supabase.from('athletes').update(updateData as any).eq('id', id).select().single();
     if (error) return { success: false, error: { code: 'ACTIVATION_ERROR', message: error.message } };
 
     await supabase.from('athlete_auth_link').upsert({ athlete_id: id, user_id: userId }, { onConflict: 'athlete_id' });

@@ -55,7 +55,7 @@ export async function loadGoogleMaps(): Promise<typeof google> {
       libraries: ["maps", "geometry", "marker"],
     });
 
-    await loader.load();
+    await loader.importLibrary("maps");
     return window.google;
   })();
 
