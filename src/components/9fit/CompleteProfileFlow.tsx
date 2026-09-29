@@ -9,7 +9,7 @@ import { useActivationProgress } from "@/hooks/useActivationProgress";
 
 interface Props { open: boolean; onClose: () => void; editOnly?: boolean; }
 interface ProfileForm { full_name: string; height_cm: string | number; weight_kg: string | number; age: string | number; }
-interface LegacyAthleteRow { id: string; full_name?: string | null; height_cm?: number | null; weight_kg?: number | null; age?: number | null; }
+interface LegacyAthleteRow { id: string; name?: string | null; altura_cm?: number | null; peso_kg?: number | null; age?: number | null; }
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
@@ -32,19 +32,19 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         const legacyAth = ath as unknown as LegacyAthleteRow;
         setAthleteId(legacyAth.id);
         setProfile({
-          full_name: legacyAth.full_name || "",
-          height_cm: legacyAth.height_cm || "",
-          weight_kg: legacyAth.weight_kg || "",
+          full_name: legacyAth.name || "",
+          height_cm: legacyAth.altura_cm || "",
+          weight_kg: legacyAth.peso_kg || "",
           age: legacyAth.age || "",
         });
       }
       if (editOnly) return;
-      const { data: ck } = await supabase
+      const { data: ck } = ath?.id ? await supabase
         .from("ninefit_checkins")
         .select("created_at")
-        .eq("user_id", user.id)
+        .eq("athlete_id", ath.id)
         .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) : { data: [] };
       const days = new Set((ck || []).map((r) => new Date(r.created_at).toDateString()));
       let streak = 0;
       for (let i = 0; i < 14; i++) {
@@ -52,10 +52,10 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         if (days.has(d)) streak++; else break;
       }
       setStreakDays(streak);
-      const { count } = await supabase
+      const { count } = ath?.id ? await supabase
         .from("workout_executions")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("athlete_id", ath.id) : { count: 0 };
       setWorkoutsDone(count || 0);
     })();
   }, [open, user?.id, editOnly]);
@@ -74,9 +74,9 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         if (!upErr) photoUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
       }
       await supabase.from("athletes").update({
-        full_name: profile.full_name,
-        height_cm: profile.height_cm ? Number(profile.height_cm) : null,
-        weight_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
+        name: profile.full_name,
+        altura_cm: profile.height_cm ? Number(profile.height_cm) : null,
+        peso_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
         age: profile.age ? Number(profile.age) : null,
         ...(photoUrl ? { avatar_url: photoUrl } : {}),
       }).eq("user_id", user.id);
@@ -114,8 +114,12 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         p_metadata: { reward: "primepass_1m+gold" },
       });
       await supabase.from("user_achievements").insert({
-        user_id: user?.id, achievement_type: "consistency_7d",
-        title: "7 dias de consistência", description: "PrimePass 1 mês + ID Card Gold",
+        athlete_id: athleteId,
+        user_email: user?.email ?? "",
+        achievement_type: "consistency_7d",
+        achievement_name: "7 dias de consistência",
+        description: "PrimePass 1 mês + ID Card Gold",
+        points: 500,
       });
       toast.success("🏆 Recompensa desbloqueada: PrimePass 1 mês + ID Card Gold");
       onClose();

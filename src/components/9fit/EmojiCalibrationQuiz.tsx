@@ -77,10 +77,9 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         checkin_date: todayISO(),
         sono: next.sleep,
         energia: next.energy,
-        humor: next.mood,
+        alimentacao: next.mood,
         // escala do banco: 1 = pouca dor, 5 = muita dor (inverso do quiz)
         dor: 6 - next.pain,
-        motivacao: next.motivation,
       },
       { onConflict: "athlete_id,checkin_date" }
     );

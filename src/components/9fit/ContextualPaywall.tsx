@@ -81,7 +81,21 @@ export function ContextualPaywall({ open, onClose, context, headline, subline, c
         .select('*')
         .in('id', ['pro', 'prime'])
         .order('display_order');
-      setPlans(data || []);
+      setPlans(((data || []) as Array<{
+        id: string;
+        name: string;
+        price_monthly: number | null;
+        price_yearly: number | null;
+        features: unknown;
+        is_recommended: boolean | null;
+      }>).map((plan) => ({
+        id: plan.id,
+        name: plan.name,
+        price_monthly: plan.price_monthly ?? 0,
+        price_yearly: plan.price_yearly ?? 0,
+        features: Array.isArray(plan.features) ? plan.features.map(String) : [],
+        is_recommended: Boolean(plan.is_recommended),
+      })));
       trackMonetizationEvent('view_paywall', null, context);
     })();
   }, [open, context]);

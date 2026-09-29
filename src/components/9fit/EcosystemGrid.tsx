@@ -20,7 +20,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { MODULE_IMAGES } from "@/assets/modules";
 import { useTiltCard } from "@/hooks/useTiltCard";
 import { EcosystemOverlay } from "./EcosystemOverlay";
@@ -461,7 +461,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
       </section>
     );
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -472,7 +472,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     },
   };
 
-  const floatingCardVariants = {
+  const floatingCardVariants: Variants = {
     hidden: {
       opacity: 0,
       y: 16,

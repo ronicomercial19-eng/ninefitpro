@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ArrowRight, ExternalLink, X } from "lucide-react";
 import { EcosystemGrid } from "./EcosystemGrid";
 import { useState } from "react";
@@ -29,21 +29,21 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
   const navigate = useNavigate();
 
   // Variantes de movimento para controle fino da transição
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, y: "100%" },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { type: "spring", damping: 25, stiffness: 200 }
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       y: "100%",
       transition: { type: "spring", damping: 30, stiffness: 200 }
     }
   };
 
-  const contentVariants = {
+  const contentVariants: Variants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: -20 }
@@ -65,7 +65,7 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
           >
             <X className="w-6 h-6" />
           </button>
-          
+
           <div className="max-w-2xl mx-auto">
             <AnimatePresence mode="wait">
               {selectedModule ? (
