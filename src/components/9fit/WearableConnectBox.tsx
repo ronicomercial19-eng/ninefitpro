@@ -127,7 +127,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
     if (charRef.current) {
       charRef.current.removeEventListener("characteristicvaluechanged", handleHeartRate);
     }
-    const gatt = deviceRef.current?.gatt as (BluetoothRemoteGATTServer & { connected?: boolean; disconnect?: () => void }) | undefined;
+    const gatt = deviceRef.current?.gatt as { connected?: boolean; disconnect?: () => void } | undefined;
     if (gatt?.connected) {
       gatt.disconnect?.();
     }

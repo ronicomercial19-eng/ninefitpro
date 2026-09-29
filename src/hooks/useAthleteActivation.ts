@@ -48,7 +48,7 @@ export const useAthleteActivation = (athleteId: string | undefined) => {
         if (!data) {
           const { data: created, error: createErr } = await supabase
             .from("athlete_activation")
-            .insert({ athlete_id: athleteId, activated_at: new Date().toISOString() })
+            .insert({ athlete_id: athleteId, activated_at: new Date().toISOString() } as any)
             .select()
             .single();
 

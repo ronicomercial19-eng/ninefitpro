@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('vw_current_identity')
+        .from('vw_current_identity' as any)
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
@@ -229,4 +229,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={{ user, profile, studentProfile, session, userRole, login, register, logout, loading, isSuperAdmin, isAdmin, isTrainer, isStudent }}>{children}</AuthContext.Provider>;
 };
-

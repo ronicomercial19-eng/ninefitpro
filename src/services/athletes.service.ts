@@ -89,7 +89,7 @@ export async function updateAthlete(id: string, dto: UpdateAthleteDTO): Promise<
     const updatePayload: Record<string, any> = { ...dto };
     if (dto.email) updatePayload.email = dto.email.toLowerCase().trim();
 
-    const { data, error } = await supabase.from('athletes').update(updatePayload).eq('id', id).select().single();
+    const { data, error } = await supabase.from('athletes').update(updatePayload as any).eq('id', id).select().single();
     if (error) return { success: false, error: { code: 'UPDATE_ERROR', message: error.message } };
     return { success: true, data, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
   } catch (err: any) {

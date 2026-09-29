@@ -81,7 +81,7 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
         player_url,
         access_url,
         download_url,
-        payload: p,
+        payload: p as any,
         notes: notes || null,
         assigned_by: user?.id,
       });
