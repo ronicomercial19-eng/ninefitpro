@@ -127,7 +127,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
 
       {!loading && days.length === 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-muted-foreground text-sm">
-          Nenhum plano ativo. Seu professor irá atribuir em breve.
+          Nenhum plano ativo encontrado para esta semana. Quando seu professor atribuir um treino, ele aparecerá aqui.
         </div>
       )}
 

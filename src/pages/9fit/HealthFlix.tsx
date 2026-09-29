@@ -114,7 +114,7 @@ export default function NineFitHealthFlix() {
         {!loading && !loadError && items.length === 0 && (
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
             <Film className="w-6 h-6 text-primary mb-2" />
-            <p className="text-xs text-muted-foreground">Catálogo HealthFlix indisponível no momento.</p>
+            <p className="text-xs text-muted-foreground">Nenhuma aula HealthFlix ativa encontrada para sua sessão.</p>
           </div>
         )}
         {items.map((v, i) => (

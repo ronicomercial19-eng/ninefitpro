@@ -39,14 +39,12 @@ type Modelo = { name?: string; objective?: string; stimulus?: string };
 type Offer = {
   id: string;
   name?: string | null;
-  title?: string | null;
   description?: string | null;
   category?: string | null;
   slug?: string | null;
   checkout_url?: string | null;
   thumbnail_url?: string | null;
-  price_cents?: number | null;
-  price?: number | null;
+  metadata?: { price_cents?: number | null; price?: number | null; [key: string]: unknown } | null;
 };
 type QuickTrainingPayload = {
   modelos?: Modelo[];
@@ -97,7 +95,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       // 1) Oferta antes do treino (não bloqueia) — colunas reais de monetization_offers
       const { data: prod } = await supabase
         .from("monetization_offers")
-        .select("id,name,description,category,slug,checkout_url,thumbnail_url")
+        .select("id,name,description,category,slug,checkout_url,thumbnail_url,metadata")
         .eq("status", "active")
         .or(`slug.eq.audience_49,category.eq.${a.goal}`)
         .order("priority", { ascending: false })
@@ -230,14 +228,16 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
               <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Oferta para seu objetivo</p>
               <p className="font-display text-lg mb-3">Aceleramos sua meta de {answers.goal}</p>
               <div className="rounded-2xl border border-primary/40 bg-primary/[0.06] p-4 mb-4">
-                <p className="font-display text-lg">{infoproduct?.title || "Protocolo Personalizado"}</p>
+                <p className="font-display text-lg">{infoproduct?.name || "Conteúdo recomendado"}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {infoproduct?.description || "Plano completo com vídeos, progressão semanal e ajustes pelo PDI."}
+                  {infoproduct?.description || "Conteúdo relacionado ao objetivo escolhido."}
                 </p>
-                <p className="font-data text-primary text-2xl mt-3">
-                  R$ {((infoproduct?.price_cents ?? infoproduct?.price ?? 4900) / (infoproduct?.price_cents ? 100 : 1)).toFixed(0)}
-                  <span className="text-xs text-muted-foreground">/mês</span>
-                </p>
+                {(infoproduct?.metadata?.price_cents != null || infoproduct?.metadata?.price != null) && (
+                  <p className="font-data text-primary text-2xl mt-3">
+                    R$ {((Number(infoproduct?.metadata?.price_cents ?? infoproduct?.metadata?.price ?? 0)) / (infoproduct?.metadata?.price_cents ? 100 : 1)).toFixed(0)}
+                    <span className="text-xs text-muted-foreground">/mês</span>
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <button onClick={() => navigate("/9fit/primepass")} className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2">

@@ -1,6 +1,7 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { motion } from "framer-motion";
 import { Activity, Brain, Crown, Dna, ShieldCheck, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -61,10 +62,15 @@ export default function NineFitPrimePass() {
             <a
               href={PRIME_PASS_CHECKOUT_URL || undefined}
               aria-disabled={!PRIME_PASS_CHECKOUT_URL}
-              onClick={(event) => { if (!PRIME_PASS_CHECKOUT_URL) { event.preventDefault(); } }}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full glass-mission glass-mission-active rounded-xl p-4 flex items-center justify-between"
+              onClick={(event) => {
+                if (!PRIME_PASS_CHECKOUT_URL) {
+                  event.preventDefault();
+                  toast.info("Prime Pass será liberado pela equipe quando sua assinatura estiver ativa.");
+                }
+              }}
+              target={PRIME_PASS_CHECKOUT_URL ? "_blank" : undefined}
+              rel={PRIME_PASS_CHECKOUT_URL ? "noreferrer" : undefined}
+              className={`w-full glass-mission rounded-xl p-4 flex items-center justify-between ${PRIME_PASS_CHECKOUT_URL ? "glass-mission-active" : "opacity-80 cursor-default"}`}
             >
               <div className="flex items-center gap-3">
                 <Crown className="w-5 h-5 text-primary" />
