@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -26,6 +27,17 @@ const ai = new GoogleGenAI({
     },
   },
 });
+
+// Initialize Supabase Admin Client
+let supabase: any;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+} else {
+  console.warn('WARN: Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não encontradas. Funcionalidades de webhook estarão desabilitadas.');
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -386,25 +398,47 @@ Se o atleta solicitar uma ação (navegar, agendar, iniciar treino, adicionar re
   }
 });
 
-// Mount Vite or serve static files
-async function startServer() {
-  if (!isProduction) {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-    });
+// Webhook para InfinitePay
+app.post('/api/webhook/infinitepay', async (req, res) => {
+  try {
+    // 1. Validação de Segurança
+    const authToken = req.headers['x-webhook-secret'];
+    if (authToken !== process.env.INFINITEPAY_WEBHOOK_SECRET) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    const { user_email, plan_id } = req.body;
+
+    if (!user_email || !plan_id) {
+      return res.status(400).json({ error: 'Dados incompletos' });
+    }
+
+    // 2. Identifica o plano (basico ou annual)
+    const planType = plan_id === 'TatHaBMsUX' ? 'pro' : 'active';
+
+    // 3. Atualiza status no banco via SDK do Supabase
+    if (!supabase) {
+      console.error('Erro: Supabase não foi inicializado');
+      return res.status(500).json({ error: 'Configuração de banco de dados ausente' });
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ plan_status: planType })
+      .eq('email', user_email);
+
+    if (error) throw error;
+
+    console.log(`Pagamento confirmado para ${user_email}, plano ${planType}`);
+    
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error('Erro no webhook:', error);
+    return res.status(500).json({ error: 'Falha ao processar webhook' });
   }
+});
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on http://0.0.0.0:${PORT}`);
-  });
-}
-
-startServer();
+// Mount Vite or serve static files
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on http://0.0.0.0:${PORT}`);
+});
