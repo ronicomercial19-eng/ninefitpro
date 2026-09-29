@@ -258,6 +258,9 @@ export function FoodScannerModal({
     setScanResult(null);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 segundos
+
       const res = await fetch("/api/gemini/scan-food", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -266,7 +269,13 @@ export function FoodScannerModal({
           mimeType: "image/jpeg",
           scanMode,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error(`Erro HTTP: ${res.status}`);
+      }
 
       const json = await res.json();
       if (json.success && json.data) {
@@ -280,7 +289,7 @@ export function FoodScannerModal({
         throw new Error(json.error || "Falha na análise");
       }
     } catch (err: any) {
-      console.warn("[FoodScanner error]", err);
+      console.error("[FoodScanner error details]", err);
       if (showLocalPresets) {
         const fallback = LOCAL_SCAN_PRESETS[0].data;
         setScanResult(fallback);
@@ -290,7 +299,9 @@ export function FoodScannerModal({
       } else {
         setScanResult(null);
         toast.error("Não foi possível analisar a imagem", {
-          description: "Tire outra foto com mais luz ou registre a refeição manualmente.",
+          description: err.name === 'AbortError' 
+            ? "A análise demorou muito. Verifique sua conexão e tente novamente."
+            : "Tire outra foto com mais luz ou registre a refeição manualmente.",
         });
       }
     } finally {

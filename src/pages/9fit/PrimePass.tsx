@@ -1,31 +1,14 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { motion } from "framer-motion";
 import { Activity, Brain, Crown, Dna, ShieldCheck, Zap } from "lucide-react";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAthleteId } from "@/hooks/useAthleteId";
-import { loadPrimeSnapshot, type PrimeSnapshot } from "@/integrations/primeSystem";
-
-type State = "DIAGNOSTIC" | "READY" | "UPGRADING";
-
-const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || null;
+import { usePrimeState } from "@/hooks/usePrimeState";
 
 export default function NineFitPrimePass() {
   const { user } = useAuth();
-  const { athleteId } = useAthleteId();
-  const [snapshot, setSnapshot] = useState<PrimeSnapshot | null>(null);
-  const [state, setState] = useState<State>("DIAGNOSTIC");
+  const { biomarkers, macros } = usePrimeState();
 
-  useEffect(() => {
-    if (!user?.id) return;
-    void loadPrimeSnapshot(user.id, athleteId).then((data) => { setSnapshot(data); setState("READY"); });
-  }, [user?.id, athleteId]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setState("READY"), 2200);
-    return () => clearTimeout(t);
-  }, []);
+  if (!user) return null;
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
@@ -34,77 +17,25 @@ export default function NineFitPrimePass() {
         <h1 className="text-massive text-4xl text-foreground mt-1">PRIME PASS</h1>
       </div>
 
-      {state === "DIAGNOSTIC" && (
-        <div className="px-4">
-          <div className="glass-mission rounded-xl p-6 flex flex-col items-center text-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 rounded-full border-2 border-primary border-t-transparent mb-4"
-            />
-            <p className="text-[10px] font-data tracking-[0.3em] text-primary mb-2">[DIAGNOSTIC]</p>
-            <p className="text-sm text-foreground">Sincronizando DNA...</p>
-            <p className="text-xs text-muted-foreground mt-1">Scanner holográfico ativo</p>
+      <div className="px-4 mb-4 grid grid-cols-2 gap-3">
+        <Pillar icon={Dna} label="Assinatura" tag="Ativa" />
+        <Pillar icon={Zap} label="Performance" tag={`Testo: ${biomarkers?.testosterone || '---'} ng/dL`} />
+        <Pillar icon={Brain} label="Recuperação" tag={`Cortisol: ${biomarkers?.cortisol || '---'} ug/dL`} />
+        <Pillar icon={Activity} label="Protocolo" tag={`Proteína: ${macros?.protein || '---'}g`} />
+      </div>
+
+      <div className="px-4 mb-4">
+        <div className="w-full glass-mission rounded-xl p-4 flex items-center justify-between glass-mission-active">
+          <div className="flex items-center gap-3">
+            <Crown className="w-5 h-5 text-primary" />
+            <div className="text-left">
+              <p className="text-editorial text-base text-foreground">Status Prime</p>
+              <p className="text-[10px] font-data text-muted-foreground">Sistema Sincronizado</p>
+            </div>
           </div>
+          <ShieldCheck className="w-5 h-5 text-primary" />
         </div>
-      )}
-
-      {state === "READY" && (
-        <>
-          <div className="px-4 mb-4 grid grid-cols-2 gap-3">
-            <Pillar icon={Dna} label="Assinatura" tag={snapshot?.entitlement === "active" ? "Ativa" : snapshot?.entitlement === "trial" ? "Em teste" : "Aguardando ativação"} />
-            <Pillar icon={Zap} label="Performance" tag={snapshot?.syncScore == null ? "Sem dados" : `Sync ${snapshot.syncScore}%`} />
-            <Pillar icon={Brain} label="Recuperação" tag={snapshot?.recovery == null ? "Sem leitura recente" : `${snapshot.recovery}%`} />
-            <Pillar icon={Activity} label="Protocolo" tag={snapshot?.activeProtocol || "Sem protocolo ativo"} />
-          </div>
-
-          <div className="px-4 mb-4">
-            <a
-              href={PRIME_PASS_CHECKOUT_URL || undefined}
-              aria-disabled={!PRIME_PASS_CHECKOUT_URL}
-              onClick={(event) => {
-                if (!PRIME_PASS_CHECKOUT_URL) {
-                  event.preventDefault();
-                  toast.info("Prime Pass será liberado pela equipe quando sua assinatura estiver ativa.");
-                }
-              }}
-              target={PRIME_PASS_CHECKOUT_URL ? "_blank" : undefined}
-              rel={PRIME_PASS_CHECKOUT_URL ? "noreferrer" : undefined}
-              className={`w-full glass-mission rounded-xl p-4 flex items-center justify-between ${PRIME_PASS_CHECKOUT_URL ? "glass-mission-active" : "opacity-80 cursor-default"}`}
-            >
-              <div className="flex items-center gap-3">
-                <Crown className="w-5 h-5 text-primary" />
-                <div className="text-left">
-                  <p className="text-editorial text-base text-foreground">Ativar Prime Pass</p>
-                  <p className="text-[10px] font-data text-muted-foreground">{PRIME_PASS_CHECKOUT_URL ? "Liberação após confirmação segura" : "Acesso gerenciado pelo Prime Pass"}</p>
-                </div>
-              </div>
-              <ShieldCheck className="w-5 h-5 text-primary" />
-            </a>
-          </div>
-
-        </>
-      )}
-
-      {state === "UPGRADING" && (
-        <div className="px-4">
-          <div className="glass-mission glass-mission-active rounded-xl p-6 flex flex-col items-center text-center">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 1.4, repeat: Infinity }}
-              className="w-12 h-12 rounded-full bg-primary mb-3"
-            />
-            <p className="text-[10px] font-data tracking-[0.3em] text-primary">[UPGRADING]</p>
-            <p className="text-sm text-foreground mt-2">Sincronizando DNA…</p>
-            <button
-              onClick={() => setState("READY")}
-              className="mt-4 text-xs text-muted-foreground underline"
-            >
-              cancelar
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
 
       <BottomNavigation />
     </div>

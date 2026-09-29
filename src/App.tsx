@@ -92,6 +92,8 @@ import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { EcoEmbed } from "./components/9fit/EcoEmbed";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
 
+import { useAppSplash } from "@/hooks/useAppSplash";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
