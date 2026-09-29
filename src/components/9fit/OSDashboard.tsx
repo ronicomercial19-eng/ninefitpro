@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Settings, 
-  Menu, 
-  Dumbbell, 
-  Share2, 
-  Users, 
-  Tag, 
-  Trophy, 
-  ChevronLeft, 
-  ChevronRight, 
-  Sparkles, 
-  Flame, 
-  Rocket, 
-  Check, 
-  X, 
+import {
+  Settings,
+  Menu,
+  Dumbbell,
+  Share2,
+  Users,
+  Tag,
+  Trophy,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Flame,
+  Rocket,
+  Check,
+  X,
   ArrowUpRight,
   ShieldCheck,
   Compass,
@@ -103,7 +103,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
   const nutriStatus = weekly.nutri > 0 ? `${weekly.nutri} refeições` : 'Sem registro';
   const focoStatus = syncScore == null ? 'A calibrar' : `Sync ${Math.round(syncScore)}`;
   const consistenciaStatus = weekly.treinos > 0 ? `${weekly.treinos}/5 sem` : 'Sem ciclo';
-  const recuperacaoStatus = syncScore == null || scoreStatus === 'empty' ? 'Calibrar' : 'Com leitura';
+  const recuperacaoStatus = syncScore == null ? 'Calibrar' : 'Com leitura';
   const ecosystemStatus = ecosystemActiveCount == null ? 'Ver módulos' : `${ecosystemActiveCount} ativos`;
 
   // Comunidade & Notícias — Apresentação 100% Visual com Imagens Cinematográficas
@@ -195,8 +195,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     <div className="px-3.5 sm:px-4 pt-1 space-y-3 sm:space-y-3.5 pb-12 max-w-2xl mx-auto">
       {/* Header Superior estilo High-Ticket (Whoop / Oura Studio) */}
       <header className="flex items-center justify-between py-1.5 border-b border-white/[0.05]">
-        <button 
-          onClick={() => navigate('/9fit/profile')} 
+        <button
+          onClick={() => navigate('/9fit/profile')}
           aria-label="Menu do Atleta"
           className="w-8 h-8 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] flex items-center justify-center transition-colors text-neutral-300"
         >
@@ -215,8 +215,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           </span>
         </div>
 
-        <button 
-          onClick={() => navigate('/9fit/settings')} 
+        <button
+          onClick={() => navigate('/9fit/settings')}
           aria-label="Configurações do Sistema"
           className="w-8 h-8 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] flex items-center justify-center transition-colors text-neutral-300"
         >
@@ -225,12 +225,12 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       </header>
 
       {/* Comando do dia — Telemetria de Estado do Atleta */}
-      <HubCommandDeck 
-        name={name} 
-        syncScore={syncScore} 
-        scoreStatus={scoreStatus} 
-        weekly={weekly} 
-        hasPlan={hasPlan} 
+      <HubCommandDeck
+        name={name}
+        syncScore={syncScore}
+        scoreStatus={scoreStatus}
+        weekly={weekly}
+        hasPlan={hasPlan}
       />
 
       {/* =========================================================================
@@ -251,9 +251,9 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:14px_14px] opacity-70" />
 
           {/* Radar 360° Geométrico em SVG (Marca d'água técnica de alta precisão) */}
-          <svg 
+          <svg
             className="absolute right-[-30px] top-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 text-primary/[0.08] pointer-events-none"
-            viewBox="0 0 200 200" 
+            viewBox="0 0 200 200"
             fill="none"
           >
             {/* Círculos concêntricos 360° */}
@@ -410,8 +410,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                 type="button"
                 onClick={() => setEventIdx(i)}
                 className={`relative rounded-md overflow-hidden text-left border transition-all cursor-pointer group/thumb h-14 sm:h-16 ${
-                  isSelected 
-                    ? 'border-primary ring-1 ring-primary/60 shadow-md scale-[1.02]' 
+                  isSelected
+                    ? 'border-primary ring-1 ring-primary/60 shadow-md scale-[1.02]'
                     : 'border-white/10 opacity-60 hover:opacity-100 hover:border-white/30'
                 }`}
               >
@@ -484,11 +484,11 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                     </div>
                     <div className="space-y-1.5">
                       {ranking.map((r, i) => (
-                        <div 
-                          key={i} 
+                        <div
+                          key={i}
                           className={`flex items-center justify-between text-xs rounded-lg px-3 py-2.5 transition-all ${
-                            r.self 
-                              ? 'bg-amber-400/10 border border-amber-400/30 text-amber-200 font-semibold' 
+                            r.self
+                              ? 'bg-amber-400/10 border border-amber-400/30 text-amber-200 font-semibold'
                               : 'bg-white/[0.02] border border-white/5 text-neutral-300'
                           }`}
                         >
@@ -617,8 +617,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                         { I: Users, label: 'Staff', desc: 'Personal & Equipe', route: '/9fit/staff' },
                         { I: Tag, label: 'Protocolos', desc: 'Conteúdo e planos', route: '/9fit/protocols' },
                       ].map(({ I, label, desc, route }) => (
-                        <button 
-                          key={label} 
+                        <button
+                          key={label}
                           onClick={() => { setActiveModal(null); navigate(route); }}
                           className="p-2.5 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/40 flex items-center gap-2.5 transition-all text-left group"
                         >

@@ -47,12 +47,12 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       if (!firstAccessDone) {
         try {
           const { data: profile } = await supabase
-            .from('vw_current_identity')
+            .from('vw_current_identity' as any)
             .select('first_access_completed')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
-          if (profile?.first_access_completed === true) {
+          if ((profile as { first_access_completed?: boolean } | null)?.first_access_completed === true) {
             firstAccessDone = true;
           } else {
             const { data: athlete } = await supabase
@@ -88,15 +88,15 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       if (firstAccessDone && !onFirstAccess) {
         try {
           const { data: athlete } = await supabase
-            .from('vw_current_identity')
+            .from('vw_current_identity' as any)
             .select('athlete_id')
             .eq('user_id', session.user.id)
             .maybeSingle();
-          if (athlete?.athlete_id) {
+          if ((athlete as { athlete_id?: string } | null)?.athlete_id) {
             const { data: act } = await supabase
               .from('athlete_activation')
               .select('finished_at')
-              .eq('athlete_id', athlete.athlete_id)
+              .eq('athlete_id', (athlete as { athlete_id: string }).athlete_id)
               .maybeSingle();
             const finished = act?.finished_at;
             if (!finished && !onAtivacao && !onOnboarding) {

@@ -244,7 +244,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
                   <span className="text-primary font-bold w-6 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                   <span className="flex-1">
                     {typeof m === 'string' ? m : moduleLabel(m)}
-                    {m?.duration && <span className="text-muted-foreground text-xs ml-2">{m.duration}</span>}
+                    {typeof m !== 'string' && m.duration && <span className="text-muted-foreground text-xs ml-2">{m.duration}</span>}
                   </span>
                 </li>
               ))}
