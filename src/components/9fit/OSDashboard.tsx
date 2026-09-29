@@ -57,6 +57,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
   const { totalXp } = useEngrenagem();
 
   const [ranking, setRanking] = useState<RankRow[]>([]);
+  const [ecosystemActiveCount, setEcosystemActiveCount] = useState<number | null>(null);
   const [activeModal, setActiveModal] = useState<ModalPillarId>(null);
   const [eventIdx, setEventIdx] = useState(0);
 
@@ -65,7 +66,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       const { data, error } = await supabase.rpc('fn_get_leaderboard', { p_limit: 20 });
       if (error) {
         console.error('[OSDashboard] fn_get_leaderboard falhou:', error);
-        setRanking([{ name, pts: totalXp, self: true }]);
+        setRanking([]);
         return;
       }
       const rows = (data || []) as LeaderboardRow[];
@@ -73,16 +74,37 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         name: (r.name || '—').split(' ')[0],
         pts: Number(r.total_xp || 0),
       }));
-      if (!top.find((t) => t.name.toLowerCase() === name.toLowerCase())) {
-        top[2] = { name, pts: totalXp, self: true };
-      } else {
-        top.forEach((t) => { if (t.name.toLowerCase() === name.toLowerCase()) t.self = true; });
-      }
+      top.forEach((t) => { if (t.name.toLowerCase() === name.toLowerCase()) t.self = true; });
       setRanking(top);
     })();
   }, [name, totalXp]);
 
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from('physio_modules')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .then(({ count, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error('[OSDashboard] physio_modules count falhou:', error);
+          setEcosystemActiveCount(null);
+          return;
+        }
+        setEcosystemActiveCount(count ?? 0);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   const myRankPos = ranking.findIndex((r) => r.self) + 1;
+  const hasRank = myRankPos > 0;
+  const treinoStatus = weekly.treinos > 0 ? `${weekly.treinos} treinos` : hasPlan ? 'Plano ativo' : 'Sem treino';
+  const nutriStatus = weekly.nutri > 0 ? `${weekly.nutri} refeições` : 'Sem registro';
+  const focoStatus = syncScore == null ? 'A calibrar' : `Sync ${Math.round(syncScore)}`;
+  const consistenciaStatus = weekly.treinos > 0 ? `${weekly.treinos}/5 sem` : 'Sem ciclo';
+  const recuperacaoStatus = syncScore == null || scoreStatus === 'empty' ? 'Calibrar' : 'Com leitura';
+  const ecosystemStatus = ecosystemActiveCount == null ? 'Ver módulos' : `${ecosystemActiveCount} ativos`;
 
   // Comunidade & Notícias — Apresentação 100% Visual com Imagens Cinematográficas
   const seasonEvents = [
@@ -93,7 +115,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       category: 'TRIBOS & ATLETAS',
       title: 'Tribos de Atletas & Feed Coletivo',
       description: 'Conecte-se com outros atletas, compartilhe rotinas e evolua junto.',
-      stats: '140+ Atletas Ativos',
+      stats: 'Comunidade ativa',
       cta: 'Acessar Comunidade',
       route: '/9fit/community'
     },
@@ -115,7 +137,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       category: 'RECORDES PESSOAIS',
       title: 'Conquistas Recentes & Subidas de Nível',
       description: 'Comemore recordes de carga batidos e marcos recentes da comunidade.',
-      stats: 'Ranking em Tempo Real',
+      stats: 'Ranking da comunidade',
       cta: 'Mural de Vitórias',
       route: '/9fit/social'
     }
@@ -123,49 +145,49 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
   const currentEvent = seasonEvents[eventIdx];
 
-  // 6 Pilares da Consultoria 360 no padrão estético exato da referência High-Ticket
+  // Pilares da Consultoria 360: status sempre derivado de dado real da sessão ou do Supabase.
   const pillars = [
     {
       id: 'fisica' as const,
       name: 'Treino & Cargas',
-      subtitle: myRankPos > 0 ? `#${myRankPos} no ranking geral` : 'Biomecânica e evolução de peso',
-      status: myRankPos > 0 ? `Top #${myRankPos}` : 'Ativo',
+      subtitle: hasRank ? `Ranking real: posição #${myRankPos}` : hasPlan ? 'Prescrição ativa no ciclo' : 'Sem prescrição ativa detectada',
+      status: hasRank ? `#${myRankPos}` : treinoStatus,
       description: 'Progressão de cargas, densidade de treino e biomecânica executiva.'
     },
     {
       id: 'nutricional' as const,
       name: 'Nutrição & Dieta',
-      subtitle: `${weekly.nutri} refeições registradas`,
-      status: '9Foods',
+      subtitle: weekly.nutri > 0 ? `${weekly.nutri} refeições registradas na semana` : 'Nenhuma refeição registrada nesta semana',
+      status: nutriStatus,
       description: 'Janela anabólica, síntese de aminoácidos e equilíbrio de macronutrientes.'
     },
     {
       id: 'psicologica' as const,
       name: 'Foco & Mente',
-      subtitle: 'Ron AI & Prontidão neural',
-      status: 'Online',
+      subtitle: syncScore == null ? 'Aguardando calibração do Sync Score' : 'RON usa seu contexto de prontidão atual',
+      status: focoStatus,
       description: 'Gestão de estresse, prontidão neural para carga e clareza mental.'
     },
     {
       id: 'comportamental' as const,
       name: 'Consistência',
-      subtitle: `${weekly.treinos}/5 treinos no ciclo`,
-      status: `${weekly.treinos}/5 Sem`,
+      subtitle: weekly.treinos > 0 ? `${weekly.treinos} treinos no microciclo` : 'Ainda sem treino registrado no microciclo',
+      status: consistenciaStatus,
       description: 'Consistência do microciclo, disciplina de horários e rituais diários.'
     },
     {
       id: 'biometrica' as const,
       name: 'Recuperação',
-      subtitle: 'Check-in de sono & energia',
-      status: 'Calibrar',
+      subtitle: syncScore == null ? 'Faça uma calibração para ativar sinais de recuperação' : `Estado do score: ${scoreStatus}`,
+      status: recuperacaoStatus,
       description: 'Variação da frequência cardíaca, qualidade de sono e peso seco.'
     },
     {
       id: 'ambiental' as const,
       name: 'Ecossistema',
-      subtitle: '4 ferramentas conectadas',
-      status: '4 Módulos',
-      description: 'Ecossistema 9FIT: Train, Hub, Staff e Market integrados.'
+      subtitle: ecosystemActiveCount == null ? 'Contagem de módulos em sincronização' : `${ecosystemActiveCount} módulos ativos no catálogo`,
+      status: ecosystemStatus,
+      description: 'Ecossistema 9FIT com rotas funcionais e módulos ativos do catálogo.'
     }
   ];
 
@@ -212,7 +234,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       />
 
       {/* =========================================================================
-          CONSULTORIA 360: PILARES ATIVOS COM EFEITO DE FUNDO RADAR 360° HIGH-TICKET
+          CONSULTORIA 360: SINAIS DO ATLETA COM EFEITO DE FUNDO RADAR 360° HIGH-TICKET
          ========================================================================= */}
       <section className="relative rounded-xl border border-white/[0.09] bg-gradient-to-br from-[#12141a] via-[#0c0d11] to-[#090a0d] p-3 sm:p-3.5 shadow-2xl transition-all overflow-hidden">
         {/* Subtle hairline edge lighting no topo */}
@@ -263,7 +285,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           <div className="flex items-center gap-1.5">
             <span className="w-1 h-1 rounded-full bg-emerald-400" />
             <span className="text-[9px] font-mono uppercase tracking-widest text-neutral-400 font-medium">
-              PILARES ATIVOS
+              SINAIS DO ATLETA
             </span>
           </div>
         </div>
@@ -499,20 +521,20 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                   <div className="space-y-2.5">
                     <div className="text-center pb-0.5">
                       <h3 className="text-sm sm:text-base font-bold text-white font-display">Bio-Nutrição & Janela Metabólica</h3>
-                      <p className="text-[11.5px] text-neutral-400">Controle de ingestão proteica e balanço energético 9Foods</p>
+                      <p className="text-[11.5px] text-neutral-400">Registros de refeição e hidratação conectados à dieta</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-lg bg-black/40 border border-white/5 text-center">
                       <div>
-                        <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">ALVO PROTEÍNA</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">140g / dia</span>
+                        <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">PROTEÍNA</span>
+                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri > 0 ? 'Com registro' : 'Sem meta'}</span>
                       </div>
                       <div>
                         <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">REFEIÇÕES</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri} registradas</span>
+                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri > 0 ? `${weekly.nutri} registradas` : 'Nenhuma'}</span>
                       </div>
                       <div>
                         <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">HIDRATAÇÃO</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">2.5 L</span>
+                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">Registrar</span>
                       </div>
                     </div>
                     <button
@@ -520,7 +542,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                       className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
                     >
                       <Flame className="w-3.5 h-3.5" />
-                      <span>Acessar Módulo 9Foods</span>
+                      <span>Acessar Dieta</span>
                     </button>
                   </div>
                 )}
@@ -581,19 +603,19 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                   </div>
                 )}
 
-                {/* 6. AMBIENTAL: Ecossistema dos 4 Módulos */}
+                {/* 6. AMBIENTAL: Ecossistema de módulos ativos */}
                 {activeModal === 'ambiental' && (
                   <div className="space-y-2.5">
                     <div className="text-center pb-0.5">
                       <h3 className="text-sm sm:text-base font-bold text-white font-display">Ecossistema Fit OS</h3>
-                      <p className="text-[11.5px] text-neutral-400">Ambientes executivos dedicados de alta performance</p>
+                      <p className="text-[11.5px] text-neutral-400">Módulos ativos e rotas funcionais do ecossistema 9FIT</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { I: Dumbbell, label: 'Train', desc: 'Treinos e Séries', route: '/9fit/train' },
                         { I: Share2, label: 'Hub', desc: 'Centro do Atleta', route: '/9fit/hub' },
                         { I: Users, label: 'Staff', desc: 'Personal & Equipe', route: '/9fit/staff' },
-                        { I: Tag, label: 'Market', desc: 'Protocolos & Planos', route: '/9fit/protocols' },
+                        { I: Tag, label: 'Protocolos', desc: 'Conteúdo e planos', route: '/9fit/protocols' },
                       ].map(({ I, label, desc, route }) => (
                         <button 
                           key={label} 
