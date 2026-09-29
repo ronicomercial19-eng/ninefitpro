@@ -73,7 +73,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
     const flags = value.getUint8(0);
     const is16Bit = flags & 0x01;
     const heartRate = is16Bit ? value.getUint16(1, true) : value.getUint8(1);
-    
+
     setBpm(heartRate);
     setZone(getZone(heartRate));
     bpmHistoryRef.current.push(heartRate);
@@ -105,7 +105,7 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
       const server = await device.gatt!.connect();
       const service = await server.getPrimaryService("heart_rate");
       const characteristic = await service.getCharacteristic("heart_rate_measurement");
-      
+
       charRef.current = characteristic;
       await characteristic.startNotifications();
       characteristic.addEventListener("characteristicvaluechanged", handleHeartRate);
@@ -127,8 +127,9 @@ export function WearableConnectBox({ isWorkoutActive, onHeartRateUpdate, onSessi
     if (charRef.current) {
       charRef.current.removeEventListener("characteristicvaluechanged", handleHeartRate);
     }
-    if (deviceRef.current?.gatt?.connected) {
-      deviceRef.current.gatt.disconnect();
+    const gatt = deviceRef.current?.gatt as (BluetoothRemoteGATTServer & { connected?: boolean; disconnect?: () => void }) | undefined;
+    if (gatt?.connected) {
+      gatt.disconnect?.();
     }
 
     // Emit session data

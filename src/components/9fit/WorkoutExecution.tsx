@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { 
-  ArrowLeft, Play, Pause, RotateCcw, Plus, Minus, 
-  ChevronRight, ChevronLeft, Timer, Dumbbell, Zap, 
+import {
+  ArrowLeft, Play, Pause, RotateCcw, Plus, Minus,
+  ChevronRight, ChevronLeft, Timer, Dumbbell, Zap,
   Loader2, Check, Sparkles, Gauge, Maximize2, Settings2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ function injectMobileViewport(html: string): string {
     td, th { word-wrap: break-word !important; overflow-wrap: break-word !important; padding: 4px !important; }
     img { max-width: 100% !important; height: auto !important; }
   </style>`;
-  
+
   if (html.includes('<head>')) {
     return html.replace('<head>', `<head>${viewportTag}${mobileStyles}`);
   } else if (html.includes('<html')) {
@@ -171,7 +171,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         });
 
         if (error) { setResolveFailed(true); return; }
-        const flat = flattenPrescricao(data);
+        const flat = flattenPrescricao(data as PrescricaoResult);
         if (flat.length > 0) setResolvedExercises(flat);
         else setResolveFailed(true);
       } finally {
@@ -253,7 +253,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerInitial, setTimerInitial] = useState(60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Workout timer
   const [workoutSeconds, setWorkoutSeconds] = useState(0);
   const workoutTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -458,7 +458,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     setPersisting(true);
 
     const exercise = exercises[exerciseIdx] ?? {};
-    const parsedReps = Number.parseInt(String(exercise.reps ?? exercise.reps_range ?? ""), 10);
+    const exerciseWithRange = exercise as typeof exercise & { reps_range?: string | number | null };
+    const plannedReps = exerciseWithRange.reps ?? exerciseWithRange.reps_range ?? "";
+    const parsedReps = Number.parseInt(String(plannedReps), 10);
     const { error } = await supabase.rpc("fn_save_workout_set", {
       p_execution_id: executionId,
       p_exercise_name: String(exercise.name ?? "Exercício"),
@@ -467,7 +469,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       p_completed: next[setIdx],
       p_actual_reps: Number.isFinite(parsedReps) ? parsedReps : null,
       p_actual_weight: weights[exerciseIdx] ?? null,
-      p_planned_reps: String(exercise.reps ?? exercise.reps_range ?? ""),
+      p_planned_reps: String(plannedReps),
       p_rest_seconds: exercise.rest_seconds ?? null,
       p_tempo: exercise.tempo ?? null,
     });
@@ -958,4 +960,3 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     </div>
   );
 }
-

@@ -83,7 +83,7 @@ export function QuickCheckIn() {
             data_checkin: new Date().toISOString().split("T")[0],
             tipo: "semanal",
             treinos_semana: 1,
-          });
+          } as any);
           await supabase.from("athlete_planning_history").insert({
             athlete_id: athleteId,
             sync_data: { source: "checkin", class_id: nextClass.classId, at: new Date().toISOString() },
@@ -162,4 +162,3 @@ export function QuickCheckIn() {
     </div>
   );
 }
-

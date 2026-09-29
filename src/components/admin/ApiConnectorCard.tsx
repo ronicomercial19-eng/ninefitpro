@@ -101,7 +101,7 @@ export function ApiConnectorCard(props: Props) {
     };
     const { error } = await supabase
       .from("api_connectors")
-      .upsert(payload, { onConflict: "key" });
+      .upsert(payload as any, { onConflict: "key" });
     if (error) { toast.error(error.message); return; }
     toast.success(`${title} salvo. Validando...`);
     setConnected(true);

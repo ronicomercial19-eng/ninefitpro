@@ -48,9 +48,9 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
       const payload: SkillPayload[] = list.map((s) => ({
         slug: String(s.slug),
         name: String(s.name),
-        description: s.description ?? null,
-        category: s.category ?? "general",
-        tags: Array.isArray(s.tags) ? s.tags : [],
+        description: typeof s.description === "string" ? s.description : null,
+        category: typeof s.category === "string" ? s.category : "general",
+        tags: Array.isArray(s.tags) ? s.tags.map(String) : [],
         version: Number(s.version) || 1,
         status: typeof s.status === "string" ? s.status : "draft",
         content: typeof s.content === "object" && s.content !== null && !Array.isArray(s.content) ? s.content as Record<string, unknown> : {},
@@ -58,7 +58,7 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
 
       const { error } = await supabase
         .from("skills")
-        .upsert(payload, { onConflict: "slug" });
+        .upsert(payload as any, { onConflict: "slug" });
 
       if (error) throw error;
       setCount(payload.length);

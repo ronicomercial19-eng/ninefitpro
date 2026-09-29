@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 type AdjustmentNotification = { id: string; related_id: string | null; title: string; message: string | null };
 
-export function TrainingAdjustmentBanner() {
+export function TrainingAdjustmentBanner({ onClose }: { onClose?: () => void } = {}) {
   const { user } = useAuth();
   const [item, setItem] = useState<AdjustmentNotification | null>(null);
   const [open, setOpen] = useState(false);
@@ -29,7 +29,7 @@ export function TrainingAdjustmentBanner() {
     setSaving(false);
     if (error) { toast.error("Não foi possível registrar seu feedback."); return; }
     await supabase.from("notifications").update({ is_read: true }).eq("id", item.id);
-    setItem(null); setOpen(false); setRating(null); setNotes("");
+    setItem(null); setOpen(false); setRating(null); setNotes(""); onClose?.();
     toast.success("Feedback registrado. O Smart Treino vai usar sua resposta na próxima semana.");
   };
 
