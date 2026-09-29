@@ -321,10 +321,10 @@ export default function FirstAccess() {
             </div>
 
             <button
-              onClick={() => navigate('/9fit/hub')}
+              onClick={() => navigate('/9fit/onboarding-pro')}
               className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all animate-pulse hover:animate-none"
             >
-              Acessar Dashboard
+              Configurar Perfil Profissional
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
