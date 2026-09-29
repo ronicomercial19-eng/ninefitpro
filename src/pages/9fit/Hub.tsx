@@ -18,6 +18,7 @@ import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { Info } from "lucide-react";
+import { usePushNotifications, useBluetoothRequest } from "@/hooks/useDeviceCapabilities";
 
 const hubStaggerContainer = {
   hidden: { opacity: 0 },
@@ -49,7 +50,6 @@ const hubStaggerItem = {
   },
 };
 
-
 export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
@@ -60,13 +60,11 @@ export default function NineFitHub() {
   const { data: liveScores, status: scoreStatus, refresh: refreshScores } = useAthleteScores(athleteId);
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
-
-
-
   const [protocolCount, setProtocolCount] = useState(0);
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
   const [hubLoading, setHubLoading] = useState(true);
   const [hubError, setHubError] = useState<string | null>(null);
+  
   const breakdown = {
     treino: liveScores?.dimensions.treino.value ?? null,
     nutri: liveScores?.dimensions.nutri.value ?? null,
@@ -81,7 +79,6 @@ export default function NineFitHub() {
     setHubLoading(true);
     setHubError(null);
     try {
-      // Leituras independentes: uma view indisponível não congela a home inteira.
       const [hubResult, performanceResult, libraryResult] = await Promise.all([
         supabase.from("vw_hub_status" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
         supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle(),
@@ -91,15 +88,9 @@ export default function NineFitHub() {
       setPerformancePlanTitle((performanceResult.data as any)?.plan_title || null);
       setProtocolCount(libraryResult.count || 0);
       if (hubResult.error || performanceResult.error || libraryResult.error) {
-        console.warn("[Hub] algumas fontes não responderam", {
-          hub: hubResult.error?.message,
-          performance: performanceResult.error?.message,
-          library: libraryResult.error?.message,
-        });
-        setHubError("Alguns sinais estão sincronizando; o restante da home continua disponível.");
+        setHubError("Alguns sinais estão sincronizando.");
       }
     } catch (e: any) {
-      console.error("[Hub] loadHubData:", e);
       setHubError("Não foi possível carregar seus dados agora.");
     } finally {
       setHubLoading(false);
@@ -117,7 +108,6 @@ export default function NineFitHub() {
     () => loadHubData(),
   );
 
-  // Paywall D7+ para usuários não-premium + escuta close-loop do protocolo
   useEffect(() => {
     if (!user?.id) return;
     const createdAt = new Date(user.created_at || Date.now()).getTime();
@@ -142,8 +132,10 @@ export default function NineFitHub() {
     return () => window.removeEventListener('9fit:protocol_completed', onComplete);
   }, [invalidate, refreshScores]);
 
-
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
+  
+  const { permission, requestPermission } = usePushNotifications();
+  const { requestDevice } = useBluetoothRequest();
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -157,14 +149,21 @@ export default function NineFitHub() {
           <button onClick={() => void loadHubData()} className="text-xs text-primary shrink-0">Tentar de novo</button>
         </div>
       )}
-      {/* Grid de Cards com Stagger Orgânico e Escala Responsiva via Framer Motion */}
+
+      {/* Device Capabilities Prompt */}
+      <div className="px-4 md:px-6 flex gap-2 my-4">
+        {permission !== 'granted' && (
+          <button onClick={requestPermission} className="text-xs bg-primary/10 text-primary p-2 rounded">Enable Push</button>
+        )}
+        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Scan Bluetooth</button>
+      </div>
+
       <motion.div
         variants={hubStaggerContainer}
         initial="hidden"
         animate="visible"
-        className="w-full space-y-6"
+        className="w-full space-y-6 px-4 md:px-6"
       >
-        {/* 1. HERO SYNC — único elemento aberto/protagonista da tela (redesign Nine Pro v2) */}
         <motion.div variants={hubStaggerItem} className="relative">
           <HeroSyncSection
             name={name}
@@ -188,13 +187,11 @@ export default function NineFitHub() {
            score={liveScores?.sync.value ?? 0}
         />
 
-        {/* 2. RON — convite ativo, mantido aberto (2º elemento com destaque da tela) */}
-        <motion.div variants={hubStaggerItem} className="px-4">
+        <motion.div variants={hubStaggerItem}>
           <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
         </motion.div>
 
-        {/* 3. HUD MODULAR & DOCK DE COMANDOS (FIT OS CONSOLE) */}
-        <motion.div variants={hubStaggerItem} className="px-4">
+        <motion.div variants={hubStaggerItem}>
           <FitOSConsoleDock
             weekly={weekly}
             liveScoresVitals={liveScores?.vitals}
@@ -205,13 +202,11 @@ export default function NineFitHub() {
           />
         </motion.div>
 
-        {/* 7. ECOSYSTEM MODULES (grid nativo via physio_modules) */}
-        <motion.div variants={hubStaggerItem} id="ecosystem-grid" className="px-4">
+        <motion.div variants={hubStaggerItem} id="ecosystem-grid">
           <EcosystemGrid />
         </motion.div>
 
-        {/* Carrossel sequencial legado */}
-        <motion.div variants={hubStaggerItem} className="px-4">
+        <motion.div variants={hubStaggerItem}>
           <p className="text-label mb-3">DESTAQUES</p>
           <HubSequentialCarousel />
         </motion.div>
@@ -226,7 +221,6 @@ export default function NineFitHub() {
         headline={`${name}, seu sistema está pronto para o próximo nível.`}
         subline="7 dias grátis no PRIME · cancele quando quiser"
       />
-
     </div>
   );
 }

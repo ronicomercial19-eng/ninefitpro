@@ -214,7 +214,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
               <span className="text-xs font-mono text-neutral-400 ml-1">/100</span>
             </div>
             <span className="text-[9px] font-mono tracking-[0.25em] uppercase text-neutral-400 mt-0.5">
-              Score Biomecânico
+              SYNC SCORE
             </span>
           </div>
         </div>

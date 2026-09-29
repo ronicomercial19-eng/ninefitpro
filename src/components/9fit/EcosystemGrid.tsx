@@ -494,25 +494,21 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   return (
     <section className="space-y-4">
       {showHeader && (
-        <header className="flex items-end justify-between">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary font-bold">
-              Ecosystem · Native Grid
-            </p>
-            <h2 className="font-display font-black text-2xl tracking-tight text-white mt-0.5">
-              Todos os módulos
-            </h2>
-            <p className="font-mono text-[10px] text-neutral-400 mt-0.5">
-              {activeCount}/{items.length} online
-            </p>
-          </div>
+        <header className="p-6 mb-6 bg-gradient-to-r from-primary/20 to-black rounded-3xl border border-primary/20 shadow-2xl">
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">
+            EXPLORAR ECOSSISTEMA
+          </h2>
+          <p className="font-mono text-[11px] text-primary mt-2">
+            {activeCount} DE {items.length} MÓDULOS DISPONÍVEIS
+          </p>
           {items.length > 2 && !showAll && (
             <button
               onClick={() => setShowOverlay(true)}
               aria-label="Abrir tela com todos os módulos"
-              className="font-mono text-[10px] uppercase tracking-widest text-primary border-b border-primary/40 pb-0.5 hover:text-primary/80 transition-colors cursor-pointer"
+              className="mt-4 flex items-center gap-2 bg-primary text-black px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-colors"
             >
-              {`Ver todos (${items.length})`}
+              Ver todos os módulos
+              <ChevronRight className="w-4 h-4" />
             </button>
           )}
         </header>
@@ -520,54 +516,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
 
       <EcosystemOverlay open={showOverlay} onClose={() => setShowOverlay(false)} />
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className={gridClass}
-      >
-        {visibleItems.map((m, index) => {
-          const src = m.hero_image || MODULE_IMAGES[m.key];
-          const status = statusByKey[m.key] || "online";
-          const online = status === "online";
-          const label = online ? "Online" : status === "not_configured" ? "Não configurado" : "Aguardando";
-          const target =
-            iframeByKey[m.key] || fallbackRoutes[m.key] || MODULE_META[m.key]?.defaultRoute || m.cta_route;
-          const canOpen = Boolean(target);
-          const fallbackImage = MODULE_IMAGES[m.key];
-          const accessibilityLabel = canOpen ? "Abrir módulo" : "Módulo indisponível";
-          const handleOpen = () => {
-            if (!target) return;
-            if (onModuleSelect) {
-              onModuleSelect(m);
-            } else if (/^https?:\/\//i.test(target))
-              navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(m.name)}`);
-            else navigate(target);
-          };
-
-          return (
-            <motion.div
-              key={m.id || m.key}
-              variants={floatingCardVariants}
-              whileHover={{ y: -2, transition: { duration: 0.2 } }}
-              className="h-full"
-            >
-              <EcosystemModuleCard
-                m={m}
-                src={src}
-                online={online}
-                label={label}
-                canOpen={canOpen}
-                fallbackImage={fallbackImage}
-                accessibilityLabel={accessibilityLabel}
-                variant={variant}
-                index={index}
-                onOpen={handleOpen}
-              />
-            </motion.div>
-          );
-        })}
-      </motion.div>
+      {/* Renderização do grid removida conforme solicitado pelo usuário */}
     </section>
   );
 }

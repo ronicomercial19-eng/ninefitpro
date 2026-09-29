@@ -31,6 +31,7 @@ import {
 } from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
+import { ProgressGraph } from "@/components/9fit/ProgressGraph";
 
 type LatLng = { lat: number; lng: number };
 
@@ -53,8 +54,18 @@ const LOCAL_SIMULATION_WAYPOINTS: LatLng[] = [
 export default function NineFitMove() {
   const showSimulationControls = import.meta.env.DEV;
   const { user } = useAuth();
+  const { position } = useNativeGeolocation();
 
-  const [running, setRunning] = useState(false);
+  useEffect(() => {
+    if (position && user && running) {
+      const { latitude, longitude } = position.coords;
+      supabase.from("workout_locations").insert({
+        athlete_id: user.id,
+        lat: latitude,
+        lng: longitude,
+      }).then(() => {});
+    }
+  }, [position, user, running]);
   const [isPaused, setIsPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [distanceKm, setDistanceKm] = useState(0);
@@ -712,6 +723,7 @@ export default function NineFitMove() {
 
         {activitySaved && (
           <div className="pt-2 flex flex-col gap-2">
+            <ProgressGraph />
             <button
               type="button"
               onClick={share}

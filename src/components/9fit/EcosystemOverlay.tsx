@@ -1,10 +1,8 @@
-import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { ArrowRight, ExternalLink, X } from "lucide-react";
-import { EcosystemGrid } from "./EcosystemGrid";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-// You might want to move this to a shared types file
 interface PhysioModule {
   id: string;
   key: string;
@@ -25,103 +23,112 @@ interface EcosystemOverlayProps {
 }
 
 export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
-  const [selectedModule, setSelectedModule] = useState<PhysioModule | null>(null);
-  const navigate = useNavigate();
+  const [modules, setModules] = useState<PhysioModule[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // 1 for next, -1 for prev
 
-  // Variantes de movimento para controle fino da transição
-  const containerVariants: Variants = {
-    hidden: { opacity: 0, y: "100%" },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", damping: 25, stiffness: 200 }
-    },
-    exit: {
-      opacity: 0,
-      y: "100%",
-      transition: { type: "spring", damping: 30, stiffness: 200 }
+  useEffect(() => {
+    if (open) {
+      async function fetchModules() {
+        const { data } = await supabase
+          .from("physio_modules")
+          .select("*")
+          .eq("status", "active")
+          .order("display_order");
+        if (data) setModules(data as PhysioModule[]);
+      }
+      fetchModules();
     }
+  }, [open]);
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prev) => (prev + newDirection + modules.length) % modules.length);
   };
 
-  const contentVariants: Variants = {
-    hidden: { opacity: 0, x: 20 },
-    visible: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 }
+  const selectedModule = modules[currentIndex];
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0,
+    }),
   };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false} custom={direction}>
       {open && (
         <motion.div
-          variants={containerVariants}
+          variants={{
+            hidden: { opacity: 0, y: "100%" },
+            visible: { opacity: 1, y: 0 },
+            exit: { opacity: 0, y: "100%" }
+          }}
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="fixed inset-0 z-[75] bg-[#050505]/95 backdrop-blur-xl p-4 pt-12 overflow-y-auto"
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md p-4 pt-12 overflow-y-auto"
         >
           <button
-            onClick={() => selectedModule ? setSelectedModule(null) : onClose()}
-            className="absolute top-4 right-4 z-10 p-2 rounded-full border border-white/10 bg-white/10 hover:bg-white/20 transition-colors text-white"
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
-
-          <div className="max-w-2xl mx-auto">
-            <AnimatePresence mode="wait">
-              {selectedModule ? (
+          
+          <div className="max-w-xl mx-auto h-full flex flex-col justify-center">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              {selectedModule && (
                 <motion.div
                   key={selectedModule.id}
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
+                  custom={direction}
+                  variants={variants}
+                  initial="enter"
+                  animate="center"
                   exit="exit"
-                  transition={{ duration: 0.3 }}
-                  className="bg-[#0f0f0f] p-6 rounded-3xl border border-primary/25 shadow-2xl shadow-black/60"
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={1}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = offset.x;
+                    if (swipe < -100) paginate(1);
+                    else if (swipe > 100) paginate(-1);
+                  }}
+                  transition={{
+                    x: { type: "spring", stiffness: 300, damping: 30 },
+                    opacity: { duration: 0.2 },
+                  }}
+                  className="bg-card p-6 rounded-3xl border border-white/10 relative w-full"
                 >
-                  <h3 className="text-2xl font-bold text-white mb-4">{selectedModule.name}</h3>
+                  <h3 className="text-3xl font-bold text-white mb-4">{selectedModule.name}</h3>
                   <p className="text-neutral-400 mb-6">{selectedModule.description}</p>
+                  
                   {selectedModule.iframe_url ? (
-                    <iframe src={selectedModule.iframe_url} title={selectedModule.name} className="w-full h-[62dvh] rounded-2xl border border-white/10 bg-black" />
-                  ) : selectedModule.cta_route ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const target = selectedModule.cta_route as string;
-                        onClose();
-                        setSelectedModule(null);
-                        if (/^https?:\/\//i.test(target)) {
-                          navigate(`/9fit/embed?url=${encodeURIComponent(target)}&title=${encodeURIComponent(selectedModule.name)}`);
-                        } else {
-                          navigate(target);
-                        }
-                      }}
-                      className="w-full rounded-2xl border border-primary/30 bg-primary/[0.08] hover:bg-primary/15 px-4 py-4 text-left text-white transition flex items-center justify-between gap-3"
-                    >
-                      <span>
-                        <span className="block text-sm font-bold">Abrir {selectedModule.name}</span>
-                        <span className="block text-xs text-muted-foreground mt-0.5">Mantém a sessão ativa e entra no módulo funcional.</span>
-                      </span>
-                      {/^(https?:)?\/\//i.test(selectedModule.cta_route || "") ? <ExternalLink className="w-5 h-5 text-primary" /> : <ArrowRight className="w-5 h-5 text-primary" />}
-                    </button>
+                    <iframe src={selectedModule.iframe_url} className="w-full h-80 rounded-2xl mb-6" />
                   ) : (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-muted-foreground">Módulo disponível, mas sem rota configurada.</div>
+                    <div className="h-80 w-full bg-white/5 rounded-2xl mb-6 flex items-center justify-center text-white">Conteúdo do {selectedModule.name}</div>
                   )}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="grid"
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  transition={{ duration: 0.3 }}
-                >
-                    <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.28 }} className="mb-8 rounded-3xl border border-primary/20 bg-primary/[0.06] p-5 shadow-[0_20px_70px_-36px_hsl(var(--primary)/0.75)]">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-primary font-bold">9FIT ECOSYSTEM</p>
-                      <h2 className="mt-1 text-3xl font-black italic uppercase tracking-tighter text-white">Todos os módulos</h2>
-                      <p className="mt-1 text-xs text-muted-foreground">Escolha o módulo e entre direto mantendo sua sessão ativa.</p>
-                    </motion.div>
-                    <EcosystemGrid showHeader={false} showAll={true} variant="grid" onModuleSelect={(m) => { setSelectedModule(m); }} />
+
+                  <div className="flex justify-between items-center mt-auto">
+                    <button onClick={() => paginate(-1)} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white">
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <span className="font-mono text-xs text-neutral-500">{currentIndex + 1} / {modules.length}</span>
+                    <button onClick={() => paginate(1)} className="p-3 rounded-full bg-primary hover:bg-primary/80 text-black">
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

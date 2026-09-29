@@ -39,7 +39,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-
+  
 
   useEffect(() => {
     fetchStudents();
@@ -49,7 +49,7 @@ export default function StudentsPage() {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-
+      
       if (!user) {
         toast.error('Usuário não autenticado');
         return;
@@ -58,12 +58,12 @@ export default function StudentsPage() {
       // A view canônica resolve quais atletas pertencem ao profissional atual.
       // Os detalhes continuam vindo de athletes para preservar o contrato visual.
       const { data: relationshipRows, error: relationshipError } = await supabase
-        .from('vw_current_relationships' as any)
+        .from('vw_current_relationships')
         .select('athlete_id')
         .eq('relationship_role', 'professional');
 
       if (relationshipError) throw relationshipError;
-      const athleteIds = ((relationshipRows || []) as Array<{ athlete_id?: string }>)
+      const athleteIds = (relationshipRows || [])
         .map((row) => row.athlete_id)
         .filter((id): id is string => Boolean(id));
 
@@ -79,14 +79,14 @@ export default function StudentsPage() {
         .order('created_at', { ascending: false });
 
       if (athletesError) throw athletesError;
-
+      
       // Mapear dados dos athletes para o formato de Student
       const mappedStudents: Student[] = (athletesData || []).map(athlete => {
         // Extract email from: 1) email column, 2) metadata.email, 3) fallback empty
-        const athleteEmail = athlete.email ||
-          (athlete.metadata as { email?: string } | null)?.email ||
+        const athleteEmail = athlete.email || 
+          (athlete.metadata as { email?: string } | null)?.email || 
           '';
-
+        
         return {
           id: athlete.id,
           nome: athlete.name,
@@ -104,7 +104,7 @@ export default function StudentsPage() {
           data_nascimento: athlete.birthdate || undefined,
         };
       });
-
+      
       setStudents(mappedStudents);
     } catch (error: any) {
       console.error('Erro ao carregar alunos:', error);
@@ -126,11 +126,11 @@ export default function StudentsPage() {
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
-
+    
     if (filter === 'all') return matchesSearch;
     if (filter === 'blocked') return matchesSearch && !student.ativo;
     if (filter === 'active') return matchesSearch && student.ativo;
-
+    
     return matchesSearch;
   });
 
@@ -161,7 +161,7 @@ export default function StudentsPage() {
   // Show student detailed view
   if (selectedStudent) {
     return (
-      <StudentDetailedView
+      <StudentDetailedView 
         student={selectedStudent}
         onBack={handleBackToList}
         onStudentUpdated={handleStudentUpdated}
@@ -173,7 +173,7 @@ export default function StudentsPage() {
   if (showAddForm) {
     return (
       <div className="space-y-6">
-        <AdicionarAlunoForm
+        <AdicionarAlunoForm 
           onStudentAdded={handleStudentAdded}
           onCancel={() => setShowAddForm(false)}
         />
@@ -185,7 +185,7 @@ export default function StudentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Alunos</h1>
-        <Button
+        <Button 
           className="bg-green-500 hover:bg-green-600"
           onClick={() => setShowAddForm(true)}
         >
@@ -210,7 +210,7 @@ export default function StudentsPage() {
                 </SelectContent>
               </Select>
             </div>
-
+            
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -241,8 +241,8 @@ export default function StudentsPage() {
                   <div className="relative">
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center overflow-hidden">
                       {student.foto_url ? (
-                        <img
-                          src={student.foto_url}
+                        <img 
+                          src={student.foto_url} 
                           alt={student.nome}
                           className="w-full h-full object-cover"
                         />
@@ -256,7 +256,7 @@ export default function StudentsPage() {
                       </div>
                     )}
                   </div>
-
+                  
                   <div className="text-center space-y-1">
                     <h3 className="font-medium text-sm text-foreground">{student.nome}</h3>
                     <p className="text-xs text-muted-foreground break-all">{student.email}</p>
@@ -269,17 +269,17 @@ export default function StudentsPage() {
                   )}
 
                   <div className="flex space-x-2 w-full">
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
                       className="flex-1 text-xs"
                       onClick={() => handleEditStudent(student)}
                     >
                       Editar
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
                       className="flex-1 text-xs"
                       onClick={() => handleViewStudent(student)}
                     >
@@ -311,3 +311,4 @@ export default function StudentsPage() {
     </div>
   );
 }
+

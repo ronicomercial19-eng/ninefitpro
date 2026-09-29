@@ -1,5 +1,5 @@
 /**
- * Training Service
+ * Training Service  
  * Uses actual DB column names: student_id (not athlete_id), training_name (not title), etc.
  */
 
@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ApiResponse, DateRange } from '@/types/domains';
 
 // ==================== TRAINING ASSIGNMENTS ====================
-// Table: student_training_assignments
+// Table: student_training_assignments 
 // Columns: student_id, created_by, training_name, training_description, training_type,
 //          html_file_path, html_file_url, training_data, is_active, start_date, end_date
 
@@ -28,7 +28,7 @@ export async function getActiveAssignments(athleteId: string): Promise<ApiRespon
 }
 
 export async function getAllAssignments(
-  athleteId: string,
+  athleteId: string, 
   options?: { isActive?: boolean; limit?: number }
 ): Promise<ApiResponse<any[]>> {
   try {
@@ -113,11 +113,11 @@ export async function updateAssignment(id: string, updates: Record<string, any>)
 
 // ==================== WORKOUT PROGRESS ====================
 // Table: workout_progress
-// Columns: aluno_id, date, exercise_name, sets, reps, weight_kg, calories_burned,
+// Columns: aluno_id, date, exercise_name, sets, reps, weight_kg, calories_burned, 
 //          duration_minutes, rpe, notes, training_name, workout_id, completed_at
 
 export async function getWorkoutProgress(
-  athleteId: string,
+  athleteId: string, 
   dateRange?: DateRange
 ): Promise<ApiResponse<any[]>> {
   try {
@@ -211,7 +211,7 @@ export async function startWorkoutExecution(
         template_id: templateId,
         status: 'in_progress',
         started_at: new Date().toISOString()
-      } as any)
+      })
       .select().single();
 
     if (error) return { success: false, error: { code: 'CREATE_ERROR', message: error.message } };

@@ -256,9 +256,17 @@ export default function NineFitTrain() {
               9FIT // PROTOCOLOS DE TREINO
             </p>
           </div>
-          <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
-            {athleteName || "ATLETA 9FIT"}
-          </span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => navigate('/9fit/move')}
+              className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-primary/20 transition-colors"
+            >
+              Move GPS
+            </button>
+            <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
+              {athleteName || "ATLETA 9FIT"}
+            </span>
+          </div>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-white mt-1">
           {flow === "HOME" ? "Prescrições & Sessões" : "Visão Geral da Sessão"}

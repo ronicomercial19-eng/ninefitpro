@@ -30,17 +30,16 @@ export async function getCurrentUser(): Promise<ApiResponse<any>> {
 export async function getUserRole(userId: string): Promise<ApiResponse<string>> {
   try {
     const { data: identity, error: identityError } = await supabase
-      .from('vw_current_identity' as any)
+      .from('vw_current_identity')
       .select('roles, profile_role')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (!identityError && identity) {
-      const currentIdentity = identity as unknown as { roles?: Array<{ role?: string }> | null; profile_role?: string | null };
-      const roles = Array.isArray(currentIdentity.roles) ? currentIdentity.roles : [];
+      const roles = Array.isArray(identity.roles) ? identity.roles as Array<{ role?: string }> : [];
       // `profiles.role` is the canonical application role. The role array is
       // retained as a compatibility fallback while legacy rows are reconciled.
-      const role = currentIdentity.profile_role ?? roles[0]?.role;
+      const role = identity.profile_role ?? roles[0]?.role;
       if (role) return { success: true, data: role, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
     }
 
@@ -111,3 +110,4 @@ export const authQueryKeys = {
   role: (userId: string) => ['auth', 'role', userId] as const,
   profile: (userId: string) => ['auth', 'profile', userId] as const,
 };
+

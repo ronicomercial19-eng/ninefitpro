@@ -1,0 +1,29 @@
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import firebaseConfig from '../../firebase-applet-config.json';
+
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+export const requestNotificationPermission = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      const token = await getToken(messaging, {
+        vapidKey: 'YOUR_VAPID_KEY_HERE', // This requires project setup in Firebase console
+      });
+      console.log('FCM Token:', token);
+      return token;
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+  }
+  return null;
+};
+
+export const onMessageListener = () =>
+  new Promise((resolve) => {
+    onMessage(messaging, (payload) => {
+      resolve(payload);
+    });
+  });
