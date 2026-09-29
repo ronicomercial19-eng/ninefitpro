@@ -149,7 +149,7 @@ export default function NineFitProfile() {
         </button>
         <button onClick={() => navigate("/9fit/native-system")}
           className="w-full rounded-full border border-primary/50 text-primary py-3 font-semibold flex items-center justify-center gap-2">
-          Abrir Sistema Nativo <ExternalLink className="w-4 h-4" />
+          Cupons <ExternalLink className="w-4 h-4" />
         </button>
         <button onClick={async () => { await logout(); navigate("/9fit/login"); }}
           className="w-full rounded-2xl border border-white/10 bg-white/[0.02] py-3 text-sm text-muted-foreground hover:text-destructive flex items-center justify-center gap-2">

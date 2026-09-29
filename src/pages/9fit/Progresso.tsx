@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { TrendingUp, TrendingDown, ChevronRight, Trophy, Footprints, RotateCcw } from "lucide-react";
+import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { MetasSection } from "@/components/9fit/MetasSection";
@@ -392,24 +393,36 @@ export default function NineFitProgresso() {
           </div>
         </div>
         {prs.length > 0 ? (
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-            {prs.map((it, i) => (
-              <div key={i} className="min-w-[60%] rounded-2xl border border-primary/45 bg-primary/[0.07] p-4 shadow-[0_12px_30px_-24px_hsl(var(--primary)/0.9)]">
-                <p className="flex items-center gap-1.5 text-[10px] text-primary/80"><Trophy className="h-3 w-3" /> {it.exercicio} • {it.data}</p>
-                <div className="flex items-end justify-between mt-2">
-                  <div>
-                    <p className="font-display text-xl">{it.valor}{it.unidade}</p>
-                    {it.delta != null && (
-                      <p className={`text-[10px] ${it.delta >= 0 ? "text-emerald-400" : "text-destructive"}`}>
-                        {it.delta >= 0 ? "+" : ""}{it.delta}{it.unidade} vs. anterior
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
+          <>
+             {/* CARD DE COMPARTILHAMENTO DE RECORDE */}
+             <div className="mb-4">
+                <ShareableCard
+                  contentType="achievement"
+                  title="Novo Recorde Pessoal"
+                  subtitle={`Performance em evolução: superei ${prs[0].exercicio}`}
+                  stat={{ label: prs[0].exercicio, value: `${prs[0].valor}${prs[0].unidade}` }}
+                  accent="#FFB800"
+                />
+             </div>
+             <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
+               {prs.map((it, i) => (
+                 <div key={i} className="min-w-[60%] rounded-2xl border border-primary/45 bg-primary/[0.07] p-4 shadow-[0_12px_30px_-24px_hsl(var(--primary)/0.9)]">
+                   <p className="flex items-center gap-1.5 text-[10px] text-primary/80"><Trophy className="h-3 w-3" /> {it.exercicio} • {it.data}</p>
+                   <div className="flex items-end justify-between mt-2">
+                     <div>
+                       <p className="font-display text-xl">{it.valor}{it.unidade}</p>
+                       {it.delta != null && (
+                         <p className={`text-[10px] ${it.delta >= 0 ? "text-emerald-400" : "text-destructive"}`}>
+                           {it.delta >= 0 ? "+" : ""}{it.delta}{it.unidade} vs. anterior
+                         </p>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </>
+         ) : (
           <div className="rounded-2xl border border-dashed border-white/15 p-4 text-center text-xs text-muted-foreground">
             Nenhum recorde registrado ainda.
           </div>

@@ -1,4 +1,4 @@
-import { Bell, Menu, Coins } from "lucide-react";
+import { Bell, Menu, Coins, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useCredits } from "@/hooks/useCredits";
+import { loadPrimeSnapshot, type PrimeSnapshot } from "@/integrations/primeSystem";
 
 export function NineFitTopBar() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export function NineFitTopBar() {
   const { athleteId } = useAthleteId();
   const { remaining } = useCredits(athleteId);
   const [unread, setUnread] = useState(0);
+  const [snapshot, setSnapshot] = useState<PrimeSnapshot | null>(null);
 
   const refresh = useCallback(async () => {
     if (!user?.id) return;
@@ -25,6 +27,11 @@ export function NineFitTopBar() {
   }, [user?.id]);
 
   useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    if (user?.id && athleteId) {
+      void loadPrimeSnapshot(user.id, athleteId).then(setSnapshot);
+    }
+  }, [user?.id, athleteId]);
 
   useRealtimeTable(
     { table: "notifications", filter: user?.id ? `user_id=eq.${user.id}` : undefined, enabled: !!user?.id },
@@ -49,6 +56,7 @@ export function NineFitTopBar() {
           <span className="text-[11px] font-display tracking-[0.4em] text-foreground uppercase">
             Fit OS
           </span>
+          {snapshot?.entitlement === "active" && <Crown className="w-3 h-3 text-primary ml-1" />}
         </button>
         <div className="flex items-center gap-1">
           <button
@@ -83,4 +91,3 @@ export function NineFitTopBar() {
     </div>
   );
 }
-

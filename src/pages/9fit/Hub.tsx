@@ -17,6 +17,7 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
+import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { Info } from "lucide-react";
 import { usePushNotifications, useBluetoothRequest } from "@/hooks/useDeviceCapabilities";
 
