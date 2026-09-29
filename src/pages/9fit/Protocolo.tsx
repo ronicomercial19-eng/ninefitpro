@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,14 @@ import { ProtocolViewer, ProtocolListItem } from "@/components/9fit/ProtocolView
 import { Library, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+const NINE_LIMA_ERRORS: Record<string, string> = {
+  treino_do_dia_ja_iniciado: "Você já iniciou o treino de hoje. Aplique o protocolo amanhã.",
+  nenhum_protocolo_para_o_perfil: "Ainda não há protocolo disponível para o seu perfil.",
+  protocolo_nao_encontrado: "Protocolo não encontrado.",
+};
+
 export default function Protocolo() {
+  const navigate = useNavigate();
   const { athleteId } = useAthleteId();
   const [items, setItems] = useState<any[]>([]);
   const [active, setActive] = useState<any | null>(null);
@@ -41,19 +49,23 @@ export default function Protocolo() {
       return;
     }
     setApplyingNineLima(true);
-    const { error } = await supabase.rpc("fn_aplicar_protocolo_9x9x9" as any, {
+    const { data, error } = await supabase.rpc("fn_aplicar_nine_lima" as any, {
       p_athlete_id: athleteId,
-      p_protocol_id: "nine-lima",
       p_data: new Date().toISOString().slice(0, 10),
     });
     setApplyingNineLima(false);
     if (error) {
-      console.error("[Protocolo] fn_aplicar_protocolo_9x9x9", error);
+      console.error("[Protocolo] fn_aplicar_nine_lima", error);
       toast.error("Não foi possível aplicar o protocolo NINE/LIMA", { description: error.message || "Verifique seu acesso e tente novamente." });
       return;
     }
-    toast.success("Protocolo NINE/LIMA aplicado ao seu ciclo.");
-    await load();
+    const res = data as { success?: boolean; error?: string; protocol_name?: string } | null;
+    if (!res?.success) {
+      toast.error("Protocolo não aplicado", { description: NINE_LIMA_ERRORS[res?.error || ""] || "Tente novamente em instantes." });
+      return;
+    }
+    toast.success(`Protocolo ${res.protocol_name || "NINE/LIMA"} aplicado ao treino de hoje.`);
+    navigate("/9fit/train");
   };
 
 
@@ -71,7 +83,7 @@ export default function Protocolo() {
             <div>
               <p className="text-[10px] uppercase tracking-[0.28em] text-primary font-bold">NINE/LIMA</p>
               <h2 className="mt-1 font-display text-lg text-foreground">Protocolo base inteligente</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Aplica o protocolo NINE/LIMA no ciclo atual usando seu perfil de atleta.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Aplica o protocolo NINE/LIMA no treino de hoje usando seu perfil de atleta.</p>
             </div>
             <button
               type="button"
