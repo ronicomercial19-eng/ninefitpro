@@ -44,7 +44,7 @@ type Offer = {
   slug?: string | null;
   checkout_url?: string | null;
   thumbnail_url?: string | null;
-  metadata?: { price_cents?: number | null; price?: number | null; [key: string]: unknown } | null;
+  metadata?: Record<string, unknown> | null;
 };
 type QuickTrainingPayload = {
   modelos?: Modelo[];
@@ -101,7 +101,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .order("priority", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setInfoproduct(prod);
+      setInfoproduct(prod as Offer | null);
 
       // 2) SmartTreino oficial via proxy server-side; mantém fallback para
       // a RPC canônica enquanto a Edge Function estiver sendo publicada.

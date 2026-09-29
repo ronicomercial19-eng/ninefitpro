@@ -96,7 +96,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             const { data: act } = await supabase
               .from('athlete_activation')
               .select('finished_at')
-              .eq('athlete_id', (athlete as { athlete_id: string }).athlete_id)
+              .eq('athlete_id', (athlete as unknown as { athlete_id: string }).athlete_id)
               .maybeSingle();
             const finished = act?.finished_at;
             if (!finished && !onAtivacao && !onOnboarding) {

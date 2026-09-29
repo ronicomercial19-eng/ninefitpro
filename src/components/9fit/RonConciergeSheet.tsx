@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { useUserState } from "@/hooks/useUserState";
 import { STATE_LABEL, STATE_COLOR } from "@/services/adaptiveState";
 import {
@@ -43,7 +44,9 @@ export function RonConciergeSheet() {
   const [calendarInitialData, setCalendarInitialData] = useState<any>(null);
 
   const { profile } = useAuth();
-  const { syncScore } = useAthleteScores();
+  const { athleteId } = useAthleteId();
+  const { data: scoreSnapshot } = useAthleteScores(athleteId);
+  const syncScore = scoreSnapshot?.sync.value;
   const { state } = useUserState();
   const location = useLocation();
   const navigate = useNavigate();
@@ -169,7 +172,7 @@ export function RonConciergeSheet() {
     setIsSending(true);
 
     try {
-      const athleteName = profile?.nome || profile?.email?.split("@")[0] || "Atleta";
+      const athleteName = profile?.full_name || profile?.email?.split("@")[0] || "Atleta";
       const operationalData = getRonOperationalData();
 
       const response = await fetch("/api/gemini/chat", {
@@ -502,7 +505,9 @@ export function RonConciergeSheet() {
       <RonCalendarModal
         isOpen={calendarModalOpen}
         onClose={() => setCalendarModalOpen(false)}
-        initialData={calendarInitialData}
+        accessToken={localStorage.getItem("9fit_google_auth_token")}
+        onOpenGoogleAuth={() => navigate("/9fit/ron?connect=google-calendar")}
+        onEventCreated={() => setCalendarInitialData(null)}
       />
     </>
   );

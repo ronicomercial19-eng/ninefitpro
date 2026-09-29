@@ -52,15 +52,16 @@ export const TiltCard = forwardRef<HTMLDivElement, TiltCardProps>(
       }
     };
 
+    const PolymorphicComponent = Component as React.ElementType;
+
     return (
-      // @ts-expect-error Component dynamic polymorphism
-      <Component
-        ref={setRef}
+      <PolymorphicComponent
+        ref={setRef as React.Ref<HTMLElement>}
         className={`hub-card-interactive relative transform-gpu ${className}`}
         {...rest}
       >
         {children}
-      </Component>
+      </PolymorphicComponent>
     );
   }
 );

@@ -81,7 +81,7 @@ export function QuickCheckIn() {
             aluno_id: athleteId,
             athlete_id: athleteId,
             data_checkin: new Date().toISOString().split("T")[0],
-            tipo: "aula",
+            tipo: "semanal",
             treinos_semana: 1,
           });
           await supabase.from("athlete_planning_history").insert({
