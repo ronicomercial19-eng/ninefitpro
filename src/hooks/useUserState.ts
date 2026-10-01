@@ -17,12 +17,12 @@ export function useUserState() {
       cache = null;
       setRevision((value) => value + 1);
     };
-    window.addEventListener("9fit:user-state-invalidated", refreshState);
-    return () => window.removeEventListener("9fit:user-state-invalidated", refreshState);
+    ["9fit:user-state-invalidated","9fit:sync_updated","9fit:workout-updated"].forEach(event=>window.addEventListener(event,refreshState));
+    return () => ["9fit:user-state-invalidated","9fit:sync_updated","9fit:workout-updated"].forEach(event=>window.removeEventListener(event,refreshState));
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) { cache=null; setResult({ state:'unknown', reasoning:'Entre para acompanhar sua recuperação.', confidence:0 }); setLoading(false); return; }
     const now = Date.now();
     if (cache && cache.uid === user.id && now - cache.at < TTL) {
       setResult(cache.result);
@@ -34,26 +34,28 @@ export function useUserState() {
       try {
         const { data: logs } = await supabase
           .from('sync_score_logs' as any)
-          .select('score, feedback_text, created_at')
+          .select('score, feedback_text, created_at, source')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5);
         const arr = (logs as any[]) || [];
-        const scores = arr.map((l) => Number(l.score)).reverse();
+        const normalized = (l: any) => l.source === "hub_mood" ? Number(l.score)*10 : l.source === "post_workout" ? Math.max(0,100-Number(l.score)*10) : Number(l.score);
+        const scores = arr.map(normalized).reverse();
         const latest = arr[0];
 
         // Consistência: últimos 7 dias com pelo menos 1 log/dia
         const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
-        const { count } = await supabase
+        const { data: consistencyLogs } = await supabase
           .from('sync_score_logs' as any)
-          .select('id', { count: 'exact', head: true })
+          .select('created_at')
           .eq('user_id', user.id)
           .gte('created_at', sevenDaysAgo.toISOString());
-        const consistency = Math.min(100, ((count || 0) / 7) * 100);
+        const consistency = Math.min(100, (new Set((consistencyLogs || []).map((entry: any) => new Date(entry.created_at).toLocaleDateString('pt-BR'))).size / 7) * 100);
 
         const inferred: StateResult = latest
           ? inferUserState({
-              syncScore: Number(latest.score),
+              syncScore: normalized(latest),
+              scoreScale: 100,
               recentScores: scores,
               recentConsistencyPct: consistency,
               feedbackText: latest.feedback_text,

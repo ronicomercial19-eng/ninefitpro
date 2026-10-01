@@ -1,3 +1,4 @@
+import { requestRonChat } from "@/services/ronChat";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { RonWaveform } from "@/components/9fit/RonWaveform";
 import { useEffect, useRef, useState } from "react";
@@ -260,7 +261,7 @@ export default function NineFitRon() {
           {
             role: "assistant",
             content:
-              "Olá! Eu sou o RON, o Neural Coach do 9FIT PRO potenciado pelo Gemini 3.8. Estou pronto para otimizar sua periodização, monitorar sua recuperação e gerenciar seus treinos no Google Agenda. O que faremos hoje?",
+              "Olá! Eu sou o RON, o Neural Coach do 9FIT PRO com contexto do seu perfil. Estou pronto para otimizar sua periodização, monitorar sua recuperação e gerenciar seus treinos no Google Agenda. O que faremos hoje?",
           },
         ]);
       } else {
@@ -372,29 +373,7 @@ export default function NineFitRon() {
 
     // 3. Call server-side Gemini Bot endpoint
     try {
-      const response = await fetch("/api/gemini/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
-          context: {
-            athleteName: user?.user_metadata?.full_name || "Atleta",
-            state,
-            stateLabel: STATE_LABEL[state],
-            remainingCredits: remaining,
-            calendarConnected: Boolean(googleToken),
-            currentPage: "/9fit/ron",
-            operationalData: getRonOperationalData(),
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Falha no Gemini Bot (${response.status})`);
-      }
-
-      const data = await response.json();
+      const data = await requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content })));
       const replyContent = data.content;
       const returnedActions: RonAction[] = data.actions || [];
 
@@ -423,7 +402,7 @@ export default function NineFitRon() {
     } catch (err: any) {
       console.warn("[Gemini API Fallback]:", err);
       const fallbackMsg =
-        "Estou processando as diretrizes através do motor neural do Gemini 3.8 Flash. Verifique sua conexão e tente novamente em instantes.";
+        (err.message || "RON indisponível. Tente novamente em instantes.");
       setMessages((p) => {
         const out = [...p];
         out[out.length - 1] = { role: "assistant", content: fallbackMsg };
@@ -716,7 +695,7 @@ export default function NineFitRon() {
         </div>
 
         <div className="flex items-center justify-between mt-1 px-3 text-[10px] text-muted-foreground">
-          <span>Powered by Gemini 3.8 Flash Neural Engine</span>
+          <span>Powered by RON IA</span>
           <span className="flex items-center gap-1">
             <Zap className="w-2.5 h-2.5 text-primary" /> Fichas: {remaining}
           </span>

@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useState } from "react";
 import { Scale, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -26,6 +27,7 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
+    if (saving) return;
     const parsedPeso = Number(String(peso).replace(",", "."));
     const parsedGordura = gordura ? Number(String(gordura).replace(",", ".")) : null;
 
@@ -47,7 +49,7 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
     const { error } = await supabase.rpc("fn_registrar_peso_avulso", {
       p_athlete_id: athleteId,
       p_peso: parsedPeso,
-      p_data: new Date().toISOString().slice(0, 10),
+      p_data: format(new Date(), "yyyy-MM-dd"),
       p_gordura: parsedGordura,
     });
 
@@ -58,6 +60,8 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
       return;
     }
 
+    window.dispatchEvent(new Event("9fit:sync_updated"));
+    window.dispatchEvent(new Event("9fit:user-state-invalidated"));
     toast.success("Check-in registrado");
     setOpen(false);
     setPeso(""); setGordura("");
@@ -90,12 +94,12 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
                 Isso não substitui a avaliação oficial com seu professor — é só um acompanhamento seu entre uma avaliação e outra.
               </p>
               <input
-                type="number" placeholder="Peso hoje (kg)" value={peso}
+                type="text" inputMode="decimal" placeholder="Peso hoje (kg)" value={peso}
                 onChange={(e) => setPeso(e.target.value)}
                 className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-sm"
               />
               <input
-                type="number" placeholder="% de gordura (opcional, se tiver balança)" value={gordura}
+                type="text" inputMode="decimal" placeholder="% de gordura (opcional, se tiver balança)" value={gordura}
                 onChange={(e) => setGordura(e.target.value)}
                 className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-sm"
               />

@@ -14,30 +14,32 @@ export default function NineFitPostWorkout() {
   const [params] = useSearchParams();
   const { user } = useAuth();
   const { athleteId } = useAthleteId();
-  const xp = Number(params.get("xp") ?? 75);
+  const xp = Number(params.get("xp") ?? 0);
   const [rpe, setRpe] = useState(7);
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [isFirstWorkout, setIsFirstWorkout] = useState(false);
 
   const stats = [
-    { Icon: Flame, label: "Volume", value: "12.4 t", trend: "+8%" },
-    { Icon: TrendingUp, label: "Performance", value: "94%", trend: "+3%" },
-    { Icon: Heart, label: "FC média", value: "138 bpm", trend: "-2%" },
+    { Icon: Flame, label: "Volume", value: "Sem medição", trend: "" },
+    { Icon: TrendingUp, label: "Performance", value: "Sem medição", trend: "" },
+    { Icon: Heart, label: "FC média", value: "Sem medição", trend: "" },
     { Icon: Trophy, label: "XP", value: `+${xp}`, trend: "" },
   ];
 
   const submit = async () => {
-    if (!user?.id) return;
+    if (!user?.id || saving || confirmed) return;
     setSaving(true);
     try {
-      await supabase.from("sync_score_logs" as any).insert({
+      const {error}=await supabase.from("sync_score_logs" as any).insert({
         user_id: user.id,
         score: rpe,
         feedback_text: `Pós-treino RPE ${rpe}`,
         source: "post_workout",
       });
 
+      if(error) throw error;
+      window.dispatchEvent(new Event("9fit:user-state-invalidated"));
       // Detecta se essa é a 1ª sessão concluída de verdade (dado real, não suposição) —
       // o card de compartilhamento muda pra "first_workout" só nesse caso, que é o
       // momento de maior emoção/viralização (prova social de "comecei").
@@ -51,7 +53,7 @@ export default function NineFitPostWorkout() {
       }
 
       window.dispatchEvent(new CustomEvent("9fit:xp_awarded", { detail: { xp } }));
-      toast.success(`RPE ${rpe} registrado · +${xp} XP`);
+      toast.success(`RPE ${rpe} registrado`);
       setConfirmed(true);
       // Removido o redirect automático: o card de compartilhamento fica visível
       // até o aluno decidir voltar (fluxo continua opcional, nunca bloqueia).

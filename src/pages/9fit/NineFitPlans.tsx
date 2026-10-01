@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { Crown, Check, ArrowRight } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 

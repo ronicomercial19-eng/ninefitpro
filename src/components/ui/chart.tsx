@@ -1,3 +1,4 @@
+import type { Payload, ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -104,6 +105,8 @@ const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
     React.ComponentProps<"div"> & {
+      payload?: Array<Payload<ValueType,NameType>>
+      label?: string | number
       hideLabel?: boolean
       hideIndicator?: boolean
       indicator?: "line" | "dot" | "dashed"
@@ -190,14 +193,14 @@ const ChartTooltipContent = React.forwardRef<
 
             return (
               <div
-                key={item.dataKey}
+                key={String(item.dataKey ?? index)}
                 className={cn(
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
                   indicator === "dot" && "items-center"
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
+                  formatter(item.value, item.name, item, index, payload)
                 ) : (
                   <>
                     {itemConfig?.icon ? (
@@ -259,7 +262,7 @@ const ChartLegend = RechartsPrimitive.Legend
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+    { payload?: Array<{value?: string; color?: string; type?: string; dataKey?: string; payload?: Record<string, any>}>; verticalAlign?: "top" | "middle" | "bottom" } & {
       hideIcon?: boolean
       nameKey?: string
     }

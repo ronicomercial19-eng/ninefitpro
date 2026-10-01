@@ -5,6 +5,7 @@
 export type UserState = 'unknown' | 'power' | 'low' | 'balanced';
 
 export interface StateSignals {
+  scoreScale?: 10 | 100;
   syncScore: number;             // 0-10 (ou 0-100 normalizado)
   recentScores?: number[];       // últimos 3-5 valores cronológicos
   recentConsistencyPct?: number; // 0-100
@@ -45,8 +46,8 @@ function feedbackSentiment(text?: string | null): 'positive' | 'negative' | 'neu
 }
 
 export function inferUserState(signals: StateSignals): StateResult {
-  const score = normalizeScore(signals.syncScore || 0);
-  const trend = detectTrend((signals.recentScores || []).map(normalizeScore));
+  const score = signals.scoreScale === 100 ? (signals.syncScore || 0) / 10 : normalizeScore(signals.syncScore || 0);
+  const trend = detectTrend((signals.recentScores || []).map(s => signals.scoreScale === 100 ? s / 10 : normalizeScore(s)));
   const consistency = signals.recentConsistencyPct ?? 50;
   const sentiment = feedbackSentiment(signals.feedbackText);
 

@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +59,9 @@ const POWER_BONUS = {
 
 export function DailyProtocol() {
   const { user } = useAuth();
+  const { athleteId } = useAthleteId();
+  const [revision, setRevision] = useState(0);
+  useEffect(() => { const refresh=()=>setRevision(n=>n+1); const events=["9fit:sync_updated","9fit:workout-updated","9fit:nutrition-updated"]; events.forEach(event=>window.addEventListener(event,refresh)); return ()=>events.forEach(event=>window.removeEventListener(event,refresh)); }, []);
   const { state, invalidate } = useUserState();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,13 +71,17 @@ export function DailyProtocol() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = format(new Date(), "yyyy-MM-dd");
       const { data } = await supabase
         .from("daily_tasks")
         .select("*")
         .eq("user_id", user.id)
         .eq("task_date", today);
 
+      const { data: completions } = await supabase.from("master_registry").select("event_type,payload").eq("user_id", user.id).gte("created_at", `${today}T00:00:00${format(new Date(), "xxx")}`);
+      const { count: meals } = athleteId ? await supabase.from("nutrition_logs").select("id", { count:"exact", head:true }).eq("athlete_id", athleteId).eq("date", today) : {count:0};
+      const { count: workouts } = athleteId ? await supabase.from("workout_executions").select("id", { count:"exact", head:true }).eq("athlete_id", athleteId).eq("status","completed").eq("workout_date",today) : {count:0};
+      const reflect = (list: Task[]) => list.map(task => ({...task,completed:task.completed || (task.task_key === "elite_training" && (!!workouts || (completions || []).some(e => ["workout_complete","workout_completed"].includes(e.event_type)))) || (task.task_key === "nutri_log" && (!!meals || (completions || []).some(e => e.event_type === "nutrition_checkin"))) || (task.task_key === "recovery" && (completions || []).some(e => e.event_type === "mobility_log"))}));
       const existing: Task[] = data || [];
       const missing = DEFAULT_TASKS.filter((d) => !existing.find((t) => t.task_key === d.key));
       if (missing.length) {
@@ -96,18 +105,18 @@ export function DailyProtocol() {
             DEFAULT_TASKS.findIndex((d) => d.key === a.task_key) -
             DEFAULT_TASKS.findIndex((d) => d.key === b.task_key)
         );
-        setTasks(list);
+        setTasks(reflect(list));
       } else {
         existing.sort(
           (a, b) =>
             DEFAULT_TASKS.findIndex((d) => d.key === a.task_key) -
             DEFAULT_TASKS.findIndex((d) => d.key === b.task_key)
         );
-        setTasks(existing);
+        setTasks(reflect(existing));
       }
       setLoading(false);
     })();
-  }, [user?.id]);
+  }, [user?.id, athleteId, revision]);
 
   const complete = async (task: Task) => {
     if (task.completed || working) return;
@@ -115,7 +124,7 @@ export function DailyProtocol() {
     const { error } = await supabase
       .from("daily_tasks")
       .update({ completed: true, completed_at: new Date().toISOString() })
-      .eq("id", task.id);
+      .eq("id", task.id).eq("user_id", user!.id).select("id").single();
     if (error) {
       toast.error("Erro ao concluir");
       setWorking(null);
@@ -134,7 +143,8 @@ export function DailyProtocol() {
     }
     const newTasks = tasks.map((t) => (t.id === task.id ? { ...t, completed: true } : t));
     setTasks(newTasks);
-    toast.success(`Protocolo registrado · +${task.xp_reward} XP`, { duration: 1600 });
+    toast.success("Conclusão registrada", { duration: 1600 });
+    window.dispatchEvent(new Event("9fit:sync_updated"));
     setWorking(null);
 
     // Completing a protocol is an adherence event, not a physiological measurement.

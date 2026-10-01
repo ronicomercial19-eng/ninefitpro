@@ -397,7 +397,7 @@ export default function NineFitProgresso() {
              {/* CARD DE COMPARTILHAMENTO DE RECORDE */}
              <div className="mb-4">
                 <ShareableCard
-                  contentType="achievement"
+                  contentType="personal_record"
                   title="Novo Recorde Pessoal"
                   subtitle={`Performance em evolução: superei ${prs[0].exercicio}`}
                   stat={{ label: prs[0].exercicio, value: `${prs[0].valor}${prs[0].unidade}` }}

@@ -35,6 +35,8 @@ export function useShareEvent(contentType: ShareContentType) {
       setSharing(true);
       try {
         const { default: html2canvas } = await import("html2canvas");
+        await document.fonts.ready;
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
         const canvas = await html2canvas(node, {
           backgroundColor: "#090909",
           scale: 2,

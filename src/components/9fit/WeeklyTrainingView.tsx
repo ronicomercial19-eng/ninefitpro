@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Play, Loader2, Dumbbell, Lock, Check } from "lucide-react";
@@ -10,7 +11,7 @@ interface WeeklyTrainingViewProps {
   onExecuteToday: (workout: DayPlan) => void;
 }
 
-type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; video_url?: string | null; gif_url?: string | null };
+type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; completed?: boolean; video_url?: string | null; gif_url?: string | null };
 type DayPlan = {
   id?: string;
   date: string;
@@ -54,7 +55,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
   const [phase, setPhase] = useState<string>("");
   const [match, setMatch] = useState<number>(0);
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = format(new Date(), "yyyy-MM-dd");
 
   const loadWeek = useCallback(async () => {
     if (!athleteId) return;
@@ -66,13 +67,15 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       setPhase(String(payload.phase_status || ""));
       setMatch(Number(payload.match_percentage || 0));
       const week = payload.week || [];
+      const { data: recordedSets } = await supabase.from("workout_exercise_sets").select("exercise_name,set_number,workout_executions!inner(athlete_id,workout_date)").eq("workout_executions.athlete_id",athleteId).eq("completed",true).gte("workout_executions.workout_date",week[0]?.workout_date || week[0]?.date || todayISO).lte("workout_executions.workout_date",week[week.length-1]?.workout_date || week[week.length-1]?.date || todayISO);
       setDays(week.map((d) => ({
         id: d.id || d.daily_workout_id || d.workout_id,
         date: d.workout_date || d.date,
-        day_label: d.day_name || d.day_label || DAY_LABELS[new Date(d.workout_date || d.date).getDay()],
+        day_label: d.day_name || d.day_label || DAY_LABELS[new Date(`${d.workout_date || d.date}T12:00:00`).getDay()],
         status: d.status || "planned",
         exercises: (d.exercises || []).map((e) => ({
           id: e.id,
+          completed: new Set((recordedSets || []).filter(s => s.exercise_name === e.name && s.workout_executions.workout_date === (d.workout_date || d.date)).map(s=>s.set_number)).size >= Number(e.sets || 3),
           name: e.name,
           sets: e.sets,
           reps: e.reps_range || e.reps,
@@ -88,13 +91,14 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
 
   useEffect(() => {
     loadWeek();
+    window.addEventListener("9fit:workout-updated", loadWeek);
     if (!athleteId) return;
     const channelName = `weekly-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const ch = supabase.channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "daily_workouts", filter: `athlete_id=eq.${athleteId}` }, loadWeek)
       .on("postgres_changes", { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` }, loadWeek)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => { window.removeEventListener("9fit:workout-updated", loadWeek); supabase.removeChannel(ch); };
   }, [athleteId, loadWeek]);
 
   // FIX (player guiado): mapa de nomes técnicos de status para rótulo legível.
@@ -202,7 +206,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-primary" />
-                          {new Date(d.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                          {new Date(`${d.date}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                         </span>
                       </>
                     )}
@@ -230,7 +234,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-2">
-                    {d.exercises.slice(0, 4).map((e, j) => (
+                    {d.exercises.map((e, j) => (
                       <button
                         key={j}
                         type="button"
@@ -238,7 +242,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                         className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-primary/40 transition-all text-left cursor-pointer group/item"
                       >
                         {/* Checkmark Laranja no padrão da imagem enviada */}
-                        <Check className="w-3.5 h-3.5 text-primary shrink-0 stroke-[2.5]" />
+                        {e.completed ? <Check aria-label="Exercício concluído" className="w-3.5 h-3.5 text-primary shrink-0 stroke-[2.5]" /> : <Dumbbell aria-label="Exercício pendente" className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
                         <span className="text-xs font-bold text-neutral-200 tracking-wide uppercase truncate group-hover/item:text-primary transition-colors flex-1 font-display">
                           {e.name}
                         </span>

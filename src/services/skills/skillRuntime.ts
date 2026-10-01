@@ -17,7 +17,7 @@ export type ActiveSkill = {
 export type SkillContext = {
   userId: string;
   athleteId?: string;
-  profile?: { level?: number; objective?: string; experience?: string };
+  profile?: { level?: number; objective?: string; experience?: string; restrictions?: string | null };
   bio?: { hrv?: number | null; sleep?: number | null; recovery?: number | null };
   activeSkills: ActiveSkill[];
   moduleContext?: string;
@@ -37,8 +37,9 @@ export async function loadActiveSkillsFor(_userId: string): Promise<ActiveSkill[
 }
 
 export async function buildSkillContext(userId: string, moduleContext = "general"): Promise<SkillContext> {
+  const { data: canonicalId } = await supabase.rpc("fn_current_athlete_id");
   const [{ data: athleteRaw }, skills] = await Promise.all([
-    supabase.from("athletes").select("id, level, experience_level").eq("user_id", userId).maybeSingle(),
+    supabase.from("athletes").select("id, level, experience_level, primary_goal, injuries_limitations").eq("id", canonicalId || "").maybeSingle(),
     loadActiveSkillsFor(userId),
   ]);
   const athlete = athleteRaw as any;
@@ -46,17 +47,17 @@ export async function buildSkillContext(userId: string, moduleContext = "general
   let bio: SkillContext["bio"] = {};
   if (athlete?.id) {
     const [{ data: hrv }, { data: sleep }, { data: rec }] = await Promise.all([
-      supabase.from("bio_hrv_logs" as any).select("hrv_ms").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("bio_hrv_logs" as any).select("hrv_ms").eq("user_id", userId).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("bio_sleep_logs" as any).select("duration_min").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("bio_recovery_state" as any).select("score").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    bio = { hrv: (hrv as any)?.hrv_ms ?? null, sleep: (sleep as any)?.duration_min ?? null, recovery: (rec as any)?.score ?? null };
+    bio = { hrv: (hrv as any)?.hrv_ms ?? null, sleep: (sleep as any)?.duration_min ?? null, recovery: (rec as any)?.recovery_score ?? null };
   }
 
   return {
     userId,
     athleteId: athlete?.id,
-    profile: athlete ? { level: athlete.level, experience: athlete.experience_level } : undefined,
+    profile: athlete ? { level: athlete.level, experience: athlete.experience_level, objective: athlete.primary_goal, restrictions: athlete.injuries_limitations } : undefined,
     bio,
     activeSkills: skills,
     moduleContext,

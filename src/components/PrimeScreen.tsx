@@ -1,14 +1,17 @@
-// Paste the code for PrimeScreen.tsx here, adjusted to use the hook instead of internal states
-import { motion, AnimatePresence } from 'motion/react';
-import { Bot, Crown, Flame, CheckCircle2, Loader2, Dumbbell, Activity, ArrowRight, Sparkles, LayoutGrid, Target, Trophy, TrendingUp, Apple, Users, Diamond, ShieldCheck, Zap, Star, Coffee, Music, ChevronRight, X, Wind, Moon, Volume2, VolumeX, Camera, FileText, Send, Heart, BrainCircuit, CalendarCheck } from 'lucide-react';
-import React, { useState } from 'react';
-import { Card, FeatureItem, SectionLabel, StorySlide, ChecklistItem } from './UI';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import { usePrimeState } from '@/hooks/usePrimeState';
 
-// ... (Rest of PrimeScreen component implementation, refactored to use usePrimeState hook)
-export const PrimeScreen = ({ setActiveProtocol, activeProtocol }: { setActiveProtocol: (protocol: string | null) => void, activeProtocol: string | null }) => {
-  const { biomarkers, updateBiometrics, macros, updateMacros } = usePrimeState();
-  // ... rest of the component logic, replacing internal useState with hook data
-  return (<div>Prime Screen Implementation</div>);
+export const PrimeScreen = ({ setActiveProtocol, activeProtocol }: { setActiveProtocol: (protocol: string | null) => void; activeProtocol: string | null }) => {
+  const { data, isLoading, error, refetch } = usePrimeState();
+  const navigate = useNavigate();
+  if (isLoading) return <p>Carregando Prime…</p>;
+  if (error) return <button onClick={() => void refetch()}>Não foi possível carregar. Tentar novamente</button>;
+  return <section className="space-y-4 p-4">
+    <h2 className="text-xl font-bold">9FIT Prime</h2>
+    <p>Assinatura: {data?.entitlement === 'active' ? 'Ativa' : data?.entitlement === 'trial' ? 'Em avaliação' : data?.entitlement === 'expired' ? 'Expirada' : 'Não confirmada'}</p>
+    <p>SYNC: {data?.syncScore == null ? 'Sem medição' : `${data.syncScore}%`}</p>
+    <p>Protocolo: {activeProtocol || data?.activeProtocol || 'Nenhum protocolo ativo'}</p>
+    <button onClick={() => { setActiveProtocol(data?.activeProtocol || null); navigate('/9fit/train'); }}>Abrir treino</button>
+    <button onClick={() => navigate('/9fit/primepass')}>Gerenciar assinatura</button>
+  </section>;
 };

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { format } from "date-fns";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Play, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +76,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
   const [quickExecutionId, setQuickExecutionId] = useState<string | null>(null);
+  const requestRef = useRef(0);
+  const busyRef = useRef(false);
+  useEffect(() => { if (!open) { ++requestRef.current; busyRef.current = false; setLoading(false); reset(); } }, [open]);
 
   const reset = () => {
     setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
@@ -82,6 +86,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   };
 
   const pick = async (k: keyof Answers, v: string) => {
+    if (busyRef.current || k !== QS[step]?.key) return;
     const next = { ...answers, [k]: v };
     setAnswers(next);
     if (step < 2) setStep((step + 1) as Step);
@@ -90,6 +95,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
 
   const resolve = async (a: Answers) => {
     if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
+    if (busyRef.current) return;
+    busyRef.current = true;
+    const request = ++requestRef.current;
     setLoading(true);
     try {
       // 1) Oferta antes do treino (não bloqueia) — colunas reais de monetization_offers
@@ -114,7 +122,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
           },
         },
       });
-      if (error) {
+      const unwrap = (value: any): QuickTrainingPayload => value?.data ?? value ?? {};
+      const hasExercises = (value: any) => { const p = unwrap(value); return (p.exercises || p.exercicios || []).length > 0; };
+      if (error || !hasExercises(data)) {
         const fallback = await supabase.rpc("fn_treino_rapido", {
           p_athlete_id: athleteId,
           p_objetivo: a.goal,
@@ -125,18 +135,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         error = fallback.error;
       }
       if (error) throw error;
+      if (request !== requestRef.current) return;
 
-      const payload = (data || {}) as QuickTrainingPayload;
+      const payload = unwrap(data);
+      if (!hasExercises(data)) throw new Error("Nenhum exercício compatível com o equipamento informado. Volte e revise os filtros.");
       setModelos((payload.modelos || []) as Modelo[]);
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
-      // Insere workout_executions in_progress (start)
-      const { data: executionRaw, error: executionError } = await supabase.from("workout_executions")
-        .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().split("T")[0], phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() })
-        .select("id").single();
-      const execution = executionRaw as { id?: string } | null;
-      if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
-      setQuickExecutionId(String(execution.id));
 
       setShowingOffer(!!prod);
       setStep(3);
@@ -145,7 +150,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       const message = e instanceof Error ? e.message : "Não foi possível montar o treino agora.";
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) { busyRef.current = false; setLoading(false); }
     }
   };
 
@@ -154,14 +159,20 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   // state (não storage — funciona em Safari modo privado). O
   // WorkoutExecution existente cuida de séries, cronômetro, vídeo inline e
   // só concede XP quando execução real (sets) é registrada.
-  const startGuidedWorkout = () => {
+  const startGuidedWorkout = async () => {
+    if (!athleteId || busyRef.current || !exercises.length) return;
+    busyRef.current = true;
+    setLoading(true);
+    try {
+      const { data: execution, error } = await supabase.from("workout_executions").insert({ athlete_id: athleteId, workout_date: format(new Date(), "yyyy-MM-dd"), phase_name: "quick", status: "in_progress", started_at: new Date().toISOString() }).select("id").single();
+      if (error || !execution?.id) throw error || new Error("Não foi possível iniciar o treino");
     const quickTraining = {
       id: `quick-${Date.now()}`,
-      execution_id: quickExecutionId,
+      execution_id: execution.id,
       training_name: `Treino Rápido · ${answers.goal}`,
       training_type: "structured",
       is_active: true,
-      start_date: new Date().toISOString().split("T")[0],
+      start_date: format(new Date(), "yyyy-MM-dd"),
       training_data: {
         estimated_duration: Number.parseInt(answers.time, 10),
         requested_duration_min: Number.parseInt(answers.time, 10),
@@ -177,10 +188,12 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         })),
       },
     };
-    if (!quickExecutionId) { toast.error("A execução ainda não está pronta. Tente novamente."); return; }
+    
     onClose();
     reset();
     navigate("/9fit/train", { state: { quickTraining } });
+    } catch (error: any) { toast.error(error.message || "Não foi possível iniciar o treino"); }
+    finally { busyRef.current = false; setLoading(false); }
   };
 
   if (!open) return null;
@@ -211,6 +224,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
           {!loading && step < 3 && (
             <div>
               <p className="text-[10px] text-muted-foreground mb-2">Pergunta {step + 1} de 3</p>
+              {step > 0 && <button type="button" onClick={() => setStep((step - 1) as Step)} className="text-xs text-primary mb-3">Voltar</button>}
               <p className="font-display text-lg mb-4">{QS[step].label}</p>
               <div className="space-y-2">
                 {QS[step].opts.map((o) => (

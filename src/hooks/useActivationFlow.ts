@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAthleteId } from './useAthleteId';
+import { toast } from 'sonner';
 
 export type ActivationStep =
   | 'not_started'
@@ -32,13 +33,14 @@ export function useActivationFlow() {
   const [advancing, setAdvancing] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!athleteId) return;
-    const { data } = await supabase
+    if (!athleteId) { setLoading(false); return; }
+    const { data, error } = await supabase
       .from('athlete_activation' as any)
       .select('*')
       .eq('athlete_id', athleteId)
       .maybeSingle();
-    setRow((data as any) ?? null);
+    if (error) toast.error('Não foi possível carregar sua ativação.');
+    else setRow((data as any) ?? null);
     setLoading(false);
   }, [athleteId]);
 
@@ -61,8 +63,12 @@ export function useActivationFlow() {
         });
         if (error) {
           console.error('[activation_advance]', step, error);
+          toast.error('Não foi possível salvar esta etapa. Tente novamente.');
+          return null;
         }
+        if ((data as any)?.success === false) { toast.error('A etapa não foi concluída. Revise os dados.'); return null; }
         await refresh();
+        window.dispatchEvent(new Event('9fit:user-state-invalidated'));
         return data;
       } finally {
         setAdvancing(false);
@@ -78,7 +84,7 @@ export function useActivationFlow() {
       const { data, error } = await supabase.rpc('activation_finish' as any, {
         p_athlete_id: athleteId,
       });
-      if (error) console.error('[activation_finish]', error);
+      if (error || (data as any)?.success === false) { toast.error('Não foi possível concluir sua ativação.'); return null; }
       await refresh();
       return data;
     } finally {

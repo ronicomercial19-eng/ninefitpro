@@ -76,6 +76,7 @@ export default function AulasCreditos() {
 
   // Schedule form
   const [date, setDate] = useState("");
+  const [accountingMonth, setAccountingMonth] = useState(format(new Date(), "yyyy-MM"));
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -88,13 +89,14 @@ export default function AulasCreditos() {
     await supabase.rpc("reconcile_appointments_for_user" as any);
     // 2. Fetch current month + future
     const start = startOfMonth(new Date()).toISOString();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("appointments")
       .select("id, scheduled_at, duration, status, confirmed_at, notes, appointment_type, title")
       .eq("student_id", athleteId)
-      .gte("scheduled_at", start)
+      
       .order("scheduled_at", { ascending: false });
-    setAppts((data || []) as Appointment[]);
+    if (error) toast.error("Não foi possível atualizar as aulas");
+    else setAppts((data || []) as Appointment[]);
     setLoading(false);
   }, [athleteId]);
 
@@ -134,34 +136,38 @@ export default function AulasCreditos() {
     const ch = supabase
       .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "appointments", filter: `student_id=eq.${athleteId}` },
-        () => fetchAppointments())
+        () => { fetchAppointments(); fetchPlan(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "student_credits", filter: `student_id=eq.${athleteId}` }, fetchPlan)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [athleteId, fetchAppointments]);
+  }, [athleteId, fetchAppointments, fetchPlan]);
 
   // ---- Derived counts ----
   const monthAppts = useMemo(() => {
-    const s = startOfMonth(new Date());
-    const e = endOfMonth(new Date());
+    const month = new Date(`${accountingMonth}-01T12:00:00`);
+    const s = startOfMonth(month);
+    const e = endOfMonth(month);
     return appts.filter(a => {
       const d = parseISO(a.scheduled_at);
       return d >= s && d <= e;
     });
-  }, [appts]);
+  }, [appts, accountingMonth]);
 
   const realizadasMes = monthAppts.filter(a => a.status === "completed").length;
   const perdidasMes = monthAppts.filter(a => a.status === "no_show").length;
-  const agendadasMes = monthAppts.filter(a => a.status === "scheduled" || a.status === "confirmed").length;
-  const restantes = Math.max(0, classesPerMonth - realizadasMes - agendadasMes);
+  const agendadasMes = monthAppts.filter(a => ["scheduled", "confirmed", "pending"].includes(a.status)).length;
+  const restantes = Math.max(0, classesPerMonth - realizadasMes - perdidasMes - agendadasMes);
 
   // ---- Actions ----
   const handleSchedule = async () => {
+    if (busy) return;
     if (!athleteId) return toast.error("Perfil de atleta não encontrado");
     if (!date || !time) return toast.error("Selecione data e horário");
 
     const when = new Date(`${date}T${time}:00`);
     if (isBefore(when, new Date())) return toast.error("Não é possível agendar no passado");
-    if (classesPerMonth > 0 && agendadasMes + realizadasMes >= classesPerMonth) {
+    const usedInTargetMonth = appts.filter(a => format(parseISO(a.scheduled_at), "yyyy-MM") === date.slice(0, 7) && a.status !== "cancelled").length;
+    if (classesPerMonth > 0 && usedInTargetMonth >= classesPerMonth) {
       return toast.error("Você já usou ou agendou todas as aulas do plano deste mês");
     }
 
@@ -184,6 +190,8 @@ export default function AulasCreditos() {
       if (error) throw error;
 
       const appointmentId = (result as any)?.appointment_id;
+      if (!appointmentId) throw new Error((result as any)?.error || "A reserva não foi confirmada pelo servidor");
+      setAccountingMonth(date.slice(0, 7));
       if (appointmentId && staffProfessionalId) {
         const { data: external, error: externalError } = await supabase.functions.invoke("staff-api/booking", {
           body: {
@@ -215,6 +223,7 @@ export default function AulasCreditos() {
       await Promise.all([fetchAppointments(), fetchPlan()]);
     } catch (e: any) {
       toast.error("Erro ao agendar: " + e.message);
+      await Promise.all([fetchAppointments(), fetchPlan()]);
     } finally {
       setBusy(false);
     }
@@ -263,7 +272,7 @@ export default function AulasCreditos() {
     parseISO(a.scheduled_at) >= new Date()
   );
 
-  const filteredExtract = appts.filter(a => extractFilter === "all" ? true : a.status === extractFilter);
+  const filteredExtract = appts.filter(a => extractFilter === "all" ? true : extractFilter === "scheduled" ? ["scheduled", "confirmed", "pending"].includes(a.status) : a.status === extractFilter);
 
   // ---- Render ----
   return (
@@ -285,6 +294,7 @@ export default function AulasCreditos() {
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-label">MEU PLANO</p>
+                <label className="text-xs">Mês de referência<input aria-label="Mês de referência" type="month" value={accountingMonth} onChange={e => e.target.value && setAccountingMonth(e.target.value)} className="block bg-elevated rounded p-2 mt-1" /></label>
                 <p className="text-xl font-bold mt-1">
                   Aulas do mês:{" "}
                   <span className="text-primary">{realizadasMes}</span>
@@ -300,7 +310,7 @@ export default function AulasCreditos() {
               <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all"
-                  style={{ width: `${Math.min(100, ((realizadasMes + agendadasMes) / classesPerMonth) * 100)}%` }}
+                  style={{ width: `${Math.min(100, ((realizadasMes + perdidasMes + agendadasMes) / classesPerMonth) * 100)}%` }}
                 />
               </div>
             )}
@@ -338,7 +348,7 @@ export default function AulasCreditos() {
                 <Label htmlFor="date" className="text-xs uppercase tracking-wider text-muted-foreground">Data</Label>
                 <Input
                   id="date" type="date" value={date} min={todayISO}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => { setDate(e.target.value); if (e.target.value) setAccountingMonth(e.target.value.slice(0, 7)); }}
                   className="mt-1 bg-elevated border-border"
                 />
               </div>

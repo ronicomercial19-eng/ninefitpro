@@ -35,12 +35,15 @@ function getStatusTheme(score: number | null, status: HubScoreStatus) {
     return {
       color: "#00E5FF",
       bgGlow: "rgba(0, 229, 255, 0.2)",
-      label: "CALIBRANDO",
+      label: status === "loading" ? "ATUALIZANDO" : "CALIBRANDO",
       badgeClass: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
       dotClass: "bg-cyan-400 shadow-[0_0_8px_#00E5FF]",
     };
   }
-  if (score >= 71) {
+  if (status === "stale") {
+    return { color: COLOR_MID, bgGlow: "rgba(255, 102, 0, 0.2)", label: "LEITURA ANTERIOR", badgeClass: "bg-orange-500/10 text-orange-400 border-orange-500/30", dotClass: "bg-orange-400" };
+  }
+  if (score >= 80) {
     return {
       color: COLOR_HIGH,
       bgGlow: "rgba(39, 174, 96, 0.25)",
@@ -49,7 +52,7 @@ function getStatusTheme(score: number | null, status: HubScoreStatus) {
       dotClass: "bg-emerald-400 shadow-[0_0_10px_#27AE60]",
     };
   }
-  if (score >= 41) {
+  if (score >= 60) {
     return {
       color: COLOR_MID,
       bgGlow: "rgba(255, 102, 0, 0.25)",
@@ -70,8 +73,8 @@ function getStatusTheme(score: number | null, status: HubScoreStatus) {
 export function SyncScoreRing({ score, status, breakdown }: Props) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
-  const measured = score !== null && (status === "available" || status === "stale");
-  const safeScore = Math.max(0, Math.min(100, score ?? 0));
+  const measured = typeof score === "number" && Number.isFinite(score);
+  const safeScore = measured ? Math.max(0, Math.min(100, score)) : 0;
   const theme = getStatusTheme(score, status);
 
   const unmeasuredTiltRef = useTiltCard<HTMLDivElement>({
@@ -104,30 +107,30 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
           </div>
           <div className="flex-1 text-center sm:text-left">
             <p className="text-sm text-white font-bold font-display leading-snug mb-1">
-              Coletando sinais biométricos para o Performance Sync.
+              {status === "offline" ? "Você está sem conexão." : status === "error" ? "Não foi possível atualizar seu Sync." : status === "loading" ? "Atualizando seus registros…" : "Seu Sync começa com seus registros."}
             </p>
             <p className="text-xs text-neutral-400 leading-relaxed mb-3">
-              Registre suas primeiras refeições ou treinos para ativar seu gauge neuromotor em tempo real.
+              {status === "offline" || status === "error" ? "Seus registros não foram apagados. Atualize o painel quando a conexão estiver disponível." : "Registre refeições, treinos e recuperação para acompanhar sua consistência."}
             </p>
-            <button
+            {status === "calibrating" && <button
               onClick={() => navigate("/9fit/onboarding")}
               className="inline-flex items-center gap-2 text-xs font-bold tracking-wide px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all active:scale-95"
             >
               Iniciar Calibração <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </button>}
           </div>
         </div>
       </div>
     );
   }
 
-  // Medição do Arco de Performance (0° a 240° semicircular como velocímetro biométrico de precisão)
-  const angle = Math.round((safeScore / 100) * 240);
-
-  // Estimativas vivas de telemetria baseadas no score real para manter o visual enriquecido
-  const treinoTime = breakdown?.treino ? `${Math.floor((breakdown.treino / 100) * 80)}min` : "1:20h";
-  const nutriKcal = breakdown?.nutri ? `${Math.round(1400 + (breakdown.nutri / 100) * 650)}kcal` : "1850kcal";
-  const moveKcal = breakdown?.mob ? `${Math.round(280 + (breakdown.mob / 100) * 260)}kcal` : "420kcal";
+  // These are dimension scores, not measured duration or energy expenditure.
+  const formatDimension = (value: number | null | undefined) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? `${Math.round(Math.max(0, Math.min(100, value)))}/100` : "Sem dados";
+  const treinoTime = formatDimension(breakdown?.treino);
+  const nutriKcal = formatDimension(breakdown?.nutri);
+  const moveKcal = formatDimension(breakdown?.mob);
 
   return (
     <div
@@ -138,6 +141,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
       className="hub-card-interactive rounded-2xl border border-white/[0.09] bg-gradient-to-b from-[#13141a] via-[#0d0e12] to-[#08080a] p-5 sm:p-6 relative overflow-hidden shadow-2xl shadow-black/80 group cursor-pointer"
       onClick={() => setShowDetails(!showDetails)}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           setShowDetails(!showDetails);
@@ -241,7 +245,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
         <div className="p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] group-hover:border-[#FF6600]/30 transition-all">
           <div className="flex items-center justify-center gap-1 text-cyan-400 mb-0.5">
             <Zap className="w-3.5 h-3.5" />
-            <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-400">Move</span>
+            <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-400">Mobilidade</span>
           </div>
           <span className="text-xs font-bold font-mono text-white">{moveKcal}</span>
         </div>
@@ -251,6 +255,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
       <div className="relative z-10 mt-3 pt-1 flex items-center justify-center">
         <button
           type="button"
+          aria-expanded={showDetails}
           onClick={(e) => {
             e.stopPropagation();
             setShowDetails(!showDetails);

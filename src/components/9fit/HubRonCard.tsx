@@ -76,7 +76,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-[#FF6600]">
               <Sparkles className="w-3 h-3 text-[#FF6600]" />
-              Gemini 3.8
+              RON IA
             </span>
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-neutral-400">

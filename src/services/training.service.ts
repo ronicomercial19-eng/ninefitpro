@@ -208,7 +208,6 @@ export async function startWorkoutExecution(
       .insert({
         athlete_id: athleteId,
         assignment_id: assignmentId,
-        template_id: templateId,
         status: 'in_progress',
         started_at: new Date().toISOString()
       })

@@ -134,25 +134,28 @@ export default function NineFitDieta() {
 
   const fetchNutritionLogs = async (aid: string) => {
     const today = format(currentDate, "yyyy-MM-dd");
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("nutrition_logs")
       .select("*")
       .eq("athlete_id", aid)
       .eq("date", today)
       .order("created_at", { ascending: true });
     
+    if (error) { toast.error("Não foi possível atualizar o diário alimentar."); return; }
     const meals = data || [];
     setTodayMeals(meals);
     setConsumed({
-      calories: meals.reduce((s: number, m: any) => s + (m.calories || 0), 0),
-      protein: meals.reduce((s: number, m: any) => s + (m.protein || 0), 0),
-      carbs: meals.reduce((s: number, m: any) => s + (m.carbs || 0), 0),
-      fat: meals.reduce((s: number, m: any) => s + (m.fat || 0), 0),
+      calories: meals.reduce((s: number, m: any) => s + Number(m.calories || 0), 0),
+      protein: meals.reduce((s: number, m: any) => s + Number(m.protein || 0), 0),
+      carbs: meals.reduce((s: number, m: any) => s + Number(m.carbs || 0), 0),
+      fat: meals.reduce((s: number, m: any) => s + Number(m.fat || 0), 0),
     });
   };
 
   const deleteMeal = async (id: string) => {
-    await supabase.from("nutrition_logs").delete().eq("id", id);
+    const { error } = await supabase.from("nutrition_logs").delete().eq("id", id).eq("athlete_id", athleteId!);
+    if (error) { toast.error("Não foi possível remover a refeição."); return; }
+    window.dispatchEvent(new Event("9fit:nutrition-updated"));
     if (athleteId) fetchNutritionLogs(athleteId);
     toast.success("Refeição removida");
   };
@@ -207,9 +210,15 @@ export default function NineFitDieta() {
     if (athleteId) fetchNutritionLogs(athleteId);
   }, [athleteId, currentDate]);
 
+  useEffect(() => {
+    const refresh = () => { if (athleteId) void fetchNutritionLogs(athleteId); };
+    window.addEventListener("9fit:nutrition-updated", refresh);
+    return () => window.removeEventListener("9fit:nutrition-updated", refresh);
+  }, [athleteId, currentDate]);
+
   // Realtime: refresh logs when nutrition_logs change
   useRealtimeTable(
-    { table: "nutrition_logs", filter: athleteId ? `user_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
+    { table: "nutrition_logs", filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
     () => { if (athleteId) fetchNutritionLogs(athleteId); },
   );
 
@@ -569,7 +578,7 @@ export default function NineFitDieta() {
           open={showLogForm}
           onClose={() => setShowLogForm(false)}
           athleteId={athleteId}
-          onSaved={() => athleteId && fetchNutritionLogs(athleteId)}
+          onSaved={() => { setCurrentDate(new Date()); if (athleteId) void fetchNutritionLogs(athleteId); }}
         />
       )}
 
@@ -579,7 +588,7 @@ export default function NineFitDieta() {
           open={showScanner}
           onClose={() => setShowScanner(false)}
           athleteId={athleteId}
-          onSaved={() => athleteId && fetchNutritionLogs(athleteId)}
+          onSaved={() => { setCurrentDate(new Date()); if (athleteId) void fetchNutritionLogs(athleteId); }}
         />
       )}
 

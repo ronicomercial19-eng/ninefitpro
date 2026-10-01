@@ -48,7 +48,7 @@ export async function requestAdaptiveAdjustment(
     if (error) throw error;
     const payload = (data as any)?.data ?? data;
     if (!payload?.intensity) return null;
-    return payload as AdaptiveAdjustment;
+    return { ...payload, swaps: Array.isArray(payload.swaps) ? payload.swaps : [], addOns: Array.isArray(payload.addOns) ? payload.addOns : [] } as AdaptiveAdjustment;
   } catch (err) {
     console.error("[trainingAgent] adjustment failed", err);
     return null;

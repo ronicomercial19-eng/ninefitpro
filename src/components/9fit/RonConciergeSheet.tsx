@@ -1,3 +1,4 @@
+import { requestRonChat } from "@/services/ronChat";
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -175,30 +176,7 @@ export function RonConciergeSheet() {
       const athleteName = profile?.full_name || profile?.email?.split("@")[0] || "Atleta";
       const operationalData = getRonOperationalData();
 
-      const response = await fetch("/api/gemini/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          history: messages.slice(-8).map((m) => ({ role: m.role, content: m.content })),
-          context: {
-            athleteName,
-            state,
-            stateLabel: STATE_LABEL[state] || "Equilibrado",
-            syncScore: syncScore ?? 85,
-            remainingCredits: 10,
-            calendarConnected: Boolean(localStorage.getItem("9fit_google_auth_token")),
-            currentPage: location.pathname,
-            operationalData
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Servidor respondeu com status ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await requestRonChat(message, messages.map(m => ({ role:m.role, content:m.content })));
       const botReply = data.content || "Entendido! Processando diretrizes.";
       const actions: RonAction[] = data.actions || [];
 
@@ -230,7 +208,7 @@ export function RonConciergeSheet() {
     } catch (err: any) {
       console.warn("[Ron Concierge Error]:", err);
       const fallback =
-        "Estou processando as diretrizes através do motor neural do Gemini 3.8. Verifique sua conexão e tente novamente.";
+        (err.message || "RON indisponível. Tente novamente em instantes.");
       setMessages((prev) => [
         ...prev,
         {

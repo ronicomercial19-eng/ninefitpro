@@ -106,10 +106,11 @@ function mapPayload(raw: unknown): HubSnapshot | null {
 }
 
 function scoreStatus(snapshot: HubSnapshot | null): HubScoreStatus {
-  if (!snapshot || snapshot.sync.value === null || snapshot.sync.status === "not_collected") return "calibrating";
-  if (snapshot.sync.status === "stale") return "stale";
+  if (!snapshot) return "calibrating";
   if (snapshot.sync.status === "offline") return "offline";
   if (snapshot.sync.status === "error") return "error";
+  if (snapshot.sync.value === null || snapshot.sync.status === "not_collected") return "calibrating";
+  if (snapshot.sync.status === "stale") return "stale";
   return "available";
 }
 
@@ -122,8 +123,10 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
   const [status, setStatus] = useState<HubScoreStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
+  const requestRef = useRef(0);
 
   const fetchScores = useCallback(async () => {
+    const request = ++requestRef.current;
     if (!athleteId) {
       setData(null);
       setStatus("calibrating");
@@ -139,6 +142,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     setStatus("loading");
     try {
       const { data: result, error: rpcError } = await supabase.rpc("fn_get_hub_snapshot" as any);
+      if (request !== requestRef.current) return;
       if (rpcError) throw rpcError;
 
       const mapped = mapPayload(result);
@@ -146,6 +150,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       setStatus(scoreStatus(mapped));
       setError(null);
     } catch (err: any) {
+      if (request !== requestRef.current) return;
       console.error("[useAthleteScores] error:", err);
       setStatus("error");
       setError(err?.message ?? "Não foi possível carregar o Hub.");
@@ -153,21 +158,34 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
   }, [athleteId]);
 
   useEffect(() => {
+    setData(null);
+    userIdRef.current = null;
     fetchScores();
     if (!athleteId) return;
 
+    let cancelled = false;
     void supabase.auth.getUser().then(({ data: authData }) => {
+      if (cancelled) return;
       userIdRef.current = authData.user?.id ?? null;
     });
 
-    const onOffline = () => setStatus("offline");
+    const onOffline = () => { ++requestRef.current; setStatus("offline"); };
     const onOnline = () => void fetchScores();
+    const onVisible = () => { if (document.visibilityState === "visible") void fetchScores(); };
+    const refreshEvents = ["9fit:sync_updated", "9fit:workout-updated", "9fit:protocol_completed", "9fit:nutrition-updated", "9fit:water-updated", "9fit:user-state-invalidated"];
+    refreshEvents.forEach(event => window.addEventListener(event, onOnline));
+    document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("offline", onOffline);
     window.addEventListener("online", onOnline);
 
     const channelName = `hub-snapshot:${athleteId}:${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
+      .on("postgres_changes", { event: "*", schema: "public", table: "nutrition_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
+      .on("postgres_changes", { event: "*", schema: "public", table: "hydration_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "athletes", filter: `id=eq.${athleteId}` },
+        () => void fetchScores())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs" },
         (payload: any) => {
           const userId = payload?.new?.user_id;
@@ -185,6 +203,10 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       .subscribe();
 
     return () => {
+      cancelled = true;
+      ++requestRef.current;
+      refreshEvents.forEach(event => window.removeEventListener(event, onOnline));
+      document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("offline", onOffline);
       window.removeEventListener("online", onOnline);
       void supabase.removeChannel(channel);

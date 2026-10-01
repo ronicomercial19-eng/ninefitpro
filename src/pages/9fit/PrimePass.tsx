@@ -1,3 +1,5 @@
+import { usePrimeState } from "@/hooks/usePrimeState";
+import { AssinaturaStatus } from "@/components/9fit/AssinaturaStatus";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { motion } from "framer-motion";
 import { Crown, Zap, Star } from "lucide-react";
@@ -24,6 +26,7 @@ const PLANS = [
 
 export default function NineFitPrimePass() {
   const { user } = useAuth();
+  const {data:prime,isLoading,error,refetch}=usePrimeState();
   if (!user) return null;
 
   return (
@@ -33,7 +36,7 @@ export default function NineFitPrimePass() {
         <p className="text-sm text-muted-foreground mt-2">Escolha o melhor plano para sua performance.</p>
       </div>
 
-      <div className="px-4 mt-6 space-y-6">
+      <div className="px-4 mt-6 space-y-6"><AssinaturaStatus /><section className="rounded-xl border border-white/10 p-4 space-y-2"><h2 className="font-bold">Sua performance</h2>{isLoading ? <p>Carregando…</p> : error ? <button onClick={()=>void refetch()}>Não foi possível atualizar. Tentar novamente</button> : <><p>SYNC: {prime?.syncScore == null ? "Sem medição" : `${prime.syncScore}%`}</p><p>Protocolo: {prime?.activeProtocol || "Sem protocolo ativo"}</p><p>Próximo treino: {prime?.nextWorkout || "Sem prescrição futura"}</p><p>Recuperação: {prime?.recovery == null ? "Sem leitura recente" : `${prime.recovery}%`}</p></>}</section>
         {PLANS.map((plan) => (
           <motion.div key={plan.id} className="glass-mission rounded-2xl p-6 border border-white/10">
             <div className="flex justify-between items-start mb-4">

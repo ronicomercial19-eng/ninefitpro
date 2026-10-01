@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { 
   Dumbbell, Play, Calendar, Zap, 
@@ -7,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import trainHeroBanner from "@/assets/images/train_hero_banner_1790011808035.jpg";
 
 interface TrainingData {
+  exercises?: unknown[];
   exercise_count?: number;
   estimated_duration?: number;
 }
@@ -27,6 +29,7 @@ interface WorkoutHomeProps {
   trainings: TrainingAssignment[];
   athleteName: string;
   completedCount: number;
+  weeklyCompleted?: number;
   onSelectWorkout: (training: TrainingAssignment) => void;
   onStartQuick: () => void;
 }
@@ -37,13 +40,14 @@ const supportLevels = [
   { label: "Assistido", desc: "Apoio do treinador dedicado", icon: "🤝" },
 ];
 
-export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWorkout, onStartQuick }: WorkoutHomeProps) {
+export function WorkoutHome({ trainings, athleteName, completedCount, weeklyCompleted = 0, onSelectWorkout, onStartQuick }: WorkoutHomeProps) {
+  const navigate=useNavigate();
   const [supportLevel, setSupportLevel] = useState([1]);
   const currentSupport = supportLevels[supportLevel[0]];
 
   const activeWorkout = trainings[0];
   const startDate = trainings.length > 0 
-    ? new Date(trainings[0].start_date).toLocaleDateString("pt-BR") 
+    ? new Date(`${trainings[0].start_date}T12:00:00`).toLocaleDateString("pt-BR") 
     : "--";
 
   return (
@@ -71,13 +75,13 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
           <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/15">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-neutral-200 font-bold">
-              PROTOCOLO ATIVO · CICLO 1
+              {activeWorkout ? "PRESCRIÇÃO ATIVA" : "SEM PRESCRIÇÃO"}
             </span>
           </div>
 
           <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/15 text-[9px] font-mono text-amber-300 font-medium">
             <Sparkles className="w-3 h-3 text-primary" />
-            <span>Cadência 3-0-1</span>
+            <span>Cadência do protocolo</span>
           </div>
 
           {/* Etiqueta de Telemetria ancorada na base da imagem */}
@@ -87,7 +91,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
             </span>
             <span className="text-white/30">•</span>
             <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-200 font-medium bg-white/[0.08] px-2 py-0.5 rounded border border-white/15 backdrop-blur-sm">
-              82% 1RM
+              Carga prescrita
             </span>
           </div>
         </div>
@@ -100,21 +104,21 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
             </h2>
 
             <p className="text-xs text-neutral-300 mt-1.5 line-clamp-2 max-w-xl font-normal leading-relaxed">
-              {activeWorkout?.training_description || "Volume neuromuscular calibrado para alta densidade metabólica e hipertrofia de cadeia anterior."}
+              {activeWorkout?.training_description || "Confira os exercícios e os parâmetros definidos na sua prescrição."}
             </p>
 
             <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 mt-3 text-[10px] font-mono font-medium">
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-neutral-200">
                 <Clock className="w-3.5 h-3.5 text-primary" />
-                {activeWorkout?.training_data?.estimated_duration || 45} MIN
+                {activeWorkout?.training_data?.estimated_duration ? `${activeWorkout.training_data.estimated_duration} MIN` : "SEM ESTIMATIVA"}
               </span>
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-neutral-200">
                 <Target className="w-3.5 h-3.5 text-primary" />
-                {activeWorkout?.training_data?.exercise_count || 6} BLOCOS
+                {activeWorkout?.training_data?.exercises?.length ?? activeWorkout?.training_data?.exercise_count ?? 0} BLOCOS
               </span>
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/[0.08] border border-amber-500/20 text-amber-300">
                 <Flame className="w-3.5 h-3.5 text-amber-400" />
-                ~480 KCAL
+                SESSÃO GUIADA
               </span>
             </div>
           </div>
@@ -195,10 +199,10 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
               SEMANA
             </p>
             <p className="text-2xl sm:text-3xl font-black text-amber-300 font-display tracking-tight">
-              5/5
+              {weeklyCompleted}
             </p>
             <span className="text-[8px] font-mono text-neutral-400 block mt-0.5">
-              META ATIVA
+              TREINOS CONCLUÍDOS
             </span>
           </div>
 
@@ -233,6 +237,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, onSelectWo
           </span>
         </div>
 
+        {supportLevel[0] === 2 && <button onClick={() => navigate("/9fit/native-system?app=staff")} className="mb-3 text-sm font-semibold text-primary">Solicitar apoio do treinador</button>}
         <Slider
           value={supportLevel}
           onValueChange={setSupportLevel}

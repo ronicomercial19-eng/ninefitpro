@@ -27,7 +27,8 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
     if (!open || !user?.id) return;
     setStep(0);
     (async () => {
-      const { data: ath } = await supabase.from("athletes").select("*").eq("user_id", user.id).maybeSingle();
+      const { data: canonicalId } = await supabase.rpc("fn_current_athlete_id");
+      const { data: ath } = await supabase.from("athletes").select("*").eq("id", canonicalId || "").maybeSingle();
       if (ath) {
         const legacyAth = ath as unknown as LegacyAthleteRow;
         setAthleteId(legacyAth.id);
@@ -55,7 +56,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
       const { count } = ath?.id ? await supabase
         .from("workout_executions")
         .select("id", { count: "exact", head: true })
-        .eq("athlete_id", ath.id) : { count: 0 };
+        .eq("athlete_id", ath.id).eq("status", "completed") : { count: 0 };
       setWorkoutsDone(count || 0);
     })();
   }, [open, user?.id, editOnly]);
@@ -64,22 +65,24 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
 
   const next = () => setStep((s) => Math.min(s + 1, 4));
   const saveProfile = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !athleteId || saving) return;
     setSaving(true);
     try {
       let photoUrl: string | null = null;
       if (photoFile) {
         const path = `${user.id}/avatar-${Date.now()}.${photoFile.name.split(".").pop()}`;
         const { error: upErr } = await supabase.storage.from("avatars").upload(path, photoFile, { upsert: true });
+        if (upErr) throw upErr;
         if (!upErr) photoUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
       }
-      await supabase.from("athletes").update({
+      const { error: profileError } = await supabase.from("athletes").update({
         name: profile.full_name,
-        altura_cm: profile.height_cm ? Number(profile.height_cm) : null,
-        peso_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
+        altura_cm: profile.height_cm ? Number(String(profile.height_cm).replace(",", ".")) : null,
+        peso_kg: profile.weight_kg ? Number(String(profile.weight_kg).replace(",", ".")) : null,
         age: profile.age ? Number(profile.age) : null,
         ...(photoUrl ? { avatar_url: photoUrl } : {}),
-      }).eq("user_id", user.id);
+      }).eq("id", athleteId).select("id").single();
+      if (profileError) throw profileError;
 
       let resolvedAthleteId = athleteId;
       if (!resolvedAthleteId) {
@@ -94,6 +97,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
           snapshot_data: { ...profile, photo: photoUrl, at: new Date().toISOString() },
         });
       }
+      window.dispatchEvent(new Event("9fit:profile-updated"));
       toast.success("Perfil salvo");
       if (editOnly) {
         onClose();
@@ -107,23 +111,26 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
   };
 
   const claimReward = async () => {
-    if (!athleteId) return;
+    if (!athleteId || streakDays < 7 || saving) return;
+    setSaving(true);
     try {
-      await supabase.rpc("fn_award_xp", {
+      const {error:rewardError} = await supabase.rpc("fn_award_xp", {
         p_athlete_id: athleteId, p_amount: 500, p_source: "complete_profile_7d",
-        p_metadata: { reward: "primepass_1m+gold" },
+        p_metadata: { reward: "consistency_7d" },
       });
+      if(rewardError) throw rewardError;
       await supabase.from("user_achievements").insert({
         athlete_id: athleteId,
         user_email: user?.email ?? "",
         achievement_type: "consistency_7d",
         achievement_name: "7 dias de consistência",
-        description: "PrimePass 1 mês + ID Card Gold",
+        description: "Conquista de 7 dias de consistência",
         points: 500,
       });
-      toast.success("🏆 Recompensa desbloqueada: PrimePass 1 mês + ID Card Gold");
+      window.dispatchEvent(new Event("9fit:xp_awarded"));
+      toast.success("Conquista registrada");
       onClose();
-    } catch { toast.error("Erro ao resgatar recompensa"); }
+    } catch { toast.error("Erro ao resgatar recompensa"); } finally {setSaving(false);}
   };
 
   return (
@@ -234,7 +241,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-center">
                   <p className="text-xs text-muted-foreground">Faltam</p>
                   <p className="font-display text-3xl text-primary">{7 - streakDays} dia(s)</p>
-                  <p className="text-[11px] text-muted-foreground mt-1">para PrimePass 1 mês + ID Card Gold</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">para Conquista de 7 dias de consistência</p>
                 </div>
               )}
               <button onClick={onClose} className="w-full rounded-full border border-white/15 py-3 text-sm">Fechar</button>

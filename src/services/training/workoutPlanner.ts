@@ -3,6 +3,7 @@
  * `athlete_periodizations`, treinos atribuídos e estado bio recente.
  * Não cria tabelas novas; consome o schema existente.
  */
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PlannedSession {
@@ -29,7 +30,7 @@ export async function planWeek(athleteId: string): Promise<PlannedSession[]> {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     week.push({
-      date: d.toISOString().slice(0, 10),
+      date: format(d, "yyyy-MM-dd"),
       label: `${DAY_LABELS[d.getDay()]} • Sem treino atribuído`,
       durationMin: 0,
       intensityPct: 0,
@@ -47,14 +48,14 @@ export async function planWeek(athleteId: string): Promise<PlannedSession[]> {
 
     (assigns ?? []).forEach((a: any) => {
       const td = a.training_data || {};
-      const days: number[] = Array.isArray(td.weekDays) ? td.weekDays : [1, 3, 5];
-      const todayKey = new Date().toISOString().slice(0, 10);
-      const starts = !a.start_date || a.start_date <= todayKey;
-      const ends = !a.end_date || a.end_date >= todayKey;
+      const days: number[] = Array.isArray(td.weekDays) ? td.weekDays : [];
+      const todayKey = format(new Date(), "yyyy-MM-dd");
+      const starts = !a.start_date || a.start_date <= week[6].date;
+      const ends = !a.end_date || a.end_date >= week[0].date;
       if (!starts || !ends) return;
       week.forEach((slot, idx) => {
-        const dow = new Date(slot.date).getDay();
-        if (days.includes(dow) && slot.source === "fallback") {
+        const dow = new Date(`${slot.date}T12:00:00`).getDay();
+        if ((days.includes(dow) || (!days.length && slot.date === a.start_date)) && (!a.start_date || a.start_date <= slot.date) && (!a.end_date || a.end_date >= slot.date) && slot.source === "fallback") {
           week[idx] = {
             ...slot,
             label: a.training_name,
