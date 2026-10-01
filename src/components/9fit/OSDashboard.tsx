@@ -1,5 +1,6 @@
 import { NutritionTodaySummary } from "./NutritionTodaySummary";
 import { DailyGoalCheckins } from "./DailyGoalCheckins";
+import { BehavioralHistory } from "./BehavioralHistory";
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -589,9 +590,10 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                   <div className="space-y-4">
                     <div className="text-center pb-0.5">
                       <h3 className="text-sm sm:text-base font-bold text-white font-display">Consistência do Ciclo</h3>
-                      <p className="text-[11.5px] text-neutral-400">Registre suas ações do dia para manter a meta</p>
+                      <p className="text-[11.5px] text-neutral-400">Toque em Treino ou Nutrição para acompanhar seu histórico</p>
                     </div>
                     
+                    <BehavioralHistory />
                     <DailyGoalCheckins />
                     <button
                       onClick={() => { setActiveModal(null); navigate('/9fit/avaliacao-guiada'); }}
