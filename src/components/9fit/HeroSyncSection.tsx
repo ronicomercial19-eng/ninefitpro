@@ -21,7 +21,7 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
     scoreStatus === "stale" ? "Seus dados precisam de uma nova leitura." :
     syncScore >= 80 ? "Seu plano está em máxima consistência." :
     syncScore >= 60 ? "Seu ritmo está estável. Vamos manter a consistência." :
-    "Há pouco sinal recente para calibrar seu plano com precisão.";
+    `Olá, ${name}. Sinto falta dos seus sinais! Vamos retomar o registro para calibrar seu plano com precisão?`;
 
   const validUpdate = lastUpdate && Number.isFinite(new Date(lastUpdate).getTime());
   const timestamp = scoreStatus === "offline" ? "OFFLINE"

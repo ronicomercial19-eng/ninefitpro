@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   Settings,
   Menu,
@@ -29,6 +30,7 @@ import { useEngrenagem } from '@/hooks/useEngrenagem';
 import { supabase } from '@/integrations/supabase/client';
 import { ActivationMissionCard } from './ActivationMissionCard';
 import { ActiveSkillsBadge } from './ActiveSkillsBadge';
+import { EcoEmbed } from './EcoEmbed';
 import { QuickCheckIn } from './QuickCheckIn';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 import { HubCommandDeck } from './HubCommandDeck';
@@ -60,6 +62,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
   const [ecosystemActiveCount, setEcosystemActiveCount] = useState<number | null>(null);
   const [activeModal, setActiveModal] = useState<ModalPillarId>(null);
   const [eventIdx, setEventIdx] = useState(0);
+  const [showCommunity, setShowCommunity] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -296,7 +299,15 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
             <button
               key={pillar.id}
               type="button"
-              onClick={() => setActiveModal(pillar.id)}
+              onClick={() => {
+                if (pillar.id === 'fisica') {
+                   window.dispatchEvent(new CustomEvent('9fit:open-quick-train'));
+                } else if (pillar.id === 'psicologica') {
+                   window.dispatchEvent(new CustomEvent('9fit:open-motivational-quote'));
+                } else {
+                   setActiveModal(pillar.id);
+                }
+              }}
               className="flex items-center justify-between text-left px-2.5 py-2 rounded-lg backdrop-blur-md bg-white/[0.025] hover:bg-white/[0.07] border border-white/[0.05] hover:border-primary/40 shadow-sm transition-all group cursor-pointer active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -391,7 +402,13 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
             <button
               type="button"
-              onClick={() => navigate(currentEvent.route)}
+              onClick={() => {
+                if (currentEvent.id === 'community-feed') {
+                  setShowCommunity(true);
+                } else {
+                  navigate(currentEvent.route);
+                }
+              }}
               className="py-2 px-3.5 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all active:scale-95 cursor-pointer shrink-0 self-start sm:self-end"
             >
               <span>{currentEvent.cta}</span>
@@ -565,20 +582,55 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                   </div>
                 )}
 
-                {/* 4. COMPORTAMENTAL: Missão de Ativação */}
+                {/* 4. COMPORTAMENTAL: Registro de Consistência */}
                 {activeModal === 'comportamental' && (
-                  <div className="space-y-2.5">
+                  <div className="space-y-4">
                     <div className="text-center pb-0.5">
-                      <h3 className="text-sm sm:text-base font-bold text-white font-display">Metas & Adesão do Ciclo</h3>
-                      <p className="text-[11.5px] text-neutral-400">Progresso do microciclo atual e consistência semanal</p>
+                      <h3 className="text-sm sm:text-base font-bold text-white font-display">Consistência do Ciclo</h3>
+                      <p className="text-[11.5px] text-neutral-400">Registre suas ações do dia para manter a meta</p>
                     </div>
-                    <ActivationMissionCard />
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2 hover:border-primary/50 transition-all"
+                        onClick={async () => {
+                           // Lógica de registro de treino
+                           await supabase.from("ninefit_checkins").insert({
+                             athlete_id: athleteId,
+                             data_checkin: new Date().toISOString().split("T")[0],
+                             tipo: "semanal",
+                             treinos_semana: 1
+                           });
+                           toast.success("Treino do dia registrado!");
+                        }}
+                      >
+                         <Dumbbell className="w-6 h-6 text-primary" />
+                         <span className="text-xs font-semibold">Treino</span>
+                      </button>
+                      <button 
+                        className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2 hover:border-primary/50 transition-all"
+                        onClick={async () => {
+                           // Lógica de registro de nutrição
+                           await supabase.from("nutrition_logs").insert({
+                             athlete_id: athleteId,
+                             meal_name: "Refeição Rápida (Consistência)",
+                             date: new Date().toISOString().split("T")[0],
+                             calories: 0 // Ajustar se necessário
+                           });
+                           toast.success("Nutrição registrada!");
+                        }}
+                      >
+                         <Flame className="w-6 h-6 text-amber-500" />
+                         <span className="text-xs font-semibold">Nutrição</span>
+                      </button>
+                    </div>
+                    
                     <button
                       onClick={() => { setActiveModal(null); navigate('/9fit/avaliacao-guiada'); }}
                       className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
                     >
                       <Rocket className="w-3.5 h-3.5" />
-                      <span>Acessar Painel de Ativação</span>
+                      <span>Ver Painel Completo</span>
                     </button>
                   </div>
                 )}
@@ -650,6 +702,13 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           </motion.div>
         )}
       </AnimatePresence>
+      {showCommunity && (
+        <EcoEmbed 
+          title="COMUNIDADE 9FIT" 
+          url="https://fit-community.9fit.com" 
+          backTo="/9fit/hub" 
+        />
+      )}
     </div>
   );
 }

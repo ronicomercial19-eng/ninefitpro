@@ -1,122 +1,69 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { motion } from "framer-motion";
-import { Activity, Brain, Crown, Dna, ShieldCheck, Zap } from "lucide-react";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { Crown, Zap, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAthleteId } from "@/hooks/useAthleteId";
-import { loadPrimeSnapshot, type PrimeSnapshot } from "@/integrations/primeSystem";
 
-type State = "DIAGNOSTIC" | "READY" | "UPGRADING";
-
-const PRIME_PASS_CHECKOUT_URL = (import.meta.env.VITE_STRIPE_PRIME_PASS_URL as string | undefined) || null;
+const PLANS = [
+  {
+    id: "basic",
+    name: "Assinatura Básica",
+    price: "R$ 97,00/mês",
+    description: "Acesso fundamental ao ecossistema 9FIT.",
+    advantages: ["Protocolos de treino base", "Acompanhamento nutricional", "Acesso ao Hub", "Suporte comunidade"],
+    link: "https://invoice.infinitepay.io/plans/ronynapoleao/kvfp4S0k42"
+  },
+  {
+    id: "annual",
+    name: "Assinatura Anual FULL",
+    price: "R$ 997,00/ano",
+    description: "Experiência completa com IA e ferramentas de elite.",
+    advantages: ["Tudo da Básica", "IA PDI Calibrada", "Concierge 1:1", "Bio-Scan & Analytics 4D", "Suporte prioritário", "Acesso antecipado a novos módulos"],
+    link: "https://invoice.infinitepay.io/plans/ronynapoleao/TatHaBMsUX"
+  }
+];
 
 export default function NineFitPrimePass() {
   const { user } = useAuth();
-  const { athleteId } = useAthleteId();
-  const [snapshot, setSnapshot] = useState<PrimeSnapshot | null>(null);
-  const [state, setState] = useState<State>("DIAGNOSTIC");
-
-  useEffect(() => {
-    if (!user?.id) return;
-    void loadPrimeSnapshot(user.id, athleteId).then((data) => { setSnapshot(data); setState("READY"); });
-  }, [user?.id, athleteId]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setState("READY"), 2200);
-    return () => clearTimeout(t);
-  }, []);
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen gradient-mission pb-28">
-      <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // PRIME PASS</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">PRIME PASS</h1>
+    <div className="min-h-screen bg-background pb-28 text-foreground">
+      <div className="px-4 pt-6 pb-6 border-b border-white/10">
+        <h1 className="text-3xl font-display font-black italic tracking-tight">Gerencie sua assinatura</h1>
+        <p className="text-sm text-muted-foreground mt-2">Escolha o melhor plano para sua performance.</p>
       </div>
 
-      {state === "DIAGNOSTIC" && (
-        <div className="px-4">
-          <div className="glass-mission rounded-xl p-6 flex flex-col items-center text-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 rounded-full border-2 border-primary border-t-transparent mb-4"
-            />
-            <p className="text-[10px] font-data tracking-[0.3em] text-primary mb-2">[DIAGNOSTIC]</p>
-            <p className="text-sm text-foreground">Sincronizando DNA...</p>
-            <p className="text-xs text-muted-foreground mt-1">Scanner holográfico ativo</p>
-          </div>
-        </div>
-      )}
-
-      {state === "READY" && (
-        <>
-          <div className="px-4 mb-4 grid grid-cols-2 gap-3">
-            <Pillar icon={Dna} label="Assinatura" tag={snapshot?.entitlement === "active" ? "Ativa" : snapshot?.entitlement === "trial" ? "Em teste" : "Aguardando ativação"} />
-            <Pillar icon={Zap} label="Performance" tag={snapshot?.syncScore == null ? "Sem dados" : `Sync ${snapshot.syncScore}%`} />
-            <Pillar icon={Brain} label="Recuperação" tag={snapshot?.recovery == null ? "Sem leitura recente" : `${snapshot.recovery}%`} />
-            <Pillar icon={Activity} label="Protocolo" tag={snapshot?.activeProtocol || "Sem protocolo ativo"} />
-          </div>
-
-          <div className="px-4 mb-4">
-            <a
-              href={PRIME_PASS_CHECKOUT_URL || undefined}
-              aria-disabled={!PRIME_PASS_CHECKOUT_URL}
-              onClick={(event) => {
-                if (!PRIME_PASS_CHECKOUT_URL) {
-                  event.preventDefault();
-                  toast.info("Prime Pass será liberado pela equipe quando sua assinatura estiver ativa.");
-                }
-              }}
-              target={PRIME_PASS_CHECKOUT_URL ? "_blank" : undefined}
-              rel={PRIME_PASS_CHECKOUT_URL ? "noreferrer" : undefined}
-              className={`w-full glass-mission rounded-xl p-4 flex items-center justify-between ${PRIME_PASS_CHECKOUT_URL ? "glass-mission-active" : "opacity-80 cursor-default"}`}
-            >
-              <div className="flex items-center gap-3">
-                <Crown className="w-5 h-5 text-primary" />
-                <div className="text-left">
-                  <p className="text-editorial text-base text-foreground">Ativar Prime Pass</p>
-                  <p className="text-[10px] font-data text-muted-foreground">{PRIME_PASS_CHECKOUT_URL ? "Liberação após confirmação segura" : "Acesso gerenciado pelo Prime Pass"}</p>
-                </div>
+      <div className="px-4 mt-6 space-y-6">
+        {PLANS.map((plan) => (
+          <motion.div key={plan.id} className="glass-mission rounded-2xl p-6 border border-white/10">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-xl font-display font-black">{plan.name}</h2>
+                <p className="text-lg font-black text-primary mt-1">{plan.price}</p>
               </div>
-              <ShieldCheck className="w-5 h-5 text-primary" />
-            </a>
-          </div>
-
-        </>
-      )}
-
-      {state === "UPGRADING" && (
-        <div className="px-4">
-          <div className="glass-mission glass-mission-active rounded-xl p-6 flex flex-col items-center text-center">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 1.4, repeat: Infinity }}
-              className="w-12 h-12 rounded-full bg-primary mb-3"
-            />
-            <p className="text-[10px] font-data tracking-[0.3em] text-primary">[UPGRADING]</p>
-            <p className="text-sm text-foreground mt-2">Sincronizando DNA…</p>
-            <button
-              onClick={() => setState("READY")}
-              className="mt-4 text-xs text-muted-foreground underline"
+              <Crown className="w-8 h-8 text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+            <ul className="space-y-2 mb-6">
+              {plan.advantages.map((adv, i) => (
+                <li key={i} className="flex items-center gap-2 text-xs text-foreground/80">
+                  <Star className="w-3 h-3 text-primary" /> {adv}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={plan.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-primary text-primary-foreground font-black py-4 rounded-xl hover:opacity-90 transition-all"
             >
-              cancelar
-            </button>
-          </div>
-        </div>
-      )}
+              Assinar Plano
+            </a>
+          </motion.div>
+        ))}
+      </div>
 
       <BottomNavigation />
-    </div>
-  );
-}
-
-function Pillar({ icon: Icon, label, tag }: any) {
-  return (
-    <div className="glass-mission rounded-xl p-4">
-      <Icon className="w-5 h-5 text-primary mb-2" />
-      <p className="text-editorial text-sm text-foreground">{label}</p>
-      <p className="text-[9px] font-data tracking-widest text-muted-foreground mt-1 uppercase">{tag}</p>
     </div>
   );
 }
