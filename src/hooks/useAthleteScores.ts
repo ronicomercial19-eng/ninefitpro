@@ -172,7 +172,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     const onOffline = () => { ++requestRef.current; setStatus("offline"); };
     const onOnline = () => void fetchScores();
     const onVisible = () => { if (document.visibilityState === "visible") void fetchScores(); };
-    const refreshEvents = ["9fit:sync_updated", "9fit:nutrition-updated", "9fit:water-updated", "9fit:user-state-invalidated"];
+    const refreshEvents = ["9fit:sync_updated", "9fit:workout-updated", "9fit:protocol_completed", "9fit:nutrition-updated", "9fit:water-updated", "9fit:user-state-invalidated"];
     refreshEvents.forEach(event => window.addEventListener(event, onOnline));
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("offline", onOffline);
@@ -181,6 +181,8 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     const channelName = `hub-snapshot:${athleteId}:${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
+      .on("postgres_changes", { event: "*", schema: "public", table: "nutrition_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
+      .on("postgres_changes", { event: "*", schema: "public", table: "hydration_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "athletes", filter: `id=eq.${athleteId}` },
         () => void fetchScores())

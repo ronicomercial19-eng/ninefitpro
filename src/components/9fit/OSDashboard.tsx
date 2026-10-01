@@ -1,3 +1,5 @@
+import { NutritionTodaySummary } from "./NutritionTodaySummary";
+import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -105,7 +107,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
   const treinoStatus = weekly.treinos > 0 ? `${weekly.treinos} treinos` : hasPlan ? 'Plano ativo' : 'Sem treino';
   const nutriStatus = weekly.nutri > 0 ? `${weekly.nutri} refeições` : 'Sem registro';
   const focoStatus = syncScore == null ? 'A calibrar' : `Sync ${Math.round(syncScore)}`;
-  const consistenciaStatus = weekly.treinos > 0 ? `${weekly.treinos}/5 sem` : 'Sem ciclo';
+  const consistenciaStatus = weekly.treinos > 0 ? `${weekly.treinos} na semana` : 'Sem ciclo';
   const recuperacaoStatus = syncScore == null ? 'Calibrar' : 'Com leitura';
   const ecosystemStatus = ecosystemActiveCount == null ? 'Ver módulos' : `${ecosystemActiveCount} ativos`;
 
@@ -535,7 +537,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
                 {/* 2. NUTRICIONAL: Janela Metabólica & Dieta */}
                 {activeModal === 'nutricional' && (
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5"><NutritionTodaySummary />
                     <div className="text-center pb-0.5">
                       <h3 className="text-sm sm:text-base font-bold text-white font-display">Bio-Nutrição & Janela Metabólica</h3>
                       <p className="text-[11.5px] text-neutral-400">Registros de refeição e hidratação conectados à dieta</p>
@@ -590,41 +592,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                       <p className="text-[11.5px] text-neutral-400">Registre suas ações do dia para manter a meta</p>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
-                      <button 
-                        className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2 hover:border-primary/50 transition-all"
-                        onClick={async () => {
-                           // Lógica de registro de treino
-                           await supabase.from("ninefit_checkins").insert({
-                             athlete_id: athleteId,
-                             data_checkin: new Date().toISOString().split("T")[0],
-                             tipo: "semanal",
-                             treinos_semana: 1
-                           });
-                           toast.success("Treino do dia registrado!");
-                        }}
-                      >
-                         <Dumbbell className="w-6 h-6 text-primary" />
-                         <span className="text-xs font-semibold">Treino</span>
-                      </button>
-                      <button 
-                        className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2 hover:border-primary/50 transition-all"
-                        onClick={async () => {
-                           // Lógica de registro de nutrição
-                           await supabase.from("nutrition_logs").insert({
-                             athlete_id: athleteId,
-                             meal_name: "Refeição Rápida (Consistência)",
-                             date: new Date().toISOString().split("T")[0],
-                             calories: 0 // Ajustar se necessário
-                           });
-                           toast.success("Nutrição registrada!");
-                        }}
-                      >
-                         <Flame className="w-6 h-6 text-amber-500" />
-                         <span className="text-xs font-semibold">Nutrição</span>
-                      </button>
-                    </div>
-                    
+                    <DailyGoalCheckins />
                     <button
                       onClick={() => { setActiveModal(null); navigate('/9fit/avaliacao-guiada'); }}
                       className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"

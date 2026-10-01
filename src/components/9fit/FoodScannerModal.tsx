@@ -173,6 +173,7 @@ export function FoodScannerModal({
 
   // Iniciar/Desligar câmera
   const startCamera = useCallback(async () => {
+    const request = ++cameraRequestRef.current;
     try {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());

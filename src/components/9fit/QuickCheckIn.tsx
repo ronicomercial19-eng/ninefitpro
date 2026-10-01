@@ -32,10 +32,11 @@ export function QuickCheckIn() {
       .eq("status", "confirmed")
       .is("check_in_at", null)
       .order("booking_time", { ascending: true })
-      .limit(1);
+      .limit(100);
 
-    if (data && data.length > 0) {
-      const b = data[0];
+    const eligible=(data || []).filter(b => b.gym_classes?.class_datetime && new Date(b.gym_classes.class_datetime).getTime() >= Date.now()).sort((a,b) => new Date(a.gym_classes!.class_datetime).getTime()-new Date(b.gym_classes!.class_datetime).getTime());
+    if (eligible.length > 0) {
+      const b = eligible[0];
       setNextClass({
         bookingId: b.id,
         classId: b.class_id,
@@ -45,6 +46,7 @@ export function QuickCheckIn() {
         checkedIn: !!b.check_in_at,
       });
     }
+    if (!eligible.length) setNextClass(null);
     setLoading(false);
   }, [user]);
 
@@ -53,13 +55,15 @@ export function QuickCheckIn() {
   }, [user, fetchNextClass]);
 
   const handleCheckIn = async () => {
-    if (!nextClass) return;
+    if (!nextClass || checkingIn) return;
+    const classTime = new Date(nextClass.classDatetime).getTime();
+    if (!Number.isFinite(classTime) || classTime < Date.now() || classTime > Date.now()+86400000) return toast.error("O check-in fica disponível nas 24 horas anteriores à aula.");
     setCheckingIn(true);
     try {
       const { error } = await supabase
         .from("class_bookings")
         .update({ check_in_at: new Date().toISOString() })
-        .eq("id", nextClass.bookingId);
+        .eq("id", nextClass.bookingId).is("check_in_at", null).select("id").single();
 
       if (error) throw error;
 
@@ -73,17 +77,11 @@ export function QuickCheckIn() {
           athleteId = ath?.id ?? null;
         }
         if (athleteId) {
-          await supabase.rpc("fn_award_xp", {
+          const { error: xpError } = await supabase.rpc("fn_award_xp", {
             p_athlete_id: athleteId, p_amount: 50, p_source: "check_in",
             p_metadata: { booking_id: nextClass.bookingId },
           });
-          await supabase.from("ninefit_checkins").insert({
-            aluno_id: athleteId,
-            athlete_id: athleteId,
-            data_checkin: new Date().toISOString().split("T")[0],
-            tipo: "semanal",
-            treinos_semana: 1,
-          } as any);
+          if (!xpError) window.dispatchEvent(new Event("9fit:xp_awarded"));
           await supabase.from("athlete_planning_history").insert({
             athlete_id: athleteId,
             sync_data: { source: "checkin", class_id: nextClass.classId, at: new Date().toISOString() },
@@ -91,7 +89,8 @@ export function QuickCheckIn() {
         }
       }
 
-      toast.success("Check-in realizado! +50 XP ✅ — abrindo Staff");
+      window.dispatchEvent(new Event("9fit:sync_updated"));
+      toast.success("Check-in realizado — abrindo Staff");
       setNextClass(prev => prev ? { ...prev, checkedIn: true } : null);
       setTimeout(() => navigate("/9fit/staff?from=checkin"), 600);
     } catch {

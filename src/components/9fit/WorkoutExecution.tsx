@@ -561,6 +561,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
       if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
       setExecutionStatus('completed');
+      window.dispatchEvent(new Event('9fit:workout-updated'));
+      window.dispatchEvent(new Event('9fit:sync_updated'));
+      window.dispatchEvent(new Event('9fit:xp_awarded'));
       await mirrorEvent("workout_completed", {
         execution_id: executionId,
         training_id: training.id,

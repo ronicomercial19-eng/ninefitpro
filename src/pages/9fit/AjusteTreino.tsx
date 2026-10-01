@@ -28,6 +28,7 @@ export default function NineFitAjusteTreino() {
   const { refresh: refreshScores } = useAthleteScores(athleteId);
   const [mode, setMode] = useState<"smart" | "copilot">("smart");
   const [exercises, setExercises] = useState<Ex[]>([]);
+  const [dailyId, setDailyId] = useState<string | null>(null);
   const [dirty, setDirty] = useState<Record<string, Partial<Ex>>>({});
   const [saving, setSaving] = useState(false);
   const [reloading, setReloading] = useState(false);
@@ -44,8 +45,9 @@ export default function NineFitAjusteTreino() {
         .select("id")
         .eq("athlete_id", athleteId)
         .eq("workout_date", today)
-        .limit(1).maybeSingle();
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (workoutError) throw workoutError;
+      setDailyId((dw as any)?.id || null);
       if (!(dw as any)?.id) { setExercises([]); return; }
       const { data: rows, error: rowsError } = await supabase
         .from("workout_exercises" as any)
@@ -87,7 +89,8 @@ export default function NineFitAjusteTreino() {
     const intensity = Math.max(1, Math.min(10, Math.round(adjustment.intensityPct / 10)));
     if (Number.isFinite(intensity)) exercises.forEach(exercise => patch(exercise.id, { intensidade: intensity }));
     if (applied) toast.success(`${applied} sugestão(ões) pronta(s) para salvar`);
-    else toast.info("O FitCopilot não encontrou uma troca compatível no treino atual.");
+    else if (Number.isFinite(intensity)) toast.success("Intensidade ajustada. Salve para aplicar ao treino.");
+    else toast.info("Não há ajustes compatíveis para aplicar.");
   };
 
   const patch = (id: string, delta: Partial<Ex>) => {
@@ -149,6 +152,8 @@ export default function NineFitAjusteTreino() {
   const openInGuidedPlayer = () => {
     if (Object.keys(dirty).length) { toast.info("Salve os ajustes antes de abrir o treino."); return; }
     const quickTraining = {
+      id: dailyId,
+      daily_workout_id: dailyId,
       training_name: workoutName,
       start_date: today,
       training_data: {
@@ -161,8 +166,9 @@ export default function NineFitAjusteTreino() {
           video_url: e.video_url,
         })),
       },
-    }));
-    navigate("/9fit/train?quick=1");
+    };
+    if (!dailyId) return toast.error("Treino não encontrado");
+    navigate("/9fit/train", { state: { quickTraining } });
   };
 
   return (

@@ -89,7 +89,7 @@ export async function updateAthlete(id: string, dto: UpdateAthleteDTO): Promise<
     const updatePayload: Record<string, any> = { ...dto };
     if (dto.email) updatePayload.email = dto.email.toLowerCase().trim();
 
-    const { data, error } = await supabase.from('athletes').update(updatePayload).eq('id', id).select().single();
+    const { data, error } = await supabase.from('athletes').update(updatePayload as import("@/integrations/supabase/types").Database["public"]["Tables"]["athletes"]["Update"]).eq('id', id).select().single();
     if (error) return { success: false, error: { code: 'UPDATE_ERROR', message: error.message } };
     return { success: true, data, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
   } catch (err: any) {
@@ -114,7 +114,7 @@ export async function activateAthlete(id: string, userId: string, markPasswordCh
       updateData.password_changed = true;
     }
 
-    const { data, error } = await supabase.from('athletes').update(updateData).eq('id', id).select().single();
+    const { data, error } = await supabase.from('athletes').update(updateData as import("@/integrations/supabase/types").Database["public"]["Tables"]["athletes"]["Update"]).eq('id', id).select().single();
     if (error) return { success: false, error: { code: 'ACTIVATION_ERROR', message: error.message } };
 
     await supabase.from('athlete_auth_link').upsert({ athlete_id: id, user_id: userId }, { onConflict: 'athlete_id' });

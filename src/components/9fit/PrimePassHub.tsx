@@ -1,5 +1,6 @@
 import { Crown, Activity, Zap, Apple, Users, Diamond, ShieldCheck, Star } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 
 // Simplified UI components based on the dump
@@ -18,6 +19,7 @@ export const SectionLabel = ({ label }: { label: string }) => (
 
 // Main Prime component extracted/adapted from the dump
 export function PrimePassHub() {
+  const navigate = useNavigate();
   const [activeSubApp, setActiveSubApp] = useState<'elite' | 'bio' | 'kitchen' | 'recovery' | null>(null);
 
   const features = [
@@ -39,7 +41,7 @@ export function PrimePassHub() {
         <SectionLabel label="Arsenal Prime" />
         <div className="grid grid-cols-2 gap-4">
           {features.map((feature) => (
-            <Card key={feature.id} onClick={() => setActiveSubApp(feature.id as any)} className="p-4 hover:border-brand-orange/30 transition-all">
+            <Card key={feature.id} onClick={() => navigate(feature.id === "nutrition" ? "/9fit/foods" : feature.id === "routines" ? "/9fit/ron" : "/9fit/progresso")} className="p-4 hover:border-brand-orange/30 transition-all">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${feature.color} mb-3`}>
                 {feature.icon}
               </div>

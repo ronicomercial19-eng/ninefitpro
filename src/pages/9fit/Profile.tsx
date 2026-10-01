@@ -10,6 +10,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PDIWizard } from "@/components/9fit/PDIWizard";
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
 import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
+import { useAthleteId } from "@/hooks/useAthleteId";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
 
 interface MenuItem {
@@ -32,7 +33,8 @@ export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
   const { totalXp, level, syncScore, streak } = useEngrenagem();
-  const [staffOnline, setStaffOnline] = useState(3);
+  const { athleteId, athleteName } = useAthleteId();
+  const [staffOnline, setStaffOnline] = useState(0);
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
@@ -43,23 +45,23 @@ export default function NineFitProfile() {
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .in("role", ["professor", "admin"] as any);
-      if (count) setStaffOnline(Math.min(9, Math.max(1, Math.round(count / 3))));
+      setStaffOnline(count || 0);
     })();
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!athleteId) return;
     (async () => {
       const { data } = await supabase
         .from("athletes")
-        .select("avatar_url, age, height_cm, weight_kg")
-        .eq("user_id", user.id)
+        .select("avatar_url, age, height_cm:altura_cm, weight_kg:peso_kg")
+        .eq("id", athleteId)
         .maybeSingle();
       if (data) setBio(data as any);
     })();
-  }, [user?.id, completeOpen]); // recarrega ao fechar o wizard (aberto pelo próprio ID Card)
+  }, [athleteId, completeOpen]); // recarrega ao fechar o wizard (aberto pelo próprio ID Card)
 
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Atleta";
+  const displayName = athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
   // QA Fase F (16/09): "Aluno Premium" e "Próxima fatura: 12/11" eram
   // hardcoded pra TODO usuário — não existe nenhuma coluna de plano/assinatura
@@ -69,7 +71,7 @@ export default function NineFitProfile() {
   // existir uma fonte real de entitlement, o item fica honesto em vez de
   // inventar status.
   const items: MenuItem[] = [
-    { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} online`, badgeStyle: "neon" },
+    { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} profissionais`, badgeStyle: "neon" },
     { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },

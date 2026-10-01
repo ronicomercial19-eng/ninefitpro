@@ -1,3 +1,4 @@
+import { NutritionTodaySummary } from "./NutritionTodaySummary";
 import { useState } from "react";
 import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { motion, AnimatePresence } from "framer-motion";
@@ -142,7 +143,7 @@ export function FitOSConsoleDock({
 
   return (
     <div className="w-full space-y-4">
-      <DailyGoalCheckins />
+      <DailyGoalCheckins /><NutritionTodaySummary />
       {/* 1. FOCO DO MOMENTO: CARD HERO COM OBJETIVO CLARO E DINÂMICA VISUAL (Estrutura do print IMG_0115) */}
       <motion.div
         whileHover={{ y: -2 }}

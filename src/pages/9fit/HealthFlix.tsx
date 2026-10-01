@@ -22,13 +22,19 @@ function normalizePlayerUrl(item: CatalogItem) {
   if (!item.video_url) return null;
   try {
     const url = new URL(item.video_url);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"].includes(url.hostname)) {
+      const id = url.hostname === "youtu.be" ? url.pathname.slice(1) : url.searchParams.get("v") || url.pathname.match(/\/(?:embed|shorts)\/([^/]+)/)?.[1];
+      return id && /^[a-zA-Z0-9_-]+$/.test(id) ? "https://www.youtube.com/embed/" + id : null;
+    }
+    if (["vimeo.com", "www.vimeo.com"].includes(url.hostname) && /^\/\d+$/.test(url.pathname)) return "https://player.vimeo.com/video" + url.pathname;
     if (/healthflix/i.test(url.hostname + url.pathname) && !url.searchParams.has("content_id")) {
       url.searchParams.set("content_id", item.external_id || item.id);
       if (item.slug) url.searchParams.set("slug", item.slug);
     }
     return url.toString();
   } catch {
-    return item.video_url;
+    return null;
   }
 }
 
@@ -50,12 +56,13 @@ export default function NineFitHealthFlix() {
           setItems(list);
         } else {
           // Fallback: lê direto de library_items (aceita 'videos' e 'video')
-          const { data: rows } = await supabase
+          const { data: rows, error: libraryError } = await supabase
             .from("library_items" as any)
             .select("id, external_id, slug, name, category, thumbnail_url, player_url, type")
             .in("type", ["videos", "video", "streaming", "aula"])
             .order("synced_at", { ascending: false })
             .limit(120);
+          if (libraryError) throw libraryError;
           setItems(((rows as any[]) || []).map((r) => ({
             id: String(r.id || r.external_id || r.slug), title: r.name, category: r.category,
             external_id: r.external_id || null, slug: r.slug || null,
@@ -165,7 +172,8 @@ export default function NineFitHealthFlix() {
                 </button>
               </div>
             </div>
-            <iframe title={selected.title} src={normalizePlayerUrl(selected) as string} className="w-full flex-1 bg-black border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+            <p className="px-4 py-2 text-xs text-muted-foreground">Se o provedor bloquear a reprodução aqui, use Abrir em nova aba.</p>
+            {/\.(mp4|webm)(\?|$)/i.test(normalizePlayerUrl(selected) || "") ? <video src={normalizePlayerUrl(selected) as string} controls playsInline className="w-full flex-1 min-h-0 bg-black" onError={() => toast.error("O vídeo não pôde ser carregado. Use Abrir em nova aba.")} /> : <iframe title={selected.title} src={normalizePlayerUrl(selected) as string} className="w-full flex-1 bg-black border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />}
           </div>
         </div>
       )}

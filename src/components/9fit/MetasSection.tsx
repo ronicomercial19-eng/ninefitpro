@@ -40,13 +40,15 @@ function isAchieved(m: Meta) {
 export function MetasSection() {
   const { athleteId } = useAthleteId();
   const [metas, setMetas] = useState<Meta[]>([]);
+  const [values, setValues] = useState<Record<string,string>>({});
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [celebrating, setCelebrating] = useState<Meta | null>(null);
   const [form, setForm] = useState({ titulo: "", metrica: "peso", valor_inicial: "", valor_meta: "", unidade: "kg" });
 
   const load = useCallback(async () => {
-    if (!athleteId) return;
+    if (!athleteId) { setMetas([]); setLoading(false); return; }
     const { data } = await supabase
       .from("metas_progresso")
       .select("*")
@@ -63,32 +65,40 @@ export function MetasSection() {
       toast.error("Preenche título, valor inicial e meta");
       return;
     }
-    const valorInicial = Number(form.valor_inicial);
+    if (saving) return;
+    const valorInicial = Number(form.valor_inicial.replace(",", "."));
+    const valorMeta = Number(form.valor_meta.replace(",", "."));
+    if (![valorInicial,valorMeta].every(Number.isFinite) || valorInicial < 0 || valorMeta <= 0 || valorInicial === valorMeta) return toast.error("Informe valores válidos e uma meta diferente do valor inicial");
+    setSaving(true);
     const { error } = await supabase.from("metas_progresso").insert({
       athlete_id: athleteId,
       titulo: form.titulo,
       metrica: form.metrica,
       valor_inicial: valorInicial,
       valor_atual: valorInicial,
-      valor_meta: Number(form.valor_meta),
+      valor_meta: valorMeta,
       unidade: form.unidade,
       status: "ativa",
     });
-    if (error) { toast.error("Erro ao criar meta"); return; }
+    setSaving(false);
+    if (error) { toast.error("Erro ao criar meta", { description: error.message }); return; }
+    window.dispatchEvent(new Event("9fit:sync_updated"));
     setShowNew(false);
     setForm({ titulo: "", metrica: "peso", valor_inicial: "", valor_meta: "", unidade: "kg" });
     load();
   };
 
   const updateValorAtual = async (m: Meta, novoValor: number) => {
+    if (!Number.isFinite(novoValor) || novoValor < 0) return toast.error("Informe um valor válido");
     const atualizado = { ...m, valor_atual: novoValor };
     const achieved = isAchieved(atualizado) && m.status !== "concluida";
     const { error } = await supabase
       .from("metas_progresso")
-      .update({ valor_atual: novoValor, status: achieved ? "concluida" : "ativa" })
-      .eq("id", m.id);
+      .update({ valor_atual: novoValor, status: isAchieved(atualizado) ? "concluida" : "ativa" })
+      .eq("id", m.id).eq("athlete_id", athleteId).select("id").single();
     if (error) { toast.error("Erro ao atualizar"); return; }
     load();
+    window.dispatchEvent(new Event("9fit:sync_updated"));
     if (achieved) setCelebrating(atualizado);
   };
 
@@ -134,17 +144,17 @@ export function MetasSection() {
               {m.status !== "concluida" && (
                 <div className="flex items-center gap-2 mt-2.5">
                   <input
-                    type="number"
+                    type="text" inputMode="decimal" value={values[m.id] ?? ""} onChange={e => setValues(v => ({...v,[m.id]:e.target.value}))}
                     placeholder={`Valor atual (${m.unidade})`}
                     className="flex-1 rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-xs"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        const v = Number((e.target as HTMLInputElement).value);
+                      if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                        const v = Number((e.target as HTMLInputElement).value.replace(",", "."));
                         if (!isNaN(v)) updateValorAtual(m, v);
                       }
                     }}
                   />
-                  <span className="text-[9px] text-muted-foreground">Enter p/ salvar</span>
+                  <button className="text-xs text-primary" disabled={!values[m.id]?.trim()} onClick={() => updateValorAtual(m, Number((values[m.id] || "").replace(",", ".")))}>Salvar</button>
                 </div>
               )}
             </div>
@@ -177,12 +187,12 @@ export function MetasSection() {
               />
               <div className="flex gap-2">
                 <input
-                  type="number" placeholder="Valor inicial" value={form.valor_inicial}
+                  type="text" inputMode="decimal" placeholder="Valor inicial" value={form.valor_inicial}
                   onChange={(e) => setForm((f) => ({ ...f, valor_inicial: e.target.value }))}
                   className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm"
                 />
                 <input
-                  type="number" placeholder="Meta" value={form.valor_meta}
+                  type="text" inputMode="decimal" placeholder="Meta" value={form.valor_meta}
                   onChange={(e) => setForm((f) => ({ ...f, valor_meta: e.target.value }))}
                   className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm"
                 />
@@ -192,7 +202,8 @@ export function MetasSection() {
                   className="w-16 rounded-lg bg-white/5 border border-white/10 px-2 py-2 text-sm"
                 />
               </div>
-              <button onClick={createMeta} className="w-full rounded-full bg-primary text-primary-foreground py-3 font-bold">
+              <select aria-label="Tipo da meta" value={form.metrica} onChange={e => setForm(f => ({...f,metrica:e.target.value,unidade:e.target.value === "distancia" ? "km" : e.target.value === "gordura" ? "%" : "kg"}))} className="w-full bg-background border border-white/10 rounded p-2"><option value="peso">Peso corporal</option><option value="carga">Força / carga</option><option value="distancia">Corrida / distância</option><option value="gordura">Gordura corporal</option></select>
+              <button disabled={saving} onClick={createMeta} className="w-full rounded-full bg-primary text-primary-foreground py-3 font-bold">
                 Criar meta
               </button>
             </motion.div>

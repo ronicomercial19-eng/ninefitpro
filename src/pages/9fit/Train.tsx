@@ -1,3 +1,4 @@
+import { format, startOfWeek } from "date-fns";
 import { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ export default function NineFitTrain() {
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [weeklyCompleted, setWeeklyCompleted] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
   const [quickOpen, setQuickOpen] = useState(false);
@@ -92,6 +94,8 @@ export default function NineFitTrain() {
     () => { if (athleteId) fetchCompletedCount(athleteId); },
   );
 
+  useEffect(() => { const refresh=()=>{ if(athleteId) { void fetchTrainings(athleteId); void fetchCompletedCount(athleteId); } }; window.addEventListener("9fit:workout-updated",refresh); return ()=>window.removeEventListener("9fit:workout-updated",refresh); }, [athleteId]);
+
   const fetchTrainings = async (aid: string) => {
     try {
       setLoadError(false);
@@ -105,7 +109,7 @@ export default function NineFitTrain() {
       if (error) throw error;
 
       if (data) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = format(new Date(), "yyyy-MM-dd");
         const valid = data.filter((t: any) => {
           const startValid = t.start_date <= today;
           const endValid = !t.end_date || t.end_date >= today;
@@ -123,7 +127,10 @@ export default function NineFitTrain() {
           training_type: "structured",
           training_data: item.prescription_schema || item.protocol_schema || undefined,
         }));
-        setTrainings([...assignedTrainings, ...(valid as TrainingAssignment[])]);
+        const { data: dailyRows, error: dailyError } = await supabase.from("daily_workouts").select("id,day_name,workout_date,workout_exercises(exercise_id,sets,reps_range,rest_seconds,exercise_order,exercises(name,video_url,gif_url))").eq("athlete_id",aid).eq("workout_date",today).order("created_at", {ascending:false});
+        if (dailyError) throw dailyError;
+        const dailyTrainings: TrainingAssignment[] = (dailyRows || []).filter(d=>d.workout_exercises?.length).map(d=>({id:d.id,daily_workout_id:d.id,training_name:d.day_name,start_date:d.workout_date,is_active:true,training_type:"structured",training_data:{exercises:[...d.workout_exercises].sort((a,b)=>a.exercise_order-b.exercise_order).map(e=>({exercise_id:e.exercise_id,name:e.exercises?.name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,video_url:e.exercises?.video_url,gif_url:e.exercises?.gif_url}))}}));
+        setTrainings([...dailyTrainings, ...assignedTrainings, ...(valid as TrainingAssignment[])]);
       }
     } catch (error) {
       setLoadError(true);
@@ -141,6 +148,8 @@ export default function NineFitTrain() {
       .eq("athlete_id", aid)
       .eq("status", "completed");
     setCompletedCount(count || 0);
+    const { count: weekly } = await supabase.from("workout_executions").select("id", { count: "exact", head: true }).eq("athlete_id", aid).eq("status", "completed").gte("workout_date", format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")).lte("workout_date", format(new Date(), "yyyy-MM-dd"));
+    setWeeklyCompleted(weekly || 0);
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
@@ -397,6 +406,7 @@ export default function NineFitTrain() {
               trainings={trainings}
               athleteName={athleteName || "Atleta"}
               completedCount={completedCount}
+            weeklyCompleted={weeklyCompleted}
               onSelectWorkout={handleSelectWorkout}
               onStartQuick={() => setQuickOpen(true)}
             />

@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,8 +19,9 @@ const FALLBACK_CYCLES: RemoteWave[] = [];
 export default function NineFitPlanejamento() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
-  const { today: workoutToday } = useWorkoutOfTheDay();
+  const { week: plannedWeek, today: workoutToday } = useWorkoutOfTheDay();
 
+  const [scheduledDates, setScheduledDates] = useState<string[]>([]);
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
   const [waves, setWaves] = useState<RemoteWave[]>(FALLBACK_CYCLES);
   const [planName, setPlanName] = useState<string>("Periodização Científica");
@@ -107,16 +109,21 @@ export default function NineFitPlanejamento() {
 
   useEffect(() => {
     if (!athleteId) return;
-    loadCarryProjection(athleteId).then(setPoints);
+    const refreshProjection = () => loadCarryProjection(athleteId).then(setPoints).catch(() => { setPoints([]); toast.error("Não foi possível carregar o histórico de carga"); });
+    refreshProjection();
+    window.addEventListener("9fit:workout-updated", refreshProjection);
     loadPlan();
+    const refreshCalendar = async () => { const {data,error}=await supabase.from("daily_workouts").select("workout_date").eq("athlete_id",athleteId).gte("workout_date",format(startOfMonth(new Date()),"yyyy-MM-dd")).lte("workout_date",format(endOfMonth(new Date()),"yyyy-MM-dd")); if(!error) setScheduledDates((data || []).map(d=>d.workout_date)); };
+    void refreshCalendar();
     const channelName = `athlete-periodization-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
+      .on("postgres_changes", {event:"*",schema:"public",table:"daily_workouts",filter:`athlete_id=eq.${athleteId}`}, refreshCalendar)
       .on("postgres_changes", { event: "*", schema: "public", table: "athlete_periodizations", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
       .on("postgres_changes", { event: "*", schema: "public", table: "periodization_plans_remote", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
       .on("postgres_changes", { event: "*", schema: "public", table: "periodization_annual_plans", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { window.removeEventListener("9fit:workout-updated", refreshProjection); supabase.removeChannel(channel); };
   }, [athleteId]);
 
   const monthDays = useMemo(() => {
@@ -132,7 +139,7 @@ export default function NineFitPlanejamento() {
     return [padding + idx * xStep, H - padding - ((val / maxY) * (H - padding * 2))] as const;
   };
   const polyProjected = points.map((p, i) => xy(p, i, "projectedPct").join(",")).join(" ");
-  const polyReal = points.filter((p) => p.realPct != null).map((p, i) => xy(p, i, "realPct").join(",")).join(" ");
+  const polyReal = points.map((p, i) => p.realPct != null ? xy(p, i, "realPct").join(",") : null).filter(Boolean).join(" ");
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -173,9 +180,10 @@ export default function NineFitPlanejamento() {
           {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map((d) => (
             <div key={d} className="text-muted-foreground/70 text-[9px] uppercase tracking-widest">{d}</div>
           ))}
+          {Array.from({ length: monthDays[0]?.getDay() || 0 }, (_, index) => <div key={`empty-${index}`} />)}
           {monthDays.map((d) => {
             const t = isToday(d);
-            const isWorkoutDay = workoutToday && isSameDay(d, new Date(workoutToday.date));
+            const isWorkoutDay = scheduledDates.includes(format(d,"yyyy-MM-dd")) || plannedWeek.some(session => session.source !== "fallback" && session.date === format(d, "yyyy-MM-dd"));
             return (
               <div key={d.toISOString()} className={`aspect-square rounded-lg flex items-center justify-center font-medium text-xs ${t ? "bg-primary text-primary-foreground" : isWorkoutDay ? "bg-primary/30 text-primary border border-primary/40" : "bg-white/[0.03] text-foreground/70"}`}>
                 {format(d, "d")}
@@ -203,7 +211,8 @@ export default function NineFitPlanejamento() {
                 {isActive && (
                   <div className="mt-3 flex items-center gap-2">
                     <div className="relative w-12 h-12">
-                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                      {points.length === 0 && <p className="text-xs text-muted-foreground">Registre cargas nas séries concluídas para ver sua evolução e projeção.</p>}
+          <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                         <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
                         <circle cx="18" cy="18" r="15" stroke="hsl(var(--primary))" strokeWidth="3" fill="none" strokeDasharray={`${(c.pct ?? 0) * 0.94} 100`} strokeLinecap="round" />
                       </svg>
@@ -244,7 +253,7 @@ export default function NineFitPlanejamento() {
         <CalIcon className="w-5 h-5" />
         Ver Plano Completo da Semana
       </button>
-      {workoutToday && <p className="mt-2 text-center text-[11px] text-muted-foreground">Próximo treino: {format(new Date(workoutToday.date), "dd/MM")} • {workoutToday.label}</p>}
+      {workoutToday && <p className="mt-2 text-center text-[11px] text-muted-foreground">Próximo treino: {format(new Date(`${workoutToday.date}T12:00:00`), "dd/MM")} • {workoutToday.label}</p>}
       <BottomNavigation />
     </div>
   );

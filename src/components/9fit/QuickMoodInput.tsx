@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,7 +24,7 @@ const LEVELS = [
  */
 export function QuickMoodInput({ onLogged }: Props) {
   const { user } = useAuth();
-  const todayKey = `9fit_mood_${new Date().toISOString().slice(0, 10)}`;
+  const todayKey = `9fit_mood_${user?.id || "guest"}_${format(new Date(), "yyyy-MM-dd")}`;
   const [done, setDone] = useState<boolean>(() => localStorage.getItem(todayKey) === 'true');
   const [busy, setBusy] = useState<number | null>(null);
 
@@ -33,12 +34,15 @@ export function QuickMoodInput({ onLogged }: Props) {
     if (!user?.id || busy !== null) return;
     setBusy(lvl.score);
     try {
-      await supabase.from('sync_score_logs').insert({
+      const { error } = await supabase.from('sync_score_logs').insert({
         user_id: user.id,
         score: lvl.score,
         feedback_text: lvl.feedback,
         source: 'hub_mood',
       });
+      if (error) throw error;
+      window.dispatchEvent(new Event('9fit:user-state-invalidated'));
+      window.dispatchEvent(new Event('9fit:sync_updated'));
       localStorage.setItem(todayKey, 'true');
       setDone(true);
       toast.success(`Registrado — RON está recalibrando.`, { duration: 1800 });

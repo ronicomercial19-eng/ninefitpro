@@ -37,10 +37,11 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
   };
   if (!user) return ctx;
 
+  const { data: canonicalId } = await supabase.rpc("fn_current_athlete_id");
   const { data: athlete } = await supabase
     .from('athletes')
     .select('id, total_xp, level, sync_score')
-    .eq('user_id', user.id)
+    .eq('id', canonicalId || '')
     .maybeSingle();
   if (athlete) {
     ctx.athleteId = (athlete as any).id;
@@ -52,21 +53,21 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
   try {
     const { data: hrv } = await supabase
       .from('bio_hrv_logs' as any)
-      .select('value')
-      .order('created_at', { ascending: false })
+      .select('hrv_ms').eq('user_id', user.id)
+      .order('recorded_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    ctx.lastHrv = (hrv as any)?.value ?? null;
+    ctx.lastHrv = (hrv as any)?.hrv_ms ?? null;
   } catch { /* table may not exist */ }
 
   try {
     const { data: sleep } = await supabase
       .from('bio_sleep_logs' as any)
-      .select('hours, duration_hours')
+      .select('hours, duration_min').eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    ctx.lastSleepH = (sleep as any)?.hours ?? (sleep as any)?.duration_hours ?? null;
+    ctx.lastSleepH = (sleep as any)?.hours ?? ((sleep as any)?.duration_min == null ? null : (sleep as any).duration_min / 60) ?? null;
   } catch { /* ignore */ }
 
   if (ctx.athleteId) {

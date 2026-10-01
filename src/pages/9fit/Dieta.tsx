@@ -134,7 +134,7 @@ export default function NineFitDieta() {
 
   const fetchNutritionLogs = async (aid: string) => {
     const today = format(currentDate, "yyyy-MM-dd");
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("nutrition_logs")
       .select("*")
       .eq("athlete_id", aid)
@@ -145,10 +145,10 @@ export default function NineFitDieta() {
     const meals = data || [];
     setTodayMeals(meals);
     setConsumed({
-      calories: meals.reduce((s: number, m: any) => s + (m.calories || 0), 0),
-      protein: meals.reduce((s: number, m: any) => s + (m.protein || 0), 0),
-      carbs: meals.reduce((s: number, m: any) => s + (m.carbs || 0), 0),
-      fat: meals.reduce((s: number, m: any) => s + (m.fat || 0), 0),
+      calories: meals.reduce((s: number, m: any) => s + Number(m.calories || 0), 0),
+      protein: meals.reduce((s: number, m: any) => s + Number(m.protein || 0), 0),
+      carbs: meals.reduce((s: number, m: any) => s + Number(m.carbs || 0), 0),
+      fat: meals.reduce((s: number, m: any) => s + Number(m.fat || 0), 0),
     });
   };
 

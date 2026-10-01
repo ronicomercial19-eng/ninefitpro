@@ -33,6 +33,7 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
   const [direction, setDirection] = useState(0); // 1 for next, -1 for prev
 
   useEffect(() => {
+    let active=true;
     if (open) {
       async function fetchModules() {
         setLoading(true); setError(null); setCurrentIndex(0);
@@ -41,12 +42,14 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
           .select("*")
           .eq("status", "active")
           .order("display_order");
+        if (!active) return;
         if (data) setModules(data as PhysioModule[]);
         if (error) setError("Não foi possível carregar os módulos. Feche e tente novamente.");
         setLoading(false);
       }
       fetchModules();
     }
+    return () => { active=false; };
   }, [open]);
 
   const paginate = (newDirection: number) => {

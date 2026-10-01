@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -136,14 +137,15 @@ export default function NineFitAtivacao() {
     }
 
     // Tenta usar RPC oficial de treino rápido; fallback local em qualquer erro
-    let workout = FALLBACK_PLAN(goal, level);
+    let workout = { ...FALLBACK_PLAN(goal, level), exercises: [] as WorkoutExercise[] };
     try {
-      const { data } = await supabase.rpc('fn_treino_rapido' as any, {
+      const { data, error: generationError } = await supabase.rpc('fn_treino_rapido' as any, {
         p_athlete_id: athleteId,
-        p_objetivo: goal,
+        p_objetivo: goal === 'Emagrecimento' ? 'fatburn' : goal === 'Saúde e Bem-estar' ? 'mobility' : 'strength',
         p_tempo_min: 40,
         p_equipamento: null,
       });
+      if (generationError) throw generationError;
       const arr = (data as any)?.exercises;
       if (Array.isArray(arr) && arr.length) {
         workout = {
@@ -161,6 +163,7 @@ export default function NineFitAtivacao() {
       console.warn('[fn_treino_rapido] fallback:', err);
     }
 
+    if (!workout.exercises.length) { toast.error("Não foi possível gerar sua prescrição. Tente novamente."); setGenerating(false); return; }
     setPlan(workout);
     const generated = await advanceStep('generation', {
       day_number: 1,
@@ -187,7 +190,7 @@ export default function NineFitAtivacao() {
     }
     const { data: exec, error } = await supabase
       .from('workout_executions')
-      .insert({ athlete_id: athleteId, workout_date: new Date().toISOString().slice(0, 10), status: 'pending', started_at: new Date().toISOString() })
+      .insert({ athlete_id: athleteId, workout_date: format(new Date(), "yyyy-MM-dd"), status: 'pending', started_at: new Date().toISOString() })
       .select('id')
       .single();
 
@@ -208,6 +211,7 @@ export default function NineFitAtivacao() {
   // Não concede XP aqui (evita farm por série) — XP só no fim do treino.
   const toggleDone = async (idx: number) => {
     if (!plan || !executionId) return;
+    if (done[idx]) return;
     const isChecking = !done[idx];
     setDone((d) => ({ ...d, [idx]: isChecking }));
 
@@ -218,7 +222,7 @@ export default function NineFitAtivacao() {
         exercise_name: ex.name,
         exercise_order: idx,
         set_number: 1,
-        actual_reps: ex.reps,
+        actual_reps: Number.parseInt(ex.reps, 10) || null,
         completed: true,
       });
       if (!result.success) {
@@ -394,7 +398,7 @@ export default function NineFitAtivacao() {
                   </div>
                 ))}
               </div>
-              <Button size="lg" onClick={() => setUiState('assessment')} className="gap-2">
+              <Button size="lg" onClick={() => navigate('/9fit/avaliacao-guiada')} className="gap-2">
                 Iniciar ativação <ArrowRight className="w-4 h-4" />
               </Button>
             </motion.section>

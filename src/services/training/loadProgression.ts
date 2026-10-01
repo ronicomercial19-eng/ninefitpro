@@ -1,72 +1,30 @@
-/**
- * Load Progression — projeção de carga relativa por exercício.
- * Lê histórico real em `workout_exercise_sets` e calcula regressão linear simples.
- */
 import { supabase } from "@/integrations/supabase/client";
-
-export interface ProgressionPoint {
-  weekIndex: number;
-  label: string; // "Sem 1-3"
-  realPct: number | null;
-  projectedPct: number;
-}
-
-export async function loadCarryProjection(
-  athleteId: string,
-  exerciseName = "Agachamento",
-): Promise<ProgressionPoint[]> {
-  let history: { week: number; pct: number }[] = [];
-  try {
-    const { data } = await supabase
-      .from("workout_exercise_sets" as any)
-      .select("weight, reps, created_at, exercise_name")
-      .ilike("exercise_name", `%${exerciseName}%`)
-      .order("created_at", { ascending: true })
-      .limit(200);
-    if (data?.length) {
-      const baseline = Math.max(...data.map((r: any) => Number(r.weight) || 0)) || 1;
-      const buckets = new Map<number, number[]>();
-      const first = new Date((data[0] as any).created_at).getTime();
-      data.forEach((r: any) => {
-        const weeks = Math.floor((new Date(r.created_at).getTime() - first) / (7 * 86400 * 1000));
-        const arr = buckets.get(weeks) ?? [];
-        arr.push(((Number(r.weight) || 0) / baseline) * 100);
-        buckets.set(weeks, arr);
-      });
-      history = [...buckets.entries()]
-        .sort((a, b) => a[0] - b[0])
-        .map(([w, arr]) => ({ week: w, pct: arr.reduce((s, v) => s + v, 0) / arr.length }));
-    }
-  } catch (e) {
-    console.warn("[progression] fetch skipped", e);
+import { format, startOfWeek } from "date-fns";
+export interface ProgressionPoint { weekIndex: number; label: string; realPct: number | null; projectedPct: number; }
+export async function loadCarryProjection(athleteId: string, exerciseName = "Agachamento"): Promise<ProgressionPoint[]> {
+  const { data, error } = await supabase.from("workout_exercise_sets")
+    .select("actual_weight, created_at, workout_executions!inner(athlete_id)")
+    .eq("workout_executions.athlete_id", athleteId).eq("completed", true).gt("actual_weight", 0)
+    .ilike("exercise_name", `%${exerciseName}%`).order("created_at", { ascending: false }).limit(1000);
+  if (error) throw error;
+  const rows = [...(data || [])].reverse();
+  if (!rows.length) return [];
+  const buckets = new Map<number, number[]>();
+  for (const row of rows) {
+    const week = startOfWeek(new Date(row.created_at), { weekStartsOn: 1 }).getTime();
+    const values = buckets.get(week) || [];
+    values.push(Number(row.actual_weight)); buckets.set(week, values);
   }
-
-  // Sem histórico: gera projeção idealizada
-  if (!history.length) {
-    return [
-      { weekIndex: 0, label: "Sem 1-3", realPct: null, projectedPct: 70 },
-      { weekIndex: 1, label: "Sem 2-4", realPct: null, projectedPct: 78 },
-      { weekIndex: 2, label: "Sem 1-6", realPct: null, projectedPct: 87 },
-      { weekIndex: 3, label: "Sem 7-8", realPct: null, projectedPct: 94 },
-    ];
-  }
-
-  // Regressão linear y = a + bx
-  const n = history.length;
-  const sx = history.reduce((s, p) => s + p.week, 0);
-  const sy = history.reduce((s, p) => s + p.pct, 0);
-  const sxy = history.reduce((s, p) => s + p.week * p.pct, 0);
-  const sxx = history.reduce((s, p) => s + p.week * p.week, 0);
-  const b = (n * sxy - sx * sy) / Math.max(1, n * sxx - sx * sx);
-  const a = (sy - b * sx) / n;
-
-  return [0, 2, 4, 6].map((w, idx) => {
-    const real = history.find((h) => h.week === w)?.pct ?? null;
-    return {
-      weekIndex: idx,
-      label: ["Sem 1-3", "Sem 2-4", "Sem 1-6", "Sem 7-8"][idx],
-      realPct: real,
-      projectedPct: Math.round(a + b * w),
-    };
-  });
+  const weeks = [...buckets.keys()].sort((a,b) => a-b);
+  const baseline = Math.max(...buckets.get(weeks[0])!);
+  const history = weeks.map(week => ({ week: Math.round((week-weeks[0])/604800000), pct: Math.max(...buckets.get(week)!)/baseline*100 }));
+  const n=history.length, sx=history.reduce((s,p)=>s+p.week,0), sy=history.reduce((s,p)=>s+p.pct,0);
+  const sxx=history.reduce((s,p)=>s+p.week*p.week,0), sxy=history.reduce((s,p)=>s+p.week*p.pct,0);
+  const slope=n>1 ? (n*sxy-sx*sy)/(n*sxx-sx*sx) : 0, intercept=(sy-slope*sx)/n;
+  const last=history[history.length-1].week;
+  return Array.from({length:last+5},(_,week)=>({
+    weekIndex:week, label:format(new Date(weeks[0]+week*604800000), "dd/MM"),
+    realPct:history.find(p=>p.week===week)?.pct ?? null,
+    projectedPct:Math.max(0,Math.round(intercept+slope*week)),
+  }));
 }

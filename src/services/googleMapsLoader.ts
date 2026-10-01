@@ -1,4 +1,4 @@
-import { Loader } from "@googlemaps/js-api-loader";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
 export const SOLUTION_ATTRIBUTION_ID = "gmp_git_agentskills_v1";
 
@@ -49,13 +49,8 @@ export async function loadGoogleMaps(): Promise<typeof google> {
 
   loaderPromise = (async () => {
     const apiKey = await getGoogleMapsApiKey();
-    const loader = new Loader({
-      apiKey,
-      version: "weekly",
-      libraries: ["maps", "geometry", "marker"],
-    });
-
-    await loader.load();
+    setOptions({ key: apiKey, v: "weekly" });
+    await Promise.all([importLibrary("maps"), importLibrary("geometry"), importLibrary("marker"), importLibrary("geocoding")]);
     return window.google;
   })();
 

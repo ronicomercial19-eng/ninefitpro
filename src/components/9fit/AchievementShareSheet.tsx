@@ -43,7 +43,7 @@ const THEMES: Record<ShareContentType, Theme> = {
 const CARD_W = 270; // preview 9:16 → 270 x 480
 
 function formatDate(d?: string | Date) {
-  const dt = d ? new Date(d) : new Date();
+  const dt = d ? new Date(typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T12:00:00` : d) : new Date();
   return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).replace(".", "");
 }
 

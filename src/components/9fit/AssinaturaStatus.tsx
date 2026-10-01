@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Crown, AlertCircle, RefreshCw } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient'; // Assumindo este caminho para o cliente
+import { supabase } from '@/integrations/supabase/client'; // Assumindo este caminho para o cliente
 
 export function AssinaturaStatus() {
   const [subscription, setSubscription] = useState<any>(null);
@@ -11,10 +11,9 @@ export function AssinaturaStatus() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data } = await supabase
-          .from('profiles')
-          .select('plan_status, subscription_expires_at')
-          .eq('id', user.id)
-          .single();
+          .from('user_subscriptions' as any)
+          .select('status, plan_id, expires_at')
+          .eq('user_id', user.id).order('activated_at', { ascending: false }).limit(1).maybeSingle();
         setSubscription(data);
       }
       setLoading(false);
@@ -24,21 +23,21 @@ export function AssinaturaStatus() {
 
   if (loading) return <div className="p-4 text-xs">Carregando status...</div>;
 
-  const isPro = subscription?.plan_status === 'pro';
+  const isPro = ['active','trialing'].includes(subscription?.status) && (!subscription?.expires_at || new Date(subscription.expires_at).getTime() > Date.now());
   
   return (
     <div className="bg-brand-surface border border-white/10 rounded-2xl p-6 space-y-4">
       <div className="flex items-center gap-3">
         <Crown className={isPro ? "text-brand-orange" : "text-gray-500"} size={20} />
         <div>
-          <h3 className="text-sm font-black uppercase tracking-widest">{isPro ? 'Plano FULL (Pro)' : 'Plano Básico'}</h3>
-          <p className="text-[10px] text-gray-500 font-mono">Status: {subscription?.plan_status || 'Inativo'}</p>
+          <h3 className="text-sm font-black uppercase tracking-widest">{isPro ? `Plano ${subscription.plan_id || 'ativo'}` : 'Sem assinatura ativa'}</h3>
+          <p className="text-[10px] text-gray-500 font-mono">Status: {subscription?.status || 'Inativo'}</p>
         </div>
       </div>
       
-      {subscription?.subscription_expires_at && (
+      {subscription?.expires_at && (
         <div className="text-[10px] text-gray-400 font-mono">
-          Expira em: {new Date(subscription.subscription_expires_at).toLocaleDateString()}
+          Expira em: {new Date(subscription.expires_at).toLocaleDateString()}
         </div>
       )}
 

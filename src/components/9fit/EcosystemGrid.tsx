@@ -394,8 +394,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     };
   }, [category, reloadToken]);
 
-  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length || items.length;
-  const visibleItems = showAll ? items : items.slice(0, 2);
+  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
+  const visibleItems = showAll ? items : items;
   const gridClass =
     variant === "rail"
       ? "flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1"
