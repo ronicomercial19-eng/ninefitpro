@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
       .from("workout_executions")
       .select("rpe")
       .eq("athlete_id", athleteId)
-      .eq("status", "completed")
+      .eq("status", "completed").neq("id", executionId || "00000000-0000-0000-0000-000000000000")
       .not("rpe", "is", null)
       .order("completed_at", { ascending: false })
       .limit(1)
@@ -87,6 +88,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
   };
 
   const handleSubmit = async () => {
+    if (saving) return;
     if (!executionId) {
       toast.error("Não foi possível identificar a sessão de treino. Tente novamente.");
       return;
@@ -99,12 +101,13 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
       const { error: execError } = await supabase
         .from("workout_executions")
         .update({
+          rpe,
           avg_rpe: rpe,
           rating: Math.min(5, Math.max(1, Math.ceil(rpe / 2))),
           notes: notes || null,
           duration_minutes: duration,
         })
-        .eq("id", executionId);
+        .eq("id", executionId).eq("athlete_id", athleteId).select("id").single();
 
       if (execError) {
         toast.error(`Não foi possível salvar seu treino: ${execError.message}`);
@@ -112,7 +115,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
       }
 
       // 2) Compatibilidade legada — nunca bloqueia
-      const todayDate = new Date().toISOString().split("T")[0];
+      const todayDate = format(new Date(),"yyyy-MM-dd");
       const { error: legacyError } = await supabase.from("workout_progress").insert({
         aluno_id: athleteId,
         exercise_name: trainingName,
@@ -138,7 +141,12 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
       });
       if (xpError) console.warn("[PostWorkout] fn_award_xp falhou:", xpError.message);
 
-      setXpGained(xp);
+      const {data:{user}}=await supabase.auth.getUser();
+      if(user) { const {error:feedbackError}=await supabase.from("sync_score_logs").insert({user_id:user.id,score:rpe,source:"post_workout",feedback_text:`Esforço ${rpe}/10. ${notes || ""}`}); if(feedbackError) console.warn("Feedback synchronization pending",feedbackError); }
+      window.dispatchEvent(new Event("9fit:user-state-invalidated"));
+      window.dispatchEvent(new Event("9fit:workout-updated"));
+      if(!xpError) window.dispatchEvent(new Event("9fit:xp_awarded"));
+      setXpGained(xpError ? 0 : xp);
       setCaloriesBurned(cal);
       setShareMessage(`Treino concluído: ${trainingName}
 RPE: ${rpe}/10
