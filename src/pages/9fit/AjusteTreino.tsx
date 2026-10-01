@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { ChevronLeft, Brain, Check, Loader2, Play, RefreshCw } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ type Ex = {
   rest_seconds: number;
   video_url?: string | null;
   new_exercise_name?: string;
+  intensidade?: number;
 };
 
 export default function NineFitAjusteTreino() {
@@ -29,40 +31,45 @@ export default function NineFitAjusteTreino() {
   const [dirty, setDirty] = useState<Record<string, Partial<Ex>>>({});
   const [saving, setSaving] = useState(false);
   const [reloading, setReloading] = useState(false);
-  const { adjustment, loading, generate, apply } = useAdaptiveAdjustment();
+  const { adjustment, loading, error: adjustmentError, generate, apply } = useAdaptiveAdjustment();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = format(new Date(), "yyyy-MM-dd");
 
   const loadToday = async () => {
     if (!athleteId) return;
     setReloading(true);
     try {
-      const { data: dw } = await supabase
+      const { data: dw, error: workoutError } = await supabase
         .from("daily_workouts" as any)
         .select("id")
         .eq("athlete_id", athleteId)
         .eq("workout_date", today)
-        .maybeSingle();
+        .limit(1).maybeSingle();
+      if (workoutError) throw workoutError;
       if (!(dw as any)?.id) { setExercises([]); return; }
-      const { data: rows } = await supabase
+      const { data: rows, error: rowsError } = await supabase
         .from("workout_exercises" as any)
-        .select("*")
-        .eq("daily_workout_id", (dw as any).id);
+        .select("*, exercises(name,video_url)")
+        .eq("daily_workout_id", (dw as any).id).order("exercise_order");
+      if (rowsError) throw rowsError;
       setExercises(((rows as any[]) || []).map((r: any) => ({
         id: r.exercise_id || r.id,
-        name: r.exercise_name || r.name,
+        name: r.exercises?.name || r.exercise_name || r.name || "Exercício",
         sets: r.sets ?? 3,
         reps_range: r.reps_range ?? r.reps ?? "10-12",
         rest_seconds: r.rest_seconds ?? 60,
-        video_url: r.video_url,
+        video_url: r.exercises?.video_url || r.video_url,
       })));
-    } finally { setReloading(false); }
+      setDirty({});
+    } catch (error: any) { toast.error(error.message || "Não foi possível carregar o treino."); }
+    finally { setReloading(false); }
   };
 
   useEffect(() => { loadToday(); /* eslint-disable-next-line */ }, [athleteId]);
 
   const runCopilot = async () => {
-    const r = await generate({ workoutName: `${workoutName} — ${exercises.map((exercise) => exercise.name).join(", ")}`, workoutType: "hipertrofia" });
+    if (!exercises.length) { toast.info("Carregue um treino antes de pedir ajustes."); return; }
+    const r = await generate({ workoutName, exercises: exercises.map(exercise => exercise.name) });
     if (r) toast.success("FitCopilot analisou seu treino");
   };
 
@@ -77,6 +84,8 @@ export default function NineFitAjusteTreino() {
         applied += 1;
       }
     });
+    const intensity = Math.max(1, Math.min(10, Math.round(adjustment.intensityPct / 10)));
+    if (Number.isFinite(intensity)) exercises.forEach(exercise => patch(exercise.id, { intensidade: intensity }));
     if (applied) toast.success(`${applied} sugestão(ões) pronta(s) para salvar`);
     else toast.info("O FitCopilot não encontrou uma troca compatível no treino atual.");
   };
@@ -87,8 +96,8 @@ export default function NineFitAjusteTreino() {
   };
 
   const onSave = async () => {
-    if (!athleteId) return;
-    if (mode === "copilot") await apply();
+    if (!athleteId || saving) return;
+    if (exercises.some(ex => !Number.isInteger(ex.sets) || ex.sets < 1 || ex.sets > 10 || !ex.reps_range.trim() || !Number.isFinite(ex.rest_seconds) || ex.rest_seconds < 0 || ex.rest_seconds > 600)) { toast.error("Revise séries, repetições e descanso antes de salvar."); return; }
     setSaving(true);
     try {
       const arrayDeAlteracoes = Object.entries(dirty).map(([exercise_id, changes]) => ({
@@ -97,6 +106,7 @@ export default function NineFitAjusteTreino() {
         reps_range: changes.reps_range,
         rest_seconds: changes.rest_seconds,
         new_exercise_name: changes.new_exercise_name,
+        intensidade: changes.intensidade,
       }));
       const { data, error } = await supabase.rpc("fn_ajustar_treino_dia" as any, {
         p_athlete_id: athleteId,
@@ -119,6 +129,8 @@ export default function NineFitAjusteTreino() {
         })));
       }
       setDirty({});
+      if (mode === "copilot") await apply();
+      window.dispatchEvent(new Event("9fit:workout-updated"));
       refreshScores();
       toast.success("Ajuste aplicado no treino de hoje");
     } catch (e: any) {
@@ -135,7 +147,8 @@ export default function NineFitAjusteTreino() {
   // leva ao mesmo player guiado (WorkoutExecution via Train.tsx) já
   // posicionado no treino de hoje, mantendo o ajuste como tela separada.
   const openInGuidedPlayer = () => {
-    sessionStorage.setItem("9fit_quick_training", JSON.stringify({
+    if (Object.keys(dirty).length) { toast.info("Salve os ajustes antes de abrir o treino."); return; }
+    const quickTraining = {
       training_name: workoutName,
       start_date: today,
       training_data: {
@@ -198,7 +211,8 @@ export default function NineFitAjusteTreino() {
           <div key={ex.id + i} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-primary text-xs font-semibold">{ex.name}</p>
+              <p className="text-primary text-xs font-semibold">{ex.name}</p>
+              {ex.new_exercise_name && <p className="text-xs text-primary">Troca pendente: {ex.new_exercise_name}</p>}
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {ex.sets}×{ex.reps_range} · {ex.rest_seconds}s
                 </p>
@@ -238,6 +252,7 @@ export default function NineFitAjusteTreino() {
             </p>
             <div className="text-sm text-foreground/85 italic leading-relaxed">
               {loading && "Analisando bio + skills ativas…"}
+              {!loading && adjustmentError && <button type="button" onClick={runCopilot}>{adjustmentError} Tentar novamente</button>}
               {!loading && adjustment && (
                 <>
                   {adjustment.rationale}

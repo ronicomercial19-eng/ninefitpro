@@ -1,3 +1,4 @@
+import { saveNutritionLog } from "@/services/nutritionLog";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog,
@@ -166,6 +167,8 @@ export function FoodScannerModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisRef = useRef(0);
+  const cameraRequestRef = useRef(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // Iniciar/Desligar câmera
@@ -184,10 +187,11 @@ export function FoodScannerModal({
         audio: false,
       });
 
+      if (request !== cameraRequestRef.current) { stream.getTracks().forEach(track => track.stop()); return; }
       mediaStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
       }
       setCameraActive(true);
     } catch (err) {
@@ -197,6 +201,7 @@ export function FoodScannerModal({
   }, [cameraFacing]);
 
   const stopCamera = useCallback(() => {
+    ++cameraRequestRef.current;
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
@@ -216,10 +221,13 @@ export function FoodScannerModal({
     };
   }, [open, capturedImage, scanResult, startCamera, stopCamera]);
 
+  useEffect(() => { if (!open) { ++analysisRef.current; setIsScanning(false); setCapturedImage(null); setScanResult(null); } }, [open]);
+
   // Capturar foto da câmera
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
+    if (video.readyState < 2 || !video.videoWidth) { toast.info("Aguarde a câmera ficar pronta."); return; }
     const canvas = canvasRef.current;
 
     canvas.width = video.videoWidth || 640;
@@ -238,7 +246,9 @@ export function FoodScannerModal({
   // Upload de arquivo
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 6_000_000) { toast.error("Envie JPEG, PNG ou WebP de até 6 MB."); return; }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -249,28 +259,26 @@ export function FoodScannerModal({
         analyzeImage(dataUrl);
       }
     };
+    reader.onerror = () => toast.error("Não foi possível ler a foto.");
     reader.readAsDataURL(file);
   };
 
   // Analisar imagem via backend multimodal Gemini
   const analyzeImage = async (base64Image: string) => {
+    const request = ++analysisRef.current;
     setIsScanning(true);
     setScanResult(null);
 
     try {
-      const res = await fetch("/api/gemini/scan-food", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: base64Image,
-          mimeType: "image/jpeg",
-          scanMode,
-        }),
-      });
-
-      const json = await res.json();
+      const { data: json, error } = await supabase.functions.invoke("food-scan", { body: { imageBase64: base64Image, scanMode } });
+      if (request !== analysisRef.current) return;
+      if (error) {
+        const details = await error.context?.json?.().catch(() => null);
+        throw new Error(details?.error || "Serviço de análise indisponível. Tente novamente ou registre manualmente.");
+      }
       if (json.success && json.data) {
         const data: ScanResult = json.data;
+        if (!data.dishName || [data.calories, data.protein, data.carbs, data.fat].some(v => !Number.isFinite(v) || v < 0)) throw new Error("A análise retornou valores inválidos.");
         setScanResult(data);
         setEditedDishName(data.dishName);
         setSelectedCategory(data.mealCategory || "Almoço");
@@ -281,20 +289,11 @@ export function FoodScannerModal({
       }
     } catch (err: any) {
       console.warn("[FoodScanner error]", err);
-      if (showLocalPresets) {
-        const fallback = LOCAL_SCAN_PRESETS[0].data;
-        setScanResult(fallback);
-        setEditedDishName(fallback.dishName);
-        setSelectedCategory("Almoço");
-        toast.info("Análise local gerada para desenvolvimento.");
-      } else {
-        setScanResult(null);
-        toast.error("Não foi possível analisar a imagem", {
-          description: "Tire outra foto com mais luz ou registre a refeição manualmente.",
-        });
-      }
+      if (request !== analysisRef.current) return;
+      setScanResult(null);
+      toast.error(err.message || "Não foi possível analisar a imagem");
     } finally {
-      setIsScanning(false);
+      if (request === analysisRef.current) setIsScanning(false);
     }
   };
 
@@ -319,7 +318,7 @@ export function FoodScannerModal({
 
   // Salvar no banco de dados e sincronizar diário
   const handleSaveToDiet = async () => {
-    if (!scanResult || !athleteId) return;
+    if (!scanResult || !athleteId || saving) return;
 
     setSaving(true);
     try {
@@ -330,36 +329,7 @@ export function FoodScannerModal({
 
       const mealLabel = `${editedDishName || scanResult.dishName} (${selectedCategory})`;
 
-      // 1. Gravar em nutrition_logs
-      const { error } = await supabase.from("nutrition_logs").insert({
-        athlete_id: athleteId,
-        meal_name: mealLabel,
-        calories: finalCalories,
-        protein: finalProtein,
-        carbs: finalCarbs,
-        fat: finalFat,
-        date: new Date().toISOString().split("T")[0],
-      });
-
-      if (error) throw error;
-
-      // 2. Sincronizar via edge function progress-sync (atualiza contador do Hub)
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (token) {
-        await supabase.functions.invoke("progress-sync", {
-          body: {
-            kind: "nutrition_log",
-            payload: {
-              athlete_id: athleteId,
-              meal_name: mealLabel,
-              calories: finalCalories,
-            },
-          },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-
+      await saveNutritionLog({ athlete_id: athleteId, meal_name: mealLabel, calories: finalCalories, protein: finalProtein, carbs: finalCarbs, fat: finalFat });
       toast.success("Refeição registrada na dieta com sucesso! 🥗");
       onSaved();
       onClose();

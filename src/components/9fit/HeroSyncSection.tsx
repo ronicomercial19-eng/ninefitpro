@@ -8,9 +8,10 @@ interface Props {
   scoreStatus?: HubScoreStatus;
   breakdown: { treino: number | null; nutri: number | null; sono: number | null; mob: number | null; hidr: number | null };
   lastUpdate?: string;
+  onRefresh?: () => void;
 }
 
-export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate }: Props) {
+export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate, onRefresh }: Props) {
   const measured = typeof syncScore === "number" && (scoreStatus === "available" || scoreStatus === "stale");
   const headline =
     scoreStatus === "offline" ? "Você está sem conexão. O último estado não será recalculado." :
@@ -22,11 +23,11 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
     syncScore >= 60 ? "Seu ritmo está estável. Vamos manter a consistência." :
     "Há pouco sinal recente para calibrar seu plano com precisão.";
 
-  const timestamp = lastUpdate
-    ? new Date(lastUpdate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-    : scoreStatus === "offline" ? "OFFLINE"
+  const validUpdate = lastUpdate && Number.isFinite(new Date(lastUpdate).getTime());
+  const timestamp = scoreStatus === "offline" ? "OFFLINE"
     : scoreStatus === "error" ? "ERRO"
     : scoreStatus === "loading" ? "ATUALIZANDO"
+    : validUpdate ? `Leitura ${new Date(lastUpdate).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
     : "CALIBRANDO";
 
   return (
@@ -39,7 +40,7 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
       >
         <div className="flex items-center justify-between text-[11px] font-mono tracking-widest text-muted-foreground uppercase">
           <span className="text-primary font-bold">NINE PRO · FIT OS</span>
-          <span>{timestamp}</span>
+          <span role="status" aria-live="polite">{timestamp}</span>
         </div>
 
         <div>
@@ -52,6 +53,9 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
         </div>
 
         <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} />
+        {onRefresh && <button type="button" onClick={onRefresh} disabled={scoreStatus === "loading"} className="text-xs text-primary disabled:opacity-50 min-h-10">
+          {scoreStatus === "loading" ? "Atualizando…" : "Atualizar meus dados"}
+        </button>}
       </motion.div>
     </section>
   );

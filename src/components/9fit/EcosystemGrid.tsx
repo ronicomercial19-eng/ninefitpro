@@ -24,6 +24,7 @@ import { motion, type Variants } from "framer-motion";
 import { MODULE_IMAGES } from "@/assets/modules";
 import { useTiltCard } from "@/hooks/useTiltCard";
 import { EcosystemOverlay } from "./EcosystemOverlay";
+import { moduleRoute } from "@/lib/moduleRoute";
 
 interface PhysioModule {
   id: string;
@@ -516,7 +517,10 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
 
       <EcosystemOverlay open={showOverlay} onClose={() => setShowOverlay(false)} />
 
-      {/* Renderização do grid removida conforme solicitado pelo usuário */}
+      <div className={gridClass}>{visibleItems.map((m, index) => {
+        const route = moduleRoute(m) || fallbackRoutes[m.key];
+        return <button key={m.id} type="button" disabled={!route} onClick={() => { if (onModuleSelect) onModuleSelect(m); else if (route) navigate(route); }} className="rounded-2xl border border-white/10 bg-card p-4 text-left disabled:opacity-50"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="text-xs text-primary">{route ? (m.cta_label || "Acessar") : "Em configuração"}</span></button>;
+      })}</div>
     </section>
   );
 }

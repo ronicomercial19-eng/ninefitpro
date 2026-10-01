@@ -171,6 +171,7 @@ export default function NineFitHub() {
             scoreStatus={scoreStatus}
             breakdown={breakdown}
             lastUpdate={liveScores?.sync.observed_at ?? undefined}
+            onRefresh={() => void refreshScores()}
           />
           <button 
             onClick={() => setShowDiagnosis(true)}
@@ -184,7 +185,9 @@ export default function NineFitHub() {
         <SyncScoreDiagnosisModal 
            open={showDiagnosis} 
            onClose={() => setShowDiagnosis(false)}
-           score={liveScores?.sync.value ?? 0}
+           score={liveScores?.sync.value ?? null}
+           status={scoreStatus}
+           breakdown={breakdown}
         />
 
         <motion.div variants={hubStaggerItem}>

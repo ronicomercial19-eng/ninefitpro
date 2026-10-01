@@ -1,3 +1,4 @@
+import { saveNutritionLog } from "@/services/nutritionLog";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,30 +22,6 @@ const QUICK_MEALS = [
   { name: "Jantar", calories: 500, protein: 35, carbs: 55, fat: 18 },
 ];
 
-// Mesmo padrão usado em Ativacao.tsx (progressSync): grava em master_registry
-// via edge function progress-sync, para que o Hub (fn_get_hub_snapshot) e o
-// marcador semanal de Nutrição no Comando do dia reflitam refeições reais.
-// Sem isso o insert em nutrition_logs acontecia isolado e o marcador ficava
-// sempre zerado, mesmo com refeições registradas.
-interface ProgressSyncResponse {
-  success: boolean;
-  data?: unknown;
-  error?: string;
-}
-
-async function notifyNutritionLog(payload: Record<string, unknown>): Promise<ProgressSyncResponse | { success: false; error: "no_session" }> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-  if (!token) return { success: false, error: "no_session" as const };
-
-  const { data, error } = await supabase.functions.invoke("progress-sync", {
-    body: { kind: "nutrition_log", payload },
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (error) return { success: false, error: error.message };
-  return (data as ProgressSyncResponse | null) ?? { success: false, error: "empty_response" };
-}
-
 export function NutritionLogForm({ open, onClose, athleteId, onSaved }: NutritionLogFormProps) {
   const [mealName, setMealName] = useState("");
   const [calories, setCalories] = useState(0);
@@ -66,31 +43,10 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
       toast.error("Informe o nome da refeição");
       return;
     }
+    if (saving) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("nutrition_logs").insert({
-        athlete_id: athleteId,
-        meal_name: mealName.trim(),
-        calories,
-        protein,
-        carbs,
-        fat,
-        date: new Date().toISOString().split("T")[0],
-      });
-
-      if (error) throw error;
-
-      // Efeito colateral: propaga para master_registry/Hub. Não bloqueia o
-      // sucesso do registro da refeição caso falhe (best-effort, mesmo
-      // espírito do resto do app — a refeição já foi salva de verdade).
-      const syncResult = await notifyNutritionLog({
-        athlete_id: athleteId,
-        meal_name: mealName.trim(),
-        calories,
-      });
-      if (!syncResult.success) {
-        console.warn("[NutritionLogForm] progress-sync falhou:", syncResult.error);
-      }
+      await saveNutritionLog({ athlete_id: athleteId, meal_name: mealName.trim(), calories, protein, carbs, fat });
 
       toast.success("Refeição registrada! 🥗");
       onSaved();

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -72,7 +73,7 @@ export function FitOSConsoleDock({
       key: "activation",
       tag: "METAS DO ATLETA",
       title: "Metas",
-      subtitle: `Plano ativo: ${performancePlanTitle || "Emagrecimento (plano ativo)"}`,
+      subtitle: `Plano ativo: ${performancePlanTitle || "Defina seu objetivo"}`,
       statusText: "EM ANDAMENTO",
       telemetryBadge: "Missões Ativas",
       icon: Target,
@@ -83,9 +84,9 @@ export function FitOSConsoleDock({
       key: "protocol",
       tag: "PRESCRIÇÃO NINE PRO",
       title: "Treinos",
-      subtitle: `${protocolCount || 4} conteúdos ativos cadastrados`,
+      subtitle: `${protocolCount} conteúdos ativos cadastrados`,
       statusText: "PRESCRIÇÃO ATIVA",
-      telemetryBadge: `${protocolCount || 4} Ativos`,
+      telemetryBadge: `${protocolCount} Ativos`,
       icon: Dumbbell,
       accentColor: "#10B981",
       pulseColor: "#10B981",
@@ -141,6 +142,7 @@ export function FitOSConsoleDock({
 
   return (
     <div className="w-full space-y-4">
+      <DailyGoalCheckins />
       {/* 1. FOCO DO MOMENTO: CARD HERO COM OBJETIVO CLARO E DINÂMICA VISUAL (Estrutura do print IMG_0115) */}
       <motion.div
         whileHover={{ y: -2 }}
@@ -168,12 +170,12 @@ export function FitOSConsoleDock({
 
           <div>
             <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-              {performancePlanTitle || "Emagrecimento (plano ativo)"}
+              {performancePlanTitle || "Defina seu objetivo"}
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
               {protocolCount > 0
                 ? `${protocolCount} intervenções prescritas prontas para execução hoje.`
-                : "4 intervenções prescritas prontas para execução hoje."}
+                : "Nenhuma intervenção prescrita disponível."}
             </p>
           </div>
 
@@ -191,10 +193,10 @@ export function FitOSConsoleDock({
             <div className="flex-1 h-1.5 rounded-full bg-neutral-800 overflow-hidden mx-2">
               <div
                 className="h-full bg-gradient-to-r from-[#FF6600] via-amber-400 to-emerald-400 rounded-full transition-all duration-1000"
-                style={{ width: `${Math.min(100, Math.max(25, ((weekly.treinos || 6) / 5) * 100))}%` }}
+                style={{ width: `${Math.min(100, Math.max(0, (weekly.treinos / 5) * 100))}%` }}
               />
             </div>
-            <span className="text-white font-bold shrink-0">{weekly.treinos || 6}/5 sessões</span>
+            <span className="text-white font-bold shrink-0">{weekly.treinos}/5 sessões</span>
           </div>
         </div>
       </motion.div>

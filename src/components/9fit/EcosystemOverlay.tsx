@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { moduleRoute } from "@/lib/moduleRoute";
 
 interface PhysioModule {
   id: string;
@@ -23,6 +25,9 @@ interface EcosystemOverlayProps {
 }
 
 export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [modules, setModules] = useState<PhysioModule[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0); // 1 for next, -1 for prev
@@ -30,18 +35,22 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
   useEffect(() => {
     if (open) {
       async function fetchModules() {
-        const { data } = await supabase
+        setLoading(true); setError(null); setCurrentIndex(0);
+        const { data, error } = await supabase
           .from("physio_modules")
           .select("*")
           .eq("status", "active")
           .order("display_order");
         if (data) setModules(data as PhysioModule[]);
+        if (error) setError("Não foi possível carregar os módulos. Feche e tente novamente.");
+        setLoading(false);
       }
       fetchModules();
     }
   }, [open]);
 
   const paginate = (newDirection: number) => {
+    if (!modules.length) return;
     setDirection(newDirection);
     setCurrentIndex((prev) => (prev + newDirection + modules.length) % modules.length);
   };
@@ -88,6 +97,9 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
           </button>
           
           <div className="max-w-xl mx-auto h-full flex flex-col justify-center">
+            {loading && <p role="status">Carregando módulos…</p>}
+            {error && <p role="alert">{error}</p>}
+            {!loading && !error && !modules.length && <p>Nenhum módulo ativo disponível.</p>}
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
               {selectedModule && (
                 <motion.div
@@ -113,9 +125,10 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
                 >
                   <h3 className="text-3xl font-bold text-white mb-4">{selectedModule.name}</h3>
                   <p className="text-neutral-400 mb-6">{selectedModule.description}</p>
+                  {moduleRoute(selectedModule) && <button type="button" className="rounded-xl bg-primary text-primary-foreground p-3 mb-4" onClick={() => { onClose(); navigate(moduleRoute(selectedModule)!); }}>{selectedModule.cta_label || "Acessar módulo"}</button>}
                   
                   {selectedModule.iframe_url ? (
-                    <iframe src={selectedModule.iframe_url} className="w-full h-80 rounded-2xl mb-6" />
+                    <iframe title={selectedModule.name} src={selectedModule.iframe_url} className="w-full h-80 rounded-2xl mb-6" />
                   ) : (
                     <div className="h-80 w-full bg-white/5 rounded-2xl mb-6 flex items-center justify-center text-white">Conteúdo do {selectedModule.name}</div>
                   )}

@@ -113,10 +113,10 @@ export default function NineFitAtivacao() {
   // ── Step 1: Assessment ────────────────────────────────
   const handleSaveAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
-    await advanceStep('assessment', {
+    const saved = await advanceStep('assessment', {
       goal, experience_level: level, weekly_frequency: frequency, restrictions,
     });
-    setUiState('generation');
+    if (saved) setUiState('generation');
   };
 
   // ── Step 2: Generation ────────────────────────────────
@@ -162,14 +162,14 @@ export default function NineFitAtivacao() {
     }
 
     setPlan(workout);
-    await advanceStep('generation', {
+    const generated = await advanceStep('generation', {
       day_number: 1,
       day_name: workout.title,
       focus_muscles: [workout.focus],
       workout_type: 'quick',
     });
     setGenerating(false);
-    setUiState('execute');
+    if (generated) setUiState('execute');
   };
 
   useEffect(() => {
@@ -252,7 +252,8 @@ export default function NineFitAtivacao() {
     }
 
     setWorkoutStarted(false);
-    await advanceStep('execute', {});
+    const executed = await advanceStep('execute', {});
+    if (!executed) { setFinishing(false); return; }
 
     setShowSuccess(true);
     setFinishing(false);
@@ -269,7 +270,8 @@ export default function NineFitAtivacao() {
   };
 
   const finishFlow = async () => {
-    await finishActivation();
+    const finished = await finishActivation();
+    if (!finished) return;
     toast.success('Ativação concluída! Bem-vindo ao 9FIT.');
     setTimeout(() => navigate('/9fit/os', { replace: true }), 800);
   };

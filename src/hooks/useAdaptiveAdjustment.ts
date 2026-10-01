@@ -15,7 +15,7 @@ export function useAdaptiveAdjustment() {
   const [error, setError] = useState<string | null>(null);
 
   const generate = useCallback(
-    async (params: { workoutName?: string; workoutType?: string; recentRPE?: number }) => {
+    async (params: { workoutName?: string; workoutType?: string; recentRPE?: number; exercises?: string[] }) => {
       if (!user?.id) return;
       setLoading(true);
       setError(null);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Play, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +75,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [offerSeen, setOfferSeen] = useState(false);
   const [showingOffer, setShowingOffer] = useState(false);
   const [quickExecutionId, setQuickExecutionId] = useState<string | null>(null);
+  const requestRef = useRef(0);
+  const busyRef = useRef(false);
+  useEffect(() => { if (!open) { ++requestRef.current; busyRef.current = false; setLoading(false); reset(); } }, [open]);
 
   const reset = () => {
     setStep(0); setAnswers({ goal: "", time: "", equipment: "" });
@@ -82,6 +85,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   };
 
   const pick = async (k: keyof Answers, v: string) => {
+    if (busyRef.current || k !== QS[step]?.key) return;
     const next = { ...answers, [k]: v };
     setAnswers(next);
     if (step < 2) setStep((step + 1) as Step);
@@ -90,6 +94,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
 
   const resolve = async (a: Answers) => {
     if (!athleteId) { toast.error("Perfil de atleta não encontrado"); return; }
+    if (busyRef.current) return;
+    busyRef.current = true;
+    const request = ++requestRef.current;
     setLoading(true);
     try {
       // 1) Oferta antes do treino (não bloqueia) — colunas reais de monetization_offers
@@ -114,7 +121,9 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
           },
         },
       });
-      if (error) {
+      const unwrap = (value: any): QuickTrainingPayload => value?.data ?? value ?? {};
+      const hasExercises = (value: any) => { const p = unwrap(value); return (p.exercises || p.exercicios || []).length > 0; };
+      if (error || !hasExercises(data)) {
         const fallback = await supabase.rpc("fn_treino_rapido", {
           p_athlete_id: athleteId,
           p_objetivo: a.goal,
@@ -125,8 +134,10 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         error = fallback.error;
       }
       if (error) throw error;
+      if (request !== requestRef.current) return;
 
-      const payload = (data || {}) as QuickTrainingPayload;
+      const payload = unwrap(data);
+      if (!hasExercises(data)) throw new Error("Nenhum exercício compatível com o equipamento informado. Volte e revise os filtros.");
       setModelos((payload.modelos || []) as Modelo[]);
       setExercises((payload.exercises || payload.exercicios || []) as Exercise[]);
 
@@ -136,6 +147,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
         .select("id").single();
       const execution = executionRaw as { id?: string } | null;
       if (executionError || !execution?.id) throw executionError || new Error("Não foi possível criar a execução do treino rápido.");
+      if (request !== requestRef.current) return;
       setQuickExecutionId(String(execution.id));
 
       setShowingOffer(!!prod);
@@ -145,7 +157,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       const message = e instanceof Error ? e.message : "Não foi possível montar o treino agora.";
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) { busyRef.current = false; setLoading(false); }
     }
   };
 
@@ -211,6 +223,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
           {!loading && step < 3 && (
             <div>
               <p className="text-[10px] text-muted-foreground mb-2">Pergunta {step + 1} de 3</p>
+              {step > 0 && <button type="button" onClick={() => setStep((step - 1) as Step)} className="text-xs text-primary mb-3">Voltar</button>}
               <p className="font-display text-lg mb-4">{QS[step].label}</p>
               <div className="space-y-2">
                 {QS[step].opts.map((o) => (

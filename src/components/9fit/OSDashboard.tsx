@@ -574,7 +574,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                     </div>
                     <ActivationMissionCard />
                     <button
-                      onClick={() => { setActiveModal(null); navigate('/9fit/ativacao'); }}
+                      onClick={() => { setActiveModal(null); navigate('/9fit/avaliacao-guiada'); }}
                       className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
                     >
                       <Rocket className="w-3.5 h-3.5" />
