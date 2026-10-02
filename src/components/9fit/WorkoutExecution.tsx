@@ -327,7 +327,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .limit(1);
 
       existingQuery = training.daily_workout_id
-        ? existingQuery.eq("workout_date", todayISO).is("assignment_id", null)
+        ? existingQuery.eq("daily_workout_id", training.daily_workout_id).is("assignment_id", null)
         : existingQuery.eq("assignment_id", training.id);
 
       const { data: existing, error: existingError } = await existingQuery.maybeSingle();

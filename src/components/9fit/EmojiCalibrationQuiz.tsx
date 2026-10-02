@@ -41,18 +41,21 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   const [saving, setSaving] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
 
-  // Fonte da verdade: daily_checkins (não só localStorage)
+  // Only a complete calibration counts; old mood-only rows remain pending.
   useEffect(() => {
+    setCompletedToday(false); setDone(false); setStep(0); setAnswers({});
     if (!athleteId) return;
+    let active = true;
     (async () => {
       const { data } = await supabase
         .from("daily_checkins")
-        .select("id")
+        .select("id,sono,energia,humor,motivacao,dor")
         .eq("athlete_id", athleteId)
         .eq("checkin_date", todayISO())
         .maybeSingle();
-      if (data?.id) setCompletedToday(true);
+      if (active && data && [data.sono,data.energia,data.humor,data.motivacao,data.dor].every(value => value !== null)) setCompletedToday(true);
     })();
+    return () => { active = false; };
   }, [athleteId]);
 
   const handlePick = async (q: Q, v: number) => {
@@ -60,7 +63,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
     const next = { ...answers, [q.key]: v };
     setAnswers(next);
     if (step < QUESTIONS.length - 1) {
-      setTimeout(() => setStep(step + 1), 250);
+      setStep(step + 1);
       return;
     }
 
@@ -77,9 +80,11 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         checkin_date: todayISO(),
         sono: next.sleep,
         energia: next.energy,
-        alimentacao: next.mood,
+        humor: next.mood,
+        motivacao: next.motivation,
         // escala do banco: 1 = pouca dor, 5 = muita dor (inverso do quiz)
         dor: 6 - next.pain,
+        ...(next.pain === 5 ? { dor_local: null } : {}),
       },
       { onConflict: "athlete_id,checkin_date" }
     );
