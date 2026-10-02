@@ -4160,6 +4160,8 @@ export type Database = {
           dor: number | null
           dor_local: string | null
           energia: number | null
+          humor: number | null
+          motivacao: number | null
           id: string
           sono: number | null
         }
@@ -4171,6 +4173,8 @@ export type Database = {
           dor?: number | null
           dor_local?: string | null
           energia?: number | null
+          humor?: number | null
+          motivacao?: number | null
           id?: string
           sono?: number | null
         }
@@ -4182,6 +4186,8 @@ export type Database = {
           dor?: number | null
           dor_local?: string | null
           energia?: number | null
+          humor?: number | null
+          motivacao?: number | null
           id?: string
           sono?: number | null
         }
@@ -18235,6 +18241,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           day_number: number | null
+          daily_workout_id: string | null
           duration_minutes: number | null
           id: string
           notes: string | null
@@ -18255,6 +18262,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           day_number?: number | null
+          daily_workout_id?: string | null
           duration_minutes?: number | null
           id?: string
           notes?: string | null
@@ -18275,6 +18283,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           day_number?: number | null
+          daily_workout_id?: string | null
           duration_minutes?: number | null
           id?: string
           notes?: string | null
