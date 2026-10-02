@@ -301,6 +301,7 @@ const CANONICAL_MODULES: PhysioModule[] = [
  */
 export function EcosystemGrid({ category, variant = "grid", showHeader = true, showAll = false, onModuleSelect }: Props) {
   const [showOverlay, setShowOverlay] = useState(false);
+  const [previewModuleKey, setPreviewModuleKey] = useState<string | null>(null);
   const [items, setItems] = useState<PhysioModule[]>([]);
   const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
@@ -504,7 +505,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           </p>
           {items.length > 2 && !showAll && (
             <button
-              onClick={() => setShowOverlay(true)}
+              onClick={() => { setPreviewModuleKey(null); setShowOverlay(true); }}
               aria-label="Abrir tela com todos os módulos"
               className="mt-4 flex items-center gap-2 bg-primary text-black px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-colors"
             >
@@ -515,11 +516,11 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         </header>
       )}
 
-      <EcosystemOverlay open={showOverlay} onClose={() => setShowOverlay(false)} />
+      <EcosystemOverlay open={showOverlay} initialModuleKey={previewModuleKey} onClose={() => setShowOverlay(false)} />
 
       <div className={gridClass}>{visibleItems.map((m, index) => {
         const route = moduleRoute(m) || fallbackRoutes[m.key];
-        return <button key={m.id} type="button" disabled={!route} onClick={() => { if (onModuleSelect) onModuleSelect(m); else if (route) navigate(route); }} className="rounded-2xl border border-white/10 bg-card p-4 text-left disabled:opacity-50"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="text-xs text-primary">{route ? (m.cta_label || "Acessar") : "Em configuração"}</span></button>;
+        return <button key={m.id} type="button" onClick={() => { if (onModuleSelect) onModuleSelect(m); else { setPreviewModuleKey(m.key); setShowOverlay(true); } }} className="rounded-2xl border border-white/10 bg-card p-4 text-left"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="text-xs text-primary">Experimentar módulo →</span></button>;
       })}</div>
     </section>
   );

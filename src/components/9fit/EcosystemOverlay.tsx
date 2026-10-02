@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { moduleRoute } from "@/lib/moduleRoute";
+import { ModuleExperience } from "./ModuleExperience";
 
 interface PhysioModule {
   id: string;
@@ -22,10 +23,12 @@ interface PhysioModule {
 interface EcosystemOverlayProps {
   open: boolean;
   onClose: () => void;
+  initialModuleKey?: string | null;
 }
 
-export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
+export function EcosystemOverlay({ open, onClose, initialModuleKey }: EcosystemOverlayProps) {
   const navigate = useNavigate();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modules, setModules] = useState<PhysioModule[]>([]);
@@ -36,21 +39,40 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
     let active=true;
     if (open) {
       async function fetchModules() {
-        setLoading(true); setError(null); setCurrentIndex(0);
+        setLoading(true); setError(null); setModules([]); setCurrentIndex(0);
         const { data, error } = await supabase
           .from("physio_modules")
           .select("*")
           .eq("status", "active")
           .order("display_order");
         if (!active) return;
-        if (data) setModules(data as PhysioModule[]);
+        if (data) { setModules(data as PhysioModule[]); setCurrentIndex(Math.max(0, data.findIndex(module => module.key.replace(/[-_]/g, '') === initialModuleKey?.replace(/[-_]/g, '')))); }
         if (error) setError("Não foi possível carregar os módulos. Feche e tente novamente.");
         setLoading(false);
       }
       fetchModules();
     }
     return () => { active=false; };
-  }, [open]);
+  }, [open, initialModuleKey]);
+
+  useEffect(() => {
+    if (!open) return;
+    const focused = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key === 'Tab') {
+        const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea, select, a[href], iframe') || []).filter(element => element.getClientRects().length > 0);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    };
+    window.addEventListener('keydown', close);
+    return () => { document.body.style.overflow = overflow; window.removeEventListener('keydown', close); focused?.focus(); };
+  }, [open, onClose]);
 
   const paginate = (newDirection: number) => {
     if (!modules.length) return;
@@ -91,15 +113,18 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
           exit="exit"
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
           className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md p-4 pt-12 overflow-y-auto"
+          role="dialog" aria-modal="true" aria-label="Explorar ecossistema"
+          ref={dialogRef}
         >
           <button
             onClick={onClose}
+            aria-label="Fechar ecossistema"
             className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
           
-          <div className="max-w-xl mx-auto h-full flex flex-col justify-center">
+          <div className="max-w-2xl mx-auto min-h-full flex flex-col justify-center">
             {loading && <p role="status">Carregando módulos…</p>}
             {error && <p role="alert">{error}</p>}
             {!loading && !error && !modules.length && <p>Nenhum módulo ativo disponível.</p>}
@@ -112,14 +137,6 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={1}
-                  onDragEnd={(e, { offset, velocity }) => {
-                    const swipe = offset.x;
-                    if (swipe < -100) paginate(1);
-                    else if (swipe > 100) paginate(-1);
-                  }}
                   transition={{
                     x: { type: "spring", stiffness: 300, damping: 30 },
                     opacity: { duration: 0.2 },
@@ -128,20 +145,15 @@ export function EcosystemOverlay({ open, onClose }: EcosystemOverlayProps) {
                 >
                   <h3 className="text-3xl font-bold text-white mb-4">{selectedModule.name}</h3>
                   <p className="text-neutral-400 mb-6">{selectedModule.description}</p>
-                  {moduleRoute(selectedModule) && <button type="button" className="rounded-xl bg-primary text-primary-foreground p-3 mb-4" onClick={() => { onClose(); navigate(moduleRoute(selectedModule)!); }}>{selectedModule.cta_label || "Acessar módulo"}</button>}
-                  
-                  {selectedModule.iframe_url ? (
-                    <iframe title={selectedModule.name} src={selectedModule.iframe_url} className="w-full h-80 rounded-2xl mb-6" />
-                  ) : (
-                    <div className="h-80 w-full bg-white/5 rounded-2xl mb-6 flex items-center justify-center text-white">Conteúdo do {selectedModule.name}</div>
-                  )}
+                  <ModuleExperience moduleKey={selectedModule.key} name={selectedModule.name} />
+                  {moduleRoute(selectedModule) && <button type="button" className="w-full rounded-xl bg-primary text-primary-foreground p-3 mt-4" onClick={() => { onClose(); navigate(moduleRoute(selectedModule)!); }}>Acessar {selectedModule.name} completo →</button>}
 
                   <div className="flex justify-between items-center mt-auto">
-                    <button onClick={() => paginate(-1)} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white">
+                    <button aria-label="Módulo anterior" onClick={() => paginate(-1)} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white">
                       <ChevronLeft className="w-6 h-6" />
                     </button>
                     <span className="font-mono text-xs text-neutral-500">{currentIndex + 1} / {modules.length}</span>
-                    <button onClick={() => paginate(1)} className="p-3 rounded-full bg-primary hover:bg-primary/80 text-black">
+                    <button aria-label="Próximo módulo" onClick={() => paginate(1)} className="p-3 rounded-full bg-primary hover:bg-primary/80 text-black">
                       <ChevronRight className="w-6 h-6" />
                     </button>
                   </div>
