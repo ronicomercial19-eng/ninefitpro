@@ -38,7 +38,7 @@ export default function NineFitModules() {
         <div className="mt-6 flex items-end justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#FF6600] font-bold">
-              ALL MODULES · 12 ACTIVE
+              TODOS OS MÓDULOS · EXPERIMENTE AQUI
             </p>
             <h1 className="mt-1 font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
               Ecosystem
