@@ -33,3 +33,6 @@ Os testes SQL simulam sessão autenticada com identidade existente em transaçã
 - [ ] Confirmar hospedagem do Express/webhook e formato de evento InfinitePay.
 - [ ] Publicar frontend no Lovable; merge não comprova publicação.
 - [ ] Teste de capacidade de 3.000 usuários na Macro 09.
+
+## Instalação reproduzível
+O primeiro CI detectou entradas ausentes no package-lock.json para geolocation, splash-screen e synapse. O lock foi sincronizado com npm 10.9.9, preservando as versões já declaradas no package.json.
