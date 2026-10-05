@@ -178,8 +178,19 @@ export function RonConciergeSheet() {
       const operationalData = getRonOperationalData();
 
       const data = await requestRonChat(message, messages.map(m => ({ role:m.role, content:m.content })));
-      const botReply = data.content || "Entendido! Processando diretrizes.";
-      const actions: RonAction[] = data.actions || [];
+      let botReply = data.content || "Entendido! Processando diretrizes.";
+      const actions: RonAction[] = [...(data.actions || [])];
+      const asksToReduceVolume = /\b(reduz|reduza|diminu|diminua|menos séries|menos series|corta uma série|corte uma série)\b/i.test(message)
+        && /\b(treino|série|series|volume|prescrição)\b/i.test(message);
+      if (asksToReduceVolume && athleteId && !actions.some(action => action.type === "ADJUST_TRAINING_VOLUME")) {
+        actions.push({
+          type: "ADJUST_TRAINING_VOLUME",
+          title: "Aplicar ajuste ao treino de hoje",
+          description: "Reduzir uma série por exercício aplicável. O RON preserva sessões iniciadas ou concluídas.",
+          payload: { athleteId },
+        });
+        botReply += "\n\nPreparei a redução de uma série por exercício aplicável no treino de hoje. Toque em **Aplicar ajuste ao treino de hoje** para confirmar; sessões em andamento ou concluídas ficam protegidas.";
+      }
 
       setMessages((prev) => [
         ...prev,

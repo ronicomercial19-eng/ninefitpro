@@ -11,6 +11,8 @@ const execution = read("../src/components/9fit/WorkoutExecution.tsx");
 const protocol = read("../src/pages/9fit/Protocolo.tsx");
 const recommendations = read("../src/services/engrenagem/recommendationEngine.ts");
 const ron = read("../src/components/9fit/RonConciergeSheet.tsx");
+const ronOperations = read("../src/services/ronOperationalCore.ts");
+const postWorkout = read("../src/components/9fit/PostWorkoutModal.tsx");
 
 assert.match(migration, /fn_generate_periodized_week/);
 assert.match(migration, /WHERE dw\.athlete_id = p_athlete_id AND dw\.workout_date = v_date\s+UNION ALL/);
@@ -35,5 +37,13 @@ assert.match(execution, /businessDate\(\)/);
 assert.match(protocol, /businessDate\(\)/);
 assert.match(recommendations, /syncScore: number \| null/);
 assert.match(ron, /syncScore == null \? "Sem leitura"/);
+assert.match(weekView, /selectedDate/);
+assert.match(weekView, /PRESCRIÇÃO AUSENTE/);
+assert.match(postWorkout, /avg_rpe: rpe/);
+assert.doesNotMatch(postWorkout.slice(postWorkout.indexOf(".update({"), postWorkout.indexOf(".eq(\"id\", executionId)")), /(^|\n)\s*rpe,/);
+assert.match(ron, /asksToReduceVolume/);
+assert.match(ronOperations, /case "ADJUST_TRAINING_VOLUME"/);
+assert.match(ronOperations, /workout_execution_in_progress|já foi iniciado ou concluído/);
+assert.match(ronOperations, /fn_ajustar_treino_dia/);
 
 console.log("PASS Macro 03: periodized week, safe generation, skip receipts, calendar navigation, São Paulo business date and truthful SYNC states");

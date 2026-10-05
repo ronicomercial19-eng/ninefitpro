@@ -1,5 +1,5 @@
 import { addDays, addWeeks, format, isBefore, parseISO, startOfWeek } from "date-fns";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Play, Loader2, Dumbbell, Lock, Check, ChevronLeft, ChevronRight, CalendarPlus, CircleSlash } from "lucide-react";
 import { toast } from "sonner";
@@ -58,21 +58,22 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
   const [days, setDays] = useState<DayPlan[]>([]);
   const [phase, setPhase] = useState<string>("");
   const [match, setMatch] = useState<number>(0);
-  const [selectedDay,setSelectedDay]=useState(0),[failed,setFailed]=useState(false);
+  const [selectedDate,setSelectedDate]=useState(initialDate || businessDate()),[failed,setFailed]=useState(false);
   const [weekStart,setWeekStart]=useState(()=>startOfWeek(parseISO(initialDate || businessDate()),{weekStartsOn:1}));
   const [generating,setGenerating]=useState(false),[skipping,setSkipping]=useState(false),[confirmSkip,setConfirmSkip]=useState(false);
-  const initialized=useRef(false);
 
   const todayISO = businessDate();
   const currentWeekStart = startOfWeek(parseISO(todayISO),{weekStartsOn:1});
   const weekStartISO = format(weekStart,"yyyy-MM-dd");
   const weekEndISO = format(addDays(weekStart,6),"yyyy-MM-dd");
+  const selectedDay = Math.max(0, days.findIndex(day => day.date === selectedDate));
 
   useEffect(()=>{
     if(!initialDate)return;
     const next=startOfWeek(parseISO(initialDate),{weekStartsOn:1});
-    if(format(next,"yyyy-MM-dd")!==weekStartISO){initialized.current=false;setWeekStart(next);setSelectedDay(0);}
-  },[initialDate,weekStartISO]);
+    setSelectedDate(initialDate);
+    setWeekStart(next);
+  },[initialDate]);
 
   const loadWeek = useCallback(async () => {
     if (!athleteId) return;
@@ -87,7 +88,6 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
       setMatch(weeklyAdherence(week.map(d=>({date:d.workout_date||d.date||"",status:d.status||"planned",exerciseCount:d.exercises?.length??0})),todayISO)??0);
       const { data: recordedSets, error: setsError } = await supabase.from("workout_exercise_sets").select("exercise_name,set_number,workout_executions!inner(athlete_id,workout_date,daily_workout_id)").eq("workout_executions.athlete_id",athleteId).eq("completed",true).gte("workout_executions.workout_date",week[0]?.workout_date || week[0]?.date || todayISO).lte("workout_executions.workout_date",week[week.length-1]?.workout_date || week[week.length-1]?.date || todayISO);
       if(setsError)throw setsError;
-      setSelectedDay(previous=>{if(!initialized.current){initialized.current=true;const target=initialDate && initialDate>=weekStartISO && initialDate<=weekEndISO ? initialDate : todayISO;const index=week.findIndex(d=>(d.workout_date||d.date)===target);return index>=0?index:0;}return Math.min(previous,Math.max(0,week.length-1));});
       setDays(week.map((d) => ({
         id: d.id || d.daily_workout_id || d.workout_id,
         date: d.workout_date || d.date,
@@ -111,7 +111,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
   }, [athleteId, weekStartISO, weekEndISO, todayISO, initialDate]);
 
   useEffect(() => {
-    initialized.current=false;setSelectedDay(0);setConfirmSkip(false);
+    setConfirmSkip(false);
     loadWeek();
     window.addEventListener("9fit:workout-updated", loadWeek);
     if (!athleteId) return;
@@ -160,7 +160,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
     const next=addWeeks(weekStart,offset);
     if(isBefore(next,startOfWeek(addWeeks(currentWeekStart,-52),{weekStartsOn:1})))return;
     if(isBefore(addWeeks(currentWeekStart,12),next))return;
-    initialized.current=false;setWeekStart(next);setSelectedDay(0);setConfirmSkip(false);
+    setWeekStart(next);setSelectedDate(format(next,"yyyy-MM-dd"));setConfirmSkip(false);
   };
 
   // FIX (player guiado): mapa de nomes técnicos de status para rótulo legível.
@@ -204,7 +204,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
       )}
 
       {!loading && failed && <div role="alert" className="text-sm"><p>Não foi possível atualizar os treinos da semana.</p><button className="text-primary" onClick={()=>void loadWeek()}>Tentar novamente</button></div>}
-      {!loading && !failed && days.length>0 && <div className="flex items-center justify-between"><button aria-label="Dia anterior" disabled={selectedDay===0} onClick={()=>setSelectedDay(n=>n-1)} className="rounded-lg border border-white/10 p-2 disabled:opacity-30"><ChevronLeft className="w-5 h-5"/></button><span className="text-sm">{days[selectedDay]?.day_label} · {selectedDay+1} de {days.length}</span><button aria-label="Próximo dia" disabled={selectedDay>=days.length-1} onClick={()=>setSelectedDay(n=>n+1)} className="rounded-lg border border-white/10 p-2 disabled:opacity-30"><ChevronRight className="w-5 h-5"/></button></div>}
+      {!loading && !failed && days.length>0 && <div className="flex items-center justify-between"><button aria-label="Dia anterior" disabled={selectedDay===0} onClick={()=>setSelectedDate(days[Math.max(0,selectedDay-1)]?.date || selectedDate)} className="rounded-lg border border-white/10 p-2 disabled:opacity-30"><ChevronLeft className="w-5 h-5"/></button><span className="text-sm">{days[selectedDay]?.day_label} · {selectedDay+1} de {days.length}</span><button aria-label="Próximo dia" disabled={selectedDay>=days.length-1} onClick={()=>setSelectedDate(days[Math.min(days.length-1,selectedDay+1)]?.date || selectedDate)} className="rounded-lg border border-white/10 p-2 disabled:opacity-30"><ChevronRight className="w-5 h-5"/></button></div>}
       {!loading && !failed && days.length === 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-muted-foreground text-sm">
           Nenhum plano ativo encontrado para esta semana. Quando seu professor atribuir um treino, ele aparecerá aqui.
@@ -216,7 +216,8 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
         const isToday = d.date === todayISO;
         const isDone = d.status === "completed";
         const isSkipped = d.status === "skipped";
-        const isRest = d.status === "rest";
+        const isRest = d.status === "rest" && !!d.id;
+        const isUnplanned = !d.id;
         const exerciseCount = d.exercises?.length || 0;
 
         return (
@@ -262,13 +263,15 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
 
                   {/* Headline de Alto Impacto: tipografia robusta, clean, sem serafins */}
                   <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white font-display leading-tight">
-                    {isRest ? "Recuperação Ativa & Descanso" : `Sessão de Força ${d.day_label}`}
+                    {isRest ? "Recuperação Ativa & Descanso" : isUnplanned ? "Sem treino prescrito" : `Sessão de Força ${d.day_label}`}
                   </h3>
 
                   {/* Descrição do Treino */}
                   <p className="text-xs text-neutral-400 mt-1.5 line-clamp-2 max-w-md font-normal leading-relaxed">
                     {isRest
                       ? "Dia planejado para regeneração miofascial, hidratação celular e adaptação neural dos ciclos anteriores."
+                      : isUnplanned
+                      ? "Não há uma prescrição vinculada a esta data. Confira o calendário ou peça ao seu profissional para programar o treino."
                       : `Prescrição neuromotora com ${exerciseCount} blocos de exercícios calibrados para o seu objetivo.`}
                   </p>
                 </div>
@@ -291,7 +294,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
                     )}
                   </div>
 
-                  {!isRest && (
+                  {!isRest && !isUnplanned && (
                     <div className="flex flex-wrap items-center justify-end gap-2">
                     <button
                       type="button"
@@ -310,10 +313,10 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
 
               {/* Coluna Direita (5 cols): Grid de Itens / Exercícios com Checkmark no padrão da imagem */}
               <div className="p-4 sm:p-5 md:col-span-5 flex flex-col justify-center bg-black/20">
-                {isRest ? (
+                {isRest || isUnplanned ? (
                   <div className="text-center py-4 text-neutral-500">
-                    <p className="text-xs font-mono uppercase tracking-widest text-neutral-400">STATUS DO DIA</p>
-                    <p className="text-sm text-neutral-300 mt-1">Nenhum exercício programado</p>
+                    <p className="text-xs font-mono uppercase tracking-widest text-neutral-400">{isRest ? "DESCANSO PROGRAMADO" : "PRESCRIÇÃO AUSENTE"}</p>
+                    <p className="text-sm text-neutral-300 mt-1">{isRest ? "Nenhum exercício programado" : "Esta data não tem treino cadastrado"}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-2">
