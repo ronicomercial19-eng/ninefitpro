@@ -320,22 +320,10 @@ export default function NineFitRon() {
       console.error("[Ron] pain report failed", reportError);
       return "Percebi seu relato de dor, mas não consegui registrá-lo no banco. Mantenha o treino pausado e procure acompanhamento.";
     }
-    if (!pain.body_region)
-      return "Registrei seu relato de dor. Indique a região exata para que eu possa sugerir variações biomecânicas adequadas.";
+    // A symptom report does not establish a safe exercise replacement.
+    // Persist the report, but never claim a prescription change from an unconfirmed RPC.
+    return 'Registrei seu relato de dor. Mantenha a atividade pausada e abra Ajuste de Treino ou converse com seu profissional para revisar a prescrição.';
 
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: adjustment } = await supabase.rpc("ajustar_exercicio_por_dor" as any, {
-      p_athlete_id: athleteId,
-      p_exercise_id: null,
-      p_body_region: pain.body_region,
-      p_workout_date: today,
-    });
-
-    const result = adjustment as any;
-    if (result?.status === "no_safe_variation") {
-      return `Dor em ${pain.body_region} registrada. Recomendo repouso ou treino de grupos musculares antagonistas hoje.`;
-    }
-    return `Dor em ${pain.body_region} registrada. Apliquei uma modulação protetora para o seu treino de hoje.`;
   };
 
   const handleSend = async (messageToSend?: string) => {

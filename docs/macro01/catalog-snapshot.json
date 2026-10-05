@@ -1,0 +1,695 @@
+[
+  {
+    "signature": "activation_advance(uuid,text,jsonb)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "activation_finish(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "ajustar_exercicio_por_dor(uuid,uuid,text,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "aplicar_ajuste_treino_dia(uuid,date,jsonb)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "calcular_sync_score_real(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "complete_first_access()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "deprecated_prescrever_treino_rapido(uuid,text,integer,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "ensure_plano_treino_gerado(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_activate_prime_reward(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_add_credits(uuid,integer,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_ajustar_treino_dia(uuid,date,jsonb)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_ajustar_treino_real(uuid,uuid)",
+    "security_definer": false,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_aplicar_nine_lima(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_aplicar_protocolo_9x9x9(uuid,text,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_award_workout_xp(uuid,integer)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_award_xp(uuid,integer,text,jsonb)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_award_xp_on_workout_completion()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_check_onboarding_progress(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_complete_mission(uuid,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_complete_workout_execution(uuid,integer)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_compute_user_thresholds(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_consume_credit(uuid,integer,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_core_os_workout_completed()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_core_os_workout_skipped()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_create_staff_appointment(uuid,uuid,text,timestamp with time zone,integer,text,text,text,text,uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_current_athlete_id()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_fitpro_daily_checkin(text,date,text)",
+    "security_definer": false,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_gerar_treino_semana(uuid,text,integer)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_athlete_timeline(uuid,integer)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_hub_snapshot()",
+    "security_definer": false,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_leaderboard(integer)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_protocolo_arquivos(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_ron_progresso_screen(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_treino_dia(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_get_week_workouts(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_interceptar_e_gerar_treino_fitpro()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_notify_coach_workout_adjusted()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": true,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_notify_workout_completed()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_notify_workout_updated()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_on_workout_completed()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_on_xp_awarded()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_publicar_treino_smartreino(uuid,date,integer,text,text[],text,integer,jsonb,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_registrar_peso_avulso(uuid,numeric,date,numeric)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_registrar_recorde(uuid,text,text,numeric,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_review_ninefit_template(uuid,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_reward_share(uuid,text,text,integer)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_salvar_avaliacao_guiada(uuid,numeric,numeric,numeric,numeric,numeric,numeric,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_save_workout_set(uuid,text,integer,integer,boolean,integer,numeric,text,integer,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_start_daily_workout_execution(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_start_workout_execution(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_sugerir_protocolo_por_perfil(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_sync_macro_rules_from_periodization(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_sync_personal_records_ids()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "fn_treino_rapido(uuid,integer,text,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "fn_treino_rapido(uuid,text,integer,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "gerar_blocos_protocolo_dia(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "gerar_modelo_treino(uuid,text,text,jsonb)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "get_aluno_context_smarttreino(text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "get_week_workouts(uuid)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "get_workout_of_day(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "prescrever_treino(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "prescrever_treino_html(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "prescrever_treino_partner(uuid,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "reconcile_appointments_for_user()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "regenerar_dia_evitando_regiao(uuid,text,date)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "sync_community_cheer_count()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": true,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "sync_fitpro_planejamento(uuid,text)",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "sync_fitpro_snapshot()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "sync_subapp_from_plan()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trg_ensure_plano_treino_gerado()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trg_fn_send_xp_event_to_supra()",
+    "security_definer": false,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": true,
+    "authenticated_execute": true
+  },
+  {
+    "signature": "trg_pdi_questionnaire_complete()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trg_pdi_snapshot()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trg_recalc_stats_on_treino()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trg_share_events_reward()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trg_workout_xp_and_score()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  },
+  {
+    "signature": "trigger_workout_completion()",
+    "security_definer": true,
+    "proconfig": [
+      "search_path=public"
+    ],
+    "anon_execute": false,
+    "authenticated_execute": false
+  }
+]
