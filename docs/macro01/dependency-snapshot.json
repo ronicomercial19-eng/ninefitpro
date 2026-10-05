@@ -1,0 +1,30 @@
+[
+  {
+    "caller": "fn_award_workout_xp(uuid,integer)",
+    "target": "fn_award_xp(uuid,integer,text,jsonb)"
+  },
+  {
+    "caller": "fn_reward_share(uuid,text,text,integer)",
+    "target": "fn_award_xp(uuid,integer,text,jsonb)"
+  },
+  {
+    "caller": "trg_share_events_reward()",
+    "target": "fn_award_xp(uuid,integer,text,jsonb)"
+  },
+  {
+    "caller": "trg_workout_xp_and_score()",
+    "target": "fn_award_xp(uuid,integer,text,jsonb)"
+  },
+  {
+    "caller": "prescrever_treino_html(uuid,date)",
+    "target": "prescrever_treino(uuid,date)"
+  },
+  {
+    "caller": "prescrever_treino_partner(uuid,date)",
+    "target": "prescrever_treino(uuid,date)"
+  },
+  {
+    "caller": "regenerar_dia_evitando_regiao(uuid,text,date)",
+    "target": "prescrever_treino(uuid,date)"
+  }
+]

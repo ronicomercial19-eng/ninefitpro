@@ -1,3 +1,4 @@
+import { webhookSecretFailure } from './src/services/infinitepayWebhookPolicy.ts';
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -403,8 +404,9 @@ app.post('/api/webhook/infinitepay', async (req, res) => {
   try {
     // 1. Validação de Segurança
     const authToken = req.headers['x-webhook-secret'];
-    if (authToken !== process.env.INFINITEPAY_WEBHOOK_SECRET) {
-      return res.status(403).json({ error: 'Acesso negado' });
+    const secretFailure = webhookSecretFailure(process.env.INFINITEPAY_WEBHOOK_SECRET, authToken);
+    if (secretFailure) {
+      return res.status(secretFailure).json({ error: secretFailure === 503 ? 'Webhook indisponível' : 'Acesso negado' });
     }
 
     const { user_email, plan_id } = req.body;

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Share2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { recordShareEvent } from '@/services/share.service';
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
@@ -10,23 +11,23 @@ interface Props {
   title?: string;
   text?: string;
   url?: string;
-  rewardXp?: number;
   className?: string;
   label?: string;
 }
 
 /**
  * Botão de compartilhamento com Web Share API + fallback clipboard.
- * Registra evento em share_events e premia XP ao usuário (loop de virilização).
+ * Registra evento em share_events e premia XP ao usuário (registro validado no servidor).
  */
 export function ShareButton({
   contentType, contentId, title = "9FIT PRO",
   text = "Confira meu progresso no 9FIT PRO!",
-  url, rewardXp = 25, className = "", label = "Compartilhar",
+  url, className = "", label = "Compartilhar",
 }: Props) {
   const { user } = useAuth();
   const [sharing, setSharing] = useState(false);
   const [done, setDone] = useState(false);
+  const [doneLabel, setDoneLabel] = useState("Enviado!");
 
   const handleShare = async () => {
     if (sharing) return;
@@ -63,24 +64,19 @@ export function ShareButton({
         channel = "copy";
         toast.success("Link copiado!");
       }
+      setDoneLabel(channel === "copy" ? "Copiado!" : "Enviado!");
       setDone(true);
       setTimeout(() => setDone(false), 2500);
 
       if (user) {
-        await supabase.from("share_events").insert({
-          user_id: user.id, channel, content_type: contentType,
-          content_id: contentId ?? null, reward_xp: rewardXp,
-        });
-        const { data: a } = await supabase.from("athletes")
-          .select("id").eq("user_id", user.id).maybeSingle();
-        if (a?.id) {
-          await supabase.rpc("fn_award_xp", {
-            p_athlete_id: a.id,
-            p_amount: rewardXp,
-            p_source: `share:${channel}:${contentType}${templateSlug ? `:${templateSlug}` : ""}`,
-            p_metadata: { content_id: contentId ?? null, template: templateSlug },
-          });
-          toast.success(`+${rewardXp} XP por compartilhar!`);
+        try {
+          const receipt = await recordShareEvent({ userId: user.id, channel, contentType, contentId });
+          if (receipt.rewarded) {
+            toast.success(`+${receipt.reward_xp} XP registrados`);
+            window.dispatchEvent(new Event('9fit:sync_updated'));
+          }
+        } catch {
+          toast.info('A ação foi realizada, mas seu registro não foi salvo. Nenhum XP foi confirmado.');
         }
       }
     } catch (err: unknown) {
@@ -94,7 +90,7 @@ export function ShareButton({
     <button onClick={handleShare} disabled={sharing}
       className={`inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition disabled:opacity-50 ${className}`}>
       {done ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
-      {done ? "Compartilhado!" : label}
+      {done ? doneLabel : label}
     </button>
   );
 }
