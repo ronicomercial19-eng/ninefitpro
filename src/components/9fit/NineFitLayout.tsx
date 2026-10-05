@@ -41,14 +41,15 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       const onOnboarding  = path.includes('onboarding');
 
       // --- 1. First-access gate ---
-      const localCompleted = localStorage.getItem('9fit_first_access_completed') === 'true';
+      let localCompleted = false;
+      try { localCompleted = localStorage.getItem(`9fit_first_access_completed:${session.user.id}`) === 'true'; } catch { /* Local storage is optional; use the authenticated source below. */ }
       let firstAccessDone = localCompleted;
 
       if (!firstAccessDone) {
         try {
           const { data: profile } = await supabase
             .from('vw_current_identity' as any)
-            .select('first_access_completed')
+            .select('first_access_completed,athlete_id')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
@@ -58,7 +59,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             const { data: athlete } = await supabase
               .from('athletes')
               .select('password_changed')
-              .eq('user_id', session.user.id)
+              .eq('id', (profile as { athlete_id?: string } | null)?.athlete_id || '00000000-0000-0000-0000-000000000000')
               .maybeSingle();
             // Sem registro de athlete (coach/admin) → liberado
             // Athlete com senha já trocada → liberado
@@ -99,11 +100,13 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
               .eq('athlete_id', (athlete as unknown as { athlete_id: string }).athlete_id)
               .maybeSingle();
             const finished = act?.finished_at;
-            if (!finished && !onAtivacao && !onOnboarding) {
+            const { data: contextSettings } = await supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', session.user.id).maybeSingle();
+            const profileConfirmed = !!(contextSettings as { pdi_completed_at?: string } | null)?.pdi_completed_at;
+            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding) {
               navigate('/9fit/ativacao');
               return;
             }
-            if (finished && onAtivacao) {
+            if ((finished || profileConfirmed) && onAtivacao) {
               navigate('/9fit/os');
               return;
             }

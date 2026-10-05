@@ -76,7 +76,8 @@ export default function FirstAccess() {
       await supabase.auth.refreshSession();
 
       // Fallback local — caminho de cinto-e-suspensório
-      localStorage.setItem('9fit_first_access_completed', 'true');
+      const { data: { user } } = await supabase.auth.getUser();
+      try { if (user) localStorage.setItem(`9fit_first_access_completed:${user.id}`, 'true'); } catch { /* Server state remains authoritative. */ }
 
       toast({
         title: "Senha alterada!",

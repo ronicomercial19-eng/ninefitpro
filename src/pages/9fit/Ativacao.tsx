@@ -12,6 +12,8 @@ import { useAthleteId } from '@/hooks/useAthleteId';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useDailyContext } from '@/hooks/useDailyContext';
+import { PDIWizard } from '@/components/9fit/PDIWizard';
 
 interface WorkoutExercise { name: string; sets: number; reps: string; rest: string; tips?: string }
 interface WorkoutPlan {
@@ -58,6 +60,8 @@ async function progressSync(kind: string, payload: Record<string, any>) {
 
 export default function NineFitAtivacao() {
   const navigate = useNavigate();
+  const context = useDailyContext();
+  const [profileOpen, setProfileOpen] = useState(true);
   const { athleteId } = useAthleteId();
   const { row, loading, derivedStep, advanceStep, finishActivation, advancing } = useActivationFlow();
 
@@ -90,9 +94,9 @@ export default function NineFitAtivacao() {
   // Sync UI with derived server state (initial load)
   useEffect(() => {
     if (loading) return;
-    if (row?.finished_at) { navigate('/9fit/os', { replace: true }); return; }
+    if (row?.finished_at || context.data?.profile.complete) { navigate('/9fit/os', { replace: true }); return; }
     if (uiState === 'not_started' && derivedStep !== 'not_started') setUiState(derivedStep);
-  }, [loading, derivedStep, row?.finished_at, uiState, navigate]);
+  }, [loading, derivedStep, row?.finished_at, uiState, navigate, context.data?.profile.complete]);
 
   // Timer
   useEffect(() => {
@@ -293,13 +297,17 @@ export default function NineFitAtivacao() {
     return 'upcoming';
   };
 
-  if (loading) {
+  if (loading || context.isPending) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground text-sm tracking-widest uppercase">Carregando ativação…</div>
       </div>
     );
   }
+
+  if (context.isError) return <div className="min-h-screen bg-background grid place-items-center p-6"><div className="text-center space-y-4"><p>Não consegui ler sua ficha. Seus dados anteriores foram preservados.</p><Button onClick={() => void context.refetch()}>Tentar novamente</Button></div></div>;
+  if (!context.data?.profile.complete && !row?.finished_at) return <div className="min-h-screen bg-background p-6 flex items-center justify-center"><section className="max-w-md space-y-4 text-center"><Rocket className="mx-auto text-primary h-10 w-10" /><h1 className="text-2xl font-display">Vamos conhecer sua rotina</h1><p className="text-sm text-muted-foreground">Confirme cinco informações para iniciar sua ficha. Depois, seus registros no app acompanharão sua evolução.</p><Button onClick={() => setProfileOpen(true)}>Confirmar minha ficha</Button><PDIWizard open={profileOpen} onClose={() => setProfileOpen(false)} onComplete={() => navigate('/9fit/os', { replace: true })} /></section></div>;
+  if (context.data?.profile.complete || row?.finished_at) return <div className="p-6 text-center text-muted-foreground">Abrindo sua jornada diária…</div>;
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased pb-24">

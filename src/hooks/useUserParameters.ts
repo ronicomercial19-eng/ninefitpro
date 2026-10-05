@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -39,19 +39,26 @@ export function useUserParameters() {
   const { user } = useAuth();
   const [params, setParams] = useState<UserParameters | null>(null);
   const [loading, setLoading] = useState(true);
+  const requestRef = useRef(0);
   const [exists, setExists] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    const request = ++requestRef.current;
     if (!user?.id) {
+      setParams(null); setExists(false); setError(null);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data } = await supabase
+    setParams(null); setExists(false); setError(null);
+    const { data, error: readError } = await supabase
       .from("user_parameters" as any)
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
+    if (request !== requestRef.current) return;
+    if (readError) { setError('Não foi possível ler sua ficha. Tente novamente.'); setLoading(false); return; }
     if (data) {
       setExists(true);
       setParams({ ...DEFAULTS, ...(data as any) });
@@ -67,18 +74,17 @@ export function useUserParameters() {
   const save = useCallback(
     async (patch: Partial<UserParameters>) => {
       if (!user?.id) return { error: "no_user" };
-      const merged = { ...(params || DEFAULTS), ...patch, user_id: user.id };
-      const { error } = await supabase
-        .from("user_parameters" as any)
-        .upsert(merged, { onConflict: "user_id" });
+      const merged = { ...(params || DEFAULTS), ...patch };
+      const { error } = await supabase.rpc("fn_save_pdi" as any, { p_patch: patch });
       if (!error) {
         setExists(true);
         setParams(merged as UserParameters);
+        window.dispatchEvent(new Event('9fit:profile-updated'));
       }
       return { error };
     },
     [params, user?.id]
   );
 
-  return { params: params || DEFAULTS, loading, exists, save, reload };
+  return { params: params || DEFAULTS, loading, error, exists, save, reload };
 }

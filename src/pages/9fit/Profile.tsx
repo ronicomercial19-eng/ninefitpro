@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { PDIWizard } from "@/components/9fit/PDIWizard";
+import { DynamicPDI } from '@/components/9fit/DynamicPDI';
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
 import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -107,6 +108,7 @@ export default function NineFitProfile() {
         />
       </section>
 
+      <div className="px-4 mt-5"><DynamicPDI /></div>
       {/* Menu */}
       <div className="px-4 mt-6 space-y-3">
         {items.map((it) => (

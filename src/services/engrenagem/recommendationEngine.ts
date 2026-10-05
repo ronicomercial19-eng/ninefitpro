@@ -4,6 +4,7 @@
  * for the OS dashboard and Hub. Mirrors the v2 prototype's agentService.
  */
 import { supabase } from '@/integrations/supabase/client';
+import { fetchDailyContext } from '@/services/dailyContext';
 
 export type Squad = 'EPSILON' | 'BETA' | 'ZETA' | 'OMEGA' | 'SIGMA';
 export type InsightPriority = 'high' | 'medium' | 'low';
@@ -79,19 +80,20 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
     ctx.hasActiveProtocol = (count ?? 0) > 0;
   }
 
+  try { const day = await fetchDailyContext(); ctx.syncScore = day.sync.value ?? 0; ctx.streak = day.streak; } catch { /* Do not infer new readiness from failed context reads. */ ctx.syncScore = 0; }
   return ctx;
 }
 
 export function getSquadInsights(ctx: EngrenagemContext): SquadInsight[] {
   const insights: SquadInsight[] = [];
 
-  // EPSILON — adaptive training
+  // EPSILON — recorded routine; the score never authorizes a load change
   if (ctx.syncScore >= 70) {
     insights.push({
       id: 'epsilon-progress',
       squad: 'EPSILON',
-      title: 'Janela de progressão aberta',
-      message: 'Sincronia alta. Hoje suporta +1 série em cada exercício composto.',
+      title: 'Confira seu treino de hoje',
+      message: 'Seus sinais e registros estão disponíveis. Siga a prescrição e revise qualquer dor antes de começar.',
       cta: { label: 'Iniciar treino', route: '/9fit/train' },
       priority: 'high',
       icon: 'training',
@@ -100,8 +102,8 @@ export function getSquadInsights(ctx: EngrenagemContext): SquadInsight[] {
     insights.push({
       id: 'epsilon-deload',
       squad: 'EPSILON',
-      title: 'Sistema pedindo deload',
-      message: 'Reduza volume em 30% hoje e priorize mobilidade.',
+      title: 'Confira seus sinais de hoje',
+      message: 'A leitura pede atenção. Revise a calibração e seu plano com o profissional antes de mudar cargas.',
       cta: { label: 'Ver protocolo leve', route: '/9fit/protocolo' },
       priority: 'high',
       icon: 'recovery',

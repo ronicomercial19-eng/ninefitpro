@@ -14,7 +14,7 @@ expect('AuthContext consome identidade canônica', authContext.includes("from('v
 expect('Serviço de auth resolve papel canônico', authService.includes("from('vw_current_identity')"));
 expect('PrivateRoute aceita papéis', privateRoute.includes('allowedRoles'));
 expect('Rotas administrativas exigem papel', app.includes('allowedRoles={["admin", "super_admin"]}'));
-expect('NineFitLayout usa identidade canônica', nineFitLayout.includes("from('vw_current_identity')"));
+expect('NineFitLayout usa identidade canônica', /\.from\(['"]vw_current_identity['"](?:\s+as\s+any)?\)/.test(nineFitLayout));
 
 for (const check of checks) console.log(`${check.pass ? 'PASS' : 'FAIL'} ${check.name}`);
 if (checks.some((check) => !check.pass)) process.exit(1);

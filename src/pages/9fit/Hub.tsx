@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { SyncScoreDiagnosisModal } from "@/components/9fit/SyncScoreDiagnosisModal";
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
+import { HubCommandDeck } from '@/components/9fit/HubCommandDeck';
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
@@ -165,6 +166,7 @@ export default function NineFitHub() {
         animate="visible"
         className="w-full space-y-6 px-4 md:px-6"
       >
+        <motion.div variants={hubStaggerItem}><HubCommandDeck name={name} syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} weekly={weekly} hasPlan={!!performancePlanTitle} /></motion.div>
         <motion.div variants={hubStaggerItem} className="relative">
           <HeroSyncSection
             name={name}
@@ -184,6 +186,7 @@ export default function NineFitHub() {
         </motion.div>
 
         <SyncScoreDiagnosisModal 
+           context={liveScores?.context}
            open={showDiagnosis} 
            onClose={() => setShowDiagnosis(false)}
            score={liveScores?.sync.value ?? null}

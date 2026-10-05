@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { businessDate } from '@/services/dailyContextRules';
 import { toast } from "sonner";
 import { Sparkles, ChevronRight, Brain, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   const {athleteId}=useAthleteId();
   const results=useRonResultCards(athleteId);
   const waterBusy=useRef(false);
-  async function logWater(){if(!athleteId||waterBusy.current)return;waterBusy.current=true;try{const {error}=await supabase.from("hydration_logs").insert({athlete_id:athleteId,log_date:format(new Date(),"yyyy-MM-dd"),amount_ml:500}).select("id").single();if(error)throw error;["9fit:hydration-updated","9fit:water-updated","9fit:sync_updated"].forEach(event=>window.dispatchEvent(new Event(event)));toast.success("500 ml de água registrados");}catch{toast.error("Não foi possível registrar a água.");}finally{waterBusy.current=false;}}
+  async function logWater(){if(!athleteId||waterBusy.current)return;waterBusy.current=true;try{const {error}=await supabase.from("hydration_logs").insert({athlete_id:athleteId,log_date:businessDate(),amount_ml:500}).select("id").single();if(error)throw error;["9fit:hydration-updated","9fit:water-updated","9fit:sync_updated"].forEach(event=>window.dispatchEvent(new Event(event)));toast.success("500 ml de água registrados");}catch{toast.error("Não foi possível registrar a água.");}finally{waterBusy.current=false;}}
   const [index,setIndex]=useState(0),[hovered,setHovered]=useState(false),[focused,setFocused]=useState(false),[manualPause,setManualPause]=useState(false),[calibration,setCalibration]=useState(false);
   useEffect(()=>{setIndex(0);setCalibration(false);},[athleteId]);
   const insight = reliable
