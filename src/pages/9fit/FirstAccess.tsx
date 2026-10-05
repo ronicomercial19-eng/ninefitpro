@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { finalizeFirstAccess } from "@/lib/firstAccess";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Lock, 
@@ -27,6 +28,8 @@ export default function FirstAccess() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [athleteName, setAthleteName] = useState("");
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAthleteData = async () => {
@@ -66,29 +69,37 @@ export default function FirstAccess() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-
-      // Marca first-access concluído de forma autoritativa (SECURITY DEFINER)
-      // Resolve o loop pós-troca de senha para coaches externos.
-      const { error: rpcError } = await supabase.rpc('complete_first_access' as any);
-      if (rpcError) console.error('[FirstAccess] RPC error:', rpcError);
-
-      // Refresh session para propagar claims atualizados
-      await supabase.auth.refreshSession();
-
-      // Fallback local — caminho de cinto-e-suspensório
-      localStorage.setItem('9fit_first_access_completed', 'true');
-
-      toast({
-        title: "Senha alterada!",
-        description: "Sua nova senha foi salva com sucesso",
-      });
-      setStep('tour-training');
-    } catch (error: any) {
+      setPasswordUpdated(true);
+      toast({ title: "Senha alterada!", description: "Sua nova senha foi salva com sucesso" });
+      await runFinalize();
+    } catch (error: unknown) {
       toast({
         title: "Erro ao alterar senha",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runFinalize = async () => {
+    setIsLoading(true);
+    setFinalizeError(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setFinalizeError("Sessão expirada. Entre novamente."); return; }
+      const res = await finalizeFirstAccess(
+        { rpc: (fn) => supabase.rpc(fn as never), refreshSession: () => supabase.auth.refreshSession() },
+        localStorage, user.id,
+      );
+      if (!res.ok) {
+        console.error("[FirstAccess] complete_first_access falhou:", res.error);
+        setFinalizeError("Sua senha foi salva, mas não conseguimos finalizar o primeiro acesso.");
+        return;
+      }
+      if (res.refreshFailed) console.warn("[FirstAccess] refreshSession falhou; conclusão mantida");
+      setStep('tour-training');
     } finally {
       setIsLoading(false);
     }
