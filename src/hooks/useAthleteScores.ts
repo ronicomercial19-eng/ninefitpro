@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useCallback, useRef } from "react";
+import type { DailyContext } from '@/services/dailyContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type HubMetricStatus = "not_collected" | "available" | "stale" | "error" | "offline";
 export type HubScoreStatus = "loading" | "available" | "calibrating" | "stale" | "error" | "offline";
@@ -12,6 +15,7 @@ export interface HubMetric {
 }
 
 export interface HubSnapshot {
+  context?: DailyContext;
   version: number;
   status: string;
   generated_at: string | null;
@@ -78,6 +82,7 @@ function mapPayload(raw: unknown): HubSnapshot | null {
 
   return {
     version: count(value.version) || 1,
+    context: value.context as DailyContext | undefined,
     status: typeof value.status === "string" ? value.status : "calibrating",
     generated_at: typeof value.generated_at === "string" ? value.generated_at : null,
     athlete: value.athlete && typeof value.athlete === "object"
@@ -119,6 +124,8 @@ function scoreStatus(snapshot: HubSnapshot | null): HubScoreStatus {
  * server-side; no user or athlete identity is trusted from the browser.
  */
 export const useAthleteScores = (athleteId: string | undefined | null) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [data, setData] = useState<HubSnapshot | null>(null);
   const [status, setStatus] = useState<HubScoreStatus>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -146,6 +153,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       if (rpcError) throw rpcError;
 
       const mapped = mapPayload(result);
+      if (mapped?.context && user?.id) queryClient.setQueryData(['daily-context', user.id], mapped.context);
       setData(mapped);
       setStatus(scoreStatus(mapped));
       setError(null);
@@ -155,13 +163,13 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       setStatus("error");
       setError(err?.message ?? "Não foi possível carregar o Hub.");
     }
-  }, [athleteId]);
+  }, [athleteId, queryClient, user?.id]);
 
   useEffect(() => {
     setData(null);
     userIdRef.current = null;
     fetchScores();
-    if (!athleteId) return;
+    if (!athleteId || !user?.id) return;
 
     let cancelled = false;
     void supabase.auth.getUser().then(({ data: authData }) => {
@@ -172,7 +180,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     const onOffline = () => { ++requestRef.current; setStatus("offline"); };
     const onOnline = () => void fetchScores();
     const onVisible = () => { if (document.visibilityState === "visible") void fetchScores(); };
-    const refreshEvents = ["9fit:sync_updated", "9fit:workout-updated", "9fit:protocol_completed", "9fit:nutrition-updated", "9fit:water-updated", "9fit:user-state-invalidated"];
+    const refreshEvents = ["9fit:sync_updated", "9fit:workout-updated", "9fit:protocol_completed", "9fit:nutrition-updated", "9fit:water-updated", "9fit:user-state-invalidated", "9fit:profile-updated", "9fit:day-reviewed"];
     refreshEvents.forEach(event => window.addEventListener(event, onOnline));
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("offline", onOffline);
@@ -181,12 +189,14 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     const channelName = `hub-snapshot:${athleteId}:${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
+      .on("postgres_changes", { event: "*", schema: "public", table: "daily_checkins", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
+      .on("postgres_changes", { event: "*", schema: "public", table: "athlete_day_reviews", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes", { event: "*", schema: "public", table: "nutrition_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes", { event: "*", schema: "public", table: "hydration_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "athletes", filter: `id=eq.${athleteId}` },
         () => void fetchScores())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs" },
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "sync_score_logs", filter: `user_id=eq.${user.id}` },
         (payload: any) => {
           const userId = payload?.new?.user_id;
           if (!userIdRef.current || userId === userIdRef.current) void fetchScores();
@@ -195,7 +205,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
         { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` },
         () => void fetchScores())
       .on("postgres_changes",
-        { event: "*", schema: "public", table: "master_registry" },
+        { event: "*", schema: "public", table: "master_registry", filter: `user_id=eq.${user.id}` },
         (payload: any) => {
           const userId = payload?.new?.user_id ?? payload?.old?.user_id;
           if (!userIdRef.current || userId === userIdRef.current) void fetchScores();
@@ -211,7 +221,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       window.removeEventListener("online", onOnline);
       void supabase.removeChannel(channel);
     };
-  }, [athleteId, fetchScores]);
+  }, [athleteId, fetchScores, user?.id]);
 
   return { data, status, loading: status === "loading", error, refresh: fetchScores };
 };

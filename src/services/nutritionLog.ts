@@ -1,9 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { businessDate } from '@/services/dailyContextRules';
 
 export async function saveNutritionLog(meal: { athlete_id: string; meal_name: string; calories: number; protein: number; carbs: number; fat: number; date?: string }) {
   if (!meal.athlete_id || !meal.meal_name.trim() || [meal.calories, meal.protein, meal.carbs, meal.fat].some(v => !Number.isFinite(v) || v < 0)) throw new Error("Revise o nome e os valores da refeição.");
-  const { data, error } = await supabase.from("nutrition_logs").insert({ ...meal, date: meal.date || format(new Date(), "yyyy-MM-dd") }).select().single();
+  const { data, error } = await supabase.from("nutrition_logs").insert({ ...meal, date: meal.date || businessDate() }).select().single();
   if (error) throw error;
   window.dispatchEvent(new CustomEvent("9fit:nutrition-updated", { detail: data }));
   // The diary is durable before optional score synchronization begins.

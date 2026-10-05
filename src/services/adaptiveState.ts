@@ -92,9 +92,9 @@ export const STATE_INSIGHT: Record<UserState, string[]> = {
     'Registre como você está hoje para começarmos uma leitura confiável.',
   ],
   power: [
-    'Você está operando acima da média. Hoje é dia de progressão.',
-    'Sistema calibrado. Aumente um pouco o desafio.',
-    'Tudo verde. Empilhe um bloco extra hoje.',
+    'Você relatou bons sinais hoje. Confira seu plano.',
+    'Calibração registrada. Siga a prescrição confirmada.',
+    'Energia positiva não substitui a revisão de dor ou restrições.',
   ],
   low: [
     'Sistema pedindo recuperação. Vamos no leve hoje.',

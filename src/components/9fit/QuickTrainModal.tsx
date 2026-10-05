@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { businessDate } from '@/services/dailyContextRules';
 import { useEffect, useRef, useState } from 'react';
 import { X, Loader2, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -37,7 +37,7 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
   const [region, setRegion] = useState('');
   const requestRef = useRef(0), busyRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = businessDate();
 
   async function loadContext() {
     if (!athleteId) { setError('Perfil de atleta não encontrado. Feche e tente novamente.'); return; }
