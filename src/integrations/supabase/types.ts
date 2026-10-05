@@ -8287,6 +8287,7 @@ export type Database = {
           carbs: number | null
           created_at: string | null
           date: string
+          adherence_status: string | null
           fat: number | null
           id: string
           meal_name: string
@@ -8298,6 +8299,7 @@ export type Database = {
           carbs?: number | null
           created_at?: string | null
           date?: string
+          adherence_status?: string | null
           fat?: number | null
           id?: string
           meal_name: string
@@ -8309,6 +8311,7 @@ export type Database = {
           carbs?: number | null
           created_at?: string | null
           date?: string
+          adherence_status?: string | null
           fat?: number | null
           id?: string
           meal_name?: string

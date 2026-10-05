@@ -54,6 +54,7 @@ const LOCAL_SIMULATION_WAYPOINTS: LatLng[] = [
 export default function NineFitMove() {
   const showSimulationControls = import.meta.env.DEV;
   const { user } = useAuth();
+  const [recentRuns, setRecentRuns] = useState<Array<{ distanceKm: number; durationSeconds: number; date: string }>>([]);
   const [running, setRunning] = useState(false);
 
   const [isPaused, setIsPaused] = useState(false);
@@ -81,6 +82,19 @@ export default function NineFitMove() {
   const lastGeocodeTimeRef = useRef(0);
   const lastGeocodedCoordRef = useRef<LatLng | null>(null);
   const captureCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!user?.id) { setRecentRuns([]); return; }
+    let active = true;
+    void supabase.from('bio_activity_logs').select('distance_m,recorded_at').eq('user_id', user.id).eq('source', 'move_gps').order('recorded_at', { ascending: false }).limit(10).then(({ data, error }) => {
+      if (!active || error) return;
+      const rows = (data ?? []).map((row) => ({ distanceKm: Number(row.distance_m ?? 0) / 1000, durationSeconds: 0, date: row.recorded_at ?? '' })).filter((row) => row.distanceKm > 0);
+      const local = JSON.parse(localStorage.getItem('9fit_move_history') || '[]') as Array<{ distanceKm: number; durationSeconds: number; date: string }>;
+      const merged = [...local, ...rows].filter((run, index, all) => all.findIndex((candidate) => Math.abs(candidate.distanceKm - run.distanceKm) < 0.01 && candidate.date === run.date) === index).slice(0, 10);
+      setRecentRuns(merged);
+    });
+    return () => { active = false; };
+  }, [user?.id, activitySaved]);
 
   useEffect(() => {
     let mounted = true;
@@ -542,6 +556,11 @@ export default function NineFitMove() {
           {voiceAudio ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4" />}
         </button>
       </div>
+
+      {!running && <section className="mx-5 mb-4 rounded-2xl border border-primary/25 bg-primary/[0.06] p-4" aria-label="Sugestão da próxima corrida">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-primary">SUA PRÓXIMA SESSÃO</p>
+        {recentRuns.length ? <><p className="mt-1 text-sm font-semibold text-white">Use seu histórico como referência, sem aumentar a carga automaticamente.</p><p className="mt-1 text-xs text-neutral-400">Último registro: {recentRuns[0].distanceKm.toFixed(2)} km · {recentRuns[0].date ? new Date(recentRuns[0].date).toLocaleDateString('pt-BR') : 'data indisponível'}. Repita uma distância confortável ou escolha uma caminhada leve.</p></> : <><p className="mt-1 text-sm font-semibold text-white">Comece com uma caminhada confortável.</p><p className="mt-1 text-xs text-neutral-400">Seu histórico ainda não tem corridas registradas. A primeira atividade cria uma referência para suas próximas sessões.</p></>}
+      </section>}
 
       {/* RUA ATUAL DETECTADA EM TEMPO REAL PELO GOOGLE GEOCODER */}
       <div className="mx-5 mb-3 rounded-2xl bg-gradient-to-r from-primary/15 via-[#0e1017] to-black border border-primary/30 p-3.5 shadow-lg flex items-center justify-between gap-3">

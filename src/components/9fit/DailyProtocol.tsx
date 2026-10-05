@@ -3,10 +3,12 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Brain, Dumbbell, Apple, Wind, Check, Flame } from "lucide-react";
+import { Brain, Dumbbell, Apple, Wind, Check, Flame, Play, Timer, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useUserState } from "@/hooks/useUserState";
+import { useNavigate } from "react-router-dom";
+import { businessDate } from "@/services/dailyContextRules";
 
 
 interface Task {
@@ -58,6 +60,7 @@ const POWER_BONUS = {
 } as const;
 
 export function DailyProtocol() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { athleteId } = useAthleteId();
   const [revision, setRevision] = useState(0);
@@ -66,12 +69,15 @@ export function DailyProtocol() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+  const [guidedTask, setGuidedTask] = useState<string | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [guidedSaving, setGuidedSaving] = useState(false);
 
 
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const today = format(new Date(), "yyyy-MM-dd");
+      const today = businessDate();
       const { data } = await supabase
         .from("daily_tasks")
         .select("*")
@@ -118,6 +124,12 @@ export function DailyProtocol() {
     })();
   }, [user?.id, athleteId, revision]);
 
+  useEffect(() => {
+    if (!guidedTask || secondsLeft <= 0) return;
+    const timer = window.setTimeout(() => setSecondsLeft((value) => value - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [guidedTask, secondsLeft]);
+
   const complete = async (task: Task) => {
     if (task.completed || working) return;
     setWorking(task.id);
@@ -137,7 +149,7 @@ export function DailyProtocol() {
           user_id: user.id,
           event_type: "daily_protocol_step",
           source: "daily_protocol",
-          payload: { task_key: task.task_key, title: task.title, xp: task.xp_reward },
+          payload: { task_key: task.task_key, title: task.title, source: 'guided_protocol' },
         })
         .then(() => {});
     }
@@ -155,6 +167,38 @@ export function DailyProtocol() {
       window.dispatchEvent(new CustomEvent("9fit:protocol_completed", {
         detail: { kind: "adherence", completedTasks: newTasks.length },
       }));
+    }
+  };
+
+  const startTask = (task: Task) => {
+    if (task.completed) return;
+    if (task.task_key === 'nutri_log') { navigate('/9fit/dieta?action=log'); return; }
+    if (task.task_key === 'elite_training') { navigate('/9fit/train'); return; }
+    setGuidedTask(task.id);
+    setSecondsLeft(task.task_key === 'neural_prep' ? 300 : 480);
+  };
+
+  const finishGuidedTask = async (task: Task) => {
+    if (secondsLeft > 0 || guidedSaving) return;
+    setGuidedSaving(true);
+    try {
+      if (task.task_key === 'recovery' && user?.id) {
+        const { error } = await supabase.from('master_registry').insert({
+          user_id: user.id,
+          event_type: 'mobility_log',
+          source: 'daily_protocol_guided_recovery',
+          payload: { task_key: task.task_key, duration_minutes: 8, completed_at: new Date().toISOString() },
+        });
+        if (error) throw error;
+      }
+      setGuidedTask(null);
+      setSecondsLeft(0);
+      await complete(task);
+      if (task.task_key === 'recovery') window.dispatchEvent(new Event('9fit:sync_updated'));
+    } catch {
+      toast.error('Não foi possível salvar a conclusão. Tente novamente.');
+    } finally {
+      setGuidedSaving(false);
     }
   };
 
@@ -198,7 +242,7 @@ export function DailyProtocol() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, delay: idx * 0.04 }}
-              onClick={() => !task.completed && complete(task)}
+              onClick={() => startTask(task)}
               disabled={task.completed || working === task.id}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                 task.completed ? "opacity-50" : "hover:bg-primary/5 active:bg-primary/10"
@@ -220,9 +264,7 @@ export function DailyProtocol() {
                 <p className="text-sm font-semibold text-foreground truncate">{def.title}</p>
                 <p className="text-[11px] text-muted-foreground truncate">{def.why}</p>
               </div>
-              <span className="shrink-0 text-[9px] tracking-[0.18em] uppercase text-muted-foreground font-data">
-                {def.duration}
-              </span>
+              <span className="shrink-0 text-[9px] tracking-[0.18em] uppercase text-muted-foreground font-data flex items-center gap-1">{task.completed ? <Check className="h-3 w-3"/> : <Play className="h-3 w-3"/>}{task.completed ? 'FEITO' : def.duration}</span>
             </motion.button>
           );
         })}
@@ -247,6 +289,24 @@ export function DailyProtocol() {
           </div>
         )}
       </div>
+      {guidedTask && (() => {
+        const task = tasks.find((item) => item.id === guidedTask);
+        if (!task) return null;
+        const isBreath = task.task_key === 'neural_prep';
+        const elapsed = (task.task_key === 'neural_prep' ? 300 : 480) - secondsLeft;
+        const phase = isBreath ? (Math.floor(elapsed / 5) % 2 === 0 ? 'Inspire pelo nariz' : 'Expire devagar') : 'Faça mobilidade leve, sem dor e respeitando seu limite';
+        return <div role="dialog" aria-modal="true" aria-label={isBreath ? 'Respiração guiada' : 'Mobilidade guiada'} className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-background p-5 text-center shadow-2xl">
+            <button className="ml-auto block rounded p-1 text-muted-foreground" aria-label="Fechar protocolo" onClick={() => { setGuidedTask(null); setSecondsLeft(0); }}><X className="h-4 w-4"/></button>
+            <Timer className="mx-auto mb-3 h-7 w-7 text-primary"/>
+            <h3 className="text-lg font-semibold">{isBreath ? 'Pausa e respiração' : 'Recovery · mobilidade leve'}</h3>
+            <p className="my-3 text-sm text-muted-foreground">{phase}</p>
+            <p className="font-mono text-3xl">{String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}</p>
+            <p className="mt-2 text-xs text-muted-foreground">O registro só será concluído ao terminar o guia.</p>
+            <button disabled={secondsLeft > 0 || guidedSaving || working === task.id} onClick={() => void finishGuidedTask(task)} className="mt-4 w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50">{secondsLeft > 0 ? 'Em andamento…' : guidedSaving || working === task.id ? 'Salvando…' : 'Concluir intervenção'}</button>
+          </div>
+        </div>;
+      })()}
     </div>
   );
 }
