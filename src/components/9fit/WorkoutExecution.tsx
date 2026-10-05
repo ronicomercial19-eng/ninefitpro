@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import type { WorkoutExecutionStatus } from "@/types/training";
 import { useWorkoutAssistance } from '@/hooks/useWorkoutAssistance';
 import { WorkoutRonAssistance } from './WorkoutRonAssistance';
+import { businessDate } from '@/services/dailyContextRules';
 
 
 interface WorkoutExercise {
@@ -133,8 +134,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [dailyOverride, setDailyOverride] = useState<DailyOverride | null>(null);
   const [showAdjustment, setShowAdjustment] = useState(false);
 
-  const todayKey = WEEKDAY_KEYS[new Date().getDay()];
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const businessToday = new Date(`${businessDate()}T12:00:00`);
+  const todayKey = WEEKDAY_KEYS[businessToday.getDay()];
+  const todayISO = businessDate();
 
   // Apply daily override (from ajuste-treino) on top of base exercises
   const baseExercises = liveTraining.training_data?.exercises || [];
