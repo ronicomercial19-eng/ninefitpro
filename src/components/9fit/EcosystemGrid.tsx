@@ -518,10 +518,10 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
 
       <EcosystemOverlay open={showOverlay} initialModuleKey={previewModuleKey} onClose={() => setShowOverlay(false)} />
 
-      <div className={gridClass}>{visibleItems.map((m, index) => {
+      {(!showHeader || showAll) && <div className={gridClass}>{visibleItems.map((m, index) => {
         const route = moduleRoute(m) || fallbackRoutes[m.key];
         return <button key={m.id} type="button" onClick={() => { if (onModuleSelect) onModuleSelect(m); else { setPreviewModuleKey(m.key); setShowOverlay(true); } }} className="rounded-2xl border border-white/10 bg-card p-4 text-left"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="text-xs text-primary">Experimentar módulo →</span></button>;
-      })}</div>
+      })}</div>}
     </section>
   );
 }
