@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethoscope, Apple } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation,useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +35,9 @@ const SERVICES_BY_ROLE: Record<string, { key: string; name: string; desc: string
 
 export default function NineFitStaff() {
   const navigate = useNavigate();
+  const location=useLocation();const [searchParams]=useSearchParams();
+  const nutritionReview=(location.state as any)?.nutritionReview;
+  const dietReview=searchParams.get("context")==="diet_review";
   const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
   const [pros, setPros] = useState<Pro[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,20 +60,21 @@ export default function NineFitStaff() {
     })();
   }, []);
 
+  const visiblePros=dietReview?pros.filter(p=>p.role==="nutritionist"):pros;
   const services = selected ? (SERVICES_BY_ROLE[selected.role] || SERVICES_BY_ROLE.default) : [];
 
   const bookService = (svcKey: string) => {
     if (!selected) return;
-    toast.success(`Agendando ${svcKey} com ${selected.full_name}...`);
+    const service=svcKey === "avaliacao" ? "avaliacao_fisica" : svcKey === "plano" ? "consultoria" : svcKey;
+    navigate(`/9fit/aulas-creditos?teacher_id=${encodeURIComponent(selected.user_id)}&service=${encodeURIComponent(service)}&tab=schedule`,{state:{nutritionReview}});
     setSelected(null);
-    navigate("/9fit/aulas-creditos");
   };
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // STAFF</p>
-        <h1 className="text-massive text-3xl text-foreground mt-1">SUPPORT ELITE</h1>
+        <h1 className="text-massive text-3xl text-foreground mt-1">{dietReview?"REVISÃO NUTRICIONAL":"SUPPORT ELITE"}</h1>
         <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">Equipe · Serviços · Agendamento</p>
       </div>
 
@@ -112,12 +116,13 @@ export default function NineFitStaff() {
       {tab === "team" && (
         <div className="px-4 space-y-2">
           {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
-          {!loading && pros.length === 0 && (
+          {nutritionReview&&<p className="rounded-xl border border-primary/30 p-3 text-sm">Plano: {nutritionReview.dietName}. Escolha um nutricionista para discutir o ajuste; os registros seguem junto com o agendamento.</p>}
+          {!loading && visiblePros.length === 0 && (
             <div className="glass-mission rounded-xl p-6 text-center text-xs text-muted-foreground">
-              Nenhum profissional ativo no momento.
+              {dietReview?"Nenhum nutricionista ativo disponível. Consulte a equipe no sistema nativo.":"Nenhum profissional ativo no momento."}
             </div>
           )}
-          {pros.map((p) => (
+          {visiblePros.map((p) => (
             <button
               key={p.user_id}
               onClick={() => setSelected(p)}

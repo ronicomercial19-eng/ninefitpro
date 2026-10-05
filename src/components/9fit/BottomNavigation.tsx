@@ -13,6 +13,8 @@ const navItems = [
   { icon: LayoutGrid, label: "HUB", path: "/9fit/hub" },
   { icon: User, label: "PERFIL", path: "/9fit/profile" },
 ];
+// Temporário: preserva a rota e o componente Prime para reativação.
+const SHOW_CENTER_PRIME = false;
 
 export function BottomNavigation() {
   const location = useLocation();
@@ -25,7 +27,7 @@ export function BottomNavigation() {
     <nav className="fixed bottom-3 left-3 right-3 z-40 pb-safe">
       <div className="mx-auto max-w-md surface-elevated rounded-full backdrop-blur-xl bg-card/90">
         <div className="flex items-center justify-around h-16 px-2">
-          {navItems.map(({ icon: Icon, label, path, center }) => {
+          {navItems.filter(item => SHOW_CENTER_PRIME || !item.center).map(({ icon: Icon, label, path, center }) => {
             const premium = center;
             const isActive =
               location.pathname === path ||

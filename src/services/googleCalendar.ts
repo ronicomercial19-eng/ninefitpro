@@ -16,6 +16,26 @@ export interface GoogleCalendarEvent {
   location?: string;
 }
 
+/** Stable event IDs make retries update the same confirmed commitment. */
+export async function syncConfirmedCommitment(accessToken:string, id:string, event:CalendarEventInput):Promise<GoogleCalendarEvent>{
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw new Error('Compromisso inválido');
+  const eventId=`9fit${id.replace(/-/g,'').toLowerCase()}`;
+  const base='https://www.googleapis.com/calendar/v3/calendars/primary/events';
+  const headers={Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'};
+  const body={summary:event.summary,description:event.description||'Compromisso confirmado no FitPro',start:{dateTime:event.startDateTime},end:{dateTime:event.endDateTime},...(event.location?{location:event.location}:{})};
+  const existing=await fetch(`${base}/${eventId}`,{headers});
+  if(existing.status!==404&&!existing.ok)throw new Error(existing.status===401?'Reconecte sua Google Agenda.':'Não foi possível consultar a Google Agenda.');
+  let response=await fetch(existing.ok?`${base}/${eventId}`:base,{method:existing.ok?'PATCH':'POST',headers,body:JSON.stringify(existing.ok?body:{...body,id:eventId})});
+  if(response.status===409)response=await fetch(`${base}/${eventId}`,{method:'PATCH',headers,body:JSON.stringify(body)});
+  if(!response.ok)throw new Error(response.status===401?'Reconecte sua Google Agenda.':'Falha na sincronização. Sua reserva no FitPro continua válida.');
+  return response.json();
+}
+export async function removeCalendarCommitment(accessToken:string,eventId:string):Promise<void>{
+  if(!/^9fit[0-9a-f]{32}$/.test(eventId))throw new Error('Evento de calendário inválido');
+  const response=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,{method:'DELETE',headers:{Authorization:`Bearer ${accessToken}`}});
+  if(!response.ok&&response.status!==404&&response.status!==410)throw new Error('Reserva cancelada no FitPro; atualize o cancelamento no Google Agenda.');
+}
+
 /**
  * Fetch upcoming events from Google Calendar
  */

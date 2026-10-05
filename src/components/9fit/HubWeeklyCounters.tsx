@@ -11,7 +11,7 @@ export function HubWeeklyCounters({ treinos, nutri, minutos }: Props) {
   const navigate = useNavigate();
   const items = [
     { label: "TREINO",  value: treinos, suffix: "/sem", Icon: Dumbbell, cta: "Registrar",  route: "/9fit/train" },
-    { label: "NUTRI",   value: nutri,   suffix: "/sem", Icon: Apple,    cta: "Logar",      route: "/9fit/foods" },
+    { label: "NUTRI",   value: nutri,   suffix: "/sem", Icon: Apple,    cta: "Logar",      route: "/9fit/dieta?action=log" },
     { label: "MOVE",    value: minutos, suffix: "min",  Icon: Activity, cta: "Correr",  route: "/9fit/move" },
   ];
 
@@ -20,7 +20,7 @@ export function HubWeeklyCounters({ treinos, nutri, minutos }: Props) {
       {items.map(({ label, value, suffix, Icon, cta, route }) => {
         const zero = !value || value === 0;
         return (
-          <div key={label} className="surface-card hub-card-interactive p-3 flex flex-col items-center text-center">
+          <button key={label} type="button" onClick={()=>navigate(route)} className="surface-card hub-card-interactive p-3 flex flex-col items-center text-center">
             <Icon className="w-4 h-4 text-primary mb-1" />
             <p className="text-label">{label}</p>
             <p className={`font-data text-2xl ${zero ? "text-muted-foreground" : "text-foreground"}`}>
@@ -28,14 +28,13 @@ export function HubWeeklyCounters({ treinos, nutri, minutos }: Props) {
               <span className="text-[10px] text-muted-foreground ml-1">{suffix}</span>
             </p>
             {zero && (
-              <button
-                onClick={() => navigate(route)}
+              <span
                 className="mt-1 text-[10px] font-semibold text-primary inline-flex items-center gap-1"
               >
                 {cta} <ArrowRight className="w-3 h-3" />
-              </button>
+              </span>
             )}
-          </div>
+          </button>
         );
       })}
     </div>

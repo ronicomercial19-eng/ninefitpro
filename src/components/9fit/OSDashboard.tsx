@@ -537,35 +537,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                 )}
 
                 {/* 2. NUTRICIONAL: Janela Metabólica & Dieta */}
-                {activeModal === 'nutricional' && (
-                  <div className="space-y-2.5"><NutritionTodaySummary />
-                    <div className="text-center pb-0.5">
-                      <h3 className="text-sm sm:text-base font-bold text-white font-display">Bio-Nutrição & Janela Metabólica</h3>
-                      <p className="text-[11.5px] text-neutral-400">Registros de refeição e hidratação conectados à dieta</p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-lg bg-black/40 border border-white/5 text-center">
-                      <div>
-                        <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">PROTEÍNA</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri > 0 ? 'Com registro' : 'Sem meta'}</span>
-                      </div>
-                      <div>
-                        <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">REFEIÇÕES</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">{weekly.nutri > 0 ? `${weekly.nutri} registradas` : 'Nenhuma'}</span>
-                      </div>
-                      <div>
-                        <span className="text-[8.5px] font-mono uppercase text-neutral-400 block font-medium">HIDRATAÇÃO</span>
-                        <span className="text-xs font-bold text-white font-mono mt-0.5 block">Registrar</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => { setActiveModal(null); navigate('/9fit/dieta'); }}
-                      className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
-                    >
-                      <Flame className="w-3.5 h-3.5" />
-                      <span>Acessar Dieta</span>
-                    </button>
-                  </div>
-                )}
+                {activeModal === 'nutricional' && <NutritionTodaySummary interactive />}
 
                 {/* 3. PSICOLÓGICA: Ron AI & Active Skills */}
                 {activeModal === 'psicologica' && (
