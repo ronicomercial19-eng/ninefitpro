@@ -26,7 +26,7 @@ import { HubWeeklyCounters } from "@/components/9fit/HubWeeklyCounters";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 import { UpsellBanner } from "@/components/9fit/UpsellBanner";
-import { QuickCheckIn } from "@/components/9fit/QuickCheckIn";
+import { UpcomingCommitments } from "./UpcomingCommitments";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 
 interface Props {
@@ -94,10 +94,10 @@ export function FitOSConsoleDock({
     },
     metrics: {
       key: "metrics",
-      tag: "MÉTRICAS SEMANAIS",
+      tag: "ALIMENTAÇÃO DO DIA",
       title: "Dieta",
-      subtitle: `Treino ${weekly.treinos} · Nutri ${weekly.nutri} · Move ${weekly.minutos}min`,
-      statusText: "SINCRONIZADO",
+      subtitle: "Dieta, refeições e hidratação em um só lugar",
+      statusText: "ABRIR DIÁRIO",
       telemetryBadge: `T:${weekly.treinos} · N:${weekly.nutri} · M:${weekly.minutos}m`,
       icon: Activity,
       accentColor: "#10B981",
@@ -116,9 +116,9 @@ export function FitOSConsoleDock({
     },
     checkin: {
       key: "checkin",
-      tag: "AGENDA E PRESENÇA",
-      title: "Check-in de Aula",
-      subtitle: "Confirmação rápida e reserva de vaga guiada",
+      tag: "AGENDA DO ATLETA",
+      title: "Compromissos",
+      subtitle: "Aulas, avaliações e início de novas prescrições",
       statusText: "DISPONÍVEL",
       telemetryBadge: "Reserva Ágil",
       icon: CalendarCheck,
@@ -341,14 +341,7 @@ export function FitOSConsoleDock({
 
               {/* Conteúdo Dinâmico do Módulo */}
               <div className="flex-1 overflow-y-auto px-0.5 py-1">
-                {activeModule === "metrics" && (
-                  <div className="space-y-3">
-                    <HubFloatingMetrics vitals={liveScoresVitals} />
-                    <div className="mt-3">
-                      <QuickMoodInput onLogged={invalidateUserState} />
-                    </div>
-                  </div>
-                )}
+                {activeModule === "metrics" && <NutritionTodaySummary interactive />}
 
                 {activeModule === "activation" && (
                   <div className="space-y-3">
@@ -421,7 +414,7 @@ export function FitOSConsoleDock({
 
                 {activeModule === "checkin" && (
                   <div className="space-y-3">
-                    <QuickCheckIn />
+                    <UpcomingCommitments />
                   </div>
                 )}
 

@@ -1,8 +1,9 @@
 import { format } from "date-fns";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Play, Loader2, Dumbbell, Lock, Check } from "lucide-react";
+import { Calendar, Play, Loader2, Dumbbell, Lock, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { weeklyAdherence } from '@/services/athleteCardRules';
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -54,20 +55,25 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
   const [days, setDays] = useState<DayPlan[]>([]);
   const [phase, setPhase] = useState<string>("");
   const [match, setMatch] = useState<number>(0);
+  const [selectedDay,setSelectedDay]=useState(0),[failed,setFailed]=useState(false);
+  const initialized=useRef(false);
 
   const todayISO = format(new Date(), "yyyy-MM-dd");
 
   const loadWeek = useCallback(async () => {
     if (!athleteId) return;
     setLoading(true);
+    setFailed(false);
     try {
       const { data, error } = await supabase.rpc("fn_get_week_workouts", { p_athlete_id: athleteId });
       if (error) throw error;
       const payload = (data || {}) as WeekPayload;
       setPhase(String(payload.phase_status || ""));
-      setMatch(Number(payload.match_percentage || 0));
       const week = payload.week || [];
-      const { data: recordedSets } = await supabase.from("workout_exercise_sets").select("exercise_name,set_number,workout_executions!inner(athlete_id,workout_date)").eq("workout_executions.athlete_id",athleteId).eq("completed",true).gte("workout_executions.workout_date",week[0]?.workout_date || week[0]?.date || todayISO).lte("workout_executions.workout_date",week[week.length-1]?.workout_date || week[week.length-1]?.date || todayISO);
+      setMatch(weeklyAdherence(week.map(d=>({date:d.workout_date||d.date||"",status:d.status||"planned",exerciseCount:d.exercises?.length??0})),todayISO)??0);
+      const { data: recordedSets, error: setsError } = await supabase.from("workout_exercise_sets").select("exercise_name,set_number,workout_executions!inner(athlete_id,workout_date,daily_workout_id)").eq("workout_executions.athlete_id",athleteId).eq("completed",true).gte("workout_executions.workout_date",week[0]?.workout_date || week[0]?.date || todayISO).lte("workout_executions.workout_date",week[week.length-1]?.workout_date || week[week.length-1]?.date || todayISO);
+      if(setsError)throw setsError;
+      setSelectedDay(previous=>{if(!initialized.current){initialized.current=true;return Math.max(0,week.findIndex(d=>(d.workout_date||d.date)===todayISO));}return Math.min(previous,Math.max(0,week.length-1));});
       setDays(week.map((d) => ({
         id: d.id || d.daily_workout_id || d.workout_id,
         date: d.workout_date || d.date,
@@ -75,7 +81,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
         status: d.status || "planned",
         exercises: (d.exercises || []).map((e) => ({
           id: e.id,
-          completed: new Set((recordedSets || []).filter(s => s.exercise_name === e.name && s.workout_executions.workout_date === (d.workout_date || d.date)).map(s=>s.set_number)).size >= Number(e.sets || 3),
+          completed: new Set((recordedSets || []).filter(s => s.exercise_name === e.name && s.workout_executions.daily_workout_id === d.id && s.workout_executions.workout_date === (d.workout_date || d.date)).map(s=>s.set_number)).size >= Number(e.sets || 3),
           name: e.name,
           sets: e.sets,
           reps: e.reps_range || e.reps,
@@ -85,11 +91,13 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
         })),
       })));
     } catch (e) {
+      setFailed(true);
       console.error("[WeeklyTrainingView] fn_get_week_workouts", e);
     } finally { setLoading(false); }
   }, [athleteId]);
 
   useEffect(() => {
+    initialized.current=false;setSelectedDay(0);
     loadWeek();
     window.addEventListener("9fit:workout-updated", loadWeek);
     if (!athleteId) return;
@@ -118,7 +126,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Treinos da Semana</p>
           <p className="text-xs text-muted-foreground">
             Fase: <span className="text-foreground font-semibold">{phaseLabel}</span>
-            {match > 0 && <> · Aderência {match}%</>}
+            {days.some(d=>d.date<=todayISO&&d.status!=="rest"&&d.exercises.length>0) && <> · Aderência {match}%</>}
           </p>
         </div>
       </div>
@@ -129,13 +137,16 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
         </div>
       )}
 
-      {!loading && days.length === 0 && (
+      {!loading && failed && <div role="alert" className="text-sm"><p>Não foi possível atualizar os treinos da semana.</p><button className="text-primary" onClick={()=>void loadWeek()}>Tentar novamente</button></div>}
+      {!loading && !failed && days.length>0 && <div className="flex items-center justify-between"><button aria-label="Dia anterior" disabled={selectedDay===0} onClick={()=>setSelectedDay(n=>n-1)} className="rounded-lg border border-white/10 p-2 disabled:opacity-30"><ChevronLeft className="w-5 h-5"/></button><span className="text-sm">{days[selectedDay]?.day_label} · {selectedDay+1} de {days.length}</span><button aria-label="Próximo dia" disabled={selectedDay>=days.length-1} onClick={()=>setSelectedDay(n=>n+1)} className="rounded-lg border border-white/10 p-2 disabled:opacity-30"><ChevronRight className="w-5 h-5"/></button></div>}
+      {!loading && !failed && days.length === 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-muted-foreground text-sm">
           Nenhum plano ativo encontrado para esta semana. Quando seu professor atribuir um treino, ele aparecerá aqui.
         </div>
       )}
 
-      {!loading && days.map((d, i) => {
+      {!loading && !failed && days.map((d, i) => {
+        if(i!==selectedDay)return null;
         const isToday = d.date === todayISO;
         const isDone = d.status === "completed";
         const isRest = d.status === "rest";
@@ -215,11 +226,12 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                   {!isRest && (
                     <button
                       type="button"
+                      disabled={isDone || !isToday}
                       onClick={() => onExecuteToday(d)}
                       className="py-2 px-4 rounded-lg font-bold text-xs flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
                     >
                       <Play className="w-3 h-3 fill-current" />
-                      <span>{isDone ? "Refazer Treino" : "Executar Treino"}</span>
+                      <span>{isDone ? "Concluído" : !isToday ? "Dia programado" : d.status=== "in_progress" ? "Retomar treino" : "Executar Treino"}</span>
                     </button>
                   )}
                 </div>
@@ -238,7 +250,8 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                       <button
                         key={j}
                         type="button"
-                        onClick={() => onExecuteToday(d)}
+                        disabled={isDone || !isToday}
+                      onClick={() => onExecuteToday(d)}
                         className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-primary/40 transition-all text-left cursor-pointer group/item"
                       >
                         {/* Checkmark Laranja no padrão da imagem enviada */}
@@ -253,15 +266,6 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
                         )}
                       </button>
                     ))}
-                    {d.exercises.length > 4 && (
-                      <button
-                        type="button"
-                        onClick={() => onExecuteToday(d)}
-                        className="text-[10px] font-mono uppercase tracking-widest text-primary/80 hover:text-primary pt-1 text-left pl-2 cursor-pointer transition-colors"
-                      >
-                        + {d.exercises.length - 4} exercícios prescritos
-                      </button>
-                    )}
                   </div>
                 )}
               </div>

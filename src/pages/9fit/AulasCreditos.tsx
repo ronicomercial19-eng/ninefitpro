@@ -1,3 +1,7 @@
+import { getAccessToken,googleSignIn } from "@/services/googleAuth";
+import { removeCalendarCommitment } from "@/services/googleCalendar";
+import { serviceCreditBalance } from "@/services/athleteCardRules";
+import { ServiceCreditOptions } from "@/components/9fit/ServiceCreditOptions";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { format, differenceInMinutes, isBefore, addMinutes, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -5,7 +9,7 @@ import {
   Calendar as CalendarIcon, Clock, CheckCircle2, XCircle, AlertCircle,
   Loader2, ChevronRight, History, CalendarDays, Activity, Sparkles,
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams,useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -31,6 +35,8 @@ interface Appointment {
   notes: string | null;
   appointment_type: string | null;
   title: string | null;
+  google_calendar_event_id: string | null;
+  google_calendar_status: string;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -62,10 +68,19 @@ export default function AulasCreditos() {
   const { user } = useAuth();
   const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
+  const location=useLocation();
+  const nutritionReview=(location.state as any)?.nutritionReview;
   const [searchParams] = useSearchParams();
   const staffProfessionalId = searchParams.get("staff_professional_id");
   const staffMethodId = searchParams.get("staff_method_id");
   const staffHub = searchParams.get("hub");
+  const requestedTeacher=searchParams.get("teacher_id");
+  const [tab,setTab]=useState(searchParams.get("tab") || "schedule");
+  const [appointmentType,setAppointmentType]=useState(searchParams.get("service") || "aula");
+  const [lastReserved,setLastReserved]=useState(false);
+  const [creditError,setCreditError]=useState(false);
+  const [creditLoading,setCreditLoading]=useState(true);
+  const [duration,setDuration]=useState(60);
 
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +93,7 @@ export default function AulasCreditos() {
   const [date, setDate] = useState("");
   const [accountingMonth, setAccountingMonth] = useState(format(new Date(), "yyyy-MM"));
   const [time, setTime] = useState("");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(nutritionReview?.summary || "");
 
   const todayISO = format(new Date(), "yyyy-MM-dd");
 
@@ -91,7 +106,7 @@ export default function AulasCreditos() {
     const start = startOfMonth(new Date()).toISOString();
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, scheduled_at, duration, status, confirmed_at, notes, appointment_type, title")
+      .select("id, scheduled_at, duration, status, confirmed_at, notes, appointment_type, title, google_calendar_event_id, google_calendar_status")
       .eq("student_id", athleteId)
       
       .order("scheduled_at", { ascending: false });
@@ -101,14 +116,17 @@ export default function AulasCreditos() {
   }, [athleteId]);
 
   const fetchPlan = useCallback(async () => {
-    if (!athleteId) return;
-    const { data: credits } = await supabase
+    if (!athleteId) {setCreditLoading(false);return;}
+    setCreditLoading(true);
+    const { data: credits, error: creditsError } = await supabase
       .from("student_credits")
-      .select("total_credits, used_credits")
+      .select("total_credits, used_credits, expires_at")
       .eq("student_id", athleteId)
       .maybeSingle();
+    setCreditError(!!creditsError);setCreditLoading(false);
+    if(creditsError){setCreditsRemaining(null);return;}
+    setCreditsRemaining(serviceCreditBalance(credits,format(new Date(),"yyyy-MM-dd")));
     if (credits) {
-      setCreditsRemaining(Math.max(0, credits.total_credits - credits.used_credits));
       setClassesPerMonth(credits.total_credits);
       return;
     }
@@ -156,18 +174,21 @@ export default function AulasCreditos() {
   const realizadasMes = monthAppts.filter(a => a.status === "completed").length;
   const perdidasMes = monthAppts.filter(a => a.status === "no_show").length;
   const agendadasMes = monthAppts.filter(a => ["scheduled", "confirmed", "pending"].includes(a.status)).length;
-  const restantes = Math.max(0, classesPerMonth - realizadasMes - perdidasMes - agendadasMes);
+  const restantes = creditsRemaining;
 
   // ---- Actions ----
   const handleSchedule = async () => {
     if (busy) return;
     if (!athleteId) return toast.error("Perfil de atleta não encontrado");
     if (!date || !time) return toast.error("Selecione data e horário");
+    if(creditLoading)return toast.error("Aguarde a atualização do saldo.");
+    if(creditError)return toast.error("Atualize o saldo antes de reservar.");
+    if(["aula","staff"].includes(appointmentType)&&creditsRemaining!==null&&creditsRemaining<=0){setTab("credits");return toast.error("Sem créditos disponíveis para novas aulas.");}
 
     const when = new Date(`${date}T${time}:00`);
     if (isBefore(when, new Date())) return toast.error("Não é possível agendar no passado");
     const usedInTargetMonth = appts.filter(a => format(parseISO(a.scheduled_at), "yyyy-MM") === date.slice(0, 7) && a.status !== "cancelled").length;
-    if (classesPerMonth > 0 && usedInTargetMonth >= classesPerMonth) {
+    if (creditsRemaining === null && classesPerMonth > 0 && usedInTargetMonth >= classesPerMonth) {
       return toast.error("Você já usou ou agendou todas as aulas do plano deste mês");
     }
 
@@ -178,11 +199,11 @@ export default function AulasCreditos() {
 
       const { data: result, error } = await supabase.rpc("fn_create_staff_appointment" as any, {
         p_athlete_id: athleteId,
-        p_teacher_id: (athleteRow as any)?.coach_id || user?.id || null,
-        p_title: `Aula — ${athleteName || ""}`.trim(),
+        p_teacher_id: requestedTeacher || (athleteRow as any)?.coach_id || null,
+        p_title: `${appointmentType === "aula" ? "Aula" : appointmentType === "avaliacao_fisica" ? "Avaliação física" : appointmentType === "consultoria" ? "Consultoria" : "Sessão Staff"} — ${athleteName || ""}`.trim(),
         p_scheduled_at: when.toISOString(),
-        p_duration: 60,
-        p_appointment_type: "aula",
+        p_duration: duration,
+        p_appointment_type: appointmentType,
         p_notes: notes || null,
         p_staff_professional_id: staffProfessionalId,
         p_staff_method_id: staffMethodId,
@@ -206,19 +227,19 @@ export default function AulasCreditos() {
           },
         });
 
+        // The external adapter records a request; it does not confirm provider availability.
         if (externalError || !(external as any)?.ok) {
-          await supabase.from("appointments").update({ integration_status: "failed" }).eq("id", appointmentId);
-          throw new Error("A reserva local foi criada, mas a confirmação com o Staff falhou. Tente sincronizar novamente.");
+          toast.error("Reserva local registrada. A solicitação ao Staff externo falhou; contate o atendimento antes de repetir a reserva.");
+        } else {
+          toast.info("Solicitação enviada ao Staff externo. Aguarde a confirmação do profissional.");
         }
 
-        await supabase.from("appointments").update({
-          staff_booking_id: (external as any)?.booking?.id || null,
-          integration_status: "confirmed",
-        }).eq("id", appointmentId);
       }
 
       setCreditsRemaining(typeof (result as any)?.credits_remaining === "number" ? (result as any).credits_remaining : creditsRemaining);
-      toast.success("Aula reservada e crédito separado. Confirme presença até 1h antes do horário.");
+      toast.success("Reserva registrada. Confira a confirmação e as condições do serviço na agenda.");
+      setLastReserved(true);
+      window.dispatchEvent(new Event("9fit:appointments-updated"));
       setDate(""); setTime(""); setNotes("");
       await Promise.all([fetchAppointments(), fetchPlan()]);
     } catch (e: any) {
@@ -238,6 +259,7 @@ export default function AulasCreditos() {
         .eq("id", a.id);
       if (error) throw error;
       toast.success("Presença confirmada");
+      window.dispatchEvent(new Event("9fit:appointments-updated"));
       fetchAppointments();
     } catch (e: any) {
       toast.error("Erro: " + e.message);
@@ -252,12 +274,23 @@ export default function AulasCreditos() {
         .update({ status: "cancelled" })
         .eq("id", a.id);
       if (error) throw error;
-      toast.success("Agendamento cancelado");
+      if(a.google_calendar_event_id){
+        const token=getAccessToken();
+        if(token){try{await removeCalendarCommitment(token,a.google_calendar_event_id);await supabase.from("appointments").update({google_calendar_status:"not_synced",google_calendar_event_id:null}).eq("id",a.id).eq("student_id",athleteId!);}catch{await supabase.from("appointments").update({google_calendar_status:"pending"}).eq("id",a.id).eq("student_id",athleteId!);toast.error("Reserva cancelada. Atualização no Google pendente; tente novamente no Extrato.");}}
+        else{await supabase.from("appointments").update({google_calendar_status:"pending"}).eq("id",a.id).eq("student_id",athleteId!);toast.info("Reserva cancelada. Reconecte o Google e atualize o cancelamento no Extrato.");}
+      }
+      toast.success("Agendamento cancelado. Reposição e devolução seguem as condições do serviço.");
+      window.dispatchEvent(new Event("9fit:appointments-updated"));
+      void fetchPlan();
       fetchAppointments();
     } catch (e: any) {
       toast.error("Erro: " + e.message);
     } finally { setBusy(false); }
   };
+
+  async function retryCalendarCancellation(a:Appointment){
+    if(!a.google_calendar_event_id||busy)return;setBusy(true);try{const token=getAccessToken()||(await googleSignIn()).accessToken;await removeCalendarCommitment(token,a.google_calendar_event_id);const {error}=await supabase.from("appointments").update({google_calendar_status:"not_synced",google_calendar_event_id:null}).eq("id",a.id).eq("student_id",athleteId!).eq("status","cancelled").select("id").single();if(error)throw error;toast.success("Cancelamento atualizado no Google");void fetchAppointments();}catch{toast.error("Não foi possível atualizar o cancelamento no Google.");}finally{setBusy(false);}
+  }
 
   // Confirmation window: from 90 min before until start
   const canConfirm = (a: Appointment) => {
@@ -279,7 +312,7 @@ export default function AulasCreditos() {
     <div className="min-h-screen bg-background pb-32">
       <div className="px-4 pt-6 pb-3">
         <p className="text-label">9FIT • AGENDA</p>
-        <h1 className="text-display text-3xl mt-1">Suas aulas</h1>
+        <h1 className="text-display text-3xl mt-1">Aulas e avaliações</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Agende, confirme e acompanhe sem sair do app.
         </p>
@@ -296,12 +329,12 @@ export default function AulasCreditos() {
                 <p className="text-label">MEU PLANO</p>
                 <label className="text-xs">Mês de referência<input aria-label="Mês de referência" type="month" value={accountingMonth} onChange={e => e.target.value && setAccountingMonth(e.target.value)} className="block bg-elevated rounded p-2 mt-1" /></label>
                 <p className="text-xl font-bold mt-1">
-                  Aulas do mês:{" "}
+                  Compromissos do mês:{" "}
                   <span className="text-primary">{realizadasMes}</span>
-                  <span className="text-muted-foreground"> / {classesPerMonth || "—"}</span>
+
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {agendadasMes} agendada{agendadasMes !== 1 ? "s" : ""} · {restantes} restante{restantes !== 1 ? "s" : ""} · {perdidasMes} perdida{perdidasMes !== 1 ? "s" : ""}
+                  {agendadasMes} agendada{agendadasMes !== 1 ? "s" : ""} · {restantes ?? "—"} crédito{restantes !== 1 ? "s" : ""} disponível{restantes !== 1 ? "s" : ""} · {perdidasMes} perdida{perdidasMes !== 1 ? "s" : ""}
                 </p>
               </div>
               <Activity className="w-8 h-8 text-primary opacity-60" />
@@ -310,7 +343,7 @@ export default function AulasCreditos() {
               <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all"
-                  style={{ width: `${Math.min(100, ((realizadasMes + perdidasMes + agendadasMes) / classesPerMonth) * 100)}%` }}
+                  style={{ width: `${Math.min(100, Math.max(0, (classesPerMonth - (creditsRemaining ?? classesPerMonth)) / classesPerMonth * 100))}%` }}
                 />
               </div>
             )}
@@ -318,22 +351,28 @@ export default function AulasCreditos() {
         </div>
       </div>
 
-      <Tabs defaultValue="schedule" className="px-4">
-        <TabsList className="grid grid-cols-3 w-full bg-elevated">
+      <Tabs value={tab} onValueChange={setTab} className="px-4">
+        <TabsList className="grid grid-cols-4 w-full bg-elevated">
           <TabsTrigger value="schedule" className="text-xs uppercase tracking-wider">
             <CalendarDays className="w-3.5 h-3.5 mr-1.5" /> Agendar
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="text-xs uppercase tracking-wider">
             <Clock className="w-3.5 h-3.5 mr-1.5" /> Minhas
           </TabsTrigger>
+          <TabsTrigger value="credits" className="text-xs">Créditos</TabsTrigger>
           <TabsTrigger value="extract" className="text-xs uppercase tracking-wider">
             <History className="w-3.5 h-3.5 mr-1.5" /> Extrato
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="credits" className="mt-4"><ServiceCreditOptions /></TabsContent>
         {/* ========== AGENDAR ========== */}
         <TabsContent value="schedule" className="mt-4">
           <div className="surface-card p-5 space-y-4">
+            {lastReserved && <div role="status" className="rounded-lg border border-emerald-500/30 p-3 text-sm">Reserva salva. {creditsRemaining!==null&&creditsRemaining>0 ? `Você ainda tem ${creditsRemaining} créditos de aulas: escolha a próxima data e confirme outra reserva.` : "Confira seus compromissos na aba Minhas."}<button className="block mt-2 text-primary text-xs" onClick={()=>setTab("upcoming")}>Ver reservas</button></div>}
+            <label className="block text-xs">Serviço<select value={appointmentType} onChange={e=>setAppointmentType(e.target.value)} className="block mt-1 w-full rounded-lg bg-elevated border border-border p-3"><option value="aula">Aula</option><option value="staff">Sessão Staff</option><option value="avaliacao_fisica">Avaliação física</option><option value="consultoria">Consultoria</option></select></label>
+            <label className="block text-xs">Duração<select className="block mt-1 w-full rounded-lg bg-elevated border border-border p-3" value={duration} onChange={e=>setDuration(Number(e.target.value))}>{[30,45,50,60].map(minutes=><option key={minutes} value={minutes}>{minutes} minutos</option>)}</select></label>
+            <p className="text-xs text-muted-foreground">{creditLoading?"Atualizando saldo…":creditError?"Saldo indisponível: atualize antes de reservar.":`${creditsRemaining ?? "—"} créditos de aulas disponíveis. Aulas e sessões Staff reservam um crédito; outros serviços seguem as condições do profissional.`}</p>
             <div className="flex items-start gap-3 text-xs text-muted-foreground bg-elevated p-3 rounded-lg">
               <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <p>
@@ -372,10 +411,10 @@ export default function AulasCreditos() {
 
             <Button
               onClick={handleSchedule}
-              disabled={busy || !date || !time}
+              disabled={busy || !date || !time || creditError || creditLoading}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12"
             >
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Agendar aula <ChevronRight className="w-4 h-4 ml-1" /></>}
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Confirmar reserva <ChevronRight className="w-4 h-4 ml-1" /></>}
             </Button>
           </div>
         </TabsContent>
@@ -455,7 +494,7 @@ export default function AulasCreditos() {
             </div>
             <div className="surface-card p-3 text-center">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Restantes</p>
-              <p className="text-xl font-bold text-primary mt-1">{restantes}</p>
+              <p className="text-xl font-bold text-primary mt-1">{restantes ?? "—"}</p>
             </div>
           </div>
 
@@ -500,7 +539,7 @@ export default function AulasCreditos() {
                       {a.confirmed_at ? `Confirmada em ${format(parseISO(a.confirmed_at), "dd/MM HH:mm")}` : "Sem confirmação"}
                     </p>
                   </div>
-                  <StatusBadge status={a.status} />
+                  <div className="space-y-2"><StatusBadge status={a.status} />{a.status==="cancelled"&&a.google_calendar_event_id&&<button disabled={busy} className="block text-xs text-primary" onClick={()=>void retryCalendarCancellation(a)}>Atualizar cancelamento no Google</button>}</div>
                 </div>
               );
             })}

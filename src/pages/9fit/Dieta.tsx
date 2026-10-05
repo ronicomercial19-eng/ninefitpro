@@ -34,6 +34,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NutritionLogForm } from "@/components/9fit/NutritionLogForm";
 import { FoodScannerModal } from "@/components/9fit/FoodScannerModal";
+import { useSearchParams } from 'react-router-dom';
+import { NutritionTodaySummary } from '@/components/9fit/NutritionTodaySummary';
 
 interface DietAssignment {
   id: string;
@@ -115,6 +117,7 @@ function injectMobileViewport(html: string): string {
 }
 
 export default function NineFitDieta() {
+  const [searchParams,setSearchParams]=useSearchParams();
   const { user } = useAuth();
   const { athleteId, loading: athleteLoading } = useAthleteId();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -130,7 +133,8 @@ export default function NineFitDieta() {
   const [consumed, setConsumed] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [todayMeals, setTodayMeals] = useState<any[]>([]);
   const [dietMode, setDietMode] = useState<"assigned" | "self_guided" | "inactive">("self_guided");
-  const [caloriesGoal, setCaloriesGoal] = useState(2000);
+  const [caloriesGoal, setCaloriesGoal] = useState<number | null>(null);
+  useEffect(()=>{if(searchParams.get('action')==='log'&&athleteId){setCurrentDate(new Date());setShowLogForm(true);const next=new URLSearchParams(searchParams);next.delete('action');setSearchParams(next,{replace:true});}},[searchParams,athleteId,setSearchParams]);
 
   const fetchNutritionLogs = async (aid: string) => {
     const today = format(currentDate, "yyyy-MM-dd");
@@ -190,7 +194,7 @@ export default function NineFitDieta() {
     }
   };
 
-  useEffect(() => { fetchAssignedDiets(); if (athleteId) supabase.from("vw_fitpro_diet_context" as any).select("diet_mode,diet_data").eq("athlete_id", athleteId).maybeSingle().then(({ data }) => { const row: any = data || {}; setDietMode(row.diet_mode || "self_guided"); const goal = Number(row.diet_data?.calories_goal || row.diet_data?.daily_calories || 0); if (goal > 0) setCaloriesGoal(goal); }); }, [athleteId]);
+  useEffect(() => { fetchAssignedDiets(); if (athleteId) supabase.from("vw_fitpro_diet_context" as any).select("diet_mode,diet_data").eq("athlete_id", athleteId).maybeSingle().then(({ data }) => { const row: any = data || {}; setDietMode(row.diet_mode || "self_guided"); const goal = Number(row.diet_data?.calories_goal || row.diet_data?.daily_calories || 0); setCaloriesGoal(goal > 0 ? goal : null); }); }, [athleteId]);
 
   // Listener para abertura do scanner via evento global
   useEffect(() => {
@@ -306,6 +310,7 @@ export default function NineFitDieta() {
         </button>
       </div>
 
+      <div className="px-4 mb-4"><NutritionTodaySummary interactive /></div>
       {loading ? (
         <div className="px-4">
           <DietaSkeleton />
@@ -354,7 +359,7 @@ export default function NineFitDieta() {
               </div>
             </div>
             <p className="text-2xl font-bold text-foreground mt-2">{consumed.calories} kcal</p>
-            <p className="text-xs text-muted-foreground mt-1">Meta inicial: {caloriesGoal} kcal</p>
+            <p className="text-xs text-muted-foreground mt-1">{caloriesGoal?`Meta prescrita: ${caloriesGoal} kcal`:'Sem meta calórica prescrita'}</p>
           </div>
         </div>
       ) : (
@@ -454,12 +459,12 @@ export default function NineFitDieta() {
             <div className="bg-card border border-border rounded-sm p-4 mb-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">Calorias</span>
-                <span className="text-sm font-bold text-foreground">{consumed.calories} / {caloriesGoal} kcal</span>
+                <span className="text-sm font-bold text-foreground">{consumed.calories} kcal{caloriesGoal?` / ${caloriesGoal}`:' · sem meta prescrita'}</span>
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.min(100, (consumed.calories / caloriesGoal) * 100)}%` }} 
+                  style={{ width: `${caloriesGoal?Math.min(100, (consumed.calories / caloriesGoal) * 100):0}%` }}
                 />
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3">
@@ -578,6 +583,7 @@ export default function NineFitDieta() {
           open={showLogForm}
           onClose={() => setShowLogForm(false)}
           athleteId={athleteId}
+          date={format(currentDate,"yyyy-MM-dd")}
           onSaved={() => { setCurrentDate(new Date()); if (athleteId) void fetchNutritionLogs(athleteId); }}
         />
       )}

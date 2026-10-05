@@ -60,6 +60,7 @@ export interface FocusModeProps {
   workoutSeconds: number;
   onFinishWorkout?: () => void;
   persisting?: boolean;
+  assistance?: React.ReactNode;
 }
 
 function formatDuration(s: number): string {
@@ -91,6 +92,7 @@ export function FocusMode({
   workoutSeconds,
   onFinishWorkout,
   persisting = false,
+  assistance,
 }: FocusModeProps) {
   // ESC key listener to exit focus mode
   useEffect(() => {
@@ -122,6 +124,7 @@ export function FocusMode({
         {/* Top Minimal Ambient Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[180px] bg-[#FF6600]/[0.08] blur-[120px] pointer-events-none" />
 
+        {assistance && <div className="relative z-20 px-4 py-2">{assistance}</div>}
         {/* 1. Ultra-clean Focus Mode Header */}
         <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/[0.08] bg-[#08090d]/90 backdrop-blur-md">
           {/* Exit Focus Mode button */}

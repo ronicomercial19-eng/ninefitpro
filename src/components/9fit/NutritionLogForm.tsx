@@ -1,5 +1,5 @@
 import { saveNutritionLog } from "@/services/nutritionLog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ interface NutritionLogFormProps {
   onClose: () => void;
   athleteId: string;
   onSaved: () => void;
+  meal?: { id: string; meal_name: string; calories: number | null; protein: number | null; carbs: number | null; fat: number | null } | null;
+  date?: string;
 }
 
 const QUICK_MEALS = [
@@ -22,13 +24,14 @@ const QUICK_MEALS = [
   { name: "Jantar", calories: 500, protein: 35, carbs: 55, fat: 18 },
 ];
 
-export function NutritionLogForm({ open, onClose, athleteId, onSaved }: NutritionLogFormProps) {
+export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date }: NutritionLogFormProps) {
   const [mealName, setMealName] = useState("");
   const [calories, setCalories] = useState(0);
   const [protein, setProtein] = useState(0);
   const [carbs, setCarbs] = useState(0);
   const [fat, setFat] = useState(0);
   const [saving, setSaving] = useState(false);
+  useEffect(()=>{if(open){setMealName(meal?.meal_name ?? '');setCalories(Number(meal?.calories ?? 0));setProtein(Number(meal?.protein ?? 0));setCarbs(Number(meal?.carbs ?? 0));setFat(Number(meal?.fat ?? 0));}},[open,meal?.id,meal?.meal_name,meal?.calories,meal?.protein,meal?.carbs,meal?.fat]);
 
   const handleQuickFill = (meal: typeof QUICK_MEALS[0]) => {
     setMealName(meal.name);
@@ -46,7 +49,13 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
     if (saving) return;
     setSaving(true);
     try {
-      await saveNutritionLog({ athlete_id: athleteId, meal_name: mealName.trim(), calories, protein, carbs, fat });
+      if([calories,protein,carbs,fat].some(v=>!Number.isFinite(v)||v<0))throw new Error('Revise os valores');
+      if(meal){
+        const {error}=await supabase.from('nutrition_logs').update({meal_name:mealName.trim(),calories,protein,carbs,fat}).eq('id',meal.id).eq('athlete_id',athleteId).select('id').single();
+        if(error)throw error;
+        window.dispatchEvent(new Event('9fit:nutrition-updated'));
+        window.dispatchEvent(new Event('9fit:sync_updated'));
+      }else await saveNutritionLog({ athlete_id: athleteId, meal_name: mealName.trim(), calories, protein, carbs, fat, date });
 
       toast.success("Refeição registrada! 🥗");
       onSaved();
@@ -70,7 +79,7 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Utensils className="w-5 h-5 text-primary" />
-            Registrar Refeição
+            {meal ? 'Editar refeição' : 'Registrar Refeição'}
           </DialogTitle>
         </DialogHeader>
 
@@ -110,6 +119,7 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
           <span className="text-[10px] text-muted-foreground">Abrir →</span>
         </button>
 
+        <p className="text-xs text-muted-foreground">Os atalhos preenchem estimativas. Revise as quantidades e os nutrientes antes de salvar.</p>
         {/* Quick meals */}
         <div className="flex flex-wrap gap-2">
           {QUICK_MEALS.map((meal) => (
@@ -149,7 +159,7 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved }: Nutritio
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="w-full bg-primary text-primary-foreground font-bold">
-            {saving ? "Salvando..." : "Registrar Refeição"}
+            {saving ? "Salvando..." : meal ? "Salvar alteração" : "Registrar Refeição"}
           </Button>
         </div>
       </DialogContent>

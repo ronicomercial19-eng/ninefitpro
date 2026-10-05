@@ -919,6 +919,8 @@ export type Database = {
           created_at: string | null
           description: string | null
           duration: number | null
+          google_calendar_event_id: string | null
+          google_calendar_status: string
           gym_class_id: string | null
           id: string
           integration_status: string
@@ -941,6 +943,8 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration?: number | null
+          google_calendar_event_id?: string | null
+          google_calendar_status?: string
           gym_class_id?: string | null
           id?: string
           integration_status?: string
@@ -963,6 +967,8 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration?: number | null
+          google_calendar_event_id?: string | null
+          google_calendar_status?: string
           gym_class_id?: string | null
           id?: string
           integration_status?: string
@@ -23264,7 +23270,7 @@ vw_current_identity: {
         | "user"
         | "super_admin"
         | "trainer"
-      appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
+      appointment_status: "scheduled" | "confirmed" | "pending" | "completed" | "cancelled" | "no_show"
       assignment_status:
         | "pending"
         | "assigned"
@@ -23455,7 +23461,7 @@ export const Constants = {
         "super_admin",
         "trainer",
       ],
-      appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
+      appointment_status: ["scheduled", "confirmed", "pending", "completed", "cancelled", "no_show"],
       assignment_status: [
         "pending",
         "assigned",

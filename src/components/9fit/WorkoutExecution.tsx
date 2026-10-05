@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { toast } from "sonner";
 import type { WorkoutExecutionStatus } from "@/types/training";
+import { useWorkoutAssistance } from '@/hooks/useWorkoutAssistance';
+import { WorkoutRonAssistance } from './WorkoutRonAssistance';
 
 
 interface WorkoutExercise {
@@ -122,6 +124,10 @@ function injectMobileViewport(html: string): string {
 const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
 
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
+  const {level:assistanceLevel,setLevel:setAssistanceLevel}=useWorkoutAssistance(athleteId);
+  const [safetyPaused,setSafetyPaused]=useState(false);
+  const painSaving=useRef(false);
+  const [actualRepsByExercise,setActualRepsByExercise]=useState<Record<number,number>>({});
   // Live training data + realtime patches from daily_workouts.changes_json
   const [liveTraining, setLiveTraining] = useState<TrainingAssignment>(training);
   const [dailyOverride, setDailyOverride] = useState<DailyOverride | null>(null);
@@ -300,27 +306,34 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     let cancelled = false;
     (async () => {
       if (training.execution_id) {
+        const {data:owned,error:ownedError}=await supabase.from("workout_executions").select("id,status,notes").eq("id",training.execution_id).eq("athlete_id",athleteId).single();
+        if(cancelled)return;
+        if(ownedError||!owned||owned.status!=="in_progress"){setExecutionError("Esta execução não está disponível para retomada.");return;}
+        setSafetyPaused(!!owned.notes?.includes("[pain_review_pending]"));
         setExecutionId(training.execution_id);
         setExecutionStatus('in_progress');
         const { data: savedSets, error: setsError } = await supabase.from("workout_exercise_sets")
-          .select("exercise_order, set_number, completed, actual_weight")
+          .select("exercise_order, set_number, completed, actual_weight, actual_reps")
           .eq("execution_id", training.execution_id);
-        if (cancelled || setsError) return;
+        if(cancelled)return;
+        if(setsError){setExecutionError("Não foi possível recuperar suas séries salvas.");return;}
         const restored: Record<string, boolean[]> = {};
         const restoredWeights: Record<number, number> = {};
+        const restoredReps: Record<number,number> = {};
         for (const row of savedSets ?? []) {
           const exerciseOrder = Number(row.exercise_order); const setNumber = Number(row.set_number);
           const list = restored[String(exerciseOrder)] ?? []; list[Math.max(0, setNumber - 1)] = row.completed === true; restored[String(exerciseOrder)] = list;
           if (row.actual_weight !== null) restoredWeights[exerciseOrder] = Number(row.actual_weight);
+          if(row.actual_reps!==null)restoredReps[exerciseOrder]=Number(row.actual_reps);
         }
-        setCompletedSets(restored); setWeights(restoredWeights); return;
+        setCompletedSets(restored); setWeights(restoredWeights);setActualRepsByExercise(restoredReps); return;
       }
       // Reidrata uma execução aberta após reload antes de criar outra.
       // Para a entrada Semana/diária, a chave é atleta + data; para atribuição,
       // a chave é assignment_id. Isso evita perder o treino em andamento.
       let existingQuery = supabase
         .from("workout_executions")
-        .select("id")
+        .select("id,notes")
         .eq("athlete_id", athleteId)
         .in("status", ["in_progress"])
         .order("created_at", { ascending: false })
@@ -351,16 +364,21 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       }
 
       const id = String(data);
+      const {data:executionInfo,error:infoError}=await supabase.from("workout_executions").select("notes").eq("id",id).eq("athlete_id",athleteId).single();
+      if(cancelled)return;if(infoError){setExecutionError("Não foi possível recuperar o estado da execução.");return;}
+      setSafetyPaused(!!executionInfo?.notes?.includes("[pain_review_pending]"));
       setExecutionId(id);
       setExecutionStatus('in_progress');
       const { data: savedSets, error: setsError } = await supabase
         .from("workout_exercise_sets")
-        .select("exercise_order, set_number, completed, actual_weight")
+        .select("exercise_order, set_number, completed, actual_weight, actual_reps")
         .eq("execution_id", id);
-      if (cancelled || setsError) return;
+      if(cancelled)return;
+        if(setsError){setExecutionError("Não foi possível recuperar suas séries salvas.");return;}
 
       const restored: Record<string, boolean[]> = {};
       const restoredWeights: Record<number, number> = {};
+        const restoredReps: Record<number,number> = {};
       for (const row of savedSets ?? []) {
         const exerciseOrder = Number(row.exercise_order);
         const setNumber = Number(row.set_number);
@@ -368,9 +386,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         list[Math.max(0, setNumber - 1)] = row.completed === true;
         restored[String(exerciseOrder)] = list;
         if (row.actual_weight !== null) restoredWeights[exerciseOrder] = Number(row.actual_weight);
+          if(row.actual_reps!==null)restoredReps[exerciseOrder]=Number(row.actual_reps);
       }
       setCompletedSets(restored);
-      setWeights(restoredWeights);
+      setWeights(restoredWeights);setActualRepsByExercise(restoredReps);
     })();
 
     return () => { cancelled = true; };
@@ -389,10 +408,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   // Start workout timer
   useEffect(() => {
-    if (!executionId) return;
+    if (!executionId || safetyPaused) return;
     workoutTimerRef.current = setInterval(() => setWorkoutSeconds(s => s + 1), 1000);
     return () => { if (workoutTimerRef.current) clearInterval(workoutTimerRef.current); };
-  }, [executionId]);
+  }, [executionId,safetyPaused]);
 
   // Rest timer
   useEffect(() => {
@@ -441,10 +460,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const currentWeight = weights[currentIdx] ?? 20;
+  const currentWeight = weights[currentIdx] ?? 0;
   const setWeight = (v: number) => setWeights(prev => ({ ...prev, [currentIdx]: v }));
 
   const toggleSet = async (exerciseIdx: number, setIdx: number) => {
+    if (safetyPaused) { toast.error("Revise o treino antes de registrar novas séries."); return; }
     if (!executionId || persisting) {
       toast.error(executionError ?? "Aguarde o treino terminar de carregar.");
       return;
@@ -460,14 +480,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     const exercise = exercises[exerciseIdx] ?? {};
     const exerciseWithRange = exercise as typeof exercise & { reps_range?: string | number | null };
     const plannedReps = exerciseWithRange.reps ?? exerciseWithRange.reps_range ?? "";
-    const parsedReps = Number.parseInt(String(plannedReps), 10);
+    const actualReps=actualRepsByExercise[exerciseIdx];
+    if(actualReps!==undefined && (!Number.isInteger(actualReps)||actualReps<1||actualReps>1000)){setCompletedSets(current=>({...current,[key]:previous}));setPersisting(false);toast.error("Revise as repetições realizadas.");return;}
     const { error } = await supabase.rpc("fn_save_workout_set", {
       p_execution_id: executionId,
       p_exercise_name: String(exercise.name ?? "Exercício"),
       p_exercise_order: exerciseIdx,
       p_set_number: setIdx + 1,
       p_completed: next[setIdx],
-      p_actual_reps: Number.isFinite(parsedReps) ? parsedReps : null,
+      p_actual_reps: actualReps ?? null,
       p_actual_weight: weights[exerciseIdx] ?? null,
       p_planned_reps: String(plannedReps),
       p_rest_seconds: exercise.rest_seconds ?? null,
@@ -481,12 +502,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       toast.error("Não foi possível salvar esta série. Tente novamente.");
     } else {
       setExecutionError(null);
+      if(next[setIdx] && assistanceLevel>0 && exercise.rest_seconds){setTimerInitial(exercise.rest_seconds);setTimerSeconds(exercise.rest_seconds);setTimerRunning(true);}
 
       // Verificação e disparo automático de Recorde Pessoal (PR)
       if (next[setIdx]) {
         const exName = String(exercise.name ?? "Exercício");
         const exKey = exName.trim().toLowerCase();
-        const currentActualWeight = weights[exerciseIdx] ?? 20;
+        const currentActualWeight = weights[exerciseIdx] ?? 0;
         const previousPr = knownRecords[exKey];
 
         if (currentActualWeight > 0) {
@@ -530,6 +552,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   };
 
   const handleFinishWorkout = async () => {
+    if(safetyPaused){toast.error("Revise o treino antes de concluir.");return;}
     if (!executionId || persisting) {
       toast.error(executionError ?? "A execução ainda não está pronta.");
       return;
@@ -610,8 +633,22 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     );
   }
 
+  async function setPainReview(pending:boolean){
+    if(!executionId || painSaving.current)return;
+    painSaving.current=true;
+    if(pending){setSafetyPaused(true);setTimerRunning(false);setFocusModeOpen(false);}
+    try{
+      const {data:row,error:readError}=await supabase.from('workout_executions').select('notes').eq('id',executionId).eq('athlete_id',athleteId).single();if(readError)throw readError;
+      const notes=(row.notes||'').split('[pain_review_pending]').join('').trim();
+      const {error}=await supabase.from('workout_executions').update({notes:pending?`${notes}\n[pain_review_pending]`:notes||null}).eq('id',executionId).eq('athlete_id',athleteId).eq('status','in_progress').select('id').single();if(error)throw error;
+      setSafetyPaused(pending);toast.success(pending?'Pausa registrada para revisão':'Registro retomado após sua confirmação de revisão');
+    }catch{toast.error(pending?'Pausa ativa nesta tela; não foi possível salvar o relato. Tente novamente.':'Não foi possível retomar. Tente novamente.');}finally{painSaving.current=false;}
+  }
+  const assistance=currentExercise ? <div className="space-y-2"><label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Informe antes de marcar a série" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label><WorkoutRonAssistance level={assistanceLevel} onLevelChange={setAssistanceLevel} trainingName={liveTraining.training_name} exercise={currentExercise} completedSets={completedSets[String(currentIdx)] || []} weight={weights[currentIdx] ?? null} actualReps={actualRepsByExercise[currentIdx] ?? null} executionId={executionId} paused={safetyPaused} onPain={()=>void setPainReview(true)} onReviewed={()=>void setPainReview(false)}/></div> : null;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {!focusModeOpen && assistance && <div className="px-4 py-3">{assistance}</div>}
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center">
@@ -915,7 +952,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
         {/* Finish */}
         <div className="px-4 py-3">
-          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting || executionStatus === 'completed'}
+          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting || safetyPaused || executionStatus === 'completed'}
             className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">
             {persisting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
             {persisting ? "Salvando..." : "Concluir Treino"}
@@ -954,7 +991,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           }}
           workoutSeconds={workoutSeconds}
           onFinishWorkout={handleFinishWorkout}
-          persisting={persisting}
+          persisting={persisting || safetyPaused}
+          assistance={assistance}
         />
       )}
 

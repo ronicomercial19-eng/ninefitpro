@@ -1,3 +1,4 @@
+import { getAccessToken } from "@/services/googleAuth";
 import { requestRonChat } from "@/services/ronChat";
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -483,7 +484,7 @@ export function RonConciergeSheet() {
       <RonCalendarModal
         isOpen={calendarModalOpen}
         onClose={() => setCalendarModalOpen(false)}
-        accessToken={localStorage.getItem("9fit_google_auth_token")}
+        accessToken={getAccessToken()}
         onOpenGoogleAuth={() => navigate("/9fit/ron?connect=google-calendar")}
         onEventCreated={() => setCalendarInitialData(null)}
       />
