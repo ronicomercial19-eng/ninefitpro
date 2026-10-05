@@ -252,11 +252,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerInitial, setTimerInitial] = useState(60);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Workout timer
   const [workoutSeconds, setWorkoutSeconds] = useState(0);
-  const workoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const workoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Weight tracking per exercise
   const [weights, setWeights] = useState<Record<number, number>>({});
