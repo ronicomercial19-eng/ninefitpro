@@ -7,6 +7,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { ProtocolViewer, ProtocolListItem } from "@/components/9fit/ProtocolViewer";
 import { Library, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { businessDate } from "@/services/dailyContextRules";
 
 const NINE_LIMA_ERRORS: Record<string, string> = {
   treino_do_dia_ja_iniciado: "Você já iniciou o treino de hoje. Aplique o protocolo amanhã.",
@@ -51,7 +52,7 @@ export default function Protocolo() {
     setApplyingNineLima(true);
     const { data, error } = await supabase.rpc("fn_aplicar_nine_lima" as any, {
       p_athlete_id: athleteId,
-      p_data: new Date().toISOString().slice(0, 10),
+      p_data: businessDate(),
     });
     setApplyingNineLima(false);
     if (error) {

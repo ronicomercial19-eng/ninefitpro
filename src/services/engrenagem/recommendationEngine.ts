@@ -23,7 +23,7 @@ interface EngrenagemContext {
   athleteId: string | null;
   totalXp: number;
   level: number;
-  syncScore: number;
+  syncScore: number | null;
   streak: number;
   lastHrv?: number | null;
   lastSleepH?: number | null;
@@ -34,21 +34,20 @@ interface EngrenagemContext {
 export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
   const { data: { user } } = await supabase.auth.getUser();
   const ctx: EngrenagemContext = {
-    athleteId: null, totalXp: 0, level: 1, syncScore: 0, streak: 0,
+    athleteId: null, totalXp: 0, level: 1, syncScore: null, streak: 0,
   };
   if (!user) return ctx;
 
   const { data: canonicalId } = await supabase.rpc("fn_current_athlete_id");
   const { data: athlete } = await supabase
     .from('athletes')
-    .select('id, total_xp, level, sync_score')
+    .select('id, total_xp, level')
     .eq('id', canonicalId || '')
     .maybeSingle();
   if (athlete) {
     ctx.athleteId = (athlete as any).id;
     ctx.totalXp = (athlete as any).total_xp ?? 0;
     ctx.level = (athlete as any).level ?? 1;
-    ctx.syncScore = (athlete as any).sync_score ?? 0;
   }
 
   try {
@@ -80,7 +79,7 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
     ctx.hasActiveProtocol = (count ?? 0) > 0;
   }
 
-  try { const day = await fetchDailyContext(); ctx.syncScore = day.sync.value ?? 0; ctx.streak = day.streak; } catch { /* Do not infer new readiness from failed context reads. */ ctx.syncScore = 0; }
+  try { const day = await fetchDailyContext(); ctx.syncScore = day.sync.value; ctx.streak = day.streak; } catch { /* A missing read is not a zero score. */ ctx.syncScore = null; }
   return ctx;
 }
 
@@ -88,7 +87,7 @@ export function getSquadInsights(ctx: EngrenagemContext): SquadInsight[] {
   const insights: SquadInsight[] = [];
 
   // EPSILON — recorded routine; the score never authorizes a load change
-  if (ctx.syncScore >= 70) {
+  if (ctx.syncScore != null && ctx.syncScore >= 70) {
     insights.push({
       id: 'epsilon-progress',
       squad: 'EPSILON',
@@ -98,7 +97,7 @@ export function getSquadInsights(ctx: EngrenagemContext): SquadInsight[] {
       priority: 'high',
       icon: 'training',
     });
-  } else if (ctx.syncScore < 45) {
+  } else if (ctx.syncScore != null && ctx.syncScore < 45) {
     insights.push({
       id: 'epsilon-deload',
       squad: 'EPSILON',

@@ -1,4 +1,4 @@
-import { format, startOfWeek } from "date-fns";
+import { format, parseISO, startOfWeek } from "date-fns";
 import { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
 import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar, ArrowUpRight, Dumbbell } from "lucide-react";
 import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBanner";
+import { businessDate } from "@/services/dailyContextRules";
 
 interface TrainingAssignment {
   id: string;
@@ -45,6 +46,11 @@ export default function NineFitTrain() {
   const [completedCount, setCompletedCount] = useState(0);
   const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
   const [quickOpen, setQuickOpen] = useState(false);
+  const initialCalendarDate = new URLSearchParams(location.search).get("date") || undefined;
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("tab") === "semana" || initialCalendarDate) setSubTab("semana");
+  }, [location.search, initialCalendarDate]);
 
   // Workout flow state
   const [flow, setFlow] = useState<WorkoutFlow>("HOME");
@@ -109,7 +115,7 @@ export default function NineFitTrain() {
       if (error) throw error;
 
       if (data) {
-        const today = format(new Date(), "yyyy-MM-dd");
+        const today = businessDate();
         const valid = data.filter((t: any) => {
           const startValid = t.start_date <= today;
           const endValid = !t.end_date || t.end_date >= today;
@@ -148,7 +154,8 @@ export default function NineFitTrain() {
       .eq("athlete_id", aid)
       .eq("status", "completed");
     setCompletedCount(count || 0);
-    const { count: weekly } = await supabase.from("workout_executions").select("id", { count: "exact", head: true }).eq("athlete_id", aid).eq("status", "completed").gte("workout_date", format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")).lte("workout_date", format(new Date(), "yyyy-MM-dd"));
+    const businessToday = parseISO(businessDate());
+    const { count: weekly } = await supabase.from("workout_executions").select("id", { count: "exact", head: true }).eq("athlete_id", aid).eq("status", "completed").gte("workout_date", format(startOfWeek(businessToday, { weekStartsOn: 1 }), "yyyy-MM-dd")).lte("workout_date", businessDate());
     setWeeklyCompleted(weekly || 0);
   };
 
@@ -374,6 +381,7 @@ export default function NineFitTrain() {
           <WeeklyTrainingView
             athleteId={athleteId}
             onExecuteToday={handleExecuteWeekDay}
+            initialDate={initialCalendarDate}
           />
         ) : (
           <>

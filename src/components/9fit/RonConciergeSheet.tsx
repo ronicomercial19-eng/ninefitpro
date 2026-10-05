@@ -351,7 +351,7 @@ export function RonConciergeSheet() {
                   </span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0 text-muted-foreground">
-                  <span>Prontidão: <b className="text-white">{syncScore ?? 85}%</b></span>
+                  <span>Prontidão: <b className="text-white">{syncScore == null ? "Sem leitura" : `${syncScore}%`}</b></span>
                   <span>·</span>
                   <button
                     onClick={() => setCalendarModalOpen(true)}

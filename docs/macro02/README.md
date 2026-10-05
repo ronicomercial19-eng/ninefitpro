@@ -45,6 +45,6 @@ O card existe no Hub e no OS. A próxima ação é determinada pelo dia em Ameri
 ## Escala e limites
 Uma ficha compacta, agregações limitadas a 7/30/31 dias e sem gravação por clique. React Query compartilha contexto por usuário; atualização por eventos, foco e virada do dia, sem polling contínuo nem chamadas de IA para calcular o SYNC. Realtime do Hub filtra eventos pelo aluno/usuário.
 
-Esta implementação não certifica capacidade para 3.000 usuários. Carga/custos e testes integrados permanecem na Macro 09. O score legado athletes.sync_score continua disponível para rotas antigas; consumidores de prescrição serão conciliados na Macro 03. O read-model v2 é a fonte usada pelas experiências migradas aqui.
+Esta implementação não certifica capacidade para 3.000 usuários. Carga/custos e testes integrados permanecem na Macro 09. O score legado athletes.sync_score continua disponível para rotas antigas; consumidores de leitura migrados na Macro 03 usam o read-model v2 e exibem ausência como “Sem leitura”.
 
 Checklist técnico e QA: [verification.md](verification.md).

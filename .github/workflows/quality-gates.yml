@@ -25,6 +25,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run qa:fase2
       - run: npm run qa:macro02
+      - run: npm run qa:macro03
       - run: npm run build
         if: ${{ always() }}
       - name: Lint baseline (informational until legacy debt is cleared)
