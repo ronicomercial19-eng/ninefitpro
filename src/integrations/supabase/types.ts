@@ -1871,6 +1871,185 @@ export type Database = {
           },
         ]
       }
+      athlete_day_reviews: {
+        Row: {
+          athlete_id: string
+          rating: number | null
+          review_date: string
+          training_choice: string | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          rating?: number | null
+          review_date?: string
+          training_choice?: string | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          rating?: number | null
+          review_date?: string
+          training_choice?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_students_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_canonical"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "v_unified_users"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_full_profile"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_legacy_map"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_athlete_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_current_relationships"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_athlete_canonical"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_coach_student_performance"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_consistency_audit"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_diet_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_healthflix_assignments"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_performance_overview"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_safety_context"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_fitpro_share_catalog"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_hub_status"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_leaderboard_semanal"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_performance_athlete"
+            referencedColumns: ["athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_day_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "vw_radar_5d"
+            referencedColumns: ["athlete_id"]
+          },
+        ]
+      }
       athlete_inactivity_flags: {
         Row: {
           athlete_id: string
@@ -8802,6 +8981,7 @@ export type Database = {
       }
       nutrition_logs: {
         Row: {
+          adherence_status: string | null
           athlete_id: string
           calories: number | null
           carbs: number | null
@@ -8813,6 +8993,7 @@ export type Database = {
           protein: number | null
         }
         Insert: {
+          adherence_status?: string | null
           athlete_id: string
           calories?: number | null
           carbs?: number | null
@@ -8824,6 +9005,7 @@ export type Database = {
           protein?: number | null
         }
         Update: {
+          adherence_status?: string | null
           athlete_id?: string
           calories?: number | null
           carbs?: number | null
@@ -17554,6 +17736,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_context_settings: {
+        Row: {
+          declared_keys: string[]
+          pdi_completed_at: string | null
+          preferences: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          declared_keys?: string[]
+          pdi_completed_at?: string | null
+          preferences?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          declared_keys?: string[]
+          pdi_completed_at?: string | null
+          preferences?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           athlete_id: string | null
@@ -23828,6 +24034,14 @@ export type Database = {
         Returns: Json
       }
       fn_forcar_catalogar_planilhas_resiliente: { Args: never; Returns: Json }
+      fn_generate_periodized_week: {
+        Args: {
+          p_athlete_id: string
+          p_days_week?: number
+          p_week_start: string
+        }
+        Returns: Json
+      }
       fn_generate_plan_from_bank_model: {
         Args: { p_athlete_id: string; p_coach_id?: string; p_model_id: string }
         Returns: string
@@ -23855,11 +24069,13 @@ export type Database = {
           title: string
         }[]
       }
+      fn_get_daily_context: { Args: never; Returns: Json }
       fn_get_historico_performance: {
         Args: { p_athlete_id: string }
         Returns: Json
       }
       fn_get_hub_snapshot: { Args: never; Returns: Json }
+      fn_get_hub_snapshot_legacy: { Args: never; Returns: Json }
       fn_get_hydration_today: {
         Args: { p_athlete_id: string }
         Returns: number
@@ -23916,12 +24132,21 @@ export type Database = {
         Args: { p_aluno_id: string; p_data: string; p_frequencia?: number }
         Returns: string[]
       }
+      fn_increment_streak: {
+        Args: { p_athlete_id: string }
+        Returns: {
+          last_active: string
+          new_days_active: number
+        }[]
+      }
       fn_is_staff: { Args: { p_user_id: string }; Returns: boolean }
       fn_map_phase_category: { Args: { p_raw: string }; Returns: string }
-      fn_montar_bloco_exercicios: {
-        Args: { p_descricao: string; p_qtd_alvo?: number }
-        Returns: Json
-      }
+      fn_montar_bloco_exercicios:
+        | { Args: { p_descricao: string; p_qtd_alvo?: number }; Returns: Json }
+        | {
+            Args: { p_descricao: string; p_qtd_alvo: number; p_seed: string }
+            Returns: Json
+          }
       fn_montar_bloco9_exercicios:
         | {
             Args: {
@@ -23940,6 +24165,19 @@ export type Database = {
               p_reps?: string
               p_rest?: string
               p_rpe?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_cadence: string
+              p_descricao: string
+              p_grupos_musculares: string[]
+              p_qtd_alvo: number
+              p_reps: string
+              p_rest: string
+              p_rpe: string
+              p_seed: string
             }
             Returns: Json
           }
@@ -24031,6 +24269,10 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_save_pdi: {
+        Args: { p_complete?: boolean; p_patch: Json; p_preferences?: Json }
+        Returns: Json
+      }
       fn_save_workout_set: {
         Args: {
           p_actual_reps?: number
@@ -24061,6 +24303,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      fn_skip_daily_workout_execution: {
+        Args: { p_daily_workout_id: string }
+        Returns: Json
       }
       fn_start_daily_workout_execution: {
         Args: { p_daily_workout_id: string }
