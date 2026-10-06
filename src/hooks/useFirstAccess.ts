@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { finalizeFirstAccess } from '@/lib/firstAccess';
 
 interface UseFirstAccessResult {
   isFirstAccess: boolean;
@@ -61,13 +62,12 @@ export function useFirstAccess(): UseFirstAccessResult {
   }, []);
 
   const markCompleted = async () => {
-    try {
-      await supabase.rpc('complete_first_access' as any);
-      await supabase.auth.refreshSession();
-      setIsFirstAccess(false);
-    } catch (e) {
-      console.error('[useFirstAccess.markCompleted]', e);
-    }
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error('Sessão expirada. Entre novamente.');
+    let store: Storage | undefined;
+    try { store = localStorage; } catch { /* Optional storage. */ }
+    await finalizeFirstAccess({ rpc: () => supabase.rpc('complete_first_access'), refreshSession: () => supabase.auth.refreshSession() }, user.id, store);
+    setIsFirstAccess(false);
   };
 
   return { isFirstAccess, isLoading, athleteId, markCompleted };
