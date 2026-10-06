@@ -41,9 +41,8 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       const onOnboarding  = path.includes('onboarding');
 
       // --- 1. First-access gate ---
-      let localCompleted = false;
-      try { localCompleted = localStorage.getItem(`9fit_first_access_completed:${session.user.id}`) === 'true'; } catch { /* Local storage is optional; use the authenticated source below. */ }
-      let firstAccessDone = localCompleted;
+      // The server is authoritative; an old browser flag must not skip the gate.
+      let firstAccessDone = false;
 
       if (!firstAccessDone) {
         try {

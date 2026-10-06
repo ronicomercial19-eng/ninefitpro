@@ -70,8 +70,9 @@ const Auth = () => {
 
       if (athleteLink) {
         // Check first access
-        const localCompleted = localStorage.getItem('9fit_first_access_completed');
-        if (localCompleted !== 'true') {
+        const { data: firstAccess } = await supabase.from('profiles')
+          .select('first_access_completed').eq('user_id', userId).maybeSingle();
+        if (firstAccess?.first_access_completed !== true) {
           const { data: athlete } = await supabase
             .from('athletes')
             .select('password_changed')

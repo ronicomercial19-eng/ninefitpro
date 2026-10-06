@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { finalizeFirstAccess } from "@/lib/firstAccess";
 import { 
   Lock, 
   Eye, 
@@ -27,6 +28,8 @@ export default function FirstAccess() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [athleteName, setAthleteName] = useState("");
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAthleteData = async () => {
@@ -67,23 +70,10 @@ export default function FirstAccess() {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
-      // Marca first-access concluído de forma autoritativa (SECURITY DEFINER)
-      // Resolve o loop pós-troca de senha para coaches externos.
-      const { error: rpcError } = await supabase.rpc('complete_first_access' as any);
-      if (rpcError) console.error('[FirstAccess] RPC error:', rpcError);
-
-      // Refresh session para propagar claims atualizados
-      await supabase.auth.refreshSession();
-
-      // Fallback local — caminho de cinto-e-suspensório
-      const { data: { user } } = await supabase.auth.getUser();
-      try { if (user) localStorage.setItem(`9fit_first_access_completed:${user.id}`, 'true'); } catch { /* Server state remains authoritative. */ }
-
-      toast({
-        title: "Senha alterada!",
-        description: "Sua nova senha foi salva com sucesso",
-      });
-      setStep('tour-training');
+      setPasswordUpdated(true);
+      setNewPassword('');
+      setConfirmPassword('');
+      await runFinalize();
     } catch (error: any) {
       toast({
         title: "Erro ao alterar senha",
@@ -93,6 +83,24 @@ export default function FirstAccess() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const runFinalize = async () => {
+    setIsLoading(true);
+    setFinalizeError(null);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error('Sua sessão expirou. Entre novamente para concluir.');
+      let store: Storage | undefined;
+      try { store = localStorage; } catch { /* Optional storage. */ }
+      await finalizeFirstAccess({
+        rpc: () => supabase.rpc('complete_first_access'),
+        refreshSession: () => supabase.auth.refreshSession(),
+      }, user.id, store);
+      setStep('tour-training');
+    } catch {
+      setFinalizeError('Sua senha foi salva. Não foi possível concluir seu acesso; tente finalizar novamente.');
+    } finally { setIsLoading(false); }
   };
 
   const tourSteps = [
@@ -169,6 +177,16 @@ export default function FirstAccess() {
         );
 
       case 'password':
+        if (passwordUpdated) return (
+          <div className="text-center space-y-6" role="status">
+            <h2 className="text-2xl font-bold">Sua senha foi salva</h2>
+            <p>{finalizeError || 'Finalizando seu acesso…'}</p>
+            <button disabled={isLoading} onClick={() => void runFinalize()} className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-lg disabled:opacity-50">
+              {isLoading ? 'Finalizando…' : 'Tentar finalizar novamente'}
+            </button>
+            <button onClick={() => navigate('/9fit/login', { replace: true })} className="text-sm underline">Entrar novamente</button>
+          </div>
+        );
         return (
           <div className="animate-fade-in space-y-6">
             <div className="text-center mb-8">
@@ -322,10 +340,10 @@ export default function FirstAccess() {
             </div>
 
             <button
-              onClick={() => navigate('/9fit/onboarding-pro')}
+              onClick={() => navigate('/9fit/hub', { replace: true })}
               className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all animate-pulse hover:animate-none"
             >
-              Configurar Perfil Profissional
+              Acessar meus treinos
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
 import AgendaPage from "./pages/AgendaPage";
 import AITrainingPage from "./pages/AITrainingPage";
@@ -120,6 +120,10 @@ const App = () => (
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
+            <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+            <Route path="/9fit/onboarding-pro" element={<Navigate to="/9fit/hub" replace />} />
+            <Route path="/9fit/stats" element={<Navigate to="/9fit/progresso" replace />} />
+            <Route path="/9fit/aulas" element={<Navigate to="/9fit/aulas-creditos" replace />} />
             <Route path="/register" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/suporte" element={<Support />} />

@@ -46,7 +46,9 @@ export default function NineFitLogin() {
           .eq('id', athleteLink.athlete_id)
           .single();
 
-        const isFirstAccess = athlete?.password_changed === false;
+        const { data: firstAccess } = await supabase.from('profiles')
+          .select('first_access_completed').eq('user_id', userId).maybeSingle();
+        const isFirstAccess = firstAccess?.first_access_completed !== true && athlete?.password_changed === false;
 
         if (isFirstAccess) {
           navigate("/9fit/first-access");
