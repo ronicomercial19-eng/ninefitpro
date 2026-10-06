@@ -98,10 +98,10 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
       const cal = calculatedCalories;
 
       // 1) Fonte de verdade: workout_executions
+      // `rpe` é coluna GERADA (= avg_rpe) no banco: nunca escrever nela, só em avg_rpe.
       const { error: execError } = await supabase
         .from("workout_executions")
         .update({
-          rpe,
           avg_rpe: rpe,
           rating: Math.min(5, Math.max(1, Math.ceil(rpe / 2))),
           notes: notes || null,
@@ -110,7 +110,8 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
         .eq("id", executionId).eq("athlete_id", athleteId).select("id").single();
 
       if (execError) {
-        toast.error(`Não foi possível salvar seu treino: ${execError.message}`);
+        console.warn("[PostWorkout] update workout_executions falhou:", execError.message);
+        toast.error("Não foi possível salvar seu treino agora. Tente novamente.");
         return;
       }
 
