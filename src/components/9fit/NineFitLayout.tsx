@@ -21,6 +21,8 @@ interface NineFitLayoutProps {
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pendingFirstAccess, setPendingFirstAccess] = useState(false);
+  const [pendingActivation, setPendingActivation] = useState(false);
   const [gateError, setGateError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const navigate = useNavigate();
@@ -29,14 +31,18 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
   useEffect(() => {
     const checkAuth = async () => {
       setGateError(null);
+      setIsLoading(true);
+      setPendingFirstAccess(false);
+      setPendingActivation(false);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        navigate("/9fit/login");
+        navigate("/9fit/login", { replace: true });
         return;
       }
 
       const path = location.pathname;
+      const onHome = path === '/9fit/hub';
       const onFirstAccess = path.includes('first-access');
       const onOnboarding  = path.includes('onboarding');
 
@@ -72,12 +78,13 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         }
       }
 
-      if (!firstAccessDone && !onFirstAccess) {
-        navigate("/9fit/first-access");
+      setPendingFirstAccess(!firstAccessDone);
+      if (!firstAccessDone && !onFirstAccess && !onHome) {
+        navigate("/9fit/first-access", { replace: true });
         return;
       }
       if (firstAccessDone && onFirstAccess) {
-        navigate("/9fit/hub");
+        navigate("/9fit/hub", { replace: true });
         return;
       }
 
@@ -101,12 +108,13 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             const finished = act?.finished_at;
             const { data: contextSettings } = await supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', session.user.id).maybeSingle();
             const profileConfirmed = !!(contextSettings as { pdi_completed_at?: string } | null)?.pdi_completed_at;
-            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding) {
-              navigate('/9fit/ativacao');
+            setPendingActivation(!finished && !profileConfirmed);
+            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome) {
+              navigate('/9fit/ativacao', { replace: true });
               return;
             }
             if ((finished || profileConfirmed) && onAtivacao) {
-              navigate('/9fit/os');
+              navigate('/9fit/os', { replace: true });
               return;
             }
           }
@@ -125,7 +133,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
-          navigate("/9fit/login");
+          navigate("/9fit/login", { replace: true });
         }
       },
     );
@@ -172,6 +180,10 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     <>
       {!isOnboardingFlow && <NineFitTopBar />}
       {!isOnboardingFlow && <BackButton />}
+      {location.pathname === '/9fit/hub' && (pendingFirstAccess || pendingActivation) && <section className="mx-auto max-w-3xl p-4" role="status">
+        <p>{pendingFirstAccess ? 'Bem-vindo! Conclua seu primeiro acesso para preparar seus treinos.' : 'Bem-vindo! Confirme sua ficha para personalizar seus treinos.'}</p>
+        <button className="mt-2 underline" onClick={() => navigate(pendingFirstAccess ? '/9fit/first-access' : '/9fit/ativacao')}>Continuar configuração</button>
+      </section>}
       {children}
       {!isOnboardingFlow && <RonBubble />}
     </>

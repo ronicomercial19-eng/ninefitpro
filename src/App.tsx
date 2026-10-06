@@ -1,6 +1,7 @@
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import AuthCallback from './pages/AuthCallback';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -119,6 +120,7 @@ const App = () => (
             {/* Public Routes - Login is the main entry point */}
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/dashboard" element={<Navigate to="/app" replace />} />
             <Route path="/9fit/onboarding-pro" element={<Navigate to="/9fit/hub" replace />} />
