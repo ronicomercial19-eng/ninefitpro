@@ -36,11 +36,11 @@ test('refresh or browser storage failure cannot undo successful completion', asy
   const storage = { setItem: () => { throw new Error('blocked'); }, removeItem: () => { throw new Error('blocked'); } };
   assert.deepEqual(await finalizeFirstAccess(client, 'user-test', storage), { refreshFailed: true });
 });
-test('first-access completion and legacy route point at registered guarded hub', () => {
+test('first-access completion goes straight to activation; legacy route still points at guarded hub', () => {
   const firstAccess = readFileSync('src/pages/9fit/FirstAccess.tsx', 'utf8');
   const app = readFileSync('src/App.tsx', 'utf8');
-  assert.match(firstAccess, /navigate\('\/9fit\/hub', \{ replace: true \}\)/);
+  assert.match(firstAccess, /navigate\('\/9fit\/ativacao', \{ replace: true \}\)/);
   assert.match(app, /path="\/9fit\/onboarding-pro" element=\{<Navigate to="\/9fit\/hub" replace/);
-  assert.match(app, /path="\/9fit\/hub" element=\{<NineFitLayout>/);
+  assert.match(app, /path="\/9fit\/ativacao" element=\{<NineFitLayout>/);
   assert.match(firstAccess, /onClick=\{\(\) => void runFinalize\(\)\}/);
 });
