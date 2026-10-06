@@ -216,22 +216,151 @@ export default function FirstAccess() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-       …3432 tokens truncated…      >
-            <Chrome className="w-5 h-5 text-foreground" />
-            <span className="text-sm font-medium text-foreground">Google</span>
-          </button>
-        </div>
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
 
-        {/* Sign Up Link */}
-        <p className="text-center mt-8 text-muted-foreground text-sm">
-          Novo por aqui?{" "}
-          <button
-            onClick={() => navigate("/auth")}
-            className="text-primary hover:text-foreground transition-colors"
-          >
-            Criar conta
-          </button>
-        </p>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirme a senha"
+                  className="w-full bg-card border border-border rounded-lg pl-12 pr-4 py-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
+                />
+              </div>
+
+              {newPassword && confirmPassword && (
+                <div className={`flex items-center gap-2 text-sm ${
+                  newPassword === confirmPassword ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {newPassword === confirmPassword ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Senhas conferem
+                    </>
+                  ) : (
+                    'Senhas não conferem'
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handlePasswordChange}
+              disabled={isLoading || !newPassword || newPassword !== confirmPassword}
+              className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-all"
+            >
+              {isLoading ? (
+                <span className="animate-pulse">Salvando...</span>
+              ) : (
+                <>
+                  Salvar e Continuar
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          </div>
+        );
+
+      case 'tour-training':
+      case 'tour-diet':
+      case 'tour-classes':
+      case 'tour-profile':
+        const currentTour = tourSteps.find(t => t.id === step);
+        if (!currentTour) return null;
+        
+        const currentIndex = tourSteps.findIndex(t => t.id === step);
+        const Icon = currentTour.icon;
+
+        return (
+          <div className="animate-fade-in text-center space-y-8">
+            {/* Progress dots */}
+            <div className="flex justify-center gap-2">
+              {tourSteps.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    idx <= currentIndex ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="relative">
+              <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
+                <Icon className="w-12 h-12 text-primary" />
+              </div>
+              <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl" />
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                {currentTour.title}
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {currentTour.description}
+              </p>
+            </div>
+
+            <button
+              onClick={() => setStep(currentTour.nextStep)}
+              className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+            >
+              {currentTour.nextStep === 'complete' ? 'Começar!' : 'Próximo'}
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => setStep('complete')}
+              className="text-muted-foreground text-sm hover:text-foreground transition-colors"
+            >
+              Pular tour
+            </button>
+          </div>
+        );
+
+      case 'complete':
+        return (
+          <div className="animate-fade-in text-center space-y-8">
+            <div className="relative">
+              <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-12 h-12 text-green-500" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Tudo Pronto!
+              </h2>
+              <p className="text-muted-foreground">
+                Seu perfil está configurado. Hora de treinar! 💪
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate('/9fit/hub', { replace: true })}
+              className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all animate-pulse hover:animate-none"
+            >
+              Acessar meus treinos
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      {/* Ambient Effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-primary/3 rounded-full blur-[80px]" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        {renderStep()}
       </div>
     </div>
   );
