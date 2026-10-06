@@ -54,7 +54,7 @@ const hubStaggerItem = {
 
 export default function NineFitHub() {
   const { user, profile } = useAuth();
-  const { athleteId, athleteName } = useAthleteId();
+  const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -77,7 +77,7 @@ export default function NineFitHub() {
   const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
 
   const loadHubData = async () => {
-    if (!athleteId) return;
+    if (!athleteId) { setHubLoading(athleteLoading); return; }
     setHubLoading(true);
     setHubError(null);
     try {
@@ -99,7 +99,7 @@ export default function NineFitHub() {
     }
   };
 
-  useEffect(() => { loadHubData(); }, [athleteId, user?.id]);
+  useEffect(() => { loadHubData(); }, [athleteId, user?.id, athleteLoading]);
 
   useRealtimeTable(
     {
@@ -142,6 +142,7 @@ export default function NineFitHub() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <WeeklyRecapPrompt />
+      {!athleteLoading && !athleteId && <p className="mx-4 mt-3 rounded-xl border border-border p-4 text-sm">Seu acesso está pronto. Seus treinos aparecerão quando seu professor vincular sua ficha.</p>}
       {hubLoading && (
         <p className="px-4 pt-3 text-[11px] text-muted-foreground">Carregando seus dados…</p>
       )}
