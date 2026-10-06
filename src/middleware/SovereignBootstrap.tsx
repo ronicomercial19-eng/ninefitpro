@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveLoginDestination } from '@/services/loginDestination.service';
 import { cleanAuthUrl, readIncomingAuth, tokenMatchesProject } from '@/lib/authTokens';
 
-const PUBLIC_ROUTES = ['/', '/auth', '/login', '/register', '/forgot-password', '/9fit/login', '/9fit', '/9fit/onboarding', '/9fit/first-access', '/sales', '/suporte', '/whatsapp-redirect', '/assessment'];
+const PUBLIC_ROUTES = ['/', '/auth', '/auth/callback', '/login', '/register', '/forgot-password', '/9fit/login', '/9fit', '/9fit/onboarding', '/9fit/first-access', '/sales', '/suporte', '/whatsapp-redirect', '/assessment'];
 type Outcome = 'ready' | 'error';
 // StrictMode/remounts must not consume the same refresh token twice.
 let bootstrap: Promise<Outcome> | undefined;
@@ -17,6 +18,7 @@ async function establishSession(): Promise<Outcome> {
       if (error || !data.session) return 'error';
       const verified = await supabase.auth.getUser();
       if (verified.error || !verified.data.user) return 'error';
+      window.history.replaceState({}, '', await resolveLoginDestination(verified.data.user.id));
       return 'ready';
     } catch { return 'error'; }
   }

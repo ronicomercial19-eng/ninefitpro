@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+import { resolveLoginDestination } from '@/services/loginDestination.service';
+import { AUTH_CALLBACK } from '@/lib/loginDestination';
+
 export default function NineFitLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,51 +26,8 @@ export default function NineFitLogin() {
   }, [navigate]);
 
   const handleRedirectByRole = async (userId: string) => {
-    try {
-      // Check user_roles table for role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
-
-      // Check if user is linked as athlete
-      const { data: athleteLink } = await supabase
-        .from('athlete_auth_link')
-        .select('athlete_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (athleteLink) {
-        // Check if this is first access
-        const { data: athlete } = await supabase
-          .from('athletes')
-          .select('password_changed')
-          .eq('id', athleteLink.athlete_id)
-          .single();
-
-        const { data: firstAccess } = await supabase.from('profiles')
-          .select('first_access_completed').eq('user_id', userId).maybeSingle();
-        const isFirstAccess = firstAccess?.first_access_completed !== true && athlete?.password_changed === false;
-
-        if (isFirstAccess) {
-          navigate("/9fit/first-access");
-          return;
-        }
-        
-        // User is an athlete/student
-        navigate("/9fit/hub");
-      } else if (roleData?.role === 'super_admin' || roleData?.role === 'admin' || roleData?.role === 'trainer') {
-        // User is admin/trainer - go to dashboard
-        navigate("/app");
-      } else {
-        // Default to athlete hub for other roles
-        navigate("/9fit/hub");
-      }
-    } catch (error) {
-      // Default to hub if error checking roles
-      navigate("/9fit/hub");
-    }
+    try { navigate(await resolveLoginDestination(userId), { replace: true }); }
+    catch { toast({ title: 'Não foi possível carregar seu perfil', description: 'Tente entrar novamente.', variant: 'destructive' }); }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -101,7 +61,7 @@ export default function NineFitLogin() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/9fit/hub`,
+          redirectTo: `${window.location.origin}${AUTH_CALLBACK}`,
         },
       });
 

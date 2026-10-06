@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { getAthleteByUserId, getAthleteByEmail } from '@/services/athletes.service';
 import { getUserRole } from '@/services/auth.service';
+import { AUTH_CALLBACK } from '@/lib/loginDestination';
 import { mirrorEvent } from '@/services/intelligenceHub.service';
 
 interface Profile {
@@ -49,7 +50,7 @@ interface AuthContextType {
   session: Session | null;
   userRole: string | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
+  register: (email: string, password: string, name?: string) => Promise<{ error?: string; needsEmailConfirmation?: boolean }>;
   logout: () => Promise<void>;
   loading: boolean;
   isSuperAdmin: boolean;
@@ -201,12 +202,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name?: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: `${window.location.origin}/9fit/hub`, data: { full_name: name } },
+        options: { emailRedirectTo: `${window.location.origin}${AUTH_CALLBACK}`, data: { full_name: name } },
       });
       if (error) return { error: error.message };
-      return {};
+      return { needsEmailConfirmation: !data.session };
     } catch (error: any) { return { error: error.message || 'Erro no registro' }; }
     finally { setLoading(false); }
   };

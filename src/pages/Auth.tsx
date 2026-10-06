@@ -23,7 +23,8 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-const SUPER_ADMIN_EMAIL = 'roni.comercial19@gmail.com';
+import { resolveLoginDestination } from '@/services/loginDestination.service';
+import { AUTH_CALLBACK } from '@/lib/loginDestination';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -46,53 +47,9 @@ const Auth = () => {
     checkAndRedirect();
   }, [user]);
 
-  const handleRedirectByRole = async (userId: string, userEmail?: string | null) => {
-    try {
-      // Super admin check
-      if (userEmail === SUPER_ADMIN_EMAIL) {
-        navigate("/app");
-        return;
-      }
-
-      // Check user_roles table
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
-
-      // Check if athlete
-      const { data: athleteLink } = await supabase
-        .from('athlete_auth_link')
-        .select('athlete_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (athleteLink) {
-        // Check first access
-        const { data: firstAccess } = await supabase.from('profiles')
-          .select('first_access_completed').eq('user_id', userId).maybeSingle();
-        if (firstAccess?.first_access_completed !== true) {
-          const { data: athlete } = await supabase
-            .from('athletes')
-            .select('password_changed')
-            .eq('id', athleteLink.athlete_id)
-            .maybeSingle();
-
-          if (athlete && athlete.password_changed === false) {
-            navigate("/9fit/first-access");
-            return;
-          }
-        }
-        navigate("/9fit/hub");
-      } else if (roleData?.role === 'super_admin' || roleData?.role === 'admin' || roleData?.role === 'trainer') {
-        navigate("/app");
-      } else {
-        navigate("/9fit/hub");
-      }
-    } catch (error) {
-      navigate("/9fit/hub");
-    }
+  const handleRedirectByRole = async (userId: string, _userEmail?: string | null) => {
+    try { navigate(await resolveLoginDestination(userId), { replace: true }); }
+    catch { toast.error('Não foi possível carregar seu perfil. Tente entrar novamente.'); }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -133,13 +90,13 @@ const Auth = () => {
     }
 
     try {
-      const { error } = await register(email, password, name);
+      const { error, needsEmailConfirmation } = await register(email, password, name);
       
       if (error) {
         toast.error(error);
       } else {
-        toast.success('Conta criada! Redirecionando...');
-        navigate('/9fit/hub');
+        if (needsEmailConfirmation) toast.success('Confirme seu e-mail para acessar a 9FIT PRO.');
+        else navigate(AUTH_CALLBACK, { replace: true });
       }
     } catch (err) {
       toast.error('Erro ao criar conta');
@@ -153,7 +110,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}${AUTH_CALLBACK}`,
         },
       });
 
@@ -163,9 +120,7 @@ const Auth = () => {
     }
   };
 
-  if (user && profile) {
-    return null; // useEffect will handle redirect
-  }
+
 
   return (
     <div className="min-h-screen bg-[#070708] text-foreground flex flex-col justify-between relative overflow-hidden selection:bg-primary/30 selection:text-white">

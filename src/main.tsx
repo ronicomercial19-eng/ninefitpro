@@ -13,9 +13,7 @@ initializeCapacitor();
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     void caches.delete('supabase-cache').catch(() => {});
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.warn("Service worker registration failed", error);
-    });
+    // Registration and updates are owned by vite-plugin-pwa.
   });
 }
 
