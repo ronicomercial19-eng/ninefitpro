@@ -305,6 +305,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (training.daily_workout_id) {
+        const { data: prescription, error: validationError } = await (supabase as any).from('daily_workouts').select('prescription_issue').eq('id', training.daily_workout_id).eq('athlete_id', athleteId).single();
+        if (cancelled) return;
+        if (validationError || !prescription) { setExecutionError('Não foi possível validar esta prescrição.'); return; }
+        if (prescription.prescription_issue) { setExecutionError('Esta sessão foi suspensa por inconsistência na prescrição. Consulte o protocolo do coach.'); return; }
+      }
       if (training.execution_id) {
         const {data:owned,error:ownedError}=await supabase.from("workout_executions").select("id,status,notes").eq("id",training.execution_id).eq("athlete_id",athleteId).single();
         if(cancelled)return;
