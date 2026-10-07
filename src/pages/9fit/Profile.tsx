@@ -37,6 +37,8 @@ export default function NineFitProfile() {
   const { athleteId, athleteName } = useAthleteId();
   const [staffOnline, setStaffOnline] = useState(0);
   const [pdiOpen, setPdiOpen] = useState(false);
+  // Ficha dinâmica (PDI) recolhida por padrão: o Perfil não abre mais com a ficha inteira em cima da tela.
+  const [fichaOpen, setFichaOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
 
@@ -108,7 +110,28 @@ export default function NineFitProfile() {
         />
       </section>
 
-      <div className="px-4 mt-5"><DynamicPDI /></div>
+      <div className="px-4 mt-5">
+        {fichaOpen ? (
+          <div className="space-y-2">
+            <DynamicPDI />
+            <button onClick={() => setFichaOpen(false)} className="w-full text-xs text-muted-foreground py-2">
+              Recolher ficha
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setFichaOpen(true)}
+            className="w-full rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 flex items-center gap-4 text-left hover:border-primary/50 transition">
+            <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.08] flex items-center justify-center">
+              <Brain className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-display text-lg">Minha ficha dinâmica</p>
+              <p className="text-xs text-muted-foreground">Preferências que personalizam o seu app</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        )}
+      </div>
       {/* Menu */}
       <div className="px-4 mt-6 space-y-3">
         {items.map((it) => (
