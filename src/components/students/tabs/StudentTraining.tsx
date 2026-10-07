@@ -478,7 +478,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
             <DialogTitle>{selectedHTMLTraining?.training_name}</DialogTitle>
           </DialogHeader>
           <div className="overflow-auto max-h-[70vh] border rounded-lg bg-white">
-            {selectedHTMLTraining?.html_file_url && (
+            {selectedHTMLTraining && (
               <AssignedTrainingViewer training={{ ...selectedHTMLTraining, student_id: student.id }} onBack={() => setSelectedHTMLTraining(null)} />
             )}
           </div>
