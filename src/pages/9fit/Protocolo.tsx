@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,9 +50,10 @@ export default function Protocolo() {
       return;
     }
     setApplyingNineLima(true);
+    // Data LOCAL do aluno (toISOString devolve UTC e, depois das 21h em SP, aplicava o protocolo no dia seguinte).
     const { data, error } = await supabase.rpc("fn_aplicar_nine_lima" as any, {
       p_athlete_id: athleteId,
-      p_data: new Date().toISOString().slice(0, 10),
+      p_data: format(new Date(), "yyyy-MM-dd"),
     });
     setApplyingNineLima(false);
     if (error) {
