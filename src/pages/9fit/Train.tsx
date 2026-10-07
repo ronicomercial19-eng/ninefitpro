@@ -1,3 +1,4 @@
+import { AssignedProtocols } from '@/components/9fit/AssignedProtocols';
 import { format, startOfWeek } from "date-fns";
 import { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -153,6 +154,7 @@ export default function NineFitTrain() {
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
+    if (["html", "link", "periodization"].includes(training.training_type || "")) { navigate("/9fit/protocolo"); return; }
     const exercises = training.training_data?.exercises;
     if (training.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
       toast.info("Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca.");
@@ -285,6 +287,8 @@ export default function NineFitTrain() {
       <div className="px-4 relative z-10">
         <TrainingAdjustmentBanner />
       </div>
+
+      {flow === "HOME" && athleteId && <section className="px-4 mb-5 relative z-10" aria-label="Protocolos do coach"><h2 className="text-lg font-bold mb-3">Seus protocolos do coach</h2><AssignedProtocols athleteId={athleteId} /></section>}
 
       {/* Upsell contextual no topo de Train */}
       <div className="px-4 mb-3 relative z-10">
