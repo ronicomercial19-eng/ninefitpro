@@ -41,6 +41,7 @@ export default function NineFitTrain() {
   const location = useLocation();
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [prescriptionIssue, setPrescriptionIssue] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [weeklyCompleted, setWeeklyCompleted] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
@@ -128,9 +129,10 @@ export default function NineFitTrain() {
           training_type: "structured",
           training_data: item.prescription_schema || item.protocol_schema || undefined,
         }));
-        const { data: dailyRows, error: dailyError } = await supabase.from("daily_workouts").select("id,day_name,workout_date,workout_exercises(exercise_id,sets,reps_range,rest_seconds,exercise_order,exercises(name,video_url,gif_url))").eq("athlete_id",aid).eq("workout_date",today).order("created_at", {ascending:false});
+        const { data: dailyRows, error: dailyError } = await (supabase as any).from("daily_workouts").select("id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,sets,reps_range,rest_seconds,exercise_order,exercises(name,video_url,gif_url))").eq("athlete_id",aid).eq("workout_date",today).order("created_at", {ascending:false});
         if (dailyError) throw dailyError;
-        const dailyTrainings: TrainingAssignment[] = (dailyRows || []).filter(d=>d.workout_exercises?.length).map(d=>({id:d.id,daily_workout_id:d.id,training_name:d.day_name,start_date:d.workout_date,is_active:true,training_type:"structured",training_data:{exercises:[...d.workout_exercises].sort((a,b)=>a.exercise_order-b.exercise_order).map(e=>({exercise_id:e.exercise_id,name:e.exercises?.name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,video_url:e.exercises?.video_url,gif_url:e.exercises?.gif_url}))}}));
+        setPrescriptionIssue((dailyRows || []).some((d: any) => !!d.prescription_issue));
+        const dailyTrainings: TrainingAssignment[] = (dailyRows || []).filter((d: any)=>!d.prescription_issue && d.workout_exercises?.length).map(d=>({id:d.id,daily_workout_id:d.id,training_name:d.day_name,start_date:d.workout_date,is_active:true,training_type:"structured",training_data:{exercises:[...d.workout_exercises].sort((a,b)=>a.exercise_order-b.exercise_order).map(e=>({exercise_id:e.exercise_id,name:e.exercises?.name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,video_url:e.exercises?.video_url,gif_url:e.exercises?.gif_url}))}}));
         setTrainings([...dailyTrainings, ...assignedTrainings, ...(valid as TrainingAssignment[])]);
       }
     } catch (error) {
@@ -289,6 +291,8 @@ export default function NineFitTrain() {
       </div>
 
       {flow === "HOME" && athleteId && <section className="px-4 mb-5 relative z-10" aria-label="Protocolos do coach"><h2 className="text-lg font-bold mb-3">Seus protocolos do coach</h2><AssignedProtocols athleteId={athleteId} /></section>}
+
+      {prescriptionIssue && flow === "HOME" && <div role="alert" className="px-4 mb-4"><p className="rounded-xl border border-orange-500 p-4 text-sm">O treino automático foi suspenso por uma inconsistência na prescrição. Acesse o protocolo enviado pelo seu coach acima.</p></div>}
 
       {/* Upsell contextual no topo de Train */}
       <div className="px-4 mb-3 relative z-10">

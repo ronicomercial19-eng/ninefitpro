@@ -15,6 +15,7 @@ interface WeeklyTrainingViewProps {
 type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; completed?: boolean; video_url?: string | null; gif_url?: string | null };
 type DayPlan = {
   id?: string;
+  prescription_issue?: string | null;
   date: string;
   day_label: string;
   status: "rest" | "planned" | "completed" | "in_progress";
@@ -32,6 +33,7 @@ interface WeekPayload {
     date?: string;
     day_name?: string;
     day_label?: string;
+    prescription_issue?: string | null;
     status?: DayPlan["status"];
     exercises?: Array<{
       id?: string;
@@ -77,6 +79,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       setDays(week.map((d) => ({
         id: d.id || d.daily_workout_id || d.workout_id,
         date: d.workout_date || d.date,
+        prescription_issue: d.prescription_issue,
         day_label: d.day_name || d.day_label || DAY_LABELS[new Date(`${d.workout_date || d.date}T12:00:00`).getDay()],
         status: d.status || "planned",
         exercises: (d.exercises || []).map((e) => ({
@@ -147,6 +150,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
 
       {!loading && !failed && days.map((d, i) => {
         if(i!==selectedDay)return null;
+        if (d.prescription_issue) return <div key={d.date} role="alert" className="rounded-xl border border-orange-500 p-4 text-sm">Esta sessão automática foi suspensa por inconsistência na prescrição. Consulte o protocolo do coach em Seu Protocolo.</div>;
         const isToday = d.date === todayISO;
         const isDone = d.status === "completed";
         const isRest = d.status === "rest";
