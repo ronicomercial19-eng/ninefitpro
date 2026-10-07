@@ -1,10 +1,12 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { Play, Film, Loader2, X, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { TrackedLibraryVideo } from "@/components/9fit/TrackedLibraryVideo";
 
 interface CatalogItem {
   id: string;
@@ -16,6 +18,9 @@ interface CatalogItem {
   video_url?: string | null;
   external_id?: string | null;
   slug?: string | null;
+  progress_percent?: number;
+  last_position_seconds?: number;
+  duration_seconds?: number;
 }
 
 function normalizePlayerUrl(item: CatalogItem) {
@@ -40,10 +45,12 @@ function normalizePlayerUrl(item: CatalogItem) {
 
 export default function NineFitHealthFlix() {
   const { athleteId } = useAthleteId();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
+  const [savedProgress, setSavedProgress] = useState<Record<string, Partial<CatalogItem>>>({});
 
   useEffect(() => {
     (async () => {
@@ -78,6 +85,56 @@ export default function NineFitHealthFlix() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!athleteId) return;
+    let active = true;
+    void supabase.functions.invoke(`healthflix-proxy?action=progress&fitpro_student_id=${encodeURIComponent(athleteId)}`, { method: "GET" as any })
+      .then(({ data, error }) => {
+        if (error || !active) return;
+        const progress = Object.fromEntries(((data as any)?.progress || []).map((row: any) => [String(row.content_id), row]));
+        setSavedProgress(progress);
+      });
+    return () => { active = false; };
+  }, [athleteId]);
+
+  useEffect(() => {
+    if (!Object.keys(savedProgress).length) return;
+    const mergeProgress = (item: CatalogItem) => ({ ...item, ...(savedProgress[item.external_id || item.id] || {}) });
+    setItems((current) => current.map(mergeProgress));
+    setSelected((current) => current ? mergeProgress(current) : current);
+  }, [savedProgress]);
+
+  useEffect(() => {
+    const requestedId = searchParams.get("content");
+    if (!requestedId || !items.length) return;
+    const item = items.find((entry) => entry.id === requestedId || entry.external_id === requestedId || entry.slug === requestedId);
+    if (item && !selected) setSelected(item);
+  }, [items, searchParams, selected]);
+
+  const trackEvent = (item: CatalogItem, eventType: "content_started" | "content_progress_updated" | "content_completed", position = 0, duration = 0) => {
+    if (!athleteId) return;
+    const progressPercent = eventType === "content_completed" ? 100 : duration ? Math.min(99, Math.round((position / duration) * 100)) : 0;
+    setItems((current) => current.map((entry) => (entry.id === item.id ? {
+      ...entry,
+      progress_percent: Math.max(Number(entry.progress_percent) || 0, progressPercent),
+      last_position_seconds: Math.floor(position),
+      duration_seconds: Math.floor(duration),
+    } : entry)));
+    void supabase.functions.invoke("healthflix-proxy?action=events", { method: "POST" as any, body: {
+      event_type: eventType,
+      fitpro_student_id: athleteId,
+      entity_type: "content",
+      entity_id: item.external_id || item.id,
+      payload: {
+        title: item.title,
+        progress_percent: progressPercent,
+        last_position_seconds: Math.max(0, Math.floor(position)),
+        duration_seconds: Math.max(0, Math.floor(duration)),
+        watched_seconds: Math.max(0, Math.floor(position)),
+      },
+    } }).then(({ error }) => { if (error) console.error("[HealthFlix] progresso não salvo", error); });
+  };
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -127,7 +184,12 @@ export default function NineFitHealthFlix() {
         {items.map((v, i) => (
           <motion.button
             key={v.id}
-            onClick={() => normalizePlayerUrl(v) ? setSelected(v) : toast.info("Este conteúdo ainda não possui player configurado.")}
+            onClick={() => {
+              if (!normalizePlayerUrl(v)) { toast.info("Este conteúdo ainda não possui player configurado."); return; }
+              setSelected(v);
+              setSearchParams((current) => { current.set("content", v.external_id || v.id); return current; }, { replace: true });
+              trackEvent(v, "content_started", v.last_position_seconds || 0, v.duration_seconds || 0);
+            }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
@@ -149,6 +211,7 @@ export default function NineFitHealthFlix() {
             <div className="px-2 py-2">
               <p className="text-xs text-foreground line-clamp-2">{v.title}</p>
               {v.category && <p className="text-[9px] text-muted-foreground mt-0.5 uppercase tracking-widest">{v.category}</p>}
+              {Number(v.progress_percent) > 0 && <p className="mt-1 text-[9px] text-primary">{Number(v.progress_percent) >= 100 ? "Concluído" : `Retomar · ${Math.round(Number(v.progress_percent))}% assistido`}</p>}
             </div>
           </motion.button>
         ))}
@@ -167,13 +230,18 @@ export default function NineFitHealthFlix() {
                 <a href={normalizePlayerUrl(selected) as string} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40" aria-label="Abrir em nova aba">
                   <ExternalLink className="w-4 h-4" />
                 </a>
-                <button onClick={() => setSelected(null)} className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-primary/40" aria-label="Fechar player">
+                <button onClick={() => { setSelected(null); setSearchParams((current) => { current.delete("content"); return current; }, { replace: true }); }} className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-primary/40" aria-label="Fechar player">
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
             <p className="px-4 py-2 text-xs text-muted-foreground">Se o provedor bloquear a reprodução aqui, use Abrir em nova aba.</p>
-            {/\.(mp4|webm)(\?|$)/i.test(normalizePlayerUrl(selected) || "") ? <video src={normalizePlayerUrl(selected) as string} controls playsInline className="w-full flex-1 min-h-0 bg-black" onError={() => toast.error("O vídeo não pôde ser carregado. Use Abrir em nova aba.")} /> : <iframe title={selected.title} src={normalizePlayerUrl(selected) as string} className="w-full flex-1 bg-black border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />}
+            <div className="w-full flex-1 min-h-0 bg-black">
+              <TrackedLibraryVideo url={normalizePlayerUrl(selected) as string} title={selected.title}
+                startSeconds={selected.last_position_seconds || 0}
+                onProgress={(position, duration) => trackEvent(selected, "content_progress_updated", position, duration)}
+                onComplete={(duration) => trackEvent(selected, "content_completed", duration, duration)} />
+            </div>
           </div>
         </div>
       )}

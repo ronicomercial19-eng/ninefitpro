@@ -6500,6 +6500,9 @@ export type Database = {
           fitpro_student_id: string
           id: string
           last_event_at: string | null
+          last_position_seconds: number
+          duration_seconds: number
+          watched_seconds: number
           progress_percent: number | null
           started_at: string | null
           updated_at: string
@@ -6513,6 +6516,9 @@ export type Database = {
           fitpro_student_id: string
           id?: string
           last_event_at?: string | null
+          last_position_seconds?: number
+          duration_seconds?: number
+          watched_seconds?: number
           progress_percent?: number | null
           started_at?: string | null
           updated_at?: string
@@ -6526,6 +6532,9 @@ export type Database = {
           fitpro_student_id?: string
           id?: string
           last_event_at?: string | null
+          last_position_seconds?: number
+          duration_seconds?: number
+          watched_seconds?: number
           progress_percent?: number | null
           started_at?: string | null
           updated_at?: string

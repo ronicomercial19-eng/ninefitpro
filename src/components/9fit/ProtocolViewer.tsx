@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Check, ExternalLink, ArrowLeft, FileText, Video, Globe, PlayCircle, Layers, BookOpen, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TrackedLibraryVideo } from "@/components/9fit/TrackedLibraryVideo";
 
 type ProtocolModule = string | {
   title?: string;
@@ -25,6 +26,7 @@ interface ProtocolPayload {
   structure?: ProtocolModule[];
   guidelines?: string[];
   diretrizes?: string[];
+  fitpro_watch?: { last_position_seconds?: number; duration_seconds?: number; watched_seconds?: number; updated_at?: string };
 }
 
 interface Assignment {
@@ -74,7 +76,9 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [embedded, setEmbedded] = useState(false);
-  const [playerLoaded, setPlayerLoaded] = useState(false);
+  const [videoCompleted, setVideoCompleted] = useState(!!assignment.completed_at);
+  const lastSavedAt = useRef(0);
+  useEffect(() => { lastSavedAt.current = 0; setVideoCompleted(!!assignment.completed_at); }, [assignment.id, assignment.completed_at]);
 
   const p = useMemo(() => assignment.payload ?? {}, [assignment.payload]);
   const url = assignment.access_url || assignment.player_url || assignment.download_url || p.episodeUrl || p.playerUrl || null;
@@ -84,7 +88,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
 
   const isInfoproduto = assignment.content_type === 'infoproduto' || assignment.content_type === 'sistema' || assignment.content_type === 'app' || assignment.content_type === 'ebook';
   const isPdf = !!url && /\.pdf$/i.test(url);
-  const isVideo = assignment.content_type === 'video' || (!!url && /(youtube|vimeo|\.mp4)/i.test(url));
+  const isVideo = /^(video|videos|streaming|aula)$/i.test(assignment.content_type) || (!!url && /(youtube|youtu\.be|vimeo|healthflix|\.(mp4|webm|ogg))/i.test(url));
 
   const modules: ProtocolModule[] = useMemo(() => {
     if (p.modules) return p.modules;
@@ -114,8 +118,8 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
     })();
   }, [assignment.id, assignment.access_url, assignment.player_url, assignment.download_url, assignment.content_type]);
 
-  const canComplete = isInfoproduto
-    ? (playerUrl ? embedded && playerLoaded : !!htmlContent)
+  const canComplete = isVideo ? videoCompleted : isInfoproduto
+    ? (playerUrl ? false : !!htmlContent)
     : (loaded && (!!htmlContent || !!url));
 
   const markDone = async () => {
@@ -147,6 +151,33 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
       toast.error(message);
     } finally {
       setMarking(false);
+    }
+  };
+
+  const saveWatch = async (position: number, duration: number, completed = false) => {
+    if (!Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0) return;
+    const now = Date.now();
+    if (!completed && now - lastSavedAt.current < 30000) return;
+    lastSavedAt.current = now;
+    const previous = p.fitpro_watch ?? {};
+    const lastPosition = Math.max(0, Math.floor(position));
+    const durationSeconds = Math.max(0, Math.floor(duration));
+    try {
+      const { error } = await supabase.from("student_library_assignments").update({
+        progress_pct: completed ? 100 : Math.min(99, Math.round((lastPosition / durationSeconds) * 100)),
+        status: completed ? "completed" : "in_progress",
+        ...(completed ? { completed_at: new Date().toISOString() } : {}),
+        payload: { ...p, fitpro_watch: {
+          last_position_seconds: completed ? durationSeconds : lastPosition,
+          duration_seconds: durationSeconds,
+          watched_seconds: Math.max(Number(previous.watched_seconds) || 0, lastPosition),
+          updated_at: new Date().toISOString(),
+        } },
+      }).eq("id", assignment.id);
+      if (error) throw error;
+      if (completed) { setVideoCompleted(true); toast.success("Conteúdo concluído e progresso salvo."); onComplete(); }
+    } catch (error) {
+      toast.error(error instanceof Error ? `Não foi possível salvar o progresso: ${error.message}` : "Não foi possível salvar o progresso.");
     }
   };
 
@@ -213,7 +244,6 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
           <div className="rounded-xl overflow-hidden border border-white/[0.06] bg-black">
             <iframe
               src={playerUrl}
-              onLoad={() => setPlayerLoaded(true)}
               className="w-full h-[78vh]"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
@@ -225,6 +255,8 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
             </p>
           </div>
         )}
+
+        {playerUrl && !isVideo && <p className="text-xs text-muted-foreground">A conclusão deste conteúdo externo depende da confirmação enviada pelo próprio HealthFlix.</p>}
 
         {assignment.notes && (
           <div className="surface-card p-4">
@@ -304,16 +336,15 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
         <iframe src={url} className="w-full h-[80vh] rounded-xl bg-card border border-white/[0.06]" title={assignment.content_title} />
       )}
 
-      {loaded && !htmlContent && !isPdf && isVideo && url && (
+        {loaded && !htmlContent && !isPdf && isVideo && url && (
         <div className="aspect-video rounded-xl overflow-hidden bg-black border border-white/[0.06]">
-          <iframe
-            src={url.replace('watch?v=', 'embed/')}
-            onLoad={() => setPlayerLoaded(true)}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={assignment.content_title}
-          />
+            <TrackedLibraryVideo
+              url={url}
+              title={assignment.content_title}
+              startSeconds={p.fitpro_watch?.last_position_seconds || 0}
+              onProgress={(position, duration) => void saveWatch(position, duration)}
+              onComplete={(duration) => void saveWatch(duration, duration, true)}
+            />
         </div>
       )}
 
@@ -353,7 +384,7 @@ export function ProtocolListItem({ a, onOpen }: { a: Assignment; onOpen: () => v
       <div className="flex-1 min-w-0">
         <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-0.5">{a.content_type}</p>
         <p className="text-sm font-semibold truncate">{a.content_title}</p>
-        {a.notes && <p className="text-xs text-muted-foreground truncate">{a.notes}</p>}
+        {a.notes ? <p className="text-xs text-muted-foreground truncate">{a.notes}</p> : Number(a.progress_pct) > 0 && !a.completed_at ? <p className="text-xs text-primary">Retomar · {Math.round(Number(a.progress_pct))}%</p> : null}
       </div>
       {a.completed_at ? (
         <span className="text-[10px] font-semibold text-primary">CONCLUÍDO</span>
