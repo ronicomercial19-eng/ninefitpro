@@ -1,3 +1,4 @@
+import { localDate } from '@/lib/assignedProtocols';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -41,7 +42,7 @@ export function TrainingContentUpload({
   // Common fields
   const [trainingName, setTrainingName] = useState('');
   const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(localDate());
   const [endDate, setEndDate] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [uploading, setUploading] = useState(false);

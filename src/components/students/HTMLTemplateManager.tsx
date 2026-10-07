@@ -1,3 +1,4 @@
+import { localDate } from '@/lib/assignedProtocols';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,7 +109,7 @@ export function HTMLTemplateManager({ studentId }: HTMLTemplateManagerProps) {
         html_file_url: assignTemplate.html_file_url,
         html_file_path: assignTemplate.html_file_path,
         training_data: { source: 'template_copy', original_id: assignTemplate.id },
-        start_date: new Date().toISOString().split('T')[0],
+        start_date: localDate(),
         is_active: true,
         created_by: (await supabase.auth.getUser()).data.user?.id || '',
       }]);

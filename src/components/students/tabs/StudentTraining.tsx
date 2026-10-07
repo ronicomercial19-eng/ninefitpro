@@ -1,3 +1,4 @@
+import { AssignedTrainingViewer } from '@/components/9fit/AssignedTrainingViewer';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ interface StudentTrainingProps {
 export function StudentTraining({ student, onStudentUpdate }: StudentTrainingProps) {
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAssignProtocol, setShowAssignProtocol] = useState(false);
   const [showHTMLUpload, setShowHTMLUpload] = useState(false);
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
   const [showPeriodization, setShowPeriodization] = useState(false);
@@ -91,7 +93,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   };
 
   const handleViewTraining = (training: TrainingAssignment) => {
-    if (training.training_type === 'html' && training.html_file_url) {
+    if (['html', 'link', 'periodization'].includes(training.training_type || '')) {
       setSelectedHTMLTraining(training);
     } else {
       navigate('/9fit/train', { state: { quickTraining: training } });
@@ -172,6 +174,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
 
   return (
     <div className="space-y-6">
+      <Button onClick={() => setShowAssignProtocol(true)}><Plus className="w-4 h-4 mr-2" />Atribuir protocolo</Button>
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
@@ -411,6 +414,15 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
         </Card>
       )}
 
+      <Dialog open={showAssignProtocol} onOpenChange={setShowAssignProtocol}>
+        <DialogContent><DialogHeader><DialogTitle>Atribuir protocolo — {student.nome}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Escolha o conteúdo. Após enviar e ativar, o aluno acessa em Seu Protocolo e Train.</p>
+          <Button onClick={() => { setShowAssignProtocol(false); setShowHTMLUpload(true); }}>Arquivo HTML, código ou link</Button>
+          <Button variant="outline" onClick={() => { setShowAssignProtocol(false); setShowPeriodization(true); }}>Modelos de periodização, HTML ou PDF</Button>
+          <Button variant="outline" onClick={() => { setShowAssignProtocol(false); setShowCreateWorkout(true); }}>Criar treino com exercícios</Button>
+        </DialogContent>
+      </Dialog>
+
       {/* Sovereign Override Panel */}
       <SovereignOverridePanel studentId={student.id} />
 
@@ -467,12 +479,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
           </DialogHeader>
           <div className="overflow-auto max-h-[70vh] border rounded-lg bg-white">
             {selectedHTMLTraining?.html_file_url && (
-              <iframe
-                src={selectedHTMLTraining.html_file_url}
-                sandbox="allow-scripts"
-                className="w-full h-[600px] border-0"
-                title={selectedHTMLTraining.training_name}
-              />
+              <AssignedTrainingViewer training={{ ...selectedHTMLTraining, student_id: student.id }} onBack={() => setSelectedHTMLTraining(null)} />
             )}
           </div>
         </DialogContent>
