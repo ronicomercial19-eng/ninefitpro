@@ -21,8 +21,8 @@ function apiError(code: string, message: string, status = 500) {
 }
 
 // FIX QA Master #4: monta contexto real do atleta (sync score, sono, HRV,
-// avaliações, treinos recentes) para os modos 'recommendations'/'recommend'
-// e 'analyze_progress'/'analyze', que antes recebiam só {name, goal, level,
+// avaliações, treinos recentes) para os modos 'recommendations'/'recommend' e
+// 'analyze_progress'/'analyze', que antes recebiam só {name, goal, level,
 // injuries} do front e geravam recomendações "no escuro". Mirra a lógica de
 // contexto já usada no modo 'chat' do RON.
 async function buildAthleteRichContext(authClient: any, athleteId: string) {
@@ -114,9 +114,19 @@ serve(async (req) => {
       }
     }
 
+    // Provedores de IA em ordem de preferência: chave própria do Gemini, depois OpenAI, depois o gateway da Lovable.
+    // Se o provedor preferido falhar (erro, limite ou crédito), o RON tenta o próximo em vez de ficar fora do ar.
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
+    const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!OPENAI_API_KEY && !LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'AI provider not configured', 500);
+    if (!GEMINI_API_KEY && !OPENAI_API_KEY && !LOVABLE_API_KEY) return apiError('CONFIG_ERROR', 'AI provider not configured', 500);
+
+    type AiProvider = { name: string; endpoint: string; key: string; model: string };
+    const providers: AiProvider[] = [];
+    if (GEMINI_API_KEY) providers.push({ name: "gemini", endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: GEMINI_API_KEY, model: GEMINI_MODEL });
+    if (OPENAI_API_KEY) providers.push({ name: "openai", endpoint: "https://api.openai.com/v1/chat/completions", key: OPENAI_API_KEY, model: "gpt-5-mini" });
+    if (LOVABLE_API_KEY) providers.push({ name: "lovable", endpoint: "https://ai.gateway.lovable.dev/v1/chat/completions", key: LOVABLE_API_KEY, model: "google/gemini-3-flash-preview" });
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -275,34 +285,47 @@ ${richCtx || 'Sem dados adicionais fornecidos — gere recomendações pedindo q
       chatMessages = [{ role: 'user', content: userPrompt }];
     }
 
-    const aiBody = {
-      model: OPENAI_API_KEY ? "gpt-5-mini" : "google/gemini-3-flash-preview",
-      messages: [{ role: "system", content: systemPrompt }, ...chatMessages],
-    };
-
-    const aiEndpoint = OPENAI_API_KEY ? "https://api.openai.com/v1/chat/completions" : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const aiKey = OPENAI_API_KEY || LOVABLE_API_KEY;
-    const response = await fetch(aiEndpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${aiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(aiBody),
-    });
-
-    if (!response.ok) {
-      const txt = await response.text().catch(() => '');
-      console.error("AI gateway error:", response.status, txt.slice(0, 400));
-      if (response.status === 429) return apiError('RATE_LIMITED', 'Limite excedido. Tente novamente.', 429);
-      if (response.status === 402) return apiError('CREDITS_EXHAUSTED', 'Créditos de IA esgotados.', 402);
-      return apiError('AI_SERVICE_ERROR', `IA indisponível (${response.status})`, 500);
+    // Tenta cada provedor na ordem; só devolve erro ao usuário se todos falharem (ou responderem vazio).
+    let content: string | null = null;
+    let lastStatus = 0;
+    for (const provider of providers) {
+      try {
+        const response = await fetch(provider.endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${provider.key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: provider.model,
+            messages: [{ role: "system", content: systemPrompt }, ...chatMessages],
+          }),
+        });
+        if (!response.ok) {
+          const txt = await response.text().catch(() => '');
+          console.error(`AI provider error (${provider.name}):`, response.status, txt.slice(0, 400));
+          lastStatus = response.status;
+          continue;
+        }
+        const result = await response.json();
+        const candidate = result.choices?.[0]?.message?.content;
+        if (typeof candidate === "string" && candidate.trim().length > 0) {
+          content = candidate;
+          break;
+        }
+        console.error(`AI provider returned empty content (${provider.name})`);
+        lastStatus = 502;
+      } catch (e: any) {
+        console.error(`AI provider exception (${provider.name}):`, e?.message);
+        lastStatus = 503;
+      }
     }
 
-    const result = await response.json();
-    const content = result.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || content.trim().length === 0) {
-      return apiError("INVALID_AI_RESPONSE", "Resposta vazia ou inválida", 502);
+    if (content === null) {
+      if (lastStatus === 429) return apiError('RATE_LIMITED', 'Limite excedido. Tente novamente.', 429);
+      if (lastStatus === 402) return apiError('CREDITS_EXHAUSTED', 'Créditos de IA esgotados.', 402);
+      if (lastStatus === 502) return apiError("INVALID_AI_RESPONSE", "Resposta vazia ou inválida", 502);
+      return apiError('AI_SERVICE_ERROR', `IA indisponível (${lastStatus || 'sem resposta'})`, 500);
     }
 
     if (mode === "recommendations" || mode === "recommend") {
