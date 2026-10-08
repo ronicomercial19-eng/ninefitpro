@@ -6,6 +6,8 @@ import { AssignedTrainingViewer } from './AssignedTrainingViewer';
 import { ProtocolListItem, ProtocolViewer } from './ProtocolViewer';
 import { Button } from '@/components/ui/button';
 
+// Lista única de tudo o que o coach (ou o NINE/LIMA) entregou ao aluno, separada em dois grupos:
+// prescrições/modelos de treino e conteúdos (infoprodutos, e-books, sistemas, HTML).
 export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
   const [trainings, setTrainings] = useState<AssignedTraining[]>([]);
   const [library, setLibrary] = useState<any[]>([]);
@@ -37,10 +39,36 @@ export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
   if (loading) return <p role="status">Carregando protocolos…</p>;
   if (error) return <div role="alert" className="surface-card p-4"><p>Não foi possível consultar seus protocolos.</p><Button onClick={() => void load()}>Tentar novamente</Button></div>;
   if (!trainings.length && !library.length) return <div className="surface-card p-6 text-center"><p>Nenhum protocolo atribuído.</p><p className="text-sm text-muted-foreground">Quando seu coach enviar um conteúdo, ele aparecerá aqui.</p></div>;
-  return <div className="space-y-3">
-    {trainings.map(row => <button key={row.id} className="surface-card p-4 w-full text-left hover:border-primary/40" onClick={() => setSelected({ source: 'training', row })}>
-      <p className="text-xs uppercase text-primary">{trainingMedia(row).kind === 'model' ? 'Prescrição / modelo' : trainingMedia(row).kind}</p><p className="font-semibold">{row.training_name}</p><p className="text-xs text-muted-foreground mt-1">Abrir protocolo →</p>
-    </button>)}
-    {library.map(row => <ProtocolListItem key={row.id} a={row} onOpen={() => setSelected({ source: 'library', row })} />)}
+
+  const activeLibrary = library.filter(row => !row.completed_at);
+  const doneLibrary = library.filter(row => !!row.completed_at);
+
+  return <div className="space-y-5">
+    {trainings.length > 0 && (
+      <div>
+        <p className="text-label mb-2">PRESCRIÇÕES E MODELOS ({trainings.length})</p>
+        <div className="space-y-2">
+          {trainings.map(row => <button key={row.id} className="surface-card p-4 w-full text-left hover:border-primary/40" onClick={() => setSelected({ source: 'training', row })}>
+            <p className="text-xs uppercase text-primary">{trainingMedia(row).kind === 'model' ? 'Prescrição / modelo' : trainingMedia(row).kind}</p><p className="font-semibold">{row.training_name}</p><p className="text-xs text-muted-foreground mt-1">Abrir protocolo →</p>
+          </button>)}
+        </div>
+      </div>
+    )}
+    {activeLibrary.length > 0 && (
+      <div>
+        <p className="text-label mb-2">CONTEÚDOS E INFOPRODUTOS ({activeLibrary.length})</p>
+        <div className="space-y-2">
+          {activeLibrary.map(row => <ProtocolListItem key={row.id} a={row} onOpen={() => setSelected({ source: 'library', row })} />)}
+        </div>
+      </div>
+    )}
+    {doneLibrary.length > 0 && (
+      <div>
+        <p className="text-label mb-2">CONCLUÍDOS ({doneLibrary.length})</p>
+        <div className="space-y-2 opacity-60">
+          {doneLibrary.map(row => <ProtocolListItem key={row.id} a={row} onOpen={() => setSelected({ source: 'library', row })} />)}
+        </div>
+      </div>
+    )}
   </div>;
 }
