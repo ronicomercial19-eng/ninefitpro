@@ -1,29 +1,30 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { resolveRole, isStaffRole, isAdminRole, createGenerationGuard } from '../authRole';
 
 describe('resolveRole', () => {
   it('profile role wins over legacy role rows', () => {
-    expect(resolveRole('student', ['admin'])).toBe('student');
+    assert.equal(resolveRole('student', ['admin']), 'student');
   });
   it('falls back to highest-priority role row', () => {
-    expect(resolveRole(null, ['student', 'trainer'])).toBe('trainer');
+    assert.equal(resolveRole(null, ['student', 'trainer']), 'trainer');
   });
   it('returns null without server data', () => {
-    expect(resolveRole(null, [])).toBeNull();
+    assert.equal(resolveRole(null, []), null);
   });
 });
 
 describe('vertical access', () => {
   it('students and unknown are not staff', () => {
-    expect(isStaffRole('student')).toBe(false);
-    expect(isStaffRole('user')).toBe(false);
-    expect(isStaffRole(null)).toBe(false);
+    assert.equal(isStaffRole('student'), false);
+    assert.equal(isStaffRole('user'), false);
+    assert.equal(isStaffRole(null), false);
   });
   it('professor and trainer reach the panel, only admins are admin', () => {
-    expect(isStaffRole('professor')).toBe(true);
-    expect(isStaffRole('trainer')).toBe(true);
-    expect(isAdminRole('trainer')).toBe(false);
-    expect(isAdminRole('admin')).toBe(true);
+    assert.equal(isStaffRole('professor'), true);
+    assert.equal(isStaffRole('trainer'), true);
+    assert.equal(isAdminRole('trainer'), false);
+    assert.equal(isAdminRole('admin'), true);
   });
 });
 
@@ -32,13 +33,13 @@ describe('session switch guard', () => {
     const g = createGenerationGuard();
     const a = g.next();
     const b = g.next(); // troca de sessão
-    expect(g.isCurrent(a)).toBe(false);
-    expect(g.isCurrent(b)).toBe(true);
+    assert.equal(g.isCurrent(a), false);
+    assert.equal(g.isCurrent(b), true);
   });
   it('logout invalidates pending loads', () => {
     const g = createGenerationGuard();
     const a = g.next();
     g.next();
-    expect(g.isCurrent(a)).toBe(false);
+    assert.equal(g.isCurrent(a), false);
   });
 });

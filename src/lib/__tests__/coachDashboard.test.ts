@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { scopeAthletes, computeTrainingCounters } from '../coachDashboard';
 import type { CoachStudentPerformance } from '@/integrations/coachStudentPerformance';
 
@@ -7,10 +8,10 @@ const rows = [row('a1', 'coachA'), row('a2', 'coachA', false), row('b1', 'coachB
 
 describe('horizontal isolation', () => {
   it('trainer only sees own students', () => {
-    expect(scopeAthletes(rows, 'coachA', 'trainer').map(r => r.athlete_id)).toEqual(['a1', 'a2']);
+    assert.deepEqual(scopeAthletes(rows, 'coachA', 'trainer').map(r => r.athlete_id), ['a1', 'a2']);
   });
   it('admin keeps what RLS returned', () => {
-    expect(scopeAthletes(rows, 'adm', 'admin')).toHaveLength(4);
+    assert.equal(scopeAthletes(rows, 'adm', 'admin').length, 4);
   });
 });
 
@@ -21,10 +22,10 @@ describe('counters', () => {
       { student_id: 'a1', end_date: '2026-01-01' },
       { student_id: 'b1', end_date: null },
     ], '2026-10-11');
-    expect(c).toEqual({ totalClients: 2, activeMembers: 1, studentsWithoutTraining: 0, overdueTraining: 1 });
+    assert.deepEqual(c, { totalClients: 2, activeMembers: 1, studentsWithoutTraining: 0, overdueTraining: 1 });
   });
   it('active student without assignment counts as without training', () => {
     const c = computeTrainingCounters([row('x', 'c')], [], '2026-10-11');
-    expect(c.studentsWithoutTraining).toBe(1);
+    assert.equal(c.studentsWithoutTraining, 1);
   });
 });

@@ -4,7 +4,9 @@ import { User, Session } from '@supabase/supabase-js';
 import { getAthleteByUserId, getAthleteByEmail } from '@/services/athletes.service';
 import { getUserRole } from '@/services/auth.service';
 import { AUTH_CALLBACK } from '@/lib/loginDestination';
-import { createGenerationGuard, resolveRole, isStaffRole, isAdminRole } from '@/lib/authRole';
+import { resolveRole, isStaffRole, isAdminRole } from '@/lib/authRole';
+import { createAuthSessionGate } from '@/lib/authSessionGate';
+import { useQueryClient } from '@tanstack/react-query';
 import { mirrorEvent } from '@/services/intelligenceHub.service';
 
 interface Profile {
@@ -82,11 +84,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [roleStatus, setRoleStatus] = useState<RoleStatus>('idle');
 
   // Geração de sessão: respostas antigas são descartadas ao trocar de usuário.
-  const genRef = React.useRef(createGenerationGuard());
+  const genRef = React.useRef(createAuthSessionGate());
+  const identityUserRef = React.useRef<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const loadIdentity = React.useCallback(async (u: User) => {
-    const gen = genRef.current.next();
-    const alive = () => genRef.current.isCurrent(gen);
+  const loadIdentity = React.useCallback(async (u: User, gen = genRef.current.next()) => {
+    const gate = genRef.current;
+    const alive = () => gate.isCurrent(gen);
+    if (!alive()) return;
+    setLoading(true);
     setRoleStatus('loading');
     setProfile(null); setStudentProfile(null); setUserRole(null);
     try {
@@ -97,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let roles: string[] = [];
       if (!error && data) {
         const identity = data as unknown as CanonicalIdentity;
+        if (identity.user_id !== u.id) throw new Error('Identidade incompatível com a sessão');
         profileRole = identity.profile_role ?? null;
         roles = (identity.roles || []).map((r) => r.role);
         setProfile({
@@ -113,52 +120,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         const fallback = await supabase.from('profiles').select('*').eq('user_id', u.id).maybeSingle();
         if (!alive()) return;
-        if (!fallback.error && fallback.data) { setProfile(fallback.data as Profile); profileRole = (fallback.data as Profile).role; }
+        if (fallback.error) throw fallback.error;
+        if (fallback.data) { setProfile(fallback.data as Profile); profileRole = (fallback.data as Profile).role; }
       }
       let role = resolveRole(profileRole, roles);
       if (!role) {
         const r = await getUserRole(u.id);
         if (!alive()) return;
-        role = r.success && r.data ? r.data : null;
+        if (!r.success || !r.data) throw new Error('Não foi possível verificar seu papel');
+        role = r.data;
       }
+      if (!alive()) return;
       setUserRole(role);
-      setRoleStatus('ready');
       await fetchStudentProfile(u.id, u.email, alive);
+      if (alive()) setRoleStatus('ready');
     } catch (error) {
       console.error('[Auth] falha ao carregar identidade', error);
       if (alive()) setRoleStatus('error');
+    } finally {
+      if (alive()) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // A fresh gate is required when React StrictMode mounts the effect again.
+    const gate = createAuthSessionGate();
+    genRef.current = gate;
     const apply = (s: Session | null) => {
+      const gen = gate.next();
+      if (identityUserRef.current !== (s?.user.id ?? null)) {
+        queryClient.clear();
+        identityUserRef.current = s?.user.id ?? null;
+      }
+      setProfile(null); setStudentProfile(null); setUserRole(null);
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
         const u = s.user;
-        setTimeout(() => { void loadIdentity(u); }, 0);
+        setRoleStatus('loading');
+        setLoading(true);
+        setTimeout(() => { if (gate.isCurrent(gen)) void loadIdentity(u, gen); }, 0);
       } else {
-        genRef.current.next(); // invalida respostas pendentes
         setProfile(null); setStudentProfile(null); setUserRole(null); setRoleStatus('idle');
+        setLoading(false);
       }
-      setLoading(false);
     };
     let lastUserId: string | null | undefined;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      gate.observe();
       const uid = s?.user?.id ?? null;
       // TOKEN_REFRESHED do mesmo usuário não precisa recarregar papel
       if (uid === lastUserId && event !== 'USER_UPDATED' && event !== 'SIGNED_IN') { setSession(s); return; }
       lastUserId = uid;
       apply(s);
     });
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    supabase.auth.getSession().then(({ data: { session: s }, error }) => {
+      if (error) throw error;
+      if (!gate.canApplyInitial()) return;
       const uid = s?.user?.id ?? null;
       if (uid === lastUserId) return;
       lastUserId = uid;
       apply(s);
+    }).catch(() => {
+      if (gate.canApplyInitial()) { setRoleStatus('error'); setLoading(false); }
     });
-    return () => subscription.unsubscribe();
-  }, [loadIdentity]);
+    return () => { gate.dispose(); subscription.unsubscribe(); };
+  }, [loadIdentity, queryClient]);
 
   const retryIdentity = async () => { if (user) await loadIdentity(user); };
 
@@ -197,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      setStudentProfile(null);
+      if (alive()) setStudentProfile(null);
     } catch (error) { console.error('Error in fetchStudentProfile:', error); }
   };
 
@@ -228,6 +255,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try { mirrorEvent('logout', {}, null, user?.email ?? null); } catch {}
     genRef.current.next();
+    queryClient.clear();
+    identityUserRef.current = null;
+    setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null); setRoleStatus('idle'); setLoading(false);
     await supabase.auth.signOut();
     try {
       localStorage.removeItem('ninefit_token');
