@@ -33,7 +33,7 @@ Também existem exercícios, super-séries, séries de referência, análise IA,
 
 Stevent: talentos, vagas, pipeline, contratos e pagamentos de freelancers continuam fora do escopo.
 
-## Item 3 — autenticação: implementado, validação técnica em andamento
+## Item 3 — autenticação: correção técnica validada
 
 - Invalidação ocorre ao receber a sessão, antes do callback agendado, com limpeza imediata de perfil/papel.
 - Logout cancela trabalho ainda não iniciado e limpa dados/cache da conta.
@@ -43,8 +43,28 @@ Stevent: talentos, vagas, pipeline, contratos e pagamentos de freelancers contin
 - Serviço de papel e contexto usam o mesmo resolvedor; fallback de user_roles aceita múltiplas linhas.
 - Cache React Query é limpo na troca de identidade; a autorização final do banco não é substituída por isso.
 
-15 testes de lógica passam (11 recebidos + 4 regressões de concorrência). Esses testes não comprovam RLS nem substituem reteste com contas reais. npm test agora integra o CI. Typecheck/build e regressões serão registrados após execução.
+15 testes de lógica passam (11 recebidos + 4 regressões de concorrência). Esses testes não comprovam RLS nem substituem reteste com contas reais. npm test agora integra o CI. Typecheck local passou; CI 618, commit aaf4f6d, passou incluindo build e regressões. Contas desativadas também deixam de receber acesso visual.
+
+## Item 4 — permissões: correções principais aplicadas; auditoria ainda em andamento
+
+Migração professor_access_boundaries aplicada em mfrydtrzjxscbkaiwfnw após teste transacional com rollback, e retestada após aplicação. Os dados sintéticos e identidades de teste não persistiram (zero usuários @qa.invalid).
+
+Correções verificadas:
+
+- Agenda deixa de conceder gestão global a qualquer trainer; acesso por vínculo autorizado ou administrador.
+- Prescrições exigem vínculo professor/aluno; created_by sozinho não concede permissão.
+- Perfil não pode promover seu próprio papel nem alterar campos privilegiados de acesso.
+- Vínculos de atleta/usuário/professor não podem ser reassociados pelo cliente sem autorização administrativa.
+- Cadastros novos não recebem professor/admin por user_metadata nem por comparação de e-mail. Provisionamento profissional usa app_metadata.fitpro_role definido pelo servidor. Contas existentes preservadas.
+- Vínculos de login só são criados por servidor/admin; reservas e leitura de créditos deixam de usar acesso global de trainer.
+- Revogados grants anônimos de perfil, papéis, agenda e prescrição; user_roles não aceita escrita direta autenticada.
+
+Teste no PostgreSQL verificou leitura e edição próprias, bloqueio entre professores, bloqueio de autoelevação, leitura da prescrição entregue pelo aluno, impedimento de prescrição pelo aluno, visão administrativa e negação anônima. O arquivo supabase/tests/professor_access_boundaries.sql deve ser executado em BEGIN/ROLLBACK; não é um teste do navegador.
+
+Pendências antes de fechar o item 4: políticas de postura/mídias ainda permitem alcance amplo; view vw_athlete_periodizacao_ativa indicada como security definer pelo advisor; revisar endpoints/RPCs relevantes durante o fechamento do controle de acesso. Avisos de funções security definer exigem análise de autorização, não são automaticamente provas de exploração.
+
+Item 5 ainda pendente: assessments é público e a política de objetos não limita proprietário. A correção requer armazenamento privado, permissões por vínculo e URLs temporárias em todos os leitores e no serviço de análise; alterar só o bucket quebraria imagens existentes.
 
 ## Próximos itens
 
-Itens 4 a 24 permanecem pendentes. Item 4 começa pela auditoria das políticas permissivas combinadas, agenda, atribuições de treino e atualização de campos privilegiados. Não declarar segurança resolvida por filtros frontend.
+Item 4 permanece em andamento; itens 5 a 24 pendentes. Não declarar segurança resolvida por filtros frontend nem considerar a aplicação desta migração aprovação completa do painel.

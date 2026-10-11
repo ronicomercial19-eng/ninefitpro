@@ -104,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!error && data) {
         const identity = data as unknown as CanonicalIdentity;
         if (identity.user_id !== u.id) throw new Error('Identidade incompatível com a sessão');
+        if (identity.is_active === false) throw new Error('Conta desativada');
         profileRole = identity.profile_role ?? null;
         roles = (identity.roles || []).map((r) => r.role);
         setProfile({
@@ -121,7 +122,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const fallback = await supabase.from('profiles').select('*').eq('user_id', u.id).maybeSingle();
         if (!alive()) return;
         if (fallback.error) throw fallback.error;
-        if (fallback.data) { setProfile(fallback.data as Profile); profileRole = (fallback.data as Profile).role; }
+        if (fallback.data) {
+          if (fallback.data.is_active === false) throw new Error('Conta desativada');
+          setProfile(fallback.data as Profile); profileRole = (fallback.data as Profile).role;
+        }
       }
       let role = resolveRole(profileRole, roles);
       if (!role) {
