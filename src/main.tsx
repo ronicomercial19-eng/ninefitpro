@@ -12,9 +12,8 @@ initializeCapacitor();
 // Register the PWA service worker only in production-capable browsers.
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.warn("Service worker registration failed", error);
-    });
+    void caches.delete('supabase-cache').catch(() => {});
+    // Registration and updates are owned by vite-plugin-pwa.
   });
 }
 

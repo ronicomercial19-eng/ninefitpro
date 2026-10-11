@@ -8,7 +8,7 @@ interface Props {
   name: string;
   level: number;
   classTier?: string;
-  syncScore: number;
+  syncScore: number | null;
   totalXP: number;
   streak: number;
   avatarUrl?: string | null;
@@ -81,7 +81,7 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
               <p className="font-display text-xl truncate">{name}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] font-bold tracking-widest uppercase text-primary">
-                  LVL {level}
+                  NÍVEL {level}
                 </span>
                 <span className="text-[10px] tracking-widest uppercase text-muted-foreground">· {classTier}</span>
               </div>
@@ -107,7 +107,7 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
           {/* XP bar — única barra, decisão principal do card */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] tracking-widest uppercase text-muted-foreground">XP NEXT LEVEL</span>
+              <span className="text-[9px] tracking-widest uppercase text-muted-foreground">PONTOS DE EXPERIÊNCIA</span>
               <span className="text-[10px] font-data text-foreground">{totalXP.toLocaleString('pt-BR')} XP</span>
             </div>
             <div className="h-1.5 rounded-full bg-elevated overflow-hidden">
@@ -120,9 +120,9 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
 
           {/* Sync/Streak — texto de apoio, não competem com a barra de XP */}
           <p className="text-[11px] text-muted-foreground text-center pt-1">
-            Sync <span className="text-foreground font-semibold">{syncScore}%</span>
+            Sync <span className="text-foreground font-semibold">{syncScore == null ? "Sem leitura" : `${syncScore}%`}</span>
             <span className="mx-2 text-white/15">·</span>
-            Streak <span className="text-foreground font-semibold">{streak}d</span>
+            Sequência <span className="text-foreground font-semibold">{streak}d</span>
           </p>
         </div>
       </div>
@@ -148,8 +148,8 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
               <ShareableCard
                 contentType="id_card_upgrade"
                 title={name}
-                subtitle={`LVL ${level} · ${classTier}`}
-                stat={{ label: 'SYNC SCORE', value: `${syncScore}%` }}
+                subtitle={`NÍVEL ${level} · ${classTier}`}
+                stat={{ label: 'SYNC SCORE', value: syncScore == null ? "Sem leitura" : `${syncScore}%` }}
               />
             </motion.div>
           </motion.div>

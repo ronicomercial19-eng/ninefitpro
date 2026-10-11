@@ -28,7 +28,10 @@ Deno.serve(async (req) => {
   if (cerr || !claims?.claims) return json(401, { error: "unauthorized" });
 
   const url = new URL(req.url);
-  const sid = url.searchParams.get("student_external_id") || claims.claims.sub;
+  const requestedStudentId = url.searchParams.get("student_external_id");
+  const { data: sid, error: athleteError } = await sb.rpc("fn_current_athlete_id");
+  if (athleteError || !sid) return json(403, { error: "athlete profile required" });
+  if (requestedStudentId && requestedStudentId !== sid) return json(403, { error: "student identity mismatch" });
   const partner = Deno.env.get("LIBRARY_PARTNER_KEY")!;
   const apiKey = Deno.env.get("LIBRARY_APIKEY")!;
   const { data: subscription } = await sb.from("user_subscriptions").select("plan_id").eq("user_id", claims.claims.sub).order("activated_at", { ascending: false }).limit(1).maybeSingle();

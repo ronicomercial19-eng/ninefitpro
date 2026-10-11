@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
 export const SOLUTION_ATTRIBUTION_ID = "gmp_git_agentskills_v1";
@@ -50,13 +51,7 @@ export async function loadGoogleMaps(): Promise<typeof google> {
   loaderPromise = (async () => {
     const apiKey = await getGoogleMapsApiKey();
     setOptions({ key: apiKey, v: "weekly" });
-    // Importa explicitamente as bibliotecas necessárias
-    await Promise.all([
-      importLibrary("maps"),
-      importLibrary("geometry"),
-      importLibrary("marker"),
-      importLibrary("geocoding"),
-    ]);
+    await Promise.all([importLibrary("maps"), importLibrary("geometry"), importLibrary("marker"), importLibrary("geocoding")]);
     return window.google;
   })();
 
@@ -158,12 +153,19 @@ export async function getStreetNameFromCoords(lat: number, lng: number): Promise
   formattedAddress: string;
 }> {
   try {
-    const response = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`);
-    const data = await response.json();
+    const g = await loadGoogleMaps();
+    if (!geocoderInstance) {
+      geocoderInstance = new g.maps.Geocoder();
+    }
 
-    if (data.results && data.results.length > 0) {
-      const topResult = data.results[0];
-      
+    const response = await geocoderInstance.geocode({
+      location: { lat, lng },
+      // Solução de atribuição
+    });
+
+    if (response && response.results && response.results.length > 0) {
+      const topResult = response.results[0];
+
       let street = "";
       let streetNumber = "";
       let neighborhood = "";

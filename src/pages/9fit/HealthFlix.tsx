@@ -1,10 +1,13 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { Play, Film, Loader2, X, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { matchesCatalog, type CatalogFilters } from "@/services/catalogFilters";
+import { TrackedLibraryVideo } from "@/components/9fit/TrackedLibraryVideo";
 
 interface CatalogItem {
   id: string;
@@ -16,6 +19,11 @@ interface CatalogItem {
   video_url?: string | null;
   external_id?: string | null;
   slug?: string | null;
+  objective?: string | null;
+  equipment?: string | string[] | null;
+  progress_percent?: number;
+  last_position_seconds?: number;
+  duration_seconds?: number;
 }
 
 function normalizePlayerUrl(item: CatalogItem) {
@@ -40,10 +48,18 @@ function normalizePlayerUrl(item: CatalogItem) {
 
 export default function NineFitHealthFlix() {
   const { athleteId } = useAthleteId();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const emptyFilters: CatalogFilters = { search: "", category: "", level: "", duration: "", objective: "", equipment: "" };
+  const [filters, setFilters] = useState<CatalogFilters>(emptyFilters);
+  const [visibleCount, setVisibleCount] = useState(24);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
+  const [savedProgress, setSavedProgress] = useState<Record<string, Partial<CatalogItem>>>({});
+  const currentAthlete = useRef(athleteId);
+  currentAthlete.current = athleteId;
+  const catalogItems = useMemo(() => items.map(item => ({ ...item, ...(savedProgress[item.external_id || item.id] || {}) })), [items, savedProgress]);
 
   useEffect(() => {
     (async () => {
@@ -79,17 +95,70 @@ export default function NineFitHealthFlix() {
     })();
   }, []);
 
+  useEffect(() => {
+    setSavedProgress({}); setSelected(null);
+    if (!athleteId) return;
+    let active = true;
+    void supabase.functions.invoke(`healthflix-proxy?action=progress&fitpro_student_id=${encodeURIComponent(athleteId)}`, { method: "GET" as any })
+      .then(({ data, error }) => {
+        if (error || !active) return;
+        const progress = Object.fromEntries(((data as any)?.progress || []).map((row: any) => [String(row.content_id), row]));
+        setSavedProgress(progress);
+      });
+    return () => { active = false; };
+  }, [athleteId]);
+
+  useEffect(() => {
+    const requestedId = searchParams.get("content");
+    if (!requestedId || !catalogItems.length) return;
+    const item = catalogItems.find((entry) => entry.id === requestedId || entry.external_id === requestedId || entry.slug === requestedId);
+    if (item && !selected) setSelected(item);
+  }, [catalogItems, searchParams, selected]);
+
+  const trackEvent = (item: CatalogItem, eventType: "content_started" | "content_progress_updated" | "content_completed", position = 0, duration = 0) => {
+    if (!athleteId) return;
+    const progressPercent = eventType === "content_completed" ? 100 : duration ? Math.min(99, Math.round((position / duration) * 100)) : 0;
+    void supabase.functions.invoke("healthflix-proxy?action=events", { method: "POST" as any, body: {
+      event_type: eventType,
+      fitpro_student_id: athleteId,
+      entity_type: "content",
+      entity_id: item.external_id || item.id,
+      payload: {
+        title: item.title,
+        progress_percent: progressPercent,
+        last_position_seconds: Math.max(0, Math.floor(position)),
+        duration_seconds: Math.max(0, Math.floor(duration)),
+        watched_seconds: Math.max(0, Math.floor(position)),
+      },
+    } }).then(({ data, error }) => {
+      if (currentAthlete.current !== athleteId) return;
+      if (error || !data?.fitpro_persisted) { toast.error("Não foi possível salvar o progresso. Tente novamente."); return; }
+      const key = item.external_id || item.id;
+      setSavedProgress(current => ({ ...current, [key]: {
+        ...current[key],
+        progress_percent: Math.max(Number(current[key]?.progress_percent) || Number(item.progress_percent) || 0, progressPercent),
+        last_position_seconds: Math.max(0, Math.floor(position)),
+        duration_seconds: Math.max(0, Math.floor(duration)),
+      } }));
+    });
+  };
+
   const categories = useMemo(() => {
     const set = new Set<string>();
-    items.forEach((i) => i.category && set.add(String(i.category)));
+    catalogItems.forEach((i) => i.category && set.add(String(i.category)));
     return Array.from(set);
-  }, [items]);
+  }, [catalogItems]);
+
+  const filtered = useMemo(() => catalogItems.filter(item => matchesCatalog(item, filters)), [catalogItems, filters]);
+  useEffect(() => setVisibleCount(24), [filters]);
+  const options = (key: "level" | "objective" | "equipment") => Array.from(new Set(catalogItems.flatMap(item => key === "equipment" && Array.isArray(item.equipment) ? item.equipment : item[key] ? [String(item[key])] : [])));
+  const field = "rounded-lg border border-white/15 bg-background p-2 text-xs";
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // HEALTHFLIX</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">STREAMING ELITE</h1>
+        <h1 className="text-massive text-4xl text-foreground mt-1">AULAS EM VÍDEO</h1>
         <p className="text-xs text-muted-foreground mt-1">Catálogo conectado em tempo real via API.</p>
       </div>
 
@@ -97,13 +166,17 @@ export default function NineFitHealthFlix() {
         <p className="w-full rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 text-center text-xs font-bold text-primary">CATÁLOGO HEALTHFLIX VIA API</p>
       </div>
 
-      {categories.length > 0 && (
-        <div className="px-4 mb-2 flex gap-2 overflow-x-auto text-[10px] uppercase tracking-widest text-muted-foreground">
-          {categories.map((c) => (
-            <span key={c} className="px-2 py-1 rounded-full border border-white/10 whitespace-nowrap">{c}</span>
-          ))}
+      <section className="mx-4 mb-4 space-y-2" aria-label="Filtros do catálogo">
+        <label className="block text-xs">Buscar conteúdo<input className={`${field} mt-1 w-full`} value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} /></label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <label className="text-xs">Categoria<select className={`${field} block w-full mt-1`} value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}><option value="">Todas</option>{categories.map(value => <option key={value}>{value}</option>)}<option value="__unknown">Não informada</option></select></label>
+          <label className="text-xs">Duração<select className={`${field} block w-full mt-1`} value={filters.duration} onChange={e => setFilters(f => ({ ...f, duration: e.target.value }))}><option value="">Todas</option><option value="short">Até 20 minutos</option><option value="medium">Mais de 20 até 45 minutos</option><option value="long">Mais de 45 minutos</option><option value="__unknown">Não informada</option></select></label>
+          {([['level', 'Nível'], ['objective', 'Objetivo'], ['equipment', 'Equipamento']] as const).map(([key, label]) => <label key={key} className="text-xs">{label}<select className={`${field} block w-full mt-1`} value={filters[key]} onChange={e => setFilters(f => ({ ...f, [key]: e.target.value }))}><option value="">Todos</option>{options(key).map(value => <option key={value}>{value}</option>)}<option value="__unknown">Não informado</option></select></label>)}
         </div>
-      )}
+        <p className="text-xs text-muted-foreground">Filtros usam os metadados fornecidos pelo catálogo. Campos ausentes aparecem como não informados.</p>
+        <button className="text-xs text-primary" onClick={() => setFilters(emptyFilters)}>Limpar filtros</button>
+        {!loading && !loadError && <p className="text-xs">{filtered.length} conteúdos encontrados</p>}
+      </section>
 
       <div className="px-4 grid grid-cols-2 gap-3">
         {loading && (
@@ -118,16 +191,21 @@ export default function NineFitHealthFlix() {
             <button onClick={() => window.location.reload()} className="mt-3 text-xs text-primary underline">Tentar novamente</button>
           </div>
         )}
-        {!loading && !loadError && items.length === 0 && (
+        {!loading && !loadError && filtered.length === 0 && (
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
             <Film className="w-6 h-6 text-primary mb-2" />
-            <p className="text-xs text-muted-foreground">Nenhuma aula HealthFlix ativa encontrada para sua sessão.</p>
+            <p className="text-xs text-muted-foreground">Nenhuma aula encontrada. Limpe os filtros ou verifique o catálogo da sua sessão.</p>
           </div>
         )}
-        {items.map((v, i) => (
+        {filtered.slice(0, visibleCount).map((v, i) => (
           <motion.button
             key={v.id}
-            onClick={() => normalizePlayerUrl(v) ? setSelected(v) : toast.info("Este conteúdo ainda não possui player configurado.")}
+            onClick={() => {
+              if (!normalizePlayerUrl(v)) { toast.info("Este conteúdo ainda não possui player configurado."); return; }
+              setSelected(v);
+              setSearchParams((current) => { current.set("content", v.external_id || v.id); return current; }, { replace: true });
+              trackEvent(v, "content_started", v.last_position_seconds || 0, v.duration_seconds || 0);
+            }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
@@ -149,31 +227,38 @@ export default function NineFitHealthFlix() {
             <div className="px-2 py-2">
               <p className="text-xs text-foreground line-clamp-2">{v.title}</p>
               {v.category && <p className="text-[9px] text-muted-foreground mt-0.5 uppercase tracking-widest">{v.category}</p>}
+              {Number(v.progress_percent) > 0 && <p className="mt-1 text-[9px] text-primary">{Number(v.progress_percent) >= 100 ? "Concluído" : `Retomar · ${Math.round(Number(v.progress_percent))}% assistido`}</p>}
             </div>
           </motion.button>
         ))}
       </div>
 
 
+      {filtered.length > visibleCount && <button className="mx-4 mt-4 text-sm text-primary" onClick={() => setVisibleCount(count => count + 24)}>Mostrar mais conteúdos</button>}
       {selected && normalizePlayerUrl(selected) && (
         <div className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-md p-3 sm:p-6 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Reproduzir ${selected.title}`}>
           <div className="w-full max-w-5xl h-[78dvh] rounded-3xl border border-primary/30 bg-[#0f0f0f] shadow-2xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-primary/20 px-4 py-3 bg-[#0f0f0f]">
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate text-white">{selected.title}</p>
-                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">HealthFlix Player</p>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Reprodutor HealthFlix</p>
               </div>
               <div className="flex items-center gap-2">
                 <a href={normalizePlayerUrl(selected) as string} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40" aria-label="Abrir em nova aba">
                   <ExternalLink className="w-4 h-4" />
                 </a>
-                <button onClick={() => setSelected(null)} className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-primary/40" aria-label="Fechar player">
+                <button onClick={() => { setSelected(null); setSearchParams((current) => { current.delete("content"); return current; }, { replace: true }); }} className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-primary/40" aria-label="Fechar player">
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
             <p className="px-4 py-2 text-xs text-muted-foreground">Se o provedor bloquear a reprodução aqui, use Abrir em nova aba.</p>
-            {/\.(mp4|webm)(\?|$)/i.test(normalizePlayerUrl(selected) || "") ? <video src={normalizePlayerUrl(selected) as string} controls playsInline className="w-full flex-1 min-h-0 bg-black" onError={() => toast.error("O vídeo não pôde ser carregado. Use Abrir em nova aba.")} /> : <iframe title={selected.title} src={normalizePlayerUrl(selected) as string} className="w-full flex-1 bg-black border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />}
+            <div className="w-full flex-1 min-h-0 bg-black">
+              <TrackedLibraryVideo url={normalizePlayerUrl(selected) as string} title={selected.title}
+                startSeconds={selected.last_position_seconds || 0}
+                onProgress={(position, duration) => trackEvent(selected, "content_progress_updated", position, duration)}
+                onComplete={(duration) => trackEvent(selected, "content_completed", duration, duration)} />
+            </div>
           </div>
         </div>
       )}

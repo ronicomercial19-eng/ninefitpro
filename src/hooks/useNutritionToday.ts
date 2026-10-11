@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { dietGoals } from '@/services/athleteCardRules';
 import type { Tables } from '@/integrations/supabase/types';
+import { businessDate } from '@/services/dailyContextRules';
 
-export function useNutritionToday(athleteId: string | null) {
+export function useNutritionToday(athleteId: string | null, selectedDate?: string) {
   const [meals,setMeals]=useState<Tables<'nutrition_logs'>[]>([]);
   const [water,setWater]=useState<Tables<'hydration_logs'>[]>([]);
   const [diet,setDiet]=useState<Tables<'student_diet_assignments'> | null>(null);
@@ -13,7 +13,7 @@ export function useNutritionToday(athleteId: string | null) {
   const refresh=useCallback(async()=>{
     const id=++request.current;
     if(!athleteId){setLoading(false);setMeals([]);setWater([]);setDiet(null);setUpdatedAt(null);return;}
-    const today=format(new Date(),'yyyy-MM-dd');
+    const today=selectedDate || businessDate();
     const [m,w,d]=await Promise.all([
       supabase.from('nutrition_logs').select('*').eq('athlete_id',athleteId).eq('date',today).order('created_at'),
       supabase.from('hydration_logs').select('*').eq('athlete_id',athleteId).eq('log_date',today).order('created_at'),
@@ -23,7 +23,7 @@ export function useNutritionToday(athleteId: string | null) {
     setError(!!(m.error || w.error || d.error));setLoading(false);
     if(m.error || w.error || d.error)return;
     setMeals(m.data ?? []);setWater(w.data ?? []);setDiet(d.data);setUpdatedAt(new Date());
-  },[athleteId]);
+  },[athleteId, selectedDate]);
   useEffect(()=>{
     setLoading(true);setError(false);setMeals([]);setWater([]);setDiet(null);setUpdatedAt(null);void refresh();
     const events=['9fit:nutrition-updated','9fit:hydration-updated'];events.forEach(e=>window.addEventListener(e,refresh));
@@ -31,7 +31,7 @@ export function useNutritionToday(athleteId: string | null) {
     const channel=athleteId ? supabase.channel(`nutrition-panel-${athleteId}-${Math.random()}`).on('postgres_changes',{event:'*',schema:'public',table:'nutrition_logs',filter:`athlete_id=eq.${athleteId}`},refresh).on('postgres_changes',{event:'*',schema:'public',table:'hydration_logs',filter:`athlete_id=eq.${athleteId}`},refresh).on('postgres_changes',{event:'*',schema:'public',table:'student_diet_assignments',filter:`student_id=eq.${athleteId}`},refresh).subscribe():null;
     return()=>{request.current++;events.forEach(e=>window.removeEventListener(e,refresh));window.removeEventListener('focus',focus);if(channel)void supabase.removeChannel(channel);};
   },[athleteId,refresh]);
-  const totals=meals.reduce((sum,m)=>({calories:sum.calories+Number(m.calories ?? 0),protein:sum.protein+Number(m.protein ?? 0)}),{calories:0,protein:0});
+  const totals=meals.reduce((sum,m)=>({calories:sum.calories+Number(m.calories ?? 0),protein:sum.protein+Number(m.protein ?? 0),carbs:sum.carbs+Number(m.carbs ?? 0)}),{calories:0,protein:0,carbs:0});
   const goals=dietGoals((diet?.diet_data ?? {}) as Record<string,unknown>);
   return {meals,water,diet,totals,goals,waterMl:water.reduce((sum,w)=>sum+w.amount_ml,0),loading,error,updatedAt,refresh};
 }

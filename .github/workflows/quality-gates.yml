@@ -23,7 +23,13 @@ jobs:
           node-version: 22
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
+      - run: npm test
+      - run: node --import tsx --test scripts/qa-auth-first-access.ts scripts/qa-login-flow.ts scripts/qa-protocol-delivery.ts
       - run: npm run qa:fase2
+      - run: npm run qa:macro02
+      - run: npm run qa:master18
+      - run: npm run qa:macro03
+      - run: npm run qa:integration19
       - run: npm run build
         if: ${{ always() }}
       - name: Lint baseline (informational until legacy debt is cleared)

@@ -3,6 +3,7 @@
  * `athlete_periodizations`, treinos atribuídos e estado bio recente.
  * Não cria tabelas novas; consome o schema existente.
  */
+import { businessDate } from "@/services/dailyContextRules";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,7 +12,7 @@ export interface PlannedSession {
   label: string; // e.g. "Push A — Peito + Tríceps"
   durationMin: number;
   intensityPct: number; // recomendada
-  source: "periodization" | "assignment" | "fallback";
+  source: "periodization" | "assignment" | "daily" | "fallback";
   trainingId?: string;
   trainingType?: string;
   htmlUrl?: string;
@@ -74,10 +75,19 @@ export async function planWeek(athleteId: string): Promise<PlannedSession[]> {
     console.warn("[planner] assignments fetch skipped", e);
   }
 
+  const { data: daily, error: dailyError } = await supabase.from("daily_workouts").select("id,workout_date,day_name,workout_exercises(exercise_id,sets,reps_range,rest_seconds,exercise_order,exercises(name,video_url))").eq("athlete_id", athleteId).gte("workout_date", week[0].date).lte("workout_date", week[6].date).order("created_at", { ascending: false });
+  if (dailyError) throw dailyError;
+  const seen = new Set<string>();
+  for (const row of daily || []) {
+    if (!row.workout_exercises?.length || seen.has(row.workout_date)) continue;
+    seen.add(row.workout_date);
+    const index = week.findIndex(slot => slot.date === row.workout_date);
+    if (index >= 0) week[index] = { ...week[index], label: row.day_name, source: "daily", trainingId: row.id, trainingType: "structured", trainingData: { exercises: row.workout_exercises.map(exercise => ({ exercise_id: exercise.exercise_id, name: exercise.exercises?.name, sets: exercise.sets, reps: exercise.reps_range, rest_seconds: exercise.rest_seconds, video_url: exercise.exercises?.video_url })) } };
+  }
   return week;
 }
 
 export function pickWorkoutOfTheDay(week: PlannedSession[]): PlannedSession | null {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = businessDate();
   return week.find((s) => s.date === today && s.source !== "fallback") ?? null;
 }

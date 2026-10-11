@@ -8,6 +8,9 @@ import { CheckinCorporalCard } from "@/components/9fit/CheckinCorporalCard";
 import { RecordesSection } from "@/components/9fit/RecordesSection";
 import { HistoricoCompletoModal } from "@/components/9fit/HistoricoCompletoModal";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import { loadProgressScreen } from "@/services/activitySummary";
+import { useActivitySummary } from "@/hooks/useActivitySummary";
+import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SeriesPoint { label: string; value: number; oficial: boolean }
@@ -44,6 +47,7 @@ interface RonProgressoScreen {
 
 export default function NineFitProgresso() {
   const navigate = useNavigate();
+  const activity = useActivitySummary();
   const { athleteId, error: athleteError } = useAthleteId();
   const [bodyfat, setBodyfat] = useState<SeriesPoint[]>([]);
   const [scoreHistory, setScoreHistory] = useState<SeriesPoint[]>([]);
@@ -66,9 +70,8 @@ export default function NineFitProgresso() {
     setLoading(true);
     setLoadError(null);
 
-    const { data, error } = await supabase.rpc("fn_get_ron_progresso_screen", {
-      p_athlete_id: athleteId,
-    });
+    const result = await loadProgressScreen(athleteId).then(data => ({ data, error: null })).catch(error => ({ data: null, error }));
+    const { data, error } = result;
 
     if (error) {
       console.error("[Progresso] fn_get_ron_progresso_screen falhou:", error);
@@ -173,7 +176,13 @@ export default function NineFitProgresso() {
     setLoading(false);
   }, [athleteId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const refresh = () => void load();
+    const events = ["9fit:workout-updated", "9fit:protocol_completed", "9fit:profile-updated", "9fit:sync_updated"];
+    events.forEach(event => window.addEventListener(event, refresh));
+    return () => events.forEach(event => window.removeEventListener(event, refresh));
+  }, [load]);
 
   const W = 320, H = 150, pad = 22;
   const hasCurve = bodyfat.length > 1;
@@ -199,6 +208,8 @@ export default function NineFitProgresso() {
         <h1 className="text-4xl font-display tracking-tight">Progresso</h1>
         <TrendingUp className="w-7 h-7 text-primary" />
       </div>
+      <section className="mx-4 mt-4 rounded-xl border border-white/10 p-4 space-y-2"><h2 className="font-semibold">Histórico de sessões</h2>{activity.isPending ? <p>Carregando sessões…</p> : activity.isError ? <button onClick={() => void activity.refetch()}>Sessões indisponíveis. Tentar novamente</button> : <><p>{activity.data?.total ?? 0} concluídas no total · {activity.data?.week ?? 0} nesta semana · {activity.data?.today ?? 0} hoje</p>{activity.data?.recent.map(session => <p key={session.id} className="text-sm text-muted-foreground">Sessão concluída · {session.workout_date}</p>)}{!activity.data?.total && <p className="text-sm text-muted-foreground">Nenhuma sessão concluída registrada. Um protocolo marcado não equivale a uma sessão de treino executada.</p>}</>}<p className="text-xs text-muted-foreground">Sessões: registros de execução. Recordes e avaliações: histórico de progresso. O índice SYNC mede rotina e tem cálculo separado.</p></section>
+      <div className="mx-4 mt-4"><DailyProtocol readOnly /></div>
       {loading && <p className="px-4 mt-3 text-xs text-muted-foreground">Carregando seus dados reais…</p>}
       {athleteError && <p className="px-4 mt-3 text-xs text-destructive">{athleteError}</p>}
       {loadError && (

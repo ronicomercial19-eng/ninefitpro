@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
+import { canProvisionAthlete } from "../_shared/provisionAthleteGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,8 +36,8 @@ serve(async (req) => {
     if (claimsError || !claimsData?.claims) return apiError('INVALID_TOKEN', 'Invalid authentication token', 401);
 
     const callerId = claimsData.claims.sub;
-    const { data: roleCheck } = await authClient.from("user_roles").select("role").eq("user_id", callerId).single();
-    if (!roleCheck || !["admin", "super_admin", "trainer"].includes(roleCheck.role)) {
+    const { data: roleCheck, error: roleError } = await authClient.from("profiles").select("role,is_active").eq("user_id", callerId).maybeSingle();
+    if (roleError || !roleCheck || roleCheck.is_active === false || !["admin", "super_admin", "trainer", "professor"].includes(roleCheck.role)) {
       return apiError('INSUFFICIENT_PERMISSIONS', 'Trainer role required', 403);
     }
 
@@ -75,7 +76,16 @@ serve(async (req) => {
       return apiError('INVALID_ATHLETE_ID', 'Invalid athlete ID format', 400);
     }
 
-    console.log("Creating auth user for athlete:", athleteId);
+    const { data: athlete, error: athleteError } = await supabaseAdmin.from("athletes")
+      .select("coach_id,user_id,email").eq("id", athleteId).maybeSingle();
+    if (athleteError || !canProvisionAthlete(callerId, roleCheck.role, roleCheck.is_active, athlete, trimmedEmail)) {
+      return apiError('ATHLETE_ACCESS_DENIED', 'Aluno não autorizado, já vinculado ou email incompatível', 403);
+    }
+    const { data: matches, error: matchError } = await supabaseAdmin.from("athletes")
+      .select("id").eq("email", trimmedEmail);
+    if (matchError || matches?.length !== 1 || matches[0].id !== athleteId) {
+      return apiError('AMBIGUOUS_LINK', 'O vínculo de acesso precisa de revisão administrativa', 409);
+    }
 
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: trimmedEmail,
@@ -86,32 +96,24 @@ serve(async (req) => {
 
     if (createError) {
       if (createError.message.includes("already been registered")) {
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-        const existingUser = existingUsers?.users?.find(u => u.email === trimmedEmail);
-        
-        if (existingUser) {
-          await supabaseAdmin.from("athlete_auth_link").upsert(
-            { athlete_id: athleteId, user_id: existingUser.id },
-            { onConflict: "athlete_id" }
-          );
-          return apiResponse({ userId: existingUser.id, message: "User already exists, linked to athlete", linked: true });
-        }
+        return apiError('EXISTING_ACCOUNT', 'Conta existente: confirme o vínculo pelo fluxo administrativo', 409);
       }
       return apiError('CREATE_USER_ERROR', 'Failed to create user account', 400);
     }
 
     if (!userData?.user) return apiError('CREATE_FAILED', 'Failed to create user', 500);
 
-    const { error: linkError } = await supabaseAdmin.from("athlete_auth_link").insert({
+    const { error: linkError } = await supabaseAdmin.from("athlete_auth_link").upsert({
       athlete_id: athleteId, user_id: userData.user.id,
-    });
-    if (linkError) console.error("Error linking athlete:", linkError);
+    }, { onConflict: "athlete_id" });
+    if (linkError) return apiError('LINK_ERROR', 'Conta criada, mas o vínculo não foi confirmado', 500);
 
-    await supabaseAdmin.from("athletes").update({
+    const { error: updateError } = await supabaseAdmin.from("athletes").update({
       password_changed: false,
       activated: true, user_id: userData.user.id,
       metadata: { email: trimmedEmail }
     }).eq("id", athleteId);
+    if (updateError) return apiError('ATHLETE_UPDATE_ERROR', 'Conta criada, mas a ativação não foi confirmada', 500);
 
     return apiResponse({ userId: userData.user.id, message: "User created successfully" });
   } catch (error: any) {

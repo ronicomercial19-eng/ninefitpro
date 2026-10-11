@@ -3,6 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { getAthleteByUserId, getAthleteByEmail } from '@/services/athletes.service';
 import { getUserRole } from '@/services/auth.service';
+import { AUTH_CALLBACK } from '@/lib/loginDestination';
+import { resolveRole, isStaffRole, isAdminRole } from '@/lib/authRole';
+import { createAuthSessionGate } from '@/lib/authSessionGate';
+import { useQueryClient } from '@tanstack/react-query';
 import { mirrorEvent } from '@/services/intelligenceHub.service';
 
 interface Profile {
@@ -42,14 +46,18 @@ interface CanonicalIdentity {
   roles: Array<{ role: string }>;
 }
 
+export type RoleStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 interface AuthContextType {
+  roleStatus: RoleStatus;
+  retryIdentity: () => Promise<void>;
   user: User | null;
   profile: Profile | null;
   studentProfile: StudentProfile | null;
   session: Session | null;
   userRole: string | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
+  register: (email: string, password: string, name?: string) => Promise<{ error?: string; needsEmailConfirmation?: boolean }>;
   logout: () => Promise<void>;
   loading: boolean;
   isSuperAdmin: boolean;
@@ -73,88 +81,124 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleStatus, setRoleStatus] = useState<RoleStatus>('idle');
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(async () => {
-            await fetchUserProfile(session.user.id);
-            await fetchUserRole(session.user.id);
-            await fetchStudentProfile(session.user.id, session.user.email);
-          }, 0);
-        } else {
-          setProfile(null); setStudentProfile(null); setUserRole(null);
-        }
-        setLoading(false);
-      }
-    );
+  // Geração de sessão: respostas antigas são descartadas ao trocar de usuário.
+  const genRef = React.useRef(createAuthSessionGate());
+  const identityUserRef = React.useRef<string | null>(null);
+  const queryClient = useQueryClient();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-        fetchUserRole(session.user.id);
-        fetchStudentProfile(session.user.id, session.user.email);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const result = await getUserRole(userId);
-      if (result.success && result.data) setUserRole(result.data);
-    } catch (error) { console.error('Error fetching user role:', error); }
-  };
-
-  const fetchUserProfile = async (userId: string) => {
+  const loadIdentity = React.useCallback(async (u: User, gen = genRef.current.next()) => {
+    const gate = genRef.current;
+    const alive = () => gate.isCurrent(gen);
+    if (!alive()) return;
+    setLoading(true);
+    setRoleStatus('loading');
+    setProfile(null); setStudentProfile(null); setUserRole(null);
     try {
       const { data, error } = await supabase
-        .from('vw_current_identity')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .from('vw_current_identity').select('*').eq('user_id', u.id).maybeSingle();
+      if (!alive()) return;
+      let profileRole: string | null = null;
+      let roles: string[] = [];
       if (!error && data) {
         const identity = data as unknown as CanonicalIdentity;
+        if (identity.user_id !== u.id) throw new Error('Identidade incompatível com a sessão');
+        if (identity.is_active === false) throw new Error('Conta desativada');
+        profileRole = identity.profile_role ?? null;
+        roles = (identity.roles || []).map((r) => r.role);
         setProfile({
-          id: identity.user_id,
-          user_id: identity.user_id,
-          email: identity.email,
-          full_name: identity.full_name,
-          role: identity.profile_role,
-          phone: null,
-          avatar_url: null,
-          is_active: identity.is_active ?? true,
+          id: identity.user_id, user_id: identity.user_id, email: identity.email,
+          full_name: identity.full_name, role: identity.profile_role, phone: null,
+          avatar_url: null, is_active: identity.is_active ?? true,
         });
-        if (identity.roles?.length) setUserRole(identity.roles[0].role);
         if (identity.athlete_id && identity.athlete_name) {
           setStudentProfile({
-            id: identity.athlete_id,
-            email: identity.athlete_email,
-            name: identity.athlete_name,
-            activated: identity.athlete_activated,
-            coach_id: identity.coach_id ?? undefined,
+            id: identity.athlete_id, email: identity.athlete_email, name: identity.athlete_name,
+            activated: identity.athlete_activated, coach_id: identity.coach_id ?? undefined,
           });
         }
-        return;
+      } else {
+        const fallback = await supabase.from('profiles').select('*').eq('user_id', u.id).maybeSingle();
+        if (!alive()) return;
+        if (fallback.error) throw fallback.error;
+        if (fallback.data) {
+          if (fallback.data.is_active === false) throw new Error('Conta desativada');
+          setProfile(fallback.data as Profile); profileRole = (fallback.data as Profile).role;
+        }
       }
+      let role = resolveRole(profileRole, roles);
+      if (!role) {
+        const r = await getUserRole(u.id);
+        if (!alive()) return;
+        if (!r.success || !r.data) throw new Error('Não foi possível verificar seu papel');
+        role = r.data;
+      }
+      if (!alive()) return;
+      setUserRole(role);
+      await fetchStudentProfile(u.id, u.email, alive);
+      if (alive()) setRoleStatus('ready');
+    } catch (error) {
+      console.error('[Auth] falha ao carregar identidade', error);
+      if (alive()) setRoleStatus('error');
+    } finally {
+      if (alive()) setLoading(false);
+    }
+  }, []);
 
-      const fallback = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-      if (!fallback.error && fallback.data) setProfile(fallback.data);
-    } catch (error) { console.error('Error in fetchUserProfile:', error); }
-  };
+  useEffect(() => {
+    // A fresh gate is required when React StrictMode mounts the effect again.
+    const gate = createAuthSessionGate();
+    genRef.current = gate;
+    const apply = (s: Session | null) => {
+      const gen = gate.next();
+      if (identityUserRef.current !== (s?.user.id ?? null)) {
+        queryClient.clear();
+        identityUserRef.current = s?.user.id ?? null;
+      }
+      setProfile(null); setStudentProfile(null); setUserRole(null);
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        const u = s.user;
+        setRoleStatus('loading');
+        setLoading(true);
+        setTimeout(() => { if (gate.isCurrent(gen)) void loadIdentity(u, gen); }, 0);
+      } else {
+        setProfile(null); setStudentProfile(null); setUserRole(null); setRoleStatus('idle');
+        setLoading(false);
+      }
+    };
+    let lastUserId: string | null | undefined;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      gate.observe();
+      const uid = s?.user?.id ?? null;
+      // TOKEN_REFRESHED do mesmo usuário não precisa recarregar papel
+      if (uid === lastUserId && event !== 'USER_UPDATED' && event !== 'SIGNED_IN') { setSession(s); return; }
+      lastUserId = uid;
+      apply(s);
+    });
+    supabase.auth.getSession().then(({ data: { session: s }, error }) => {
+      if (error) throw error;
+      if (!gate.canApplyInitial()) return;
+      const uid = s?.user?.id ?? null;
+      if (uid === lastUserId) return;
+      lastUserId = uid;
+      apply(s);
+    }).catch(() => {
+      if (gate.canApplyInitial()) { setRoleStatus('error'); setLoading(false); }
+    });
+    return () => { gate.dispose(); subscription.unsubscribe(); };
+  }, [loadIdentity, queryClient]);
+
+  const retryIdentity = async () => { if (user) await loadIdentity(user); };
 
   // Now uses athletes table via service layer instead of legacy students table
-  const fetchStudentProfile = async (userId: string, userEmail: string | undefined) => {
+  const fetchStudentProfile = async (userId: string, userEmail: string | undefined, alive: () => boolean = () => true) => {
     try {
       // Try by user_id first (includes athlete_auth_link fallback)
       const result = await getAthleteByUserId(userId);
+      if (!alive()) return;
       if (result.success && result.data) {
         setStudentProfile({
           id: result.data.id,
@@ -170,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fallback by email
       if (userEmail) {
         const emailResult = await getAthleteByEmail(userEmail);
+        if (!alive()) return;
         if (emailResult.success && emailResult.data) {
           setStudentProfile({
             id: emailResult.data.id,
@@ -183,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      setStudentProfile(null);
+      if (alive()) setStudentProfile(null);
     } catch (error) { console.error('Error in fetchStudentProfile:', error); }
   };
 
@@ -201,32 +246,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name?: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: `${window.location.origin}/9fit/hub`, data: { full_name: name } },
+        options: { emailRedirectTo: `${window.location.origin}${AUTH_CALLBACK}`, data: { full_name: name } },
       });
       if (error) return { error: error.message };
-      return {};
+      return { needsEmailConfirmation: !data.session };
     } catch (error: any) { return { error: error.message || 'Erro no registro' }; }
     finally { setLoading(false); }
   };
 
   const logout = async () => {
     try { mirrorEvent('logout', {}, null, user?.email ?? null); } catch {}
+    genRef.current.next();
+    queryClient.clear();
+    identityUserRef.current = null;
+    setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null); setRoleStatus('idle'); setLoading(false);
     await supabase.auth.signOut();
     try {
       localStorage.removeItem('ninefit_token');
       localStorage.removeItem('ninefit_user_id');
       sessionStorage.removeItem('ninefit_redirect_attempted');
     } catch {}
-    setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null);
+    setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null); setRoleStatus('idle');
   };
 
   const isSuperAdmin = userRole === 'super_admin';
-  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
-  const isTrainer = userRole === 'trainer' || userRole === 'admin' || userRole === 'super_admin';
+  const isAdmin = isAdminRole(userRole);
+  const isTrainer = isStaffRole(userRole);
   const isStudent = userRole === 'student' || userRole === 'user' || Boolean(studentProfile);
 
-  return <AuthContext.Provider value={{ user, profile, studentProfile, session, userRole, login, register, logout, loading, isSuperAdmin, isAdmin, isTrainer, isStudent }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ roleStatus, retryIdentity, user, profile, studentProfile, session, userRole, login, register, logout, loading, isSuperAdmin, isAdmin, isTrainer, isStudent }}>{children}</AuthContext.Provider>;
 };
 

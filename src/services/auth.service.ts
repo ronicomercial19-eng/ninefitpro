@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { resolveRole } from '@/lib/authRole';
 import type { ApiResponse } from '@/types/domains';
 
 export async function getCurrentSession(): Promise<ApiResponse<any>> {
@@ -39,18 +40,18 @@ export async function getUserRole(userId: string): Promise<ApiResponse<string>> 
       const roles = Array.isArray(identity.roles) ? identity.roles as Array<{ role?: string }> : [];
       // `profiles.role` is the canonical application role. The role array is
       // retained as a compatibility fallback while legacy rows are reconciled.
-      const role = identity.profile_role ?? roles[0]?.role;
+      const role = resolveRole(identity.profile_role, roles.map(row => row.role));
       if (role) return { success: true, data: role, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
     }
 
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .single();
+      .eq('user_id', userId);
 
-    if (error || !data) return { success: false, error: { code: 'NO_ROLE', message: 'No role found' } };
-    return { success: true, data: data.role, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
+    const role = resolveRole(null, (data ?? []).map(row => row.role));
+    if (error || !role) return { success: false, error: { code: 'NO_ROLE', message: 'No role found' } };
+    return { success: true, data: role, metadata: { timestamp: new Date().toISOString(), version: 'v1' } };
   } catch (err: any) {
     return { success: false, error: { code: 'UNEXPECTED_ERROR', message: err.message } };
   }

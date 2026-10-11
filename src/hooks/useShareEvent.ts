@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
+import { recordShareEvent } from '@/services/share.service';
 import { supabase } from "@/integrations/supabase/client";
-import { useAthleteId } from "./useAthleteId";
 import { toast } from "sonner";
 
 export type ShareContentType =
@@ -23,7 +23,6 @@ export type ShareContentType =
  * e registra o evento em share_events para analytics.
  */
 export function useShareEvent(contentType: ShareContentType) {
-  const { athleteId } = useAthleteId();
   const [sharing, setSharing] = useState(false);
 
   const share = useCallback(
@@ -65,14 +64,14 @@ export function useShareEvent(contentType: ShareContentType) {
 
         // Registrar evento (não bloqueia caso falhe)
         try {
-          await supabase.from("share_events" as any).insert({
-            athlete_id: athleteId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            content_type: contentType,
-            content_id: contentId ?? null,
-            channel,
-            shared_at: new Date().toISOString(),
-          } as any);
+          const user = (await supabase.auth.getUser()).data.user;
+          if (user) {
+            const receipt = await recordShareEvent({ userId: user.id, contentType, contentId, channel });
+            if (receipt.rewarded) {
+              toast.success(`+${receipt.reward_xp} XP registrados`);
+              window.dispatchEvent(new Event('9fit:sync_updated'));
+            }
+          }
         } catch (e) { console.warn("[share_events] insert:", e); }
         return channel;
       } catch (e: any) {
@@ -85,7 +84,7 @@ export function useShareEvent(contentType: ShareContentType) {
         setSharing(false);
       }
     },
-    [athleteId, contentType]
+    [contentType]
   );
 
   return { share, sharing };

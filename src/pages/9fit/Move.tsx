@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   MapPin,
@@ -23,34 +24,17 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { emitNexus } from "@/services/nexus/nexusBus";
+import {
+  loadGoogleMaps,
+  NINE_FIT_MAP_STYLES,
+  getStreetNameFromCoords,
+  SOLUTION_ATTRIBUTION_ID,
+} from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
 import { ProgressGraph } from "@/components/9fit/ProgressGraph";
-import { APIProvider, Map, AdvancedMarker, Polyline } from "@vis.gl/react-google-maps";
-
-// ATENÇÃO: As chaves de API devem ser carregadas de variáveis de ambiente.
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
-const ATTRIBUTION_ID = "gmp_mcp_codeassist_v1_aistudio";
-
-// Placeholder para o geocoder que precisa ser chamado via REST API
-const getStreetNameFromCoords = async (lat: number, lng: number): Promise<{ street: string; neighborhood: string }> => {
-  try {
-    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`);
-    const data = await response.json();
-    if (data.results && data.results.length > 0) {
-      const addressComponents = data.results[0].address_components;
-      const street = addressComponents.find((c: any) => c.types.includes("route"))?.long_name || "Rua desconhecida";
-      const neighborhood = addressComponents.find((c: any) => c.types.includes("sublocality"))?.long_name || "";
-      return { street, neighborhood };
-    }
-  } catch (error) {
-    console.error("Erro no Geocoding:", error);
-  }
-  return { street: "Rua desconhecida", neighborhood: "" };
-};
 
 type LatLng = { lat: number; lng: number };
-// ... (rest of the file)
 
 const LOCAL_SIMULATION_WAYPOINTS: LatLng[] = [
   { lat: -23.56149, lng: -46.65588 }, 
@@ -71,6 +55,7 @@ const LOCAL_SIMULATION_WAYPOINTS: LatLng[] = [
 export default function NineFitMove() {
   const showSimulationControls = import.meta.env.DEV;
   const { user } = useAuth();
+  const [recentRuns, setRecentRuns] = useState<Array<{ distanceKm: number; durationSeconds: number; date: string }>>([]);
   const [running, setRunning] = useState(false);
 
   const [isPaused, setIsPaused] = useState(false);
@@ -99,36 +84,84 @@ export default function NineFitMove() {
   const lastGeocodedCoordRef = useRef<LatLng | null>(null);
   const captureCardRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <APIProvider apiKey={API_KEY}>
-      <Map
-        defaultCenter={{ lat: -23.56149, lng: -46.65588 }}
-        defaultZoom={15}
-        mapId="9fit_move_map"
-        onMapTypeIdChanged={(map) => {
-          mapInstanceRef.current = map;
-        }}
-        ref={(map) => {
-          if (map) mapInstanceRef.current = map;
-        }}
-        style={{ height: "100%", width: "100%" }}
-      />
-    </APIProvider>
-  );
+  useEffect(() => {
+    if (!user?.id) { setRecentRuns([]); return; }
+    let active = true;
+    void supabase.from('bio_activity_logs').select('distance_m,recorded_at').eq('user_id', user.id).eq('source', 'move_gps').order('recorded_at', { ascending: false }).limit(10).then(({ data, error }) => {
+      if (!active || error) return;
+      const rows = (data ?? []).map((row) => ({ distanceKm: Number(row.distance_m ?? 0) / 1000, durationSeconds: 0, date: row.recorded_at ?? '' })).filter((row) => row.distanceKm > 0);
+      const local = JSON.parse(localStorage.getItem('9fit_move_history') || '[]') as Array<{ distanceKm: number; durationSeconds: number; date: string }>;
+      const merged = [...local, ...rows].filter((run, index, all) => all.findIndex((candidate) => Math.abs(candidate.distanceKm - run.distanceKm) < 0.01 && candidate.date === run.date) === index).slice(0, 10);
+      setRecentRuns(merged);
+    });
+    return () => { active = false; };
+  }, [user?.id, activitySaved]);
 
-  /*
   useEffect(() => {
     let mounted = true;
+
     async function initMap() {
-       ... // (rest of old init code)
+      try {
+        const g = await loadGoogleMaps();
+        if (!mounted || !mapElementRef.current) return;
+
+        const defaultCenter = { lat: -23.56149, lng: -46.65588 };
+
+        const map = new g.maps.Map(mapElementRef.current, {
+          center: defaultCenter,
+          zoom: 17,
+          styles: NINE_FIT_MAP_STYLES,
+          disableDefaultUI: true,
+          zoomControl: false,
+          gestureHandling: "greedy",
+          mapId: undefined,
+          internalUsageAttributionIds: [SOLUTION_ATTRIBUTION_ID],
+        } as any);
+        console.log("[NineFitMove] Map instance created:", map);
+
+        mapInstanceRef.current = map;
+
+        polylineRef.current = new g.maps.Polyline({
+          map,
+          path: [],
+          strokeColor: "#ff6b2c",
+          strokeOpacity: 0.95,
+          strokeWeight: 6,
+        });
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (!mounted || !mapInstanceRef.current) return;
+              const posLatLng = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              };
+              mapInstanceRef.current.setCenter(posLatLng);
+              updateStreetName(posLatLng.lat, posLatLng.lng, true);
+            },
+            () => {},
+            { enableHighAccuracy: true, timeout: 5000 }
+          );
+        }
+      } catch (err) {
+        console.error("[NineFitMove] Erro ao carregar Google Maps:", err);
+        toast.error("Não foi possível carregar o Google Maps. Verifique sua conexão.");
+      }
     }
+
     initMap();
+
     return () => {
       mounted = false;
-      ...
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+      if (simIntervalRef.current !== null) {
+        window.clearInterval(simIntervalRef.current);
+      }
     };
   }, []);
-  */
 
   useEffect(() => {
     if (!running || isPaused) return;
@@ -524,6 +557,11 @@ export default function NineFitMove() {
           {voiceAudio ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4" />}
         </button>
       </div>
+
+      {!running && <section className="mx-5 mb-4 rounded-2xl border border-primary/25 bg-primary/[0.06] p-4" aria-label="Sugestão da próxima corrida">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-primary">SUA PRÓXIMA SESSÃO</p>
+        {recentRuns.length ? <><p className="mt-1 text-sm font-semibold text-white">Use seu histórico como referência, sem aumentar a carga automaticamente.</p><p className="mt-1 text-xs text-neutral-400">Último registro: {recentRuns[0].distanceKm.toFixed(2)} km · {recentRuns[0].date ? new Date(recentRuns[0].date).toLocaleDateString('pt-BR') : 'data indisponível'}. Repita uma distância confortável ou escolha uma caminhada leve.</p></> : <><p className="mt-1 text-sm font-semibold text-white">Comece com uma caminhada confortável.</p><p className="mt-1 text-xs text-neutral-400">Seu histórico ainda não tem corridas registradas. A primeira atividade cria uma referência para suas próximas sessões.</p></>}
+      </section>}
 
       {/* RUA ATUAL DETECTADA EM TEMPO REAL PELO GOOGLE GEOCODER */}
       <div className="mx-5 mb-3 rounded-2xl bg-gradient-to-r from-primary/15 via-[#0e1017] to-black border border-primary/30 p-3.5 shadow-lg flex items-center justify-between gap-3">

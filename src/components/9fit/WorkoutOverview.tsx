@@ -63,18 +63,33 @@ const WEEKDAYS = [
   { key: "domingo", label: "Dom", jsDay: 0 },
 ];
 
+// Estimativa honesta quando a prescrição não traz duração: ~40 s por série + descanso + 3 min de preparo.
+function estimateMinutes(exercises: WorkoutExercise[]): number | null {
+  if (!exercises.length) return null;
+  const seconds = exercises.reduce((sum, ex) => {
+    const sets = Math.max(1, Number(ex.sets) || 3);
+    const rest = Number(ex.rest_seconds) || 60;
+    return sum + sets * 40 + (sets - 1) * rest + 30;
+  }, 0);
+  return Math.max(5, Math.round(seconds / 60) + 3);
+}
+
 export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewProps) {
   const trainingData = training.training_data;
   const exercises = useMemo(() => trainingData?.exercises ?? [], [trainingData]);
   const exerciseCount = exercises.length || training.training_data?.exercise_count || 0;
-  const duration = training.training_data?.estimated_duration ?? training.training_data?.requested_duration_min ?? null;
+  const duration = training.training_data?.estimated_duration ?? training.training_data?.requested_duration_min ?? estimateMinutes(exercises);
   const protocol = training.training_data?.protocol;
   const xpReward = training.training_data?.xp_reward ?? null;
 
   const todayKey = WEEKDAYS.find(w => w.jsDay === new Date().getDay())?.key || "segunda";
   const [activeDay, setActiveDay] = useState<string>(todayKey);
 
-  // Group exercises by training_day
+  // Só divide por dia da semana quando a prescrição realmente traz training_day.
+  // Treino de um dia só (sessão do dia, treino rápido, NINE/LIMA) aparece como lista única,
+  // em vez de cair na "segunda" e mostrar "dia de descanso" no resto da semana.
+  const hasWeekdaySplit = useMemo(() => exercises.some((ex) => !!ex.training_day), [exercises]);
+
   const byDay = useMemo(() => {
     const map: Record<string, WorkoutExercise[]> = {};
     WEEKDAYS.forEach(d => map[d.key] = []);
@@ -94,6 +109,36 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
     }
     return <Dumbbell className="w-5 h-5 text-primary" />;
   };
+
+  const renderExercise = (ex: WorkoutExercise, idx: number) => (
+    <div key={ex.exercise_id || idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-sm border border-border/50">
+      {ex.gif_url ? (
+        <img src={ex.gif_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
+      ) : (
+        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
+          <Dumbbell className="w-5 h-5 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{ex.sets}x{ex.reps}</Badge>
+          {ex.rest_seconds && (
+            <span className="text-[10px] text-muted-foreground">{ex.rest_seconds}s desc</span>
+          )}
+          {ex.override_locked && (
+            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-amber-500/10 text-amber-600 border-amber-500/30">
+              🔒 Prof.
+            </Badge>
+          )}
+        </div>
+      </div>
+      {ex.external_video_id && (
+        <Video className="w-4 h-4 text-primary flex-shrink-0" />
+      )}
+      <span className="text-xs text-muted-foreground font-bold">#{idx + 1}</span>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -165,8 +210,21 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
         </div>
       </div>
 
-      {/* Weekday Tabs - exercises by day */}
-      {exercises.length > 0 && (
+      {/* Treino de um dia: lista única */}
+      {exercises.length > 0 && !hasWeekdaySplit && (
+        <div className="bg-card border border-border rounded-sm p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+            <Dumbbell className="w-4 h-4 text-primary" />
+            Exercícios do treino
+          </h3>
+          <div className="space-y-2">
+            {exercises.map((ex, idx) => renderExercise(ex, idx))}
+          </div>
+        </div>
+      )}
+
+      {/* Protocolo semanal: exercícios por dia da semana */}
+      {exercises.length > 0 && hasWeekdaySplit && (
         <div className="bg-card border border-border rounded-sm p-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
             <Dumbbell className="w-4 h-4 text-primary" />
@@ -205,35 +263,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
                       <p className="text-[10px] mt-1">Nenhum exercício para {d.label}</p>
                     </div>
                   ) : (
-                    dayExercises.map((ex, idx) => (
-                      <div key={ex.exercise_id || idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-sm border border-border/50">
-                        {ex.gif_url ? (
-                          <img src={ex.gif_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
-                        ) : (
-                          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                            <Dumbbell className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{ex.sets}x{ex.reps}</Badge>
-                            {ex.rest_seconds && (
-                              <span className="text-[10px] text-muted-foreground">{ex.rest_seconds}s desc</span>
-                            )}
-                            {ex.override_locked && (
-                              <Badge variant="outline" className="text-[10px] px-1 py-0 bg-amber-500/10 text-amber-600 border-amber-500/30">
-                                🔒 Prof.
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        {ex.external_video_id && (
-                          <Video className="w-4 h-4 text-primary flex-shrink-0" />
-                        )}
-                        <span className="text-xs text-muted-foreground font-bold">#{idx + 1}</span>
-                      </div>
-                    ))
+                    dayExercises.map((ex, idx) => renderExercise(ex, idx))
                   )}
                 </TabsContent>
               );

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowRight, Flame, Utensils, Zap, ChevronDown, Activity } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
 import { useTiltCard } from "@/hooks/useTiltCard";
+import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 
 interface Props {
   score: number | null;
@@ -71,7 +72,7 @@ function getStatusTheme(score: number | null, status: HubScoreStatus) {
 }
 
 export function SyncScoreRing({ score, status, breakdown }: Props) {
-  const navigate = useNavigate();
+  const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const measured = typeof score === "number" && Number.isFinite(score);
   const safeScore = measured ? Math.max(0, Math.min(100, score)) : 0;
@@ -113,13 +114,19 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
               {status === "offline" || status === "error" ? "Seus registros não foram apagados. Atualize o painel quando a conexão estiver disponível." : "Registre refeições, treinos e recuperação para acompanhar sua consistência."}
             </p>
             {status === "calibrating" && <button
-              onClick={() => navigate("/9fit/onboarding")}
+               onClick={() => setCalibrationOpen(true)}
               className="inline-flex items-center gap-2 text-xs font-bold tracking-wide px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all active:scale-95"
             >
               Iniciar Calibração <ArrowRight className="w-3.5 h-3.5" />
             </button>}
           </div>
         </div>
+        <Dialog open={calibrationOpen} onOpenChange={setCalibrationOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Calibração diária</DialogTitle><DialogDescription>Registre como você está hoje para atualizar seu contexto diário.</DialogDescription></DialogHeader>
+            <EmojiCalibrationQuiz onComplete={() => setCalibrationOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

@@ -2,6 +2,15 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Brain, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
+import { useState } from 'react';
+import { useDailyContext } from '@/hooks/useDailyContext';
+import { businessDate, dayProgress, selectDayCommand } from '@/services/dailyContext';
+import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
+import { PDIWizard } from './PDIWizard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useAthleteId } from '@/hooks/useAthleteId';
+import { toast } from 'sonner';
 
 interface Props {
   name: string;
@@ -11,13 +20,30 @@ interface Props {
   hasPlan: boolean;
 }
 
-export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }: Props) {
+export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) {
   const navigate = useNavigate();
-  const hasWorkout = weekly.treinos > 0;
+  const context = useDailyContext();
+  const { athleteId } = useAthleteId();
+  const [modal, setModal] = useState<'calibration' | 'profile' | 'review' | null>(null);
+  const [saving, setSaving] = useState(false);
+  const current = !context.isError && context.data?.date === businessDate() ? context.data : null;
+  const command = current ? selectDayCommand(current) : null;
+  const progress = current ? dayProgress(current) : null;
   const scoreReady = typeof syncScore === "number" && scoreStatus === "available";
-  const headline = hasWorkout ? "Seu ritmo está em movimento." : hasPlan ? "Seu próximo passo está pronto." : "Vamos calibrar seu primeiro passo.";
-  const primaryLabel = hasWorkout ? "Abrir treino de hoje" : hasPlan ? "Abrir meu plano" : "Começar ativação";
-  const primaryRoute = hasWorkout ? "/9fit/train" : hasPlan ? "/9fit/planejamento" : "/9fit/ativacao";
+  const headline = command?.title || (context.isError ? 'Não consegui ler seu dia.' : 'Lendo seus registros de hoje…');
+  const primaryLabel = command?.label || 'Tentar atualizar';
+  const act = () => { if (!command) { void context.refetch(); return; } if (command.route) navigate(command.route); else if (['calibration', 'profile', 'review'].includes(command.key)) setModal(command.key as 'calibration' | 'profile' | 'review'); };
+  const record = async (patch: { rating?: number; training_choice?: string }) => {
+    if (!athleteId || saving) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('athlete_day_reviews' as any).upsert({ athlete_id: athleteId, review_date: businessDate(), updated_at: new Date().toISOString(), ...patch }, { onConflict: 'athlete_id,review_date' });
+      if (error) throw error;
+      window.dispatchEvent(new Event('9fit:day-reviewed'));
+      setModal(null);
+      toast.success(patch.rating ? 'Balanço registrado' : 'Descanso registrado para hoje. Sua prescrição foi preservada.');
+    } catch { toast.error('Não foi possível salvar. Tente novamente.'); } finally { setSaving(false); }
+  };
   const consistency = Math.min(100, Math.round((weekly.treinos / 5) * 100));
 
   return (
@@ -53,7 +79,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
                 {name}, {headline}
               </h2>
               <p className="mt-0.5 text-[11.5px] text-neutral-400 leading-normal">
-                Uma ação agora recalibra a leitura do seu próximo ciclo.
+                {command?.description || 'A próxima ação depende dos seus registros confirmados.'}
               </p>
             </div>
             <SyncDial score={scoreReady ? Math.round(syncScore!) : null} />
@@ -62,7 +88,8 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
           {/* Botão de Ação Primária */}
           <button
             type="button"
-            onClick={() => navigate(primaryRoute)}
+            onClick={act}
+            disabled={!context.online || context.isFetching}
             className="mt-3 flex w-full items-center justify-between gap-2.5 rounded-lg bg-primary hover:bg-primary/90 px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-primary-foreground transition-all active:scale-[0.99] shadow-sm"
           >
             <span className="flex items-center gap-2">
@@ -71,6 +98,10 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
             </span>
             <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
+          {progress && <p className="mt-2 text-xs text-neutral-400" aria-live="polite">{progress.completed}/{progress.total} etapas registradas · {current?.today.rest_day ? 'Descanso registrado' : 'Jornada de hoje'}</p>}
+          {(command?.key === 'training' || command?.key === 'safety') && <button type="button" disabled={saving || !navigator.onLine} onClick={() => void record({ training_choice: 'rest' })} className="mt-2 text-xs text-neutral-400 underline">Hoje vou descansar</button>}
+          {context.isError && <p role="alert" className="mt-2 text-xs text-amber-400">Falha ao atualizar. Conecte-se e tente novamente antes de continuar.</p>}
+          {!context.online && <p role="status" className="mt-2 text-xs text-amber-400">Sem conexão. Seus últimos registros ficam visíveis; reconecte para continuar.</p>}
 
           {/* Métricas Semanais — Números Elegantes & Labels Nítidos */}
           <div className="mt-2.5 grid grid-cols-3 gap-2">
@@ -91,7 +122,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
             </button>
             <button
               type="button"
-              onClick={() => navigate("/9fit/ativacao")}
+              onClick={() => setModal('calibration')}
               className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
             >
               <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
@@ -100,6 +131,13 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, hasPlan }
           </div>
         </div>
       </div>
+      <PDIWizard open={modal === 'profile'} onClose={() => setModal(null)} />
+      <Dialog open={modal === 'calibration' || modal === 'review'} onOpenChange={open => { if (!open) setModal(null); }}>
+        <DialogContent><DialogHeader><DialogTitle>{modal === 'review' ? 'Como foi seu dia?' : 'Calibração diária'}</DialogTitle><DialogDescription>{modal === 'review' ? 'Um balanço da sua rotina, separado dos sinais ao acordar.' : 'Cinco sinais declarados para orientar o dia.'}</DialogDescription></DialogHeader>
+          {modal === 'calibration' && <EmojiCalibrationQuiz onComplete={() => setModal(null)} />}
+          {modal === 'review' && <div className="grid grid-cols-5 gap-2">{['😵', '😕', '😐', '🙂', '🤩'].map((emoji, i) => <button key={emoji} aria-label={['Péssimo', 'Ruim', 'Regular', 'Bom', 'Ótimo'][i]} disabled={saving} onClick={() => void record({ rating: i + 1 })} className="rounded-xl border border-white/10 py-3"><span className="text-2xl">{emoji}</span><span className="block text-[10px]">{['Péssimo', 'Ruim', 'Regular', 'Bom', 'Ótimo'][i]}</span></button>)}</div>}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

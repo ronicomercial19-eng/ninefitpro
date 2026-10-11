@@ -1,3 +1,4 @@
+import { webhookSecretFailure } from './src/services/infinitepayWebhookPolicy.ts';
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -55,23 +56,6 @@ app.get('/api/config/maps', (req, res) => {
     process.env.GOOGLE_MAPS_API_KEY ||
     'AIzaSyDdsMhbF8C6KTht4vbqPcBvxHNAdM3doh4';
   res.json({ apiKey });
-});
-
-// Proxy para Geocoding (evita CORS trap no cliente)
-app.get('/api/geocode', async (req, res) => {
-  const { lat, lng } = req.query;
-  const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY;
-  if (!lat || !lng || !apiKey) {
-    return res.status(400).json({ error: 'Parâmetros inválidos' });
-  }
-
-  try {
-    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`);
-    const data = await response.json();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar Geocoding' });
-  }
 });
 
 // Food Scanner Multimodal Endpoint via Gemini 3.8 Flash
@@ -420,8 +404,9 @@ app.post('/api/webhook/infinitepay', async (req, res) => {
   try {
     // 1. Validação de Segurança
     const authToken = req.headers['x-webhook-secret'];
-    if (authToken !== process.env.INFINITEPAY_WEBHOOK_SECRET) {
-      return res.status(403).json({ error: 'Acesso negado' });
+    const secretFailure = webhookSecretFailure(process.env.INFINITEPAY_WEBHOOK_SECRET, authToken);
+    if (secretFailure) {
+      return res.status(secretFailure).json({ error: secretFailure === 503 ? 'Webhook indisponível' : 'Acesso negado' });
     }
 
     const { user_email, plan_id } = req.body;

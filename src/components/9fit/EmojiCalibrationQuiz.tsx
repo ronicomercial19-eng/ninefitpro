@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { toast } from "sonner";
+import { businessDate, fetchDailyContext } from '@/services/dailyContext';
 
 type Q = { key: string; label: string; emojis: { e: string; v: number; l: string }[] };
 
@@ -28,13 +29,12 @@ const QUESTIONS: Q[] = [
 const STORAGE_KEY = "9fit:emoji_quiz_date";
 
 function todayISO() {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return businessDate();
 }
 
-export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: number) => void }) {
+export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: number | null) => void }) {
   const { athleteId } = useAthleteId();
+  const today = todayISO();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [done, setDone] = useState(false);
@@ -51,12 +51,12 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         .from("daily_checkins")
         .select("id,sono,energia,humor,motivacao,dor")
         .eq("athlete_id", athleteId)
-        .eq("checkin_date", todayISO())
+        .eq("checkin_date", today)
         .maybeSingle();
       if (active && data && [data.sono,data.energia,data.humor,data.motivacao,data.dor].every(value => value !== null)) setCompletedToday(true);
     })();
     return () => { active = false; };
-  }, [athleteId]);
+  }, [athleteId, today]);
 
   const handlePick = async (q: Q, v: number) => {
     if (saving) return;
@@ -73,7 +73,6 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
     }
 
     setSaving(true);
-    const quizScore = Math.round((Object.values(next).reduce((a, b) => a + b, 0) / (QUESTIONS.length * 5)) * 100);
     const { error } = await supabase.from("daily_checkins").upsert(
       {
         athlete_id: athleteId,
@@ -98,14 +97,12 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
       return;
     }
 
-    // O trigger recalcula o sync; lê o valor real gravado
-    const { data: ath } = await supabase.from("athletes").select("sync_score").eq("id", athleteId).maybeSingle();
-    const score = Math.round(Number(ath?.sync_score ?? quizScore));
-
-    localStorage.setItem(STORAGE_KEY, new Date().toDateString());
+    let score: number | null = null;
+    try { score = (await fetchDailyContext()).sync.value; } catch { /* Calibration is durable; never fabricate a score when the read model fails. */ }
+    try { localStorage.setItem(STORAGE_KEY, businessDate()); } catch { /* Storage is optional. */ }
     setDone(true);
     onComplete?.(score);
-    toast.success(`SYNC atualizada: ${score}%`);
+    toast.success(score === null ? 'Calibração salva. A leitura será atualizada ao reconectar.' : `SYNC atualizada: ${score}/100`);
     window.dispatchEvent(new CustomEvent("9fit:sync_updated", { detail: { score } }));
   };
 
@@ -117,7 +114,8 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         </div>
         <div>
           <p className="text-xs uppercase tracking-widest text-primary font-bold">SYNC atualizada hoje</p>
-          <p className="text-xs text-muted-foreground">Volte amanhã para fazer um novo check-in.</p>
+          <p className="text-xs text-muted-foreground">Seus cinco sinais estão salvos. Atualize se algo mudar.</p>
+          <button type="button" className="mt-2 text-xs text-primary underline" onClick={() => { setCompletedToday(false); setDone(false); setStep(0); setAnswers({}); }}>Meus sinais mudaram · atualizar</button>
         </div>
       </div>
     );

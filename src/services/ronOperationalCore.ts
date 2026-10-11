@@ -15,6 +15,8 @@ import { emitNexus } from "./nexus/nexusBus";
 import { toast } from "sonner";
 import { createCalendarWorkoutEvent, syncWeeklyWorkouts } from "./googleCalendar";
 import { getAccessToken } from "./googleAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { businessDate } from "@/services/dailyContextRules";
 
 export type RonOperationType =
   | "NAVIGATE"
@@ -339,12 +341,60 @@ export async function executeRonAction(
         return { success: true, message: "Missão finalizada." };
       }
 
+      case "ADJUST_TRAINING_VOLUME": {
+        const { data: currentAthleteId, error: identityError } = await supabase.rpc("fn_current_athlete_id");
+        if (identityError || !currentAthleteId) throw new Error("Não consegui confirmar seu perfil de atleta.");
+        const date = businessDate();
+        const { data: workout, error: workoutError } = await supabase
+          .from("daily_workouts")
+          .select("id,day_name")
+          .eq("athlete_id", currentAthleteId)
+          .eq("workout_date", date)
+          .neq("workout_type", "quick")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (workoutError) throw workoutError;
+        if (!workout) throw new Error("Não há treino prescrito para hoje. Não alterei nenhuma sessão.");
+
+        const { data: executions, error: executionError } = await supabase
+          .from("workout_executions")
+          .select("status")
+          .eq("athlete_id", currentAthleteId)
+          .eq("daily_workout_id", workout.id)
+          .in("status", ["started", "in_progress", "paused", "completed"]);
+        if (executionError) throw executionError;
+        if (executions?.length) throw new Error("O treino já foi iniciado ou concluído. Para proteger seus registros, o RON não alterou esta sessão.");
+
+        const { data: rows, error: exerciseError } = await supabase
+          .from("workout_exercises")
+          .select("exercise_id,sets")
+          .eq("daily_workout_id", workout.id);
+        if (exerciseError) throw exerciseError;
+        const changes = (rows || [])
+          .filter((row) => Number(row.sets || 1) > 1)
+          .map((row) => ({ exercise_id: row.exercise_id, sets: Number(row.sets) - 1 }));
+        if (!changes.length) throw new Error("O treino já está no volume mínimo seguro; nenhuma alteração foi feita.");
+
+        const { data: result, error: adjustmentError } = await supabase.rpc("fn_ajustar_treino_dia" as any, {
+          p_athlete_id: currentAthleteId,
+          p_data: date,
+          p_changes: changes,
+        });
+        if (adjustmentError) throw adjustmentError;
+        if ((result as any)?.success === false) throw new Error((result as any)?.error || "O ajuste não foi aplicado.");
+        window.dispatchEvent(new Event("9fit:workout-updated"));
+        window.dispatchEvent(new Event("9fit:sync_updated"));
+        toast.success(`Volume de ${workout.day_name || "treino de hoje"} ajustado: uma série a menos por exercício aplicável.`);
+        return { success: true, message: "Ajuste aplicado ao treino de hoje." };
+      }
+
       default:
         return { success: true, message: `Ação ${type} processada.` };
     }
   } catch (error: any) {
     console.error("[RonOperationalCore] Erro ao executar ação:", error);
-    toast.error("Não foi possível executar a ação solicitada.");
+    toast.error(action.type === "ADJUST_TRAINING_VOLUME" && error?.message ? error.message : "Não foi possível executar a ação solicitada.");
     return { success: false, message: error?.message || "Erro desconhecido." };
   }
 }

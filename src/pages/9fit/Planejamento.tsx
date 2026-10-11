@@ -1,9 +1,9 @@
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from "date-fns";
+import { addMonths, format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PdiRoadmapView } from "@/components/9fit/PdiRoadmapView";
-import { ChevronLeft, Sparkles, Calendar as CalIcon, RefreshCw, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Calendar as CalIcon, RefreshCw, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -12,6 +12,7 @@ import { loadCarryProjection, type ProgressionPoint } from "@/services/training/
 import { supabase } from "@/integrations/supabase/client";
 import { useActivationProgress } from "@/hooks/useActivationProgress";
 import { smartPeriodizerRequest } from "@/services/smartperiodizer.service";
+import { businessDate } from "@/services/dailyContextRules";
 
 type RemoteWave = { label?: string; week?: number; focus?: string; volume?: string; intensity?: string; pct?: number; status?: string };
 const FALLBACK_CYCLES: RemoteWave[] = [];
@@ -19,7 +20,8 @@ const FALLBACK_CYCLES: RemoteWave[] = [];
 export default function NineFitPlanejamento() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
-  const { week: plannedWeek, today: workoutToday } = useWorkoutOfTheDay();
+  const { week: plannedWeek, today: workoutToday, error: workoutError } = useWorkoutOfTheDay();
+  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(parseISO(businessDate())));
 
   const [scheduledDates, setScheduledDates] = useState<string[]>([]);
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
@@ -28,6 +30,7 @@ export default function NineFitPlanejamento() {
   const [periodizationId, setPeriodizationId] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);
   const [hasRemotePlan, setHasRemotePlan] = useState(false);
+  const [planSource, setPlanSource] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [planLoading, setPlanLoading] = useState(true);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export default function NineFitPlanejamento() {
     }
 
     const row = data as any;
+    setPlanSource(row?.source || null);
     let wavesFound: RemoteWave[] | null = null;
 
     if (Array.isArray(row?.waves) && row.waves.length) {
@@ -82,6 +86,7 @@ export default function NineFitPlanejamento() {
       setHasRemotePlan(true);
     } else {
       setHasRemotePlan(false);
+      setWaves([]); setPeriodizationId(null); setCurrentPhase(null); setPlanName("Sem planejamento ativo");
     }
     setPlanLoading(false);
   }
@@ -113,7 +118,7 @@ export default function NineFitPlanejamento() {
     refreshProjection();
     window.addEventListener("9fit:workout-updated", refreshProjection);
     loadPlan();
-    const refreshCalendar = async () => { const {data,error}=await supabase.from("daily_workouts").select("workout_date").eq("athlete_id",athleteId).gte("workout_date",format(startOfMonth(new Date()),"yyyy-MM-dd")).lte("workout_date",format(endOfMonth(new Date()),"yyyy-MM-dd")); if(!error) setScheduledDates((data || []).map(d=>d.workout_date)); };
+    const refreshCalendar = async () => { const {data,error}=await supabase.from("daily_workouts").select("workout_date").eq("athlete_id",athleteId).gte("workout_date",format(startOfMonth(visibleMonth),"yyyy-MM-dd")).lte("workout_date",format(endOfMonth(visibleMonth),"yyyy-MM-dd")); if(!error) setScheduledDates((data || []).map(d=>d.workout_date)); };
     void refreshCalendar();
     const channelName = `athlete-periodization-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
@@ -124,12 +129,11 @@ export default function NineFitPlanejamento() {
       .on("postgres_changes", { event: "*", schema: "public", table: "periodization_annual_plans", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
       .subscribe();
     return () => { window.removeEventListener("9fit:workout-updated", refreshProjection); supabase.removeChannel(channel); };
-  }, [athleteId]);
+  }, [athleteId, visibleMonth]);
 
   const monthDays = useMemo(() => {
-    const now = new Date();
-    return eachDayOfInterval({ start: startOfMonth(now), end: endOfMonth(now) });
-  }, []);
+    return eachDayOfInterval({ start: startOfMonth(visibleMonth), end: endOfMonth(visibleMonth) });
+  }, [visibleMonth]);
 
   const maxY = Math.max(100, ...points.map((p) => Math.max(p.projectedPct, p.realPct ?? 0)));
   const W = 280, H = 120, padding = 16;
@@ -154,6 +158,8 @@ export default function NineFitPlanejamento() {
       </div>
       
       <PdiRoadmapView />
+      {workoutError && <p role="alert" className="mx-4 text-sm text-destructive">{workoutError}</p>}
+      <p className="mx-4 mt-3 text-xs text-muted-foreground">Abrir o plano completo não sincroniza nem altera seu objetivo. Sincronizar consulta o provedor; a origem só é confirmada após o plano ser salvo. A projeção usa as cargas registradas nas séries concluídas e não garante resultados.</p>
 
       {planLoading && <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>}
       {planError && (
@@ -171,9 +177,9 @@ export default function NineFitPlanejamento() {
             Sincronizar
           </button>
         </div>
-        <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>{format(new Date(), "MMMM yyyy", { locale: ptBR })}</span>
-          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Sem plano sincronizado"}</span>
+        <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-2"><button type="button" aria-label="Mês anterior" onClick={()=>setVisibleMonth(month=>addMonths(month,-1))} className="rounded-md border border-white/10 p-1"><ChevronLeft className="h-3.5 w-3.5"/></button><span className="min-w-28 text-center capitalize">{format(visibleMonth, "MMMM yyyy", { locale: ptBR })}</span><button type="button" aria-label="Próximo mês" onClick={()=>setVisibleMonth(month=>addMonths(month,1))} className="rounded-md border border-white/10 p-1"><ChevronRight className="h-3.5 w-3.5"/></button></div>
+          <span>{planLoading ? "Verificando origem…" : planError ? "Origem indisponível" : hasRemotePlan ? `Plano salvo · origem: ${planSource || "não informada"}` : "Sem plano salvo"}</span>
           {currentPhase && <span>Fase: {currentPhase}</span>}
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">
@@ -185,9 +191,9 @@ export default function NineFitPlanejamento() {
             const t = isToday(d);
             const isWorkoutDay = scheduledDates.includes(format(d,"yyyy-MM-dd")) || plannedWeek.some(session => session.source !== "fallback" && session.date === format(d, "yyyy-MM-dd"));
             return (
-              <div key={d.toISOString()} className={`aspect-square rounded-lg flex items-center justify-center font-medium text-xs ${t ? "bg-primary text-primary-foreground" : isWorkoutDay ? "bg-primary/30 text-primary border border-primary/40" : "bg-white/[0.03] text-foreground/70"}`}>
+              <button type="button" aria-label={`Abrir treinos de ${format(d,"d MMMM",{locale:ptBR})}${isWorkoutDay?", com treino programado":""}`} onClick={()=>navigate(`/9fit/train?tab=semana&date=${format(d,"yyyy-MM-dd")}`)} key={format(d,"yyyy-MM-dd")} className={`aspect-square rounded-lg flex items-center justify-center font-medium text-xs transition-colors hover:ring-1 hover:ring-primary ${t ? "bg-primary text-primary-foreground" : isWorkoutDay ? "bg-primary/30 text-primary border border-primary/40" : "bg-white/[0.03] text-foreground/70"}`}>
                 {format(d, "d")}
-              </div>
+              </button>
             );
           })}
         </div>
