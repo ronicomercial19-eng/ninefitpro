@@ -10,6 +10,8 @@ import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { MetricsDisplay } from "@/components/analytics/MetricsDisplay";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { loadCoachStudentsPerformance } from '@/integrations/coachStudentPerformance';
+import { scopeAthletes, computeTrainingCounters } from '@/lib/coachDashboard';
+import { isAdminRole } from '@/lib/authRole';
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
@@ -27,15 +29,16 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, userRole } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0, activeMembers: 0, weeklyWorkouts: 0, upcomingAppointments: 0,
     studentsWithoutTraining: 0, overdueTraining: 0, expiringPlans: [], rpeAlerts: []
   });
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<{ id: string; status: string | null; created_at: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => { fetchDashboardData(); }, [user]);
+  useEffect(() => { fetchDashboardData(); }, [user, userRole]);
 
   // Mission Control realtime — auto-refresh when athletes / workouts / events change
   useRealtimeTable({ table: "athletes", filter: user?.id ? `coach_id=eq.${user.id}` : undefined, enabled: !!user?.id }, () => fetchDashboardData());
@@ -45,77 +48,72 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) { setLoading(false); return; }
 
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const in24h = new Date(now.getTime() + 24 * 3600 * 1000).toISOString();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString();
 
-      // Fonte canônica Professor ↔ Aluno (security_invoker + RLS)
-      const allAthletes = await loadCoachStudentsPerformance();
+      // Fonte canônica Professor ↔ Aluno (security_invoker + RLS), escopada ao coach
+      const athletes = scopeAthletes(await loadCoachStudentsPerformance(), currentUser.id, userRole);
+      const ids = athletes.map((a) => a.athlete_id);
+      const nameMap = new Map(athletes.map((a) => [a.athlete_id, a]));
+      const noIds = ['00000000-0000-0000-0000-000000000000'];
+      const scopeIds = ids.length ? ids : noIds;
 
-      // Parallel fetch for remaining data
-      const [workoutsRes, appointmentsRes, activeAssignmentsRes, expiredAssignmentsRes] = await Promise.all([
-        supabase.from('workouts').select('id, status, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('appointments').select('id, scheduled_at').gte('scheduled_at', new Date().toISOString()),
-        supabase.from('student_training_assignments').select('student_id').eq('is_active', true),
-        supabase.from('student_training_assignments').select('student_id').eq('is_active', true).lt('end_date', today)
+      let apptQ = supabase.from('appointments').select('id', { count: 'exact', head: true })
+        .gte('scheduled_at', now.toISOString()).lte('scheduled_at', in24h);
+      if (!isAdminRole(userRole)) apptQ = apptQ.eq('teacher_id', currentUser.id);
+
+      const [execRes, apptRes, assignRes] = await Promise.all([
+        supabase.from('workout_executions').select('id, status, completed_at, athlete_id')
+          .in('athlete_id', scopeIds).eq('status', 'completed').gte('completed_at', weekAgo)
+          .order('completed_at', { ascending: false }),
+        apptQ,
+        supabase.from('student_training_assignments').select('id, student_id, training_name, end_date')
+          .eq('is_active', true).in('student_id', scopeIds),
       ]);
+      const failed = [execRes.error, apptRes.error, assignRes.error].find(Boolean);
+      if (failed) throw failed;
 
-      const totalClients = allAthletes.length;
-      const activeMembers = allAthletes.filter((s: any) => s.activated)?.length || 0;
-      const trainingIds = new Set((activeAssignmentsRes.data || []).map((t: any) => t.student_id));
-      const studentsWithoutTraining = allAthletes.filter((a: any) => a.activated && !trainingIds.has(a.id)).length;
-      const overdueTraining = new Set((expiredAssignmentsRes.data || []).map((t: any) => t.student_id)).size;
+      const assignments = (assignRes.data || []) as Array<{ id: string; student_id: string; training_name: string | null; end_date: string | null }>;
+      const counters = computeTrainingCounters(athletes, assignments, today);
 
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 7);
-      const { data: expiringAssignments } = await supabase
-        .from('student_training_assignments')
-        .select('id, student_id, training_name, end_date')
-        .eq('is_active', true).gte('end_date', today).lte('end_date', futureDate.toISOString().split('T')[0]);
-
-      const expiringStudentIds = [...new Set((expiringAssignments || []).map((a: any) => a.student_id))];
-      let expiringPlans: DashboardStats['expiringPlans'] = [];
-      if (expiringStudentIds.length > 0) {
-        const nameMap = new Map(allAthletes.filter((a: any) => expiringStudentIds.includes(a.id)).map((a: any) => [a.id, a]));
-        expiringPlans = (expiringAssignments || []).map((a: any) => ({
+      const future = new Date(now.getTime() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0];
+      const expiringPlans: DashboardStats['expiringPlans'] = assignments
+        .filter((a) => a.end_date && a.end_date >= today && a.end_date <= future)
+        .map((a) => ({
           id: a.id,
-          name: (nameMap.get(a.student_id) as any)?.name || a.training_name,
-          email: (nameMap.get(a.student_id) as any)?.email || null,
-          data_fim_plano: a.end_date || ''
+          name: nameMap.get(a.student_id)?.athlete_name || a.training_name || 'Aluno',
+          email: nameMap.get(a.student_id)?.athlete_email || null,
+          data_fim_plano: a.end_date || '',
         }));
-      }
 
-      // RPE Alerts - check workout_progress for high/low RPE averages
       const rpeAlerts: DashboardStats['rpeAlerts'] = [];
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const { data: recentProgress } = await supabase
-        .from('workout_progress')
-        .select('aluno_id, rpe')
-        .not('rpe', 'is', null)
-        .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+      const { data: recentProgress, error: rpeErr } = await supabase
+        .from('workout_progress').select('aluno_id, rpe')
+        .in('aluno_id', scopeIds).not('rpe', 'is', null).gte('date', weekAgo.split('T')[0]);
+      if (rpeErr) console.warn('[Dashboard] RPE indisponível', rpeErr);
+      const byAthlete = new Map<string, number[]>();
+      (recentProgress || []).forEach((p: { aluno_id: string; rpe: number }) => {
+        byAthlete.set(p.aluno_id, [...(byAthlete.get(p.aluno_id) || []), p.rpe]);
+      });
+      byAthlete.forEach((rpes, athleteId) => {
+        const avg = rpes.reduce((a, b) => a + b, 0) / rpes.length;
+        const name = nameMap.get(athleteId)?.athlete_name || 'Aluno';
+        if (avg > 8) rpeAlerts.push({ name, avgRpe: Math.round(avg * 10) / 10, type: 'high' });
+        else if (avg < 4) rpeAlerts.push({ name, avgRpe: Math.round(avg * 10) / 10, type: 'low' });
+      });
 
-      if (recentProgress && recentProgress.length > 0) {
-        const byAthlete = new Map<string, number[]>();
-        recentProgress.forEach((p: any) => {
-          const arr = byAthlete.get(p.aluno_id) || [];
-          arr.push(p.rpe);
-          byAthlete.set(p.aluno_id, arr);
-        });
-        
-        const athleteNameMap = new Map(allAthletes.map((a: any) => [a.id, a.name]));
-        byAthlete.forEach((rpes, athleteId) => {
-          const avg = rpes.reduce((a, b) => a + b, 0) / rpes.length;
-          if (avg > 8) rpeAlerts.push({ name: athleteNameMap.get(athleteId) || 'Aluno', avgRpe: Math.round(avg * 10) / 10, type: 'high' });
-          else if (avg < 4) rpeAlerts.push({ name: athleteNameMap.get(athleteId) || 'Aluno', avgRpe: Math.round(avg * 10) / 10, type: 'low' });
-        });
-      }
-
-      setStats({ totalClients, activeMembers, weeklyWorkouts: workoutsRes.data?.length || 0, upcomingAppointments: appointmentsRes.data?.length || 0, studentsWithoutTraining, overdueTraining, expiringPlans, rpeAlerts });
-      if (workoutsRes.data) setRecentActivities(workoutsRes.data.slice(0, 4));
+      const execs = execRes.data || [];
+      setStats({ ...counters, weeklyWorkouts: execs.length, upcomingAppointments: apptRes.count || 0, expiringPlans, rpeAlerts });
+      setRecentActivities(execs.slice(0, 4).map((e) => ({ id: e.id, status: e.status, created_at: e.completed_at })));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      setLoadError('Não foi possível carregar os dados do painel.');
       toast.error('Erro ao carregar dados do dashboard');
     } finally { setLoading(false); }
   };

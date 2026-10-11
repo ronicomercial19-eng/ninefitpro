@@ -33,11 +33,27 @@ const routeLabels: Record<string, string> = {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
-  const { isTrainer, loading, user, userRole } = useAuth();
+  const { isTrainer, loading, user, roleStatus, retryIdentity, logout } = useAuth();
 
-  // Aguarda o papel do usuário carregar antes de decidir o acesso,
-  // senão um professor legítimo é redirecionado no primeiro render.
-  if (loading || (user && userRole === null)) {
+  if (!loading && !user) return <Navigate to="/login" replace />;
+
+  if (roleStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-sm text-center space-y-4">
+          <h1 className="text-lg font-semibold">Não foi possível verificar seu acesso</h1>
+          <p className="text-sm text-muted-foreground">Verifique sua conexão e tente novamente.</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => void retryIdentity()}>Tentar novamente</Button>
+            <Button variant="outline" onClick={() => void logout()}>Sair</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Aguarda o papel carregar antes de decidir o acesso.
+  if (loading || roleStatus === 'idle' || roleStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -52,7 +68,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   
   const getBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(Boolean);
-    const breadcrumbs = [{ label: 'Início', path: '/dashboard' }];
+    const breadcrumbs = [{ label: 'Início', path: '/app' }];
     
     let currentPath = '';
     paths.forEach(path => {
