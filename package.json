@@ -13,6 +13,9 @@
     "typecheck": "tsc -b --pretty false",
     "qa:fase2": "node scripts/qa-fase2.mjs",
     "qa:macro02": "tsx scripts/qa-macro02.ts",
+    "qa:master18": "tsx scripts/qa-master18.ts",
+    "qa:macro03": "tsx scripts/qa-macro03.ts",
+    "qa:integration19": "node --import tsx --test scripts/qa-integration19.ts",
     "qa:fase3": "node scripts/qa-fase3.mjs",
     "qa:fase4": "node scripts/qa-fase4.mjs"
   },

@@ -1,5 +1,5 @@
 /**
- * Gamification Engine — XP, levels, streaks, sync score.
+ * Gamification Engine — XP, levels, streaks.
  * Single entry point for awarding XP across the FitPro ecosystem.
  * Emits global events so any UI can react (overlay, toasts, animations).
  */
@@ -19,7 +19,6 @@ export type XPAction =
 
 export interface XPMultipliers {
   streak?: number;        // streak days
-  syncScore?: number;     // 0-100
   difficulty?: number;    // 1-3
 }
 
@@ -43,10 +42,6 @@ function levelFromXP(xp: number): number {
 function computeMultiplier(m: XPMultipliers = {}): number {
   let mult = 1;
   if (m.streak && m.streak >= 3) mult += Math.min(0.5, m.streak * 0.05);
-  if (m.syncScore != null) {
-    if (m.syncScore >= 75) mult += 0.2;
-    else if (m.syncScore < 40) mult -= 0.1;
-  }
   if (m.difficulty) mult += (m.difficulty - 1) * 0.15;
   return Math.max(0.5, Math.min(2, mult));
 }

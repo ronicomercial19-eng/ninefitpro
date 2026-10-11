@@ -287,7 +287,7 @@ const App = () => (
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/embed" element={<NineFitLayout><EcoEmbed title={new URLSearchParams(window.location.search).get("title") || "Ecossistema"} url={new URLSearchParams(window.location.search).get("url") || "/9fit/hub"} /></NineFitLayout>} />
-            <Route path="/9fit/home" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
+            <Route path="/9fit/home" element={<Navigate to="/9fit/os" replace />} />
             <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
             {/* Orphan route /9fit/aulas removed - use /9fit/aulas-creditos */}
             <Route path="/9fit/aulas-creditos" element={<NineFitLayout><AulasCreditos /></NineFitLayout>} />

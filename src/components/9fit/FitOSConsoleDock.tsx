@@ -108,8 +108,8 @@ export function FitOSConsoleDock({
       tag: "PROGRAMAÇÃO DO DIA",
       title: "Radar 3D",
       subtitle: "Visão tridimensional da consistência neuromuscular",
-      statusText: "CALIBRADO",
-      telemetryBadge: "Radar 3D Ativo",
+      statusText: "REGISTROS",
+      telemetryBadge: "Cobertura de registros",
       icon: Compass,
       accentColor: "#00E5FF",
       pulseColor: "#00E5FF",
@@ -143,6 +143,7 @@ export function FitOSConsoleDock({
 
   return (
     <div className="w-full space-y-4">
+      <HubFloatingMetrics vitals={liveScoresVitals} />
       <DailyGoalCheckins /><NutritionTodaySummary />
       {/* 1. FOCO DO MOMENTO: CARD HERO COM OBJETIVO CLARO E DINÂMICA VISUAL (Estrutura do print IMG_0115) */}
       <motion.div
@@ -175,7 +176,7 @@ export function FitOSConsoleDock({
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
               {protocolCount > 0
-                ? `${protocolCount} intervenções prescritas prontas para execução hoje.`
+                ? `${protocolCount} conteúdos atribuídos ainda não concluídos na Biblioteca. A rotina diária é acompanhada separadamente.`
                 : "Nenhuma intervenção prescrita disponível."}
             </p>
           </div>

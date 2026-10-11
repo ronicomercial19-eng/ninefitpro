@@ -19,7 +19,7 @@ export interface HubSnapshot {
   version: number;
   status: string;
   generated_at: string | null;
-  athlete?: { id: string; name: string | null };
+  athlete?: { id: string; name: string | null; level?: number | null; total_xp?: number | null };
   sync: HubMetric;
   dimensions: {
     treino: HubMetric;
@@ -86,7 +86,7 @@ function mapPayload(raw: unknown): HubSnapshot | null {
     status: typeof value.status === "string" ? value.status : "calibrating",
     generated_at: typeof value.generated_at === "string" ? value.generated_at : null,
     athlete: value.athlete && typeof value.athlete === "object"
-      ? { id: String(value.athlete.id ?? ""), name: typeof value.athlete.name === "string" ? value.athlete.name : null }
+      ? { id: String(value.athlete.id ?? ""), name: typeof value.athlete.name === "string" ? value.athlete.name : null, level: numericOrNull(value.athlete.level), total_xp: numericOrNull(value.athlete.total_xp) }
       : undefined,
     sync: mapMetric(value.sync),
     dimensions: {
@@ -180,7 +180,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
     const onOffline = () => { ++requestRef.current; setStatus("offline"); };
     const onOnline = () => void fetchScores();
     const onVisible = () => { if (document.visibilityState === "visible") void fetchScores(); };
-    const refreshEvents = ["9fit:sync_updated", "9fit:workout-updated", "9fit:protocol_completed", "9fit:nutrition-updated", "9fit:water-updated", "9fit:user-state-invalidated", "9fit:profile-updated", "9fit:day-reviewed"];
+    const refreshEvents = ["9fit:sync_updated", "9fit:workout-updated", "9fit:protocol_completed", "9fit:nutrition-updated", "9fit:water-updated", "9fit:vitals-updated", "9fit:hydration-updated", "9fit:user-state-invalidated", "9fit:profile-updated", "9fit:day-reviewed"];
     refreshEvents.forEach(event => window.addEventListener(event, onOnline));
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("offline", onOffline);
@@ -192,6 +192,8 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
       .on("postgres_changes", { event: "*", schema: "public", table: "daily_checkins", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes", { event: "*", schema: "public", table: "athlete_day_reviews", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes", { event: "*", schema: "public", table: "nutrition_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bio_hrv_logs", filter: `user_id=eq.${user.id}` }, () => void fetchScores())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bio_heart_rate_logs", filter: `user_id=eq.${user.id}` }, () => void fetchScores())
       .on("postgres_changes", { event: "*", schema: "public", table: "hydration_logs", filter: `athlete_id=eq.${athleteId}` }, () => void fetchScores())
       .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "athletes", filter: `id=eq.${athleteId}` },

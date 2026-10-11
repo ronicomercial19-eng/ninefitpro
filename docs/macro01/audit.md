@@ -5,11 +5,11 @@ Referência: origin/main d986526 ao iniciar; inclui o webhook InfinitePay adicio
 | Loop / pendência antiga | Evidência atual | Tratamento |
 |---|---|---|
 | Compartilhamento / XP | ShareButton e Collections pediam XP além do trigger; useShareEvent também grava receipts | Corrigido nos três pontos: trigger único, valor servidor, dedupe, teto 3/dia, recibo e distinção export/handoff |
-| Gerar semana | fn_gerar_treino_semana existe; sem chamada frontend localizada; seleciona exercícios aleatórios e reescreve semana | Acesso e proteção de semana iniciada adicionados; geração orientada à periodização/calendário na Macro 03 |
-| Navegação semanal | WeeklyTrainingView apresenta um dia; fn_get_week_workouts tem âncora, frontend não expõe mudança de semana | Macro 03 |
-| Iniciar/finalizar | RPCs e séries persistidas existem; status DB in_progress/completed/skipped | Preservados; UI de skipped na Macro 03 |
+| Gerar semana | fn_gerar_treino_semana existe; sem chamador frontend, podia selecionar exercícios aleatórios e reescrever a semana | Macro 03: geração orientada à periodização sem remover registros existentes; navegação e “pular” persistidos |
+| Navegação semanal | WeeklyTrainingView apresenta um dia; fn_get_week_workouts tem âncora, frontend não expõe mudança de semana | Macro 03: semanas/dias navegáveis e calendário abre a data escolhida |
+| Iniciar/finalizar | RPCs e séries persistidas existem; status DB in_progress/completed/skipped | Macro 03: “Não vou treinar” grava `skipped`; a prescrição fica no calendário |
 | Calibração | EmojiCalibrationQuiz lê a calibração completa e grava dor invertida corretamente | Nova experiência, respostas parciais e SYNC amplo na Macro 02 |
-| Planejamento m04/m06 | Tela lê periodização, ondas e assignments; planner local é projeção de assignments, não a fonte da prescrição | Edição/calendário e unificação da projeção na Macro 03 |
+| Planejamento m04/m06 | Tela lê periodização, ondas e assignments; planner local é projeção de assignments, não a fonte da prescrição | Macro 03 conecta dias do calendário a Train; edição/unificação completa do read-model fica fora do escopo |
 | RON sem chave | Há frontend autenticado para ai-coach; configuração de segredo/provider em produção não comprovada | Não inferir ausência pelo frontend; validar serviço sem expor segredos na Macro 06/07 |
 | Nine/Lima | Protocolo chama fn_aplicar_nine_lima e navega Train; RPC aplica protocolo e nível com fallback | Snapshot da função versionado; QA da entrega gerada na Macro 03 |
 | Assistência | Solo/Guiado/Assistido e RON contextual existem; pause marker persistente | Não recriar; validar e integrar na Macro 03 |

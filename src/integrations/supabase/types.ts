@@ -6500,6 +6500,9 @@ export type Database = {
           fitpro_student_id: string
           id: string
           last_event_at: string | null
+          last_position_seconds: number
+          duration_seconds: number
+          watched_seconds: number
           progress_percent: number | null
           started_at: string | null
           updated_at: string
@@ -6513,6 +6516,9 @@ export type Database = {
           fitpro_student_id: string
           id?: string
           last_event_at?: string | null
+          last_position_seconds?: number
+          duration_seconds?: number
+          watched_seconds?: number
           progress_percent?: number | null
           started_at?: string | null
           updated_at?: string
@@ -6526,6 +6532,9 @@ export type Database = {
           fitpro_student_id?: string
           id?: string
           last_event_at?: string | null
+          last_position_seconds?: number
+          duration_seconds?: number
+          watched_seconds?: number
           progress_percent?: number | null
           started_at?: string | null
           updated_at?: string
@@ -8287,6 +8296,7 @@ export type Database = {
           carbs: number | null
           created_at: string | null
           date: string
+          adherence_status: string | null
           fat: number | null
           id: string
           meal_name: string
@@ -8298,6 +8308,7 @@ export type Database = {
           carbs?: number | null
           created_at?: string | null
           date?: string
+          adherence_status?: string | null
           fat?: number | null
           id?: string
           meal_name: string
@@ -8309,6 +8320,7 @@ export type Database = {
           carbs?: number | null
           created_at?: string | null
           date?: string
+          adherence_status?: string | null
           fat?: number | null
           id?: string
           meal_name?: string
@@ -13754,6 +13766,10 @@ export type Database = {
           template_version_id: string | null
           thumbnail_url: string | null
           weekly_schedule: Json
+          last_position_sec: number
+          duration_sec: number | null
+          watch_seconds: number
+          last_watched_at: string | null
         }
         Insert: {
           access_url?: string | null
@@ -13775,6 +13791,10 @@ export type Database = {
           template_version_id?: string | null
           thumbnail_url?: string | null
           weekly_schedule?: Json
+          last_position_sec?: number
+          duration_sec?: number | null
+          watch_seconds?: number
+          last_watched_at?: string | null
         }
         Update: {
           access_url?: string | null
@@ -13796,6 +13816,10 @@ export type Database = {
           template_version_id?: string | null
           thumbnail_url?: string | null
           weekly_schedule?: Json
+          last_position_sec?: number
+          duration_sec?: number | null
+          watch_seconds?: number
+          last_watched_at?: string | null
         }
         Relationships: [
           {

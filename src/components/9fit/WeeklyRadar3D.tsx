@@ -174,14 +174,14 @@ export function WeeklyRadar3D({ current, previous }: Props) {
   const [error, setError] = useState(false);
   const rawValues = [current.treino, current.nutri, current.sono, current.mob, current.hidr];
   const values = rawValues.map((value) => value ?? 0);
+  const completeCurrent = rawValues.every((value): value is number => value !== null);
+  const rawPrevious = previous ? [previous.treino, previous.nutri, previous.sono, previous.mob, previous.hidr] : undefined;
   const prevValues = previous
     ? [previous.treino, previous.nutri, previous.sono, previous.mob, previous.hidr].map((value) => value ?? 0)
     : undefined;
 
   if (error) {
-    const safeCurrent = { treino: current.treino ?? 0, nutri: current.nutri ?? 0, sono: current.sono ?? 0, mob: current.mob ?? 0, hidr: current.hidr ?? 0 };
-    const safePrevious = previous ? { treino: previous.treino ?? 0, nutri: previous.nutri ?? 0, sono: previous.sono ?? 0, mob: previous.mob ?? 0, hidr: previous.hidr ?? 0 } : undefined;
-    return <WeeklyRadar current={safeCurrent} previous={safePrevious} />;
+    return <WeeklyRadar current={current} previous={previous} />;
   }
 
   return (
@@ -202,7 +202,8 @@ export function WeeklyRadar3D({ current, previous }: Props) {
               }
             }}
           >
-            <Scene values={values} prev={prevValues} />
+          {completeCurrent && <Scene values={values} prev={prevValues && rawPrevious?.every((value): value is number => value !== null) ? prevValues : undefined} />}
+          {!completeCurrent && <FallbackAxes />}
             <OrbitControls
               enableZoom={false}
               enablePan={false}
@@ -214,6 +215,7 @@ export function WeeklyRadar3D({ current, previous }: Props) {
           </Canvas>
         </Suspense>
       </div>
+      {!completeCurrent && <p className="mt-2 text-center text-[11px] text-muted-foreground">O radar 3D aparece quando todos os eixos tiverem registros; eixos sem dados não são tratados como zero.</p>}
       <div className="grid grid-cols-5 gap-1 mt-3">
         {AXES.map((label, i) => (
           <div key={label} className="text-center">
@@ -224,4 +226,8 @@ export function WeeklyRadar3D({ current, previous }: Props) {
       </div>
     </div>
   );
+}
+
+function FallbackAxes() {
+  return <div className="h-64 grid grid-cols-2 place-content-center gap-2 rounded-xl bg-black/40 text-center text-xs text-muted-foreground">Registre seus dados para formar o radar 3D.</div>;
 }

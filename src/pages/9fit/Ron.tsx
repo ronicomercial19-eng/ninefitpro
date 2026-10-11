@@ -48,13 +48,13 @@ const RON_ACTIONS = [
   { label: "⚡ Sincronizar Semana", actionKey: "calendar_sync" },
   { label: "💧 +500ml de Água", actionKey: "log_water" },
   { label: "🏋️ Iniciar Treino", route: "/9fit/train?from=ron" },
-  { label: "🥗 Registrar Refeição", route: "/9fit/diet?from=ron" },
+  { label: "🥗 Registrar Refeição", route: "/9fit/dieta?action=log&from=ron" },
   { label: "📈 Ver Progresso", route: "/9fit/progresso?from=ron" },
 ];
 
 const SUGGESTIONS = [
   "Agendar meu treino no Google Calendar",
-  "Como está meu recovery hoje?",
+  "Como está minha recuperação hoje?",
   "Sincronizar treinos da semana na minha agenda",
   "O que meu HRV e fadiga indicam?",
   "Próximo treino recomendado para meu estado",

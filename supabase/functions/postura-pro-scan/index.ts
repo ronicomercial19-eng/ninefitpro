@@ -51,9 +51,17 @@ Deno.serve(async (req) => {
     const { data: connector } = await admin
       .from("api_connectors").select("*").eq("key", "postura_pro").maybeSingle();
 
+    if (connector?.status !== "active" || !connector.endpoint) {
+      await admin.from("postura_scans").update({
+        status: "unavailable",
+        result: { error: "Postura Pro API não está configurada; nenhuma análise foi gerada." },
+        updated_at: new Date().toISOString(),
+      }).eq("id", scan_id);
+      return json({ error: "Postura Pro API is not configured; no analysis was generated." }, 503);
+    }
+
     let result: any;
-    if (connector?.status === "active" && connector.endpoint) {
-      try {
+    try {
         const secret = connector.secret_ref ? Deno.env.get(connector.secret_ref) : null;
         const r = await fetch(`${connector.endpoint.replace(/\/$/, "")}/analyze`, {
           method: "POST",
@@ -66,27 +74,16 @@ Deno.serve(async (req) => {
             left: scan.left_url, right: scan.right_url,
           }),
         });
+        if (!r.ok) throw new Error(`Postura Pro provider returned ${r.status}`);
         result = await r.json();
-      } catch (e: any) {
-        result = { error: e?.message, fallback: true };
-      }
-    } else {
-      // Fallback: análise heurística básica para já entregar valor
-      result = {
-        fallback: true,
-        summary: "Análise preliminar — conecte Postura Pro API para laudo completo.",
-        findings: [
-          { region: "Cervical", severity: "leve", note: "Possível anteriorização da cabeça." },
-          { region: "Ombros", severity: "moderada", note: "Avaliar simetria escapular." },
-          { region: "Pelve", severity: "leve", note: "Sugere checagem de báscula anterior." },
-        ],
-        recommendations: [
-          "Mobilidade torácica diária (10 min)",
-          "Fortalecimento de romboides e serrátil",
-          "Alongamento de psoas e cadeia anterior",
-        ],
-        score: 72,
-      };
+        if (!result || typeof result !== "object") throw new Error("Postura Pro provider returned an invalid response");
+    } catch (e: any) {
+      await admin.from("postura_scans").update({
+        status: "error",
+        result: { error: "O serviço de análise não respondeu. Tente novamente mais tarde." },
+        updated_at: new Date().toISOString(),
+      }).eq("id", scan_id);
+      return json({ error: e?.message ?? "Postura Pro provider unavailable" }, 502);
     }
 
     await admin.from("postura_scans").update({

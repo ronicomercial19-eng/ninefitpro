@@ -75,9 +75,9 @@ export function inferUserState(signals: StateSignals): StateResult {
 
 export const STATE_LABEL: Record<UserState, string> = {
   unknown: 'CALIBRANDO',
-  power: 'POWER',
-  low: 'LOW',
-  balanced: 'BALANCED',
+  power: 'ENERGIA ALTA',
+  low: 'ENERGIA BAIXA',
+  balanced: 'EQUILIBRADO',
 };
 
 export const STATE_COLOR: Record<UserState, string> = {
