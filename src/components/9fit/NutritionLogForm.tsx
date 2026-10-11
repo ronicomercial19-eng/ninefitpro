@@ -13,7 +13,7 @@ interface NutritionLogFormProps {
   onClose: () => void;
   athleteId: string;
   onSaved: () => void;
-  meal?: { id: string; meal_name: string; calories: number | null; protein: number | null; carbs: number | null; fat: number | null } | null;
+  meal?: { id: string; meal_name: string; calories: number | null; protein: number | null; carbs: number | null; fat: number | null; adherence_status?: string | null } | null;
   date?: string;
 }
 
@@ -30,8 +30,9 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
   const [protein, setProtein] = useState(0);
   const [carbs, setCarbs] = useState(0);
   const [fat, setFat] = useState(0);
+  const [adherenceStatus, setAdherenceStatus] = useState<'on_plan' | 'off_plan' | null>(null);
   const [saving, setSaving] = useState(false);
-  useEffect(()=>{if(open){setMealName(meal?.meal_name ?? '');setCalories(Number(meal?.calories ?? 0));setProtein(Number(meal?.protein ?? 0));setCarbs(Number(meal?.carbs ?? 0));setFat(Number(meal?.fat ?? 0));}},[open,meal?.id,meal?.meal_name,meal?.calories,meal?.protein,meal?.carbs,meal?.fat]);
+  useEffect(()=>{if(open){setMealName(meal?.meal_name ?? '');setCalories(Number(meal?.calories ?? 0));setProtein(Number(meal?.protein ?? 0));setCarbs(Number(meal?.carbs ?? 0));setFat(Number(meal?.fat ?? 0));setAdherenceStatus((meal?.adherence_status as 'on_plan' | 'off_plan' | null) ?? null);}},[open,meal?.id,meal?.meal_name,meal?.calories,meal?.protein,meal?.carbs,meal?.fat,meal?.adherence_status]);
 
   const handleQuickFill = (meal: typeof QUICK_MEALS[0]) => {
     setMealName(meal.name);
@@ -51,11 +52,11 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
     try {
       if([calories,protein,carbs,fat].some(v=>!Number.isFinite(v)||v<0))throw new Error('Revise os valores');
       if(meal){
-        const {error}=await supabase.from('nutrition_logs').update({meal_name:mealName.trim(),calories,protein,carbs,fat}).eq('id',meal.id).eq('athlete_id',athleteId).select('id').single();
+        const {error}=await supabase.from('nutrition_logs').update({meal_name:mealName.trim(),calories,protein,carbs,fat,adherence_status:adherenceStatus}).eq('id',meal.id).eq('athlete_id',athleteId).select('id').single();
         if(error)throw error;
         window.dispatchEvent(new Event('9fit:nutrition-updated'));
         window.dispatchEvent(new Event('9fit:sync_updated'));
-      }else await saveNutritionLog({ athlete_id: athleteId, meal_name: mealName.trim(), calories, protein, carbs, fat, date });
+      }else await saveNutritionLog({ athlete_id: athleteId, meal_name: mealName.trim(), calories, protein, carbs, fat, date, adherence_status: adherenceStatus });
 
       toast.success("Refeição registrada! 🥗");
       onSaved();
@@ -156,6 +157,15 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
               <Label className="text-xs uppercase tracking-wider">Gordura (g)</Label>
               <Input type="number" value={fat} onChange={(e) => setFat(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
             </div>
+          </div>
+
+          <div>
+            <Label className="text-xs uppercase tracking-wider">Relação com seu plano (opcional)</Label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button type="button" variant={adherenceStatus === 'on_plan' ? 'default' : 'outline'} size="sm" onClick={() => setAdherenceStatus(adherenceStatus === 'on_plan' ? null : 'on_plan')}>Dentro do plano</Button>
+              <Button type="button" variant={adherenceStatus === 'off_plan' ? 'default' : 'outline'} size="sm" onClick={() => setAdherenceStatus(adherenceStatus === 'off_plan' ? null : 'off_plan')}>Fora do plano</Button>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Você escolhe se quer classificar; deixar em branco também é válido.</p>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="w-full bg-primary text-primary-foreground font-bold">

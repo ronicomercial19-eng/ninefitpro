@@ -42,7 +42,7 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
   if (identityError || !canonicalId) throw identityError || new Error('Perfil indisponível');
   const { data: athlete, error: athleteError } = await supabase
     .from('athletes')
-    .select('id, total_xp, level, sync_score')
+    .select('id, total_xp, level')
     .eq('id', canonicalId || '')
     .maybeSingle();
   if (athleteError || !athlete) throw athleteError || new Error('Perfil indisponível');

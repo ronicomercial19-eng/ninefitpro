@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import type { WorkoutExecutionStatus } from "@/types/training";
 import { useWorkoutAssistance } from '@/hooks/useWorkoutAssistance';
 import { WorkoutRonAssistance } from './WorkoutRonAssistance';
+import { businessDate } from '@/services/dailyContextRules';
 
 
 interface WorkoutExercise {
@@ -133,8 +134,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [dailyOverride, setDailyOverride] = useState<DailyOverride | null>(null);
   const [showAdjustment, setShowAdjustment] = useState(false);
 
-  const todayKey = WEEKDAY_KEYS[new Date().getDay()];
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const businessToday = new Date(`${businessDate()}T12:00:00`);
+  const todayKey = WEEKDAY_KEYS[businessToday.getDay()];
+  const todayISO = businessDate();
 
   // Apply daily override (from ajuste-treino) on top of base exercises
   const baseExercises = liveTraining.training_data?.exercises || [];
@@ -258,11 +260,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerInitial, setTimerInitial] = useState(60);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Workout timer
   const [workoutSeconds, setWorkoutSeconds] = useState(0);
-  const workoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const workoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Weight tracking per exercise
   const [weights, setWeights] = useState<Record<number, number>>({});

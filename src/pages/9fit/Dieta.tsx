@@ -310,7 +310,7 @@ export default function NineFitDieta() {
         </button>
       </div>
 
-      <div className="px-4 mb-4"><NutritionTodaySummary interactive /></div>
+      <div className="px-4 mb-4"><NutritionTodaySummary interactive date={format(currentDate, "yyyy-MM-dd")} /></div>
       {loading ? (
         <div className="px-4">
           <DietaSkeleton />

@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
 export const SOLUTION_ATTRIBUTION_ID = "gmp_git_agentskills_v1";

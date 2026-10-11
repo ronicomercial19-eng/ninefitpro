@@ -156,9 +156,16 @@ Tipos com efeito colateral em `content_progress`:
   "fitpro_student_id": "stu_123",
   "entity_type": "content",
   "entity_id": "42",
-  "payload": { "progress_percent": 100 }
+  "payload": {
+    "progress_percent": 100,
+    "last_position_seconds": 1800,
+    "duration_seconds": 1800,
+    "watched_seconds": 1800
+  }
 }
 ```
+
+Para que o aluno retome no mesmo ponto, o player deve enviar `last_position_seconds`, `duration_seconds` e `watched_seconds` nos eventos de início/progresso/conclusão. O FitPro persiste essa posição no histórico HealthFlix e atualiza a atribuição correspondente quando `entity_id` corresponde ao `content_ref` atribuído.
 
 ---
 

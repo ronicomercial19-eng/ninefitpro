@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { addMonths,format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +12,9 @@ import { toast } from 'sonner';
 
 export function UpcomingCommitments(){
   const {athleteId}=useAthleteId();const navigate=useNavigate();const [month,setMonth]=useState(new Date()),[syncing,setSyncing]=useState<string|null>(null);
+  const [nextContent,setNextContent]=useState<{id:string;title:string;category?:string|null;thumbnail?:string|null}|null>(null);
   const data=usePhysicalCommitments(athleteId,month);
+  useEffect(()=>{let active=true;void supabase.functions.invoke('healthflix-proxy?action=content',{method:'GET' as any}).then(({data:catalog,error})=>{if(error||!active)return;const items=(catalog as any)?.items||[];const item=items.find((entry:any)=>entry.video_url);if(item)setNextContent({id:String(item.external_id||item.id),title:String(item.title||'Aula HealthFlix'),category:item.category,thumbnail:item.thumbnail||null});});return()=>{active=false;};},[]);
   async function sync(item:PhysicalCommitment){
     if(!athleteId||!item.appointmentId||syncing)return;setSyncing(item.id);
     try{
@@ -35,6 +37,10 @@ export function UpcomingCommitments(){
     {data.loading?<p className="text-sm">Carregando agenda e saldo…</p>:data.failed?<div role="alert"><p className="text-sm">Não foi possível atualizar seus compromissos.</p><button className={style} onClick={()=>void data.refresh()}>Tentar novamente</button></div>:<>
       <p className="text-xs text-muted-foreground">{data.items.length} compromissos futuros neste mês · {data.balance} créditos de aulas disponíveis</p>
       {data.items.length===0&&<p className="text-sm">Nenhum compromisso futuro neste mês.</p>}
+      {data.items.length===0&&nextContent&&<article className="overflow-hidden rounded-xl border border-primary/25 bg-primary/[0.06]">
+        {nextContent.thumbnail&&<img src={nextContent.thumbnail} alt="" loading="lazy" className="aspect-video w-full object-cover"/>}
+        <div className="space-y-2 p-3"><p className="text-xs font-semibold uppercase tracking-wider text-primary">Aula disponível agora · HealthFlix</p><h4 className="text-sm font-semibold">{nextContent.title}</h4>{nextContent.category&&<p className="text-xs text-muted-foreground">{nextContent.category} · conteúdo sob demanda</p>}<button className={style} onClick={()=>navigate(`/9fit/healthflix?content=${encodeURIComponent(nextContent.id)}`)}>Assistir e retomar progresso</button></div>
+      </article>}
       {data.items.map(item=><article key={item.id} className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-primary">{item.type} · {item.status==='pending'?'Aguardando confirmação':item.status==='confirmed'?'Confirmado':item.status==='planned'?'Programado':'Agendado'}</p><h4 className="text-sm font-semibold">{item.title}</h4><p className="text-xs text-muted-foreground">{format(new Date(item.at),item.duration===0?'dd/MM/yyyy':"dd/MM/yyyy 'às' HH:mm")}{item.location&&` · ${item.location}`}</p><div className="flex flex-wrap gap-2"><button className={style} onClick={()=>navigate(item.route)}>Ver detalhes</button>{item.appointmentId&&item.status!=='pending'&&<button disabled={!!syncing} className={style} onClick={()=>void sync(item)}>{syncing===item.id?'Sincronizando…':item.calendarStatus==='synced'?'Atualizar Google Agenda':item.calendarStatus==='failed'?'Tentar sincronização novamente':'Sincronizar Google Agenda'}</button>}</div></article>)}
       {data.balance!==null&&data.balance>0?<div className="space-y-2"><p className="text-sm">Você ainda pode agendar com seus créditos. Após cada reserva, escolha outro horário até usar o saldo.</p><button className={style} onClick={()=>navigate('/9fit/aulas-creditos?tab=schedule')}>Agendar com meus créditos</button></div>:<div className="space-y-2"><p className="text-sm">Sem créditos disponíveis para novas aulas. Consulte opções de compra de créditos, aulas e avaliações.</p><button className={style} onClick={()=>navigate('/9fit/aulas-creditos?tab=credits')}>Ver opções de créditos e serviços</button></div>}
     </>}
