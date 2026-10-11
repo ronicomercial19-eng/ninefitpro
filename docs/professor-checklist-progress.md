@@ -61,9 +61,15 @@ Correções verificadas:
 
 Teste no PostgreSQL verificou leitura e edição próprias, bloqueio entre professores, bloqueio de autoelevação, leitura da prescrição entregue pelo aluno, impedimento de prescrição pelo aluno, visão administrativa e negação anônima. O arquivo supabase/tests/professor_access_boundaries.sql deve ser executado em BEGIN/ROLLBACK; não é um teste do navegador.
 
-Pendências antes de fechar o item 4: políticas de postura/mídias ainda permitem alcance amplo; view vw_athlete_periodizacao_ativa indicada como security definer pelo advisor; revisar endpoints/RPCs relevantes durante o fechamento do controle de acesso. Avisos de funções security definer exigem análise de autorização, não são automaticamente provas de exploração.
+Segunda migração professor_periodization_privacy aplicada e retestada: periodizações, snapshots, ondas e scans de postura restritos ao vínculo. View vw_athlete_periodizacao_ativa agora security_invoker; teste confirmou planejamento visível ao aluno e professor responsável, sem acesso de outro professor. Resultado postural só é escrito pelo serviço; aluno não pode forjá-lo. Revogado acesso RPC a cinco funções de trigger. Advisor posterior deixou de apontar security_definer_view e anon_security_definer_function_executable.
+
+Serviços corrigidos e publicados no backend: create-athlete-user versão 57 exige papel canônico ativo, aluno próprio ainda sem vínculo e email correspondente, rejeita vínculo ambíguo e não reassocia conta existente automaticamente. smartperiodizer-proxy versão 4 exige aluno autorizado antes de encaminhar pedido com chave de parceiro e rejeita identificadores conflitantes. Ambos retornaram 401 na chamada HTTP sem autorização. Cinco testes de lógica adicionais cobrem provisionamento e identificadores de parceiro; não foram criadas contas reais nem enviados emails de teste.
+
+Pendências antes de fechar o item 4: completar conferência de serviços/RPCs relevantes, especialmente smartreino-proxy e fluxos de recuperação de acesso. Avisos de funções security definer exigem análise de autorização, não são automaticamente provas de exploração. Algumas tabelas legadas ainda requerem conferência no caminho de uso real dos módulos.
 
 Item 5 ainda pendente: assessments é público e a política de objetos não limita proprietário. A correção requer armazenamento privado, permissões por vínculo e URLs temporárias em todos os leitores e no serviço de análise; alterar só o bucket quebraria imagens existentes.
+
+Referências de diagnóstico: [funções privilegiadas autenticadas](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) e [views privilegiadas](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view). Não há certificação global de segurança nesta etapa.
 
 ## Próximos itens
 
