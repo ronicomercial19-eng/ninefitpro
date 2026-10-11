@@ -80,7 +80,7 @@ const MODULES: ModuleDef[] = [
   { id: "tribos", label: "Comunidade",     display: "TRIBOS", style: "outline-white",  route: "/9fit/community",     Front: TribosFront },
   { id: "intell", label: "SmartTreino",    display: "INTELL", style: "solid-white",    route: "/9fit/train",         Front: IntelFront },
   { id: "play",   label: "HealthFlix",     display: "PLAY",   style: "outline-orange", route: "/9fit/healthflix",    Front: PlayFront },
-  { id: "elite",  label: "Saúde e longevidade",    display: "ELITE",  style: "solid-orange",   route: "/9fit/elite-bio",     Front: IntelFront },
+  { id: "elite",  label: "Bio-Hacking",    display: "ELITE",  style: "solid-orange",   route: "/9fit/elite-bio",     Front: IntelFront },
   { id: "habits", label: "Habit Flow",     display: "FLOW",   style: "outline-white",  route: "/9fit/habit-flow",    Front: HabitFront },
 ];
 

@@ -11,7 +11,7 @@ export function usePhysicalCommitments(athleteId:string|null,month:Date){
     const version=++request.current;if(!athleteId || !user){setItems([]);setBalance(null);setLoading(false);return;}
     const date=new Date(`${monthKey}-01T12:00:00`),start=startOfMonth(date).toISOString(),end=endOfMonth(date).toISOString();
     const [appointments,credits,plans,classes]=await Promise.all([
-      supabase.from('appointments').select('id,title,scheduled_at,duration,status,appointment_type,location,google_calendar_status').eq('student_id',athleteId).in('status',['scheduled','confirmed']).gte('scheduled_at',start).lte('scheduled_at',end).order('scheduled_at'),
+      supabase.from('appointments').select('id,title,scheduled_at,duration,status,appointment_type,location,google_calendar_status').eq('student_id',athleteId).in('status',['scheduled','confirmed','pending']).gte('scheduled_at',start).lte('scheduled_at',end).order('scheduled_at'),
       supabase.from('student_credits').select('total_credits,used_credits,expires_at').eq('student_id',athleteId).maybeSingle(),
       supabase.from('student_training_assignments').select('id,training_name,start_date').eq('student_id',athleteId).eq('is_active',true).gt('start_date',format(new Date(),'yyyy-MM-dd')).gte('start_date',format(startOfMonth(date),'yyyy-MM-dd')).lte('start_date',format(endOfMonth(date),'yyyy-MM-dd')),
       supabase.from('class_bookings').select('id,class_id,status,gym_classes(class_name,class_datetime,location)').or(`user_id.eq.${user.id},user_email.eq.${user.email}`).in('status',['confirmed','scheduled']),

@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethoscope, Apple } from "lucide-react";
 import { useNavigate,useLocation,useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
-import { useStaffDirectory } from "@/hooks/useStaffDirectory";
+import { toast } from "sonner";
 
 type Pro = {
   user_id: string;
@@ -14,9 +14,9 @@ type Pro = {
 };
 
 const ROLE_LABEL: Record<string, string> = {
-  admin: "Treinador responsável",
-  super_admin: "Treinador responsável",
-  trainer: "Treinador pessoal",
+  admin: "Master Coach",
+  super_admin: "Master Coach",
+  trainer: "Personal Trainer",
   professor: "Professor",
   nutritionist: "Nutricionista",
 };
@@ -39,10 +39,26 @@ export default function NineFitStaff() {
   const nutritionReview=(location.state as any)?.nutritionReview;
   const dietReview=searchParams.get("context")==="diet_review";
   const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
-  const directory = useStaffDirectory();
-  const pros = directory.data || [];
-  const loading = directory.isPending;
+  const [pros, setPros] = useState<Pro[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Pro | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, role, avatar_url")
+        .in("role", ["admin", "professor"] as any)
+        .eq("is_active", true)
+        .limit(40);
+      if (error) {
+        console.error(error);
+      } else {
+        setPros((data as any) || []);
+      }
+      setLoading(false);
+    })();
+  }, []);
 
   const visiblePros=dietReview?pros.filter(p=>p.role==="nutritionist"):pros;
   const services = selected ? (SERVICES_BY_ROLE[selected.role] || SERVICES_BY_ROLE.default) : [];
@@ -57,8 +73,8 @@ export default function NineFitStaff() {
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // EQUIPE</p>
-        <h1 className="text-massive text-3xl text-foreground mt-1">{dietReview?"REVISÃO NUTRICIONAL":"SUPORTE EQUIPE"}</h1>
+        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // STAFF</p>
+        <h1 className="text-massive text-3xl text-foreground mt-1">{dietReview?"REVISÃO NUTRICIONAL":"SUPPORT ELITE"}</h1>
         <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">Equipe · Serviços · Agendamento</p>
       </div>
 
@@ -99,12 +115,11 @@ export default function NineFitStaff() {
 
       {tab === "team" && (
         <div className="px-4 space-y-2">
-          {directory.isError && <button onClick={() => void directory.refetch()} className="text-sm text-destructive">Não foi possível carregar a equipe. Tentar novamente</button>}
           {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
           {nutritionReview&&<p className="rounded-xl border border-primary/30 p-3 text-sm">Plano: {nutritionReview.dietName}. Escolha um nutricionista para discutir o ajuste; os registros seguem junto com o agendamento.</p>}
-          {!loading && !directory.isError && visiblePros.length === 0 && (
+          {!loading && visiblePros.length === 0 && (
             <div className="glass-mission rounded-xl p-6 text-center text-xs text-muted-foreground">
-              {dietReview?"Nenhum nutricionista ativo disponível para sua conta. Use a aba Suporte para solicitar atendimento.":"Nenhum profissional ativo disponível para sua conta."}
+              {dietReview?"Nenhum nutricionista ativo disponível. Consulte a equipe no sistema nativo.":"Nenhum profissional ativo no momento."}
             </div>
           )}
           {visiblePros.map((p) => (

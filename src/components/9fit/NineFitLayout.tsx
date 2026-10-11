@@ -21,8 +21,6 @@ interface NineFitLayoutProps {
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pendingFirstAccess, setPendingFirstAccess] = useState(false);
-  const [pendingActivation, setPendingActivation] = useState(false);
   const [gateError, setGateError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const navigate = useNavigate();
@@ -31,30 +29,26 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
   useEffect(() => {
     const checkAuth = async () => {
       setGateError(null);
-      setIsLoading(true);
-      setPendingFirstAccess(false);
-      setPendingActivation(false);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        navigate("/9fit/login", { replace: true });
+        navigate("/9fit/login");
         return;
       }
 
       const path = location.pathname;
-      const onHome = path === '/9fit/hub';
       const onFirstAccess = path.includes('first-access');
       const onOnboarding  = path.includes('onboarding');
 
       // --- 1. First-access gate ---
-      // The server is authoritative; an old browser flag must not skip the gate.
-      let firstAccessDone = false;
+      const localCompleted = localStorage.getItem('9fit_first_access_completed') === 'true';
+      let firstAccessDone = localCompleted;
 
       if (!firstAccessDone) {
         try {
           const { data: profile } = await supabase
             .from('vw_current_identity' as any)
-            .select('first_access_completed,athlete_id')
+            .select('first_access_completed')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
@@ -64,7 +58,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             const { data: athlete } = await supabase
               .from('athletes')
               .select('password_changed')
-              .eq('id', (profile as { athlete_id?: string } | null)?.athlete_id || '00000000-0000-0000-0000-000000000000')
+              .eq('user_id', session.user.id)
               .maybeSingle();
             // Sem registro de athlete (coach/admin) → liberado
             // Athlete com senha já trocada → liberado
@@ -78,13 +72,12 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         }
       }
 
-      setPendingFirstAccess(!firstAccessDone);
-      if (!firstAccessDone && !onFirstAccess && !onHome) {
-        navigate("/9fit/first-access", { replace: true });
+      if (!firstAccessDone && !onFirstAccess) {
+        navigate("/9fit/first-access");
         return;
       }
       if (firstAccessDone && onFirstAccess) {
-        navigate("/9fit/hub", { replace: true });
+        navigate("/9fit/hub");
         return;
       }
 
@@ -106,15 +99,12 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
               .eq('athlete_id', (athlete as unknown as { athlete_id: string }).athlete_id)
               .maybeSingle();
             const finished = act?.finished_at;
-            const { data: contextSettings } = await supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', session.user.id).maybeSingle();
-            const profileConfirmed = !!(contextSettings as { pdi_completed_at?: string } | null)?.pdi_completed_at;
-            setPendingActivation(!finished && !profileConfirmed);
-            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome) {
-              navigate('/9fit/ativacao', { replace: true });
+            if (!finished && !onAtivacao && !onOnboarding) {
+              navigate('/9fit/ativacao');
               return;
             }
-            if ((finished || profileConfirmed) && onAtivacao) {
-              navigate('/9fit/os', { replace: true });
+            if (finished && onAtivacao) {
+              navigate('/9fit/os');
               return;
             }
           }
@@ -133,7 +123,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
-          navigate("/9fit/login", { replace: true });
+          navigate("/9fit/login");
         }
       },
     );
@@ -180,10 +170,6 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
     <>
       {!isOnboardingFlow && <NineFitTopBar />}
       {!isOnboardingFlow && <BackButton />}
-      {location.pathname === '/9fit/hub' && (pendingFirstAccess || pendingActivation) && <section className="mx-auto max-w-3xl p-4" role="status">
-        <p>{pendingFirstAccess ? 'Bem-vindo! Conclua seu primeiro acesso para preparar seus treinos.' : 'Bem-vindo! Confirme sua ficha para personalizar seus treinos.'}</p>
-        <button className="mt-2 underline" onClick={() => navigate(pendingFirstAccess ? '/9fit/first-access' : '/9fit/ativacao')}>Continuar configuração</button>
-      </section>}
       {children}
       {!isOnboardingFlow && <RonBubble />}
     </>

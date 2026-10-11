@@ -1,50 +1,69 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AchievementShareSheet, type Achievement } from '@/components/9fit/AchievementShareSheet';
-import { BottomNavigation } from '@/components/9fit/BottomNavigation';
-import { useAthleteId } from '@/hooks/useAthleteId';
-import { useAthleteScores } from '@/hooks/useAthleteScores';
-import { useActivitySummary } from '@/hooks/useActivitySummary';
-import { loadProgressScreen } from '@/services/activitySummary';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { AchievementShareSheet, type Achievement } from "@/components/9fit/AchievementShareSheet";
+import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { getAthleteScores } from "@/hooks/useAthleteScores";
+import { Loader2 } from "lucide-react";
+
+const templates = [
+  { type: "sync_score", label: "Sync Score", kicker: "MEU PROGRESSO", title: "Minha evolução no 9FIT PRO", subtitle: "Consistência registrada no seu perfil" },
+  { type: "personal_record", label: "Recorde pessoal", kicker: "NOVO RECORDE", title: "Meu recorde no 9FIT PRO", subtitle: "Performance em evolução" },
+  { type: "workout_completed", label: "Treino concluído", kicker: "TREINO CONCLUÍDO", title: "Mais uma sessão entregue", subtitle: "Consistência vence intensidade" },
+  { type: "assessment_completed", label: "Avaliação", kicker: "AVALIAÇÃO CONCLUÍDA", title: "Meu check-in de performance", subtitle: "Dados reais, evolução contínua" },
+  { type: "weekly_recap", label: "Resumo semanal", kicker: "RECAP DA SEMANA", title: "Minha semana 9FIT", subtitle: "Veja minha consistência" },
+  { type: "goal_achieved", label: "Meta alcançada", kicker: "META ALCANÇADA", title: "Objetivo concluído", subtitle: "Um passo a mais na jornada" },
+  { type: "level_up", label: "Level up", kicker: "LEVEL UP", title: "Subi de nível", subtitle: "Minha evolução continua" },
+] as const;
 
 export default function NineFitCompartilhar() {
-  const { athleteId, athleteName, loading: athleteLoading, error: athleteError } = useAthleteId();
-  const scores = useAthleteScores(athleteId);
-  const activity = useActivitySummary();
-  const client = useQueryClient();
-  const progress = useQuery({ queryKey: ['progress-screen', athleteId], queryFn: () => loadProgressScreen(athleteId!), enabled: !!athleteId });
+  const { user } = useAuth();
   const [params] = useSearchParams();
   const [achievement, setAchievement] = useState<Achievement | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ name: "Aluno 9FIT", score: null as number | null, workouts: 0, record: null as string | null });
+
   useEffect(() => {
-    const refresh = () => { void client.invalidateQueries({ queryKey: ['progress-screen', athleteId] }); setAchievement(null); };
-    const events = ['9fit:workout-updated', '9fit:profile-updated', '9fit:sync_updated'];
-    events.forEach(event => window.addEventListener(event, refresh));
-    return () => events.forEach(event => window.removeEventListener(event, refresh));
-  }, [client, athleteId]);
-  const name = athleteName || 'Atleta';
-  const screen = progress.data as { recordes_recentes?: { exercicio: string; valor: number; unidade: string; data: string }[]; avaliacao_atual?: { score_atual?: number | null; data?: string | null } } | null;
-  const record = screen?.recordes_recentes?.[0];
-  const loading = athleteLoading || !!athleteId && (activity.isPending || progress.isPending || scores.loading);
-  const error = athleteError || activity.isError || progress.isError || scores.error;
-  const score = scores.status === 'available' ? scores.data?.sync.value : null;
+    if (!user?.id) return;
+    (async () => {
+      const { data: athleteData } = await supabase.from("athletes" as any).select("id,name").eq("user_id", user.id).maybeSingle();
+      const athlete = athleteData as any;
+      if (!athlete?.id) { setLoading(false); return; }
+      const [{ data: executions }, { data: records }, snapshot] = await Promise.all([
+        supabase.from("workout_executions" as any).select("id").eq("athlete_id", athlete.id).eq("status", "completed"),
+        supabase.from("personal_records" as any).select("exercicio,valor,unidade").eq("athlete_id", athlete.id).order("data_pr", { ascending: false }).limit(1),
+        getAthleteScores(),
+      ]);
+      const latest = records?.[0] as any;
+      setStats({ name: athlete.name || snapshot?.athlete?.name || "Aluno 9FIT", score: snapshot?.sync.value == null ? null : Number(snapshot.sync.value), workouts: executions?.length || 0, record: latest ? String(latest.exercicio) + " · " + String(latest.valor) + String(latest.unidade || "kg") : null });
+      setLoading(false);
+    })();
+  }, [user?.id]);
+
   useEffect(() => {
-    if (!loading && !error && params.get('template') === 'id_card') setAchievement({ contentType: 'id_card', kicker: 'MEU PERFIL', title: 'Meu perfil 9FIT', subtitle: name });
-  }, [loading, error, params, name]);
-  const templates = [
-    { type: 'sync_score', label: 'Índice de rotina (SYNC)', value: score == null ? null : `${score}%`, subtitle: 'Percepção e cobertura de registros; não é avaliação fisiológica.' },
-    { type: 'personal_record', label: 'Último recorde registrado', value: record ? `${record.exercicio} · ${record.valor} ${record.unidade || ''}` : null, subtitle: record ? `Registro de ${record.data}` : 'Nenhum recorde confirmado no Histórico.' },
-    { type: 'workout_completed', label: 'Treinos concluídos', value: activity.data?.total ? `${activity.data.total} treinos concluídos` : null, subtitle: 'Total de sessões com conclusão registrada.' },
-    { type: 'weekly_recap', label: 'Resumo semanal', value: activity.data?.week ? `${activity.data.week} treinos nesta semana` : null, subtitle: 'Sessões concluídas de segunda-feira até hoje.' },
-    { type: 'assessment_completed', label: 'Última avaliação', value: screen?.avaliacao_atual?.score_atual == null ? null : `${screen.avaliacao_atual.score_atual}`, subtitle: screen?.avaliacao_atual?.data || 'Nenhuma avaliação confirmada.' },
-  ] as const;
-  return <div className="min-h-screen bg-background pb-28 p-5">
-    <h1 className="text-3xl font-display">Compartilhar meu progresso</h1><p className="mt-2 text-sm text-muted-foreground">Os mesmos registros usados no Histórico. Cards sem dados confirmados ficam indisponíveis.</p>
-    {loading ? <Loader2 className="mt-8 animate-spin" /> : error ? <div role="alert" className="mt-6"><p>Não foi possível confirmar seus dados para compartilhar.</p><button onClick={() => { void activity.refetch(); void progress.refetch(); void scores.refresh(); }}>Tentar novamente</button></div> : <>
-      <div className="mt-6 rounded-xl border border-white/10 p-4"><p>{name}</p><p className="text-sm text-muted-foreground">SYNC: {score == null ? 'Sem leitura atual' : `${score}%`} · {activity.data?.total ?? 0} treinos concluídos</p></div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">{templates.map(template => <button key={template.type} type="button" disabled={template.value === null} onClick={() => setAchievement({ contentType: template.type, kicker: 'MEU PROGRESSO', title: template.label, value: template.value!, subtitle: `${template.subtitle} · ${name}` })} className="rounded-xl border border-primary/30 p-4 text-left disabled:opacity-50"><p className="font-semibold">{template.label}</p><p className="mt-1 text-xs text-muted-foreground">{template.subtitle}</p><p className="mt-3 text-xs text-primary">{template.value ?? 'Sem registro confirmado'}</p></button>)}</div>
-    </>}
-    <AchievementShareSheet achievement={achievement} onClose={() => setAchievement(null)} /><BottomNavigation />
-  </div>;
+    if (!loading && params.get("template") === "id_card") {
+      setAchievement({ contentType: "id_card", kicker: "MEU PERFIL", title: "Meu ID Card 9FIT", subtitle: "Perfil verificado · " + stats.name });
+    }
+  }, [loading, params, stats.name]);
+
+  const openTemplate = (template: (typeof templates)[number]) => setAchievement({
+    contentType: template.type, kicker: template.kicker, title: template.title,
+    value: template.type === "sync_score" && stats.score != null ? String(stats.score) + "%" : template.type === "personal_record" && stats.record ? stats.record : template.type === "workout_completed" ? String(stats.workouts) + " treinos concluídos" : undefined,
+    subtitle: template.subtitle + " · " + stats.name,
+  });
+
+  return (
+    <div className="min-h-screen bg-background pb-28 p-5">
+      <p className="text-[10px] uppercase tracking-[0.3em] text-primary">9FIT PRO</p>
+      <h1 className="mt-2 text-3xl font-display">Moldes de compartilhamento</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Cards personalizados com seus dados reais.</p>
+      {loading ? <div className="mt-8 flex justify-center"><Loader2 className="animate-spin" /></div> : <>
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><p className="font-semibold">{stats.name}</p><p className="mt-1 text-muted-foreground">Sync Score: {stats.score == null ? "—" : stats.score + "%"} · Treinos concluídos: {stats.workouts}</p>{stats.record && <p className="mt-1 text-muted-foreground">Último recorde: {stats.record}</p>}</div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">{templates.map((template) => <button key={template.type} type="button" onClick={() => openTemplate(template)} className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 text-left hover:bg-primary/[0.12]"><p className="font-semibold">{template.label}</p><p className="mt-1 text-xs text-muted-foreground">{template.subtitle}</p><span className="mt-3 inline-block text-xs font-semibold text-primary">Criar e compartilhar →</span></button>)}</div>
+      </>}
+      <AchievementShareSheet achievement={achievement} onClose={() => setAchievement(null)} />
+      <BottomNavigation />
+    </div>
+  );
 }

@@ -1,4 +1,4 @@
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, MessageCircle, Sparkles } from "lucide-react";
 import { getEmbeddedApp } from "@/data/ecosystemApps";
 
@@ -7,8 +7,6 @@ export default function NineFitNativeSystem() {
   const [params] = useSearchParams();
   const appKey = params.get("app") ?? "fitness-place";
   const app = getEmbeddedApp(appKey) ?? getEmbeddedApp("fitness-place")!;
-
-  if (appKey === "staff") return <Navigate to="/9fit/staff" replace />;
 
   // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
   const showFallback = !app.url;

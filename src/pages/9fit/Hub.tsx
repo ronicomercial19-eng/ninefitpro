@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { SyncScoreDiagnosisModal } from "@/components/9fit/SyncScoreDiagnosisModal";
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
-import { HubCommandDeck } from '@/components/9fit/HubCommandDeck';
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
@@ -54,7 +53,7 @@ const hubStaggerItem = {
 
 export default function NineFitHub() {
   const { user, profile } = useAuth();
-  const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
+  const { athleteId, athleteName } = useAthleteId();
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -77,7 +76,7 @@ export default function NineFitHub() {
   const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
 
   const loadHubData = async () => {
-    if (!athleteId) { setHubLoading(athleteLoading); return; }
+    if (!athleteId) return;
     setHubLoading(true);
     setHubError(null);
     try {
@@ -99,7 +98,7 @@ export default function NineFitHub() {
     }
   };
 
-  useEffect(() => { loadHubData(); }, [athleteId, user?.id, athleteLoading]);
+  useEffect(() => { loadHubData(); }, [athleteId, user?.id]);
 
   useRealtimeTable(
     {
@@ -129,7 +128,6 @@ export default function NineFitHub() {
     const onComplete = () => {
       invalidate();
       void refreshScores();
-      void loadHubData();
     };
     window.addEventListener('9fit:protocol_completed', onComplete);
     return () => window.removeEventListener('9fit:protocol_completed', onComplete);
@@ -143,7 +141,6 @@ export default function NineFitHub() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <WeeklyRecapPrompt />
-      {!athleteLoading && !athleteId && <p className="mx-4 mt-3 rounded-xl border border-border p-4 text-sm">Seu acesso está pronto. Seus treinos aparecerão quando seu professor vincular sua ficha.</p>}
       {hubLoading && (
         <p className="px-4 pt-3 text-[11px] text-muted-foreground">Carregando seus dados…</p>
       )}
@@ -159,7 +156,7 @@ export default function NineFitHub() {
         {permission !== 'granted' && (
           <button onClick={requestPermission} className="text-xs bg-primary/10 text-primary p-2 rounded">Enable Push</button>
         )}
-        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Conectar Bluetooth</button>
+        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Scan Bluetooth</button>
       </div>
 
       <motion.div
@@ -168,7 +165,6 @@ export default function NineFitHub() {
         animate="visible"
         className="w-full space-y-6 px-4 md:px-6"
       >
-        <motion.div variants={hubStaggerItem}><HubCommandDeck name={name} syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} weekly={weekly} hasPlan={!!performancePlanTitle} /></motion.div>
         <motion.div variants={hubStaggerItem} className="relative">
           <HeroSyncSection
             name={name}
@@ -188,7 +184,6 @@ export default function NineFitHub() {
         </motion.div>
 
         <SyncScoreDiagnosisModal 
-           context={liveScores?.context}
            open={showDiagnosis} 
            onClose={() => setShowDiagnosis(false)}
            score={liveScores?.sync.value ?? null}

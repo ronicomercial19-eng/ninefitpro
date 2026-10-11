@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface LibraryPayload {
   id?: string;
@@ -44,7 +43,6 @@ interface Props {
 }
 
 export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
-  const { user, isAdmin, isSuperAdmin } = useAuth();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteId, setAthleteId] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -52,14 +50,9 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    if (!user) { setAthletes([]); return; }
-    let query = supabase.from("athletes").select("id, name, email").order("name").limit(500);
-    if (!isAdmin && !isSuperAdmin) query = query.eq("coach_id", user.id);
-    query.then(({ data, error }) => {
-      if (error) { toast.error("Não foi possível carregar seus alunos."); setAthletes([]); return; }
-      setAthletes(data || []);
-    });
-  }, [open, user, isAdmin, isSuperAdmin]);
+    supabase.from("athletes").select("id, name, email").order("name").limit(500)
+      .then(({ data }) => setAthletes(data || []));
+  }, [open]);
 
   const handleAssign = async () => {
     if (!item || !athleteId) {
@@ -78,6 +71,7 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
       const access_url = p.episodeUrl || p.accessUrl || p.access_url || null;
       const download_url = p.downloadUrl || p.download_url || p.pdfUrl || null;
 
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("student_library_assignments").insert({
         athlete_id: athleteId,
         content_type: item.type,

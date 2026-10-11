@@ -1,12 +1,11 @@
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import AuthCallback from './pages/AuthCallback';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
 import AgendaPage from "./pages/AgendaPage";
 import AITrainingPage from "./pages/AITrainingPage";
@@ -120,12 +119,7 @@ const App = () => (
             {/* Public Routes - Login is the main entry point */}
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/login" element={<Auth />} />
-            <Route path="/dashboard" element={<Navigate to="/app" replace />} />
-            <Route path="/9fit/onboarding-pro" element={<Navigate to="/9fit/hub" replace />} />
-            <Route path="/9fit/stats" element={<Navigate to="/9fit/progresso" replace />} />
-            <Route path="/9fit/aulas" element={<Navigate to="/9fit/aulas-creditos" replace />} />
             <Route path="/register" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/suporte" element={<Support />} />
@@ -287,7 +281,7 @@ const App = () => (
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/embed" element={<NineFitLayout><EcoEmbed title={new URLSearchParams(window.location.search).get("title") || "Ecossistema"} url={new URLSearchParams(window.location.search).get("url") || "/9fit/hub"} /></NineFitLayout>} />
-            <Route path="/9fit/home" element={<Navigate to="/9fit/os" replace />} />
+            <Route path="/9fit/home" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
             {/* Orphan route /9fit/aulas removed - use /9fit/aulas-creditos */}
             <Route path="/9fit/aulas-creditos" element={<NineFitLayout><AulasCreditos /></NineFitLayout>} />

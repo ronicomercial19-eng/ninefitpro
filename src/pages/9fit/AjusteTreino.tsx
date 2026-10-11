@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { businessDate } from "@/services/dailyContextRules";
 import { format } from "date-fns";
 import { ChevronLeft, Brain, Check, Loader2, Play, RefreshCw } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -35,7 +34,7 @@ export default function NineFitAjusteTreino() {
   const [reloading, setReloading] = useState(false);
   const { adjustment, loading, error: adjustmentError, generate, apply } = useAdaptiveAdjustment();
 
-  const today = businessDate();
+  const today = format(new Date(), "yyyy-MM-dd");
 
   const loadToday = async () => {
     if (!athleteId) return;
@@ -68,13 +67,7 @@ export default function NineFitAjusteTreino() {
     finally { setReloading(false); }
   };
 
-  useEffect(() => {
-    void loadToday();
-    const refresh = () => void loadToday();
-    window.addEventListener("9fit:workout-updated", refresh);
-    return () => window.removeEventListener("9fit:workout-updated", refresh);
-    /* eslint-disable-next-line */
-  }, [athleteId]);
+  useEffect(() => { loadToday(); /* eslint-disable-next-line */ }, [athleteId]);
 
   const runCopilot = async () => {
     if (!exercises.length) { toast.info("Carregue um treino antes de pedir ajustes."); return; }
@@ -217,8 +210,7 @@ export default function NineFitAjusteTreino() {
       <div className="mx-4 mt-6 space-y-3">
         {exercises.length === 0 && !reloading && (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-muted-foreground">
-            Não há prescrição diária salva para ajustar hoje. O Train também oferece conteúdos atribuídos e a criação de um treino rápido; essas opções não são uma prescrição diária já programada.
-            <div className="mt-3 flex justify-center gap-3"><button className="text-primary" onClick={() => navigate("/9fit/train")}>Escolher ou gerar treino</button><button className="text-primary" onClick={() => navigate("/9fit/staff")}>Solicitar ajuste à equipe</button></div>
+            Nenhum treino programado para hoje. Ajuste indisponível.
           </div>
         )}
         {exercises.map((ex, i) => (

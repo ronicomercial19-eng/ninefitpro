@@ -21,28 +21,19 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
   const [streakDays, setStreakDays] = useState(0);
   const [workoutsDone, setWorkoutsDone] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [reading, setReading] = useState(true);
-  const [readError, setReadError] = useState(false);
-  const [reload, setReload] = useState(0);
   const [athleteId, setAthleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !user?.id) return;
-    setStep(0); setReading(true); setReadError(false); setAthleteId(null); setPhotoFile(null);
-    setProfile({full_name: "", height_cm: "", weight_kg: "", age: ""});
-    let cancelled = false;
+    setStep(0);
     (async () => {
-      try {
-      const { data: canonicalId, error: identityError } = await supabase.rpc("fn_current_athlete_id");
-      if (identityError || !canonicalId) throw identityError || new Error("Perfil indisponível");
-      const { data: ath, error: athleteError } = await supabase.from("athletes").select("*").eq("id", canonicalId).single();
-      if (athleteError) throw athleteError;
-      if (cancelled) return;
+      const { data: canonicalId } = await supabase.rpc("fn_current_athlete_id");
+      const { data: ath } = await supabase.from("athletes").select("*").eq("id", canonicalId || "").maybeSingle();
       if (ath) {
         const legacyAth = ath as unknown as LegacyAthleteRow;
         setAthleteId(legacyAth.id);
         setProfile({
-          full_name: legacyAth.name || user.user_metadata?.full_name || "",
+          full_name: legacyAth.name || "",
           height_cm: legacyAth.altura_cm || "",
           weight_kg: legacyAth.peso_kg || "",
           age: legacyAth.age || "",
@@ -61,23 +52,20 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         const d = new Date(Date.now() - i * 86400000).toDateString();
         if (days.has(d)) streak++; else break;
       }
-      if (!cancelled) setStreakDays(streak);
+      setStreakDays(streak);
       const { count } = ath?.id ? await supabase
         .from("workout_executions")
         .select("id", { count: "exact", head: true })
         .eq("athlete_id", ath.id).eq("status", "completed") : { count: 0 };
-      if (!cancelled) setWorkoutsDone(count || 0);
-      } catch { if (!cancelled) setReadError(true); } finally { if (!cancelled) setReading(false); }
+      setWorkoutsDone(count || 0);
     })();
-    return () => { cancelled = true; };
-  }, [open, user?.id, user?.user_metadata?.full_name, editOnly, reload]);
+  }, [open, user?.id, editOnly]);
 
   if (!open) return null;
 
   const next = () => setStep((s) => Math.min(s + 1, 4));
   const saveProfile = async () => {
-    if (!user?.id || !athleteId || saving || reading || readError) return;
-    if (!profile.full_name.trim()) { toast.error("Informe seu nome completo."); return; }
+    if (!user?.id || !athleteId || saving) return;
     setSaving(true);
     try {
       let photoUrl: string | null = null;
@@ -169,9 +157,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
             </div>
           )}
 
-          {reading && <p className="text-sm">Carregando os dados já cadastrados…</p>}
-          {readError && <button className="text-sm text-destructive" onClick={() => setReload(value => value + 1)}>Não foi possível carregar seu perfil. Tentar novamente</button>}
-          {!reading && !readError && step === 0 && (
+          {step === 0 && (
             <div className="space-y-3">
               <p className="font-display text-lg flex items-center gap-2"><Camera className="w-5 h-5 text-primary" /> Dados + foto</p>
               <input className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
@@ -199,10 +185,10 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
 
           {!editOnly && step === 1 && (
             <div className="space-y-4">
-              <p className="font-display text-lg flex items-center gap-2"><Dumbbell className="w-5 h-5 text-primary" /> Confira seu planejamento</p>
+              <p className="font-display text-lg flex items-center gap-2"><Dumbbell className="w-5 h-5 text-primary" /> Seu plano está pronto</p>
               <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
-                <p className="text-xs text-muted-foreground">Treinos e prescrições disponíveis na sua conta</p>
-                <p className="font-display text-lg mt-1">Consultar plano ativo</p>
+                <p className="text-xs text-muted-foreground">Treino diário gerado pelo SmartTreino</p>
+                <p className="font-display text-lg mt-1">Plano personalizado</p>
               </div>
               <button onClick={() => { navigate("/9fit/train"); onClose(); }}
                 className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">Ver plano</button>
@@ -213,7 +199,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
           {!editOnly && step === 2 && (
             <div className="space-y-4">
               <p className="font-display text-lg flex items-center gap-2"><Share2 className="w-5 h-5 text-primary" /> Primeiro treino</p>
-              <p className="text-sm text-muted-foreground">Registre a conclusão do seu treino para acompanhar sua evolução.</p>
+              <p className="text-sm text-muted-foreground">Registrar e compartilhar seu primeiro treino acelera resultados em 3x.</p>
               <button onClick={() => { navigate("/9fit/train"); onClose(); }}
                 className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">Registrar agora</button>
               <button onClick={next} className="w-full text-xs text-muted-foreground py-2">Já fiz, próxima →</button>

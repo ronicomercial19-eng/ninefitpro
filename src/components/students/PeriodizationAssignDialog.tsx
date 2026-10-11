@@ -1,4 +1,3 @@
-import { localDate } from '@/lib/assignedProtocols';
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -69,7 +68,7 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
     training_name: name.trim() || "Periodização",
     training_description: description.trim() || null,
     training_type: "periodization",
-    start_date: localDate(),
+    start_date: new Date().toISOString().split("T")[0],
     is_active: true,
     ...extra,
   });

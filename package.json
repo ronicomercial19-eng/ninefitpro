@@ -12,13 +12,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "qa:fase2": "node scripts/qa-fase2.mjs",
-    "qa:macro02": "tsx scripts/qa-macro02.ts",
-    "qa:master18": "tsx scripts/qa-master18.ts",
-    "qa:macro03": "tsx scripts/qa-macro03.ts",
-    "qa:integration19": "node --import tsx --test scripts/qa-integration19.ts",
     "qa:fase3": "node scripts/qa-fase3.mjs",
-    "qa:fase4": "node scripts/qa-fase4.mjs",
-    "test": "vitest run"
+    "qa:fase4": "node scripts/qa-fase4.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.0",
@@ -67,6 +62,7 @@
     "@supabase/supabase-js": "^2.117.2",
     "@tanstack/react-query": "^5.56.2",
     "@types/dompurify": "^3.0.5",
+    "@vis.gl/react-google-maps": "^1.10.1",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -122,7 +118,6 @@
     "tsx": "^4.23.15",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1",
-    "vitest": "^2"
+    "vite": "^5.4.1"
   }
 }

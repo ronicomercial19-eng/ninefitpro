@@ -1,4 +1,3 @@
-import { recordShareEvent } from '@/services/share.service';
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -135,18 +134,21 @@ export default function NineFitCollections() {
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        try {
-          const receipt = await recordShareEvent({ userId: user.id, channel, contentType: b.tipo, contentId: b.template?.slug || b.tipo });
-          toast.success(channel === 'download' ? 'Imagem salva para compartilhar' : 'Compartilhamento enviado ao aplicativo');
-          if (receipt.rewarded) {
-            toast.success(`+${receipt.reward_xp} XP registrados`);
-            window.dispatchEvent(new Event('9fit:sync_updated'));
-          }
-        } catch {
-          toast.info('Imagem preparada, mas o registro não foi salvo. Nenhum XP foi confirmado.');
-        }
-      }
+      await supabase.from("share_events" as any).insert({
+        user_id: user?.id,
+        athlete_id: athleteId,
+        channel,
+        content_type: b.tipo,
+        content_id: b.template?.slug || b.tipo,
+        reward_xp: 20,
+        shared_at: new Date().toISOString(),
+      } as any);
+
+      await supabase.rpc("fn_award_xp" as any, {
+        p_athlete_id: athleteId, p_amount: 20, p_source: "share_viral", p_metadata: { tipo: b.tipo } as any,
+      });
+
+      toast.success("Compartilhado · +20 XP");
     } catch (e: any) {
       console.error("[Collections] share", e);
       toast.error("Não foi possível compartilhar");

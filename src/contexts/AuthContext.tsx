@@ -3,8 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { getAthleteByUserId, getAthleteByEmail } from '@/services/athletes.service';
 import { getUserRole } from '@/services/auth.service';
-import { AUTH_CALLBACK } from '@/lib/loginDestination';
-import { createGenerationGuard, resolveRole, isStaffRole, isAdminRole } from '@/lib/authRole';
 import { mirrorEvent } from '@/services/intelligenceHub.service';
 
 interface Profile {
@@ -44,18 +42,14 @@ interface CanonicalIdentity {
   roles: Array<{ role: string }>;
 }
 
-export type RoleStatus = 'idle' | 'loading' | 'ready' | 'error';
-
 interface AuthContextType {
-  roleStatus: RoleStatus;
-  retryIdentity: () => Promise<void>;
   user: User | null;
   profile: Profile | null;
   studentProfile: StudentProfile | null;
   session: Session | null;
   userRole: string | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  register: (email: string, password: string, name?: string) => Promise<{ error?: string; needsEmailConfirmation?: boolean }>;
+  register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   loading: boolean;
   isSuperAdmin: boolean;
@@ -79,95 +73,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [roleStatus, setRoleStatus] = useState<RoleStatus>('idle');
-
-  // Geração de sessão: respostas antigas são descartadas ao trocar de usuário.
-  const genRef = React.useRef(createGenerationGuard());
-
-  const loadIdentity = React.useCallback(async (u: User) => {
-    const gen = genRef.current.next();
-    const alive = () => genRef.current.isCurrent(gen);
-    setRoleStatus('loading');
-    setProfile(null); setStudentProfile(null); setUserRole(null);
-    try {
-      const { data, error } = await supabase
-        .from('vw_current_identity').select('*').eq('user_id', u.id).maybeSingle();
-      if (!alive()) return;
-      let profileRole: string | null = null;
-      let roles: string[] = [];
-      if (!error && data) {
-        const identity = data as unknown as CanonicalIdentity;
-        profileRole = identity.profile_role ?? null;
-        roles = (identity.roles || []).map((r) => r.role);
-        setProfile({
-          id: identity.user_id, user_id: identity.user_id, email: identity.email,
-          full_name: identity.full_name, role: identity.profile_role, phone: null,
-          avatar_url: null, is_active: identity.is_active ?? true,
-        });
-        if (identity.athlete_id && identity.athlete_name) {
-          setStudentProfile({
-            id: identity.athlete_id, email: identity.athlete_email, name: identity.athlete_name,
-            activated: identity.athlete_activated, coach_id: identity.coach_id ?? undefined,
-          });
-        }
-      } else {
-        const fallback = await supabase.from('profiles').select('*').eq('user_id', u.id).maybeSingle();
-        if (!alive()) return;
-        if (!fallback.error && fallback.data) { setProfile(fallback.data as Profile); profileRole = (fallback.data as Profile).role; }
-      }
-      let role = resolveRole(profileRole, roles);
-      if (!role) {
-        const r = await getUserRole(u.id);
-        if (!alive()) return;
-        role = r.success && r.data ? r.data : null;
-      }
-      setUserRole(role);
-      setRoleStatus('ready');
-      await fetchStudentProfile(u.id, u.email, alive);
-    } catch (error) {
-      console.error('[Auth] falha ao carregar identidade', error);
-      if (alive()) setRoleStatus('error');
-    }
-  }, []);
 
   useEffect(() => {
-    const apply = (s: Session | null) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const u = s.user;
-        setTimeout(() => { void loadIdentity(u); }, 0);
-      } else {
-        genRef.current.next(); // invalida respostas pendentes
-        setProfile(null); setStudentProfile(null); setUserRole(null); setRoleStatus('idle');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          setTimeout(async () => {
+            await fetchUserProfile(session.user.id);
+            await fetchUserRole(session.user.id);
+            await fetchStudentProfile(session.user.id, session.user.email);
+          }, 0);
+        } else {
+          setProfile(null); setStudentProfile(null); setUserRole(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+        fetchUserRole(session.user.id);
+        fetchStudentProfile(session.user.id, session.user.email);
       }
       setLoading(false);
-    };
-    let lastUserId: string | null | undefined;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-      const uid = s?.user?.id ?? null;
-      // TOKEN_REFRESHED do mesmo usuário não precisa recarregar papel
-      if (uid === lastUserId && event !== 'USER_UPDATED' && event !== 'SIGNED_IN') { setSession(s); return; }
-      lastUserId = uid;
-      apply(s);
     });
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      const uid = s?.user?.id ?? null;
-      if (uid === lastUserId) return;
-      lastUserId = uid;
-      apply(s);
-    });
-    return () => subscription.unsubscribe();
-  }, [loadIdentity]);
 
-  const retryIdentity = async () => { if (user) await loadIdentity(user); };
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const result = await getUserRole(userId);
+      if (result.success && result.data) setUserRole(result.data);
+    } catch (error) { console.error('Error fetching user role:', error); }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('vw_current_identity')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!error && data) {
+        const identity = data as unknown as CanonicalIdentity;
+        setProfile({
+          id: identity.user_id,
+          user_id: identity.user_id,
+          email: identity.email,
+          full_name: identity.full_name,
+          role: identity.profile_role,
+          phone: null,
+          avatar_url: null,
+          is_active: identity.is_active ?? true,
+        });
+        if (identity.roles?.length) setUserRole(identity.roles[0].role);
+        if (identity.athlete_id && identity.athlete_name) {
+          setStudentProfile({
+            id: identity.athlete_id,
+            email: identity.athlete_email,
+            name: identity.athlete_name,
+            activated: identity.athlete_activated,
+            coach_id: identity.coach_id ?? undefined,
+          });
+        }
+        return;
+      }
+
+      const fallback = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
+      if (!fallback.error && fallback.data) setProfile(fallback.data);
+    } catch (error) { console.error('Error in fetchUserProfile:', error); }
+  };
 
   // Now uses athletes table via service layer instead of legacy students table
-  const fetchStudentProfile = async (userId: string, userEmail: string | undefined, alive: () => boolean = () => true) => {
+  const fetchStudentProfile = async (userId: string, userEmail: string | undefined) => {
     try {
       // Try by user_id first (includes athlete_auth_link fallback)
       const result = await getAthleteByUserId(userId);
-      if (!alive()) return;
       if (result.success && result.data) {
         setStudentProfile({
           id: result.data.id,
@@ -183,7 +170,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fallback by email
       if (userEmail) {
         const emailResult = await getAthleteByEmail(userEmail);
-        if (!alive()) return;
         if (emailResult.success && emailResult.data) {
           setStudentProfile({
             id: emailResult.data.id,
@@ -215,33 +201,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name?: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: `${window.location.origin}${AUTH_CALLBACK}`, data: { full_name: name } },
+        options: { emailRedirectTo: `${window.location.origin}/9fit/hub`, data: { full_name: name } },
       });
       if (error) return { error: error.message };
-      return { needsEmailConfirmation: !data.session };
+      return {};
     } catch (error: any) { return { error: error.message || 'Erro no registro' }; }
     finally { setLoading(false); }
   };
 
   const logout = async () => {
     try { mirrorEvent('logout', {}, null, user?.email ?? null); } catch {}
-    genRef.current.next();
     await supabase.auth.signOut();
     try {
       localStorage.removeItem('ninefit_token');
       localStorage.removeItem('ninefit_user_id');
       sessionStorage.removeItem('ninefit_redirect_attempted');
     } catch {}
-    setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null); setRoleStatus('idle');
+    setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null);
   };
 
   const isSuperAdmin = userRole === 'super_admin';
-  const isAdmin = isAdminRole(userRole);
-  const isTrainer = isStaffRole(userRole);
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const isTrainer = userRole === 'trainer' || userRole === 'admin' || userRole === 'super_admin';
   const isStudent = userRole === 'student' || userRole === 'user' || Boolean(studentProfile);
 
-  return <AuthContext.Provider value={{ roleStatus, retryIdentity, user, profile, studentProfile, session, userRole, login, register, logout, loading, isSuperAdmin, isAdmin, isTrainer, isStudent }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, profile, studentProfile, session, userRole, login, register, logout, loading, isSuperAdmin, isAdmin, isTrainer, isStudent }}>{children}</AuthContext.Provider>;
 };
 
