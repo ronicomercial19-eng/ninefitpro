@@ -8,6 +8,8 @@ Conferência em 11/10/2026. Base anterior 3e98a9b; main atual 68fb36f. Oito comm
 
 Mudanças recebidas: AuthContext, AppLayout, Dashboard, helpers/testes, tipos gerados, variáveis públicas Supabase, lock Bun, pequeno ajuste de tipo e remoção de webhook client sem uso. Nenhuma migração de banco foi adicionada nessa rodada. Corrigida incompatibilidade entre o Vitest recém-adicionado e package-lock/npm ci: os testes usam node:test, já adotado pelo projeto; lock Bun restaurado ao contrato anterior. A revisão não declara essas mudanças todas aprovadas: permissões e fluxos passam pelos próximos itens.
 
+Durante a execução, main recebeu bdfc806 (191 arquivos modificados), retirando testes, migrações, QA18/Macros e correções de autenticação/dashboard. CI 38167524986 falhou na instalação e build. A origem dessa alteração não foi atribuída ao Lovable: seu histórico consultado não mostra novo pedido correspondente. O merge de reconciliação f7af524 incorpora o commit à história e preserva integralmente a árvore bcdda1e com as entregas aprovadas e correções desta rodada. Não foram reaproveitadas as regressões nem os caches de ferramenta adicionados pelo cleanup.
+
 ## Item 2 — mapa do painel: concluído como inventário de código
 
 Rotas /app usam PrivateRoute + AppLayout; dados efetivamente protegidos dependem das políticas do banco e dos endpoints, a revisar no item 4. Fonte atual de identidade: vw_current_identity, profiles e user_roles. Vínculos: athletes.coach_id, athlete_auth_link e vw_current_relationships.
