@@ -33,10 +33,11 @@ export default function NineFitPrimePass() {
     <div className="min-h-screen bg-background pb-28 text-foreground">
       <div className="px-4 pt-6 pb-6 border-b border-white/10">
         <h1 className="text-3xl font-display font-black italic tracking-tight">Gerencie sua assinatura</h1>
-        <p className="text-sm text-muted-foreground mt-2">Escolha o melhor plano para sua performance.</p>
+        <p className="text-sm text-muted-foreground mt-2">Confira seu acesso atual e as condições comerciais disponíveis.</p>
       </div>
 
       <div className="px-4 mt-6 space-y-6"><AssinaturaStatus /><section className="rounded-xl border border-white/10 p-4 space-y-2"><h2 className="font-bold">Sua performance</h2>{isLoading ? <p>Carregando…</p> : error ? <button onClick={()=>void refetch()}>Não foi possível atualizar. Tentar novamente</button> : <><p>SYNC: {prime?.syncScore == null ? "Sem medição" : `${prime.syncScore}%`}</p><p>Protocolo: {prime?.activeProtocol || "Sem protocolo ativo"}</p><p>Próximo treino: {prime?.nextWorkout || "Sem prescrição futura"}</p><p>Recuperação: {prime?.recovery == null ? "Sem leitura recente" : `${prime.recovery}%`}</p></>}</section>
+        <p className="text-sm text-muted-foreground">{prime?.entitlement === "active" || prime?.entitlement === "trial" ? "Você já tem acesso. Consulte as condições de alteração antes de contratar outro plano." : "Ofertas disponíveis. O acesso só é confirmado após o registro da contratação."} Valores, renovação e cobrança são confirmados pelo provedor de pagamento; o aplicativo não informa uma próxima cobrança sem esse registro.</p>
         {PLANS.map((plan) => (
           <motion.div key={plan.id} className="glass-mission rounded-2xl p-6 border border-white/10">
             <div className="flex justify-between items-start mb-4">
@@ -60,7 +61,7 @@ export default function NineFitPrimePass() {
               rel="noopener noreferrer"
               className="block w-full text-center bg-primary text-primary-foreground font-black py-4 rounded-xl hover:opacity-90 transition-all"
             >
-              Assinar Plano
+              {prime?.entitlement === "active" || prime?.entitlement === "trial" ? "Ver condições de alteração" : "Ver condições de contratação"}
             </a>
           </motion.div>
         ))}

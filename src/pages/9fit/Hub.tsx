@@ -129,6 +129,7 @@ export default function NineFitHub() {
     const onComplete = () => {
       invalidate();
       void refreshScores();
+      void loadHubData();
     };
     window.addEventListener('9fit:protocol_completed', onComplete);
     return () => window.removeEventListener('9fit:protocol_completed', onComplete);
@@ -157,7 +158,7 @@ export default function NineFitHub() {
         {permission !== 'granted' && (
           <button onClick={requestPermission} className="text-xs bg-primary/10 text-primary p-2 rounded">Enable Push</button>
         )}
-        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Scan Bluetooth</button>
+        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Conectar Bluetooth</button>
       </div>
 
       <motion.div

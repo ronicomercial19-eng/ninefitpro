@@ -12,6 +12,7 @@ import { DynamicPDI } from '@/components/9fit/DynamicPDI';
 import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
 import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import { useStaffDirectory } from "@/hooks/useStaffDirectory";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
 
 interface MenuItem {
@@ -33,22 +34,12 @@ interface AthleteBio {
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
-  const { totalXp, level, syncScore, streak } = useEngrenagem();
+  const { totalXp, level, syncScore, streak, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
   const { athleteId, athleteName } = useAthleteId();
-  const [staffOnline, setStaffOnline] = useState(0);
+  const directory = useStaffDirectory();
   const [pdiOpen, setPdiOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
-
-  useEffect(() => {
-    (async () => {
-      const { count } = await supabase
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .in("role", ["professor", "admin"] as any);
-      setStaffOnline(count || 0);
-    })();
-  }, []);
 
   useEffect(() => {
     if (!athleteId) return;
@@ -72,7 +63,7 @@ export default function NineFitProfile() {
   // existir uma fonte real de entitlement, o item fica honesto em vez de
   // inventar status.
   const items: MenuItem[] = [
-    { icon: Users, label: "Staff", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: `${staffOnline} profissionais`, badgeStyle: "neon" },
+    { icon: Users, label: "Equipe", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: directory.isPending ? "Carregando…" : directory.isError ? "Indisponível" : `${directory.data?.length ?? 0} profissionais ativos`, badgeStyle: "neon" },
     { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
     { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
     { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
@@ -95,7 +86,7 @@ export default function NineFitProfile() {
       {/* ID Card — decisão principal da tela: 1 barra de XP, dados físicos ou
           CTA de completar perfil já embutido, Sync/Streak como texto de apoio */}
       <section className="px-4 mt-5">
-        <DigitalIDCard
+        {profileLoading ? <p>Carregando pontos e nível…</p> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
           name={displayName}
           level={level}
           syncScore={syncScore}
@@ -105,7 +96,7 @@ export default function NineFitProfile() {
           age={bio.age}
           heightCm={bio.height_cm}
           weightKg={bio.weight_kg}
-        />
+        />}
       </section>
 
       <div className="px-4 mt-5"><DynamicPDI /></div>

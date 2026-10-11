@@ -1,4 +1,5 @@
-import { format, startOfWeek } from "date-fns";
+import { loadActivitySummary } from "@/services/activitySummary";
+import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,14 +143,11 @@ export default function NineFitTrain() {
   };
 
   const fetchCompletedCount = async (aid: string) => {
-    const { count } = await supabase
-      .from("workout_executions" as any)
-      .select("id", { count: "exact", head: true })
-      .eq("athlete_id", aid)
-      .eq("status", "completed");
-    setCompletedCount(count || 0);
-    const { count: weekly } = await supabase.from("workout_executions").select("id", { count: "exact", head: true }).eq("athlete_id", aid).eq("status", "completed").gte("workout_date", format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")).lte("workout_date", format(new Date(), "yyyy-MM-dd"));
-    setWeeklyCompleted(weekly || 0);
+    try {
+      const activity = await loadActivitySummary(aid);
+      setCompletedCount(activity.total);
+      setWeeklyCompleted(activity.week);
+    } catch { setLoadError(true); toast.error("Não foi possível confirmar as sessões concluídas."); }
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {

@@ -19,7 +19,7 @@ const FALLBACK_CYCLES: RemoteWave[] = [];
 export default function NineFitPlanejamento() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
-  const { week: plannedWeek, today: workoutToday } = useWorkoutOfTheDay();
+  const { week: plannedWeek, today: workoutToday, error: workoutError } = useWorkoutOfTheDay();
 
   const [scheduledDates, setScheduledDates] = useState<string[]>([]);
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
@@ -28,6 +28,7 @@ export default function NineFitPlanejamento() {
   const [periodizationId, setPeriodizationId] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);
   const [hasRemotePlan, setHasRemotePlan] = useState(false);
+  const [planSource, setPlanSource] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [planLoading, setPlanLoading] = useState(true);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function NineFitPlanejamento() {
     }
 
     const row = data as any;
+    setPlanSource(row?.source || null);
     let wavesFound: RemoteWave[] | null = null;
 
     if (Array.isArray(row?.waves) && row.waves.length) {
@@ -82,6 +84,7 @@ export default function NineFitPlanejamento() {
       setHasRemotePlan(true);
     } else {
       setHasRemotePlan(false);
+      setWaves([]); setPeriodizationId(null); setCurrentPhase(null); setPlanName("Sem planejamento ativo");
     }
     setPlanLoading(false);
   }
@@ -154,6 +157,8 @@ export default function NineFitPlanejamento() {
       </div>
       
       <PdiRoadmapView />
+      {workoutError && <p role="alert" className="mx-4 text-sm text-destructive">{workoutError}</p>}
+      <p className="mx-4 mt-3 text-xs text-muted-foreground">Abrir o plano completo não sincroniza nem altera seu objetivo. Sincronizar consulta o provedor; a origem só é confirmada após o plano ser salvo. A projeção usa as cargas registradas nas séries concluídas e não garante resultados.</p>
 
       {planLoading && <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>}
       {planError && (
@@ -173,7 +178,7 @@ export default function NineFitPlanejamento() {
         </div>
         <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>{format(new Date(), "MMMM yyyy", { locale: ptBR })}</span>
-          <span>{hasRemotePlan ? "SmartPeriodizer conectado" : "Sem plano sincronizado"}</span>
+          <span>{planLoading ? "Verificando origem…" : planError ? "Origem indisponível" : hasRemotePlan ? `Plano salvo · origem: ${planSource || "não informada"}` : "Sem plano salvo"}</span>
           {currentPhase && <span>Fase: {currentPhase}</span>}
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">

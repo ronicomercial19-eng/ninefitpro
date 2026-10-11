@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
 import AgendaPage from "./pages/AgendaPage";
 import AITrainingPage from "./pages/AITrainingPage";
@@ -281,7 +281,7 @@ const App = () => (
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/embed" element={<NineFitLayout><EcoEmbed title={new URLSearchParams(window.location.search).get("title") || "Ecossistema"} url={new URLSearchParams(window.location.search).get("url") || "/9fit/hub"} /></NineFitLayout>} />
-            <Route path="/9fit/home" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
+            <Route path="/9fit/home" element={<Navigate to="/9fit/os" replace />} />
             <Route path="/9fit/train" element={<NineFitLayout><NineFitTrain /></NineFitLayout>} />
             {/* Orphan route /9fit/aulas removed - use /9fit/aulas-creditos */}
             <Route path="/9fit/aulas-creditos" element={<NineFitLayout><AulasCreditos /></NineFitLayout>} />

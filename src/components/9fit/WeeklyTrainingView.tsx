@@ -69,7 +69,13 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       if (error) throw error;
       const payload = (data || {}) as WeekPayload;
       setPhase(String(payload.phase_status || ""));
-      const week = payload.week || [];
+      const { data: executions, error: executionsError } = await supabase.from('workout_executions').select('daily_workout_id,workout_date,status').eq('athlete_id', athleteId).gte('workout_date', payload.week?.[0]?.workout_date || payload.week?.[0]?.date || todayISO).lte('workout_date', todayISO);
+      if (executionsError) throw executionsError;
+      const week = (payload.week || []).map(day => {
+        const id = day.id || day.daily_workout_id || day.workout_id;
+        const execution = executions?.find(row => row.daily_workout_id === id && row.workout_date === (day.workout_date || day.date) && row.status === 'completed');
+        return { ...day, status: execution ? 'completed' as const : day.status === 'completed' ? 'planned' as const : day.status };
+      });
       setMatch(weeklyAdherence(week.map(d=>({date:d.workout_date||d.date||"",status:d.status||"planned",exerciseCount:d.exercises?.length??0})),todayISO)??0);
       const { data: recordedSets, error: setsError } = await supabase.from("workout_exercise_sets").select("exercise_name,set_number,workout_executions!inner(athlete_id,workout_date,daily_workout_id)").eq("workout_executions.athlete_id",athleteId).eq("completed",true).gte("workout_executions.workout_date",week[0]?.workout_date || week[0]?.date || todayISO).lte("workout_executions.workout_date",week[week.length-1]?.workout_date || week[week.length-1]?.date || todayISO);
       if(setsError)throw setsError;
@@ -94,7 +100,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
       setFailed(true);
       console.error("[WeeklyTrainingView] fn_get_week_workouts", e);
     } finally { setLoading(false); }
-  }, [athleteId]);
+  }, [athleteId, todayISO]);
 
   useEffect(() => {
     initialized.current=false;setSelectedDay(0);
@@ -126,7 +132,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday }: WeeklyTraining
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Treinos da Semana</p>
           <p className="text-xs text-muted-foreground">
             Fase: <span className="text-foreground font-semibold">{phaseLabel}</span>
-            {days.some(d=>d.date<=todayISO&&d.status!=="rest"&&d.exercises.length>0) && <> · Aderência {match}%</>}
+            {days.some(d=>d.date<=todayISO&&d.status!=="rest"&&d.exercises.length>0) && <> · Aderência {match}% (sessões previstas até hoje com execução concluída)</>}
           </p>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { Play, Film, Loader2, X, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { matchesCatalog, type CatalogFilters } from "@/services/catalogFilters";
 
 interface CatalogItem {
   id: string;
@@ -16,6 +17,8 @@ interface CatalogItem {
   video_url?: string | null;
   external_id?: string | null;
   slug?: string | null;
+  objective?: string | null;
+  equipment?: string | string[] | null;
 }
 
 function normalizePlayerUrl(item: CatalogItem) {
@@ -43,6 +46,9 @@ export default function NineFitHealthFlix() {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const emptyFilters: CatalogFilters = { search: "", category: "", level: "", duration: "", objective: "", equipment: "" };
+  const [filters, setFilters] = useState<CatalogFilters>(emptyFilters);
+  const [visibleCount, setVisibleCount] = useState(24);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
 
   useEffect(() => {
@@ -85,11 +91,16 @@ export default function NineFitHealthFlix() {
     return Array.from(set);
   }, [items]);
 
+  const filtered = useMemo(() => items.filter(item => matchesCatalog(item, filters)), [items, filters]);
+  useEffect(() => setVisibleCount(24), [filters]);
+  const options = (key: "level" | "objective" | "equipment") => Array.from(new Set(items.flatMap(item => key === "equipment" && Array.isArray(item.equipment) ? item.equipment : item[key] ? [String(item[key])] : [])));
+  const field = "rounded-lg border border-white/15 bg-background p-2 text-xs";
+
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // HEALTHFLIX</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">STREAMING ELITE</h1>
+        <h1 className="text-massive text-4xl text-foreground mt-1">AULAS EM VÍDEO</h1>
         <p className="text-xs text-muted-foreground mt-1">Catálogo conectado em tempo real via API.</p>
       </div>
 
@@ -97,13 +108,17 @@ export default function NineFitHealthFlix() {
         <p className="w-full rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 text-center text-xs font-bold text-primary">CATÁLOGO HEALTHFLIX VIA API</p>
       </div>
 
-      {categories.length > 0 && (
-        <div className="px-4 mb-2 flex gap-2 overflow-x-auto text-[10px] uppercase tracking-widest text-muted-foreground">
-          {categories.map((c) => (
-            <span key={c} className="px-2 py-1 rounded-full border border-white/10 whitespace-nowrap">{c}</span>
-          ))}
+      <section className="mx-4 mb-4 space-y-2" aria-label="Filtros do catálogo">
+        <label className="block text-xs">Buscar conteúdo<input className={`${field} mt-1 w-full`} value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} /></label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <label className="text-xs">Categoria<select className={`${field} block w-full mt-1`} value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}><option value="">Todas</option>{categories.map(value => <option key={value}>{value}</option>)}<option value="__unknown">Não informada</option></select></label>
+          <label className="text-xs">Duração<select className={`${field} block w-full mt-1`} value={filters.duration} onChange={e => setFilters(f => ({ ...f, duration: e.target.value }))}><option value="">Todas</option><option value="short">Até 20 minutos</option><option value="medium">Mais de 20 até 45 minutos</option><option value="long">Mais de 45 minutos</option><option value="__unknown">Não informada</option></select></label>
+          {([['level', 'Nível'], ['objective', 'Objetivo'], ['equipment', 'Equipamento']] as const).map(([key, label]) => <label key={key} className="text-xs">{label}<select className={`${field} block w-full mt-1`} value={filters[key]} onChange={e => setFilters(f => ({ ...f, [key]: e.target.value }))}><option value="">Todos</option>{options(key).map(value => <option key={value}>{value}</option>)}<option value="__unknown">Não informado</option></select></label>)}
         </div>
-      )}
+        <p className="text-xs text-muted-foreground">Filtros usam os metadados fornecidos pelo catálogo. Campos ausentes aparecem como não informados.</p>
+        <button className="text-xs text-primary" onClick={() => setFilters(emptyFilters)}>Limpar filtros</button>
+        {!loading && !loadError && <p className="text-xs">{filtered.length} conteúdos encontrados</p>}
+      </section>
 
       <div className="px-4 grid grid-cols-2 gap-3">
         {loading && (
@@ -118,13 +133,13 @@ export default function NineFitHealthFlix() {
             <button onClick={() => window.location.reload()} className="mt-3 text-xs text-primary underline">Tentar novamente</button>
           </div>
         )}
-        {!loading && !loadError && items.length === 0 && (
+        {!loading && !loadError && filtered.length === 0 && (
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">
             <Film className="w-6 h-6 text-primary mb-2" />
-            <p className="text-xs text-muted-foreground">Nenhuma aula HealthFlix ativa encontrada para sua sessão.</p>
+            <p className="text-xs text-muted-foreground">Nenhuma aula encontrada. Limpe os filtros ou verifique o catálogo da sua sessão.</p>
           </div>
         )}
-        {items.map((v, i) => (
+        {filtered.slice(0, visibleCount).map((v, i) => (
           <motion.button
             key={v.id}
             onClick={() => normalizePlayerUrl(v) ? setSelected(v) : toast.info("Este conteúdo ainda não possui player configurado.")}
@@ -155,13 +170,14 @@ export default function NineFitHealthFlix() {
       </div>
 
 
+      {filtered.length > visibleCount && <button className="mx-4 mt-4 text-sm text-primary" onClick={() => setVisibleCount(count => count + 24)}>Mostrar mais conteúdos</button>}
       {selected && normalizePlayerUrl(selected) && (
         <div className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-md p-3 sm:p-6 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Reproduzir ${selected.title}`}>
           <div className="w-full max-w-5xl h-[78dvh] rounded-3xl border border-primary/30 bg-[#0f0f0f] shadow-2xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-primary/20 px-4 py-3 bg-[#0f0f0f]">
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate text-white">{selected.title}</p>
-                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">HealthFlix Player</p>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Reprodutor HealthFlix</p>
               </div>
               <div className="flex items-center gap-2">
                 <a href={normalizePlayerUrl(selected) as string} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40" aria-label="Abrir em nova aba">

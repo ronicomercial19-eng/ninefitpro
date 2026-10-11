@@ -20,28 +20,28 @@ interface Task {
 const DEFAULT_TASKS = [
   {
     key: "neural_prep",
-    title: "Neural Prep",
+    title: "Preparação mental",
     duration: "5 min",
     Icon: Brain,
     why: "Respiração guiada para começar o dia com presença e foco.",
   },
   {
     key: "elite_training",
-    title: "Elite Training",
+    title: "Treino do dia",
     duration: "45 min",
     Icon: Dumbbell,
     why: "Treino estruturado para avançar com consistência conforme seu plano.",
   },
   {
     key: "nutri_log",
-    title: "Nutri-Log",
+    title: "Registro alimentar",
     duration: "2 min",
     Icon: Apple,
     why: "Registrar refeições ajuda você e o time a acompanharem sua rotina.",
   },
   {
     key: "recovery",
-    title: "Recovery",
+    title: "Recuperação",
     duration: "8 min",
     Icon: Wind,
     why: "Mobilidade leve para cuidar do corpo e manter sua rotina.",
@@ -57,7 +57,7 @@ const POWER_BONUS = {
   why: "Bloco opcional para quem quer adicionar movimento ao dia.",
 } as const;
 
-export function DailyProtocol() {
+export function DailyProtocol({ readOnly = false }: { readOnly?: boolean }) {
   const { user } = useAuth();
   const { athleteId } = useAthleteId();
   const [revision, setRevision] = useState(0);
@@ -84,7 +84,7 @@ export function DailyProtocol() {
       const reflect = (list: Task[]) => list.map(task => ({...task,completed:task.completed || (task.task_key === "elite_training" && (!!workouts || (completions || []).some(e => ["workout_complete","workout_completed"].includes(e.event_type)))) || (task.task_key === "nutri_log" && (!!meals || (completions || []).some(e => e.event_type === "nutrition_checkin"))) || (task.task_key === "recovery" && (completions || []).some(e => e.event_type === "mobility_log"))}));
       const existing: Task[] = data || [];
       const missing = DEFAULT_TASKS.filter((d) => !existing.find((t) => t.task_key === d.key));
-      if (missing.length) {
+      if (missing.length && !readOnly) {
         await supabase.from("daily_tasks").insert(
           missing.map((m) => ({
             user_id: user.id,
@@ -116,10 +116,10 @@ export function DailyProtocol() {
       }
       setLoading(false);
     })();
-  }, [user?.id, athleteId, revision]);
+  }, [user?.id, athleteId, revision, readOnly]);
 
   const complete = async (task: Task) => {
-    if (task.completed || working) return;
+    if (readOnly || task.completed || working) return;
     setWorking(task.id);
     const { error } = await supabase
       .from("daily_tasks")
@@ -169,16 +169,16 @@ export function DailyProtocol() {
     displayTasks = tasks.filter((t) => t.task_key === 'neural_prep' || t.task_key === 'recovery');
   }
   const done = displayTasks.filter((t) => t.completed).length;
-  const total = displayTasks.length + (state === 'power' ? 1 : 0);
+  const total = displayTasks.length;
 
   return (
     <div className="space-y-3">
       <div className="flex items-end justify-between px-1">
         <div>
           <p className="text-[10px] tracking-[0.3em] uppercase text-primary/80 font-data">
-            INTERVENÇÕES FISIOLÓGICAS
+            ROTINA DIÁRIA
             {state === 'low' && <span className="ml-2 text-amber-400/80">· LEVE</span>}
-            {state === 'power' && <span className="ml-2 text-emerald-400/80">· PEAK</span>}
+            {state === 'power' && <span className="ml-2 text-emerald-400/80">· ENERGIA ALTA</span>}
           </p>
           <h2 className="text-display text-base text-foreground mt-1">Protocolo do dia</h2>
         </div>
@@ -199,7 +199,7 @@ export function DailyProtocol() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, delay: idx * 0.04 }}
               onClick={() => !task.completed && complete(task)}
-              disabled={task.completed || working === task.id}
+              disabled={readOnly || task.completed || working === task.id}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                 task.completed ? "opacity-50" : "hover:bg-primary/5 active:bg-primary/10"
               }`}

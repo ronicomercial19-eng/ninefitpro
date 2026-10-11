@@ -43,7 +43,7 @@ export function NutritionTodaySummary({ interactive = false }: {interactive?:boo
       <button className={button} onClick={()=>navigate('/9fit/dieta')}>Abrir dieta</button>
     </div>
     {interactive&&<>
-      <fieldset className="space-y-2 rounded-lg border border-white/10 p-3" disabled={savingWater}>
+      <fieldset id="hydration" className="space-y-2 rounded-lg border border-white/10 p-3" disabled={savingWater}>
         <legend className="text-sm">{waterEditing?'Corrigir registro de água':'Registrar água'}</legend>
         <div className="flex gap-2"><input aria-label="Quantidade de água em mililitros" type="number" min="1" max="5000" value={waterAmount} onChange={e=>setWaterAmount(e.target.value)} className="min-w-0 w-24 rounded-lg bg-card border border-border p-2 text-sm"/><span className="self-center text-sm">ml</span><button className={button} onClick={()=>void saveWater()}>{savingWater?'Salvando…':waterEditing?'Salvar':'Registrar'}</button></div>
         {waterEditing&&<button className="text-xs" onClick={()=>{setWaterEditing(null);setWaterAmount('250');}}>Cancelar edição</button>}
