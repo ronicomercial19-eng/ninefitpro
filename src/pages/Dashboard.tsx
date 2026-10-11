@@ -128,6 +128,13 @@ export default function Dashboard() {
   ];
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner size="xl" label="Carregando dashboard..." /></div>;
+  if (loadError) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+      <AlertTriangle className="w-8 h-8 text-destructive" />
+      <p className="text-sm text-muted-foreground">{loadError}</p>
+      <Button onClick={() => fetchDashboardData()}>Tentar novamente</Button>
+    </div>
+  );
 
   return (
     <>
