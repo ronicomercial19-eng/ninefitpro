@@ -1,5 +1,5 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -57,6 +57,9 @@ export default function NineFitHealthFlix() {
   const [visibleCount, setVisibleCount] = useState(24);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [savedProgress, setSavedProgress] = useState<Record<string, Partial<CatalogItem>>>({});
+  const currentAthlete = useRef(athleteId);
+  currentAthlete.current = athleteId;
+  const catalogItems = useMemo(() => items.map(item => ({ ...item, ...(savedProgress[item.external_id || item.id] || {}) })), [items, savedProgress]);
 
   useEffect(() => {
     (async () => {
@@ -93,6 +96,7 @@ export default function NineFitHealthFlix() {
   }, []);
 
   useEffect(() => {
+    setSavedProgress({}); setSelected(null);
     if (!athleteId) return;
     let active = true;
     void supabase.functions.invoke(`healthflix-proxy?action=progress&fitpro_student_id=${encodeURIComponent(athleteId)}`, { method: "GET" as any })
@@ -105,28 +109,15 @@ export default function NineFitHealthFlix() {
   }, [athleteId]);
 
   useEffect(() => {
-    if (!Object.keys(savedProgress).length) return;
-    const mergeProgress = (item: CatalogItem) => ({ ...item, ...(savedProgress[item.external_id || item.id] || {}) });
-    setItems((current) => current.map(mergeProgress));
-    setSelected((current) => current ? mergeProgress(current) : current);
-  }, [savedProgress]);
-
-  useEffect(() => {
     const requestedId = searchParams.get("content");
-    if (!requestedId || !items.length) return;
-    const item = items.find((entry) => entry.id === requestedId || entry.external_id === requestedId || entry.slug === requestedId);
+    if (!requestedId || !catalogItems.length) return;
+    const item = catalogItems.find((entry) => entry.id === requestedId || entry.external_id === requestedId || entry.slug === requestedId);
     if (item && !selected) setSelected(item);
-  }, [items, searchParams, selected]);
+  }, [catalogItems, searchParams, selected]);
 
   const trackEvent = (item: CatalogItem, eventType: "content_started" | "content_progress_updated" | "content_completed", position = 0, duration = 0) => {
     if (!athleteId) return;
     const progressPercent = eventType === "content_completed" ? 100 : duration ? Math.min(99, Math.round((position / duration) * 100)) : 0;
-    setItems((current) => current.map((entry) => (entry.id === item.id ? {
-      ...entry,
-      progress_percent: Math.max(Number(entry.progress_percent) || 0, progressPercent),
-      last_position_seconds: Math.floor(position),
-      duration_seconds: Math.floor(duration),
-    } : entry)));
     void supabase.functions.invoke("healthflix-proxy?action=events", { method: "POST" as any, body: {
       event_type: eventType,
       fitpro_student_id: athleteId,
@@ -139,18 +130,28 @@ export default function NineFitHealthFlix() {
         duration_seconds: Math.max(0, Math.floor(duration)),
         watched_seconds: Math.max(0, Math.floor(position)),
       },
-    } }).then(({ error }) => { if (error) console.error("[HealthFlix] progresso não salvo", error); });
+    } }).then(({ data, error }) => {
+      if (currentAthlete.current !== athleteId) return;
+      if (error || !data?.fitpro_persisted) { toast.error("Não foi possível salvar o progresso. Tente novamente."); return; }
+      const key = item.external_id || item.id;
+      setSavedProgress(current => ({ ...current, [key]: {
+        ...current[key],
+        progress_percent: Math.max(Number(current[key]?.progress_percent) || Number(item.progress_percent) || 0, progressPercent),
+        last_position_seconds: Math.max(0, Math.floor(position)),
+        duration_seconds: Math.max(0, Math.floor(duration)),
+      } }));
+    });
   };
 
   const categories = useMemo(() => {
     const set = new Set<string>();
-    items.forEach((i) => i.category && set.add(String(i.category)));
+    catalogItems.forEach((i) => i.category && set.add(String(i.category)));
     return Array.from(set);
-  }, [items]);
+  }, [catalogItems]);
 
-  const filtered = useMemo(() => items.filter(item => matchesCatalog(item, filters)), [items, filters]);
+  const filtered = useMemo(() => catalogItems.filter(item => matchesCatalog(item, filters)), [catalogItems, filters]);
   useEffect(() => setVisibleCount(24), [filters]);
-  const options = (key: "level" | "objective" | "equipment") => Array.from(new Set(items.flatMap(item => key === "equipment" && Array.isArray(item.equipment) ? item.equipment : item[key] ? [String(item[key])] : [])));
+  const options = (key: "level" | "objective" | "equipment") => Array.from(new Set(catalogItems.flatMap(item => key === "equipment" && Array.isArray(item.equipment) ? item.equipment : item[key] ? [String(item[key])] : [])));
   const field = "rounded-lg border border-white/15 bg-background p-2 text-xs";
 
   return (

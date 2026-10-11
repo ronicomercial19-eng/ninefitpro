@@ -34,7 +34,7 @@ assert.match(planning, /\/9fit\/train\?tab=semana&date=/);
 assert.match(planning, /addMonths\(month,1\)/);
 assert.match(train, /businessDate\(\)/);
 assert.match(execution, /businessDate\(\)/);
-assert.match(protocol, /businessDate\(\)/);
+assert.match(protocol, /AssignedProtocols/);
 assert.match(recommendations, /syncScore: number \| null/);
 assert.match(ron, /syncScore == null \? "Sem leitura"/);
 assert.match(weekView, /selectedDate/);

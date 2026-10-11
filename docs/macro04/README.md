@@ -25,4 +25,3 @@ QA e build serão registrados por meso após implementação. A validação aute
 - TypeScript e QA Macro 02/03 passaram localmente.
 - Build local depende de corrigir o binding SWC no cache Windows; a CI Linux deve confirmar o build do branch.
 - QA autenticado visual/registro pelo usuário permanece pendente antes de integrar em produção.
-

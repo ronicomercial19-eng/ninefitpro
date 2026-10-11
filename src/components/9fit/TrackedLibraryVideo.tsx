@@ -1,16 +1,9 @@
 import { useEffect, useRef } from "react";
 
-interface PlayerState { currentTime: () => number; duration: () => number; destroy: () => void; }
+import { youtubeId, readYouTubeProgress, type YouTubeProgressPlayer } from "@/services/libraryPlayback";
+interface PlayerState extends YouTubeProgressPlayer { destroy: () => void; }
 interface YouTubePlayer extends PlayerState { getPlayerState: () => number; }
 declare global { interface Window { YT?: { Player: new (element: HTMLElement, options: Record<string, unknown>) => YouTubePlayer; PlayerState: { PLAYING: number; ENDED: number } }; onYouTubeIframeAPIReady?: () => void; } }
-
-function youtubeId(url: string) {
-  try {
-    const parsed = new URL(url);
-    const id = parsed.hostname === "youtu.be" ? parsed.pathname.slice(1) : parsed.searchParams.get("v") || parsed.pathname.match(/\/(?:embed|shorts)\/([^/]+)/)?.[1];
-    return id && /^[\w-]+$/.test(id) ? id : null;
-  } catch { return null; }
-}
 
 export function TrackedLibraryVideo({ url, title, startSeconds = 0, onProgress, onComplete }: {
   url: string; title: string; startSeconds?: number;
@@ -31,7 +24,9 @@ export function TrackedLibraryVideo({ url, title, startSeconds = 0, onProgress, 
     let poll: number | undefined;
     const create = () => {
       if (cancelled || !host.current || !window.YT) return;
-      player = new window.YT.Player(host.current, {
+      const target = document.createElement("div");
+      host.current.replaceChildren(target);
+      player = new window.YT.Player(target, {
         videoId: id,
         playerVars: { start: Math.max(0, Math.floor(startSeconds)), playsinline: 1, rel: 0 },
         events: {
@@ -39,12 +34,12 @@ export function TrackedLibraryVideo({ url, title, startSeconds = 0, onProgress, 
             if (event.data === window.YT?.PlayerState.PLAYING && player) {
               window.clearInterval(poll);
               poll = window.setInterval(() => {
-                if (player) callbacks.current.onProgress(player.currentTime(), player.duration());
+                if (player) { const progress = readYouTubeProgress(player); if (progress) callbacks.current.onProgress(progress.position, progress.duration); }
               }, 30000);
             } else {
               window.clearInterval(poll);
-              if (player && event.data === window.YT?.PlayerState.ENDED) callbacks.current.onComplete(player.duration());
-              else if (player) callbacks.current.onProgress(player.currentTime(), player.duration());
+              if (player && event.data === window.YT?.PlayerState.ENDED) callbacks.current.onComplete(player.getDuration());
+              else if (player) { const progress = readYouTubeProgress(player); if (progress) callbacks.current.onProgress(progress.position, progress.duration); }
             }
           },
         },
