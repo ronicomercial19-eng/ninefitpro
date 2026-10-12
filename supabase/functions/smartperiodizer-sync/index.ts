@@ -24,25 +24,31 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const athleteId = body.athlete_id as string | undefined;
   if (!athleteId) return json(400, { error: "athlete_id required" });
+  const { data: profile, error: profileError } = await sbUser.from("profiles").select("role,is_active").eq("user_id", claims.claims.sub).maybeSingle();
+  if (profileError || !profile || profile.is_active === false) return json(403, { error: "forbidden" });
+  const { data: athlete, error: athleteError } = await sbUser.from("athletes").select("id").eq("id", athleteId).maybeSingle();
+  if (athleteError || !athlete) return json(403, { error: "athlete access denied" });
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const { data: conn } = await admin.from("api_connectors").select("endpoint, api_key, status")
-    .eq("module_key", "smart_periodizer").maybeSingle();
+  const { data: conn } = await admin.from("api_connectors").select("endpoint, secret_ref, status")
+    .eq("key", "smart_periodizer").maybeSingle();
 
-  if (!conn?.endpoint) {
+  if (conn?.status !== "active" || !conn.endpoint) {
     return json(400, { error: "SmartPeriodizer não conectado. Configure em Admin → SmartPeriodizer." });
   }
+  const partnerKey = conn.secret_ref ? Deno.env.get(conn.secret_ref) : null;
+  if (!partnerKey) return json(503, { error: "SmartPeriodizer secret is not configured" });
 
   try {
     const r = await fetch(`${conn.endpoint.replace(/\/$/, "")}/plan?athlete=${athleteId}`, {
-      headers: conn.api_key ? { "Authorization": `Bearer ${conn.api_key}` } : {},
+      headers: { "Authorization": `Bearer ${partnerKey}` },
     });
     if (!r.ok) {
       return json(502, { error: `SmartPeriodizer respondeu ${r.status}` });
     }
     const plan = await r.json();
     const waves = Array.isArray(plan.waves) ? plan.waves : Array.isArray(plan.cycles) ? plan.cycles : [];
-    await admin.from("periodization_plans_remote").upsert({
+    const { error: saveError } = await admin.from("periodization_plans_remote").upsert({
       athlete_id: athleteId,
       external_plan_id: String(plan.id ?? plan.plan_id ?? "default"),
       plan_name: plan.name ?? plan.title ?? "Plano SmartPeriodizer",
@@ -53,6 +59,7 @@ Deno.serve(async (req) => {
       status: plan.status ?? "active",
       last_synced_at: new Date().toISOString(),
     }, { onConflict: "athlete_id,external_plan_id" });
+    if (saveError) return json(502, { error: "Could not save remote plan" });
 
     return json(200, { ok: true, waves: waves.length });
   } catch (e) {
