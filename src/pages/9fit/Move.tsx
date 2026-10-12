@@ -92,11 +92,13 @@ export default function NineFitMove() {
 
   const generateStaticMapUrl = async (path: LatLng[]) => {
     try {
+      if (path.length === 0) return null;
       const apiKey = await getGoogleMapsApiKey();
       const maxPoints = 50;
       const sampled = path.length <= maxPoints 
         ? path 
-        : path.filter((_, i) => i % Math.floor(path.length / maxPoints) === 0);
+        : Array.from({ length: maxPoints }, (_, i) =>
+            path[Math.round(i * (path.length - 1) / (maxPoints - 1))]);
       
       const pathStr = `path=color:0xff6b2c|weight:5|${sampled.map(p => `${p.lat},${p.lng}`).join('|')}`;
       return `https://maps.googleapis.com/maps/api/staticmap?size=600x300&${pathStr}&key=${apiKey}`;
