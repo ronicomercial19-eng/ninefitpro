@@ -43,8 +43,7 @@ export default function PosturaProPage() {
         const path = `${user.id}/${Date.now()}_${side}_${f.name}`;
         const { error } = await supabase.storage.from("assessments").upload(path, f, { upsert: true });
         if (error) throw error;
-        const { data: pub } = supabase.storage.from("assessments").getPublicUrl(path);
-        urls[`${side}_url`] = pub.publicUrl;
+        urls[`${side}_url`] = path;
       }
       const { data: scan, error: insErr } = await supabase.from("postura_scans" as any)
         .insert({ user_id: user.id, ...urls, status: "pending" })

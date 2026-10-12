@@ -35,7 +35,7 @@ export default function NineFitPosturaPro() {
         const path = `${user.id}/${Date.now()}_${side}_${file.name}`;
         const { error } = await supabase.storage.from("assessments").upload(path, file, { upsert: true });
         if (error) throw error;
-        urls[`${side}_url`] = supabase.storage.from("assessments").getPublicUrl(path).data.publicUrl;
+        urls[`${side}_url`] = path;
       }
       const { data: scan, error } = await supabase.from("postura_scans" as any).insert({ user_id: user.id, ...urls, status: "pending" }).select("id").single();
       if (error) throw error;

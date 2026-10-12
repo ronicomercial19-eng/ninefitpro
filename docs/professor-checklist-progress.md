@@ -76,3 +76,13 @@ Referências de diagnóstico: [funções privilegiadas autenticadas](https://sup
 ## Próximos itens
 
 Item 4 permanece em andamento; itens 5 a 24 pendentes. Não declarar segurança resolvida por filtros frontend nem considerar a aplicação desta migração aprovação completa do painel.
+
+## Avanço em 12/10/2026
+
+Item 4: smartreino-proxy v7 e smartperiodizer-sync v31 verificam perfil ativo e acesso ao atleta antes de chamar parceiros. PR 77 aprovado no CI e integrado à main. A revisão dos demais serviços/RPCs continua necessária.
+
+Item 5: migrações `professor_private_media` e `professor_assessment_metadata` aplicadas ao banco. O bucket `assessments` passou a privado; `student-photos` foi criado privado. As políticas de Storage, fotos, PDFs e anexos agora exigem vínculo professor/aluno, com leitura própria para o aluno. Os dois PDFs antigos e o scan antigo mantêm caminho compatível com leitura temporária. O serviço `postura-pro-scan` v30 converte caminho ou URL pública antiga em URL assinada de 10 minutos para o provedor. As telas passam a guardar caminhos e solicitar URLs assinadas para visualização. Upload de anexos usa as colunas reais da tabela, com extensão de esquema para atleta, tipo, categoria, notas e data.
+
+Validação: duas migrações testadas antes da aplicação e repetidas depois com fixtures em BEGIN/ROLLBACK; isolamento entre professores e leitura do aluno verificados no PostgreSQL. `assessments.public=false`, `student-photos.public=false`, zero usuários sintéticos persistidos, chamada anônima ao serviço retornou 401, TypeScript e 20 testes de lógica passaram. Reteste de navegador e publicação do frontend ainda pendentes. O advisor de segurança posterior não trouxe erros novos; avisos legados permanecem.
+
+Ao mudar o bucket para privado, URLs públicas antigas deixam de ser a forma de acesso. A UI corrigida precisa estar publicada para abrir PDFs e anexos por URL temporária. Um objeto na raiz do bucket antigo não possui vínculo dedutível e fica indisponível até identificação administrativa; nenhum registro de foto de aluno o referencia.

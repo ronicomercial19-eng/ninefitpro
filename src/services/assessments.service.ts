@@ -5,6 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { ApiResponse, DateRange } from '@/types/domains';
+import { PRIVATE_PHOTO_BUCKET, signedPhotoUrl } from '@/lib/privateMedia';
 
 // ==================== ASSESSMENTS ====================
 
@@ -229,7 +230,7 @@ export async function getPhotosByStudent(
     let query = supabase
       .from('student_photos')
       .select('*')
-      .eq('student_id', studentId)
+      .eq('athlete_id', studentId)
       .order('taken_date', { ascending: false });
 
     if (options?.photoType) {
@@ -251,7 +252,7 @@ export async function getPhotosByStudent(
 
     return {
       success: true,
-      data: data ?? [],
+      data: await Promise.all((data ?? []).map(async photo => ({ ...photo, display_url: await signedPhotoUrl(photo.photo_url) }))),
       metadata: { timestamp: new Date().toISOString(), version: 'v1', count: data?.length ?? 0 }
     };
   } catch (err: any) {
@@ -269,9 +270,13 @@ export async function uploadPhoto(
 ): Promise<ApiResponse<any>> {
   try {
     // Upload to storage
-    const fileName = `${studentId}/${Date.now()}_${file.name}`;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      return { success: false, error: { code: 'INVALID_IMAGE', message: 'Use JPG, PNG ou WebP até 10 MB' } };
+    }
+    const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
+    const fileName = `${studentId}/${crypto.randomUUID()}.${extension}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('assessments')
+      .from(PRIVATE_PHOTO_BUCKET)
       .upload(fileName, file);
 
     if (uploadError) {
@@ -281,24 +286,20 @@ export async function uploadPhoto(
       };
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('assessments')
-      .getPublicUrl(fileName);
-
     // Create record
     const { data, error } = await supabase
       .from('student_photos')
       .insert({
-        student_id: studentId,
-        photo_url: urlData.publicUrl,
-        photo_type: photoType,
+        athlete_id: studentId,
+        photo_url: fileName,
+        photo_type: photoType ?? 'outros',
         taken_date: new Date().toISOString().split('T')[0]
       })
       .select()
       .single();
 
     if (error) {
+      await supabase.storage.from(PRIVATE_PHOTO_BUCKET).remove([fileName]);
       return {
         success: false,
         error: { code: 'CREATE_ERROR', message: error.message }
@@ -307,7 +308,7 @@ export async function uploadPhoto(
 
     return {
       success: true,
-      data,
+      data: { ...data, display_url: await signedPhotoUrl(fileName) },
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
