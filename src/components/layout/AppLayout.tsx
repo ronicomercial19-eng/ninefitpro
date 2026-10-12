@@ -1,11 +1,12 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { Settings } from 'lucide-react';
 import { NotificationBell } from '@/components/9fit/NotificationBell';
 import { Button } from '@/components/ui/button';
+import { ProfessorAthleteSelector } from './ProfessorAthleteSelector';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,6 +27,16 @@ const routeLabels: Record<string, string> = {
   '/app/super-series': 'Super Séries',
   '/app/series-referencia': 'Séries de Referência',
   '/app/treino-ia': 'Treino IA',
+  '/app/smart-treino': 'SmartTreino',
+  '/app/smart-periodizer': 'SmartPeriodizer',
+  '/app/fit-copilot': 'FitCopilot',
+  '/app/assistente-ia': 'Assistente IA',
+  '/app/postura-pro': 'Postura Pro',
+  '/app/ron': 'RON',
+  '/app/skills': 'Skills',
+  '/app/ajustes-treino': 'Ajustes de treino',
+  '/app/monetizacao': 'Monetização',
+  '/app/configuracoes': 'Configurações',
   '/app/estatisticas': 'Estatísticas',
   '/app/relatorios': 'Relatórios',
   '/app/agenda': 'Agenda',
@@ -33,7 +44,7 @@ const routeLabels: Record<string, string> = {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
-  const { isTrainer, loading, user, roleStatus, retryIdentity, logout } = useAuth();
+  const { isTrainer, loading, user, profile, roleStatus, retryIdentity, logout } = useAuth();
 
   if (!loading && !user) return <Navigate to="/login" replace />;
 
@@ -71,8 +82,9 @@ export function AppLayout({ children }: AppLayoutProps) {
     const breadcrumbs = [{ label: 'Início', path: '/app' }];
     
     let currentPath = '';
-    paths.forEach(path => {
+    paths.forEach((path, index) => {
       currentPath += `/${path}`;
+      if (index === 0 && path === 'app') return;
       const label = routeLabels[currentPath] || path;
       breadcrumbs.push({ label, path: currentPath });
     });
@@ -96,7 +108,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <div className="w-7 h-7 rounded bg-[#E8571A] flex items-center justify-center text-white font-display text-sm">9</div>
                 <span className="font-display text-base tracking-tight">9FIT · 9FIT PRO</span>
               </div>
-              <Breadcrumb>
+              <Breadcrumb className="hidden lg:flex">
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => (
                     <div key={crumb.path} className="flex items-center">
@@ -105,7 +117,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                         {index === breadcrumbs.length - 1 ? (
                           <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                         ) : (
-                          <BreadcrumbLink href={crumb.path}>{crumb.label}</BreadcrumbLink>
+                          <BreadcrumbLink asChild><Link to={`${crumb.path}${location.search}`}>{crumb.label}</Link></BreadcrumbLink>
                         )}
                       </BreadcrumbItem>
                     </div>
@@ -115,13 +127,16 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
             
             <div className="flex items-center gap-2">
+              <ProfessorAthleteSelector />
               <NotificationBell />
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" asChild aria-label="Configurações">
+                <Link to="/app/configuracoes">
                 <Settings className="w-5 h-5" />
+                </Link>
               </Button>
-              <div className="text-sm text-muted-foreground">Ajuda</div>
+              <Link to="/suporte" className="hidden md:inline text-sm text-muted-foreground hover:text-foreground">Ajuda</Link>
               <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">RT</span>
+                <span className="text-sm font-medium">{(profile?.full_name || user.email || 'P').split(' ').map(part => part[0]).join('').slice(0,2).toUpperCase()}</span>
               </div>
             </div>
           </header>

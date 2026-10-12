@@ -2,11 +2,12 @@ import React from 'react';
 import { Activity, CalendarClock, ClipboardCheck, Dumbbell, LineChart, UserRound, Zap } from 'lucide-react';
 import { ApiConnectorCard } from '@/components/admin/ApiConnectorCard';
 import TrainingAdjustmentsPage from './TrainingAdjustmentsPage';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { EcosystemGrid } from '@/components/9fit/EcosystemGrid';
 
 export default function SmartTreinoPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const modules = [
     { title: 'Treinos da semana', description: 'Monte, revise e entregue a programação dos alunos.', icon: Dumbbell, path: '/app/alunos' },
     { title: 'Planejamento', description: 'Periodização, ciclos e semanas de treino.', icon: CalendarClock, path: '/app/smart-periodizer' },
@@ -45,7 +46,7 @@ export default function SmartTreinoPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {modules.map(({ title, description, icon: Icon, path }) => (
-            <button key={title} onClick={() => path === '#ajustes' ? document.getElementById('ajustes')?.scrollIntoView({ behavior: 'smooth' }) : navigate(path)} className="group rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/60 hover:bg-primary/5">
+            <button key={title} onClick={() => path === '#ajustes' ? document.getElementById('ajustes')?.scrollIntoView({ behavior: 'smooth' }) : navigate(`${path}${location.search}`)} className="group rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/60 hover:bg-primary/5">
               <Icon className="mb-3 h-5 w-5 text-primary" />
               <p className="font-semibold group-hover:text-primary">{title}</p>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>

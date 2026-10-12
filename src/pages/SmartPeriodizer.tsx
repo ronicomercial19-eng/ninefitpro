@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, ClipboardList, Users, ArrowRight } from 'lucide-react';
 import { ApiConnectorCard } from '@/components/admin/ApiConnectorCard';
 import { smartPeriodizerRequest } from '@/services/smartperiodizer.service';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function SmartPeriodizer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [connection, setConnection] = useState<'checking' | 'online' | 'offline'>('checking');
 
   useEffect(() => {
@@ -30,13 +31,13 @@ export default function SmartPeriodizer() {
         {connection === 'online' ? 'Contrato SmartPeriodizer conectado' : connection === 'offline' ? 'Contrato SmartPeriodizer indisponível' : 'Verificando contrato SmartPeriodizer…'}
       </div>
       <section className="grid gap-4 md:grid-cols-3">
-        <button onClick={() => navigate('/app/alunos')} className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition">
+        <button onClick={() => navigate(`/app/alunos${location.search}`)} className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition">
           <Users className="w-5 h-5 text-primary mb-3" /><p className="font-semibold">Selecionar aluno</p><p className="text-xs text-muted-foreground mt-1">Abra o perfil do aluno para atribuir ou revisar uma periodização.</p><ArrowRight className="w-4 h-4 text-primary mt-4" />
         </button>
-        <button onClick={() => navigate('/app/alunos')} className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition">
+        <button onClick={() => navigate(`/app/alunos${location.search}`)} className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition">
           <ClipboardList className="w-5 h-5 text-primary mb-3" /><p className="font-semibold">Atribuir periodização</p><p className="text-xs text-muted-foreground mt-1">Use modelos, PDF ou HTML no cadastro do aluno.</p><ArrowRight className="w-4 h-4 text-primary mt-4" />
         </button>
-        <button onClick={() => navigate('/app/estatisticas')} className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition">
+        <button onClick={() => navigate(`/app/estatisticas${location.search}`)} className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition">
           <Calendar className="w-5 h-5 text-primary mb-3" /><p className="font-semibold">Acompanhar ciclos</p><p className="text-xs text-muted-foreground mt-1">Leia aderência, carga e evolução dos ciclos ativos.</p><ArrowRight className="w-4 h-4 text-primary mt-4" />
         </button>
       </section>
