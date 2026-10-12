@@ -72,6 +72,10 @@ export default function NineFitMove() {
   const [voiceAudio, setVoiceAudio] = useState(true);
   const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    console.log("[NineFitMove] Verificando VITE_GOOGLE_MAPS_API_KEY:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? "Definida" : "VAZIA ou INDEFINIDA");
+  }, []);
+
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
@@ -365,6 +369,13 @@ export default function NineFitMove() {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
+        console.log("[NineFitMove] GPS Success:", {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          speed: pos.coords.speed,
+          timestamp: pos.timestamp
+        });
         handleNewCoordinate(
           pos.coords.latitude,
           pos.coords.longitude,
@@ -373,7 +384,11 @@ export default function NineFitMove() {
         );
       },
       (err) => {
-        console.error("[NineFitMove] Erro no GPS:", err);
+        console.error("[NineFitMove] GPS Error:", {
+          code: err.code,
+          message: err.message,
+          timestamp: Date.now()
+        });
         let msg = "Erro no sinal de GPS.";
         if (err.code === err.PERMISSION_DENIED) msg = "Permissão de localização negada.";
         if (err.code === err.POSITION_UNAVAILABLE) msg = "Sinal de GPS indisponível.";
