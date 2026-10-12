@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { partnerTarget } from "../_shared/partnerTarget.ts";
 
 const ALLOWED_PATHS = new Set([
   "/fitpro-quick-workout",
@@ -32,13 +33,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", claims.claims.sub);
-    const allowed = (roles ?? []).some((r) => ["student", "user", "trainer", "professor", "admin", "super_admin"].includes(r.role));
-    if (!allowed) return json({ error: "Forbidden" }, 403);
+    const { data: profile, error: profileError } = await userClient.from("profiles").select("role,is_active").eq("user_id", claims.claims.sub).maybeSingle();
+    if (profileError || !profile || profile.is_active === false) return json({ error: "Forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
     const path = typeof body.path === "string" ? body.path : "";
     if (!ALLOWED_PATHS.has(path)) return json({ error: "SmartTreino path not allowed" }, 400);
+    let athleteId: string | null;
+    try { athleteId = partnerTarget(typeof body.query === "string" ? body.query : "", body.payload); }
+    catch { return json({ error: "Invalid or conflicting athlete identifiers" }, 400); }
+    if (!athleteId) return json({ error: "fitpro_student_id required" }, 400);
+    const { data: athlete, error: athleteError } = await userClient.from("athletes").select("id").eq("id", athleteId).maybeSingle();
+    if (athleteError || !athlete) return json({ error: "Athlete access denied" }, 403);
 
     const { data: connector } = await admin
       .from("api_connectors")
@@ -51,8 +57,10 @@ Deno.serve(async (req) => {
       || Deno.env.get("SMARTREINO_KEY");
     if (!key) return json({ error: "SmartTreino secret is not configured" }, 503);
 
-    const query = typeof body.query === "string" && body.query.startsWith("?") ? body.query : "";
+    const params = new URLSearchParams(typeof body.query === "string" ? body.query.replace(/^\?/, "") : "");
     const payload = body.payload ?? undefined;
+    if (payload === undefined) params.set("fitpro_student_id", athleteId);
+    const query = params.size ? `?${params.toString()}` : "";
     const configuredBase = Deno.env.get("SMARTREINO_BASE_URL") ?? `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
     const base = configuredBase.replace(/\/fitpro-api\/?$/, "").replace(/\/$/, "");
     const upstream = await fetch(`${base}${path}${query}`, {
