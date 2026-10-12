@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { privateAssessmentPath, signedAssessmentUrl } from '@/lib/privateMedia';
 import {
   Dialog,
   DialogContent,
@@ -88,24 +89,19 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
     setUploading(true);
     try {
       // Upload to Supabase Storage
-      const fileName = `${studentId}/${Date.now()}_${selectedFile.name}`;
+      const fileName = `${studentId}/${crypto.randomUUID()}.pdf`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('assessments')
         .upload(fileName, selectedFile);
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('assessments')
-        .getPublicUrl(fileName);
-
       // Save to database
       const { data, error } = await supabase
         .from('student_pdf_assessments' as any)
         .insert({
           student_id: studentId,
-          file_url: urlData.publicUrl,
+          file_url: fileName,
           file_name: selectedFile.name,
           description: description || null,
           uploaded_at: new Date().toISOString()
@@ -113,7 +109,10 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        await supabase.storage.from('assessments').remove([fileName]);
+        throw error;
+      }
 
       setAssessments([(data as unknown as Assessment), ...assessments]);
       setSelectedFile(null);
@@ -132,9 +131,10 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
 
     try {
       // Delete from storage
-      const filePath = assessment.file_url.split('/assessments/')[1];
+      const filePath = privateAssessmentPath(assessment.file_url);
       if (filePath) {
-        await supabase.storage.from('assessments').remove([filePath]);
+        const { error: storageError } = await supabase.storage.from('assessments').remove([filePath]);
+        if (storageError) throw storageError;
       }
 
       // Delete from database
@@ -153,8 +153,10 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
     }
   };
 
-  const handleView = (assessment: Assessment) => {
-    setViewingPdf(assessment.file_url);
+  const handleView = async (assessment: Assessment) => {
+    const signed = await signedAssessmentUrl(assessment.file_url);
+    if (!signed) return toast.error('Não foi possível abrir esta avaliação');
+    setViewingPdf(signed);
     setViewingTitle(assessment.file_name);
   };
 
@@ -274,7 +276,15 @@ export function PhysicalAssessmentPDF({ studentId }: PhysicalAssessmentPDFProps)
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(assessment.file_url, '_blank')}
+                      onClick={async () => {
+                        const tab = window.open('about:blank', '_blank');
+                        const signed = await signedAssessmentUrl(assessment.file_url);
+                        if (signed && tab) tab.location.href = signed;
+                        else {
+                          tab?.close();
+                          toast.error('Não foi possível baixar esta avaliação');
+                        }
+                      }}
                     >
                       <Download className="w-4 h-4" />
                     </Button>

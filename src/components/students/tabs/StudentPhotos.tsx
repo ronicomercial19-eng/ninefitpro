@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Camera, Upload, Eye, Trash2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PRIVATE_PHOTO_BUCKET, privatePhotoPath, signedPhotoUrl } from '@/lib/privateMedia';
 
 interface StudentPhoto {
   id: string;
@@ -16,6 +17,7 @@ interface StudentPhoto {
   description?: string;
   taken_date: string;
   created_at: string;
+  display_url?: string | null;
 }
 
 interface StudentPhotosProps {
@@ -51,7 +53,11 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
 
       if (error) throw error;
 
-      setPhotos((data || []) as unknown as StudentPhoto[]);
+      const visible = await Promise.all(((data || []) as unknown as StudentPhoto[]).map(async photo => ({
+        ...photo,
+        display_url: await signedPhotoUrl(photo.photo_url),
+      })));
+      setPhotos(visible);
     } catch (error) {
       console.error('Erro ao buscar fotos:', error);
       toast.error('Erro ao carregar fotos');
@@ -68,34 +74,36 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
 
     try {
       // Upload para o Supabase Storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${studentId}/${Date.now()}.${fileExt}`;
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(selectedFile.type) || selectedFile.size > 10 * 1024 * 1024) {
+        toast.error('Escolha uma imagem JPG, PNG ou WebP de até 10 MB');
+        return;
+      }
+      const fileExt = selectedFile.type === 'image/jpeg' ? 'jpg' : selectedFile.type === 'image/png' ? 'png' : 'webp';
+      const fileName = `${studentId}/${crypto.randomUUID()}.${fileExt}`;
       
       const { data: uploadResult, error: uploadError } = await supabase.storage
-        .from('student-photos')
+        .from(PRIVATE_PHOTO_BUCKET)
         .upload(fileName, selectedFile);
 
       if (uploadError) throw uploadError;
-
-      // Obter URL público
-      const { data: { publicUrl } } = supabase.storage
-        .from('student-photos')
-        .getPublicUrl(fileName);
 
       // Salvar referência no banco
       const { data, error } = await supabase
         .from('student_photos' as any)
         .insert({
           athlete_id: studentId,
-          photo_url: publicUrl,
+          photo_url: fileName,
           ...uploadData
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        await supabase.storage.from(PRIVATE_PHOTO_BUCKET).remove([fileName]);
+        throw error;
+      }
 
-      setPhotos([data as unknown as StudentPhoto, ...photos]);
+      setPhotos([{ ...(data as unknown as StudentPhoto), display_url: await signedPhotoUrl(fileName) }, ...photos]);
       setSelectedFile(null);
       setUploadData({
         photo_type: 'frente',
@@ -114,13 +122,14 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
   const deletePhoto = async (photoId: string, photoUrl: string) => {
     try {
       // Extrair nome do arquivo da URL
-      const fileName = photoUrl.split('/').pop();
+      const fileName = privatePhotoPath(photoUrl);
       
       // Deletar do storage
       if (fileName) {
-        await supabase.storage
-          .from('student-photos')
+        const { error: storageError } = await supabase.storage
+          .from(PRIVATE_PHOTO_BUCKET)
           .remove([fileName]);
+        if (storageError) throw storageError;
       }
 
       // Deletar do banco
@@ -291,7 +300,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
                 <div key={photo.id} className="relative group">
                   <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
                     <img
-                      src={photo.photo_url}
+                      src={photo.display_url ?? undefined}
                       alt={photo.description || `Foto ${photo.photo_type}`}
                       className="w-full h-full object-cover"
                     />
@@ -357,7 +366,7 @@ export function StudentPhotos({ studentId }: StudentPhotosProps) {
                   {typePhotos.length > 0 ? (
                     <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
                       <img
-                        src={typePhotos[0].photo_url}
+                        src={typePhotos[0].display_url ?? undefined}
                         alt={`Última foto ${type}`}
                         className="w-full h-full object-cover"
                       />

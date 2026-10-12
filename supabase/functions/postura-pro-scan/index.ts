@@ -14,6 +14,15 @@ function json(payload: unknown, status = 200) {
   });
 }
 
+function assessmentPath(value: unknown, ownerId: string): string {
+  if (typeof value !== "string") throw new Error("Missing posture image");
+  const marker = "/storage/v1/object/public/assessments/";
+  const raw = value.includes(marker) ? value.split(marker)[1]?.split("?")[0] : value;
+  const path = decodeURIComponent(raw ?? "");
+  if (!path.startsWith(`${ownerId}/`) || path.includes("..")) throw new Error("Invalid posture image path");
+  return path;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -62,6 +71,13 @@ Deno.serve(async (req) => {
 
     let result: any;
     try {
+        const imageUrls: Record<string, string> = {};
+        for (const side of ["front", "back", "left", "right"]) {
+          const path = assessmentPath(scan[`${side}_url`], userId);
+          const { data: signed, error: signError } = await admin.storage.from("assessments").createSignedUrl(path, 600);
+          if (signError || !signed?.signedUrl) throw new Error("Could not access posture image");
+          imageUrls[side] = signed.signedUrl;
+        }
         const secret = connector.secret_ref ? Deno.env.get(connector.secret_ref) : null;
         const r = await fetch(`${connector.endpoint.replace(/\/$/, "")}/analyze`, {
           method: "POST",
@@ -70,8 +86,8 @@ Deno.serve(async (req) => {
             ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
           },
           body: JSON.stringify({
-            front: scan.front_url, back: scan.back_url,
-            left: scan.left_url, right: scan.right_url,
+            front: imageUrls.front, back: imageUrls.back,
+            left: imageUrls.left, right: imageUrls.right,
           }),
         });
         if (!r.ok) throw new Error(`Postura Pro provider returned ${r.status}`);
