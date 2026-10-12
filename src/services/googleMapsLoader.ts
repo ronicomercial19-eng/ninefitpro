@@ -1,5 +1,5 @@
 /// <reference types="google.maps" />
-import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+import { Loader } from "@googlemaps/js-api-loader";
 
 export const SOLUTION_ATTRIBUTION_ID = "gmp_git_agentskills_v1";
 
@@ -13,9 +13,9 @@ export async function getGoogleMapsApiKey(): Promise<string> {
   if (cachedApiKey) return cachedApiKey;
 
   const envKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  console.log("[GoogleMapsLoader] Environment API Key:", envKey ? "Exists" : "Missing");
   if (envKey && typeof envKey === "string" && envKey.trim().length > 10) {
     cachedApiKey = envKey.trim();
+    console.log("[GoogleMapsLoader] Usando chave do ambiente (VITE_GOOGLE_MAPS_API_KEY).");
     return cachedApiKey;
   }
 
@@ -25,13 +25,15 @@ export async function getGoogleMapsApiKey(): Promise<string> {
       const data = await res.json();
       if (data?.apiKey) {
         cachedApiKey = data.apiKey;
+        console.log("[GoogleMapsLoader] Usando chave via API interna.");
         return cachedApiKey!;
       }
     }
   } catch (e) {
-    console.warn("[GoogleMapsLoader] Fallback para chave embutida:", e);
+    console.warn("[GoogleMapsLoader] Falha ao buscar chave via API:", e);
   }
 
+  console.log("[GoogleMapsLoader] Usando chave hardcoded (fallback).");
   cachedApiKey = "AIzaSyDdsMhbF8C6KTht4vbqPcBvxHNAdM3doh4";
   return cachedApiKey;
 }
@@ -50,8 +52,12 @@ export async function loadGoogleMaps(): Promise<typeof google> {
 
   loaderPromise = (async () => {
     const apiKey = await getGoogleMapsApiKey();
-    setOptions({ key: apiKey, v: "weekly" });
-    await Promise.all([importLibrary("maps"), importLibrary("geometry"), importLibrary("marker"), importLibrary("geocoding")]);
+    const loader = new Loader({
+      apiKey: apiKey,
+      version: "weekly",
+      libraries: ["maps", "geometry", "marker", "geocoding"],
+    });
+    await loader.load();
     return window.google;
   })();
 

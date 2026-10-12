@@ -29,6 +29,7 @@ import {
   NINE_FIT_MAP_STYLES,
   getStreetNameFromCoords,
   SOLUTION_ATTRIBUTION_ID,
+  getGoogleMapsApiKey,
 } from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
@@ -69,6 +70,7 @@ export default function NineFitMove() {
   const [activitySaved, setActivitySaved] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [voiceAudio, setVoiceAudio] = useState(true);
+  const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
 
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -83,6 +85,22 @@ export default function NineFitMove() {
   const lastGeocodeTimeRef = useRef(0);
   const lastGeocodedCoordRef = useRef<LatLng | null>(null);
   const captureCardRef = useRef<HTMLDivElement>(null);
+
+  const generateStaticMapUrl = async (path: LatLng[]) => {
+    try {
+      const apiKey = await getGoogleMapsApiKey();
+      const maxPoints = 50;
+      const sampled = path.length <= maxPoints 
+        ? path 
+        : path.filter((_, i) => i % Math.floor(path.length / maxPoints) === 0);
+      
+      const pathStr = `path=color:0xff6b2c|weight:5|${sampled.map(p => `${p.lat},${p.lng}`).join('|')}`;
+      return `https://maps.googleapis.com/maps/api/staticmap?size=600x300&${pathStr}&key=${apiKey}`;
+    } catch (e) {
+      console.error("[NineFitMove] Erro ao gerar mapa estático:", e);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) { setRecentRuns([]); return; }
@@ -102,11 +120,21 @@ export default function NineFitMove() {
 
     async function initMap() {
       try {
+        console.log("[NineFitMove] Iniciando carregamento do mapa...");
+        const apiKey = await getGoogleMapsApiKey();
+        console.log("[NineFitMove] API Key obtida com sucesso.");
+        
         const g = await loadGoogleMaps();
-        if (!mounted || !mapElementRef.current) return;
+        console.log("[NineFitMove] Bibliotecas do Google Maps carregadas.");
+
+        if (!mounted || !mapElementRef.current) {
+          console.log("[NineFitMove] Componente desmontado ou ref nulo.");
+          return;
+        }
 
         const defaultCenter = { lat: -23.56149, lng: -46.65588 };
-
+        
+        console.log("[NineFitMove] Criando instância de g.maps.Map...");
         const map = new g.maps.Map(mapElementRef.current, {
           center: defaultCenter,
           zoom: 17,
@@ -117,10 +145,11 @@ export default function NineFitMove() {
           mapId: undefined,
           internalUsageAttributionIds: [SOLUTION_ATTRIBUTION_ID],
         } as any);
-        console.log("[NineFitMove] Map instance created:", map);
 
         mapInstanceRef.current = map;
-
+        console.log("[NineFitMove] Instância do mapa criada com sucesso.");
+        // ... rest of initMap ...
+        
         polylineRef.current = new g.maps.Polyline({
           map,
           path: [],
@@ -140,12 +169,14 @@ export default function NineFitMove() {
               mapInstanceRef.current.setCenter(posLatLng);
               updateStreetName(posLatLng.lat, posLatLng.lng, true);
             },
-            () => {},
+            (err) => {
+              console.error("[NineFitMove] Erro ao obter posição inicial:", err);
+            },
             { enableHighAccuracy: true, timeout: 5000 }
           );
         }
       } catch (err) {
-        console.error("[NineFitMove] Erro ao carregar Google Maps:", err);
+        console.error("[NineFitMove] Falha crítica ao inicializar mapa:", err);
         toast.error("Não foi possível carregar o Google Maps. Verifique sua conexão.");
       }
     }
@@ -297,8 +328,8 @@ export default function NineFitMove() {
   );
 
   const startRealGps = () => {
-    if (!navigator.geolocation) {
-      toast.error("GPS não disponível ou suportado neste navegador.");
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocalização não suportada neste navegador.");
       return;
     }
 
@@ -324,7 +355,13 @@ export default function NineFitMove() {
 
     setRunning(true);
     setIsPaused(false);
-    toast.success("GPS ligado! Rastreamento de corrida em tempo real ativado.");
+    toast.success("GPS ligado! Rastreamento em tempo real ativado.");
+
+    const options: PositionOptions = {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 10000,
+    };
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
@@ -336,16 +373,13 @@ export default function NineFitMove() {
         );
       },
       (err) => {
-        console.warn("[GPS Error]", err);
-        toast.warning(
-          "Sinal de GPS fraco ou não autorizado. Verifique a permissão de localização do navegador."
-        );
+        console.error("[NineFitMove] Erro no GPS:", err);
+        let msg = "Erro no sinal de GPS.";
+        if (err.code === err.PERMISSION_DENIED) msg = "Permissão de localização negada.";
+        if (err.code === err.POSITION_UNAVAILABLE) msg = "Sinal de GPS indisponível.";
+        toast.warning(msg);
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,
-        timeout: 12000,
-      }
+      options
     );
   };
 
@@ -424,6 +458,9 @@ export default function NineFitMove() {
     const avgSpeed = distanceKm > 0 ? (distanceKm / (seconds / 3600)) : 0;
     const caloriesBurned = Math.round(distanceKm * 65);
 
+    const mapUrl = await generateStaticMapUrl(pathCoordinatesRef.current);
+    setStaticMapUrl(mapUrl);
+
     try {
       const {
         data: { user: currentUser },
@@ -452,6 +489,7 @@ export default function NineFitMove() {
         street: currentStreet,
         neighborhood: currentNeighborhood,
         calories: caloriesBurned,
+        staticMapUrl: mapUrl,
       });
       localStorage.setItem("9fit_move_history", JSON.stringify(localHistory.slice(0, 20)));
 
@@ -733,6 +771,11 @@ export default function NineFitMove() {
 
         {activitySaved && (
           <div className="pt-2 flex flex-col gap-2">
+            {staticMapUrl && (
+              <div className="rounded-xl overflow-hidden border border-white/10 mb-2">
+                <img src={staticMapUrl} alt="Mapa da rota" className="w-full h-auto" />
+              </div>
+            )}
             <ProgressGraph />
             <button
               type="button"
