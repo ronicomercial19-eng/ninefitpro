@@ -118,6 +118,8 @@ export default function NineFitRon() {
 
   const autoCtx = params.get("context");
   const autoTriggered = params.get("auto") === "1";
+  // Tópico vindo do Planejamento: máx. 80 caracteres, sem quebras de linha. Sempre renderizado como texto (nunca HTML).
+  const planningTopic = (params.get("topic") || "").replace(/[\r\n\t]+/g, " ").trim().slice(0, 80);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -276,11 +278,13 @@ export default function NineFitRon() {
             ? `Protocolo concluído. Modo ${STATE_LABEL[state]} detectado — ${insight} Deseja que eu agende a sessão de amanhã na sua Google Agenda?`
             : autoCtx === "hub_card"
             ? `Você está no modo ${STATE_LABEL[state]}. ${insight} Como posso impulsionar sua performance agora?`
+            : autoCtx === "planning"
+            ? `Você abriu o planejamento em '${planningTopic || "meu plano"}'. Quer que eu explique em detalhe ou ajuste o treino de amanhã?`
             : `Estou aqui com o motor Gemini ativo. O que precisa agora?`;
         setMessages((p) => [...p, { role: "assistant", content: intro }]);
       }
     })();
-  }, [user?.id, autoTriggered, autoCtx, state]);
+  }, [user?.id, autoTriggered, autoCtx, planningTopic, state]);
 
   // Realtime: novas mensagens entram automaticamente
   useRealtimeTable(
