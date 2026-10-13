@@ -62,17 +62,6 @@ const SUGGESTIONS = [
   "Estou sentindo desconforto no ombro, adaptar treino",
 ];
 
-const RON_CREDIT_PATTERNS = [
-  /\b(cri(ar|e)|mont(ar|e)|ger(ar|e)|prescrev(a|er)|planej(ar|e))\b.*\b(treino|planilha|dieta|plano|protocolo)\b/i,
-  /\b(treino|planilha|dieta|plano|protocolo)\b.*\b(cri(ar|e)|mont(ar|e)|ger(ar|e)|personaliz(ar|e)|ajust(ar|e))\b/i,
-  /\b(analis(ar|e)|relat[oó]rio|avalia[cç][aã]o completa|interpreta[rç])\b.*\b(meu|minha|dados|semana|progresso|corpo|performance)\b/i,
-  /\b(pdf|export(ar|e)|prescri[cç][aã]o|periodiza[cç][aã]o completa)\b/i,
-];
-
-function ronRequestNeedsCredit(message: string) {
-  return RON_CREDIT_PATTERNS.some((pattern) => pattern.test(message));
-}
-
 interface Msg {
   id?: string;
   role: "user" | "assistant" | "system";
@@ -365,7 +354,15 @@ export default function NineFitRon() {
 
     // 3. Call server-side Gemini Bot endpoint
     try {
-      const data = await requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content })));
+      const data = await withCredit("ron_chat", () => requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content }))));
+      if (!data) {
+        setMessages((p) => {
+          const out = [...p];
+          out[out.length - 1] = { role: "assistant", content: "Você está sem fichas para conversar com o RON agora." };
+          return out;
+        });
+        return;
+      }
       const replyContent = data.content;
       const returnedActions: RonAction[] = data.actions || [];
 

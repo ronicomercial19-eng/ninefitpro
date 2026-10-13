@@ -237,7 +237,7 @@ export default function PlanejamentoPro({ athleteId, reloadKey = 0, plannedDates
     { k: "presenca", label: "Presença", value: target ? `${thisWeek}/${target}` : String(thisWeek), unit: "treinos/sem." },
     ...(model.hasVol && hasPlan ? [{ k: "carga" as Metric, label: "Carga", value: lastVal("vol") != null ? lastVal("vol")!.toFixed(0) : "–", unit: "séries/grupo" }] : []),
     ...(model.hasRpe && hasPlan ? [{ k: "esforco" as Metric, label: "Esforço", value: lastVal("rpe") != null ? lastVal("rpe")!.toFixed(1) : "–", unit: "RPE" }] : []),
-    ...(forcaLast && forca.length >= 2 ? [{ k: "forca" as Metric, label: "Força", value: `${Math.round(forcaLast.realPct as number)}%`, unit: "agachamento" }] : []),
+    ...(forcaLast ? [{ k: "forca" as Metric, label: "Força", value: `${Math.round(forcaLast.realPct as number)}%`, unit: "agachamento" }] : []),
   ];
   const active: Metric = tabs.some((t) => t.k === metric) ? metric : tabs[0].k;
 
