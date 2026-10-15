@@ -73,9 +73,9 @@ interface Meal {
 function DietaSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-24 bg-card border border-border rounded-sm animate-shimmer" />
-      <div className="h-32 bg-card border border-border rounded-sm animate-shimmer" />
-      <div className="h-32 bg-card border border-border rounded-sm animate-shimmer" />
+      <div className="h-24 nine-panel animate-shimmer" />
+      <div className="h-32 nine-panel animate-shimmer" />
+      <div className="h-32 nine-panel animate-shimmer" />
     </div>
   );
 }
@@ -83,7 +83,7 @@ function DietaSkeleton() {
 // Empty state component
 function EmptyDieta() {
   return (
-    <div className="bg-card border border-border rounded-sm p-8 text-center">
+    <div className="nine-panel p-8 text-center">
       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
         <Utensils className="w-8 h-8 text-primary" />
       </div>
@@ -282,9 +282,9 @@ export default function NineFitDieta() {
 
   const getTypeBadge = (type: string) => {
     if (type === 'link') {
-      return <Badge className="bg-blue-100 text-blue-800"><Globe className="w-3 h-3 mr-1" />Link</Badge>;
+      return <Badge className="border border-primary/40 bg-transparent text-primary"><Globe className="w-3 h-3 mr-1" />Link</Badge>;
     }
-    return <Badge className="bg-purple-100 text-purple-800"><FileText className="w-3 h-3 mr-1" />Documento</Badge>;
+    return <Badge className="border border-primary/40 bg-transparent text-primary"><FileText className="w-3 h-3 mr-1" />Documento</Badge>;
   };
 
   return (
@@ -318,17 +318,17 @@ export default function NineFitDieta() {
       ) : assignedDiets.length === 0 ? (
         <div className="px-4 space-y-5">
           {/* Scanner de Alimentos IA Banner */}
-          <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">
+          <div className="rounded-xl nine-panel p-3.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
                 <ScanLine className="w-5 h-5 animate-pulse" />
               </div>
               <div className="min-w-0">
                 <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
-                  NOVO // SCANNER DE ALIMENTO IA
+                  SCANNER IA
                 </span>
-                <p className="text-sm font-bold text-white truncate">Escanear Prato ou Rótulo</p>
-                <p className="text-[11px] text-neutral-400 truncate">Foto rápida calcula calorias e macros</p>
+                <p className="text-sm font-bold text-foreground truncate">Escanear Prato ou Rótulo</p>
+                <p className="text-[11px] text-muted-foreground truncate">Foto rápida calcula calorias e macros</p>
               </div>
             </div>
             <Button
@@ -341,12 +341,12 @@ export default function NineFitDieta() {
             </Button>
           </div>
 
-          <div className="bg-card border border-border rounded-sm p-5">
+          <div className="nine-panel p-5">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Modo {dietMode === "self_guided" ? "autoguiado" : "sem plano ativo"}</p>
-            <h2 className="text-lg font-bold text-foreground mt-1">Construa sua consistência alimentar</h2>
+            <h2 className="text-lg font-bold text-foreground mt-1">Consistência começa no prato</h2>
             <p className="text-sm text-muted-foreground mt-2">Registre refeições, acompanhe médias e ajuste suas escolhas com apoio do RON.</p>
           </div>
-          <div className="bg-card border border-border rounded-sm p-4">
+          <div className="nine-panel p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Calorias registradas hoje</span>
               <div className="flex items-center gap-1.5">
@@ -359,23 +359,23 @@ export default function NineFitDieta() {
               </div>
             </div>
             <p className="text-2xl font-bold text-foreground mt-2">{consumed.calories} kcal</p>
-            <p className="text-xs text-muted-foreground mt-1">{caloriesGoal?`Meta prescrita: ${caloriesGoal} kcal`:'Sem meta calórica prescrita'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{caloriesGoal?`Meta prescrita: ${caloriesGoal} kcal`:'Meta livre — sem prescrição'}</p>
           </div>
         </div>
       ) : (
         <div className="px-4 space-y-6">
           {/* Scanner de Alimentos IA Banner */}
-          <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">
+          <div className="rounded-xl nine-panel p-3.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
                 <ScanLine className="w-5 h-5 animate-pulse" />
               </div>
               <div className="min-w-0">
                 <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
-                  NOVO // SCANNER DE ALIMENTO IA
+                  SCANNER IA
                 </span>
-                <p className="text-sm font-bold text-white truncate">Escanear Prato ou Rótulo</p>
-                <p className="text-[11px] text-neutral-400 truncate">Calcule proteínas, calorias e porções</p>
+                <p className="text-sm font-bold text-foreground truncate">Escanear Prato ou Rótulo</p>
+                <p className="text-[11px] text-muted-foreground truncate">Calcule proteínas, calorias e porções</p>
               </div>
             </div>
             <Button
@@ -399,7 +399,7 @@ export default function NineFitDieta() {
               {assignedDiets.map((diet) => (
                 <div
                   key={diet.id}
-                  className="bg-card border border-border rounded-sm p-4 transition-all hover:border-primary/50"
+                  className="nine-panel p-4 transition-all hover:border-primary/50"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -456,10 +456,10 @@ export default function NineFitDieta() {
             </div>
 
             {/* Calorie Progress Bar */}
-            <div className="bg-card border border-border rounded-sm p-4 mb-3">
+            <div className="nine-panel p-4 mb-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">Calorias</span>
-                <span className="text-sm font-bold text-foreground">{consumed.calories} kcal{caloriesGoal?` / ${caloriesGoal}`:' · sem meta prescrita'}</span>
+                <span className="text-sm font-bold text-foreground">{consumed.calories} kcal{caloriesGoal?` / ${caloriesGoal}`:' · meta livre'}</span>
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div 
@@ -487,20 +487,20 @@ export default function NineFitDieta() {
             {todayMeals.length > 0 ? (
               <div className="space-y-2">
                 {todayMeals.map((meal) => (
-                  <div key={meal.id} className="bg-card border border-border rounded-sm p-3 flex items-center justify-between">
+                  <div key={meal.id} className="nine-panel p-3 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-bold text-foreground">{meal.meal_name}</p>
                       <p className="text-[10px] text-muted-foreground">{meal.calories} kcal • P:{meal.protein}g C:{meal.carbs}g G:{meal.fat}g</p>
                     </div>
-                    <button onClick={() => deleteMeal(meal.id)} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors">
+                    <button onClick={() => deleteMeal(meal.id)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-card border border-border rounded-sm p-4 text-center">
-                <p className="text-xs text-muted-foreground">Nenhuma refeição registrada hoje</p>
+              <div className="nine-panel p-4 text-center">
+                <p className="text-xs text-muted-foreground">Prato vazio por enquanto. Registre a próxima refeição.</p>
               </div>
             )}
           </div>
@@ -509,9 +509,9 @@ export default function NineFitDieta() {
 
       {/* Fullscreen Diet Viewer Dialog */}
       <Dialog open={!!selectedDiet} onOpenChange={() => setSelectedDiet(null)}>
-        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-[#0f0f0f] text-foreground rounded-none border-none">
+        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-background text-foreground rounded-none border-none">
           {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-primary/20 bg-[#0f0f0f] flex-shrink-0">
+          <div className="flex items-center justify-between p-3 border-b border-primary/20 bg-background flex-shrink-0">
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-sm truncate">{selectedDiet?.diet_name}</h3>
               <p className="text-xs text-muted-foreground">
@@ -542,7 +542,7 @@ export default function NineFitDieta() {
           </div>
           
           {/* Content */}
-          <div className="flex-1 overflow-auto bg-[#0f0f0f]" style={{ height: 'calc(100dvh - 60px)' }}>
+          <div className="flex-1 overflow-auto bg-background" style={{ height: 'calc(100dvh - 60px)' }}>
             {loadingContent ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -603,7 +603,7 @@ export default function NineFitDieta() {
         <div className="fixed bottom-24 right-4 flex flex-col gap-2.5 z-40">
           <button
             onClick={() => setShowScanner(true)}
-            className="w-12 h-12 bg-[#12131a] border border-primary/50 text-primary rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+            className="w-12 h-12 bg-background border border-primary/50 text-primary rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
             title="Escanear Prato / Alimento com IA"
           >
             <Camera className="w-5 h-5 animate-pulse" />
