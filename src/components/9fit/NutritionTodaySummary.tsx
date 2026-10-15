@@ -11,6 +11,8 @@ import type { Tables } from '@/integrations/supabase/types';
 import { businessDate } from '@/services/dailyContextRules';
 
 // Padrão Nine Pro v2 (referência: card TRIBOS em Destaques)
+// interactive (tela Dieta / splash) = hero (glow + número vazado).
+// Hub (não interativo) = modo calmo, para não competir com o Foco atual.
 const label = 'font-data text-[9px] uppercase tracking-[0.3em] text-primary/80';
 const pillPrimary = 'inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-3 font-display text-[11px] font-black uppercase tracking-wider text-primary-foreground transition-transform active:scale-95';
 const pillGhost = 'inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-5 py-3 font-display text-[11px] font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/10 active:scale-95';
@@ -27,6 +29,7 @@ function Metric({ name, value, hint }: { name: string; value: string; hint: stri
 }
 
 export function NutritionTodaySummary({ interactive = false, date }: {interactive?:boolean; date?:string}) {
+  const hero = interactive;
   const {athleteId}=useAthleteId();const navigate=useNavigate();
   const data=useNutritionToday(athleteId, date);
   const [form,setForm]=useState(false),[editing,setEditing]=useState<Tables<'nutrition_logs'>|null>(null);
@@ -51,8 +54,8 @@ export function NutritionTodaySummary({ interactive = false, date }: {interactiv
   const pct = kcalGoal ? Math.min(100, (kcal / kcalGoal) * 100) : 0;
   const subtitle = data.loading ? 'Carregando…' : data.error ? 'Leitura indisponível' : (data.diet?.diet_name || 'Sem plano alimentar ativo');
 
-  return <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-black p-5" aria-label="Sua alimentação hoje">
-    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_0%,hsla(20,100%,50%,0.18),transparent_60%)]" />
+  return <section className={`relative overflow-hidden rounded-2xl border p-5 ${hero ? 'border-primary/20 bg-black' : 'border-white/10 bg-black/60'}`} aria-label="Sua alimentação hoje">
+    {hero && <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_0%,hsla(20,100%,50%,0.18),transparent_60%)]" />}
     <div className="relative z-10 space-y-5">
       <div>
         <p className={label}>Alimentação do dia</p>
@@ -65,7 +68,9 @@ export function NutritionTodaySummary({ interactive = false, date }: {interactiv
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className={label}>Kcal hoje</p>
-              <p className="font-display font-black leading-none tracking-tighter" style={{ ...outlineStyle, fontSize: 'clamp(56px, 20vw, 96px)' }}>{kcal}</p>
+              {hero
+                ? <p className="font-display font-black leading-none tracking-tighter" style={{ ...outlineStyle, fontSize: 'clamp(56px, 20vw, 96px)' }}>{kcal}</p>
+                : <p className="font-display text-3xl font-black leading-none tracking-tighter text-foreground">{kcal}</p>}
             </div>
             <p className="pb-2 text-right font-data text-[10px] uppercase tracking-widest text-muted-foreground">{kcalGoal ? `Meta ${kcalGoal} kcal` : 'Sem meta prescrita'}</p>
           </div>
@@ -85,7 +90,7 @@ export function NutritionTodaySummary({ interactive = false, date }: {interactiv
       <div className="flex flex-wrap gap-2">
         {interactive
           ? <button className={pillPrimary} onClick={()=>{setEditing(null);setForm(true);}}>Registrar refeição <ArrowUpRight className="h-3.5 w-3.5" /></button>
-          : <button className={pillPrimary} onClick={()=>navigate('/9fit/dieta?action=log')}>Registrar refeição <ArrowUpRight className="h-3.5 w-3.5" /></button>}
+          : <button className={pillGhost} onClick={()=>navigate('/9fit/dieta?action=log')}>Registrar refeição <ArrowUpRight className="h-3.5 w-3.5" /></button>}
         <button className={pillGhost} onClick={()=>navigate('/9fit/dieta')}>Abrir dieta</button>
       </div>
 
