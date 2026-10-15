@@ -7,11 +7,7 @@ import {
   Utensils, 
   Plus, 
   Flame,
-  Apple,
-  Beef,
-  Droplets,
   Loader2,
-  CheckCircle,
   Eye,
   ExternalLink,
   Globe,
@@ -20,18 +16,15 @@ import {
   Calendar,
   Trash2,
   Camera,
-  ScanLine,
-  Sparkles
+  ScanLine
 } from "lucide-react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { NutritionLogForm } from "@/components/9fit/NutritionLogForm";
 import { FoodScannerModal } from "@/components/9fit/FoodScannerModal";
 import { useSearchParams } from 'react-router-dom';
@@ -48,51 +41,40 @@ interface DietAssignment {
   is_active: boolean;
 }
 
-interface NutritionPlan {
-  id: string;
-  calories_goal: number;
-  protein_goal: number;
-  carbs_goal: number;
-  fat_goal: number;
-  meals: Meal[];
-}
-
-interface Meal {
-  id: string;
-  name: string;
-  time: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  foods: string[];
-  completed?: boolean;
-}
+// Padrão Nine Pro v2
+const card = "rounded-2xl border border-white/10 bg-black/60 p-4";
+const eyebrow = "font-data text-[10px] uppercase tracking-[0.3em] text-primary";
+const pillPrimary = "inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 font-display text-[11px] font-black uppercase tracking-wider text-primary-foreground transition-transform active:scale-95";
+const pillGhost = "inline-flex items-center justify-center gap-1.5 rounded-full border border-primary/40 px-4 py-2.5 font-display text-[11px] font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/10 active:scale-95";
 
 // Skeleton component
 function DietaSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-24 bg-card border border-border rounded-sm animate-shimmer" />
-      <div className="h-32 bg-card border border-border rounded-sm animate-shimmer" />
-      <div className="h-32 bg-card border border-border rounded-sm animate-shimmer" />
+      <div className="h-24 bg-card border border-border rounded-2xl animate-shimmer" />
+      <div className="h-32 bg-card border border-border rounded-2xl animate-shimmer" />
+      <div className="h-32 bg-card border border-border rounded-2xl animate-shimmer" />
     </div>
   );
 }
 
-// Empty state component
-function EmptyDieta() {
+function ScannerBanner({ subtitle, onScan }: { subtitle: string; onScan: () => void }) {
   return (
-    <div className="bg-card border border-border rounded-sm p-8 text-center">
-      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-        <Utensils className="w-8 h-8 text-primary" />
+    <div className="relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border border-primary/20 bg-black p-4">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,hsla(20,100%,50%,0.18),transparent_60%)]" />
+      <div className="relative z-10 flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
+          <ScanLine className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <span className="block font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">Scanner IA</span>
+          <p className="truncate font-display text-sm font-black uppercase tracking-tight text-foreground">Escanear prato ou rótulo</p>
+          <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>
+        </div>
       </div>
-      <h3 className="text-lg font-bold text-foreground mb-2">
-        Nenhum plano alimentar disponível
-      </h3>
-      <p className="text-sm text-muted-foreground mb-4">
-        Seu professor ainda não atribuiu um plano alimentar para você.
-      </p>
+      <button onClick={onScan} className={`${pillPrimary} relative z-10 shrink-0`}>
+        <Camera className="h-3.5 w-3.5" />Escanear
+      </button>
     </div>
   );
 }
@@ -118,8 +100,7 @@ function injectMobileViewport(html: string): string {
 
 export default function NineFitDieta() {
   const [searchParams,setSearchParams]=useSearchParams();
-  const { user } = useAuth();
-  const { athleteId, loading: athleteLoading } = useAthleteId();
+  const { athleteId } = useAthleteId();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [assignedDiets, setAssignedDiets] = useState<DietAssignment[]>([]);
@@ -281,10 +262,12 @@ export default function NineFitDieta() {
   };
 
   const getTypeBadge = (type: string) => {
-    if (type === 'link') {
-      return <Badge className="bg-blue-100 text-blue-800"><Globe className="w-3 h-3 mr-1" />Link</Badge>;
-    }
-    return <Badge className="bg-purple-100 text-purple-800"><FileText className="w-3 h-3 mr-1" />Documento</Badge>;
+    const Icon = type === 'link' ? Globe : FileText;
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 font-data text-[9px] uppercase tracking-widest text-primary">
+        <Icon className="h-3 w-3" />{type === 'link' ? 'Link' : 'Documento'}
+      </span>
+    );
   };
 
   return (
@@ -293,18 +276,21 @@ export default function NineFitDieta() {
       <div className="px-4 pt-6 pb-4 flex items-center justify-between">
         <button 
           onClick={() => setCurrentDate(d => new Date(d.setDate(d.getDate() - 1)))}
-          className="p-2 hover:bg-muted rounded-sm transition-colors"
+          className="p-2 hover:bg-white/5 rounded-full transition-colors"
+          aria-label="Dia anterior"
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="text-center">
-          <h1 className="text-lg font-bold text-foreground capitalize">
+          <p className={eyebrow}>Dieta</p>
+          <h1 className="font-display text-lg font-black uppercase tracking-tight text-foreground">
             {format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
           </h1>
         </div>
         <button 
           onClick={() => setCurrentDate(d => new Date(d.setDate(d.getDate() + 1)))}
-          className="p-2 hover:bg-muted rounded-sm transition-colors"
+          className="p-2 hover:bg-white/5 rounded-full transition-colors"
+          aria-label="Próximo dia"
         >
           <ChevronRight className="w-5 h-5 text-foreground" />
         </button>
@@ -317,122 +303,73 @@ export default function NineFitDieta() {
         </div>
       ) : assignedDiets.length === 0 ? (
         <div className="px-4 space-y-5">
-          {/* Scanner de Alimentos IA Banner */}
-          <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
-                <ScanLine className="w-5 h-5 animate-pulse" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
-                  NOVO // SCANNER DE ALIMENTO IA
-                </span>
-                <p className="text-sm font-bold text-white truncate">Escanear Prato ou Rótulo</p>
-                <p className="text-[11px] text-neutral-400 truncate">Foto rápida calcula calorias e macros</p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowScanner(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shrink-0 text-xs shadow cursor-pointer"
-            >
-              <Camera className="w-3.5 h-3.5 mr-1.5" />
-              Escanear
-            </Button>
-          </div>
+          <ScannerBanner subtitle="Foto rápida calcula calorias e macros" onScan={() => setShowScanner(true)} />
 
-          <div className="bg-card border border-border rounded-sm p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Modo {dietMode === "self_guided" ? "autoguiado" : "sem plano ativo"}</p>
-            <h2 className="text-lg font-bold text-foreground mt-1">Construa sua consistência alimentar</h2>
-            <p className="text-sm text-muted-foreground mt-2">Registre refeições, acompanhe médias e ajuste suas escolhas com apoio do RON.</p>
+          <div className={card}>
+            <p className={eyebrow}>Modo {dietMode === "self_guided" ? "autoguiado" : "sem plano ativo"}</p>
+            <h2 className="mt-1 font-display text-lg font-black uppercase leading-tight tracking-tight text-foreground">Construa sua consistência alimentar</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Registre refeições, acompanhe médias e ajuste suas escolhas com apoio do RON.</p>
           </div>
-          <div className="bg-card border border-border rounded-sm p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Calorias registradas hoje</span>
+          <div className={card}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={eyebrow}>Calorias registradas hoje</span>
               <div className="flex items-center gap-1.5">
-                <Button size="sm" onClick={() => setShowScanner(true)} className="bg-primary text-primary-foreground font-semibold text-xs">
-                  <Camera className="w-3.5 h-3.5 mr-1" />Escanear
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setShowLogForm(true)} className="text-xs">
-                  <Plus className="w-3 h-3 mr-1" />Manual
-                </Button>
+                <button onClick={() => setShowScanner(true)} className={pillPrimary}>
+                  <Camera className="w-3.5 h-3.5" />Escanear
+                </button>
+                <button onClick={() => setShowLogForm(true)} className={pillGhost}>
+                  <Plus className="w-3 h-3" />Manual
+                </button>
               </div>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-2">{consumed.calories} kcal</p>
-            <p className="text-xs text-muted-foreground mt-1">{caloriesGoal?`Meta prescrita: ${caloriesGoal} kcal`:'Sem meta calórica prescrita'}</p>
+            <p className="mt-3 font-display text-3xl font-black text-foreground">{consumed.calories} kcal</p>
+            <p className="mt-1 text-xs text-muted-foreground">{caloriesGoal?`Meta prescrita: ${caloriesGoal} kcal`:'Sem meta calórica prescrita'}</p>
           </div>
         </div>
       ) : (
         <div className="px-4 space-y-6">
-          {/* Scanner de Alimentos IA Banner */}
-          <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
-                <ScanLine className="w-5 h-5 animate-pulse" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
-                  NOVO // SCANNER DE ALIMENTO IA
-                </span>
-                <p className="text-sm font-bold text-white truncate">Escanear Prato ou Rótulo</p>
-                <p className="text-[11px] text-neutral-400 truncate">Calcule proteínas, calorias e porções</p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowScanner(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shrink-0 text-xs shadow cursor-pointer"
-            >
-              <Camera className="w-3.5 h-3.5 mr-1.5" />
-              Escanear
-            </Button>
-          </div>
+          <ScannerBanner subtitle="Calcule proteínas, calorias e porções" onScan={() => setShowScanner(true)} />
 
           {/* Assigned Diets Section */}
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
-              <Utensils className="w-4 h-4 text-primary" />
-              Meus Planos Alimentares
+            <h2 className={`${eyebrow} mb-3 flex items-center gap-2`}>
+              <Utensils className="w-4 h-4" />
+              Meus planos alimentares
             </h2>
             
             <div className="space-y-3">
               {assignedDiets.map((diet) => (
                 <div
                   key={diet.id}
-                  className="bg-card border border-border rounded-sm p-4 transition-all hover:border-primary/50"
+                  className={`${card} transition-all hover:border-primary/40`}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-foreground">{diet.diet_name}</h3>
-                        {getTypeBadge(diet.diet_type)}
-                      </div>
-                      
-                      {diet.diet_description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {diet.diet_description}
-                        </p>
+                  <div className="mb-3">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <h3 className="font-display font-black uppercase tracking-tight text-foreground">{diet.diet_name}</h3>
+                      {getTypeBadge(diet.diet_type)}
+                    </div>
+                    
+                    {diet.diet_description && (
+                      <p className="mb-2 text-sm text-muted-foreground">
+                        {diet.diet_description}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Desde {formatDate(diet.start_date)}
+                      </span>
+                      {diet.end_date && (
+                        <span>até {formatDate(diet.end_date)}</span>
                       )}
-                      
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          Desde {formatDate(diet.start_date)}
-                        </span>
-                        {diet.end_date && (
-                          <span>até {formatDate(diet.end_date)}</span>
-                        )}
-                      </div>
                     </div>
                   </div>
                   
-                  <Button
-                    onClick={() => handleOpenDiet(diet)}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Ver Completo
-                  </Button>
+                  <button onClick={() => handleOpenDiet(diet)} className={`${pillPrimary} w-full`}>
+                    <Eye className="w-4 h-4" />
+                    Ver completo
+                  </button>
                 </div>
               ))}
             </div>
@@ -440,44 +377,44 @@ export default function NineFitDieta() {
 
           {/* Daily Nutrition Tracking */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
-                <Flame className="w-4 h-4 text-primary" />
-                Acompanhamento Diário
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className={`${eyebrow} flex items-center gap-2`}>
+                <Flame className="w-4 h-4" />
+                Acompanhamento diário
               </h2>
               <div className="flex items-center gap-1.5">
-                <Button size="sm" onClick={() => setShowScanner(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs cursor-pointer">
-                  <Camera className="w-3.5 h-3.5 mr-1" />Escanear
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setShowLogForm(true)} className="border-primary text-primary hover:bg-primary/10 text-xs cursor-pointer">
-                  <Plus className="w-3 h-3 mr-1" />Manual
-                </Button>
+                <button onClick={() => setShowScanner(true)} className={pillPrimary}>
+                  <Camera className="w-3.5 h-3.5" />Escanear
+                </button>
+                <button onClick={() => setShowLogForm(true)} className={pillGhost}>
+                  <Plus className="w-3 h-3" />Manual
+                </button>
               </div>
             </div>
 
             {/* Calorie Progress Bar */}
-            <div className="bg-card border border-border rounded-sm p-4 mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">Calorias</span>
+            <div className={`${card} mb-3`}>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">Calorias</span>
                 <span className="text-sm font-bold text-foreground">{consumed.calories} kcal{caloriesGoal?` / ${caloriesGoal}`:' · sem meta prescrita'}</span>
               </div>
-              <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+              <div className="h-0.5 w-full overflow-hidden rounded-full bg-white/10">
                 <div 
-                  className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500" 
+                  className="h-full bg-primary transition-all duration-500" 
                   style={{ width: `${caloriesGoal?Math.min(100, (consumed.calories / caloriesGoal) * 100):0}%` }}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Proteína</p>
+                  <p className="font-data text-[8px] uppercase tracking-widest text-muted-foreground">Proteína</p>
                   <p className="text-sm font-bold text-foreground">{consumed.protein}g</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Carbs</p>
+                  <p className="font-data text-[8px] uppercase tracking-widest text-muted-foreground">Carbs</p>
                   <p className="text-sm font-bold text-foreground">{consumed.carbs}g</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Gordura</p>
+                  <p className="font-data text-[8px] uppercase tracking-widest text-muted-foreground">Gordura</p>
                   <p className="text-sm font-bold text-foreground">{consumed.fat}g</p>
                 </div>
               </div>
@@ -487,19 +424,19 @@ export default function NineFitDieta() {
             {todayMeals.length > 0 ? (
               <div className="space-y-2">
                 {todayMeals.map((meal) => (
-                  <div key={meal.id} className="bg-card border border-border rounded-sm p-3 flex items-center justify-between">
+                  <div key={meal.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/60 p-3">
                     <div>
                       <p className="text-sm font-bold text-foreground">{meal.meal_name}</p>
                       <p className="text-[10px] text-muted-foreground">{meal.calories} kcal • P:{meal.protein}g C:{meal.carbs}g G:{meal.fat}g</p>
                     </div>
-                    <button onClick={() => deleteMeal(meal.id)} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors">
+                    <button onClick={() => deleteMeal(meal.id)} className="p-1.5 text-muted-foreground transition-colors hover:text-destructive" aria-label="Remover refeição">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-card border border-border rounded-sm p-4 text-center">
+              <div className={`${card} text-center`}>
                 <p className="text-xs text-muted-foreground">Nenhuma refeição registrada hoje</p>
               </div>
             )}
@@ -509,14 +446,14 @@ export default function NineFitDieta() {
 
       {/* Fullscreen Diet Viewer Dialog */}
       <Dialog open={!!selectedDiet} onOpenChange={() => setSelectedDiet(null)}>
-        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-[#0f0f0f] text-foreground rounded-none border-none">
+        <DialogContent className="max-w-[100vw] w-full h-[100dvh] p-0 m-0 bg-black text-foreground rounded-none border-none">
           {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-primary/20 bg-[#0f0f0f] flex-shrink-0">
+          <div className="flex items-center justify-between p-3 border-b border-primary/20 bg-black flex-shrink-0">
             <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-sm truncate">{selectedDiet?.diet_name}</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">
                 {selectedDiet?.diet_type === 'link' ? 'Link externo' : 'Plano alimentar'}
               </p>
+              <h3 className="truncate font-display text-sm font-black uppercase tracking-tight">{selectedDiet?.diet_name}</h3>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               {selectedDiet?.diet_type === 'link' && selectedDiet.diet_file_url && (
@@ -542,28 +479,27 @@ export default function NineFitDieta() {
           </div>
           
           {/* Content */}
-          <div className="flex-1 overflow-auto bg-[#0f0f0f]" style={{ height: 'calc(100dvh - 60px)' }}>
+          <div className="flex-1 overflow-auto bg-black" style={{ height: 'calc(100dvh - 60px)' }}>
             {loadingContent ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
               </div>
             ) : selectedDiet?.diet_type === 'link' ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <Globe className="w-20 h-20 text-muted-foreground mb-6" />
-                <h3 className="text-xl font-bold mb-2">Link Externo</h3>
+                <Globe className="w-20 h-20 text-primary/60 mb-6" />
+                <h3 className="mb-2 font-display text-xl font-black uppercase tracking-tight">Link externo</h3>
                 <p className="text-muted-foreground mb-6 max-w-md">
                   Este plano alimentar está hospedado em um link externo.
                 </p>
-                <Button asChild size="lg">
-                  <a 
-                    href={selectedDiet?.diet_file_url || ''} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="w-5 h-5 mr-2" />
-                    Abrir Plano Alimentar
-                  </a>
-                </Button>
+                <a 
+                  href={selectedDiet?.diet_file_url || ''} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={pillPrimary}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Abrir plano alimentar
+                </a>
               </div>
             ) : (
               <iframe
@@ -603,15 +539,17 @@ export default function NineFitDieta() {
         <div className="fixed bottom-24 right-4 flex flex-col gap-2.5 z-40">
           <button
             onClick={() => setShowScanner(true)}
-            className="w-12 h-12 bg-[#12131a] border border-primary/50 text-primary rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-            title="Escanear Prato / Alimento com IA"
+            className="w-12 h-12 bg-black border border-primary/40 text-primary rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+            title="Escanear prato / alimento com IA"
+            aria-label="Escanear prato ou alimento"
           >
-            <Camera className="w-5 h-5 animate-pulse" />
+            <Camera className="w-5 h-5" />
           </button>
           <button
             onClick={() => setShowLogForm(true)}
             className="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-            title="Registrar Refeição Manualmente"
+            title="Registrar refeição manualmente"
+            aria-label="Registrar refeição manualmente"
           >
             <Plus className="w-6 h-6" />
           </button>
