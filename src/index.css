@@ -302,6 +302,17 @@
 
 @layer components {
 
+  /* Nine Pro v2 — padrão de card/CTA (referência: card TRIBOS dos Destaques) */
+  .nine-card { @apply relative overflow-hidden rounded-3xl border border-primary/25 bg-background p-5; background-image: radial-gradient(circle at 100% 0%, hsl(var(--primary) / 0.16), transparent 55%); }
+  .nine-panel { @apply rounded-2xl border border-primary/15 bg-background p-4; }
+  .nine-label { @apply font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-primary; }
+  .nine-title { font-family: var(--font-display); font-style: italic; font-weight: 900; letter-spacing: -0.03em; line-height: 0.95; text-transform: uppercase; @apply text-foreground; }
+  .nine-outline { color: transparent; -webkit-text-stroke: 1.5px hsl(var(--foreground)); }
+  .nine-btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-primary-foreground transition hover:opacity-90 disabled:opacity-50; }
+  .nine-btn-outline { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/40 bg-transparent px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/10 disabled:opacity-50; }
+  .nine-link { @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-primary; }
+  .nine-progress { @apply absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-500; }
+
   /* Google FitPro visual layer — jornada, dados e ações sem alterar contratos */
   .journey-card { @apply relative overflow-hidden rounded-2xl border border-white/[0.08] bg-card p-5; box-shadow: 0 18px 50px -28px hsl(0 0% 0% / .8); }
   .journey-card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, hsl(var(--primary) / .08), transparent 48%); }
