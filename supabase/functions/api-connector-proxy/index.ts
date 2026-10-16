@@ -1,8 +1,8 @@
-// API Connector Proxy — assina e encaminha requests usando o secret armazenado
-// como variável de ambiente referenciado por `api_connectors.secret_ref`.
-// Nunca expõe a chave ao client.
+// API Connector Proxy — assina e encaminha requests usando a chave do conector guardada no
+// Supabase Vault (fallback: variável de ambiente). Nunca expõe a chave ao client.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { loadConnectorSecret } from "../_shared/connectorSecret.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     if (error || !rec) return json({ error: "connector not found" }, 404);
     if (rec.status !== "active") return json({ error: "connector inactive" }, 409);
 
-    const secret = rec.secret_ref ? Deno.env.get(rec.secret_ref) : null;
+    const secret = await loadConnectorSecret(adminClient, rec.key, rec.secret_ref);
     const base = (rec.endpoint ?? "").replace(/\/$/, "");
     const url = `${base}${path}`;
 

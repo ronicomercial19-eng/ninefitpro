@@ -1,13 +1,12 @@
-// Resolve o segredo de um conector (api_connectors.secret_ref) de forma tolerante.
+// Resolve o segredo de um conector (api_connectors).
 //
-// Problema encontrado na inspeção de 15/10: secret_ref é gravado como "nome:timestamp"
-// (ex.: "smart_periodizer:1780325045679"), que não é um nome de variável de ambiente
-// utilizável; Deno.env.get(secret_ref) devolvia sempre vazio e os proxies respondiam
-// 503 / "Missing bearer token".
+// Causa raiz encontrada na inspeção de 15/10: a UI (ApiConnectorCard) NUNCA persistia a API Key
+// digitada — gravava só o hint de 4 caracteres e um secret_ref inventado ("nome:timestamp"),
+// e os proxies faziam Deno.env.get(secret_ref), que não existe. Resultado: 503 / "Missing bearer token".
 //
-// Agora tentamos, em ordem: o valor literal, uma versão sanitizada em MAIÚSCULAS, e os
-// nomes convencionais <CHAVE>_API_KEY / <CHAVE>_SECRET. Para ativar um conector basta
-// criar o secret do Supabase com um destes nomes (ex.: POSTURA_PRO_API_KEY).
+// Agora a chave fica no Supabase Vault (public.set_connector_secret, só admin) e é lida aqui via
+// public.get_connector_secret (só service_role). Variáveis de ambiente continuam como fallback
+// (ex.: POSTURA_PRO_API_KEY) para quem preferir configurar pelo painel do Supabase.
 const sanitize = (value: string) => value.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase();
 
 export function resolveConnectorSecret(secretRef: string | null | undefined, connectorKey?: string): string | null {
@@ -29,4 +28,17 @@ export function resolveConnectorSecret(secretRef: string | null | undefined, con
     } catch (_) { /* nome inválido para env: ignora */ }
   }
   return null;
+}
+
+// `admin` = cliente supabase-js com a service role key.
+export async function loadConnectorSecret(
+  admin: { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> },
+  connectorKey: string,
+  secretRef?: string | null,
+): Promise<string | null> {
+  try {
+    const { data } = await admin.rpc("get_connector_secret", { p_key: connectorKey });
+    if (typeof data === "string" && data.length > 0) return data;
+  } catch (_) { /* cai no fallback de ambiente */ }
+  return resolveConnectorSecret(secretRef, connectorKey);
 }
