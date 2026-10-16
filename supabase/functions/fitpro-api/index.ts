@@ -4,6 +4,8 @@
  * 
  * Base URL: https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1
  * Auth: header x-api-key (SHA256 hash em fitpro_connections.api_key_hash)
+ *       ou x-internal-service (service role, somente chamadas servidor-a-servidor
+ *       dos proxies do próprio projeto — nunca exposto ao navegador).
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -16,6 +18,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -30,6 +33,22 @@ async function sha256(input: string): Promise<string> {
 }
 
 async function authenticate(req: Request, supabase: any) {
+  // Chamada interna (proxy do próprio projeto): dispensa chave por conector.
+  const internal = req.headers.get("x-internal-service");
+  if (internal) {
+    if (!SUPABASE_SERVICE_KEY || internal !== SUPABASE_SERVICE_KEY) {
+      return { ok: false, status: 401, error: "Invalid internal credential" };
+    }
+    const { data } = await supabase
+      .from("fitpro_connections")
+      .select("id, name, status, professor_id")
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (!data) return { ok: false, status: 401, error: "No active connection" };
+    return { ok: true, connection: data };
+  }
+
   const key = req.headers.get("x-api-key") || "";
   if (!key) return { ok: false, status: 401, error: "Missing x-api-key" };
   const hash = await sha256(key);
@@ -128,12 +147,12 @@ Deno.serve(async (req) => {
       return json({
         status: "ok",
         service: "fitpro-api",
-        version: "1.0",
+        version: "1.1",
         time: new Date().toISOString(),
       });
     }
 
-    // All other endpoints require x-api-key
+    // All other endpoints require x-api-key (ou credencial interna)
     const auth = await authenticate(req, supabase);
     if (!auth.ok) return json({ error: auth.error }, auth.status);
     const conn = auth.connection!;
@@ -179,8 +198,13 @@ Deno.serve(async (req) => {
     }
 
     // --- GET /v1/fitpro/planejamento?fitpro_student_id=... ---
-    // Snapshot canônico para a tela "Planejamento" do FitPro
-    if (req.method === "GET" && path === "/v1/fitpro/planejamento") {
+    // Snapshot canônico para a tela "Planejamento" do FitPro.
+    // /planejamento/ativa e /periodization/current são aliases (o proxy do SmartPeriodizer
+    // já liberava esses caminhos, mas a API respondia 404).
+    if (
+      req.method === "GET" &&
+      ["/v1/fitpro/planejamento", "/v1/fitpro/planejamento/ativa", "/v1/fitpro/periodization/current"].includes(path)
+    ) {
       const sid = url.searchParams.get("fitpro_student_id");
       if (!sid) return json({ error: "fitpro_student_id required" }, 400);
       const athleteId = await resolveAthlete(supabase, conn.id, sid);
@@ -220,6 +244,75 @@ Deno.serve(async (req) => {
           rules: (snap.payload?.master_rules) || {},
         },
       });
+    }
+
+    // --- POST /v1/fitpro/planejamento/sync ---
+    // Re-espelha a periodização anual do aluno no snapshot consumido pelo app.
+    if (req.method === "POST" && path === "/v1/fitpro/planejamento/sync") {
+      const body = await req.json().catch(() => ({}));
+      const sid = body?.fitpro_student_id;
+      if (!sid) return json({ error: "fitpro_student_id required" }, 400);
+      const realId = body.athlete_id || (await resolveAthlete(supabase, conn.id, sid)) || sid;
+      const { error: syncErr } = await supabase.rpc("sync_fitpro_planejamento", { p_athlete_id: realId });
+      if (syncErr) {
+        await logGenerationFailure(supabase, {
+          athlete_id: realId,
+          origin: "edge",
+          error_reason: syncErr.message,
+          error_detail: { step: "sync_fitpro_planejamento", via: "planejamento/sync" },
+          payload: body,
+        });
+        return json({ error: "sync_failed", detail: syncErr.message }, 502);
+      }
+      await supabase
+        .from("fitpro_connections")
+        .update({ last_sync_at: new Date().toISOString() })
+        .eq("id", conn.id);
+      return json({ status: "synced", athlete_id: realId });
+    }
+
+    // --- GET /v1/fitpro/workout/today?fitpro_student_id=... ---
+    if (req.method === "GET" && path === "/v1/fitpro/workout/today") {
+      const sid = url.searchParams.get("fitpro_student_id");
+      if (!sid) return json({ error: "fitpro_student_id required" }, 400);
+      const realId = (await resolveAthlete(supabase, conn.id, sid)) || sid;
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      const { data: workout, error } = await supabase
+        .from("daily_workouts")
+        .select("id, workout_date, day_name, workout_type, focus_muscles, estimated_duration_minutes, changes_json, override_locked")
+        .eq("athlete_id", realId)
+        .eq("workout_date", today)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) return json({ error: error.message }, 500);
+      return json({ date: today, athlete_id: realId, workout: workout ?? null });
+    }
+
+    // --- POST /v1/fitpro/events ---
+    // Registra eventos do SmartPeriodizer (ex.: periodização gerada/ajustada) para consumo do app.
+    if (req.method === "POST" && path === "/v1/fitpro/events") {
+      const body = await req.json().catch(() => ({}));
+      if (!body?.event_type || !UUID_RE.test(String(body?.fitpro_student_id ?? ""))) {
+        return json({ error: "fitpro_student_id (uuid) and event_type required" }, 400);
+      }
+      const professorId = body.fitpro_professor_id && UUID_RE.test(String(body.fitpro_professor_id))
+        ? String(body.fitpro_professor_id)
+        : (conn.professor_id ?? null);
+      const { data: ev, error } = await supabase
+        .from("fitpro_smartperiodizer_events")
+        .insert({
+          fitpro_student_id: String(body.fitpro_student_id),
+          fitpro_professor_id: professorId,
+          event_type: String(body.event_type).slice(0, 80),
+          entity_type: body.entity_type ? String(body.entity_type).slice(0, 80) : null,
+          entity_id: body.entity_id ? String(body.entity_id).slice(0, 120) : null,
+          payload: body.payload ?? {},
+        })
+        .select("id")
+        .single();
+      if (error) return json({ error: error.message }, 400);
+      return json({ status: "recorded", id: ev.id });
     }
 
     // --- POST /v1/fitpro/periodization/generate ---

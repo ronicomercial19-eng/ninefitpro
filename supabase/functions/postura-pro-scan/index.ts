@@ -1,6 +1,7 @@
 // Postura Pro Scan — orquestra análise postural via API externa configurada em api_connectors.
 // Recebe scan_id, lê fotos do Storage e envia ao serviço externo, grava resultado.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveConnectorSecret } from "../_shared/connectorSecret.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,15 @@ Deno.serve(async (req) => {
     if (scanErr || !scan) return json({ error: "scan not found" }, 404);
     if (scan.user_id !== userId) return json({ error: "Forbidden" }, 403);
 
+    // A coach may submit on behalf of a linked athlete; the scan owner remains
+    // the caller, but the image folder and result belong to that athlete.
+    if (scan.athlete_id) {
+      const { data: athlete, error: athleteError } = await supabase.from("athletes")
+        .select("id").eq("id", scan.athlete_id).maybeSingle();
+      if (athleteError || !athlete) return json({ error: "Athlete not accessible" }, 403);
+    }
+    const imageOwnerId = scan.athlete_id || userId;
+
     await admin.from("postura_scans").update({ status: "processing" }).eq("id", scan_id);
 
     // Lê configuração do connector
@@ -69,21 +79,32 @@ Deno.serve(async (req) => {
       return json({ error: "Postura Pro API is not configured; no analysis was generated." }, 503);
     }
 
+    // Sem chave resolvida o provedor responde "Missing bearer token". Falha cedo e com mensagem
+    // clara, em vez de enviar as fotos e gravar o erro do provedor como se fosse laudo.
+    const secret = resolveConnectorSecret(connector.secret_ref, "postura_pro");
+    if (!secret) {
+      await admin.from("postura_scans").update({
+        status: "unavailable",
+        result: { error: "Chave da API do Postura Pro não configurada; nenhuma análise foi gerada." },
+        updated_at: new Date().toISOString(),
+      }).eq("id", scan_id);
+      return json({ error: "Postura Pro API key is not configured; no analysis was generated." }, 503);
+    }
+
     let result: any;
     try {
         const imageUrls: Record<string, string> = {};
         for (const side of ["front", "back", "left", "right"]) {
-          const path = assessmentPath(scan[`${side}_url`], userId);
+          const path = assessmentPath(scan[`${side}_url`], imageOwnerId);
           const { data: signed, error: signError } = await admin.storage.from("assessments").createSignedUrl(path, 600);
           if (signError || !signed?.signedUrl) throw new Error("Could not access posture image");
           imageUrls[side] = signed.signedUrl;
         }
-        const secret = connector.secret_ref ? Deno.env.get(connector.secret_ref) : null;
         const r = await fetch(`${connector.endpoint.replace(/\/$/, "")}/analyze`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+            Authorization: `Bearer ${secret}`,
           },
           body: JSON.stringify({
             front: imageUrls.front, back: imageUrls.back,
@@ -93,6 +114,8 @@ Deno.serve(async (req) => {
         if (!r.ok) throw new Error(`Postura Pro provider returned ${r.status}`);
         result = await r.json();
         if (!result || typeof result !== "object") throw new Error("Postura Pro provider returned an invalid response");
+        // O provedor pode responder 200 com corpo de erro; isso NÃO é um laudo.
+        if (result.error) throw new Error(`Postura Pro provider error: ${String(result.error).slice(0, 120)}`);
     } catch (e: any) {
       await admin.from("postura_scans").update({
         status: "error",
