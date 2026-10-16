@@ -62,17 +62,6 @@ const SUGGESTIONS = [
   "Estou sentindo desconforto no ombro, adaptar treino",
 ];
 
-const RON_CREDIT_PATTERNS = [
-  /\b(cri(ar|e)|mont(ar|e)|ger(ar|e)|prescrev(a|er)|planej(ar|e))\b.*\b(treino|planilha|dieta|plano|protocolo)\b/i,
-  /\b(treino|planilha|dieta|plano|protocolo)\b.*\b(cri(ar|e)|mont(ar|e)|ger(ar|e)|personaliz(ar|e)|ajust(ar|e))\b/i,
-  /\b(analis(ar|e)|relat[oó]rio|avalia[cç][aã]o completa|interpreta[rç])\b.*\b(meu|minha|dados|semana|progresso|corpo|performance)\b/i,
-  /\b(pdf|export(ar|e)|prescri[cç][aã]o|periodiza[cç][aã]o completa)\b/i,
-];
-
-function ronRequestNeedsCredit(message: string) {
-  return RON_CREDIT_PATTERNS.some((pattern) => pattern.test(message));
-}
-
 interface Msg {
   id?: string;
   role: "user" | "assistant" | "system";
@@ -118,6 +107,8 @@ export default function NineFitRon() {
 
   const autoCtx = params.get("context");
   const autoTriggered = params.get("auto") === "1";
+  // Tópico vindo do Planejamento: máx. 80 caracteres, sem quebras de linha. Sempre renderizado como texto (nunca HTML).
+  const planningTopic = (params.get("topic") || "").replace(/[\r\n\t]+/g, " ").trim().slice(0, 80);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -276,11 +267,13 @@ export default function NineFitRon() {
             ? `Protocolo concluído. Modo ${STATE_LABEL[state]} detectado — ${insight} Deseja que eu agende a sessão de amanhã na sua Google Agenda?`
             : autoCtx === "hub_card"
             ? `Você está no modo ${STATE_LABEL[state]}. ${insight} Como posso impulsionar sua performance agora?`
+            : autoCtx === "planning"
+            ? `Você abriu o planejamento em '${planningTopic || "meu plano"}'. Quer que eu explique em detalhe ou ajuste o treino de amanhã?`
             : `Estou aqui com o motor Gemini ativo. O que precisa agora?`;
         setMessages((p) => [...p, { role: "assistant", content: intro }]);
       }
     })();
-  }, [user?.id, autoTriggered, autoCtx, state]);
+  }, [user?.id, autoTriggered, autoCtx, planningTopic, state]);
 
   // Realtime: novas mensagens entram automaticamente
   useRealtimeTable(
@@ -361,7 +354,15 @@ export default function NineFitRon() {
 
     // 3. Call server-side Gemini Bot endpoint
     try {
-      const data = await requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content })));
+      const data = await withCredit("ron_chat", () => requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content }))));
+      if (!data) {
+        setMessages((p) => {
+          const out = [...p];
+          out[out.length - 1] = { role: "assistant", content: "Você está sem fichas para conversar com o RON agora." };
+          return out;
+        });
+        return;
+      }
       const replyContent = data.content;
       const returnedActions: RonAction[] = data.actions || [];
 

@@ -116,7 +116,7 @@ serve(async (req) => {
           console.log(`API returned ${resp.status}`);
         }
       } catch (e) {
-        console.log(`API fetch failed: ${e.message}`);
+        console.log(`API fetch failed: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
 
@@ -165,7 +165,7 @@ serve(async (req) => {
 
   } catch (e) {
     console.error("sync-exercise-library error:", e);
-    return new Response(JSON.stringify({ success: false, error: e.message }), {
+    return new Response(JSON.stringify({ success: false, error: e instanceof Error ? e.message : String(e) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
