@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,8 @@ interface StudentDetailedViewProps {
 }
 
 export function StudentDetailedView({ student, onBack, onStudentUpdated, onStudentDeleted }: StudentDetailedViewProps) {
+  const location = useLocation();
+  const initialTab = new URLSearchParams(location.search).get('tab') === 'treino' ? 'treino' : 'dados-pessoais';
   const [currentStudent, setCurrentStudent] = useState<Student>(student);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -480,7 +483,7 @@ Bons treinos! 🎯`;
       </Card>
 
       {/* Abas principais */}
-      <Tabs defaultValue="dados-pessoais" className="w-full">
+      <Tabs key={`${student.id}:${initialTab}`} defaultValue={initialTab} className="w-full">
         <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="dados-pessoais" className="flex items-center gap-2">
             <User className="w-4 h-4" />
