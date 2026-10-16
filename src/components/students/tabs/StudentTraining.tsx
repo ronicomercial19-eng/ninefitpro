@@ -1,6 +1,6 @@
 import { AssignedTrainingViewer } from '@/components/9fit/AssignedTrainingViewer';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,10 +46,24 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   const [showPeriodization, setShowPeriodization] = useState(false);
   const [selectedHTMLTraining, setSelectedHTMLTraining] = useState<TrainingAssignment | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetchTrainings();
   }, [student.id]);
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('action') === 'assign-periodization') setShowPeriodization(true);
+  }, [location.search, student.id]);
+
+  const changePeriodizationDialog = (open: boolean) => {
+    setShowPeriodization(open);
+    if (!open && new URLSearchParams(location.search).get('action') === 'assign-periodization') {
+      const params = new URLSearchParams(location.search);
+      params.delete('action');
+      navigate({ pathname: location.pathname, search: `?${params}` }, { replace: true });
+    }
+  };
 
   const fetchTrainings = async () => {
     try {
@@ -432,7 +446,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
       {/* Periodization Dialog */}
       <PeriodizationAssignDialog
         open={showPeriodization}
-        onOpenChange={setShowPeriodization}
+        onOpenChange={changePeriodizationDialog}
         studentId={student.id}
         studentName={student.nome}
         onSuccess={fetchTrainings}
