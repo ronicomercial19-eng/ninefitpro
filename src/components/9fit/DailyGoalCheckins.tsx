@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { Footprints, Dumbbell, Utensils } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { toast } from "sonner";
+
+// Linha de CTAs do Hub: topo = estado (HubFloatingMetrics), aqui = ação (iniciar).
+// O auto-relato "Já fiz hoje" continua disponível (fn_fitpro_daily_checkin) porque alimenta o Sync Score.
+const CTAS = [
+  { key: 'run', label: 'Correr', hint: 'GPS e ritmo', route: '/9fit/move', Icon: Footprints },
+  { key: 'train', label: 'Treinar', hint: 'Treino do dia', route: '/9fit/train', Icon: Dumbbell },
+  { key: 'diet', label: 'Dieta', hint: 'Plano e refeições', route: '/9fit/dieta', Icon: Utensils },
+] as const;
+
 export function DailyGoalCheckins() {
+  const navigate = useNavigate();
   const {user}=useAuth(); const {athleteId}=useAthleteId();
   const [done,setDone]=useState<string[]>([]); const [saving,setSaving]=useState<string|null>(null);
   const date=format(new Date(),'yyyy-MM-dd'), hour=new Date().getHours();
@@ -36,8 +48,26 @@ export function DailyGoalCheckins() {
       setDone(values=>[...values,key]); window.dispatchEvent(new Event('9fit:sync_updated')); toast.success('Conclusão registrada');
     }catch(error:any){toast.error(error.message || 'Falha ao registrar conclusão');}finally{setSaving(null);}
   }
-  return <section className="space-y-2" aria-label="Metas diárias"><p className="text-xs text-muted-foreground">Toque para confirmar o que você já fez hoje.</p><div className="grid grid-cols-3 gap-2">{['move','nutri','treino'].map(kind=>{
-    const key=kind==='nutri'?`nutri:${slot}`:kind;
-    return <button key={kind} type="button" disabled={!athleteId || !!saving || done.includes(key)} onClick={()=>void complete(kind)} className={`rounded-xl border p-3 text-xs disabled:opacity-70 ${done.includes(key)?'border-emerald-500/50 bg-emerald-500/10':'border-primary/30 bg-primary/10'}`}><strong className="block uppercase">{kind}</strong><span>{saving===key?'Salvando…':done.includes(key)?'✓ Concluído':kind==='nutri'?slot:kind==='move'?'Fiz minha meta':'Fiz o treino'}</span></button>;
-  })}</div></section>;
+  const selfReport=[
+    {kind:'treino',key:'treino',label:'Treino',doneLabel:'Treino feito'},
+    {kind:'nutri',key:`nutri:${slot}`,label:slot,doneLabel:`${slot} feito`},
+  ];
+  return <section className="space-y-3" aria-label="Ações rápidas">
+    <div className="grid grid-cols-3 gap-2">
+      {CTAS.map(({key,label,hint,route,Icon})=>(
+        <button key={key} type="button" onClick={()=>navigate(route)} className="flex flex-col items-center justify-center gap-1 rounded-xl border border-primary/30 bg-primary/10 p-3 text-xs transition-transform active:scale-95">
+          <Icon className="h-4 w-4 text-primary" aria-hidden />
+          <strong className="block uppercase">{label}</strong>
+          <span className="text-[10px] text-muted-foreground">{hint}</span>
+        </button>
+      ))}
+    </div>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Já fiz hoje</span>
+      {selfReport.map(({kind,key,label,doneLabel})=>{
+        const isDone=done.includes(key);
+        return <button key={key} type="button" disabled={!athleteId || !!saving || isDone} onClick={()=>void complete(kind)} className={`rounded-full border px-3 py-1.5 text-[11px] disabled:opacity-70 ${isDone?'border-emerald-500/50 bg-emerald-500/10':'border-white/10 bg-white/[0.03]'}`}>{saving===key?'Salvando…':isDone?`✓ ${doneLabel}`:label}</button>;
+      })}
+    </div>
+  </section>;
 }
