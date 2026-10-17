@@ -36,6 +36,13 @@ export function NutritionTodaySummary({ interactive = false, date }: {interactiv
   const [waterAmount,setWaterAmount]=useState('250'),[savingWater,setSavingWater]=useState(false);
   const [waterEditing,setWaterEditing]=useState<string|null>(null);
   useEffect(()=>{setForm(false);setEditing(null);setWaterEditing(null);setWaterAmount('250');},[athleteId]);
+  // Hub (modo calmo): o card "Refeição" do topo e o botão "Registrar refeição" abrem o formulário em splash, sem sair do Hub.
+  useEffect(()=>{
+    if(interactive) return;
+    const open=()=>{setEditing(null);setForm(true);};
+    window.addEventListener('9fit:open-meal-log',open);
+    return()=>window.removeEventListener('9fit:open-meal-log',open);
+  },[interactive]);
   async function saveWater(){
     const amount=Number(waterAmount);
     if(!athleteId || savingWater)return;
@@ -90,7 +97,7 @@ export function NutritionTodaySummary({ interactive = false, date }: {interactiv
       <div className="flex flex-wrap gap-2">
         {interactive
           ? <button className={pillPrimary} onClick={()=>{setEditing(null);setForm(true);}}>Registrar refeição <ArrowUpRight className="h-3.5 w-3.5" /></button>
-          : <button className={pillGhost} onClick={()=>navigate('/9fit/dieta?action=log')}>Registrar refeição <ArrowUpRight className="h-3.5 w-3.5" /></button>}
+          : <button className={pillPrimary} onClick={()=>{setEditing(null);setForm(true);}}>Registrar refeição <ArrowUpRight className="h-3.5 w-3.5" /></button>}
         <button className={pillGhost} onClick={()=>navigate('/9fit/dieta')}>Abrir dieta</button>
       </div>
 
@@ -117,8 +124,8 @@ export function NutritionTodaySummary({ interactive = false, date }: {interactiv
           <button className={pillGhost} onClick={()=>navigate('/9fit/staff?context=diet_review',{state:{nutritionReview:{dietName:data.diet?.diet_name || 'Sem dieta ativa',summary:`Revisão alimentar: ${data.meals.length} refeições hoje, ${data.totals.calories} kcal, ${data.totals.protein} g proteína e ${data.waterMl} ml água. Metas prescritas: ${JSON.stringify(data.goals)}.`}}})}>Buscar ajuste profissional</button>
         </div>
         <p className="text-xs text-muted-foreground">A dieta completa contém as refeições prescritas. Mudanças na prescrição precisam de revisão profissional.</p>
-        <NutritionLogForm open={form} onClose={()=>setForm(false)} athleteId={athleteId} meal={editing} onSaved={()=>void data.refresh()}/>
       </>}
+      <NutritionLogForm open={form} onClose={()=>setForm(false)} athleteId={athleteId} meal={editing} onSaved={()=>void data.refresh()}/>
     </div>
   </section>;
 }
