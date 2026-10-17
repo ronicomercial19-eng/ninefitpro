@@ -32,7 +32,8 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   const results=useRonResultCards(athleteId);
   const waterBusy=useRef(false);
   async function logWater(){if(!athleteId||waterBusy.current)return;waterBusy.current=true;try{const {error}=await supabase.from("hydration_logs").insert({athlete_id:athleteId,log_date:businessDate(),amount_ml:500}).select("id").single();if(error)throw error;["9fit:hydration-updated","9fit:water-updated","9fit:sync_updated"].forEach(event=>window.dispatchEvent(new Event(event)));toast.success("500 ml de água registrados");}catch{toast.error("Não foi possível registrar a água.");}finally{waterBusy.current=false;}}
-  const [index,setIndex]=useState(0),[hovered,setHovered]=useState(false),[focused,setFocused]=useState(false),[manualPause,setManualPause]=useState(false),[calibration,setCalibration]=useState(false);
+  // Sem carrossel automático: o insight do dia fica fixo e as demais leituras são navegadas manualmente.
+  const [index,setIndex]=useState(0),[calibration,setCalibration]=useState(false);
   useEffect(()=>{setIndex(0);setCalibration(false);},[athleteId]);
   const insight = reliable
     ? insights[Math.abs(Math.round(syncScore)) % insights.length] ?? insights[0]
@@ -44,7 +45,6 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   const slides=[{id:'today',title:insight,description:reliable ? reasoning||'Consulte o RON para interpretar os sinais registrados.' : scoreStatus==='stale'?'Atualize a calibração para uma nova leitura.':'Complete a calibração diária para orientar o próximo passo.',action:reliable?'Consultar RON':'Calibrar meu dia',route:'/9fit/ron'},...results.cards];
   const selected=slides[Math.min(index,slides.length-1)];
   useEffect(()=>{setIndex(i=>Math.min(i,slides.length-1));},[slides.length]);
-  useEffect(()=>{if(hovered||focused||manualPause||calibration||slides.length<2)return;const timer=window.setInterval(()=>{if(!document.hidden)setIndex(i=>(i+1)%slides.length);},20000);return()=>window.clearInterval(timer);},[hovered,focused,manualPause,calibration,slides.length]);
 
   return (
     <div
@@ -52,8 +52,6 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
       tabIndex={0}
       onClick={() => navigate(selected.route)}
       onKeyDown={e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();navigate(selected.route);}}}
-      onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
-      onFocusCapture={()=>setFocused(true)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setFocused(false);}}
       className="relative w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black/60 p-4 text-left transition-colors hover:border-primary/30"
     >
       <div className="flex items-start justify-between gap-3">
@@ -78,7 +76,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
           </motion.div></AnimatePresence>
 
           {slides.length>1&&<div className="mt-3 flex items-center justify-between gap-2" onClick={e=>e.stopPropagation()}>
-            <button aria-label="Resultado anterior" className="p-2 text-primary" onClick={()=>setIndex(i=>(i-1+slides.length)%slides.length)}>‹</button><span className="font-data text-[9px] uppercase tracking-widest text-muted-foreground">{Math.min(index,slides.length-1)+1}/{slides.length} · a cada 20s</span><button aria-label={manualPause?'Retomar apresentações':'Pausar apresentações'} className="font-data text-[9px] uppercase tracking-widest text-primary" onClick={()=>setManualPause(p=>!p)}>{manualPause?'Retomar':'Pausar'}</button><button aria-label="Próximo resultado" className="p-2 text-primary" onClick={()=>setIndex(i=>(i+1)%slides.length)}>›</button>
+            <button aria-label="Resultado anterior" className="p-2 text-primary" onClick={()=>setIndex(i=>(i-1+slides.length)%slides.length)}>‹</button><span className="font-data text-[9px] uppercase tracking-widest text-muted-foreground">{Math.min(index,slides.length-1)+1}/{slides.length}</span><button aria-label="Próximo resultado" className="p-2 text-primary" onClick={()=>setIndex(i=>(i+1)%slides.length)}>›</button>
           </div>}
           {results.failed&&<button className="text-xs text-neutral-400" onClick={e=>{e.stopPropagation();void results.refresh();}}>Resultados indisponíveis · tentar novamente</button>}
 
