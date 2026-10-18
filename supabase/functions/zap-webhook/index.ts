@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "method not allowed" });
 
   const raw = await req.text();
-  const secret = Deno.env.get("FITPRO_WEBHOOK_SECRET");
+  const secret = Deno.env.get("NINEZAP_SHARED_SECRET");
   if (!secret) return json(503, { error: "webhook secret not configured" });
 
   const sigHeader = req.headers.get("x-9zap-signature") || "";

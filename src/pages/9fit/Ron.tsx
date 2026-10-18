@@ -85,7 +85,11 @@ export default function NineFitRon() {
   const { state } = useUserState();
 
   // 9ZAP legacy thread support
-  const zapThread = useZapThread(user?.id, `Atendimento — ${user?.user_metadata?.full_name || "Aluno"}`);
+  const zapThread = useZapThread(
+    user?.id,
+    `Atendimento — ${user?.user_metadata?.full_name || "Aluno"}`,
+    { phone: user?.phone || user?.user_metadata?.phone, name: user?.user_metadata?.full_name || "Aluno" },
+  );
   const zapMessages = useZapMessages(zapThread.data);
   const sendZap = useSendZap(zapThread.data, user?.id);
 

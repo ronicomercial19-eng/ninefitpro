@@ -33,7 +33,6 @@ import { useEngrenagem } from '@/hooks/useEngrenagem';
 import { supabase } from '@/integrations/supabase/client';
 import { ActivationMissionCard } from './ActivationMissionCard';
 import { ActiveSkillsBadge } from './ActiveSkillsBadge';
-import { EcoEmbed } from './EcoEmbed';
 import { QuickCheckIn } from './QuickCheckIn';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 import { HubCommandDeck } from './HubCommandDeck';
@@ -65,7 +64,6 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
   const [ecosystemActiveCount, setEcosystemActiveCount] = useState<number | null>(null);
   const [activeModal, setActiveModal] = useState<ModalPillarId>(null);
   const [eventIdx, setEventIdx] = useState(0);
-  const [showCommunity, setShowCommunity] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -363,7 +361,19 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </div>
 
         {/* Hero Visual Principal — 100% Baseado em Imagem */}
-        <div className="relative rounded-lg overflow-hidden border border-white/10 group">
+        <div
+          className="relative rounded-lg overflow-hidden border border-white/10 group cursor-pointer"
+          role="link"
+          tabIndex={0}
+          onClick={() => currentEvent.id === 'community-feed' && navigate('/9fit/community')}
+          onKeyDown={(event) => {
+            if (currentEvent.id === 'community-feed' && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              navigate('/9fit/community');
+            }
+          }}
+          aria-label={currentEvent.id === 'community-feed' ? 'Acessar Comunidade 9FIT' : currentEvent.title}
+        >
           <div className="relative h-44 sm:h-52 md:h-60 w-full overflow-hidden bg-black">
             <img
               src={currentEvent.image}
@@ -407,7 +417,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
               type="button"
               onClick={() => {
                 if (currentEvent.id === 'community-feed') {
-                  setShowCommunity(true);
+                  navigate('/9fit/community');
                 } else {
                   navigate(currentEvent.route);
                 }
@@ -644,13 +654,6 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           </motion.div>
         )}
       </AnimatePresence>
-      {showCommunity && (
-        <EcoEmbed 
-          title="COMUNIDADE 9FIT" 
-          url="https://fit-community.9fit.com" 
-          backTo="/9fit/hub" 
-        />
-      )}
     </div>
   );
 }
