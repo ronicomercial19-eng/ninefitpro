@@ -7,11 +7,13 @@ const corsHeaders = {
 };
 
 const COMMUNITY_BASE = "https://piqqmrwinullmenoyyfr.supabase.co/functions/v1";
-const ALLOWED_ACTIONS = new Set([
-  "profile", "feed", "posts", "groups", "group", "matches", "leaderboard",
-  "missions", "badges", "notifications", "student_profile", "student_scores",
-  "student_assessments",
-]);
+const ROUTES: Record<string, string> = {
+  feed: "/community/posts",
+  posts: "/community/posts",
+  groups: "/community/groups",
+  categories: "/categories",
+  products: "/products",
+};
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
   status,
@@ -44,15 +46,14 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const action = url.searchParams.get("action") || "feed";
-  if (!ALLOWED_ACTIONS.has(action)) return json(400, { error: "unsupported_action" });
+  const route = ROUTES[action];
+  if (!route) return json(400, { error: "unsupported_action" });
 
   const params = new URLSearchParams(url.searchParams);
   params.delete("action");
-  const email = String(auth.claims.email || "");
-  if (email && !params.has("email")) params.set("email", email);
-
   try {
-    const upstream = await fetch(`${COMMUNITY_BASE}/public-api?action=${encodeURIComponent(action)}&${params}`, {
+    const query = params.toString();
+    const upstream = await fetch(`${COMMUNITY_BASE}${route}${query ? `?${query}` : ""}`, {
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
