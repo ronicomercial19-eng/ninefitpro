@@ -406,7 +406,7 @@ export default function NineFitAjusteTreino() {
         </div>
       )}
 
-      <div className="sticky bottom-16 z-20 mt-6 border-t border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky bottom-20 z-20 mt-6 border-t border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
         <button onClick={onSave} disabled={saving || !!executionStatus || Object.keys(dirty).length === 0}
           className="w-full rounded-full bg-primary py-4 font-bold uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)] disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-2">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
