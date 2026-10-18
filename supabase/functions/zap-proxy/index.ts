@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-const configuredZapBase = (Deno.env.get("NINEZAP_BASE_URL") || "https://core-stride-os.lovable.app").replace(/\/+$/, "");
+const configuredZapBase = (Deno.env.get("NINEZAP_BASE_URL") || "https://hmppvtdlzsnxyiaozssu.supabase.co/functions/v1/zap-api").replace(/\/+$/, "");
 const ZAP_BASE = configuredZapBase.endsWith("/api/public/zap")
   ? configuredZapBase
   : `${configuredZapBase}/api/public/zap`;
