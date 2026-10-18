@@ -365,11 +365,11 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           className="relative rounded-lg overflow-hidden border border-white/10 group cursor-pointer"
           role="link"
           tabIndex={0}
-          onClick={() => currentEvent.id === 'community-feed' && navigate('/9fit/community')}
+          onClick={() => currentEvent.id === 'community-feed' && window.open('https://ninefit-community-flow.lovable.app', '_blank', 'noopener,noreferrer')}
           onKeyDown={(event) => {
             if (currentEvent.id === 'community-feed' && (event.key === 'Enter' || event.key === ' ')) {
               event.preventDefault();
-              navigate('/9fit/community');
+              window.open('https://ninefit-community-flow.lovable.app', '_blank', 'noopener,noreferrer');
             }
           }}
           aria-label={currentEvent.id === 'community-feed' ? 'Acessar Comunidade 9FIT' : currentEvent.title}
@@ -417,7 +417,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
               type="button"
               onClick={() => {
                 if (currentEvent.id === 'community-feed') {
-                  navigate('/9fit/community');
+                  window.open('https://ninefit-community-flow.lovable.app', '_blank', 'noopener,noreferrer');
                 } else {
                   navigate(currentEvent.route);
                 }
