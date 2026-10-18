@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import { usePhysicalCommitments } from "@/hooks/usePhysicalCommitments";
 import { NutritionTodaySummary } from "./NutritionTodaySummary";
 import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
@@ -91,6 +92,11 @@ export function FitOSConsoleDock({
   const [assessment, setAssessment] = useState<AssessmentState | null>(null);
   const [stats, setStats] = useState<StatsState | null>(null);
   const [goals, setGoals] = useState<GoalRow[]>([]);
+  // Compromissos de hoje (agendamentos, aulas em grupo e início de prescrições). O hook depende só do mês (yyyy-MM), então new Date() é estável.
+  const commitments = usePhysicalCommitments(athleteId, new Date());
+  const todayKey = new Date().toLocaleDateString("en-CA");
+  const commitmentsToday = commitments.items.filter((item) => new Date(item.at).toLocaleDateString("en-CA") === todayKey).length;
+  const commitmentsKnown = !commitments.loading && !commitments.failed;
 
   // Estados reais dos cards (nada decorativo): avaliação (avaliacoes_unificadas), evolução (user_stats_agg), metas (metas_progresso).
   useEffect(() => {
@@ -145,6 +151,12 @@ export function FitOSConsoleDock({
         ? `${stats.prs} ${stats.prs === 1 ? "PR" : "PRS"}`
         : "REGISTROS";
 
+  const commitmentsStatus = !commitmentsKnown
+    ? "DISPONÍVEL"
+    : commitmentsToday > 0
+      ? `${commitmentsToday} HOJE`
+      : "NENHUM HOJE";
+
   const modules: Record<ModuleKey, ModuleConfig> = {
     avaliacao: {
       key: "avaliacao",
@@ -169,8 +181,8 @@ export function FitOSConsoleDock({
       tag: "AGENDA DO ATLETA",
       title: "Compromissos",
       subtitle: "Aulas, avaliações e início de novas prescrições",
-      statusText: "DISPONÍVEL",
-      signal: undefined,
+      statusText: commitmentsStatus,
+      signal: commitmentsKnown && commitmentsToday > 0 ? "pending" : undefined,
       icon: CalendarCheck,
     },
     evolucao: {
@@ -202,11 +214,16 @@ export function FitOSConsoleDock({
     },
   };
 
-  // Ordem por urgência: Avaliação (se pendente/vencida) > Compromissos > Metas > Evolução > Avaliação (em dia) > Radar > Prime member (sempre por último).
+  // Ordem por urgência: Avaliação (pendente/vencida) e Compromissos (com algo hoje) sobem; Prime member é sempre o último.
   const urgent = assessmentPending || assessmentStale;
-  const squircleKeys: ModuleKey[] = urgent
-    ? ["avaliacao", "checkin", "activation", "evolucao", "schedule", "offers"]
-    : ["checkin", "activation", "evolucao", "avaliacao", "schedule", "offers"];
+  const hasToday = commitmentsKnown && commitmentsToday > 0;
+  const squircleKeys: ModuleKey[] = [];
+  if (urgent) squircleKeys.push("avaliacao");
+  if (hasToday) squircleKeys.push("checkin");
+  squircleKeys.push("activation", "evolucao");
+  if (!urgent) squircleKeys.push("avaliacao");
+  if (!hasToday) squircleKeys.push("checkin");
+  squircleKeys.push("schedule", "offers");
   const currentMod = activeModule ? modules[activeModule] : null;
   const sessionsPct = Math.min(100, Math.max(0, (weekly.treinos / 5) * 100));
 
