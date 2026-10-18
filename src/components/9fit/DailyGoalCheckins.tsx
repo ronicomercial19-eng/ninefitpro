@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { toast } from "sonner";
+
+// Padrão Nine Pro v2: pendente = calmo (neutro); concluído = laranja. Sem verde.
 export function DailyGoalCheckins() {
   const {user}=useAuth(); const {athleteId}=useAthleteId();
   const [done,setDone]=useState<string[]>([]); const [saving,setSaving]=useState<string|null>(null);
@@ -36,8 +38,9 @@ export function DailyGoalCheckins() {
       setDone(values=>[...values,key]); window.dispatchEvent(new Event('9fit:sync_updated')); toast.success('Conclusão registrada');
     }catch(error:any){toast.error(error.message || 'Falha ao registrar conclusão');}finally{setSaving(null);}
   }
-  return <section className="space-y-2" aria-label="Metas diárias"><p className="text-xs text-muted-foreground">Toque para confirmar o que você já fez hoje.</p><div className="grid grid-cols-3 gap-2">{['move','nutri','treino'].map(kind=>{
+  return <section className="space-y-2" aria-label="Metas diárias"><p className="font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">Confirme o que você já fez hoje</p><div className="grid grid-cols-3 gap-2">{['move','nutri','treino'].map(kind=>{
     const key=kind==='nutri'?`nutri:${slot}`:kind;
-    return <button key={kind} type="button" disabled={!athleteId || !!saving || done.includes(key)} onClick={()=>void complete(kind)} className={`rounded-xl border p-3 text-xs disabled:opacity-70 ${done.includes(key)?'border-emerald-500/50 bg-emerald-500/10':'border-primary/30 bg-primary/10'}`}><strong className="block uppercase">{kind}</strong><span>{saving===key?'Salvando…':done.includes(key)?'✓ Concluído':kind==='nutri'?slot:kind==='move'?'Fiz minha meta':'Fiz o treino'}</span></button>;
+    const isDone=done.includes(key);
+    return <button key={kind} type="button" disabled={!athleteId || !!saving || isDone} onClick={()=>void complete(kind)} className={`rounded-2xl border p-3 text-left transition-all active:scale-95 disabled:cursor-default ${isDone?'border-primary/50 bg-primary/15':'border-white/10 bg-black/60 hover:border-primary/40 disabled:opacity-60'}`}><strong className={`block font-data text-[9px] uppercase tracking-[0.25em] ${isDone?'text-primary':'text-muted-foreground'}`}>{kind}</strong><span className="mt-1 block font-display text-xs font-black uppercase leading-tight tracking-tight text-foreground">{saving===key?'Salvando…':isDone?'✓ Concluído':kind==='nutri'?slot:kind==='move'?'Fiz minha meta':'Fiz o treino'}</span></button>;
   })}</div></section>;
 }
