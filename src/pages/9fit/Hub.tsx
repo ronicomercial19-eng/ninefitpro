@@ -20,7 +20,7 @@ import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { Info } from "lucide-react";
-import { usePushNotifications } from "@/hooks/useDeviceCapabilities";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const hubStaggerContainer = {
   hidden: { opacity: 0 },
@@ -137,9 +137,9 @@ export default function NineFitHub() {
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
   
-  const { permission, requestPermission } = usePushNotifications();
+  // Push real: assina no PushManager e grava em push_subscriptions (hook com VAPID). Só aparece onde o navegador suporta e ainda não há assinatura.
   // Bluetooth removido do Hub: Web Bluetooth não existe no iOS/Safari e o botão não gravava nenhum dado.
-  const pushSupported = typeof window !== "undefined" && "Notification" in window;
+  const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, subscribe: subscribePush } = usePushNotifications();
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -156,9 +156,9 @@ export default function NineFitHub() {
       )}
 
       {/* Notificações: só aparece quando há o que pedir */}
-      {pushSupported && permission === 'default' && (
+      {pushSupported && !pushSubscribed && (
         <div className="px-4 md:px-6 flex gap-2 my-4">
-          <button onClick={requestPermission} className="text-xs bg-primary/10 text-primary p-2 rounded">Ativar notificações</button>
+          <button onClick={() => void subscribePush()} disabled={pushLoading} className="text-xs bg-primary/10 text-primary p-2 rounded disabled:opacity-60">{pushLoading ? "Ativando…" : "Ativar notificações"}</button>
         </div>
       )}
 
