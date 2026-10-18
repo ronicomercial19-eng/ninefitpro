@@ -3,11 +3,28 @@ import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
 export const SOLUTION_ATTRIBUTION_ID = "gmp_git_agentskills_v1";
 
-let loaderPromise: Promise<typeof google> | null = null;
+let librariesPromise: Promise<typeof google> | null = null;
 let cachedApiKey: string | null = null;
+let optionsSet = false;
+let authFailed = false;
+
+/** true quando o Google recusou a chave (billing, referrer, API desativada...). */
+export function didMapsAuthFail(): boolean {
+  return authFailed;
+}
+
+function installAuthHook() {
+  // O Google chama window.gm_authFailure quando a chave é recusada e mostra o
+  // diálogo "Esta página não carregou o Google Maps corretamente". Avisamos o app
+  // para ele mostrar um estado próprio em vez de deixar a tela quebrada.
+  (window as any).gm_authFailure = () => {
+    authFailed = true;
+    window.dispatchEvent(new CustomEvent("9fit:maps-auth-failure"));
+  };
+}
 
 /**
- * Obtém a chave do Google Maps de forma robusta
+ * Obtém a chave do Google Maps. Sem chave hardcoded: só ambiente ou API interna.
  */
 export async function getGoogleMapsApiKey(): Promise<string> {
   if (cachedApiKey) return cachedApiKey;
@@ -15,7 +32,6 @@ export async function getGoogleMapsApiKey(): Promise<string> {
   const envKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   if (envKey && typeof envKey === "string" && envKey.trim().length > 10) {
     cachedApiKey = envKey.trim();
-    console.log("[GoogleMapsLoader] Usando chave do ambiente (VITE_GOOGLE_MAPS_API_KEY).");
     return cachedApiKey;
   }
 
@@ -25,7 +41,6 @@ export async function getGoogleMapsApiKey(): Promise<string> {
       const data = await res.json();
       if (data?.apiKey) {
         cachedApiKey = data.apiKey;
-        console.log("[GoogleMapsLoader] Usando chave via API interna.");
         return cachedApiKey!;
       }
     }
@@ -33,26 +48,26 @@ export async function getGoogleMapsApiKey(): Promise<string> {
     console.warn("[GoogleMapsLoader] Falha ao buscar chave via API:", e);
   }
 
-  console.log("[GoogleMapsLoader] Usando chave hardcoded (fallback).");
-  cachedApiKey = "AIzaSyDdsMhbF8C6KTht4vbqPcBvxHNAdM3doh4";
-  return cachedApiKey;
+  throw new Error("maps_key_missing");
 }
 
 /**
- * Carrega a API do Google Maps com tratamento de singleton
+ * Carrega a API do Google Maps como singleton.
+ * - Carregamentos simultâneos (abrir a tela 2x) compartilham a mesma promessa.
+ * - Se falhar, a promessa é descartada: a próxima abertura tenta de novo
+ *   (antes a promessa rejeitada ficava presa e toda abertura seguinte falhava).
+ * - As bibliotecas (geometry, marker, geocoding) são sempre garantidas.
  */
 export async function loadGoogleMaps(): Promise<typeof google> {
-  if (window.google?.maps) {
-    return window.google;
-  }
+  if (librariesPromise) return librariesPromise;
 
-  if (loaderPromise) {
-    return loaderPromise;
-  }
-
-  loaderPromise = (async () => {
+  librariesPromise = (async () => {
     const apiKey = await getGoogleMapsApiKey();
-    setOptions({ key: apiKey, v: "weekly" });
+    installAuthHook();
+    if (!optionsSet) {
+      setOptions({ key: apiKey, v: "weekly" });
+      optionsSet = true;
+    }
     await Promise.all([
       importLibrary("maps"),
       importLibrary("geometry"),
@@ -60,9 +75,12 @@ export async function loadGoogleMaps(): Promise<typeof google> {
       importLibrary("geocoding"),
     ]);
     return window.google;
-  })();
+  })().catch((error) => {
+    librariesPromise = null;
+    throw error;
+  });
 
-  return loaderPromise;
+  return librariesPromise;
 }
 
 /**
@@ -152,13 +170,21 @@ export const NINE_FIT_MAP_STYLES: google.maps.MapTypeStyle[] = [
 let geocoderInstance: google.maps.Geocoder | null = null;
 
 /**
- * Geocodificação reversa em tempo real com extração precisa de Rua e Bairro
+ * Geocodificação reversa em tempo real com extração precisa de Rua e Bairro.
+ * Nunca lança: sem Maps (ou chave recusada) devolve o texto padrão.
  */
 export async function getStreetNameFromCoords(lat: number, lng: number): Promise<{
   street: string;
   neighborhood: string;
   formattedAddress: string;
 }> {
+  const fallback = {
+    street: "Em percurso...",
+    neighborhood: "GPS Ativo",
+    formattedAddress: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+  };
+  if (authFailed) return fallback;
+
   try {
     const g = await loadGoogleMaps();
     if (!geocoderInstance) {
@@ -167,7 +193,6 @@ export async function getStreetNameFromCoords(lat: number, lng: number): Promise
 
     const response = await geocoderInstance.geocode({
       location: { lat, lng },
-      // Solução de atribuição
     });
 
     if (response && response.results && response.results.length > 0) {
@@ -205,9 +230,5 @@ export async function getStreetNameFromCoords(lat: number, lng: number): Promise
     console.warn("[GoogleMapsLoader] Erro na geocodificação reversa:", error);
   }
 
-  return {
-    street: "Em percurso...",
-    neighborhood: "GPS Ativo",
-    formattedAddress: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-  };
+  return fallback;
 }
