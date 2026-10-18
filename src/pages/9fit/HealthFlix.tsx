@@ -237,7 +237,7 @@ export default function NineFitHealthFlix() {
       {filtered.length > visibleCount && <button className="mx-4 mt-4 text-sm text-primary" onClick={() => setVisibleCount(count => count + 24)}>Mostrar mais conteúdos</button>}
       {selected && normalizePlayerUrl(selected) && (
         <div className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-md p-3 sm:p-6 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Reproduzir ${selected.title}`}>
-          <div className="w-full max-w-5xl h-[78dvh] rounded-3xl border border-primary/30 bg-[#0f0f0f] shadow-2xl overflow-hidden flex flex-col">
+          <div className="w-full max-w-5xl h-auto max-h-[90dvh] overflow-y-auto rounded-3xl border border-primary/30 bg-[#0f0f0f] shadow-2xl flex flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-primary/20 px-4 py-3 bg-[#0f0f0f]">
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate text-white">{selected.title}</p>
@@ -253,7 +253,7 @@ export default function NineFitHealthFlix() {
               </div>
             </div>
             <p className="px-4 py-2 text-xs text-muted-foreground">Se o provedor bloquear a reprodução aqui, use Abrir em nova aba.</p>
-            <div className="w-full flex-1 min-h-0 bg-black">
+            <div className="relative w-full aspect-video bg-black overflow-hidden">
               <TrackedLibraryVideo url={normalizePlayerUrl(selected) as string} title={selected.title}
                 startSeconds={selected.last_position_seconds || 0}
                 onProgress={(position, duration) => trackEvent(selected, "content_progress_updated", position, duration)}
