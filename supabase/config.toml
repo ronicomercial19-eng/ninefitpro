@@ -58,6 +58,9 @@ verify_jwt = false
 [functions.healthflix-webhook]
 verify_jwt = false
 
+[functions.community-proxy]
+verify_jwt = false
+
 [functions.library-full-proxy]
 verify_jwt = false
 
