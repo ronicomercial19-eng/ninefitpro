@@ -10,6 +10,7 @@ import { WorkoutHome } from "@/components/9fit/WorkoutHome";
 import { WorkoutOverview } from "@/components/9fit/WorkoutOverview";
 import { WorkoutExecution } from "@/components/9fit/WorkoutExecution";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
+import { AssignedProtocols } from "@/components/9fit/AssignedProtocols";
 import { UpsellBanner } from "@/components/9fit/UpsellBanner";
 import { DynamicOffers } from "@/components/9fit/DynamicOffers";
 import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
@@ -61,8 +62,12 @@ export default function NineFitTrain() {
   const [quickOpen, setQuickOpen] = useState(false);
   const initialCalendarDate = new URLSearchParams(location.search).get("date") || undefined;
 
+  // A aba ativa vive na URL (?tab=semana | protocolo). Sem param = Hoje. Assim o voltar do navegador funciona.
   useEffect(() => {
-    if (new URLSearchParams(location.search).get("tab") === "semana" || initialCalendarDate) setSubTab("semana");
+    const tab = new URLSearchParams(location.search).get("tab");
+    if (tab === "semana" || initialCalendarDate) setSubTab("semana");
+    else if (tab === "protocolo") setSubTab("protocol");
+    else setSubTab("train");
   }, [location.search, initialCalendarDate]);
 
   // Workout flow state
@@ -315,24 +320,7 @@ export default function NineFitTrain() {
         </h1>
       </div>
 
-      <div className="px-4 relative z-10">
-        <TrainingAdjustmentBanner />
-      </div>
-
-      {prescriptionIssue && flow === "HOME" && <div role="alert" className="px-4 mb-4"><p className="rounded-xl border border-orange-500 p-4 text-sm">O treino automático foi suspenso por uma inconsistência na prescrição. Abra a aba Protocolo para ver o que seu coach enviou.</p></div>}
-
-      {/* Upsell contextual no topo de Train */}
-      <div className="px-4 mb-3 relative z-10">
-        <UpsellBanner
-          context="feature_locked"
-          storageKey="train_top"
-          variant="cyan"
-          headline="IA personaliza cada treino em tempo real no PRIME"
-          cta="Ativar 7 dias grátis"
-        />
-      </div>
-
-      {/* Sub-tabs no padrão Pill Segmented Control High-Ticket */}
+      {/* Navegação das seções logo abaixo do título: Hoje / Semana / Protocolo / Streaming */}
       {flow === "HOME" && (
         <div className="px-4 mb-3.5 relative z-10">
           <div className="rounded-xl bg-[#0f1015] border border-white/[0.08] p-1 grid grid-cols-4 gap-1 shadow-inner">
@@ -349,8 +337,7 @@ export default function NineFitTrain() {
                   type="button"
                   onClick={() => {
                     if (k === "healthflix") navigate("/9fit/healthflix");
-                    else if (k === "protocol") navigate("/9fit/protocolo");
-                    else setSubTab(k as any);
+                    else navigate({ search: `?tab=${k === "protocol" ? "protocolo" : k}` }, { replace: true });
                   }}
                   className={`py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     isActive
@@ -364,6 +351,14 @@ export default function NineFitTrain() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Avisos do dia: só na aba Hoje, junto do treino */}
+      {flow === "HOME" && subTab === "train" && (
+        <div className="px-4 mb-3.5 relative z-10 space-y-3 empty:hidden">
+          <TrainingAdjustmentBanner />
+          {prescriptionIssue && <div role="alert"><p className="rounded-xl border border-orange-500 p-4 text-sm">O treino automático foi suspenso por uma inconsistência na prescrição. Abra a aba Protocolo para ver o que seu coach enviou.</p></div>}
         </div>
       )}
 
@@ -404,7 +399,18 @@ export default function NineFitTrain() {
             onStart={handleStartExecution}
           />
         ) : subTab === "protocol" ? (
-          <DailyProtocol />
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <p className="font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">Rotina de hoje</p>
+              <DailyProtocol />
+            </div>
+            {athleteId && (
+              <div className="space-y-2">
+                <p className="font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">Do seu coach</p>
+                <AssignedProtocols athleteId={athleteId} />
+              </div>
+            )}
+          </div>
         ) : subTab === "semana" && athleteId ? (
           <WeeklyTrainingView
             athleteId={athleteId}
@@ -450,8 +456,16 @@ export default function NineFitTrain() {
         )}
         <QuickTrainModal open={quickOpen} onClose={() => setQuickOpen(false)} />
 
+        {/* Rodapé da tela: upsell e ofertas por último, nunca antes do conteúdo */}
         {flow === "HOME" && (
           <div className="mt-6 space-y-6">
+            <UpsellBanner
+              context="feature_locked"
+              storageKey="train_top"
+              variant="cyan"
+              headline="IA personaliza cada treino em tempo real no PRIME"
+              cta="Ativar 7 dias grátis"
+            />
             <DynamicOffers category="training" compact />
           </div>
         )}
