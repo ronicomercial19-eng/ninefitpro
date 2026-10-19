@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   ArrowUpRight,
   Target,
-  Dumbbell,
+  TrendingUp,
   Compass,
   CalendarCheck,
   Sparkles,
-  Activity,
+  ClipboardCheck,
+  Timer,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAthleteId } from "@/hooks/useAthleteId";
+import { usePhysicalCommitments } from "@/hooks/usePhysicalCommitments";
 import { NutritionTodaySummary } from "./NutritionTodaySummary";
 import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
@@ -37,7 +41,9 @@ interface Props {
   protocolCount: number;
 }
 
-type ModuleKey = "metrics" | "activation" | "schedule" | "protocol" | "checkin" | "offers";
+// Comandos & Sinais = checkpoint de ações rápidas: dados, engajamento, retenção e evolução.
+type ModuleKey = "avaliacao" | "activation" | "checkin" | "evolucao" | "schedule" | "offers";
+type Signal = "pending" | "ok" | undefined;
 
 interface ModuleConfig {
   key: ModuleKey;
@@ -45,8 +51,15 @@ interface ModuleConfig {
   title: string;
   subtitle: string;
   statusText: string;
+  signal: Signal;
   icon: any;
 }
+
+interface AssessmentState { last: string | null }
+interface StatsState { streak: number; treinosMes: number; prs: number; kgMes: number; ultimo: string | null }
+interface GoalRow { id: string; titulo: string; valor_atual: number | null; valor_meta: number | null; unidade: string | null }
+
+const REASSESS_DAYS = 30;
 
 // Padrão Nine Pro v2: UM foco por tela (Foco atual, com glow + número vazado).
 // Todo o resto é "calmo": preto, borda neutra, ícone laranja, sem glow/pulso.
@@ -54,6 +67,16 @@ const label = "font-data text-[9px] uppercase tracking-[0.3em] text-primary/80";
 const pillPrimary = "inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-3 font-display text-[11px] font-black uppercase tracking-wider text-primary-foreground transition-transform active:scale-95";
 const pillGhost = "inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-5 py-3 font-display text-[11px] font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/10 active:scale-95";
 const outlineStyle: React.CSSProperties = { WebkitTextStroke: "1.5px hsl(20 100% 50%)", color: "transparent" };
+
+function daysSince(isoDate: string): number {
+  const then = new Date(`${isoDate}T00:00:00`).getTime();
+  return Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
+}
+
+function formatDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  return `${d}/${m}/${y}`;
+}
 
 export function FitOSConsoleDock({
   weekly,
@@ -64,60 +87,143 @@ export function FitOSConsoleDock({
   protocolCount,
 }: Props) {
   const navigate = useNavigate();
+  const { athleteId } = useAthleteId();
   const [activeModule, setActiveModule] = useState<ModuleKey | null>(null);
+  const [assessment, setAssessment] = useState<AssessmentState | null>(null);
+  const [stats, setStats] = useState<StatsState | null>(null);
+  const [goals, setGoals] = useState<GoalRow[]>([]);
+  // Compromissos de hoje (agendamentos, aulas em grupo e início de prescrições). O hook depende só do mês (yyyy-MM), então new Date() é estável.
+  const commitments = usePhysicalCommitments(athleteId, new Date());
+  const todayKey = new Date().toLocaleDateString("en-CA");
+  const commitmentsToday = commitments.items.filter((item) => new Date(item.at).toLocaleDateString("en-CA") === todayKey).length;
+  const commitmentsKnown = !commitments.loading && !commitments.failed;
+
+  // Estados reais dos cards (nada decorativo): avaliação (avaliacoes_unificadas), evolução (user_stats_agg), metas (metas_progresso).
+  useEffect(() => {
+    if (!athleteId) { setAssessment(null); setStats(null); setGoals([]); return; }
+    let active = true;
+    async function load() {
+      const db = supabase as any;
+      const [a, s, g] = await Promise.all([
+        db.from("avaliacoes_unificadas").select("data_avaliacao").eq("athlete_id", athleteId).order("data_avaliacao", { ascending: false }).limit(1),
+        db.from("user_stats_agg").select("streak_dias,total_treinos_mes,kg_total_mes,prs_count,ultimo_treino").eq("athlete_id", athleteId).maybeSingle(),
+        db.from("metas_progresso").select("id,titulo,valor_atual,valor_meta,unidade").eq("athlete_id", athleteId).eq("status", "ativa").order("created_at", { ascending: false }).limit(3),
+      ]);
+      if (!active) return;
+      if (!a.error) setAssessment({ last: a.data?.[0]?.data_avaliacao ?? null });
+      if (!s.error) {
+        const row = s.data;
+        setStats(row ? {
+          streak: Number(row.streak_dias ?? 0),
+          treinosMes: Number(row.total_treinos_mes ?? 0),
+          prs: Number(row.prs_count ?? 0),
+          kgMes: Number(row.kg_total_mes ?? 0),
+          ultimo: row.ultimo_treino ?? null,
+        } : { streak: 0, treinosMes: 0, prs: 0, kgMes: 0, ultimo: null });
+      }
+      if (!g.error) setGoals((g.data ?? []) as GoalRow[]);
+    }
+    void load();
+    const events = ["9fit:sync_updated", "9fit:profile-updated", "9fit:workout-updated"];
+    events.forEach((e) => window.addEventListener(e, load));
+    return () => { active = false; events.forEach((e) => window.removeEventListener(e, load)); };
+  }, [athleteId]);
+
+  const assessmentPending = assessment !== null && assessment.last === null;
+  const assessmentAge = assessment?.last ? daysSince(assessment.last) : null;
+  const assessmentStale = assessmentAge !== null && assessmentAge >= REASSESS_DAYS;
+
+  const assessmentStatus = assessment === null
+    ? "—"
+    : assessmentPending
+      ? "PENDENTE"
+      : assessmentStale
+        ? "REAVALIAR"
+        : assessmentAge === 0
+          ? "ATUALIZADA HOJE"
+          : `ATUALIZADA HÁ ${assessmentAge}D`;
+
+  const evolutionStatus = stats === null
+    ? "—"
+    : stats.streak > 0
+      ? `STREAK ${stats.streak}D`
+      : stats.prs > 0
+        ? `${stats.prs} ${stats.prs === 1 ? "PR" : "PRS"}`
+        : "REGISTROS";
+
+  const commitmentsStatus = !commitmentsKnown
+    ? "DISPONÍVEL"
+    : commitmentsToday > 0
+      ? `${commitmentsToday} HOJE`
+      : "NENHUM HOJE";
 
   const modules: Record<ModuleKey, ModuleConfig> = {
+    avaliacao: {
+      key: "avaliacao",
+      tag: "AVALIAÇÃO GUIADA",
+      title: "Avaliação guiada",
+      subtitle: "Peso, composição corporal e cargas de referência em cerca de 3 minutos",
+      statusText: assessmentStatus,
+      signal: assessment === null ? undefined : assessmentPending || assessmentStale ? "pending" : "ok",
+      icon: ClipboardCheck,
+    },
     activation: {
       key: "activation",
       tag: "METAS DO ATLETA",
       title: "Metas",
       subtitle: `Plano ativo: ${performancePlanTitle || "Defina seu objetivo"}`,
-      statusText: "EM ANDAMENTO",
+      statusText: `${weekly.treinos}/5 SESSÕES`,
+      signal: undefined,
       icon: Target,
-    },
-    protocol: {
-      key: "protocol",
-      tag: "PRESCRIÇÃO NINE PRO",
-      title: "Treinos",
-      subtitle: `${protocolCount} conteúdos ativos cadastrados`,
-      statusText: "PRESCRIÇÃO ATIVA",
-      icon: Dumbbell,
-    },
-    metrics: {
-      key: "metrics",
-      tag: "ALIMENTAÇÃO DO DIA",
-      title: "Dieta",
-      subtitle: "Dieta, refeições e hidratação em um só lugar",
-      statusText: "ABRIR DIÁRIO",
-      icon: Activity,
-    },
-    schedule: {
-      key: "schedule",
-      tag: "PROGRAMAÇÃO DO DIA",
-      title: "Radar 3D",
-      subtitle: "Visão tridimensional da consistência neuromuscular",
-      statusText: "REGISTROS",
-      icon: Compass,
     },
     checkin: {
       key: "checkin",
       tag: "AGENDA DO ATLETA",
       title: "Compromissos",
       subtitle: "Aulas, avaliações e início de novas prescrições",
-      statusText: "DISPONÍVEL",
+      statusText: commitmentsStatus,
+      signal: commitmentsKnown && commitmentsToday > 0 ? "pending" : undefined,
       icon: CalendarCheck,
+    },
+    evolucao: {
+      key: "evolucao",
+      tag: "EVOLUÇÃO DO ATLETA",
+      title: "Evolução",
+      subtitle: "Streak, treinos do mês e recordes pessoais",
+      statusText: evolutionStatus,
+      signal: stats === null ? undefined : stats.streak > 0 ? "ok" : "pending",
+      icon: TrendingUp,
+    },
+    schedule: {
+      key: "schedule",
+      tag: "PROGRAMAÇÃO DO DIA",
+      title: "Radar",
+      subtitle: "Visão tridimensional da consistência neuromuscular",
+      statusText: "REGISTROS",
+      signal: undefined,
+      icon: Compass,
     },
     offers: {
       key: "offers",
       tag: "BENEFÍCIOS E UPGRADES",
-      title: "Prime",
+      title: "Prime member",
       subtitle: "Condições especiais e benefícios exclusivos do seu nível",
       statusText: "EXCLUSIVO",
+      signal: undefined,
       icon: Sparkles,
     },
   };
 
-  const squircleKeys: ModuleKey[] = ["activation", "protocol", "metrics", "schedule", "checkin", "offers"];
+  // Ordem por urgência: Avaliação (pendente/vencida) e Compromissos (com algo hoje) sobem; Prime member é sempre o último.
+  const urgent = assessmentPending || assessmentStale;
+  const hasToday = commitmentsKnown && commitmentsToday > 0;
+  const squircleKeys: ModuleKey[] = [];
+  if (urgent) squircleKeys.push("avaliacao");
+  if (hasToday) squircleKeys.push("checkin");
+  squircleKeys.push("activation", "evolucao");
+  if (!urgent) squircleKeys.push("avaliacao");
+  if (!hasToday) squircleKeys.push("checkin");
+  squircleKeys.push("schedule", "offers");
   const currentMod = activeModule ? modules[activeModule] : null;
   const sessionsPct = Math.min(100, Math.max(0, (weekly.treinos / 5) * 100));
 
@@ -168,7 +274,7 @@ export function FitOSConsoleDock({
         </div>
       </motion.div>
 
-      {/* COMANDOS & SINAIS — calmo: sem glow, sem pulso, ícone laranja */}
+      {/* COMANDOS & SINAIS — checkpoint: dados, engajamento, retenção, evolução */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <span className={label}>Comandos &amp; sinais</span>
@@ -183,8 +289,14 @@ export function FitOSConsoleDock({
                 key={key}
                 type="button"
                 onClick={() => setActiveModule(key)}
-                className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/60 p-3 text-center transition-colors hover:border-primary/40 active:scale-95"
+                className="relative flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/60 p-3 text-center transition-colors hover:border-primary/40 active:scale-95"
               >
+                {m.signal && (
+                  <span
+                    aria-hidden
+                    className={`absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full ${m.signal === "pending" ? "bg-primary" : "bg-emerald-500"}`}
+                  />
+                )}
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </div>
@@ -240,7 +352,38 @@ export function FitOSConsoleDock({
               </div>
 
               <div className="relative z-10 flex-1 overflow-y-auto px-0.5 py-1">
-                {activeModule === "metrics" && <NutritionTodaySummary interactive />}
+                {activeModule === "avaliacao" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className={label}>O que vamos medir</span>
+                        <span className="inline-flex items-center gap-1 font-data text-[10px] uppercase tracking-widest text-muted-foreground">
+                          <Timer className="h-3 w-3" /> ~3 min
+                        </span>
+                      </div>
+                      <ul className="space-y-1.5 text-sm text-foreground">
+                        <li>Peso corporal</li>
+                        <li>% Gordura corporal e massa muscular</li>
+                        <li>1RM: supino, agachamento e puxada</li>
+                      </ul>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        {assessmentPending
+                          ? "Você ainda não tem avaliação registrada. Seus dados reais alimentam seu histórico e a evolução."
+                          : assessment?.last
+                            ? `Última avaliação em ${formatDate(assessment.last)}${assessmentStale ? ` (há ${assessmentAge} dias). Hora de reavaliar.` : "."}`
+                            : "Carregando seu histórico…"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveModule(null); navigate("/9fit/avaliacao-guiada"); }}
+                      className={`${pillPrimary} w-full justify-center`}
+                    >
+                      <span>{assessmentPending ? "Começar avaliação" : "Nova avaliação"}</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
 
                 {activeModule === "activation" && (
                   <div className="space-y-3">
@@ -257,6 +400,73 @@ export function FitOSConsoleDock({
                         Plano ativo: <span className="font-medium text-white">{performancePlanTitle}</span>
                       </p>
                     )}
+                    {goals.length > 0 && (
+                      <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                        <span className={label}>Metas ativas</span>
+                        {goals.map((g) => {
+                          const atual = Number(g.valor_atual ?? 0);
+                          const meta = Number(g.valor_meta ?? 0);
+                          const pct = meta > 0 ? Math.min(100, Math.max(0, (atual / meta) * 100)) : 0;
+                          return (
+                            <div key={g.id} className="space-y-1">
+                              <div className="flex items-center justify-between gap-3 text-xs">
+                                <span className="truncate text-foreground">{g.titulo}</span>
+                                <span className="shrink-0 font-data text-[10px] text-muted-foreground">{atual} / {meta} {g.unidade ?? ""}</span>
+                              </div>
+                              <div className="h-0.5 w-full overflow-hidden rounded-full bg-white/10">
+                                <div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveModule(null); navigate("/9fit/protocolo"); }}
+                      className={`${pillGhost} w-full justify-center`}
+                    >
+                      <span>Abrir protocolo prescrito{protocolCount > 0 ? ` (${protocolCount})` : ""}</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
+                {activeModule === "evolucao" && (
+                  <div className="space-y-4">
+                    {stats && (stats.treinosMes > 0 || stats.prs > 0 || stats.streak > 0) ? (
+                      <>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { name: "Streak", value: `${stats.streak}d` },
+                            { name: "Treinos no mês", value: String(stats.treinosMes) },
+                            { name: "Recordes", value: String(stats.prs) },
+                          ].map((item) => (
+                            <div key={item.name} className="min-w-0 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <p className="truncate font-data text-[8px] uppercase tracking-widest text-muted-foreground">{item.name}</p>
+                              <p className="mt-1 font-display text-xl font-black leading-none text-foreground">{item.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {stats.kgMes > 0 ? `Volume do mês: ${Math.round(stats.kgMes).toLocaleString("pt-BR")} kg. ` : ""}
+                          {stats.ultimo ? `Último treino em ${formatDate(stats.ultimo)}.` : ""}
+                        </p>
+                      </>
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                        <p className="font-display text-sm font-black uppercase tracking-tight text-white">Registre seu primeiro treino</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Sua evolução aparece aqui a partir do primeiro treino concluído.</p>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveModule(null); navigate(stats && (stats.treinosMes > 0 || stats.prs > 0) ? "/9fit/progresso" : "/9fit/train"); }}
+                      className={`${pillPrimary} w-full justify-center`}
+                    >
+                      <span>{stats && (stats.treinosMes > 0 || stats.prs > 0) ? "Ver evolução completa" : "Iniciar treino"}</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
 
@@ -275,35 +485,6 @@ export function FitOSConsoleDock({
                         cta="Testar 7 dias grátis"
                       />
                     </div>
-                  </div>
-                )}
-
-                {activeModule === "protocol" && (
-                  <div className="space-y-4">
-                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className={label}>Prescrição Nine Pro</span>
-                        <span className="font-data text-xs font-bold text-white">{protocolCount} ativos</span>
-                      </div>
-                      <p className="font-display text-sm font-black uppercase tracking-tight text-white">
-                        Seu plano personalizado de exercícios e intervenções
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Acesse a biblioteca de conteúdos prescritos para sua rotina neuromotora.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveModule(null);
-                        navigate("/9fit/protocolo");
-                      }}
-                      className={`${pillPrimary} w-full justify-center`}
-                    >
-                      <span>Abrir tela completa do protocolo</span>
-                      <ArrowUpRight className="h-4 w-4" />
-                    </button>
                   </div>
                 )}
 

@@ -11,6 +11,7 @@ import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
 import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { FitOSConsoleDock } from "@/components/9fit/FitOSConsoleDock";
+import { NewsletterOptIn } from "@/components/9fit/NewsletterOptIn";
 import { useUserState } from "@/hooks/useUserState";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -19,7 +20,7 @@ import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { Info } from "lucide-react";
-import { usePushNotifications, useBluetoothRequest } from "@/hooks/useDeviceCapabilities";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const hubStaggerContainer = {
   hidden: { opacity: 0 },
@@ -136,8 +137,9 @@ export default function NineFitHub() {
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
   
-  const { permission, requestPermission } = usePushNotifications();
-  const { requestDevice } = useBluetoothRequest();
+  // Push real: assina no PushManager e grava em push_subscriptions (hook com VAPID). Só aparece onde o navegador suporta e ainda não há assinatura.
+  // Bluetooth removido do Hub: Web Bluetooth não existe no iOS/Safari e o botão não gravava nenhum dado.
+  const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, subscribe: subscribePush } = usePushNotifications();
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -153,13 +155,12 @@ export default function NineFitHub() {
         </div>
       )}
 
-      {/* Device Capabilities Prompt */}
-      <div className="px-4 md:px-6 flex gap-2 my-4">
-        {permission !== 'granted' && (
-          <button onClick={requestPermission} className="text-xs bg-primary/10 text-primary p-2 rounded">Enable Push</button>
-        )}
-        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Conectar Bluetooth</button>
-      </div>
+      {/* Notificações: só aparece quando há o que pedir */}
+      {pushSupported && !pushSubscribed && (
+        <div className="px-4 md:px-6 flex gap-2 my-4">
+          <button onClick={() => void subscribePush()} disabled={pushLoading} className="text-xs bg-primary/10 text-primary p-2 rounded disabled:opacity-60">{pushLoading ? "Ativando…" : "Ativar notificações"}</button>
+        </div>
+      )}
 
       <motion.div
         variants={hubStaggerContainer}
@@ -208,6 +209,10 @@ export default function NineFitHub() {
             breakdown={breakdown}
             protocolCount={protocolCount}
           />
+        </motion.div>
+
+        <motion.div variants={hubStaggerItem}>
+          <NewsletterOptIn />
         </motion.div>
 
         <motion.div variants={hubStaggerItem} id="ecosystem-grid">
