@@ -57,6 +57,10 @@ export function HubFloatingMetrics({ vitals }: Props) {
   const hrvOk = isAvailable(vitals?.hrv);
   const hrOk = isAvailable(vitals?.heart_rate);
   const signals = (hrvOk ? 1 : 0) + (hrOk ? 1 : 0);
+  const missingVital = [
+    { vital: 'hrv' as const, available: hrvOk },
+    { vital: 'heart_rate' as const, available: hrOk },
+  ].find((item) => !item.available)?.vital;
 
   const cards: StateCard[] = [
     {
@@ -81,7 +85,7 @@ export function HubFloatingMetrics({ vitals }: Props) {
       key: "saude", label: "SAÚDE", value: `${signals}/2`, Icon: HeartPulse,
       pct: (signals / 2) * 100, attention: signals === 0,
       aria: `Sinais de saúde registrados: ${signals} de 2 (HRV e BPM)`,
-      onClick: () => setVital(!hrvOk ? "hrv" : !hrOk ? "heart_rate" : "hrv"),
+      onClick: () => setVital(missingVital ?? "hrv"),
     },
   ];
 
