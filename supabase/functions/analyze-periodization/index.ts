@@ -139,7 +139,7 @@ IMPORTANTE: Responda APENAS com JSON válido no seguinte formato:
   } catch (error) {
     console.error('Error in analyze-periodization:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : String(error),
+      error: error.message,
       analysis: createFallbackAnalysis(null),
       source: 'fallback'
     }), {

@@ -6,7 +6,6 @@ const migration = read("../supabase/migrations/20261005200347_macro03_periodized
 const deterministic = read("../supabase/migrations/20261005203000_macro03_deterministic_periodized_selection.sql");
 const weekView = read("../src/components/9fit/WeeklyTrainingView.tsx");
 const planning = read("../src/pages/9fit/Planejamento.tsx");
-const planningPro = read("../src/components/9fit/PlanejamentoPro.tsx");
 const train = read("../src/pages/9fit/Train.tsx");
 const execution = read("../src/components/9fit/WorkoutExecution.tsx");
 const protocol = read("../src/pages/9fit/Protocolo.tsx");
@@ -32,8 +31,7 @@ assert.match(weekView, /addWeeks\(weekStart,offset\)/);
 assert.match(weekView, /fn_generate_periodized_week/);
 assert.match(weekView, /fn_skip_daily_workout_execution/);
 assert.match(planning, /\/9fit\/train\?tab=semana&date=/);
-assert.match(planningPro, /onMonthChange\(addMonths\(viewMonth,\s*1\)\)/);
-assert.match(planningPro, /onMonthChange\(addMonths\(viewMonth,\s*-1\)\)/);
+assert.match(planning, /addMonths\(month,1\)/);
 assert.match(train, /businessDate\(\)/);
 assert.match(execution, /businessDate\(\)/);
 assert.match(protocol, /AssignedProtocols/);

@@ -1,7 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { partnerTarget } from "../_shared/partnerTarget.ts";
-import { resolveConnectorSecret } from "../_shared/connectorSecret.ts";
 
 const ALLOWED_PATHS = new Set([
   "/health",
@@ -63,32 +62,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (connector?.status !== "active") return json({ error: "SmartPeriodizer connector inactive" }, 409);
 
-    const base = (connector.endpoint ?? "").replace(/\/$/, "");
-
-    // Conector que aponta para o próprio FitPro (fitpro-api no mesmo projeto): autentica
-    // servidor-a-servidor, sem exigir chave colada na UI. Qualquer outro host exige secret.
-    let isInternal = false;
-    try {
-      const target = new URL(base);
-      isInternal = target.host === new URL(Deno.env.get("SUPABASE_URL")!).host &&
-        target.pathname.startsWith("/functions/v1/fitpro-api");
-    } catch (_) { /* endpoint inválido: cai no caminho com secret */ }
-
-    const upstreamHeaders: Record<string, string> = { "Content-Type": "application/json" };
-    if (isInternal) {
-      upstreamHeaders["x-internal-service"] = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    } else {
-      const key = resolveConnectorSecret(connector.secret_ref, "smart_periodizer");
-      if (!key) return json({ error: "SmartPeriodizer secret is not configured" }, 503);
-      upstreamHeaders["x-api-key"] = key;
-    }
+    const key = connector.secret_ref ? Deno.env.get(connector.secret_ref) : null;
+    if (!key) return json({ error: "SmartPeriodizer secret is not configured" }, 503);
 
     const query = params.size ? `?${params.toString()}` : '';
     const payload = body.payload;
     const method = requestedMethod;
+    const base = (connector.endpoint ?? "").replace(/\/$/, "");
     const upstream = await fetch(`${base}${path}${query}`, {
       method,
-      headers: upstreamHeaders,
+      headers: { "Content-Type": "application/json", "x-api-key": key },
       body: payload === undefined || method === "GET" ? undefined : JSON.stringify(payload),
     });
     const text = await upstream.text();

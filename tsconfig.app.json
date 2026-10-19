@@ -22,7 +22,6 @@
       ]
     },
     "skipLibCheck": true,
-    "types": ["node", "google.maps"],
     "strict": false,
     "target": "ES2020",
     "useDefineForClassFields": true

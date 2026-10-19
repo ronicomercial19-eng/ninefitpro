@@ -18,7 +18,6 @@ import {
   Activity,
   Volume2,
   VolumeX,
-  MapPinOff,
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -31,7 +30,6 @@ import {
   getStreetNameFromCoords,
   SOLUTION_ATTRIBUTION_ID,
   getGoogleMapsApiKey,
-  didMapsAuthFail,
 } from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
@@ -55,18 +53,6 @@ const LOCAL_SIMULATION_WAYPOINTS: LatLng[] = [
   { lat: -23.57155, lng: -46.64077 },
 ];
 
-// Distância entre dois pontos (haversine). Independe do Google Maps, para a corrida
-// continuar sendo medida mesmo se o mapa não carregar.
-function haversineMeters(a: LatLng, b: LatLng): number {
-  const R = 6371000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-
 export default function NineFitMove() {
   const showSimulationControls = import.meta.env.DEV;
   const { user } = useAuth();
@@ -85,9 +71,10 @@ export default function NineFitMove() {
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [voiceAudio, setVoiceAudio] = useState(true);
   const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
-  // mapError: o mapa não carregou (chave recusada, sem rede...). A corrida segue funcionando.
-  const [mapError, setMapError] = useState(false);
-  const [mapRetry, setMapRetry] = useState(0);
+
+  useEffect(() => {
+    console.log("[NineFitMove] Verificando VITE_GOOGLE_MAPS_API_KEY:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? "Definida" : "VAZIA ou INDEFINIDA");
+  }, []);
 
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -105,14 +92,11 @@ export default function NineFitMove() {
 
   const generateStaticMapUrl = async (path: LatLng[]) => {
     try {
-      if (path.length === 0 || didMapsAuthFail()) return null;
       const apiKey = await getGoogleMapsApiKey();
       const maxPoints = 50;
-      const sampled = path.length <= maxPoints
-        ? path
-        : Array.from({ length: maxPoints }, (_, index) =>
-            path[Math.round((index * (path.length - 1)) / (maxPoints - 1))],
-          );
+      const sampled = path.length <= maxPoints 
+        ? path 
+        : path.filter((_, i) => i % Math.floor(path.length / maxPoints) === 0);
       
       const pathStr = `path=color:0xff6b2c|weight:5|${sampled.map(p => `${p.lat},${p.lng}`).join('|')}`;
       return `https://maps.googleapis.com/maps/api/staticmap?size=600x300&${pathStr}&key=${apiKey}`;
@@ -135,26 +119,26 @@ export default function NineFitMove() {
     return () => { active = false; };
   }, [user?.id, activitySaved]);
 
-  // O Google avisa quando recusa a chave (billing, referrer, API desativada).
-  useEffect(() => {
-    const onAuthFailure = () => setMapError(true);
-    window.addEventListener("9fit:maps-auth-failure", onAuthFailure);
-    if (didMapsAuthFail()) setMapError(true);
-    return () => window.removeEventListener("9fit:maps-auth-failure", onAuthFailure);
-  }, []);
-
   useEffect(() => {
     let mounted = true;
 
     async function initMap() {
       try {
+        console.log("[NineFitMove] Iniciando carregamento do mapa...");
+        const apiKey = await getGoogleMapsApiKey();
+        console.log("[NineFitMove] API Key obtida com sucesso.");
+        
         const g = await loadGoogleMaps();
+        console.log("[NineFitMove] Bibliotecas do Google Maps carregadas.");
 
-        if (!mounted || !mapElementRef.current) return;
-        if (didMapsAuthFail()) { setMapError(true); return; }
+        if (!mounted || !mapElementRef.current) {
+          console.log("[NineFitMove] Componente desmontado ou ref nulo.");
+          return;
+        }
 
         const defaultCenter = { lat: -23.56149, lng: -46.65588 };
-
+        
+        console.log("[NineFitMove] Criando instância de g.maps.Map...");
         const map = new g.maps.Map(mapElementRef.current, {
           center: defaultCenter,
           zoom: 17,
@@ -167,7 +151,9 @@ export default function NineFitMove() {
         } as any);
 
         mapInstanceRef.current = map;
-
+        console.log("[NineFitMove] Instância do mapa criada com sucesso.");
+        // ... rest of initMap ...
+        
         polylineRef.current = new g.maps.Polyline({
           map,
           path: [],
@@ -194,8 +180,8 @@ export default function NineFitMove() {
           );
         }
       } catch (err) {
-        console.error("[NineFitMove] Falha ao inicializar mapa:", err);
-        if (mounted) setMapError(true);
+        console.error("[NineFitMove] Falha crítica ao inicializar mapa:", err);
+        toast.error("Não foi possível carregar o Google Maps. Verifique sua conexão.");
       }
     }
 
@@ -203,21 +189,14 @@ export default function NineFitMove() {
 
     return () => {
       mounted = false;
-      mapInstanceRef.current = null;
-      polylineRef.current = null;
-      startMarkerRef.current = null;
-      currentMarkerRef.current = null;
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
       }
       if (simIntervalRef.current !== null) {
         window.clearInterval(simIntervalRef.current);
-        simIntervalRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapRetry]);
+  }, []);
 
   useEffect(() => {
     if (!running || isPaused) return;
@@ -248,24 +227,48 @@ export default function NineFitMove() {
     []
   );
 
-  // A medição (distância, velocidade, trajeto) não depende do mapa.
-  // Marcador e linha no mapa só são desenhados quando o mapa existe.
   const handleNewCoordinate = useCallback(
     (lat: number, lng: number, speedMps?: number | null, accuracy?: number | null) => {
       const g = window.google;
-      const map = mapInstanceRef.current;
-      const hasMap = !!(g?.maps && map);
+      if (!g?.maps || !mapInstanceRef.current) return;
 
       const currentLatLng = { lat, lng };
+      const currentGoogleLatLng = new g.maps.LatLng(lat, lng);
 
       if (accuracy !== undefined && accuracy !== null) {
         setGpsAccuracy(Math.round(accuracy));
       }
 
       if (lastCoordRef.current) {
-        const deltaMeters = haversineMeters(lastCoordRef.current, currentLatLng);
+        const lastGoogleLatLng = new g.maps.LatLng(
+          lastCoordRef.current.lat,
+          lastCoordRef.current.lng
+        );
+
+        let deltaMeters = 0;
+        if (g.maps.geometry?.spherical) {
+          deltaMeters = g.maps.geometry.spherical.computeDistanceBetween(
+            lastGoogleLatLng,
+            currentGoogleLatLng
+          );
+        } else {
+          const R = 6371000;
+          const dLat = ((lat - lastCoordRef.current.lat) * Math.PI) / 180;
+          const dLng = ((lng - lastCoordRef.current.lng) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lastCoordRef.current.lat * Math.PI) / 180) *
+              Math.cos((lat * Math.PI) / 180) *
+              Math.sin(dLng / 2) *
+              Math.sin(dLng / 2);
+          deltaMeters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
         if (deltaMeters > 2.0) {
-          setDistanceKm((prev) => prev + deltaMeters / 1000);
+          setDistanceKm((prev) => {
+            const nextDist = prev + deltaMeters / 1000;
+            return nextDist;
+          });
         }
       }
 
@@ -282,50 +285,46 @@ export default function NineFitMove() {
       pathCoordinatesRef.current.push(currentLatLng);
       lastCoordRef.current = currentLatLng;
 
-      if (hasMap) {
-        try {
-          polylineRef.current?.getPath().push(new g.maps.LatLng(lat, lng));
-
-          if (!startMarkerRef.current) {
-            startMarkerRef.current = new g.maps.Marker({
-              position: currentLatLng,
-              map,
-              title: "Largada 9FIT",
-              icon: {
-                path: g.maps.SymbolPath.CIRCLE,
-                fillColor: "#22c55e",
-                fillOpacity: 1,
-                strokeWeight: 3,
-                strokeColor: "#ffffff",
-                scale: 7,
-              },
-            });
-          }
-
-          if (!currentMarkerRef.current) {
-            currentMarkerRef.current = new g.maps.Marker({
-              position: currentLatLng,
-              map,
-              title: "Sua Posição Atual",
-              zIndex: 999,
-              icon: {
-                path: g.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                fillColor: "#ff6b2c",
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: "#ffffff",
-                scale: 6,
-              },
-            });
-          } else {
-            currentMarkerRef.current.setPosition(currentLatLng);
-          }
-
-          map!.panTo(currentLatLng);
-        } catch (e) {
-          console.warn("[NineFitMove] Falha ao desenhar no mapa:", e);
-        }
+      if (polylineRef.current) {
+        polylineRef.current.getPath().push(currentGoogleLatLng);
       }
+
+      if (!startMarkerRef.current) {
+        startMarkerRef.current = new g.maps.Marker({
+          position: currentLatLng,
+          map: mapInstanceRef.current,
+          title: "Largada 9FIT",
+          icon: {
+            path: g.maps.SymbolPath.CIRCLE,
+            fillColor: "#22c55e",
+            fillOpacity: 1,
+            strokeWeight: 3,
+            strokeColor: "#ffffff",
+            scale: 7,
+          },
+        });
+      }
+
+      if (!currentMarkerRef.current) {
+        currentMarkerRef.current = new g.maps.Marker({
+          position: currentLatLng,
+          map: mapInstanceRef.current,
+          title: "Sua Posição Atual",
+          zIndex: 999,
+          icon: {
+            path: g.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            fillColor: "#ff6b2c",
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: "#ffffff",
+            scale: 6,
+          },
+        });
+      } else {
+        currentMarkerRef.current.setPosition(currentLatLng);
+      }
+
+      mapInstanceRef.current.panTo(currentLatLng);
 
       updateStreetName(lat, lng);
     },
@@ -358,11 +357,6 @@ export default function NineFitMove() {
       currentMarkerRef.current = null;
     }
 
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-
     setRunning(true);
     setIsPaused(false);
     toast.success("GPS ligado! Rastreamento em tempo real ativado.");
@@ -375,6 +369,13 @@ export default function NineFitMove() {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
+        console.log("[NineFitMove] GPS Success:", {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          speed: pos.coords.speed,
+          timestamp: pos.timestamp
+        });
         handleNewCoordinate(
           pos.coords.latitude,
           pos.coords.longitude,
@@ -401,10 +402,6 @@ export default function NineFitMove() {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
-    }
-    if (simIntervalRef.current !== null) {
-      window.clearInterval(simIntervalRef.current);
-      simIntervalRef.current = null;
     }
 
     setActivitySaved(false);
@@ -535,13 +532,6 @@ export default function NineFitMove() {
     }
   };
 
-  const retryMap = () => {
-    // Depois de uma recusa de chave o Google não recarrega no mesmo documento: recarrega a página.
-    if (didMapsAuthFail()) { window.location.reload(); return; }
-    setMapError(false);
-    setMapRetry((value) => value + 1);
-  };
-
   const formattedPace = useMemo(() => {
     if (distanceKm <= 0.05 || seconds < 10) return "—'—\"";
     const paceTotalSeconds = seconds / distanceKm;
@@ -656,25 +646,8 @@ export default function NineFitMove() {
         {/* Container do Mapa */}
         <div ref={mapElementRef} className="w-full h-full" />
 
-        {/* Estado de falha do mapa: cobre o diálogo do Google. A corrida continua sendo medida. */}
-        {mapError && (
-          <div role="alert" className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#07080b] p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
-              <MapPinOff className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="font-data text-[9px] uppercase tracking-[0.3em] text-primary/80">Mapa indisponível</p>
-              <p className="mt-1 text-sm font-bold text-white">O GPS continua medindo sua corrida.</p>
-              <p className="mt-1 text-xs text-neutral-400">Distância, tempo e ritmo funcionam sem o mapa. A rota no mapa volta quando ele carregar.</p>
-            </div>
-            <button type="button" onClick={retryMap} className="rounded-full border border-primary/40 px-5 py-2.5 font-display text-[11px] font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/10 active:scale-95">
-              Tentar novamente
-            </button>
-          </div>
-        )}
-
         {/* Overlay Superior Esquerdo: Status do GPS */}
-        <div className="absolute left-3 top-3 z-30 flex items-center gap-2 rounded-full bg-black/75 backdrop-blur-md px-3 py-1.5 border border-white/10 text-xs shadow-md">
+        <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/75 backdrop-blur-md px-3 py-1.5 border border-white/10 text-xs shadow-md">
           <span
             className={`w-2.5 h-2.5 rounded-full ${
               running ? "bg-emerald-400 animate-ping" : "bg-neutral-500"
@@ -692,19 +665,17 @@ export default function NineFitMove() {
         </div>
 
         {/* Botão Flutuante de Recentralizar Mapa */}
-        {!mapError && (
-          <button
-            type="button"
-            onClick={recenterMap}
-            className="absolute right-3 top-3 z-30 w-9 h-9 rounded-full bg-black/75 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:text-primary transition-colors shadow-md"
-            title="Recentralizar na minha localização"
-          >
-            <Navigation className="w-4 h-4 text-primary" />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={recenterMap}
+          className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/75 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:text-primary transition-colors shadow-md"
+          title="Recentralizar na minha localização"
+        >
+          <Navigation className="w-4 h-4 text-primary" />
+        </button>
 
         {/* Overlay Inferior: Velocímetro HUD sobre o Mapa */}
-        <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 p-2.5 flex items-center justify-between">
+        <div className="absolute inset-x-3 bottom-3 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 p-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Gauge className="w-4 h-4 text-primary" />
             <div>
@@ -817,7 +788,7 @@ export default function NineFitMove() {
           <div className="pt-2 flex flex-col gap-2">
             {staticMapUrl && (
               <div className="rounded-xl overflow-hidden border border-white/10 mb-2">
-                <img src={staticMapUrl} alt="Mapa da rota" className="w-full h-auto" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+                <img src={staticMapUrl} alt="Mapa da rota" className="w-full h-auto" />
               </div>
             )}
             <ProgressGraph />

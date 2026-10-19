@@ -3,9 +3,8 @@ import { format, startOfWeek } from "date-fns";
 export interface ProgressionPoint { weekIndex: number; label: string; realPct: number | null; projectedPct: number; }
 export async function loadCarryProjection(athleteId: string, exerciseName = "Agachamento"): Promise<ProgressionPoint[]> {
   const { data, error } = await supabase.from("workout_exercise_sets")
-    .select("actual_weight, created_at, workout_executions!inner(athlete_id,status)")
-    .eq("workout_executions.athlete_id", athleteId).eq("workout_executions.status", "completed")
-    .eq("completed", true).gt("actual_weight", 0)
+    .select("actual_weight, created_at, workout_executions!inner(athlete_id)")
+    .eq("workout_executions.athlete_id", athleteId).eq("completed", true).gt("actual_weight", 0)
     .ilike("exercise_name", `%${exerciseName}%`).order("created_at", { ascending: false }).limit(1000);
   if (error) throw error;
   const rows = [...(data || [])].reverse();

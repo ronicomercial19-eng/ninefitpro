@@ -51,7 +51,7 @@ export async function buildSkillContext(userId: string, moduleContext = "general
       supabase.from("bio_sleep_logs" as any).select("duration_min").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("bio_recovery_state" as any).select("score").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    bio = { hrv: (hrv as any)?.hrv_ms ?? null, sleep: (sleep as any)?.duration_min ?? null, recovery: (rec as any)?.score ?? null };
+    bio = { hrv: (hrv as any)?.hrv_ms ?? null, sleep: (sleep as any)?.duration_min ?? null, recovery: (rec as any)?.recovery_score ?? null };
   }
 
   return {

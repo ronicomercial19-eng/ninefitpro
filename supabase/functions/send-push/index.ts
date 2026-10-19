@@ -66,10 +66,9 @@ Deno.serve(async (req) => {
       privateKey,
     );
 
-    // A coluna real em push_subscriptions é "auth" (o hook de assinatura grava nela). "auth_key" não existe e quebrava a consulta.
     const { data: subscriptions, error: subscriptionsError } = await admin
       .from("push_subscriptions")
-      .select("id, endpoint, p256dh, auth")
+      .select("id, endpoint, p256dh, auth_key")
       .eq("user_id", notification.user_id);
     if (subscriptionsError) throw subscriptionsError;
 
@@ -86,7 +85,7 @@ Deno.serve(async (req) => {
       try {
         await webpush.sendNotification({
           endpoint: subscription.endpoint,
-          keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+          keys: { p256dh: subscription.p256dh, auth: subscription.auth_key },
         }, payload);
         sent += 1;
       } catch (error) {

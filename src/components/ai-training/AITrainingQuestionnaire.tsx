@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { Brain, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface AITrainingQuestionnaireData {
-  studentId: string;
   studentName: string;
   age: string;
   gender: string;
@@ -35,18 +34,15 @@ interface AITrainingQuestionnaireData {
 }
 
 interface AITrainingQuestionnaireProps {
-  studentId: string;
-  studentName: string;
   onComplete: (data: AITrainingQuestionnaireData) => void;
   onCancel: () => void;
 }
 
-export function AITrainingQuestionnaire({ studentId, studentName, onComplete, onCancel }: AITrainingQuestionnaireProps) {
+export function AITrainingQuestionnaire({ onComplete, onCancel }: AITrainingQuestionnaireProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<AITrainingQuestionnaireData>({
     // Informações do Aluno
-    studentId,
-    studentName,
+    studentName: '',
     age: '',
     gender: '',
     
@@ -97,7 +93,7 @@ export function AITrainingQuestionnaire({ studentId, studentName, onComplete, on
 
   const handleSubmit = () => {
     // Validar campos obrigatórios
-    if (!formData.studentId || !formData.studentName || !formData.primaryGoal || !formData.experienceLevel) {
+    if (!formData.studentName || !formData.primaryGoal || !formData.experienceLevel) {
       toast.error('Por favor, preencha todos os campos obrigatórios');
       return;
     }
@@ -147,7 +143,7 @@ export function AITrainingQuestionnaire({ studentId, studentName, onComplete, on
                 <Input
                   id="studentName"
                   value={formData.studentName}
-                  readOnly
+                  onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
                   placeholder="Nome completo"
                 />
               </div>

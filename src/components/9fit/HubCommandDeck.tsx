@@ -1,11 +1,10 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight, Brain, CheckCircle2, Droplet, Dumbbell, Sparkles, Utensils } from "lucide-react";
+import { ArrowUpRight, Brain, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useDailyContext } from '@/hooks/useDailyContext';
 import { businessDate, dayProgress, selectDayCommand } from '@/services/dailyContext';
-import { businessDate as hydrationDate } from '@/services/dailyContextRules';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 import { PDIWizard } from './PDIWizard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -27,7 +26,6 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
   const { athleteId } = useAthleteId();
   const [modal, setModal] = useState<'calibration' | 'profile' | 'review' | null>(null);
   const [saving, setSaving] = useState(false);
-  const waterBusy = useRef(false);
   const current = !context.isError && context.data?.date === businessDate() ? context.data : null;
   const command = current ? selectDayCommand(current) : null;
   const progress = current ? dayProgress(current) : null;
@@ -46,24 +44,6 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
       toast.success(patch.rating ? 'Balanço registrado' : 'Descanso registrado para hoje. Sua prescrição foi preservada.');
     } catch { toast.error('Não foi possível salvar. Tente novamente.'); } finally { setSaving(false); }
   };
-  // Atalho de início rápido: +250 ml em 1 toque (mesmo padrão de registro do card RON).
-  const logWater = async () => {
-    if (!athleteId || waterBusy.current) return;
-    waterBusy.current = true;
-    try {
-      const { error } = await supabase.from('hydration_logs').insert({ athlete_id: athleteId, log_date: hydrationDate(), amount_ml: 250 }).select('id').single();
-      if (error) throw error;
-      ['9fit:hydration-updated', '9fit:water-updated', '9fit:sync_updated'].forEach(event => window.dispatchEvent(new Event(event)));
-      toast.success('250 ml de água registrados');
-    } catch { toast.error('Não foi possível registrar a água.'); } finally { waterBusy.current = false; }
-  };
-  const shortcuts = [
-    { key: 'meal', label: 'Refeição', Icon: Utensils, onClick: () => navigate('/9fit/dieta?action=log') },
-    { key: 'train', label: 'Treino', Icon: Dumbbell, onClick: () => window.dispatchEvent(new CustomEvent('9fit:open-quick-train')) },
-    { key: 'water', label: '+250 ml', Icon: Droplet, onClick: () => void logWater() },
-    { key: 'checkin', label: 'Check-in', Icon: CheckCircle2, onClick: () => setModal('calibration') },
-    { key: 'ron', label: 'RON IA', Icon: Brain, onClick: () => navigate('/9fit/ron?context=hub_command') },
-  ];
   const consistency = Math.min(100, Math.round((weekly.treinos / 5) * 100));
 
   return (
@@ -130,19 +110,24 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
             <CommandMetric label="Nutrição" value={weekly.nutri} suffix="reg" progress={Math.min(100, weekly.nutri * 20)} />
           </div>
 
-          {/* Atalhos do core: início rápido em 1 toque */}
-          <div className="mt-2 grid grid-cols-5 gap-1.5" role="group" aria-label="Atalhos rápidos">
-            {shortcuts.map(({ key, label, Icon, onClick }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={onClick}
-                className="flex flex-col items-center justify-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-1 py-2 text-[10px] font-medium text-neutral-300 hover:text-white transition-colors active:scale-95"
-              >
-                <Icon className="h-3.5 w-3.5 text-primary" />
-                <span className="w-full truncate text-center">{label}</span>
-              </button>
-            ))}
+          {/* Ações Secundárias Compactas */}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => navigate("/9fit/ron?context=hub_command")}
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
+            >
+              <Brain className="h-3.5 w-3.5 text-primary" />
+              <span>Perguntar ao RON</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setModal('calibration')}
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              <span>Registrar sinal</span>
+            </button>
           </div>
         </div>
       </div>

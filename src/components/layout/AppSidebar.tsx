@@ -35,26 +35,26 @@ import {
 import { Settings } from 'lucide-react';
 
 const menuItems = [
-  { group: 'Principal', title: 'Dashboard', url: '/app', icon: LayoutDashboard },
-  { group: 'Principal', title: 'Agenda', url: '/app/agenda', icon: Calendar },
-  { group: 'Principal', title: 'Alunos', url: '/app/alunos', icon: Users },
-  { group: 'Treino', title: 'SmartTreino', url: '/app/smart-treino', icon: Zap },
-  { group: 'Treino', title: 'SmartPeriodizer', url: '/app/smart-periodizer', icon: CalendarClock },
-  { group: 'Treino', title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
-  { group: 'Treino', title: 'Exercícios', url: '/app/exercicios', icon: Dumbbell },
-  { group: 'Inteligência', title: 'FitCopilot', url: '/app/fit-copilot', icon: Cpu },
-  { group: 'Inteligência', title: 'Assistente IA', url: '/app/assistente-ia', icon: Sparkles },
-  { group: 'Inteligência', title: 'RON', url: '/app/ron', icon: Bot },
-  { group: 'Inteligência', title: 'Postura Pro', url: '/app/postura-pro', icon: Activity },
-  { group: 'Inteligência', title: 'Skills', url: '/app/skills', icon: Brain },
-  { group: 'Inteligência', title: 'Análise IA', url: '/app/analise-ia', icon: Brain },
-  { group: 'Operação', title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
-  { group: 'Operação', title: 'Relatórios', url: '/app/relatorios', icon: FileText },
-  { group: 'Operação', title: 'Monetização', url: '/app/monetizacao', icon: Sparkles },
-  { group: 'Biblioteca', title: 'HealthFlix', url: '/app/healthflix', icon: Film },
-  { group: 'Biblioteca', title: 'NEXUS', url: '/app/nexus', icon: Atom },
-  { group: 'Biblioteca', title: 'Roadmap', url: '/app/roadmap', icon: Map },
-  { group: 'Conta', title: 'Configurações', url: '/app/configuracoes', icon: Settings },
+  { title: 'Dashboard', url: '/app', icon: LayoutDashboard },
+  { title: 'Agenda', url: '/app/agenda', icon: Calendar },
+  { title: 'Alunos', url: '/app/alunos', icon: Users },
+  { title: 'Exercícios', url: '/app/exercicios', icon: Dumbbell },
+  { title: 'SmartTreino', url: '/app/smart-treino', icon: Zap },
+  { title: 'SmartPeriodizer', url: '/app/smart-periodizer', icon: CalendarClock },
+  { title: 'FitCopilot', url: '/app/fit-copilot', icon: Cpu },
+  { title: 'Treino com IA', url: '/app/treino-ia', icon: Bot },
+  { title: 'Assistente IA', url: '/app/assistente-ia', icon: Sparkles },
+  { title: 'Análise IA', url: '/app/analise-ia', icon: Brain },
+  { title: 'HealthFlix', url: '/app/healthflix', icon: Film },
+  { title: 'Postura Pro', url: '/app/postura-pro', icon: Activity },
+  { title: 'RON', url: '/app/ron', icon: Bot },
+  { title: 'NEXUS', url: '/app/nexus', icon: Atom },
+  { title: 'Skills', url: '/app/skills', icon: Brain },
+  { title: 'Monetização', url: '/app/monetizacao', icon: Sparkles },
+  { title: 'Estatísticas', url: '/app/estatisticas', icon: BarChart3 },
+  { title: 'Relatórios', url: '/app/relatorios', icon: FileText },
+  { title: 'Roadmap', url: '/app/roadmap', icon: Map },
+  { title: 'Configurações', url: '/app/configuracoes', icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -68,8 +68,6 @@ export function AppSidebar() {
   const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   const isActive = (path: string) => currentPath === path;
-  const athleteId = new URLSearchParams(location.search).get('athleteId');
-  const athleteSearch = athleteId ? `?athleteId=${encodeURIComponent(athleteId)}` : '';
 
   return (
     <Sidebar className={cn(
@@ -92,15 +90,14 @@ export function AppSidebar() {
           </div>
         </div>
 
-        {['Principal','Treino','Inteligência','Operação','Biblioteca','Conta'].map(group => <SidebarGroup key={group}>
-          {!collapsed && <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{group}</p>}
+        <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.filter(item => item.group === group).map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
-                      to={{ pathname: item.url, search: athleteSearch }}
+                      to={item.url} 
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
                         isActive(item.url) 
@@ -123,7 +120,7 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>)}
+        </SidebarGroup>
 
         {/* User info at bottom */}
         <div className="mt-auto p-4 border-t border-border">

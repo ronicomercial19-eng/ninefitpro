@@ -77,21 +77,19 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
   const handlePdfUpload = async () => {
     if (!pdfFile) return toast.error("Selecione um arquivo PDF");
     if (!name.trim()) return toast.error("Informe o nome");
-    if (pdfFile.type !== 'application/pdf' || pdfFile.size > 10 * 1024 * 1024) return toast.error('Envie um PDF de até 10 MB.');
     setSaving(true);
-    let uploadedPath: string | null = null;
     try {
       const { data: session } = await supabase.auth.getSession();
       const coachId = session.session?.user?.id || "";
-      const path = `${studentId}/${crypto.randomUUID()}.pdf`;
+      const path = `${studentId}/${Date.now()}-${pdfFile.name}`;
       const { error: upErr } = await supabase.storage.from("plans-pdfs").upload(path, pdfFile);
       if (upErr) throw upErr;
-      uploadedPath = path;
+      const { data: urlData } = supabase.storage.from("plans-pdfs").getPublicUrl(path);
       const { error } = await supabase.from("student_training_assignments").insert(
         baseInsert({
           created_by: coachId,
           content_type: "pdf",
-          periodization_file_url: path,
+          periodization_file_url: urlData.publicUrl,
           training_data: { source: "periodization_pdf", file_path: path },
         }) as any
       );
@@ -102,7 +100,6 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
       onSuccess();
       onOpenChange(false);
     } catch (e: any) {
-      if (uploadedPath) await supabase.storage.from('plans-pdfs').remove([uploadedPath]);
       toast.error("Erro: " + e.message);
     } finally {
       setSaving(false);

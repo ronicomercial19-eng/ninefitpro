@@ -1,56 +1,112 @@
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
-import { ChevronLeft, RefreshCw, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { addMonths, format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { PdiRoadmapView } from "@/components/9fit/PdiRoadmapView";
+import { ChevronLeft, ChevronRight, Sparkles, Calendar as CalIcon, RefreshCw, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import PlanejamentoPro from "@/components/9fit/PlanejamentoPro";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutOfTheDay } from "@/hooks/useWorkoutOfTheDay";
-import { useActivationProgress } from "@/hooks/useActivationProgress";
 import { loadCarryProjection, type ProgressionPoint } from "@/services/training/loadProgression";
-import { smartPeriodizerRequest } from "@/services/smartperiodizer.service";
 import { supabase } from "@/integrations/supabase/client";
+import { useActivationProgress } from "@/hooks/useActivationProgress";
+import { smartPeriodizerRequest } from "@/services/smartperiodizer.service";
 import { businessDate } from "@/services/dailyContextRules";
 
-/**
- * Planejamento (aluno).
- * A tela em si vive em <PlanejamentoPro /> (dados reais, padrão Nine Pro).
- * Esta página mantém o que já existia: PDI, sincronização com o SmartPeriodizer,
- * evento de ativação `first_plan`, dias programados e linha de próximo treino.
- */
-const FIRST_PLAN_KEY = "9fit_first_plan_marked";
+type RemoteWave = { label?: string; week?: number; focus?: string; volume?: string; intensity?: string; pct?: number; status?: string };
+const FALLBACK_CYCLES: RemoteWave[] = [];
 
 export default function NineFitPlanejamento() {
   const navigate = useNavigate();
   const { athleteId } = useAthleteId();
   const { week: plannedWeek, today: workoutToday, error: workoutError } = useWorkoutOfTheDay();
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(parseISO(businessDate())));
-  const { mark } = useActivationProgress();
 
   const [scheduledDates, setScheduledDates] = useState<string[]>([]);
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
+  const [waves, setWaves] = useState<RemoteWave[]>(FALLBACK_CYCLES);
+  const [planName, setPlanName] = useState<string>("Periodização Científica");
+  const [periodizationId, setPeriodizationId] = useState<string | null>(null);
+  const [currentPhase, setCurrentPhase] = useState<string | null>(null);
+  const [hasRemotePlan, setHasRemotePlan] = useState(false);
+  const [planSource, setPlanSource] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const { mark } = useActivationProgress();
+
+  async function loadPlan() {
+    if (!athleteId) return;
+    setPlanLoading(true);
+    setPlanError(null);
+    const { data, error: planErr } = await supabase
+      .from("vw_athlete_periodizacao_ativa" as any)
+      .select("plan_name, waves, macrocycle, mesocycle, source, plan_id, current_phase")
+      .eq("athlete_id", athleteId)
+      .maybeSingle();
+
+    if (planErr) {
+      console.error("[Planejamento] loadPlan:", planErr);
+      setPlanError("Não foi possível carregar seu planejamento agora.");
+      setPlanLoading(false);
+      return;
+    }
+
+    const row = data as any;
+    setPlanSource(row?.source || null);
+    let wavesFound: RemoteWave[] | null = null;
+
+    if (Array.isArray(row?.waves) && row.waves.length) {
+      wavesFound = row.waves as RemoteWave[];
+    } else if (Array.isArray(row?.mesocycle) && row.mesocycle.length) {
+      wavesFound = (row.mesocycle as any[]).map((m: any, i: number) => ({
+        label: m.label || m.name || `Onda ${i + 1}`,
+        week: m.week ?? i + 1,
+        focus: m.focus,
+        volume: m.volume,
+        intensity: m.intensity,
+        pct: m.pct ?? 0,
+        status: m.status,
+      }));
+    }
+
+    if (wavesFound && wavesFound.length) {
+      const FIRST_PLAN_KEY = "9fit_first_plan_marked";
+      if (!hasRemotePlan && !localStorage.getItem(FIRST_PLAN_KEY)) {
+        try {
+          mark("first_plan");
+          localStorage.setItem(FIRST_PLAN_KEY, "1");
+        } catch (err) {}
+      }
+      setWaves(wavesFound);
+      setPlanName(row.plan_name || "Periodização SmartPeriodizer");
+      setPeriodizationId(row.plan_id || null);
+      setCurrentPhase(row.current_phase || null);
+      setHasRemotePlan(true);
+    } else {
+      setHasRemotePlan(false);
+      setWaves([]); setPeriodizationId(null); setCurrentPhase(null); setPlanName("Sem planejamento ativo");
+    }
+    setPlanLoading(false);
+  }
 
   async function syncNow() {
     if (!athleteId) return;
     setSyncing(true);
-    setSyncError(null);
+    setPlanError(null);
     try {
       await smartPeriodizerRequest({
         path: "/v1/fitpro/planejamento/sync",
         method: "POST",
         payload: { fitpro_student_id: athleteId },
       });
-      setReloadKey((k) => k + 1);
+      await loadPlan();
     } catch (error: any) {
       console.error("[Planejamento] syncNow:", error);
       const { error: fallbackError } = await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
-      if (fallbackError) setSyncError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
-      else setReloadKey((k) => k + 1);
+      if (fallbackError) setPlanError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
+      else await loadPlan();
     } finally {
       setSyncing(false);
     }
@@ -58,101 +114,152 @@ export default function NineFitPlanejamento() {
 
   useEffect(() => {
     if (!athleteId) return;
-    const refreshProjection = () =>
-      loadCarryProjection(athleteId)
-        .then(setPoints)
-        .catch(() => { setPoints([]); toast.error("Não foi possível carregar o histórico de carga"); });
+    const refreshProjection = () => loadCarryProjection(athleteId).then(setPoints).catch(() => { setPoints([]); toast.error("Não foi possível carregar o histórico de carga"); });
     refreshProjection();
     window.addEventListener("9fit:workout-updated", refreshProjection);
-    return () => window.removeEventListener("9fit:workout-updated", refreshProjection);
-  }, [athleteId]);
-
-  useEffect(() => {
-    if (!athleteId) return;
-    const refreshCalendar = async () => {
-      const { data, error } = await supabase
-        .from("daily_workouts")
-        .select("workout_date")
-        .eq("athlete_id", athleteId)
-        .gte("workout_date", format(startOfMonth(visibleMonth), "yyyy-MM-dd"))
-        .lte("workout_date", format(endOfMonth(visibleMonth), "yyyy-MM-dd"));
-      if (!error) setScheduledDates((data || []).map((d: { workout_date: string }) => d.workout_date));
-    };
+    loadPlan();
+    const refreshCalendar = async () => { const {data,error}=await supabase.from("daily_workouts").select("workout_date").eq("athlete_id",athleteId).gte("workout_date",format(startOfMonth(visibleMonth),"yyyy-MM-dd")).lte("workout_date",format(endOfMonth(visibleMonth),"yyyy-MM-dd")); if(!error) setScheduledDates((data || []).map(d=>d.workout_date)); };
     void refreshCalendar();
+    const channelName = `athlete-periodization-${athleteId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`planejamento-shell-${athleteId}-${Math.random().toString(36).slice(2, 8)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "daily_workouts", filter: `athlete_id=eq.${athleteId}` }, refreshCalendar)
+      .channel(channelName)
+      .on("postgres_changes", {event:"*",schema:"public",table:"daily_workouts",filter:`athlete_id=eq.${athleteId}`}, refreshCalendar)
+      .on("postgres_changes", { event: "*", schema: "public", table: "athlete_periodizations", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
+      .on("postgres_changes", { event: "*", schema: "public", table: "periodization_plans_remote", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
+      .on("postgres_changes", { event: "*", schema: "public", table: "periodization_annual_plans", filter: `athlete_id=eq.${athleteId}` }, () => loadPlan())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { window.removeEventListener("9fit:workout-updated", refreshProjection); supabase.removeChannel(channel); };
   }, [athleteId, visibleMonth]);
 
-  // Treinos programados = daily_workouts do mês + semana planejada (ignorando sessões de fallback)
-  const plannedDates = Array.from(new Set([
-    ...scheduledDates,
-    ...plannedWeek.filter((s) => s.source !== "fallback").map((s) => s.date),
-  ]));
+  const monthDays = useMemo(() => {
+    return eachDayOfInterval({ start: startOfMonth(visibleMonth), end: endOfMonth(visibleMonth) });
+  }, [visibleMonth]);
 
-  // Funil de ativação: marca o primeiro plano visto (uma única vez)
-  const handlePlanLoaded = (hasPlan: boolean) => {
-    if (!hasPlan) return;
-    try {
-      if (!localStorage.getItem(FIRST_PLAN_KEY)) {
-        mark("first_plan");
-        localStorage.setItem(FIRST_PLAN_KEY, "1");
-      }
-    } catch { /* noop */ }
+  const maxY = Math.max(100, ...points.map((p) => Math.max(p.projectedPct, p.realPct ?? 0)));
+  const W = 280, H = 120, padding = 16;
+  const xStep = points.length > 1 ? (W - padding * 2) / (points.length - 1) : 0;
+  const xy = (p: ProgressionPoint, idx: number, key: "realPct" | "projectedPct") => {
+    const val = p[key] ?? p.projectedPct;
+    return [padding + idx * xStep, H - padding - ((val / maxY) * (H - padding * 2))] as const;
   };
-
-  const goRon = (topic: string) =>
-    navigate(`/9fit/ron?auto=1&context=planning&topic=${encodeURIComponent(topic)}`);
+  const polyProjected = points.map((p, i) => xy(p, i, "projectedPct").join(",")).join(" ");
+  const polyReal = points.map((p, i) => p.realPct != null ? xy(p, i, "realPct").join(",") : null).filter(Boolean).join(" ");
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
       <div className="px-4 pt-6 flex items-center gap-2">
-        <button onClick={() => navigate(-1)} aria-label="Voltar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
           <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT PRO // PLANEJAMENTO</p>
           <h1 className="text-3xl font-display tracking-tight">Planejamento</h1>
         </div>
-        <button onClick={syncNow} disabled={syncing} aria-label="Sincronizar periodização" title="Sincronizar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center disabled:opacity-50">
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-        </button>
       </div>
-
+      
       <PdiRoadmapView />
-      {workoutError && <p role="alert" className="mx-4 mt-3 text-sm text-destructive">{workoutError}</p>}
+      {workoutError && <p role="alert" className="mx-4 text-sm text-destructive">{workoutError}</p>}
+      <p className="mx-4 mt-3 text-xs text-muted-foreground">Abrir o plano completo não sincroniza nem altera seu objetivo. Sincronizar consulta o provedor; a origem só é confirmada após o plano ser salvo. A projeção usa as cargas registradas nas séries concluídas e não garante resultados.</p>
 
-      {syncError && (
+      {planLoading && <p className="px-4 mt-3 text-[11px] text-muted-foreground">Carregando seu planejamento…</p>}
+      {planError && (
         <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
-          <p className="text-xs text-destructive">{syncError}</p>
-          <button onClick={() => void syncNow()} className="text-xs text-primary shrink-0">Tentar de novo</button>
+          <p className="text-xs text-destructive">{planError}</p>
+          <button onClick={() => void loadPlan()} className="text-xs text-primary shrink-0">Tentar de novo</button>
         </div>
       )}
 
-      <div className="px-4 mt-2">
-        <PlanejamentoPro
-          athleteId={athleteId ?? undefined}
-          reloadKey={reloadKey}
-          plannedDates={plannedDates}
-          month={visibleMonth}
-          onMonthChange={setVisibleMonth}
-          onPlannedDayClick={(date) => navigate(`/9fit/train?tab=semana&date=${date}`)}
-          forca={points}
-          onAskRon={goRon}
-          onStart={() => navigate("/9fit/train")}
-          onPlanLoaded={handlePlanLoaded}
-        />
+      <div className="mx-4 mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="flex items-center justify-between">
+          <p className="text-primary font-semibold text-sm">{planName}</p>
+          <button onClick={syncNow} disabled={syncing} className="text-[10px] uppercase tracking-widest text-primary border border-primary/40 rounded-full px-3 py-1 flex items-center gap-1" title="sincronizar">
+            {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Sincronizar
+          </button>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-2"><button type="button" aria-label="Mês anterior" onClick={()=>setVisibleMonth(month=>addMonths(month,-1))} className="rounded-md border border-white/10 p-1"><ChevronLeft className="h-3.5 w-3.5"/></button><span className="min-w-28 text-center capitalize">{format(visibleMonth, "MMMM yyyy", { locale: ptBR })}</span><button type="button" aria-label="Próximo mês" onClick={()=>setVisibleMonth(month=>addMonths(month,1))} className="rounded-md border border-white/10 p-1"><ChevronRight className="h-3.5 w-3.5"/></button></div>
+          <span>{planLoading ? "Verificando origem…" : planError ? "Origem indisponível" : hasRemotePlan ? `Plano salvo · origem: ${planSource || "não informada"}` : "Sem plano salvo"}</span>
+          {currentPhase && <span>Fase: {currentPhase}</span>}
+        </div>
+        <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px]">
+          {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map((d) => (
+            <div key={d} className="text-muted-foreground/70 text-[9px] uppercase tracking-widest">{d}</div>
+          ))}
+          {Array.from({ length: monthDays[0]?.getDay() || 0 }, (_, index) => <div key={`empty-${index}`} />)}
+          {monthDays.map((d) => {
+            const t = isToday(d);
+            const isWorkoutDay = scheduledDates.includes(format(d,"yyyy-MM-dd")) || plannedWeek.some(session => session.source !== "fallback" && session.date === format(d, "yyyy-MM-dd"));
+            return (
+              <button type="button" aria-label={`Abrir treinos de ${format(d,"d MMMM",{locale:ptBR})}${isWorkoutDay?", com treino programado":""}`} onClick={()=>navigate(`/9fit/train?tab=semana&date=${format(d,"yyyy-MM-dd")}`)} key={format(d,"yyyy-MM-dd")} className={`aspect-square rounded-lg flex items-center justify-center font-medium text-xs transition-colors hover:ring-1 hover:ring-primary ${t ? "bg-primary text-primary-foreground" : isWorkoutDay ? "bg-primary/30 text-primary border border-primary/40" : "bg-white/[0.03] text-foreground/70"}`}>
+                {format(d, "d")}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <p className="mx-4 mt-3 text-[10px] text-muted-foreground">Sincronizar consulta o provedor do plano. A projeção de força usa as cargas registradas nas séries concluídas e não garante resultados.</p>
+      <div className="mt-6 px-4">
+        <h2 className="text-xl font-display mb-3">Ondas {hasRemotePlan ? "(SmartPeriodizer)" : "Adaptativas"}</h2>
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
+          {waves.map((c, i) => {
+            const isActive = c.status === "active" || (c.pct ?? 0) > 0 && (c.pct ?? 0) < 100;
+            const isDone = c.status === "done" || (c.pct ?? 0) >= 100;
+            const label = c.label || `Onda ${c.week ?? i + 1}`;
+            const [head, tail] = label.split(" • ");
+            return (
+              <div key={i} className={`snap-start min-w-[230px] rounded-2xl p-4 border ${isActive ? "border-primary/60 bg-primary/[0.06] shadow-[0_0_30px_-12px_hsl(var(--primary)/0.6)]" : "border-white/10 bg-white/[0.03]"}`}>
+                <p className="text-xs text-muted-foreground">{head}</p>
+                {tail && <p className="text-sm font-semibold">{tail}</p>}
+                {c.focus && <p className="text-xs text-muted-foreground mt-2">Foco: {c.focus}</p>}
+                {c.volume && <p className="text-xs text-muted-foreground">Volume: {c.volume}</p>}
+                {c.intensity && <p className="text-xs text-muted-foreground">Intensidade: {c.intensity}</p>}
+                {isActive && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="relative w-12 h-12">
+                      {points.length === 0 && <p className="text-xs text-muted-foreground">Registre cargas nas séries concluídas para ver sua evolução e projeção.</p>}
+          <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="15" stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
+                        <circle cx="18" cy="18" r="15" stroke="hsl(var(--primary))" strokeWidth="3" fill="none" strokeDasharray={`${(c.pct ?? 0) * 0.94} 100`} strokeLinecap="round" />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">{c.pct ?? 0}%</span>
+                    </div>
+                  </div>
+                )}
+                {isDone && <p className="mt-3 text-emerald-400 text-lg">✓</p>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-      {workoutToday && (
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          Próximo treino: {format(new Date(`${workoutToday.date}T12:00:00`), "dd/MM")} • {workoutToday.label}
-        </p>
-      )}
+      <div className="mt-6 mx-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-xl font-display mb-1">Progresso do Ciclo</h2>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+           <defs>
+            <linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
+              <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {polyProjected && <polygon points={`${padding},${H - padding} ${polyProjected} ${W - padding},${H - padding}`} fill="url(#fill)" />}
+          {polyProjected && <polyline points={polyProjected} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />}
+          {polyReal && <polyline points={polyReal} fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="1.5" strokeDasharray="3 3" />}
+          {points.map((p, i) => {
+            const [x, y] = xy(p, i, "projectedPct");
+            return <circle key={i} cx={x} cy={y} r="3" fill="hsl(var(--primary))" />;
+          })}
+        </svg>
+        <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+          {points.map((p) => <span key={p.label}>{p.label}</span>)}
+        </div>
+      </div>
+
+      <button onClick={() => navigate("/9fit/train")} className="mx-4 mt-6 w-[calc(100%-2rem)] rounded-2xl bg-primary text-primary-foreground py-4 font-semibold flex items-center justify-center gap-2">
+        <CalIcon className="w-5 h-5" />
+        Ver Plano Completo da Semana
+      </button>
+      {workoutToday && <p className="mt-2 text-center text-[11px] text-muted-foreground">Próximo treino: {format(new Date(`${workoutToday.date}T12:00:00`), "dd/MM")} • {workoutToday.label}</p>}
       <BottomNavigation />
     </div>
   );

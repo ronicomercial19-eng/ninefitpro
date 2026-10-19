@@ -28,9 +28,7 @@ export function TrackedLibraryVideo({ url, title, startSeconds = 0, onProgress, 
       host.current.replaceChildren(target);
       player = new window.YT.Player(target, {
         videoId: id,
-        width: "100%",
-        height: "100%",
-        playerVars: { start: Math.max(0, Math.floor(startSeconds)), playsinline: 1, rel: 0, modestbranding: 1 },
+        playerVars: { start: Math.max(0, Math.floor(startSeconds)), playsinline: 1, rel: 0 },
         events: {
           onStateChange: (event: { data: number }) => {
             if (event.data === window.YT?.PlayerState.PLAYING && player) {
@@ -59,7 +57,7 @@ export function TrackedLibraryVideo({ url, title, startSeconds = 0, onProgress, 
     return () => { cancelled = true; window.clearInterval(poll); player?.destroy(); };
   }, [id, startSeconds]);
 
-  if (isFile) return <video src={url} controls playsInline preload="metadata" className="absolute inset-0 w-full h-full bg-black object-contain" onLoadedMetadata={(event) => {
+  if (isFile) return <video src={url} controls playsInline preload="metadata" className="w-full h-full bg-black" onLoadedMetadata={(event) => {
     if (startSeconds > 0 && startSeconds < event.currentTarget.duration) event.currentTarget.currentTime = startSeconds;
   }} onPause={(event) => {
     const video = event.currentTarget;
@@ -71,6 +69,9 @@ export function TrackedLibraryVideo({ url, title, startSeconds = 0, onProgress, 
       callbacks.current.onProgress(video.currentTime, video.duration);
     }
   }} onEnded={(event) => callbacks.current.onComplete(event.currentTarget.duration)} />;
-  if (id) return <div ref={host} className="absolute inset-0 w-full h-full [&_iframe]:absolute [&_iframe]:inset-0 [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:border-0" aria-label={title} />;
-  return <iframe src={url} title={title} className="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />;
+  if (id) return <div ref={host} className="w-full h-full" aria-label={title} />;
+  return <div className="flex h-full min-h-0 flex-col bg-black">
+    <iframe src={url} title={title} className="w-full min-h-0 flex-1 border-0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowFullScreen />
+    <p className="px-3 py-2 text-center text-[10px] text-muted-foreground">O progresso deste provedor é salvo quando o HealthFlix confirma o avanço.</p>
+  </div>;
 }

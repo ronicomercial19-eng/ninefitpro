@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -25,10 +25,6 @@ interface EcosystemOverlayProps {
   onClose: () => void;
   initialModuleKey?: string | null;
 }
-
-// Padrão Nine Pro v2 (referência: card TRIBOS): o módulo atual é o único hero da tela.
-const eyebrow = "font-data text-[10px] uppercase tracking-[0.4em] text-primary/80";
-const pillPrimary = "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 font-display text-xs font-black uppercase tracking-wider text-primary-foreground transition-transform active:scale-95";
 
 export function EcosystemOverlay({ open, onClose, initialModuleKey }: EcosystemOverlayProps) {
   const navigate = useNavigate();
@@ -85,7 +81,6 @@ export function EcosystemOverlay({ open, onClose, initialModuleKey }: EcosystemO
   };
 
   const selectedModule = modules[currentIndex];
-  const pad = (n: number) => String(n).padStart(2, "0");
 
   const variants = {
     enter: (direction: number) => ({
@@ -117,22 +112,22 @@ export function EcosystemOverlay({ open, onClose, initialModuleKey }: EcosystemO
           animate="visible"
           exit="exit"
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/95 p-4 pt-14 backdrop-blur-md"
+          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md p-4 pt-12 overflow-y-auto"
           role="dialog" aria-modal="true" aria-label="Explorar ecossistema"
           ref={dialogRef}
         >
           <button
             onClick={onClose}
             aria-label="Fechar ecossistema"
-            className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-foreground transition-colors hover:bg-white/10"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="w-6 h-6" />
           </button>
-
-          <div className="mx-auto flex min-h-full max-w-2xl flex-col justify-center">
-            {loading && <p role="status" className="text-sm text-muted-foreground">Carregando módulos…</p>}
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            {!loading && !error && !modules.length && <p className="text-sm text-muted-foreground">Nenhum módulo ativo disponível.</p>}
+          
+          <div className="max-w-2xl mx-auto min-h-full flex flex-col justify-center">
+            {loading && <p role="status">Carregando módulos…</p>}
+            {error && <p role="alert">{error}</p>}
+            {!loading && !error && !modules.length && <p>Nenhum módulo ativo disponível.</p>}
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
               {selectedModule && (
                 <motion.div
@@ -146,39 +141,21 @@ export function EcosystemOverlay({ open, onClose, initialModuleKey }: EcosystemO
                     x: { type: "spring", stiffness: 300, damping: 30 },
                     opacity: { duration: 0.2 },
                   }}
-                  className="relative w-full overflow-hidden rounded-2xl border border-primary/20 bg-black p-5"
+                  className="bg-card p-6 rounded-3xl border border-white/10 relative w-full"
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_0%,hsla(20,100%,50%,0.2),transparent_60%)]" />
+                  <h3 className="text-3xl font-bold text-white mb-4">{selectedModule.name}</h3>
+                  <p className="text-neutral-400 mb-6">{selectedModule.description}</p>
+                  <ModuleExperience moduleKey={selectedModule.key} name={selectedModule.name} />
+                  {moduleRoute(selectedModule) && <button type="button" className="w-full rounded-xl bg-primary text-primary-foreground p-3 mt-4" onClick={() => { onClose(); navigate(moduleRoute(selectedModule)!); }}>Acessar {selectedModule.name} completo →</button>}
 
-                  <div className="relative z-10 space-y-5">
-                    <div>
-                      <p className={eyebrow}>{pad(currentIndex + 1)} / {pad(modules.length)} · {selectedModule.category}</p>
-                      <h3
-                        className="mt-2 break-words font-display font-black uppercase leading-none tracking-tighter"
-                        style={{ WebkitTextStroke: "1.5px hsl(20 100% 50%)", color: "transparent", fontSize: "clamp(36px, 12vw, 72px)" }}
-                      >
-                        {selectedModule.name}
-                      </h3>
-                      <p className="mt-3 text-sm text-muted-foreground">{selectedModule.description}</p>
-                    </div>
-
-                    <ModuleExperience moduleKey={selectedModule.key} name={selectedModule.name} />
-
-                    {moduleRoute(selectedModule) && (
-                      <button type="button" className={pillPrimary} onClick={() => { onClose(); navigate(moduleRoute(selectedModule)!); }}>
-                        Acessar {selectedModule.name} completo <ArrowUpRight className="h-4 w-4" />
-                      </button>
-                    )}
-
-                    <div className="flex items-center justify-between pt-1">
-                      <button aria-label="Módulo anterior" onClick={() => paginate(-1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-foreground transition-colors hover:bg-white/10">
-                        <ChevronLeft className="h-5 w-5" />
-                      </button>
-                      <span className="font-data text-[10px] uppercase tracking-[0.4em] text-muted-foreground">{pad(currentIndex + 1)} / {pad(modules.length)}</span>
-                      <button aria-label="Próximo módulo" onClick={() => paginate(1)} className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95">
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
-                    </div>
+                  <div className="flex justify-between items-center mt-auto">
+                    <button aria-label="Módulo anterior" onClick={() => paginate(-1)} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white">
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <span className="font-mono text-xs text-neutral-500">{currentIndex + 1} / {modules.length}</span>
+                    <button aria-label="Próximo módulo" onClick={() => paginate(1)} className="p-3 rounded-full bg-primary hover:bg-primary/80 text-black">
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
                   </div>
                 </motion.div>
               )}

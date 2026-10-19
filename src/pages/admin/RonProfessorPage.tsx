@@ -41,22 +41,13 @@ export default function RonProfessorPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
     (async () => {
-      // FIX: a coluna real é `primary_goal` (não existe `preferred_goal` em athletes).
-      // O select antigo retornava 400 e a lista de alunos ficava sempre vazia.
-      // Alias mantém o resto do componente igual.
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("athletes" as any)
-        .select("id, name, user_id, sync_score, level, total_xp, preferred_goal:primary_goal")
-        .eq("coach_id", user.id)
+        .select("id, name, user_id, sync_score, level, total_xp, preferred_goal")
+        .eq("coach_id", user?.id)
         .eq("is_test_account", false)
         .order("name");
-      if (error) {
-        console.error("[RON] falha ao carregar alunos", error);
-        toast.error("Não foi possível carregar os alunos");
-        return;
-      }
       setAthletes((data as any) || []);
     })();
   }, [user?.id]);

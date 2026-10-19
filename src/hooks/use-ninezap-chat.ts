@@ -13,7 +13,7 @@ export type ZapMessage = {
 const invokeZap = (action: string, options?: Parameters<typeof supabase.functions.invoke>[1]) =>
   supabase.functions.invoke(`zap-proxy?action=${action}`, options);
 
-export function useZapThread(userId?: string, subject = "Atendimento FitPro", context?: { phone?: string; name?: string }) {
+export function useZapThread(userId?: string, subject = "Atendimento FitPro") {
   return useQuery({
     queryKey: ["zap", "thread", userId],
     enabled: Boolean(userId),
@@ -29,12 +29,7 @@ export function useZapThread(userId?: string, subject = "Atendimento FitPro", co
 
       const created = await invokeZap("threads.upsert", {
         method: "POST",
-        body: {
-          subject,
-          external_key: externalKey,
-          context: { user_id: userId, name: context?.name || subject.replace(/^Atendimento — /, ""), phone: context?.phone || null },
-          participants: [],
-        },
+        body: { subject, external_key: externalKey, context: { user_id: userId }, participants: [] },
       });
       if (created.error) throw created.error;
       const id = (created.data as { thread?: { id?: string }; id?: string })?.thread?.id || (created.data as { id?: string })?.id;
@@ -68,7 +63,10 @@ export function useSendZap(threadId?: string, userId?: string) {
           thread_id: threadId,
           body,
           external_id: `fitpro:msg:${crypto.randomUUID()}`,
-          sender_type: "user",
+          // O Core 9ZAP aceita os papéis do contrato de integração:
+          // student | trainer. "user" causa 400 no envio.
+          sender_type: "student",
+          sender_external_id: `fitpro:user:${userId}`,
           attachments: [],
         },
       });
