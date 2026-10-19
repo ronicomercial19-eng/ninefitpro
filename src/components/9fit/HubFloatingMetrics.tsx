@@ -73,7 +73,7 @@ export function HubFloatingMetrics({ vitals }: Props) {
       key: "refeicao", label: "REFEIÇÃO", value: String(meals), unit: meals === 1 ? "hoje" : "hoje", Icon: Utensils,
       pct: Math.min(100, (meals / 4) * 100), attention: meals === 0,
       aria: `Refeições registradas hoje: ${meals}`,
-      onClick: () => window.dispatchEvent(new Event("9fit:open-meal-log")),
+      onClick: () => navigate("/9fit/dieta?action=log"),
     },
     {
       key: "agua", label: "ÁGUA", value: String(nutrition.waterMl), unit: "ml", Icon: Droplet,
