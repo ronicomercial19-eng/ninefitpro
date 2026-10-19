@@ -18,7 +18,7 @@ import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
-import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar, ArrowUpRight, Dumbbell } from "lucide-react";
+import { Film, Dumbbell as DumbIcon, Target, Calendar, Dumbbell } from "lucide-react";
 import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBanner";
 import { businessDate } from "@/services/dailyContextRules";
 
@@ -418,41 +418,14 @@ export default function NineFitTrain() {
             initialDate={initialCalendarDate}
           />
         ) : (
-          <>
-            {/* Botão Treino Rápido High-Ticket */}
-            <button 
-              type="button"
-              onClick={() => setQuickOpen(true)}
-              className="w-full mb-3.5 p-3 rounded-xl border border-primary/30 hover:border-primary/60 bg-gradient-to-r from-primary/[0.12] via-[#121319] to-primary/[0.06] flex items-center justify-between transition-all group cursor-pointer shadow-lg active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
-                  <Zap className="w-4 h-4 fill-primary" />
-                </div>
-                <div className="text-left">
-                  <span className="text-xs font-bold text-white block group-hover:text-primary transition-colors">
-                    Calibrar Treino Rápido
-                  </span>
-                  <span className="text-[10px] font-mono text-neutral-400 block">
-                    Ajuste dinâmico por tempo disponível e energia (3 etapas)
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] font-semibold text-primary">
-                <span>Calibrar</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </div>
-            </button>
-
-            <WorkoutHome
-              trainings={trainings}
-              athleteName={athleteName || "Atleta"}
-              completedCount={completedCount}
+          <WorkoutHome
+            trainings={trainings}
+            athleteName={athleteName || "Atleta"}
+            completedCount={completedCount}
             weeklyCompleted={weeklyCompleted}
-              onSelectWorkout={handleSelectWorkout}
-              onStartQuick={() => setQuickOpen(true)}
-            />
-          </>
+            onSelectWorkout={handleSelectWorkout}
+            onStartQuick={() => setQuickOpen(true)}
+          />
         )}
         <QuickTrainModal open={quickOpen} onClose={() => setQuickOpen(false)} />
 
