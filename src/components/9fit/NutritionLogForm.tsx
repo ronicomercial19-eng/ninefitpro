@@ -15,16 +15,20 @@ interface NutritionLogFormProps {
   onSaved: () => void;
   meal?: { id: string; meal_name: string; calories: number | null; protein: number | null; carbs: number | null; fat: number | null; adherence_status?: string | null } | null;
   date?: string;
+  // Refeição sugerida pelo horário (regra do Registrar refeição). Só vale para novo registro.
+  suggestion?: { name: string; note?: string } | null;
 }
 
 const QUICK_MEALS = [
-  { name: "Café da Manhã", calories: 350, protein: 20, carbs: 45, fat: 12 },
+  { name: "Café da manhã", calories: 350, protein: 20, carbs: 45, fat: 12 },
+  { name: "Lanche da manhã", calories: 200, protein: 15, carbs: 25, fat: 8 },
   { name: "Almoço", calories: 600, protein: 40, carbs: 70, fat: 20 },
-  { name: "Lanche", calories: 200, protein: 15, carbs: 25, fat: 8 },
+  { name: "Lanche da tarde", calories: 200, protein: 15, carbs: 25, fat: 8 },
   { name: "Jantar", calories: 500, protein: 35, carbs: 55, fat: 18 },
+  { name: "Ceia", calories: 150, protein: 10, carbs: 15, fat: 6 },
 ];
 
-export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date }: NutritionLogFormProps) {
+export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date, suggestion }: NutritionLogFormProps) {
   const [mealName, setMealName] = useState("");
   const [calories, setCalories] = useState(0);
   const [protein, setProtein] = useState(0);
@@ -32,7 +36,7 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
   const [fat, setFat] = useState(0);
   const [adherenceStatus, setAdherenceStatus] = useState<'on_plan' | 'off_plan' | null>(null);
   const [saving, setSaving] = useState(false);
-  useEffect(()=>{if(open){setMealName(meal?.meal_name ?? '');setCalories(Number(meal?.calories ?? 0));setProtein(Number(meal?.protein ?? 0));setCarbs(Number(meal?.carbs ?? 0));setFat(Number(meal?.fat ?? 0));setAdherenceStatus((meal?.adherence_status as 'on_plan' | 'off_plan' | null) ?? null);}},[open,meal?.id,meal?.meal_name,meal?.calories,meal?.protein,meal?.carbs,meal?.fat,meal?.adherence_status]);
+  useEffect(()=>{if(open){setMealName(meal?.meal_name ?? suggestion?.name ?? '');setCalories(Number(meal?.calories ?? 0));setProtein(Number(meal?.protein ?? 0));setCarbs(Number(meal?.carbs ?? 0));setFat(Number(meal?.fat ?? 0));setAdherenceStatus((meal?.adherence_status as 'on_plan' | 'off_plan' | null) ?? null);}},[open,meal?.id,meal?.meal_name,meal?.calories,meal?.protein,meal?.carbs,meal?.fat,meal?.adherence_status,suggestion?.name]);
 
   const handleQuickFill = (meal: typeof QUICK_MEALS[0]) => {
     setMealName(meal.name);
@@ -121,6 +125,7 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
         </button>
 
         <p className="text-xs text-muted-foreground">Os atalhos preenchem estimativas. Revise as quantidades e os nutrientes antes de salvar.</p>
+        {!meal && suggestion && <p className="text-xs text-primary">{suggestion.note ?? `Sugerido pelo horário: ${suggestion.name}. Você pode trocar.`}</p>}
         {/* Quick meals */}
         <div className="flex flex-wrap gap-2">
           {QUICK_MEALS.map((meal) => (
@@ -176,4 +181,3 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
     </Dialog>
   );
 }
-
