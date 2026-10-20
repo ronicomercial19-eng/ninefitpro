@@ -12,6 +12,7 @@ import { loadProgressScreen } from "@/services/activitySummary";
 import { useActivitySummary } from "@/hooks/useActivitySummary";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { supabase } from "@/integrations/supabase/client";
+import { SharedHistory } from "@/components/progress/SharedHistory";
 
 interface SeriesPoint { label: string; value: number; oficial: boolean }
 interface StrengthBar { name: string; kg: number; delta: number; unidade: string }
@@ -200,6 +201,11 @@ export default function NineFitProgresso() {
   const scoreSpan = Math.max(1, scoreMaxV - scoreMinV);
   const scoreXStep = hasScoreCurve ? (W - pad * 2) / (scoreHistory.length - 1) : 0;
   const scorePts = scoreHistory.map((p, i) => `${pad + i * scoreXStep},${H - pad - ((p.value - scoreMinV) / scoreSpan) * (H - pad * 2)}`).join(" ");
+  const guidedCard = <div className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
+    <p className="text-sm font-semibold">Avaliação guiada</p>
+    <p className="mt-1 text-xs text-muted-foreground">Registre as medidas que você realmente avaliou. Elas entram no histórico integrado com seus treinos.</p>
+    <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" onClick={() => navigate('/9fit/avaliacao-guiada')} className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">Fazer avaliação guiada</button><a href="https://nineprogresstracker.lovable.app/progresso" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-primary/40 px-4 py-2 text-xs font-semibold text-primary">Abrir no Progress Tracker ↗</a></div>
+  </div>;
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -220,18 +226,11 @@ export default function NineFitProgresso() {
           </button>
         </div>
       )}
-      {loadError && (
-        <div className="mx-4 mt-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">{loadError}</p>
-          <button onClick={load} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive">
-            <RotateCcw className="h-3.5 w-3.5" /> Tentar novamente
-          </button>
-        </div>
-      )}
       <div className="px-4 mt-1">
         <div className="h-[2px] w-32 bg-primary/70" />
         <p className="text-xs text-muted-foreground mt-2">Módulo 9FIT PRO</p>
       </div>
+      {!loading && !loadError && !scoreHistory.length && guidedCard}
 
       {/* Top cards */}
       <div className="px-4 mt-4 grid grid-cols-5 gap-2.5">
@@ -357,6 +356,10 @@ export default function NineFitProgresso() {
 
       {/* Auto-registro do aluno — não substitui a avaliação oficial */}
       <CheckinCorporalCard onSaved={load} />
+
+      {!loading && !loadError && !!scoreHistory.length && guidedCard}
+
+      {athleteId && <div className="mx-4 mt-5" id="historico-integrado"><SharedHistory athleteId={athleteId} compact /></div>}
 
       {/* Metas — dado real (metas_progresso), dispara goal_achieved ao bater */}
       <MetasSection />
