@@ -151,7 +151,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
   const currentEvent = seasonEvents[eventIdx];
 
-  // Ações rápidas do dia: atalhos para treino, nutrição, foco, consistência, recuperação e ecossistema.
+  // Atalhos do dia: treino, nutrição, foco, consistência, recuperação e ecossistema.
   // ("Consultoria 360°" é um serviço da plataforma e não dá nome a este card.)
   // Status sempre derivado de dado real da sessão ou do Supabase.
   const pillars = [
@@ -242,7 +242,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       />
 
       {/* =========================================================================
-          AÇÕES RÁPIDAS DO DIA, COM EFEITO DE FUNDO RADAR 360° HIGH-TICKET
+          ATALHOS DO DIA, COM EFEITO DE FUNDO RADAR 360° HIGH-TICKET
          ========================================================================= */}
       <section className="relative rounded-xl border border-white/[0.09] bg-gradient-to-br from-[#12141a] via-[#0c0d11] to-[#090a0d] p-3 sm:p-3.5 shadow-2xl transition-all overflow-hidden">
         {/* Subtle hairline edge lighting no topo */}
@@ -287,13 +287,13 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[9.5px] font-mono uppercase tracking-[0.22em] text-primary font-bold">
-              AÇÕES RÁPIDAS
+              ATALHOS DO DIA
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1 h-1 rounded-full bg-emerald-400" />
             <span className="text-[9px] font-mono uppercase tracking-widest text-neutral-400 font-medium">
-              ATALHOS DO DIA
+              AÇÕES RÁPIDAS
             </span>
           </div>
         </div>
@@ -459,7 +459,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       </section>
 
       {/* =========================================================================
-          SPLASH MODAL LUXURY HIGH-TICKET (Ao clicar em qualquer atalho do card de ações rápidas)
+          SPLASH MODAL LUXURY HIGH-TICKET (Ao clicar em qualquer atalho do card Atalhos do dia)
          ========================================================================= */}
       <AnimatePresence>
         {activeModal && (
