@@ -151,9 +151,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
   const currentEvent = seasonEvents[eventIdx];
 
-  // Atalhos do dia: treino, nutrição, foco, consistência, recuperação e ecossistema.
-  // ("Consultoria 360°" é um serviço da plataforma e não dá nome a este card.)
-  // Status sempre derivado de dado real da sessão ou do Supabase.
+  // Pilares da Consultoria 360: status sempre derivado de dado real da sessão ou do Supabase.
   const pillars = [
     {
       id: 'fisica' as const,
@@ -242,7 +240,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       />
 
       {/* =========================================================================
-          ATALHOS DO DIA, COM EFEITO DE FUNDO RADAR 360° HIGH-TICKET
+          CONSULTORIA 360: SINAIS DO ATLETA COM EFEITO DE FUNDO RADAR 360° HIGH-TICKET
          ========================================================================= */}
       <section className="relative rounded-xl border border-white/[0.09] bg-gradient-to-br from-[#12141a] via-[#0c0d11] to-[#090a0d] p-3 sm:p-3.5 shadow-2xl transition-all overflow-hidden">
         {/* Subtle hairline edge lighting no topo */}
@@ -287,18 +285,18 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[9.5px] font-mono uppercase tracking-[0.22em] text-primary font-bold">
-              ATALHOS DO DIA
+              CONSULTORIA 360°
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1 h-1 rounded-full bg-emerald-400" />
             <span className="text-[9px] font-mono uppercase tracking-widest text-neutral-400 font-medium">
-              AÇÕES RÁPIDAS
+              SINAIS DO ATLETA
             </span>
           </div>
         </div>
 
-        {/* Grid dos 6 atalhos com efeito translúcido (Glassmorphism sutil sobre o radar) */}
+        {/* Grid dos 6 Pilares com efeito translúcido (Glassmorphism sutil sobre o radar) */}
         <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
           {pillars.map((pillar) => (
             <button
@@ -459,7 +457,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       </section>
 
       {/* =========================================================================
-          SPLASH MODAL LUXURY HIGH-TICKET (Ao clicar em qualquer atalho do card Atalhos do dia)
+          SPLASH MODAL LUXURY HIGH-TICKET (Ao clicar em qualquer pilar do Card 360)
          ========================================================================= */}
       <AnimatePresence>
         {activeModal && (
@@ -483,7 +481,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                   <span className="text-[9.5px] font-mono uppercase tracking-[0.2em] text-primary font-bold">
-                    {(pillars.find((p) => p.id === activeModal)?.name || '').toUpperCase()} · DETALHES
+                    PILAR {activeModal.toUpperCase()} · VISÃO DETALHADA
                   </span>
                 </div>
                 <button

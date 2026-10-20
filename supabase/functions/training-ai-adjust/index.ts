@@ -13,8 +13,7 @@ function adjustForPDI(base: { volume: number; intensity: number }, pdi: any, lab
   if (label === "recovery") { volume *= 0.4; intensity *= 0.5; notes.push("recovery_day"); }
   if (label === "light") { volume *= 0.7; intensity *= 0.75; notes.push("light_day"); }
   if (pdi) {
-    const tolerance = typeof pdi.volume_tolerance === "number" ? Math.max(0, Math.min(10, pdi.volume_tolerance)) : 5;
-    volume *= 0.6 + (tolerance / 10) * 0.6;
+    volume *= 0.6 + (pdi.volume_tolerance / 10) * 0.6;
     if (pdi.recovery_rate === "slow") { volume *= 0.85; notes.push("slow_recovery_dampener"); }
     if (pdi.discomfort_tolerance === "conservative") intensity *= 0.9;
     if (pdi.discomfort_tolerance === "aggressive") intensity *= 1.05;
@@ -59,7 +58,7 @@ serve(async (req) => {
     const authedUserId = claims.claims.sub as string;
 
     const body = await req.json();
-    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE, exercises, prescription, date, request, sync, dayNumber, focusMuscles } = body ?? {};
+    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE, exercises } = body ?? {};
     const userId = authedUserId; // trust JWT, not body
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -73,25 +72,20 @@ serve(async (req) => {
     const pdi = await loadUserParameters(authClient, userId);
     const base = adjustForPDI({ volume: 100, intensity: 100 }, pdi, "normal");
     const pdiBlock = pdi
-      ? `PDI: goal=${pdi.goal ?? "não informado"}, recovery=${pdi.recovery_rate ?? "não informado"}, tol_vol=${pdi.volume_tolerance ?? "não informado"}/10, discomfort=${pdi.discomfort_tolerance ?? "não informado"}, injuries=${(pdi.injury_zones||[]).join("|")||"none"}. Baseline modulado: vol=${base.volume}%, int=${base.intensity}%, notes=${base.notes.join(",")}.`
+      ? `PDI: goal=${pdi.goal}, recovery=${pdi.recovery_rate}, tol_vol=${pdi.volume_tolerance}/10, discomfort=${pdi.discomfort_tolerance}, injuries=${(pdi.injury_zones||[]).join("|")||"none"}. Baseline modulado: vol=${base.volume}%, int=${base.intensity}%, notes=${base.notes.join(",")}.`
       : "PDI: ainda não calibrado — use perfil conservador.";
 
-    const sys = `Você é o FitCopilot, IA de ajuste adaptativo de treino do 9FIT PRO, sobre a prescrição do Smart Treino.
-Responda SEMPRE chamando a tool ajustar_treino. Em português. Use apenas exercícios presentes na prescrição para mudanças. Não invente Sync, dia de ciclo, fadiga ou dados fisiológicos ausentes. Se houver dor ou restrição, seja conservador e recomende revisão profissional. Não aumente a carga em resposta a fadiga alta. Explique cada alteração concretamente. Não proponha exercício adicional: esta tela edita a sessão existente.
+    const sys = `Você é o FitCopilot, IA de ajuste adaptativo de treino do 9FIT PRO.
+Responda SEMPRE chamando a tool ajustar_treino. Em português.
 ${pdiBlock}`;
     const userPrompt = `Treino: ${workoutName ?? "—"} (${workoutType ?? "geral"})
 Perfil: nível ${profile?.level ?? "?"}, experiência ${profile?.experience ?? "?"}.
 Estado fisiológico: HRV ${bio?.hrv ?? "—"} | Sono(min) ${bio?.sleep ?? "—"} | Recovery ${bio?.recovery ?? "—"}.
 RPE recente: ${recentRPE ?? "—"}.
 Exercícios atuais: ${Array.isArray(exercises) && exercises.length ? exercises.join(", ") : "não informado"}.
-Prescrição Smart Treino: ${JSON.stringify(Array.isArray(prescription) ? prescription.slice(0, 30) : [])}.
-Data da sessão: ${date ?? "não informada"}. Sync atual: ${typeof sync === "number" ? `${sync}%` : "não disponível"}.
-Dia da estrutura Smart Treino: ${Number.isInteger(dayNumber) ? dayNumber : "não informado"}. Foco muscular: ${Array.isArray(focusMuscles) ? focusMuscles.join(", ") : "não informado"}.
-Pedido do aluno: ${typeof request === "string" ? request.slice(0, 300) : "ajuste para os sinais atuais"}.
-Restrições declaradas: ${profile?.restrictions ?? "não informadas"}.
 Skills ativas: ${skills || "nenhuma"}.
 
-Gere uma recomendação curta e, quando houver motivo concreto, mudanças de séries, dose, descanso ou RPE em changes para exercícios existentes. Use swaps apenas quando uma troca for realmente necessária. Deixe changes e swaps vazios quando os dados não sustentarem alteração. RESPEITE o PDI acima.`;
+Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação curta — RESPEITE o PDI acima.`;
 
     const tools = [
       {
@@ -116,22 +110,6 @@ Gere uma recomendação curta e, quando houver motivo concreto, mudanças de sé
                     reason: { type: "string" },
                   },
                   required: ["from", "to", "reason"],
-                },
-              },
-              changes: {
-                type: "array",
-                description: "Alterações por exercício da prescrição atual; omita campos que não devem mudar.",
-                items: {
-                  type: "object",
-                  properties: {
-                    exercise: { type: "string" },
-                    sets: { type: "integer", minimum: 1, maximum: 10 },
-                    reps: { type: "string" },
-                    restSeconds: { type: "integer", minimum: 0, maximum: 600 },
-                    rpe: { type: "integer", minimum: 1, maximum: 10 },
-                    reason: { type: "string" },
-                  },
-                  required: ["exercise", "reason"],
                 },
               },
               addOns: {
@@ -186,10 +164,8 @@ Gere uma recomendação curta e, quando houver motivo concreto, mudanças de sé
     if (!call) return fail("PARSE", "Resposta sem tool call", 500);
     const args = JSON.parse(call.function.arguments || "{}");
     args.generatedAt = new Date().toISOString();
-    args.pdiAvailable = !!pdi;
-    args.swaps = Array.isArray(args.swaps) ? args.swaps.slice(0, 20) : [];
-    args.changes = Array.isArray(args.changes) ? args.changes.slice(0, 30) : [];
-    args.addOns = [];
+    args.swaps = args.swaps ?? [];
+    args.addOns = args.addOns ?? [];
     return ok(args);
   } catch (e) {
     console.error("training-ai-adjust", e);

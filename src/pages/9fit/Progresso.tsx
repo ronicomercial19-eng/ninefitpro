@@ -12,8 +12,6 @@ import { loadProgressScreen } from "@/services/activitySummary";
 import { useActivitySummary } from "@/hooks/useActivitySummary";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { supabase } from "@/integrations/supabase/client";
-import { SharedHistory } from "@/components/progress/SharedHistory";
-import { AssessmentWorkspace } from "@/components/progress/AssessmentWorkspace";
 
 interface SeriesPoint { label: string; value: number; oficial: boolean }
 interface StrengthBar { name: string; kg: number; delta: number; unidade: string }
@@ -202,11 +200,6 @@ export default function NineFitProgresso() {
   const scoreSpan = Math.max(1, scoreMaxV - scoreMinV);
   const scoreXStep = hasScoreCurve ? (W - pad * 2) / (scoreHistory.length - 1) : 0;
   const scorePts = scoreHistory.map((p, i) => `${pad + i * scoreXStep},${H - pad - ((p.value - scoreMinV) / scoreSpan) * (H - pad * 2)}`).join(" ");
-  const guidedCard = <div className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
-    <p className="text-sm font-semibold">Avaliação guiada</p>
-    <p className="mt-1 text-xs text-muted-foreground">Registre as medidas que você realmente avaliou. Elas entram no histórico integrado com seus treinos.</p>
-    <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" onClick={() => navigate('/9fit/avaliacao-guiada')} className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">Fazer avaliação guiada</button><a href="https://nineprogresstracker.lovable.app/progresso" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-primary/40 px-4 py-2 text-xs font-semibold text-primary">Abrir no Progress Tracker ↗</a></div>
-  </div>;
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
@@ -215,7 +208,6 @@ export default function NineFitProgresso() {
         <h1 className="text-4xl font-display tracking-tight">Progresso</h1>
         <TrendingUp className="w-7 h-7 text-primary" />
       </div>
-      {athleteId && <div className="mx-4 mt-6"><AssessmentWorkspace athleteId={athleteId} /></div>}
       <section className="mx-4 mt-4 rounded-xl border border-white/10 p-4 space-y-2"><h2 className="font-semibold">Histórico de sessões</h2>{activity.isPending ? <p>Carregando sessões…</p> : activity.isError ? <button onClick={() => void activity.refetch()}>Sessões indisponíveis. Tentar novamente</button> : <><p>{activity.data?.total ?? 0} concluídas no total · {activity.data?.week ?? 0} nesta semana · {activity.data?.today ?? 0} hoje</p>{activity.data?.recent.map(session => <p key={session.id} className="text-sm text-muted-foreground">Sessão concluída · {session.workout_date}</p>)}{!activity.data?.total && <p className="text-sm text-muted-foreground">Nenhuma sessão concluída registrada. Um protocolo marcado não equivale a uma sessão de treino executada.</p>}</>}<p className="text-xs text-muted-foreground">Sessões: registros de execução. Recordes e avaliações: histórico de progresso. O índice SYNC mede rotina e tem cálculo separado.</p></section>
       <div className="mx-4 mt-4"><DailyProtocol readOnly /></div>
       {loading && <p className="px-4 mt-3 text-xs text-muted-foreground">Carregando seus dados reais…</p>}
@@ -228,11 +220,18 @@ export default function NineFitProgresso() {
           </button>
         </div>
       )}
+      {loadError && (
+        <div className="mx-4 mt-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <button onClick={load} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive">
+            <RotateCcw className="h-3.5 w-3.5" /> Tentar novamente
+          </button>
+        </div>
+      )}
       <div className="px-4 mt-1">
         <div className="h-[2px] w-32 bg-primary/70" />
         <p className="text-xs text-muted-foreground mt-2">Módulo 9FIT PRO</p>
       </div>
-      {!loading && !loadError && !scoreHistory.length && guidedCard}
 
       {/* Top cards */}
       <div className="px-4 mt-4 grid grid-cols-5 gap-2.5">
@@ -241,7 +240,7 @@ export default function NineFitProgresso() {
             <p className="text-[10px] uppercase text-muted-foreground">Avaliação Atual</p>
             <p className="mt-2 text-5xl font-display tabular-nums text-foreground">{score != null ? `${score}%` : "—"}</p>
             <p className="mt-2 text-[10px] font-medium text-primary">
-              {scoreTrend != null ? `${scoreTrend >= 0 ? "+" : ""}${scoreTrend} pp no período` : "Sem histórico ainda"}
+              {scoreTrend != null ? `${scoreTrend >= 0 ? "+" : ""}${scoreTrend}% no período` : "Sem histórico ainda"}
             </p>
           </div>
           {hasCurve && (
@@ -270,7 +269,7 @@ export default function NineFitProgresso() {
               </svg>
               <div className="min-w-0 space-y-0.5 text-[9px]">
                 <p><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%` : "—"}</p>
-                <p><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo} kg` : "—"}</p>
+                <p><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo}%` : "—"}</p>
               </div>
             </div>
           </div>
@@ -358,10 +357,6 @@ export default function NineFitProgresso() {
 
       {/* Auto-registro do aluno — não substitui a avaliação oficial */}
       <CheckinCorporalCard onSaved={load} />
-
-      {!loading && !loadError && !!scoreHistory.length && guidedCard}
-
-      {athleteId && <div className="mx-4 mt-5" id="historico-integrado"><SharedHistory athleteId={athleteId} compact /></div>}
 
       {/* Metas — dado real (metas_progresso), dispara goal_achieved ao bater */}
       <MetasSection />

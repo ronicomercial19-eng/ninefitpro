@@ -3,8 +3,8 @@ import { TrainingHistory } from "./TrainingHistory";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutAssistance, ASSISTANCE_LEVELS } from "@/hooks/useWorkoutAssistance";
 import { 
-  Dumbbell, Play, Calendar, Zap, ArrowUpRight,
-  Clock, Target, Shield, CheckCircle2, ChevronRight, Activity, Sparkles
+  Dumbbell, Play, Calendar, Zap, 
+  Clock, Target, Shield, Flame, CheckCircle2, ChevronRight, Activity, Sparkles
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import trainHeroBanner from "@/assets/images/train_hero_banner_1790011808035.jpg";
@@ -45,11 +45,15 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
   const currentSupport=ASSISTANCE_LEVELS[level];
 
   const activeWorkout = trainings[0];
+  const startDate = trainings.length > 0 
+    ? new Date(`${trainings[0].start_date}T12:00:00`).toLocaleDateString("pt-BR") 
+    : "--";
 
   return (
     <div className="space-y-4">
       {/* =========================================================================
-          HERO — SESSÃO DO DIA. Primeira coisa da aba Hoje; a ação principal é Iniciar treino.
+          HERO VISUAL CINEMATOGRÁFICO — SESSÃO PRINCIPAL DE TREINO (HIGH-TICKET)
+          Estrutura em layout vertical: Banner com gradiente de transição + Bloco textual dedicado
          ========================================================================= */}
       <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-[#0c0d12] flex flex-col group">
         {/* Bloco 1: Imagem Superior com Gradiente de Sobreposição (fundo -> topo) */}
@@ -66,11 +70,27 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
           {/* Hairline luminoso sutil no topo */}
           <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
-          {/* Único selo do hero: estado da prescrição */}
+          {/* Badges Flutuantes sobre a Imagem */}
           <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/15">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-neutral-200 font-bold">
               {activeWorkout ? "PRESCRIÇÃO ATIVA" : "SEM PRESCRIÇÃO"}
+            </span>
+          </div>
+
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/15 text-[9px] font-mono text-amber-300 font-medium">
+            <Sparkles className="w-3 h-3 text-primary" />
+            <span>Cadência do protocolo</span>
+          </div>
+
+          {/* Etiqueta de Telemetria ancorada na base da imagem */}
+          <div className="absolute bottom-2.5 left-4 flex items-center gap-2">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-primary font-bold">
+              TELEMETRIA OFICIAL
+            </span>
+            <span className="text-white/30">•</span>
+            <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-200 font-medium bg-white/[0.08] px-2 py-0.5 rounded border border-white/15 backdrop-blur-sm">
+              Carga prescrita
             </span>
           </div>
         </div>
@@ -79,27 +99,27 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
         <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4 bg-gradient-to-b from-[#0c0d12] to-[#090a0d] border-t border-white/[0.04]">
           <div className="min-w-0 flex-1">
             <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-snug font-display">
-              {activeWorkout ? activeWorkout.training_name : "Sem treino prescrito hoje"}
+              {activeWorkout ? activeWorkout.training_name : "Hipertrofia & Força Muscular"}
             </h2>
 
             <p className="text-xs text-neutral-300 mt-1.5 line-clamp-2 max-w-xl font-normal leading-relaxed">
-              {activeWorkout
-                ? (activeWorkout.training_description || "Confira os exercícios e os parâmetros definidos na sua prescrição.")
-                : "Monte uma sessão pelo Treino Rápido ou confira a aba Semana."}
+              {activeWorkout?.training_description || "Confira os exercícios e os parâmetros definidos na sua prescrição."}
             </p>
 
-            {activeWorkout && (
-              <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 mt-3 text-[10px] font-mono font-medium">
-                <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-neutral-200">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  {activeWorkout.training_data?.estimated_duration ? `${activeWorkout.training_data.estimated_duration} MIN` : "SEM ESTIMATIVA"}
-                </span>
-                <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-neutral-200">
-                  <Target className="w-3.5 h-3.5 text-primary" />
-                  {activeWorkout.training_data?.exercises?.length ?? activeWorkout.training_data?.exercise_count ?? 0} BLOCOS
-                </span>
-              </div>
-            )}
+            <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 mt-3 text-[10px] font-mono font-medium">
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-neutral-200">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                {activeWorkout?.training_data?.estimated_duration ? `${activeWorkout.training_data.estimated_duration} MIN` : "SEM ESTIMATIVA"}
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-neutral-200">
+                <Target className="w-3.5 h-3.5 text-primary" />
+                {activeWorkout?.training_data?.exercises?.length ?? activeWorkout?.training_data?.exercise_count ?? 0} BLOCOS
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/[0.08] border border-amber-500/20 text-amber-300">
+                <Flame className="w-3.5 h-3.5 text-amber-400" />
+                SESSÃO GUIADA
+              </span>
+            </div>
           </div>
 
           <button
@@ -108,37 +128,10 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
             className="py-3 px-6 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all active:scale-95 cursor-pointer shrink-0 self-stretch sm:self-end"
           >
             <Play className="w-4 h-4 fill-current" />
-            <span>{activeWorkout ? "INICIAR TREINO" : "TREINO RÁPIDO"}</span>
+            <span>INICIAR TREINO</span>
           </button>
         </div>
       </div>
-
-      {/* Ação secundária logo abaixo do hero: Treino Rápido (só quando já existe treino do dia; sem treino o hero já cumpre esse papel) */}
-      {activeWorkout && (
-        <button 
-          type="button"
-          onClick={onStartQuick}
-          className="w-full p-3 rounded-xl border border-primary/30 hover:border-primary/60 bg-gradient-to-r from-primary/[0.12] via-[#121319] to-primary/[0.06] flex items-center justify-between transition-all group cursor-pointer shadow-lg active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
-              <Zap className="w-4 h-4 fill-primary" />
-            </div>
-            <div className="text-left">
-              <span className="text-xs font-bold text-white block group-hover:text-primary transition-colors">
-                Calibrar Treino Rápido
-              </span>
-              <span className="text-[10px] font-mono text-neutral-400 block">
-                Ajuste dinâmico por tempo disponível e energia (3 etapas)
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-primary">
-            <span>Calibrar</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </div>
-        </button>
-      )}
 
       {/* =========================================================================
           CARD DE TELEMETRIA COM EFEITO DE FUNDO RADAR 360° (HIGH-TICKET)
@@ -184,8 +177,8 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
           </div>
         </div>
 
-        {/* Grid de Métricas de Progresso (o nível de suporte tem bloco próprio logo abaixo, sem repetir aqui) */}
-        <div className="relative z-10 grid grid-cols-2 gap-2">
+        {/* Grid de Métricas de Progresso */}
+        <div className="relative z-10 grid grid-cols-3 gap-2">
           {/* Métrica 1: Treinos Realizados */}
           <div className="p-3 rounded-lg backdrop-blur-md bg-white/[0.025] border border-white/[0.05] text-center">
             <p className="text-[9px] font-mono uppercase tracking-wider text-neutral-400 font-medium mb-1">
@@ -209,6 +202,19 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
             </p>
             <span className="text-[8px] font-mono text-neutral-400 block mt-0.5">
               TREINOS CONCLUÍDOS
+            </span>
+          </div>
+
+          {/* Métrica 3: Modo de Assistência */}
+          <div className="p-3 rounded-lg backdrop-blur-md bg-white/[0.025] border border-white/[0.05] text-center">
+            <p className="text-[9px] font-mono uppercase tracking-wider text-neutral-400 font-medium mb-1">
+              SUPORTE
+            </p>
+            <p className="text-base sm:text-lg font-bold text-white font-display tracking-tight mt-1 truncate">
+              {currentSupport.label}
+            </p>
+            <span className="text-[8px] font-mono text-neutral-400 block mt-0.5 truncate">
+              {startDate !== "--" ? `Desde ${startDate}` : "Ciclo 9FIT"}
             </span>
           </div>
         </div>

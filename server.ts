@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
@@ -14,6 +15,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Vite integration
+if (!isProduction) {
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'spa',
+  });
+  app.use(vite.middlewares);
+} else {
+  app.use(express.static(path.resolve(__dirname, 'dist')));
+}
 
 // Support base64 image uploads up to 25MB for Food Scanner
 app.use(express.json({ limit: '25mb' }));
@@ -416,7 +428,12 @@ app.post('/api/webhook/infinitepay', async (req, res) => {
     }
 
     // 2. Identifica o plano (basico ou annual)
-    const planType = plan_id === 'TatHaBMsUX' ? 'pro' : 'active';
+    let planType = 'active'; // Default
+    if (plan_id === 'TatHaBMsUX') {
+      planType = 'pro'; // Annual
+    } else if (plan_id === 'kvfp4S0k42') {
+      planType = 'active'; // Basic
+    }
 
     // 3. Atualiza status no banco via SDK do Supabase
     if (!supabase) {

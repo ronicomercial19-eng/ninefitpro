@@ -199,6 +199,12 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
         <span className="text-xs font-semibold">{format(weekStart,"dd/MM")} – {format(addDays(weekStart,6),"dd/MM/yyyy")}</span>
         <button type="button" aria-label="Próxima semana" onClick={()=>moveWeek(1)} className="rounded-lg border border-white/10 p-2"><ChevronRight className="h-4 w-4" /></button>
       </div>
+      {(phase === "active" || phase === "in_progress") && weekStartISO >= format(currentWeekStart,"yyyy-MM-dd") && (
+        <button type="button" onClick={()=>void generateWeek()} disabled={generating} className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary disabled:opacity-50">
+          {generating?<Loader2 className="h-4 w-4 animate-spin"/>:<CalendarPlus className="h-4 w-4"/>}
+          {generating?"Preparando periodização…":"Completar programação da semana"}
+        </button>
+      )}
 
       {loading && (
         <div className="py-10 flex items-center justify-center text-muted-foreground">
@@ -223,9 +229,6 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
         const isRest = d.status === "rest" && !!d.id;
         const isUnplanned = !d.id;
         const exerciseCount = d.exercises?.length || 0;
-        // Eyebrow mostra o dia da semana pela data; o título usa o nome real do treino quando existe.
-        const weekdayLabel = DAY_LABELS[new Date(`${d.date}T12:00:00`).getDay()];
-        const sessionTitle = d.day_label && d.day_label !== weekdayLabel ? d.day_label : "Sessão de Força";
 
         return (
           <div
@@ -253,7 +256,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
                   {/* Eyebrow técnico laranja / tracking largo */}
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] font-mono tracking-[0.25em] text-primary font-bold uppercase">
-                      DIA 0{i + 1} // {weekdayLabel.toUpperCase()}
+                      DIA 0{i + 1} // {d.day_label.toUpperCase()}
                     </span>
                     {isToday && (
                       <span className="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[8px] font-mono font-bold tracking-wider uppercase border border-primary/30 animate-pulse">
@@ -270,7 +273,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
 
                   {/* Headline de Alto Impacto: tipografia robusta, clean, sem serafins */}
                   <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white font-display leading-tight">
-                    {isRest ? "Recuperação Ativa & Descanso" : isUnplanned ? "Sem treino prescrito" : sessionTitle}
+                    {isRest ? "Recuperação Ativa & Descanso" : isUnplanned ? "Sem treino prescrito" : `Sessão de Força ${d.day_label}`}
                   </h3>
 
                   {/* Descrição do Treino */}
@@ -303,20 +306,15 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
 
                   {!isRest && !isUnplanned && (
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                    {isToday && !isDone && !isSkipped ? (
-                      <button
-                        type="button"
-                        onClick={() => onExecuteToday(d)}
-                        className="py-2 px-4 rounded-lg font-bold text-xs flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
-                      >
-                        <Play className="w-3 h-3 fill-current" />
-                        <span>{d.status === "in_progress" ? "Retomar treino" : "Executar Treino"}</span>
-                      </button>
-                    ) : (
-                      <span className="py-2 px-3 rounded-lg border border-white/10 text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 shrink-0">
-                        {isDone ? "Concluído" : isSkipped ? "Não realizado" : "Programado"}
-                      </span>
-                    )}
+                    <button
+                      type="button"
+                      disabled={isDone || isSkipped || !isToday}
+                      onClick={() => onExecuteToday(d)}
+                      className="py-2 px-4 rounded-lg font-bold text-xs flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>{isDone ? "Concluído" : isSkipped ? "Não realizado" : !isToday ? "Dia programado" : d.status=== "in_progress" ? "Retomar treino" : "Executar Treino"}</span>
+                    </button>
                     {isToday && d.status !== "in_progress" && !isDone && !isSkipped && d.id && <button type="button" onClick={()=>setConfirmSkip(true)} className="rounded-lg border border-amber-500/30 px-3 py-2 text-[10px] font-semibold text-amber-300"><CircleSlash className="mr-1 inline h-3.5 w-3.5"/>Não vou treinar</button>}
                     </div>
                   )}
@@ -368,17 +366,10 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
         </div>
       )}
 
-      {/* Ação da semana (secundária): fica depois do dia, não antes */}
-      {(phase === "active" || phase === "in_progress") && weekStartISO >= format(currentWeekStart,"yyyy-MM-dd") && (
-        <button type="button" onClick={()=>void generateWeek()} disabled={generating} className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary disabled:opacity-50">
-          {generating?<Loader2 className="h-4 w-4 animate-spin"/>:<CalendarPlus className="h-4 w-4"/>}
-          {generating?"Preparando periodização…":"Completar programação da semana"}
-        </button>
-      )}
-
       <p className="text-[10px] text-muted-foreground text-center pt-2 flex items-center justify-center gap-1">
         <Calendar className="w-3 h-3" /> Ao concluir, o progresso e o Sync Score são atualizados
       </p>
     </div>
   );
 }
+

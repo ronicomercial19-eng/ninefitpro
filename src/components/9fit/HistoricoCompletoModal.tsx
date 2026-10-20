@@ -27,8 +27,7 @@ const ICONS: Record<string, JSX.Element> = {
 function describe(ev: TimelineEvent): string {
   if (ev.event_type === "assessment") {
     const parts: string[] = [];
-    if (["avaliacao_guiada", "peso_avulso", "autoavaliacao"].includes(ev.detail?.origem || "")) parts.push("Auto-registro · fora do score oficial");
-    if (!["avaliacao_guiada", "peso_avulso", "autoavaliacao"].includes(ev.detail?.origem || "") && ev.detail?.score_global != null) parts.push(`score ${Math.round(ev.detail.score_global)}%`);
+    if (ev.detail?.score_global != null) parts.push(`score ${Math.round(ev.detail.score_global)}%`);
     if (ev.detail?.peso != null) parts.push(`${ev.detail.peso}kg`);
     if (ev.detail?.gordura_corporal != null) parts.push(`${ev.detail.gordura_corporal}% gordura`);
     return parts.join(" · ") || (ev.detail?.origem === "peso_avulso" ? "Auto-registro" : "Avaliação com professor");

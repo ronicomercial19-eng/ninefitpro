@@ -23840,9 +23840,6 @@ export type Database = {
       }
     }
     Functions: {
-      fn_get_assessment_hub: { Args: { p_athlete_id: string }; Returns: Json }
-      fn_get_avaliacao_detalhe: { Args: { p_athlete_id: string; p_avaliacao_id: string; p_comparar?: string }; Returns: Json }
-      fn_save_assessment_preferences: { Args: { p_athlete_id: string; p_interval_weeks?: number; p_reminder?: boolean; p_source?: string; p_source_status?: string; p_share_coach?: boolean }; Returns: Json }
       _selecionar_exercicios_bloco: {
         Args: {
           p_aluno_id: string

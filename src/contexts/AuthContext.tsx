@@ -139,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await fetchStudentProfile(u.id, u.email, alive);
       if (alive()) setRoleStatus('ready');
     } catch (error) {
-      console.error('[Auth] falha ao carregar identidade', error);
+      console.error('[Auth] falha ao carregar identidade para usuario:', u.id, error);
       if (alive()) setRoleStatus('error');
     } finally {
       if (alive()) setLoading(false);

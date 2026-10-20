@@ -652,15 +652,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       setSafetyPaused(pending);toast.success(pending?'Pausa registrada para revisão':'Registro retomado após sua confirmação de revisão');
     }catch{toast.error(pending?'Pausa ativa nesta tela; não foi possível salvar o relato. Tente novamente.':'Não foi possível retomar. Tente novamente.');}finally{painSaving.current=false;}
   }
-  // Repetições realizadas e painel de assistência (RON + relato de dor) são peças separadas:
-  // as reps ficam junto de séries e carga no card do exercício; o painel RON fica recolhido abaixo.
-  // O Modo Foco continua recebendo as duas juntas em `assistance`.
-  const repsField = currentExercise ? <label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Informe antes de marcar a série" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label> : null;
-  const ronPanel = currentExercise ? <WorkoutRonAssistance level={assistanceLevel} onLevelChange={setAssistanceLevel} trainingName={liveTraining.training_name} exercise={currentExercise} completedSets={completedSets[String(currentIdx)] || []} weight={weights[currentIdx] ?? null} actualReps={actualRepsByExercise[currentIdx] ?? null} executionId={executionId} paused={safetyPaused} onPain={()=>void setPainReview(true)} onReviewed={()=>void setPainReview(false)}/> : null;
-  const assistance = currentExercise ? <div className="space-y-2">{repsField}{ronPanel}</div> : null;
+  const assistance=currentExercise ? <div className="space-y-2"><label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Informe antes de marcar a série" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label><WorkoutRonAssistance level={assistanceLevel} onLevelChange={setAssistanceLevel} trainingName={liveTraining.training_name} exercise={currentExercise} completedSets={completedSets[String(currentIdx)] || []} weight={weights[currentIdx] ?? null} actualReps={actualRepsByExercise[currentIdx] ?? null} executionId={executionId} paused={safetyPaused} onPain={()=>void setPainReview(true)} onReviewed={()=>void setPainReview(false)}/></div> : null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {!focusModeOpen && assistance && <div className="px-4 py-3">{assistance}</div>}
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center">
@@ -708,8 +704,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         </div>
       )}
 
+      {/* Wearable */}
+      <div className="px-4 py-2 flex-shrink-0">
+        <WearableConnectBox isWorkoutActive={true} />
+      </div>
+
       {dailyOverride && (
-        <div className="mx-4 mt-2 mb-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 flex items-center gap-2 text-xs text-primary">
+        <div className="mx-4 mb-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 flex items-center gap-2 text-xs text-primary">
           <Sparkles className="w-3.5 h-3.5" />
           Ajuste aplicado hoje
           {dailyOverride.intensity_pct && <span className="font-bold">• {dailyOverride.intensity_pct}%</span>}
@@ -721,7 +722,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
 
       {/* Content Area */}
-      <div className="flex-1 overflow-auto px-4 pb-4 pt-3">
+      <div className="flex-1 overflow-auto px-4 pb-4">
         {isStructured ? (
           /* Structured Exercise View */
           <div className="space-y-4">
@@ -818,7 +819,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                     </div>
                   </div>
 
-                  {/* Registro da série: séries, repetições realizadas e carga juntas */}
+                  {/* Set Tracking */}
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Séries completadas</p>
                     <div className="flex gap-2">
@@ -838,27 +839,6 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                           </button>
                         );
                       })}
-                    </div>
-                  </div>
-
-                  {!focusModeOpen && repsField}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                      <Dumbbell className="w-4 h-4" /> Carga Atual
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => setWeight(Math.max(0, currentWeight - 2.5))}
-                        className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
-                        <Minus className="w-4 h-4 text-foreground" />
-                      </button>
-                      <span className="text-2xl font-black text-foreground w-20 text-center">
-                        {currentWeight}<span className="text-sm text-muted-foreground ml-1">kg</span>
-                      </span>
-                      <button onClick={() => setWeight(currentWeight + 2.5)}
-                        className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
-                        <Plus className="w-4 h-4 text-foreground" />
-                      </button>
                     </div>
                   </div>
 
@@ -915,18 +895,6 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
           </div>
         )}
-
-        {/* Recolhidos: assistência RON (inclui relato de dor; abre sozinha se o treino estiver pausado) e wearable */}
-        {!focusModeOpen && ronPanel && (
-          <details open={safetyPaused} className="mt-4 rounded-lg border border-border bg-card">
-            <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Assistência RON · relatar dor</summary>
-            <div className="p-3">{ronPanel}</div>
-          </details>
-        )}
-        <details className="mt-2 rounded-lg border border-border bg-card">
-          <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Wearable</summary>
-          <div className="p-3"><WearableConnectBox isWorkoutActive={true} /></div>
-        </details>
       </div>
 
       {/* Bottom Controls */}
@@ -965,6 +933,28 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                 {s}s
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Weight Control */}
+        <div className="px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> Carga Atual
+            </span>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setWeight(Math.max(0, currentWeight - 2.5))}
+                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
+                <Minus className="w-4 h-4 text-foreground" />
+              </button>
+              <span className="text-2xl font-black text-foreground w-20 text-center">
+                {currentWeight}<span className="text-sm text-muted-foreground ml-1">kg</span>
+              </span>
+              <button onClick={() => setWeight(currentWeight + 2.5)}
+                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
+                <Plus className="w-4 h-4 text-foreground" />
+              </button>
+            </div>
           </div>
         </div>
 
