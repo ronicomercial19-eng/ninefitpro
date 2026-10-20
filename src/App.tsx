@@ -71,6 +71,7 @@ import NineFitProgresso from "./pages/9fit/Progresso";
 import NineFitPosturaPro from "./pages/9fit/PosturaPro";
 import NineFitNativeSystem from "./pages/9fit/NativeSystem";
 import NineFitAvaliacaoGuiada from "./pages/9fit/AvaliacaoGuiada";
+import NineFitAssessmentPages from "./pages/9fit/AssessmentPages";
 import NineFitCompartilhar from "./pages/9fit/Compartilhar";
 import NineFitMove from "./pages/9fit/Move";
 import NineFitModules from "./pages/9fit/Modules";
@@ -277,13 +278,13 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
-            
+
             {/* 9FIT Routes - Public */}
             <Route path="/9fit" element={<NineFitLogin />} />
             <Route path="/9fit/login" element={<NineFitLogin />} />
             <Route path="/9fit/onboarding" element={<NineFitOnboarding />} />
             <Route path="/9fit/first-access" element={<NineFitFirstAccess />} />
-            
+
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/embed" element={<NineFitLayout><EcoEmbed title={new URLSearchParams(window.location.search).get("title") || "Ecossistema"} url={new URLSearchParams(window.location.search).get("url") || "/9fit/hub"} /></NineFitLayout>} />
@@ -323,6 +324,14 @@ const App = () => (
             <Route path="/9fit/planejamento" element={<NineFitLayout><NineFitPlanejamento /></NineFitLayout>} />
             <Route path="/9fit/biblioteca" element={<NineFitLayout><NineFitBiblioteca /></NineFitLayout>} />
             <Route path="/9fit/progresso" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
+            <Route path="/9fit/progresso/capacidades" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/progresso/historico" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/progresso/meta" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/progresso/reavaliacao" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/progresso/fontes" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/perfil/fontes" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/avaliacao/:id" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
+            <Route path="/9fit/avaliacao/:id/:section" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
             <Route path="/9fit/postura-pro" element={<NineFitLayout><NineFitPosturaPro /></NineFitLayout>} />
             <Route path="/9fit/progresso/recordes" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
             <Route path="/9fit/premium" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 import { toast } from "sonner";
+import { loadAssessmentHub } from '@/services/assessmentHubService';
 
 interface Meta {
   id: string;
@@ -49,13 +50,9 @@ export function MetasSection() {
 
   const load = useCallback(async () => {
     if (!athleteId) { setMetas([]); setLoading(false); return; }
-    const { data } = await supabase
-      .from("metas_progresso")
-      .select("*")
-      .eq("athlete_id", athleteId)
-      .order("created_at", { ascending: false });
-    setMetas(data || []);
-    setLoading(false);
+    try { const hub = await loadAssessmentHub(athleteId); setMetas(hub.goals); }
+    catch { toast.error('Não foi possível carregar suas metas.'); }
+    finally { setLoading(false); }
   }, [athleteId]);
 
   useEffect(() => { load(); }, [load]);
@@ -97,8 +94,8 @@ export function MetasSection() {
       .update({ valor_atual: novoValor, status: isAchieved(atualizado) ? "concluida" : "ativa" })
       .eq("id", m.id).eq("athlete_id", athleteId).select("id").single();
     if (error) { toast.error("Erro ao atualizar"); return; }
-    load();
     window.dispatchEvent(new Event("9fit:sync_updated"));
+    load();
     if (achieved) setCelebrating(atualizado);
   };
 

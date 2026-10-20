@@ -13,6 +13,7 @@ import { useActivitySummary } from "@/hooks/useActivitySummary";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { supabase } from "@/integrations/supabase/client";
 import { SharedHistory } from "@/components/progress/SharedHistory";
+import { AssessmentWorkspace } from "@/components/progress/AssessmentWorkspace";
 
 interface SeriesPoint { label: string; value: number; oficial: boolean }
 interface StrengthBar { name: string; kg: number; delta: number; unidade: string }
@@ -214,6 +215,7 @@ export default function NineFitProgresso() {
         <h1 className="text-4xl font-display tracking-tight">Progresso</h1>
         <TrendingUp className="w-7 h-7 text-primary" />
       </div>
+      {athleteId && <div className="mx-4 mt-6"><AssessmentWorkspace athleteId={athleteId} /></div>}
       <section className="mx-4 mt-4 rounded-xl border border-white/10 p-4 space-y-2"><h2 className="font-semibold">Histórico de sessões</h2>{activity.isPending ? <p>Carregando sessões…</p> : activity.isError ? <button onClick={() => void activity.refetch()}>Sessões indisponíveis. Tentar novamente</button> : <><p>{activity.data?.total ?? 0} concluídas no total · {activity.data?.week ?? 0} nesta semana · {activity.data?.today ?? 0} hoje</p>{activity.data?.recent.map(session => <p key={session.id} className="text-sm text-muted-foreground">Sessão concluída · {session.workout_date}</p>)}{!activity.data?.total && <p className="text-sm text-muted-foreground">Nenhuma sessão concluída registrada. Um protocolo marcado não equivale a uma sessão de treino executada.</p>}</>}<p className="text-xs text-muted-foreground">Sessões: registros de execução. Recordes e avaliações: histórico de progresso. O índice SYNC mede rotina e tem cálculo separado.</p></section>
       <div className="mx-4 mt-4"><DailyProtocol readOnly /></div>
       {loading && <p className="px-4 mt-3 text-xs text-muted-foreground">Carregando seus dados reais…</p>}
@@ -239,7 +241,7 @@ export default function NineFitProgresso() {
             <p className="text-[10px] uppercase text-muted-foreground">Avaliação Atual</p>
             <p className="mt-2 text-5xl font-display tabular-nums text-foreground">{score != null ? `${score}%` : "—"}</p>
             <p className="mt-2 text-[10px] font-medium text-primary">
-              {scoreTrend != null ? `${scoreTrend >= 0 ? "+" : ""}${scoreTrend}% no período` : "Sem histórico ainda"}
+              {scoreTrend != null ? `${scoreTrend >= 0 ? "+" : ""}${scoreTrend} pp no período` : "Sem histórico ainda"}
             </p>
           </div>
           {hasCurve && (
@@ -268,7 +270,7 @@ export default function NineFitProgresso() {
               </svg>
               <div className="min-w-0 space-y-0.5 text-[9px]">
                 <p><span className="text-muted-foreground">Gord</span> {gordura != null ? `${gordura}%` : "—"}</p>
-                <p><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo}%` : "—"}</p>
+                <p><span className="text-muted-foreground">Músc</span> {musculo != null ? `${musculo} kg` : "—"}</p>
               </div>
             </div>
           </div>

@@ -91,6 +91,7 @@ export function RecordesSection({
       });
       setOpen(false);
       setValor("");
+      window.dispatchEvent(new Event('9fit:sync_updated'));
       onSaved?.();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Não foi possível salvar o recorde");

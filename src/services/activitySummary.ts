@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { loadAssessmentHub } from './assessmentHubService';
 import { businessDate } from './dailyContextRules';
 
 export async function loadActivitySummary(athleteId: string) {
@@ -6,18 +6,12 @@ export async function loadActivitySummary(athleteId: string) {
   const day = new Date(`${today}T12:00:00`);
   day.setDate(day.getDate() - (day.getDay() + 6) % 7);
   const monday = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-  const results = await Promise.all([
-    supabase.from('workout_executions').select('id', { count: 'exact', head: true }).eq('athlete_id', athleteId).eq('status', 'completed'),
-    supabase.from('workout_executions').select('id', { count: 'exact', head: true }).eq('athlete_id', athleteId).eq('status', 'completed').gte('workout_date', monday).lte('workout_date', today),
-    supabase.from('workout_executions').select('id', { count: 'exact', head: true }).eq('athlete_id', athleteId).eq('status', 'completed').eq('workout_date', today),
-    supabase.from('workout_executions').select('id,workout_date,status').eq('athlete_id', athleteId).eq('status', 'completed').order('workout_date', { ascending: false }).limit(10),
-  ]);
-  results.forEach(result => { if (result.error) throw result.error; });
-  return { total: results[0].count ?? 0, week: results[1].count ?? 0, today: results[2].count ?? 0, recent: results[3].data ?? [] };
+  const hub = await loadAssessmentHub(athleteId);
+  const workouts = hub.workouts.filter(w => w.source === 'FitPro');
+  return { total: workouts.length, week: workouts.filter(w => w.date >= monday && w.date <= today).length, today: workouts.filter(w => w.date === today).length, recent: [...workouts].reverse().slice(0,10).map(w => ({ id:w.id.replace('fitpro:',''), workout_date:w.date, status:'completed' })) };
 }
 
 export async function loadProgressScreen(athleteId: string) {
-  const { data, error } = await supabase.rpc('fn_get_ron_progresso_screen', { p_athlete_id: athleteId });
-  if (error) throw error;
-  return data;
+  const hub = await loadAssessmentHub(athleteId);
+  return hub.legacy_screen;
 }
