@@ -53,7 +53,7 @@ export function planMealsFromDiet(data: unknown): PlanMeal[] {
       const time = String(r.time ?? r.horario ?? r.horário ?? '').trim();
       return name ? { name, time: time || undefined } : null;
     })
-    .filter((x): x is PlanMeal => !!x);
+    .filter((x): x is { name: string; time: string | undefined } => x !== null);
 }
 
 export function resolveMealByTime({ now = new Date(), planMeals = [], logged = [] }: { now?: Date; planMeals?: PlanMeal[]; logged?: string[] }): MealSuggestion {
