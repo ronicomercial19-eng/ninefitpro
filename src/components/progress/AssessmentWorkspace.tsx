@@ -42,7 +42,7 @@ function MetricCard({row,previous,metric,refs,history}:{row:AssessmentRow;previo
 }
 function useHub(athleteId:string) {
  const [hub,setHub]=useState<AssessmentHub|null>(null),[error,setError]=useState<string|null>(null),[loading,setLoading]=useState(true),[revision,setRevision]=useState(0);
- useEffect(()=>{const refresh=()=>setRevision(r=>r+1);['9fit:sync_updated','9fit:profile-updated','focus'].forEach(e=>window.addEventListener(e,refresh));return()=>['9fit:sync_updated','9fit:profile-updated','focus'].forEach(e=>window.removeEventListener(e,refresh));},[]);
+ useEffect(()=>{const refresh=()=>setRevision(r=>r+1);['9fit:sync_updated','9fit:profile-updated','9fit:workout-updated','focus'].forEach(e=>window.addEventListener(e,refresh));return()=>['9fit:sync_updated','9fit:profile-updated','9fit:workout-updated','focus'].forEach(e=>window.removeEventListener(e,refresh));},[]);
  useEffect(()=>{let active=true;setLoading(true);setError(null);setHub(null);loadAssessmentHub(athleteId).then(data=>{if(active)setHub(data)}).catch(e=>{if(active)setError(permissionMessage(e))}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[athleteId,revision]);
  return {hub,error,loading,refresh:()=>{invalidateAssessmentHub(athleteId);setRevision(r=>r+1)}};
 }
