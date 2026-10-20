@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { businessDate } from "@/services/dailyContextRules";
-import { ChevronLeft, Check, Loader2, Play, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowLeftRight, ChevronLeft, Check, Loader2, Play, RefreshCw, RotateCcw, Send, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
@@ -38,6 +38,10 @@ export default function NineFitAjusteTreino() {
   const [request, setRequest] = useState("");
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [applied, setApplied] = useState(false);
+  const [published, setPublished] = useState(false);
+  const [requestSheetOpen, setRequestSheetOpen] = useState(false);
+  const [swapOpen, setSwapOpen] = useState<string | null>(null);
+  const [intensityOverride, setIntensityOverride] = useState(50);
   const [exercises, setExercises] = useState<Ex[]>([]);
   const [original, setOriginal] = useState<Ex[]>([]);
   const [selectedDate, setSelectedDate] = useState(businessDate());
@@ -106,6 +110,7 @@ export default function NineFitAjusteTreino() {
       setDirty({});
       setReasons({});
       setApplied(false);
+      setPublished(false);
       setReviewing(false);
     } catch (error: any) { if (token === loadToken.current) toast.error(error.message || "Não foi possível carregar o treino."); }
     finally { if (token === loadToken.current) setReloading(false); }
@@ -188,6 +193,19 @@ export default function NineFitAjusteTreino() {
     setReviewing(false);
   };
 
+  const pickSwap = (exercise: Ex, option: ExerciseOption) => {
+    patch(exercise.id, { new_exercise_name: option.name });
+    setReasons(current => ({ ...current, [exercise.id]: `Troca escolhida para manter o grupo ${exercise.muscle_groups?.[0] || "muscular"}.` }));
+    setSwapOpen(null);
+  };
+
+  const intensityLabel = intensityOverride < 34 ? "Leve" : intensityOverride < 67 ? "Moderada" : "Alta";
+  const adjustIntensity = (value: number) => {
+    setIntensityOverride(value);
+    const rpe = Math.max(1, Math.min(10, Math.round(value / 10)));
+    if (!executionStatus) exercises.forEach(exercise => patch(exercise.id, { intensidade: rpe }));
+  };
+
   const totalSets = exercises.reduce((sum, ex) => sum + (Number.isFinite(ex.sets) ? ex.sets : 0), 0);
   const muscleVolumes = Object.entries(exercises.reduce<Record<string, number>>((result, ex) => {
     const group = ex.muscle_groups?.[0] || "Outros";
@@ -235,6 +253,7 @@ export default function NineFitAjusteTreino() {
       }
       setDirty({});
       setReviewing(false);
+      setPublished(true);
       if (applied) await recordAcceptedAdjustment();
       setApplied(false);
       window.dispatchEvent(new Event("9fit:workout-updated"));
@@ -322,12 +341,13 @@ export default function NineFitAjusteTreino() {
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">{adjustment.rationale}</p>
           <p className="mt-2 text-[11px] text-muted-foreground">Base: prescrição Smart Treino{scores?.sync.status === "available" ? ` · Sync disponível${scores.sync.observed_at ? ` (${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(scores.sync.observed_at))})` : ""}` : " · Sync sem leitura atual"}{adjustment.pdiAvailable ? " · PDI configurado" : " · PDI sem calibração"}. Fadiga é uma avaliação da IA, não uma medição clínica.</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-white/10 px-3 py-1">Intensidade: {adjustment.intensity}</span><span className="rounded-full bg-white/10 px-3 py-1">Fadiga: {adjustment.fatigueLevel}</span><span className="rounded-full bg-white/10 px-3 py-1">{adjustment.changes.length + adjustment.swaps.length} mudanças sugeridas</span></div>
+          {!executionStatus && <div className="mt-4 rounded-xl border border-white/10 bg-background/50 p-3"><div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Ajustar intensidade</span><b className="text-primary">{intensityLabel}</b></div><input aria-label="Ajustar intensidade" type="range" min={0} max={100} value={intensityOverride} onChange={event => adjustIntensity(Number(event.target.value))} className="mt-3 w-full accent-primary" /><div className="mt-1 flex justify-between text-[10px] text-muted-foreground"><span>Leve</span><span>Alta</span></div></div>}
           {(adjustment.changes.length > 0 || adjustment.swaps.length > 0) && <div className="mt-4 space-y-2">{adjustment.changes.map((change, index) => <p key={`change-${index}`} className="rounded-lg bg-background/60 p-2 text-xs"><b>{change.exercise}</b>: {change.reason}</p>)}{adjustment.swaps.map((swap, index) => <p key={`swap-${index}`} className="rounded-lg bg-background/60 p-2 text-xs"><b>{swap.from} → {swap.to}</b>: {swap.reason}</p>)}</div>}
           {!applied && adjustment.changes.length + adjustment.swaps.length > 0 && <button type="button" onClick={applyCopilotSuggestion} disabled={!!executionStatus} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-40">Preparar sugestão para revisão</button>}
           {!applied && adjustment.changes.length + adjustment.swaps.length === 0 && <p className="mt-3 text-xs text-muted-foreground">Sem mudança recomendada com os dados atuais. Você ainda pode ajustar manualmente.</p>}
           {applied && <p className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm text-emerald-300"><Check className="mr-2 inline h-4 w-4" />Sugestão preparada. Revise as mudanças e publique no botão abaixo.</p>}
         </>}
-        {!executionStatus && <div className="mt-5 border-t border-white/10 pt-4"><label className="block text-xs text-muted-foreground" htmlFor="adjustment-request">Pedir outro ajuste</label><div className="mt-2 flex gap-2"><input id="adjustment-request" value={request} onChange={e => setRequest(e.target.value)} maxLength={300} placeholder="Ex.: mais leve hoje, pouco tempo…" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-background px-3 py-2 text-sm" /><button onClick={() => void runCopilot(request)} disabled={loading || !request.trim()} className="rounded-xl border border-primary/50 px-3 text-sm font-semibold text-primary disabled:opacity-40">Pedir</button></div><div className="mt-2 flex flex-wrap gap-2">{["Mais leve hoje", "Pouco tempo, encurtar", "Poupar ombro", "Mais intenso"].map(option => <button key={option} onClick={() => { setRequest(option); void runCopilot(option); }} disabled={loading} className="rounded-full border border-white/10 px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40">{option}</button>)}</div></div>}
+        {!executionStatus && <button type="button" onClick={() => setRequestSheetOpen(true)} className="mt-5 flex w-full items-center justify-center gap-2 border-t border-white/10 pt-4 text-sm font-semibold text-primary"><SlidersHorizontal className="h-4 w-4" /> Pedir outro ajuste</button>}
       </div>}
 
       {exercises.length > 0 && <div className="mx-4 mt-5 flex items-center justify-between"><div><h2 className="font-bold">{mode === "manual" ? "Edição manual" : "Treino ajustado"} · {exercises.length} exercícios</h2><p className="text-xs text-muted-foreground">{totalSets} séries na sessão</p></div><button onClick={() => setMode(mode === "manual" ? "suggestion" : "manual")} className="text-xs font-semibold text-primary underline">{mode === "manual" ? "Ver sugestão da IA" : "Ajustar manualmente"}</button></div>}
@@ -350,8 +370,12 @@ export default function NineFitAjusteTreino() {
                   {ex.sets} × {ex.reps_range} · {ex.rest_seconds} s de descanso
                 </p>
               </div>
-              {ex.video_url && <Play className="w-4 h-4 text-primary/60" />}
+              <div className="flex items-center gap-2">
+                {!executionStatus && <button type="button" aria-label={`Trocar ${ex.name}`} onClick={() => setSwapOpen(swapOpen === ex.id ? null : ex.id)} className={`rounded-lg border p-1.5 ${swapOpen === ex.id ? "border-primary/50 bg-primary/10 text-primary" : "border-white/10 text-muted-foreground"}`}><ArrowLeftRight className="h-3.5 w-3.5" /></button>}
+                {ex.video_url && <Play className="w-4 h-4 text-primary/60" />}
+              </div>
             </div>
+            {swapOpen === ex.id && !executionStatus && <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-background/60 p-2"><p className="px-1 text-[10px] uppercase text-muted-foreground">Trocar · mesmo grupo / restrição do dia</p>{exerciseOptions.filter(option => option.name !== ex.name && (!ex.muscle_groups?.length || option.muscle_groups.some(group => ex.muscle_groups?.includes(group)))).slice(0, 4).map(option => <button key={option.name} type="button" onClick={() => pickSwap(ex, option)} className="flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-left text-xs"><span>{option.name}</span><ArrowLeftRight className="h-3 w-3 text-primary" /></button>)}</div>}
             {reasons[ex.id] && <p className="mt-2 rounded-lg bg-primary/10 p-2 text-xs text-primary">{reasons[ex.id]}</p>}
             {dirty[ex.id] && <button onClick={() => undo(ex.id)} className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground underline"><RotateCcw className="h-3 w-3" />Desfazer neste exercício</button>}
             <div className={`mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 ${mode === "suggestion" ? "hidden" : ""}`}>
@@ -408,11 +432,14 @@ export default function NineFitAjusteTreino() {
 
       <div className="sticky bottom-20 z-20 mt-6 border-t border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
         <button onClick={onSave} disabled={saving || !!executionStatus || Object.keys(dirty).length === 0}
-          className="w-full rounded-full bg-primary py-4 font-bold uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)] disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-2">
+          className={`w-full rounded-full py-4 font-bold uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)] disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-2 ${published ? "bg-emerald-500" : "bg-primary"}`}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          {saving ? "Publicando..." : reviewing ? "Confirmar publicação" : `Revisar ${Object.keys(dirty).length} ajustes`}
+          {saving ? "Publicando..." : published ? "Treino ajustado publicado" : reviewing ? "Confirmar publicação" : `Revisar ${Object.keys(dirty).length} ajustes`}
         </button>
+        {published && <p className="mt-2 text-center text-xs text-emerald-300"><Check className="mr-1 inline h-3 w-3" />Alteração registrada no histórico da sessão.</p>}
       </div>
+
+      {requestSheetOpen && !executionStatus && <div className="fixed inset-0 z-50 flex items-end bg-black/60 backdrop-blur-sm" onClick={() => setRequestSheetOpen(false)}><div className="w-full rounded-t-3xl border border-white/10 bg-background p-5" onClick={event => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 font-bold"><SlidersHorizontal className="h-4 w-4 text-primary" />O que você quer mudar?</h2><button type="button" aria-label="Fechar" onClick={() => setRequestSheetOpen(false)} className="rounded-full bg-white/10 p-2"><X className="h-4 w-4" /></button></div><div className="mb-4 flex flex-wrap gap-2">{["Mais leve hoje", "Pouco tempo, encurtar", "Poupar ombro", "Mais intenso"].map(option => <button key={option} type="button" onClick={() => setRequest(option)} className={`rounded-full border px-3 py-2 text-xs ${request === option ? "border-primary/50 bg-primary/10 text-primary" : "border-white/10 text-muted-foreground"}`}>{option}</button>)}</div><div className="flex gap-2"><input autoFocus value={request} onChange={event => setRequest(event.target.value)} maxLength={300} placeholder="Ex.: trocar supino, joelho incomodando…" className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm" /><button type="button" onClick={() => { setRequestSheetOpen(false); void runCopilot(request); }} disabled={loading || !request.trim()} className="rounded-full bg-primary p-3 text-primary-foreground disabled:opacity-40"><Send className="h-4 w-4" /></button></div></div></div>}
 
       <BottomNavigation />
     </div>
