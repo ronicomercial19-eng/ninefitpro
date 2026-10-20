@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, ChevronLeft, ChevronRight, Crown, Image as ImageIcon, Pause, Play, Sparkles, Video } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Crown, Image as ImageIcon, Pause, Play, Sparkles, TrendingUp, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const OptimizedHeroSection = () => {
