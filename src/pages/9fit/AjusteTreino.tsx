@@ -56,6 +56,7 @@ export default function NineFitAjusteTreino() {
   const [dirty, setDirty] = useState<Record<string, Partial<Ex>>>({});
   const [saving, setSaving] = useState(false);
   const [reloading, setReloading] = useState(false);
+  const [autoPublishing, setAutoPublishing] = useState(false);
   const requestedKey = useRef("");
   const loadToken = useRef(0);
   const { adjustment, loading, error: adjustmentError, generate, apply: recordAcceptedAdjustment, reset: resetAdjustment } = useAdaptiveAdjustment();
@@ -137,7 +138,16 @@ export default function NineFitAjusteTreino() {
       sync: scores?.sync.status === "available" ? scores.sync.value : null,
       exercises: original.map(exercise => exercise.name),
       prescription: original.map(exercise => ({ name: exercise.name, sets: exercise.sets, reps: exercise.reps_range, restSeconds: exercise.rest_seconds, rpe: exercise.intensidade })) });
-    if (r) { setMode("suggestion"); setApplied(false); }
+    if (r) {
+      setMode("suggestion");
+      setApplied(false);
+      // A ação "Pedir" é efetiva: a recomendação recebida é aplicada e
+      // publicada no treino atual, sem deixar uma alteração apenas na tela.
+      if (customRequest.trim()) {
+        applyCopilotSuggestion(r);
+        setAutoPublishing(true);
+      }
+    }
   };
 
   useEffect(() => {
@@ -149,11 +159,11 @@ export default function NineFitAjusteTreino() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [athleteId, selectedDate, dailyId, workoutUpdatedAt, original.length, executionStatus, reloading]);
 
-  const applyCopilotSuggestion = () => {
-    if (!adjustment || executionStatus) return;
+  const applyCopilotSuggestion = (source = adjustment) => {
+    if (!source || executionStatus) return;
     let applied = 0;
     const nextReasons: Record<string, string> = {};
-    adjustment.swaps.forEach((swap) => {
+    source.swaps.forEach((swap) => {
       const target = exercises.find((exercise) => exercise.name.toLocaleLowerCase() === swap.from.toLocaleLowerCase());
       const replacement = exerciseOptions.find(option => option.name.toLocaleLowerCase() === swap.to.toLocaleLowerCase()
         && (!target?.muscle_groups?.length || option.muscle_groups.some(group => target.muscle_groups?.includes(group))))?.name;
@@ -163,7 +173,7 @@ export default function NineFitAjusteTreino() {
         applied += 1;
       }
     });
-    adjustment.changes.forEach(change => {
+    source.changes.forEach(change => {
       const target = exercises.find(exercise => exercise.name.toLocaleLowerCase() === change.exercise.toLocaleLowerCase());
       if (!target) return;
       const delta: Partial<Ex> = {};
@@ -177,6 +187,15 @@ export default function NineFitAjusteTreino() {
     setApplied(applied > 0);
     if (!applied) toast.info("Nenhuma mudança válida para esta prescrição. Você pode ajustar manualmente.");
   };
+
+  useEffect(() => {
+    if (!autoPublishing || !Object.keys(dirty).length || loading || saving || executionStatus) return;
+    setAutoPublishing(false);
+    // Aguarda o lote de patches entrar no estado antes de chamar o RPC.
+    const timer = window.setTimeout(() => void onSave(true), 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPublishing, dirty, loading, saving, executionStatus]);
 
   const patch = (id: string, delta: Partial<Ex>) => {
     setDirty((d) => ({ ...d, [id]: { ...(d[id] || {}), ...delta } }));
@@ -213,10 +232,10 @@ export default function NineFitAjusteTreino() {
     return result;
   }, {})).sort((a, b) => b[1] - a[1]);
 
-  const onSave = async () => {
+  const onSave = async (skipReview = false) => {
     if (!athleteId || !dailyId || saving || executionStatus) return;
     if (exercises.some(ex => !Number.isInteger(ex.sets) || ex.sets < 1 || ex.sets > 10 || !ex.reps_range.trim() || /^\d{3,}$/.test(ex.reps_range.trim()) || !Number.isInteger(ex.rest_seconds) || ex.rest_seconds < 0 || ex.rest_seconds > 600 || (ex.intensidade != null && (!Number.isInteger(ex.intensidade) || ex.intensidade < 1 || ex.intensidade > 10)))) { toast.error("Revise séries, dose com unidade, descanso e intensidade antes de publicar."); return; }
-    if (!reviewing) { setReviewing(true); return; }
+    if (!reviewing && !skipReview) { setReviewing(true); return; }
     setSaving(true);
     try {
       const arrayDeAlteracoes = Object.entries(dirty).map(([workout_exercise_id, changes]) => ({
