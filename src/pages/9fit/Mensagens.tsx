@@ -1,9 +1,9 @@
 import { Navigate } from "react-router-dom";
 
 /**
- * Canal único de conversa do aluno: o RON.
- * A antiga tela de mensagens duplicava o chat e o histórico do copiloto.
+ * Mensagens = atendimento com a equipe (9ZAP).
+ * Vive dentro do chat único do RON, na aba "Equipe".
  */
 export default function NineFitMensagens() {
-  return <Navigate to="/9fit/ron" replace />;
+  return <Navigate to="/9fit/ron?tab=equipe" replace />;
 }
