@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAthleteId } from '@/hooks/useAthleteId';
 import { useActivationFlow } from '@/hooks/useActivationFlow';
@@ -15,6 +15,7 @@ export default function NineFitAvaliacaoGuiada() {
   const { athleteId } = useAthleteId();
   const { advanceStep } = useActivationFlow();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [values, setValues] = useState<Record<string,string>>({});
   const [goal,setGoal] = useState('Hipertrofia e Definição');
   const [level,setLevel] = useState('Iniciante');
@@ -35,6 +36,13 @@ export default function NineFitAvaliacaoGuiada() {
     try {
       const {data,error}=await supabase.rpc('fn_salvar_avaliacao_guiada',{p_athlete_id:athleteId,p_data_avaliacao:format(new Date(),'yyyy-MM-dd'),...measures});
       if(error || !(data as any)?.success) throw error || new Error('A avaliação não foi salva');
+      if(params.get('returnTo')==='progresso') {
+        window.dispatchEvent(new Event('9fit:sync_updated'));
+        window.dispatchEvent(new Event('9fit:profile-updated'));
+        toast.success('Medidas salvas no seu histórico');
+        navigate('/9fit/progresso/historico');
+        return;
+      }
       const advanced=await advanceStep('assessment',{goal,experience_level:level,weekly_frequency:frequency,restrictions});
       window.dispatchEvent(new Event('9fit:sync_updated'));
       window.dispatchEvent(new Event('9fit:profile-updated'));

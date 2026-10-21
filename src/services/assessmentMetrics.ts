@@ -58,15 +58,22 @@ export function metricRecord(row:AssessmentRow,metric:Metric,history:AssessmentR
   const values=history.filter(r=>r.oficial && r.id!==row.id && r.data_avaliacao<row.data_avaliacao && trustFor(r,metric)!=='ESTIMADO').flatMap(r=>{const v=metricValue(r,metric.key);return v===null?[]:[v]});
   return values.length>0 && value>Math.max(...values);
 }
-export function goalProjection(goal:HubGoal,rows:AssessmentRow[]) {
+export function goalHistory(goal:HubGoal,rows:AssessmentRow[]) {
   const norm=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const aliases:Record<string,string>={supino:'rm1_empurrar_superior',agachamento:'rm1_empurrar_perna',puxada:'rm1_puxar_costas',gordura:'gordura_corporal',peso:'peso'};
   const label=norm(`${goal.metrica} ${goal.exercicio||''}`);
   const metric=assessmentMetrics.find(m=>m.key===goal.metrica)??assessmentMetrics.find(m=>m.key===Object.entries(aliases).find(([word])=>label.includes(word))?.[1]);
   const daily=new Map<string,number>();
-  if(metric) rows.filter(r=>r.oficial && ['CONFIRMADO','DERIVADO'].includes(trustFor(r,metric))).forEach(r=>{const v=metricValue(r,metric.key);if(v!==null) daily.set(r.data_avaliacao,v)});
-  const points=[...daily].sort(([a],[b])=>a.localeCompare(b)).map(([date,y])=>({x:new Date(`${date}T12:00:00`).getTime()/86400000,y}));
-  if(points.length<4 || !metric) return {count:points.length,estimate:null};
+  if(!metric || metric.unit !== goal.unidade) return [];
+  const eligible=rows.filter(r=>r.oficial && !isSelf(r) && ['CONFIRMADO','DERIVADO'].includes(trustFor(r,metric)) && metricValue(r,metric.key)!==null).sort((a,b)=>a.data_avaliacao.localeCompare(b.data_avaliacao));
+  const latest=eligible.at(-1);
+  if(!latest) return [];
+  eligible.filter(r=>extra(r).protocolo===extra(latest).protocolo && (metric.key!=='gordura_corporal' || extra(r).metodo_gordura_score===extra(latest).metodo_gordura_score)).forEach(r=>{daily.set(r.data_avaliacao.slice(0,10),metricValue(r,metric.key)!)});
+  return [...daily].sort(([a],[b])=>a.localeCompare(b)).map(([date,value])=>({date,value}));
+}
+export function goalProjection(goal:HubGoal,rows:AssessmentRow[]) {
+  const points=goalHistory(goal,rows).map(({date,value})=>({x:new Date(`${date}T12:00:00Z`).getTime()/86400000,y:value}));
+  if(points.length<4) return {count:points.length,estimate:null};
   const base=points[0].x;const p=points.map(v=>({x:v.x-base,y:v.y}));const n=p.length,mx=p.reduce((s,v)=>s+v.x,0)/n,my=p.reduce((s,v)=>s+v.y,0)/n;
   const sxx=p.reduce((s,v)=>s+(v.x-mx)**2,0);if(!sxx)return {count:n,estimate:null};
   const slope=p.reduce((s,v)=>s+(v.x-mx)*(v.y-my),0)/sxx,intercept=my-slope*mx;
