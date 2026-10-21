@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethoscope, Apple } from "lucide-react";
+import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethoscope, Apple, UserPlus } from "lucide-react";
 import { useNavigate,useLocation,useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { supabase } from "@/integrations/supabase/client";
 import { useStaffDirectory } from "@/hooks/useStaffDirectory";
+
+// Fluxo Staff (profissionais externos / eventos). Trocar pela rota final do fluxo quando a equipe definir.
+const STAFF_FLOW_ROUTE = "/9fit/aulas-creditos?tab=schedule";
 
 type Pro = {
   user_id: string;
@@ -37,15 +39,18 @@ export default function NineFitStaff() {
   const navigate = useNavigate();
   const location=useLocation();const [searchParams]=useSearchParams();
   const nutritionReview=(location.state as any)?.nutritionReview;
-  const dietReview=searchParams.get("context")==="diet_review";
+  const dietReview=searchParams.get("context")=="diet_review";
   const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
   const directory = useStaffDirectory();
   const pros = directory.data || [];
   const loading = directory.isPending;
   const [selected, setSelected] = useState<Pro | null>(null);
+  const teamRef = useRef<HTMLDivElement | null>(null);
 
   const visiblePros=dietReview?pros.filter(p=>p.role==="nutritionist"):pros;
   const services = selected ? (SERVICES_BY_ROLE[selected.role] || SERVICES_BY_ROLE.default) : [];
+  // Equipe NINE disponível => aparece de cara. Ninguém disponível (ou erro) => fluxo Staff.
+  const hasNinePros = !loading && !directory.isError && visiblePros.length > 0;
 
   const bookService = (svcKey: string) => {
     if (!selected) return;
@@ -54,9 +59,19 @@ export default function NineFitStaff() {
     setSelected(null);
   };
 
+  const openStaffFlow = () => {
+    if (hasNinePros) {
+      setTab("team");
+      requestAnimationFrame(() => teamRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      return;
+    }
+    navigate(STAFF_FLOW_ROUTE, { state: { nutritionReview, source: "staff_fallback", dietReview } });
+  };
+
   return (
     <div className="min-h-screen gradient-mission pb-28">
-      <div className="px-4 pt-6 pb-3">
+      {/* pt-16: espaço para o botão VOLTAR fixo (BackButton) não cobrir o título */}
+      <div className="px-4 pt-16 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // EQUIPE</p>
         <h1 className="text-massive text-3xl text-foreground mt-1">{dietReview?"REVISÃO NUTRICIONAL":"SUPORTE EQUIPE"}</h1>
         <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">Equipe · Serviços · Agendamento</p>
@@ -97,14 +112,32 @@ export default function NineFitStaff() {
         <ChevronRight className="w-5 h-5 text-primary" />
       </button>
 
+      {/* Card nativo da Staff: conexão aluno ↔ profissionais */}
+      <button
+        onClick={openStaffFlow}
+        disabled={loading}
+        className="mx-4 mb-4 w-[calc(100%-2rem)] glass-mission glass-mission-active rounded-xl p-4 text-left flex items-center gap-3 disabled:opacity-60"
+      >
+        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+          {hasNinePros ? <Users className="w-6 h-6 text-primary" /> : <UserPlus className="w-6 h-6 text-primary" />}
+        </div>
+        <div className="flex-1">
+          <p className="text-[9px] font-data tracking-[0.3em] text-primary/80">{hasNinePros ? "EQUIPE NINE" : "STAFF 9FIT"}</p>
+          <p className="text-editorial text-base text-foreground">{hasNinePros ? "FALAR COM A EQUIPE" : "SOLICITAR PROFISSIONAL"}</p>
+          <p className="text-[10px] text-muted-foreground">
+            {loading ? "Verificando disponibilidade..." : hasNinePros ? `${visiblePros.length} profissional(is) disponível(is)` : "Conectamos você com um profissional da Staff"}
+          </p>
+        </div>
+        <ChevronRight className="w-5 h-5 text-primary" />
+      </button>
+
       {tab === "team" && (
-        <div className="px-4 space-y-2">
-          {directory.isError && <button onClick={() => void directory.refetch()} className="text-sm text-destructive">Não foi possível carregar a equipe. Tentar novamente</button>}
-          {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
+        <div ref={teamRef} className="px-4 space-y-2 scroll-mt-20">
           {nutritionReview&&<p className="rounded-xl border border-primary/30 p-3 text-sm">Plano: {nutritionReview.dietName}. Escolha um nutricionista para discutir o ajuste; os registros seguem junto com o agendamento.</p>}
+          {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
           {!loading && !directory.isError && visiblePros.length === 0 && (
             <div className="glass-mission rounded-xl p-6 text-center text-xs text-muted-foreground">
-              {dietReview?"Nenhum nutricionista ativo disponível para sua conta. Use a aba Suporte para solicitar atendimento.":"Nenhum profissional ativo disponível para sua conta."}
+              {dietReview?"Nenhum nutricionista da equipe NINE disponível agora. Use o botão acima para solicitar um profissional da Staff.":"Nenhum profissional da equipe NINE disponível agora. Use o botão acima para solicitar um profissional da Staff."}
             </div>
           )}
           {visiblePros.map((p) => (
@@ -127,6 +160,11 @@ export default function NineFitStaff() {
               <ChevronRight className="w-4 h-4 text-primary" />
             </button>
           ))}
+          {directory.isError && (
+            <button onClick={() => void directory.refetch()} className="text-[11px] text-muted-foreground underline underline-offset-2">
+              Não foi possível carregar a equipe NINE. Tentar novamente
+            </button>
+          )}
         </div>
       )}
 
