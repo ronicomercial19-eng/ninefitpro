@@ -1,5 +1,21 @@
 # CONTRATO CANÔNICO DE DADOS - 9FIT Evolution Platform
 
+## Contrato implementado do Planejamento em 21/10/2026
+
+Esta seção descreve o fluxo verificado em produção. As propostas históricas abaixo que citam `workout_sessions` e `exercise_logs` não são as fontes usadas pelo Planejamento atual.
+
+- Leitura do plano: `public.vw_athlete_periodizacao_ativa`, filtrada por `athlete_id`, com `security_invoker=true` e as permissões do usuário autenticado.
+- `current_week_index` é 1-based. `macrocycle[].weeks` aceita a normalização de `duration_weeks`. `macro_weeks` e `meso_weeks` permitem detectar divergências entre linhas do tempo.
+- Cada onda cobre `start_week` até `end_week`; `week` é somente o fallback legado. Os estados do contrato são `completed`, `current`, `upcoming`; o percentual da onda atual não ultrapassa 99.
+- `current_phase`, `rpe_cap`, `reps_range`, `sets_range` e o opcional `intensity_pct_1rm` descrevem a onda atual. `weekly_split.dias.length`, quando informado, define a meta semanal; não se inventa uma meta quando ausente.
+- Execuções: `public.workout_executions`, com `status='completed'`, `workout_date`, `avg_rpe` (fallback `rpe`), `duration_minutes`, `total_volume_kg`. A presença conta sessões; sessões no mesmo dia têm volume e duração somados. O RPE diário é a média dos valores disponíveis, ponderada pela duração quando registrada.
+- Força: séries concluídas de `workout_exercise_sets`, via `loadCarryProjection`. A aba exige um ponto real de carga; projeção sem medida real não cria gráfico de força.
+- Programação de sessões: `daily_workouts` e a semana salva de `useWorkoutOfTheDay`, sem os registros de fallback. A programação não equivale a execução concluída.
+- Realtime acompanha as fontes do plano e `workout_executions`; o evento `9fit:workout-updated` também atualiza presença e força.
+- Abertura contextual do RON é local e gratuita. A chamada de chat feita após o envio da pergunta usa `withCredit('ron_chat')`.
+
+Snapshot versionado da view: `supabase/migrations/20261021092727_versionar_view_planejamento_producao.sql`. Esse arquivo registra a definição existente; a implementação da tela não aplicou DDL remoto.
+
 ## 📊 ANÁLISE DE DUPLICIDADES ENCONTRADAS
 
 ### 🔴 CRÍTICO: Entidades de Aluno/Atleta (4 tabelas redundantes)

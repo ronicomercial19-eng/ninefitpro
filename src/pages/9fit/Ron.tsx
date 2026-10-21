@@ -1,4 +1,5 @@
 import { requestRonChat } from "@/services/ronChat";
+import { planningTopic as sanitizePlanningTopic } from '@/services/planningModel';
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { RonWaveform } from "@/components/9fit/RonWaveform";
 import { useEffect, useRef, useState } from "react";
@@ -118,6 +119,7 @@ export default function NineFitRon() {
 
   const autoCtx = params.get("context");
   const autoTriggered = params.get("auto") === "1";
+  const planningTopic = sanitizePlanningTopic(params.get('topic') || '');
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -276,11 +278,15 @@ export default function NineFitRon() {
             ? `Protocolo concluído. Modo ${STATE_LABEL[state]} detectado — ${insight} Deseja que eu agende a sessão de amanhã na sua Google Agenda?`
             : autoCtx === "hub_card"
             ? `Você está no modo ${STATE_LABEL[state]}. ${insight} Como posso impulsionar sua performance agora?`
+            : autoCtx === 'planning'
+            ? planningTopic
+              ? `Você abriu o planejamento em "${planningTopic}". Quer que eu explique em detalhe ou ajuste o treino de amanhã?`
+              : 'Você abriu seu planejamento. Quer que eu explique alguma fase ou ajuste o treino de amanhã?'
             : `Estou aqui com o motor Gemini ativo. O que precisa agora?`;
         setMessages((p) => [...p, { role: "assistant", content: intro }]);
       }
     })();
-  }, [user?.id, autoTriggered, autoCtx, state]);
+  }, [user?.id, autoTriggered, autoCtx, state, planningTopic]);
 
   // Realtime: novas mensagens entram automaticamente
   useRealtimeTable(
@@ -361,7 +367,8 @@ export default function NineFitRon() {
 
     // 3. Call server-side Gemini Bot endpoint
     try {
-      const data = await requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content })));
+      const data = await withCredit('ron_chat',()=>requestRonChat(text, messages.map(m => ({ role:m.role, content:m.content }))));
+      if(!data){setMessages(p=>p.map((m,i)=>i===p.length-1?{role:'assistant',content:'Você precisa de fichas para enviar uma pergunta ao RON.'}:m));return;}
       const replyContent = data.content;
       const returnedActions: RonAction[] = data.actions || [];
 
