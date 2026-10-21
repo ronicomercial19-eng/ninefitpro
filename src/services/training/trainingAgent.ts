@@ -12,10 +12,12 @@ export interface AdaptiveAdjustment {
   fatigueLevel: "baixa" | "moderada" | "alta";
   fatiguePct: number; // 0-100
   swaps: Array<{ from: string; to: string; reason: string }>;
+  changes: Array<{ exercise: string; sets?: number; reps?: string; restSeconds?: number; rpe?: number; reason: string }>;
   addOns: Array<{ exercise: string; sets: number; reps: string; reason: string }>;
   rationale: string;
   recoveryForecast: number; // % previsto para amanhã
   generatedAt: string;
+  pdiAvailable?: boolean;
 }
 
 export interface TrainingAgentContext {
@@ -25,6 +27,15 @@ export interface TrainingAgentContext {
   workoutType?: string;
   recentRPE?: number;
   exercises?: string[];
+  prescription?: Array<{ name: string; sets: number; reps: string; restSeconds: number; rpe?: number }>;
+  date?: string;
+  request?: string;
+  sync?: number | null;
+  dayNumber?: number | null;
+  focusMuscles?: string[];
+  safetyReason?: string | null;
+  painRegion?: string | null;
+  periodization?: { model?: string | null; status?: string | null; notes?: string | null };
 }
 
 export async function requestAdaptiveAdjustment(
@@ -40,6 +51,15 @@ export async function requestAdaptiveAdjustment(
         workoutType: ctx.workoutType,
         recentRPE: ctx.recentRPE,
         exercises: ctx.exercises,
+        prescription: ctx.prescription,
+        date: ctx.date,
+        request: ctx.request,
+        sync: ctx.sync,
+        dayNumber: ctx.dayNumber,
+        focusMuscles: ctx.focusMuscles,
+        safetyReason: ctx.safetyReason,
+        painRegion: ctx.painRegion,
+        periodization: ctx.periodization,
         bio: skillCtx.bio,
         profile: skillCtx.profile,
         activeSkills: skillCtx.activeSkills.map((s) => ({ slug: s.slug, category: s.category })),
@@ -48,7 +68,7 @@ export async function requestAdaptiveAdjustment(
     if (error) throw error;
     const payload = (data as any)?.data ?? data;
     if (!payload?.intensity) return null;
-    return { ...payload, swaps: Array.isArray(payload.swaps) ? payload.swaps : [], addOns: Array.isArray(payload.addOns) ? payload.addOns : [] } as AdaptiveAdjustment;
+    return { ...payload, swaps: Array.isArray(payload.swaps) ? payload.swaps : [], changes: Array.isArray(payload.changes) ? payload.changes : [], addOns: Array.isArray(payload.addOns) ? payload.addOns : [] } as AdaptiveAdjustment;
   } catch (err) {
     console.error("[trainingAgent] adjustment failed", err);
     return null;
