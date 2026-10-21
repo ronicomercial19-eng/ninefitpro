@@ -75,7 +75,7 @@ export function NineFitTopBar() {
             <span className="text-[10px] font-data tabular-nums">{remaining}</span>
           </button>
           <button
-            onClick={() => navigate("/9fit/mensagens")}
+            onClick={() => navigate("/9fit/notificacoes")}
             className="relative w-9 h-9 -mr-2 rounded-full flex items-center justify-center text-foreground hover:text-primary transition"
             aria-label="Notificações"
           >
