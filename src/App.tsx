@@ -47,6 +47,7 @@ import NineFitOnboarding from "./pages/9fit/Onboarding";
 import NineFitDieta from "./pages/9fit/Dieta";
 import NineFitFoods from "./pages/9fit/Foods";
 import NineFitMensagens from "./pages/9fit/Mensagens";
+import NineFitNotificacoes from "./pages/9fit/Notificacoes";
 import NineFitFirstAccess from "./pages/9fit/FirstAccess";
 import NineFitSocial from "./pages/9fit/Social";
 import NineFitCommunity from "./pages/9fit/Community";
@@ -299,6 +300,7 @@ const App = () => (
             <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />
             <Route path="/9fit/foods" element={<NineFitLayout><NineFitFoods /></NineFitLayout>} />
             <Route path="/9fit/mensagens" element={<NineFitLayout><NineFitMensagens /></NineFitLayout>} />
+            <Route path="/9fit/notificacoes" element={<NineFitLayout><NineFitNotificacoes /></NineFitLayout>} />
             <Route path="/9fit/social" element={<NineFitLayout><NineFitSocial /></NineFitLayout>} />
             <Route path="/9fit/community" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
             <Route path="/9fit/staff" element={<NineFitLayout><NineFitStaff /></NineFitLayout>} />
@@ -373,4 +375,3 @@ const App = () => (
 );
 
 export default App;
-
