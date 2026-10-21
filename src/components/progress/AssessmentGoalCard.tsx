@@ -22,7 +22,7 @@ export function AssessmentGoalCard({ goal, rows, onReassessment }: { goal: HubGo
       {points.length > 0 && <svg viewBox="0 0 320 100" role="img" aria-label={`Medidas oficiais registradas: ${points.map(p => `${fullDate(p.date)}: ${fmt(p.value)} ${goal.unidade}`).join('; ')}. O trecho tracejado indica a meta, não uma data confirmada.`}>
         <polyline points={points.map((p,i) => point(p.value,i)).join(' ')} fill="none" stroke="var(--aw-accent)" strokeWidth="3" strokeLinecap="round" />
         {points.map((p,i) => {const [cx,cy] = point(p.value,i).split(',');return <circle key={p.date} cx={cx} cy={cy} r="4" fill="var(--aw-accent)"/>;})}
-        <polyline points={`${point(points.at(-1)!.value,points.length-1)} 306,${78 - (goal.valor_meta - low) / Math.max(1, high - low) * 60}`} fill="none" stroke="#6b7581" strokeWidth="2" strokeDasharray="4 6"/>
+        <polyline points={`${point(points.at(-1)!.value,points.length-1)} 306,${78 - (goal.valor_meta - low) / Math.max(1, high - low) * 60}`} fill="none" stroke="var(--aw-muted)" strokeWidth="2" strokeDasharray="4 6"/>
         <text x="306" y="96" textAnchor="end" fill="var(--aw-muted)" fontSize="10">Meta · {fmt(goal.valor_meta)} {goal.unidade}</text>
       </svg>}
       <div className="aw-projection-count" aria-label={`${Math.min(projection.count, 4)} de 4 avaliações necessárias`}>

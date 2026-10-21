@@ -36,7 +36,7 @@ function Radar({current,previous}:{current:AssessmentRow|null;previous:Assessmen
  return <figure className="aw-radar"><svg viewBox="0 0 320 265" role="img" aria-label="Mapa dos cinco pilares. A lista abaixo apresenta todos os valores.">
  {[.25,.5,.75,1].map(scale=><polygon key={scale} points={pillars.map((_,i)=>vertex(i,85*scale)).join(' ')} fill="none" className="aw-grid-line"/>)}
  {pillars.map(([key,label],i)=><g key={key}><line x1="160" y1="130" x2={vertex(i,85).split(',')[0]} y2={vertex(i,85).split(',')[1]} className="aw-grid-line"/><text x={vertex(i,115).split(',')[0]} y={Number(vertex(i,110).split(',')[1])+4} textAnchor="middle" className="aw-chart-date">{label}</text></g>)}
- {previous&&<polygon points={polygon(previous)} fill="none" stroke="currentColor" strokeDasharray="5 4"/>}{current&&<polygon points={polygon(current)} className="aw-radar-current"/>}
+ {previous&&<polygon points={polygon(previous)} className="aw-radar-previous" fill="none" strokeDasharray="5 4"/>}{current&&<polygon points={polygon(current)} className="aw-radar-current"/>}
  </svg><figcaption>Atual — linha contínua · comparação — linha tracejada. Pilares sem teste aparecem como “Não avaliado” na lista.</figcaption></figure>;
 }
 function Score({row,previous}:{row:AssessmentRow|null;previous:AssessmentRow|null}) {
