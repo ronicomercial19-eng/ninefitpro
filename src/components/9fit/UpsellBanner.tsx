@@ -29,8 +29,8 @@ const VARIANT_STYLE: Record<NonNullable<Props['variant']>, { border: string; fro
 export function UpsellBanner({
   context,
   storageKey,
-  headline = 'Desbloqueie agentes IA completos e protocolos exclusivos',
-  cta = 'Testar 7 dias grátis',
+  headline = 'Organize seus treinos e acompanhe sua evolução',
+  cta = 'Conhecer a assinatura',
   cooldownHours = 24,
   variant = 'primary',
   className,
@@ -88,10 +88,10 @@ export function UpsellBanner({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[9px] tracking-[0.3em] uppercase font-bold mb-0.5" style={{ color: style.icon }}>
-              9FIT PRIME
+              9FIT PRO
             </p>
             <p className="text-[13px] text-foreground font-semibold leading-snug truncate">{headline}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{cta} · cancele quando quiser</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{cta}</p>
           </div>
           <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           <button

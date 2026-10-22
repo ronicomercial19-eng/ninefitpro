@@ -4,6 +4,7 @@ import { Users, Calendar, MessageSquare, ChevronRight, Briefcase, Stethoscope, A
 import { useNavigate,useLocation,useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useStaffDirectory } from "@/hooks/useStaffDirectory";
+import { AppSupport } from "@/components/9fit/AppSupport";
 
 // Fluxo Staff (profissionais externos / eventos). Trocar pela rota final do fluxo quando a equipe definir.
 const STAFF_FLOW_ROUTE = "/9fit/aulas-creditos?tab=schedule";
@@ -196,14 +197,7 @@ export default function NineFitStaff() {
 
       {tab === "support" && (
         <div className="px-4 space-y-2">
-          <button onClick={() => openChat("team")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-display uppercase">Chat com a equipe</p>
-              <p className="text-[10px] text-muted-foreground">Atendimento humano da equipe 9FIT</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <AppSupport />
           <button onClick={() => openChat("ron")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
             <MessageSquare className="w-5 h-5 text-primary" />
             <div className="flex-1">

@@ -413,48 +413,10 @@ Se o atleta solicitar uma ação (navegar, agendar, iniciar treino, adicionar re
 
 // Webhook para InfinitePay
 app.post('/api/webhook/infinitepay', async (req, res) => {
-  try {
-    // 1. Validação de Segurança
-    const authToken = req.headers['x-webhook-secret'];
-    const secretFailure = webhookSecretFailure(process.env.INFINITEPAY_WEBHOOK_SECRET, authToken);
-    if (secretFailure) {
-      return res.status(secretFailure).json({ error: secretFailure === 503 ? 'Webhook indisponível' : 'Acesso negado' });
-    }
-
-    const { user_email, plan_id } = req.body;
-
-    if (!user_email || !plan_id) {
-      return res.status(400).json({ error: 'Dados incompletos' });
-    }
-
-    // 2. Identifica o plano (basico ou annual)
-    let planType = 'active'; // Default
-    if (plan_id === 'TatHaBMsUX') {
-      planType = 'pro'; // Annual
-    } else if (plan_id === 'kvfp4S0k42') {
-      planType = 'active'; // Basic
-    }
-
-    // 3. Atualiza status no banco via SDK do Supabase
-    if (!supabase) {
-      console.error('Erro: Supabase não foi inicializado');
-      return res.status(500).json({ error: 'Configuração de banco de dados ausente' });
-    }
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ plan_status: planType })
-      .eq('email', user_email);
-
-    if (error) throw error;
-
-    console.log(`Pagamento confirmado para ${user_email}, plano ${planType}`);
-    
-    return res.json({ success: true });
-  } catch (error: any) {
-    console.error('Erro no webhook:', error);
-    return res.status(500).json({ error: 'Falha ao processar webhook' });
-  }
+  const failure = webhookSecretFailure(process.env.INFINITEPAY_WEBHOOK_SECRET, req.headers['x-webhook-secret']);
+  if (failure) return res.status(failure).json({ error: 'Verificação de pagamento indisponível' });
+  // Same fail-closed policy as the Edge Function: never grant access from plan_id alone.
+  return res.status(503).json({ error: 'Conciliação de pagamento pendente de validação' });
 });
 
 // Mount Vite or serve static files

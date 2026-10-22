@@ -65,7 +65,7 @@ export default function NineFitHub() {
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
   const [hubLoading, setHubLoading] = useState(true);
   const [hubError, setHubError] = useState<string | null>(null);
-  
+
   const breakdown = {
     treino: liveScores?.dimensions.treino.value ?? null,
     nutri: liveScores?.dimensions.nutri.value ?? null,
@@ -135,7 +135,7 @@ export default function NineFitHub() {
   }, [invalidate, refreshScores]);
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
-  
+
   const { permission, requestPermission } = usePushNotifications();
   const { requestDevice } = useBluetoothRequest();
 
@@ -176,7 +176,7 @@ export default function NineFitHub() {
             lastUpdate={liveScores?.sync.observed_at ?? undefined}
             onRefresh={() => void refreshScores()}
           />
-          <button 
+          <button
             onClick={() => setShowDiagnosis(true)}
             className="absolute top-4 right-4 p-2 bg-background/50 rounded-full backdrop-blur"
             title="Diagnóstico de Sincronia"
@@ -185,9 +185,9 @@ export default function NineFitHub() {
           </button>
         </motion.div>
 
-        <SyncScoreDiagnosisModal 
+        <SyncScoreDiagnosisModal
            context={liveScores?.context}
-           open={showDiagnosis} 
+           open={showDiagnosis}
            onClose={() => setShowDiagnosis(false)}
            score={liveScores?.sync.value ?? null}
            status={scoreStatus}
@@ -226,7 +226,7 @@ export default function NineFitHub() {
         onClose={() => setPaywallOpen(false)}
         context="hub_upsell"
         headline={`${name}, seu sistema está pronto para o próximo nível.`}
-        subline="7 dias grátis no PRIME · cancele quando quiser"
+        subline="Treinos, registros e evolução no 9FIT PRO"
       />
     </div>
   );

@@ -327,8 +327,8 @@ export default function NineFitTrain() {
           context="feature_locked"
           storageKey="train_top"
           variant="cyan"
-          headline="IA personaliza cada treino em tempo real no PRIME"
-          cta="Ativar 7 dias grátis"
+          headline="Organize seus treinos e acompanhe sua evolução no 9FIT PRO"
+          cta="Conhecer a assinatura"
         />
       </div>
 
