@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { trainingFollowUp } from '@/lib/trainingFollowUp';
 
 // QA roadmap Fase E (15/09): a tela inteira era 100% hardcoded (51/20/28/3 e um
 // gráfico de 12 meses fixo), sem nenhum import do Supabase. Painéis 1 e 2 agora
@@ -19,6 +20,7 @@ const COLORS = { azul: '#3b82f6', laranja: '#f97316', amarelo: '#eab308' };
 export default function StatisticsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [totalAlunos, setTotalAlunos] = useState(0);
   const [semTreino, setSemTreino] = useState(0);
   const [comTreinoSemData, setComTreinoSemData] = useState(0);
@@ -29,31 +31,38 @@ export default function StatisticsPage() {
 
     (async () => {
       setLoading(true);
+      setLoadError(false);
 
-      const { data: atletas } = await supabase
+      const { data: atletas, error: athletesError } = await supabase
         .from('athletes')
         .select('id')
         .eq('coach_id', user.id)
         .eq('is_test_account', false);
 
+      if (athletesError) { setLoadError(true); setLoading(false); return; }
+
       const athleteIds = (atletas || []).map(a => a.id);
       setTotalAlunos(athleteIds.length);
 
       if (athleteIds.length > 0) {
-        const { data: assignments } = await supabase
+        const { data: assignments, error: assignmentsError } = await supabase
           .from('student_training_assignments')
           .select('student_id, end_date, is_active')
           .in('student_id', athleteIds)
           .eq('is_active', true);
 
-        const hoje = new Date().toISOString().split('T')[0];
-        const comAtiva = new Set((assignments || []).map(a => a.student_id));
-        const semData = (assignments || []).filter(a => !a.end_date).length;
-        const vencido = (assignments || []).filter(a => a.end_date && a.end_date < hoje).length;
+        if (assignmentsError) { setLoadError(true); setLoading(false); return; }
 
-        setSemTreino(athleteIds.length - comAtiva.size);
-        setComTreinoSemData(semData);
-        setTreinoVencido(vencido);
+        const now = new Date();
+        const hoje = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const counts = trainingFollowUp(athleteIds, assignments || [], hoje);
+        setSemTreino(counts.withoutTraining);
+        setComTreinoSemData(counts.withoutEndDate);
+        setTreinoVencido(counts.expired);
+      } else {
+        setSemTreino(0);
+        setComTreinoSemData(0);
+        setTreinoVencido(0);
       }
 
       setLoading(false);
@@ -77,6 +86,8 @@ export default function StatisticsPage() {
       </div>
     );
   }
+
+  if (loadError) return <div role="alert" className="rounded-xl border border-destructive/30 p-6 text-sm">Não foi possível carregar as estatísticas. Recarregue a página para tentar novamente. Nenhum indicador foi calculado com dados incompletos.</div>;
 
   return (
     <div className="space-y-6">
