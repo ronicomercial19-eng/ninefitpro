@@ -35,12 +35,12 @@ export function metricValue(row: AssessmentRow | null | undefined,key:string): n
 export function trustFor(row:AssessmentRow,metric:Metric):Trust {
   if(metricValue(row,metric.key)===null) return 'NAO_DISPONIVEL';
   if(metric.key==='vo2_estimado') return 'ESTIMADO';
+  if(isSelf(row) && metric.key.startsWith('rm1_')) return 'ESTIMADO';
+  if(metric.key==='gordura_corporal' && /estim|navy/i.test(String(extra(row).metodo_gordura ?? extra(row).metodo_gordura_score ?? ''))) return 'ESTIMADO';
   const rawConfidence=extra(row).confianca;
   const confidence=rawConfidence && typeof rawConfidence==='object' && !Array.isArray(rawConfidence) ? rawConfidence as Record<string,Trust> : undefined;
   if(confidence?.[metric.key]) return ['CONFIRMADO','DERIVADO','ESTIMADO','NAO_DISPONIVEL'].includes(confidence[metric.key]) ? confidence[metric.key] : 'NAO_DISPONIVEL';
   if(metric.trust) return metric.trust;
-  if(isSelf(row) && metric.key.startsWith('rm1_')) return 'ESTIMADO';
-  if(metric.key==='gordura_corporal' && /estim|navy/i.test(String(extra(row).metodo_gordura ?? extra(row).metodo_gordura_score ?? ''))) return 'ESTIMADO';
   if(['imc','massa_magra','massa_gorda'].includes(metric.key)) return 'DERIVADO';
   if(metric.key==='gordura_corporal' && extra(row).metodo_gordura_score==='dobras') return 'DERIVADO';
   return 'CONFIRMADO';

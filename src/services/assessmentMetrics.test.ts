@@ -43,6 +43,9 @@ test('estimativas guiadas não viram medições nem recordes',()=>{
   assert.equal(trustFor(a,assessmentMetrics.find(m=>m.key==='gordura_corporal')!),'ESTIMADO');
   assert.equal(trustFor(a,assessmentMetrics.find(m=>m.key==='rm1_empurrar_superior')!),'ESTIMADO');
   assert.equal(metricRecord(a,assessmentMetrics.find(m=>m.key==='rm1_empurrar_superior')!,[row(0,60)]),false);
+  const legacy={...a,dados_adicionais:{metodo_gordura:'us_navy_estimativa',confianca:{gordura_corporal:'CONFIRMADO',rm1_empurrar_superior:'CONFIRMADO'}}};
+  assert.equal(trustFor(legacy,assessmentMetrics.find(m=>m.key==='gordura_corporal')!),'ESTIMADO');
+  assert.equal(trustFor(legacy,assessmentMetrics.find(m=>m.key==='rm1_empurrar_superior')!),'ESTIMADO');
 });
 test('não compara versões de score, cobertura ou protocolos diferentes',()=>{
   const a=row(0,60,{score_forca:20,dados_adicionais:{score_formula_version:'coverage_v2',protocolo:'a'}});
