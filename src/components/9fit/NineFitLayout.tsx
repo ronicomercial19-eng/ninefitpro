@@ -48,7 +48,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
 
       // --- 1. First-access gate ---
       // The server is authoritative; an old browser flag must not skip the gate.
-      let firstAccessDone = false;
+      let firstAccessDone = !!session.user.identities?.some(identity => identity.provider === 'google');
 
       if (!firstAccessDone) {
         try {
@@ -79,7 +79,8 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       }
 
       setPendingFirstAccess(!firstAccessDone);
-      if (!firstAccessDone && !onFirstAccess && !onHome) {
+      const onCommercial = ['/9fit/planos', '/9fit/primepass', '/9fit/billing', '/9fit/prime', '/9fit/premium'].includes(path);
+      if (!firstAccessDone && !onFirstAccess && !onHome && !onCommercial) {
         navigate("/9fit/first-access", { replace: true });
         return;
       }
@@ -109,7 +110,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             const { data: contextSettings } = await supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', session.user.id).maybeSingle();
             const profileConfirmed = !!(contextSettings as { pdi_completed_at?: string } | null)?.pdi_completed_at;
             setPendingActivation(!finished && !profileConfirmed);
-            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome) {
+            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome && !onCommercial) {
               navigate('/9fit/ativacao', { replace: true });
               return;
             }

@@ -25,8 +25,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 import { resolveLoginDestination } from '@/services/loginDestination.service';
 import { AUTH_CALLBACK } from '@/lib/loginDestination';
+import { entryStorage, rememberEntry } from '@/lib/customerEntry';
 
 const Auth = () => {
+  useEffect(() => {
+    const intent = new URLSearchParams(window.location.search).get('entry');
+    if (intent === 'start' || intent === 'payment_return' || intent === 'purchase') rememberEntry(entryStorage(), intent);
+  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
