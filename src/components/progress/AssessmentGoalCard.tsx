@@ -1,3 +1,4 @@
+import React from 'react';
 import { Target } from 'lucide-react';
 import type { AssessmentRow, HubGoal } from '@/services/assessmentHubService';
 import { fmt, fullDate, goalHistory, goalProjection } from '@/services/assessmentMetrics';
@@ -9,14 +10,16 @@ export function AssessmentGoalCard({ goal, rows, onReassessment }: { goal: HubGo
   const low = Math.min(...values, goal.valor_meta), high = Math.max(...values, goal.valor_meta);
   const point = (value: number, index: number) => `${16 + index * 210 / Math.max(1, points.length - 1)},${78 - (value - low) / Math.max(1, high - low) * 60}`;
   const total = goal.valor_meta - goal.valor_inicial;
-  const progress = total ? Math.max(0, Math.min(100, (goal.valor_atual - goal.valor_inicial) / total * 100)) : 100;
+  const valid = [goal.valor_inicial,goal.valor_atual,goal.valor_meta].every(Number.isFinite) && total!==0;
+  const progress = valid ? Math.max(0, Math.min(100, (goal.valor_atual - goal.valor_inicial) / total * 100)) : 0;
   const remaining = total >= 0 ? Math.max(0, goal.valor_meta - goal.valor_atual) : Math.max(0, goal.valor_atual - goal.valor_meta);
   return <section className="aw-goal" aria-label={goal.titulo}>
     <header><div><h3>{goal.titulo}</h3><p className="aw-muted">Meta de {fmt(goal.valor_meta)} {goal.unidade}</p></div><Target size={22} /></header>
     <p className="aw-note">Valor atual registrado na meta. O gráfico e a projeção usam avaliações oficiais compatíveis, não a edição manual desse valor.</p>
+    <p className="aw-note">Métrica cadastrada: {goal.metrica} · unidade: {goal.unidade}. Confirme se correspondem ao objetivo do título.</p>
     <div className="aw-card"><div className="aw-goal-values"><strong>{fmt(goal.valor_atual)} <small>{goal.unidade}</small></strong><span>de {fmt(goal.valor_meta)} {goal.unidade}</span></div>
       <progress value={progress} max={100} aria-label={`Progresso da meta ${goal.titulo}`} />
-      <p>{remaining ? `Faltam ${fmt(remaining)} ${goal.unidade}` : 'Meta alcançada'} · {fmt(progress, 0)}% do caminho</p>
+      <p>{!valid ? 'Meta precisa de revisão: valor inicial e alvo devem ser válidos e diferentes.' : `${remaining ? `Faltam ${fmt(remaining)} ${goal.unidade}` : 'Meta alcançada'} · ${fmt(progress, 0)}% do caminho`}</p>
       {goal.prazo && <p className="aw-muted">Prazo definido: {fullDate(goal.prazo)}</p>}
     </div>
     <div className="aw-projection"><h4>Projeção de data</h4>

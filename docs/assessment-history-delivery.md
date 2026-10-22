@@ -26,7 +26,7 @@ Projeto: FitPro / mfrydtrzjxscbkaiwfnw. Visual e navegação existentes preserva
 
 - Testes SQL executados antes da aplicação e novamente após: proprietário lê/salva, gravação repetida retorna mesmo ID, confiança estimada preservada, data futura recusada, testes ausentes não viram zero, acesso de outra pessoa e anônimo recusados. Testes dentro de BEGIN/ROLLBACK; não persistem avaliações, notificações ou requisições pg_net.
 - Meta de teste criada e atualizada para dono sem vínculo legado, sob role authenticated, com rollback; sign-in anônimo recusado.
-- Nove regressões de métricas/projeções e suíte selecionada de 22 testes passaram. Typecheck e build/PWA passaram.
+- Nove regressões de métricas/projeções, uma regressão de renderização de meta inválida e suíte selecionada de 23 testes passaram. Typecheck e build/PWA passaram.
 - Advisor mantém avisos gerais do projeto e de RPCs security definer intencionalmente expostas. Não equivale a certificação global de segurança; a autorização das funções deste fluxo foi testada.
 
 ## Limites e pendência cadastral
@@ -35,4 +35,13 @@ Projeto: FitPro / mfrydtrzjxscbkaiwfnw. Visual e navegação existentes preserva
 - avaliacao_tentativas e ref_faixas não tinham registros no momento da auditoria. Ausência é apresentada como não disponível; não foram inventados testes, sensores ou classificações.
 - URLs de fotos dependem de objeto existente e autorização. Falha de foto não bloqueia o restante da avaliação.
 - As preferências de fontes limitam este painel; não revogam automaticamente acessos de outros módulos.
-- A primeira inspeção autenticada do domínio público carregou o Progresso legado, diferente da fonte atual no Git. A versão pública precisa ser alinhada antes do aceite visual da nova tela.
+- A primeira inspeção autenticada do domínio público carregou o Progresso legado, diferente da fonte atual no Git. Isso exigiu publicar no Lovable e conferir a versão nova, além do push ao Git.
+
+## Reteste autenticado e publicação
+
+- Publicação Lovable solicitada após confirmar sincronização do SHA com main. Domínio passou a servir o novo bundle com as correções (não apenas uma alteração local/Git).
+- Conta autenticada pelo próprio usuário; navegação Perfil → Histórico, lista real, detalhe, resumo, metas e fontes foi exercitada sem gravar avaliações, pagamentos ou preferências da conta.
+- Autoavaliações ficaram separadas do score oficial; nenhuma avaliação oficial foi inventada para preencher o gráfico. Origem e estado sem comparação apareceram no detalhe.
+- Reteste encontrou selos legados incorretos para 1RM guiado: inferência de estimativa agora prevalece sobre esses selos. Exames vazios não exibem mais um bloco com apenas [].
+- Metas antigas com início igual ao alvo não são declaradas 100% alcançadas. A métrica/unidade cadastradas ficam explícitas para revisão; objetivos semanticamente incoerentes não são reinterpretados automaticamente.
+- A ausência de fotos e tentativas na conta testada impede validar uma imagem/sensor real nessa sessão. Assinatura privada e estados de falha estão implementados; permissões de storage foram inspecionadas sem abrir o bucket publicamente.

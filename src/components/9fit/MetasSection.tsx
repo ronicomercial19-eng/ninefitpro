@@ -23,12 +23,14 @@ function isDecreasing(m: Meta) {
 }
 
 function progressPct(m: Meta) {
+  if(m.valor_meta===m.valor_inicial)return 0;
   const total = Math.abs(m.valor_meta - m.valor_inicial) || 1;
   const feito = isDecreasing(m) ? m.valor_inicial - m.valor_atual : m.valor_atual - m.valor_inicial;
   return Math.max(0, Math.min(100, Math.round((feito / total) * 100)));
 }
 
 function isAchieved(m: Meta) {
+  if(m.valor_meta===m.valor_inicial)return false;
   return isDecreasing(m) ? m.valor_atual <= m.valor_meta : m.valor_atual >= m.valor_meta;
 }
 
