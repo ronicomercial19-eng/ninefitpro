@@ -123,6 +123,21 @@ export default function NineFitStaff() {
 
       {tab === "team" && (
         <div ref={teamRef} className="px-4 space-y-2 scroll-mt-20">
+          <button
+            type="button"
+            onClick={() => navigate('/9fit/native-system?app=staff')}
+            className="w-full glass-mission glass-mission-active rounded-2xl p-5 text-left flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            aria-label="Abrir fluxo 9FIT Staff: Cliente ou Staff / Prof"
+          >
+            <div className="w-12 h-12 shrink-0 rounded-xl bg-primary/20 grid place-items-center"><Briefcase className="w-6 h-6 text-primary" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-data tracking-[0.3em] text-primary">9FIT STAFF</p>
+              <h2 className="text-editorial text-lg text-foreground">Selecionar profissional</h2>
+              <p className="text-xs text-muted-foreground">Abrir fluxo Cliente ou Staff / Prof · categorias, métodos e jornada</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">Prévia externa com dados demonstrativos. Reservas reais: aba Agenda.</p>
+            </div>
+            <ChevronRight className="w-5 h-5 shrink-0 text-primary" />
+          </button>
           {nutritionReview&&<p className="rounded-xl border border-primary/30 p-3 text-sm">Plano: {nutritionReview.dietName}. Escolha um nutricionista para discutir o ajuste; os registros seguem junto com o agendamento.</p>}
           {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
           {!loading && !directory.isError && visiblePros.length === 0 && (
