@@ -5,22 +5,26 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { buildSkillContext } from "@/services/skills/skillRuntime";
+import { decideContextualAdjustment, type ContextualDecision } from './contextualAdjustment';
 
 export interface AdaptiveAdjustment {
+  contextual?: ContextualDecision;
   intensity: "leve" | "moderada" | "alta" | "maxima";
-  intensityPct: number; // 0-100
-  fatigueLevel: "baixa" | "moderada" | "alta";
-  fatiguePct: number; // 0-100
+  intensityPct?: number; // legacy AI payload only; contextual rules do not estimate physiology
+  fatigueLevel?: "baixa" | "moderada" | "alta";
+  fatiguePct?: number;
   swaps: Array<{ from: string; to: string; reason: string }>;
   changes: Array<{ exercise: string; sets?: number; reps?: string; restSeconds?: number; rpe?: number; reason: string }>;
   addOns: Array<{ exercise: string; sets: number; reps: string; reason: string }>;
   rationale: string;
-  recoveryForecast: number; // % previsto para amanhã
+  recoveryForecast?: number;
   generatedAt: string;
   pdiAvailable?: boolean;
 }
 
 export interface TrainingAgentContext {
+  calibration?: { sleep: number | null; energy: number | null };
+  reviewRequired?: boolean;
   userId: string;
   athleteId?: string;
   workoutName?: string;
@@ -41,6 +45,10 @@ export interface TrainingAgentContext {
 export async function requestAdaptiveAdjustment(
   ctx: TrainingAgentContext,
 ): Promise<AdaptiveAdjustment | null> {
+  if (ctx.prescription) {
+    const decision = decideContextualAdjustment({ prescription: ctx.prescription, request: ctx.request, reviewRequired: ctx.reviewRequired || !!ctx.safetyReason || !!ctx.painRegion, calibration: ctx.calibration });
+    return { intensity: 'moderada', swaps: [], changes: decision.changes, addOns: [], rationale: decision.rationale, generatedAt: new Date().toISOString(), contextual: decision };
+  }
   try {
     const skillCtx = await buildSkillContext(ctx.userId, "training");
     const { data, error } = await supabase.functions.invoke("training-ai-adjust", {

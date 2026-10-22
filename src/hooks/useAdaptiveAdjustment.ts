@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
+import type { TrainingAgentContext } from '@/services/training/trainingAgent';
 import {
   persistAcceptedAdjustment,
   requestAdaptiveAdjustment,
@@ -23,7 +24,7 @@ export function useAdaptiveAdjustment() {
   }, []);
 
   const generate = useCallback(
-    async (params: { workoutName?: string; workoutType?: string; recentRPE?: number; exercises?: string[]; prescription?: Array<{ name: string; sets: number; reps: string; restSeconds: number; rpe?: number }>; date?: string; request?: string; sync?: number | null; dayNumber?: number | null; focusMuscles?: string[]; safetyReason?: string | null; painRegion?: string | null; periodization?: { model?: string | null; status?: string | null; notes?: string | null } }) => {
+    async (params: Omit<TrainingAgentContext, 'userId' | 'athleteId'>) => {
       if (!user?.id) return;
       const currentRequest = ++requestId.current;
       setLoading(true);

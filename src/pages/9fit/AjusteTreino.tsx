@@ -4,7 +4,6 @@ import { ArrowLeftRight, ChevronLeft, Check, Loader2, Play, RefreshCw, RotateCcw
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { AdjustmentIntensityGauge } from "@/components/9fit/AdjustmentIntensityGauge";
 import { useAdaptiveAdjustment } from "@/hooks/useAdaptiveAdjustment";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
@@ -44,7 +43,6 @@ export default function NineFitAjusteTreino() {
   const [animatedSync, setAnimatedSync] = useState(0);
   const [requestSheetOpen, setRequestSheetOpen] = useState(false);
   const [swapOpen, setSwapOpen] = useState<string | null>(null);
-  const [intensityOverride, setIntensityOverride] = useState(50);
   const [exercises, setExercises] = useState<Ex[]>([]);
   const [original, setOriginal] = useState<Ex[]>([]);
   const [selectedDate, setSelectedDate] = useState(businessDate());
@@ -150,6 +148,8 @@ export default function NineFitAjusteTreino() {
     if (executionStatus) { toast.info("Esta sessão já foi iniciada. Escolha uma futura para ajustar."); return; }
     if (!exercises.length) { toast.info("Carregue um treino antes de pedir ajustes."); return; }
     const r = await generate({ workoutName: sessionName, workoutType: workoutType ?? undefined, date: selectedDate, request: customRequest, dayNumber, focusMuscles, periodization, painRegion,
+      reviewRequired: !!redFlagSource || !!scores?.context?.safety.review_required,
+      calibration: selectedDate === today && scores?.context?.date === today ? scores.context.calibration : undefined,
       safetyReason: redFlagSource ? "pain_red_flag" : scores?.context?.safety.reason,
       sync: scores?.sync.status === "available" ? scores.sync.value : null,
       exercises: original.map(exercise => exercise.name),
@@ -158,13 +158,13 @@ export default function NineFitAjusteTreino() {
   };
 
   useEffect(() => {
-    const key = `${athleteId}:${selectedDate}:${dailyId}:${workoutUpdatedAt}`;
+    const key = `${athleteId}:${selectedDate}:${dailyId}:${workoutUpdatedAt}:${scores?.context?.safety.review_required ?? false}:${scores?.context?.calibration.observed_at ?? ''}`;
     if (reloading || !athleteId || !dailyId || !original.length || executionStatus || requestedKey.current === key) return;
     requestedKey.current = key;
     void runCopilot();
     // Generate once for each saved prescription; the user can explicitly request another adjustment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [athleteId, selectedDate, dailyId, workoutUpdatedAt, original.length, executionStatus, reloading, redFlagSource]);
+  }, [athleteId, selectedDate, dailyId, workoutUpdatedAt, original.length, executionStatus, reloading, redFlagSource, scores?.context?.generated_at]);
 
   const applyCopilotSuggestion = () => {
     if (!adjustment || executionStatus) return;
@@ -194,11 +194,10 @@ export default function NineFitAjusteTreino() {
     });
     setDirty(nextDirty);
     setExercises(original.map(ex => ({ ...ex, ...nextDirty[ex.id] })));
-    setIntensityOverride(/alta|intens/i.test(adjustment.intensity) ? 80 : /leve|baixa/i.test(adjustment.intensity) ? 20 : 50);
     setPublished(false);
     setReasons(nextReasons);
     setApplied(applied > 0);
-    if (!applied) toast.info("Nenhuma mudança válida para esta prescrição. Você pode ajustar manualmente.");
+    if (!applied && !adjustment.contextual) toast.info("Nenhuma mudança válida para esta prescrição. Você pode ajustar manualmente.");
   };
 
   const patch = (id: string, delta: Partial<Ex>) => {
@@ -230,13 +229,6 @@ export default function NineFitAjusteTreino() {
     setSwapOpen(null);
   };
 
-  const intensityLabel = intensityOverride < 34 ? "Leve" : intensityOverride < 67 ? "Moderada" : "Alta";
-  const adjustIntensity = (value: number) => {
-    setIntensityOverride(value);
-    const rpe = Math.max(1, Math.min(10, Math.round(value / 10)));
-    if (!executionStatus) exercises.forEach(exercise => patch(exercise.id, { intensidade: rpe }));
-  };
-
   const totalSets = exercises.reduce((sum, ex) => sum + (Number.isFinite(ex.sets) ? ex.sets : 0), 0);
   const muscleVolumes = Object.entries(exercises.reduce<Record<string, number>>((result, ex) => {
     const group = ex.muscle_groups?.[0] || "Outros";
@@ -246,6 +238,7 @@ export default function NineFitAjusteTreino() {
 
   const onSave = async () => {
     if (!athleteId || !dailyId || saving || executionStatus) return;
+    if (redFlagSource || scores?.context?.safety.review_required || adjustment?.contextual?.kind === 'review') { toast.warning('Revisão profissional necessária. Nenhum ajuste automático será publicado.'); return; }
     if (exercises.some(ex => !Number.isInteger(ex.sets) || ex.sets < 1 || ex.sets > 10 || !ex.reps_range.trim() || /^\d{3,}$/.test(ex.reps_range.trim()) || !Number.isInteger(ex.rest_seconds) || ex.rest_seconds < 0 || ex.rest_seconds > 600 || (ex.intensidade != null && (!Number.isInteger(ex.intensidade) || ex.intensidade < 1 || ex.intensidade > 10)))) { toast.error("Revise séries, dose com unidade, descanso e intensidade antes de publicar."); return; }
     setSaving(true);
     publishing.current = true;
@@ -369,24 +362,27 @@ export default function NineFitAjusteTreino() {
       {exercises.length > 0 && <div className="mx-auto mt-5 max-w-2xl px-4"><div className="rounded-[26px] border border-primary/25 bg-gradient-to-br from-primary/15 via-white/[0.04] to-transparent p-5 shadow-[0_20px_60px_-35px_hsl(var(--primary)/0.8)]">
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Sync</p><p className="mt-1 text-xl font-bold tabular-nums text-primary">{scores?.sync.status === "available" && scores.sync.value != null ? `${animatedSync}%` : "—"}</p><p className="text-[10px] text-muted-foreground">sinal de hoje</p></div>
-          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">PDI</p><p className="mt-1 text-sm font-semibold text-amber-300">{adjustment?.fatigueLevel === "alta" ? "Fadiga alta" : adjustment?.pdiAvailable === true ? "Ativo" : "—"}</p><p className="text-[10px] text-muted-foreground">prontidão</p></div>
+          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Contexto</p><p className="mt-1 text-sm font-semibold text-primary">{selectedDate === today && scores?.context?.date === today ? 'Check-in do dia' : 'Parcial'}</p><p className="text-[10px] text-muted-foreground">declarado, não clínico</p></div>
           <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Dia do ciclo</p><p className="mt-1 text-sm font-semibold">{dayNumber ? `Dia ${dayNumber}` : "—"}</p><p className="text-[10px] text-muted-foreground">periodização</p></div>
         </div>
-        <div className="mt-5 rounded-2xl border border-primary/20 bg-background/40 p-4"><div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><h2 className="font-bold">Ron Coach ajustou seu treino</h2></div>
+        <div className="mt-5 rounded-2xl border border-primary/20 bg-background/40 p-4"><div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><h2 className="font-bold">Motor contextual · ajuste para esta sessão</h2></div>
+        <p className="mt-2 text-xs text-muted-foreground">Melhor hoje pode ser manter. Sua prescrição só muda após confirmar em Aplicar ajustes.</p>
+        {!executionStatus && <div className="mt-3 flex flex-wrap gap-2">{['Revisar contexto', 'Mais leve hoje', 'Pouco tempo, encurtar', 'Falta equipamento'].map(option => <button key={option} type="button" disabled={loading || reloading} onClick={() => void runCopilot(option === 'Revisar contexto' ? '' : option)} className="rounded-full border border-primary/30 px-3 py-2 text-xs text-primary disabled:opacity-40">{option}</button>)}</div>}
         {loading && <p className="mt-3 text-sm text-muted-foreground">Analisando sua prescrição e os sinais disponíveis…</p>}
         {!loading && adjustmentError && <button className="mt-3 text-left text-sm text-amber-300 underline" onClick={() => void runCopilot()}>{adjustmentError} Tentar novamente</button>}
         {!loading && adjustment && <>
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">{adjustment.rationale}</p>
-          <p className="mt-2 text-[11px] text-muted-foreground">Base: prescrição Smart Treino{scores?.sync.status === "available" ? ` · Sync disponível${scores.sync.observed_at ? ` (${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(scores.sync.observed_at))})` : ""}` : " · Sync sem leitura atual"}{adjustment.pdiAvailable ? " · PDI configurado" : " · PDI sem calibração"}. Fadiga é uma avaliação da IA, não uma medição clínica.</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">Base: {adjustment.contextual?.sources.join(' · ') || 'prescrição atual'}. Objetivo, exercícios, dose e descanso preservados pelo motor.</p>
+          {adjustment.contextual && <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">{adjustment.contextual.limitations.map(note => <li key={note}>{note}</li>)}</ul>}
           <p className="mt-3 inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">{Object.keys(dirty).length} exercícios ajustados</p>
-          <div className="mt-5 flex items-center gap-5"><AdjustmentIntensityGauge value={intensityOverride} onChange={adjustIntensity} disabled={!!executionStatus} /><div className="grid flex-1 grid-cols-2 gap-3"><div><p className="text-[10px] text-muted-foreground">Intensidade</p><p className="mt-1 text-sm font-bold">{intensityLabel}</p></div><div><p className="text-[10px] text-muted-foreground">Fadiga</p><p className="mt-1 text-sm font-bold">{adjustment.fatiguePct}%</p></div></div></div>
+          <div className="mt-4 rounded-xl bg-background/60 p-3 text-xs"><span className="text-primary font-semibold">Decisão: </span>{adjustment.contextual?.kind === 'review' ? 'Revisão profissional' : adjustment.contextual?.kind === 'shorten' ? 'Encurtar volume' : adjustment.contextual?.kind === 'reduce' ? 'Reduzir volume' : 'Manter prescrição'}<p className="mt-1 text-muted-foreground">Não é uma avaliação clínica nem liberação para treinar com dor.</p></div>
           {!applied && adjustment.changes.length + adjustment.swaps.length === 0 && <p className="mt-3 text-xs text-muted-foreground">Sem mudança recomendada com os dados atuais. Você ainda pode ajustar manualmente.</p>}
           {published && <p role="status" className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm text-emerald-300"><Check className="mr-2 inline h-4 w-4" />Treino atualizado — bom treino!</p>}
         </>}</div>
         {!executionStatus && <button type="button" onClick={() => setRequestSheetOpen(true)} className="mt-5 flex w-full items-center justify-center gap-2 border-t border-white/10 pt-4 text-sm font-semibold text-primary"><SlidersHorizontal className="h-4 w-4" /> Pedir outro ajuste</button>}
       </div></div>}
 
-      {exercises.length > 0 && <div className="mx-auto mt-5 flex max-w-2xl items-center justify-between px-4"><div><h2 className="font-bold">{mode === "manual" ? "Editando manualmente" : "Treino de hoje atualizado"} · {exercises.length} exercícios</h2><p className="text-xs text-muted-foreground">{totalSets} séries na sessão</p></div><button onClick={() => setMode(mode === "manual" ? "suggestion" : "manual")} className="text-xs font-semibold text-primary underline">{mode === "manual" ? "Voltar à sugestão da IA" : "Ajustar manualmente"}</button></div>}
+      {exercises.length > 0 && <div className="mx-auto mt-5 flex max-w-2xl items-center justify-between px-4"><div><h2 className="font-bold">{mode === "manual" ? "Editando manualmente" : published ? "Treino atualizado" : 'Prévia da sessão'} · {exercises.length} exercícios</h2><p className="text-xs text-muted-foreground">{totalSets} séries na sessão</p></div><button onClick={() => setMode(mode === "manual" ? "suggestion" : "manual")} className="text-xs font-semibold text-primary underline">{mode === "manual" ? "Voltar à sugestão" : "Ajustar manualmente"}</button></div>}
       {mode === "manual" && exercises.length > 0 && <div className="mx-auto mt-3 max-w-2xl px-4"><div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm font-semibold">Volume da sessão · {totalSets} séries</p><div className="mt-3 space-y-2">{muscleVolumes.map(([group, sets]) => <div key={group} className="flex items-center gap-2 text-xs"><span className="w-24 truncate">{group}</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${totalSets ? (sets / totalSets) * 100 : 0}%` }} /></div><span>{sets}</span></div>)}</div></div></div>}
 
       <div className="mx-auto mt-6 max-w-2xl space-y-3 px-4">
