@@ -63,13 +63,17 @@ export default function NineFitStaff() {
     setSelected(null);
   };
 
+  // Entra no fluxo Staff (profissionais externos por método e hub — staff-api).
+  const goStaffFlow = (source: string) =>
+    navigate(STAFF_FLOW_ROUTE, { state: { nutritionReview, source, dietReview } });
+
   const openStaffFlow = () => {
     if (hasNinePros) {
       setTab("team");
       requestAnimationFrame(() => teamRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
       return;
     }
-    navigate(STAFF_FLOW_ROUTE, { state: { nutritionReview, source: "staff_fallback", dietReview } });
+    goStaffFlow("staff_fallback");
   };
 
   return (
@@ -101,8 +105,7 @@ export default function NineFitStaff() {
         </div>
       </div>
 
-      {/* Card nativo da Staff: conexão aluno ↔ profissionais.
-          O card "O RON" foi removido: o RON é o botão flutuante (chat único). */}
+      {/* Card nativo da equipe NINE (o RON é o botão flutuante — chat único) */}
       <button
         onClick={openStaffFlow}
         disabled={loading}
@@ -127,7 +130,7 @@ export default function NineFitStaff() {
           {loading && <p className="text-[10px] text-muted-foreground">Carregando profissionais...</p>}
           {!loading && !directory.isError && visiblePros.length === 0 && (
             <div className="glass-mission rounded-xl p-6 text-center text-xs text-muted-foreground">
-              {dietReview?"Nenhum nutricionista da equipe NINE disponível agora. Use o botão acima para solicitar um profissional da Staff.":"Nenhum profissional da equipe NINE disponível agora. Use o botão acima para solicitar um profissional da Staff."}
+              {dietReview?"Nenhum nutricionista da equipe NINE disponível agora. Use o card Staff abaixo para solicitar um profissional.":"Nenhum profissional da equipe NINE disponível agora. Use o card Staff abaixo para solicitar um profissional."}
             </div>
           )}
           {visiblePros.map((p) => (
@@ -155,6 +158,22 @@ export default function NineFitStaff() {
               Não foi possível carregar a equipe NINE. Tentar novamente
             </button>
           )}
+
+          {/* Card nativo STAFF: sempre visível, mesmo com equipe NINE disponível (profissionais por método e hub) */}
+          <button
+            onClick={() => goStaffFlow("staff_card")}
+            className="w-full glass-mission glass-mission-active rounded-xl p-4 mt-2 text-left flex items-center gap-3"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <Briefcase className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-data tracking-[0.3em] text-primary/80">STAFF 9FIT</p>
+              <p className="text-editorial text-base text-foreground">SOLICITAR PROFISSIONAL</p>
+              <p className="text-[10px] text-muted-foreground">Profissionais por método e unidade · agende pelo fluxo Staff</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+          </button>
         </div>
       )}
 
