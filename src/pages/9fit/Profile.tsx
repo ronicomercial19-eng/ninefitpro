@@ -31,6 +31,15 @@ interface AthleteBio {
   weight_kg: number | null;
 }
 
+/** Última alteração de peso registrada (athlete_weight_history): de onde veio e quando. */
+interface WeightMeta { source: string; created_at: string }
+const WEIGHT_SOURCE_LABEL: Record<string, string> = {
+  perfil: "Perfil",
+  avaliacao_guiada: "Avaliação guiada",
+  atualizacao_direta: "Atualização direta",
+  baseline: "Registro inicial",
+};
+
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
@@ -40,6 +49,7 @@ export default function NineFitProfile() {
   const [fichaOpen, setFichaOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
+  const [weightMeta, setWeightMeta] = useState<WeightMeta | null>(null);
 
   useEffect(() => {
     if (!athleteId) return;
@@ -50,8 +60,17 @@ export default function NineFitProfile() {
         .eq("id", athleteId)
         .maybeSingle();
       if (data) setBio(data as any);
+
+      const { data: hist } = await supabase
+        .from("athlete_weight_history" as any)
+        .select("source, created_at")
+        .eq("athlete_id", athleteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setWeightMeta((hist as any) ?? null);
     })();
-  }, [athleteId, completeOpen]); // recarrega ao fechar o wizard (aberto pelo próprio ID Card)
+  }, [athleteId, completeOpen, fichaOpen]); // recarrega ao fechar o wizard ou a ficha
 
   const displayName = athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
@@ -103,6 +122,12 @@ export default function NineFitProfile() {
           heightCm={bio.height_cm}
           weightKg={bio.weight_kg}
         />}
+        {bio.weight_kg != null && weightMeta && (
+          <p className="mt-2 px-1 text-[11px] text-muted-foreground">
+            Peso {bio.weight_kg} kg · {WEIGHT_SOURCE_LABEL[weightMeta.source] || weightMeta.source}
+            {weightMeta.source !== "baseline" ? ` em ${new Date(weightMeta.created_at).toLocaleDateString("pt-BR")}` : ""}
+          </p>
+        )}
       </section>
 
       {/* Menu */}
