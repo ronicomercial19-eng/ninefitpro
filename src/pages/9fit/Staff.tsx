@@ -1,12 +1,16 @@
 import { useRef, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { Users, Calendar, MessageSquare, Bot, ChevronRight, Briefcase, Stethoscope, Apple, UserPlus } from "lucide-react";
+import { Users, Calendar, MessageSquare, ChevronRight, Briefcase, Stethoscope, Apple, UserPlus } from "lucide-react";
 import { useNavigate,useLocation,useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useStaffDirectory } from "@/hooks/useStaffDirectory";
 
 // Fluxo Staff (profissionais externos / eventos). Trocar pela rota final do fluxo quando a equipe definir.
 const STAFF_FLOW_ROUTE = "/9fit/aulas-creditos?tab=schedule";
+
+// Chat único: o botão flutuante (RonConciergeSheet) é o único chat. Aqui só abrimos ele na aba certa.
+const openChat = (tab: "ron" | "team") =>
+  window.dispatchEvent(new CustomEvent("9fit:open-ron-concierge", { detail: { tab } }));
 
 type Pro = {
   user_id: string;
@@ -97,22 +101,8 @@ export default function NineFitStaff() {
         </div>
       </div>
 
-      <button
-        onClick={() => navigate("/9fit/ron")}
-        className="mx-4 mb-4 w-[calc(100%-2rem)] glass-mission glass-mission-active rounded-xl p-4 text-left flex items-center gap-3"
-      >
-        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-          <Bot className="w-6 h-6 text-primary" />
-        </div>
-        <div className="flex-1">
-          <p className="text-[9px] font-data tracking-[0.3em] text-primary/80">ASSISTENTE NEURAL</p>
-          <p className="text-editorial text-base text-foreground">O RON</p>
-          <p className="text-[10px] text-muted-foreground">Disponível 24/7 · memória persistente</p>
-        </div>
-        <ChevronRight className="w-5 h-5 text-primary" />
-      </button>
-
-      {/* Card nativo da Staff: conexão aluno ↔ profissionais */}
+      {/* Card nativo da Staff: conexão aluno ↔ profissionais.
+          O card "O RON" foi removido: o RON é o botão flutuante (chat único). */}
       <button
         onClick={openStaffFlow}
         disabled={loading}
@@ -191,11 +181,19 @@ export default function NineFitStaff() {
 
       {tab === "support" && (
         <div className="px-4 space-y-2">
-          <button onClick={() => navigate("/9fit/mensagens")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+          <button onClick={() => openChat("team")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
             <MessageSquare className="w-5 h-5 text-primary" />
             <div className="flex-1">
-              <p className="text-sm font-display uppercase">Chat de Suporte</p>
-              <p className="text-[10px] text-muted-foreground">Resposta em até 4 min</p>
+              <p className="text-sm font-display uppercase">Chat com a equipe</p>
+              <p className="text-[10px] text-muted-foreground">Atendimento humano da equipe 9FIT</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <button onClick={() => openChat("ron")} className="w-full glass-mission rounded-xl p-4 text-left flex items-center gap-3">
+            <MessageSquare className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-display uppercase">Perguntar ao RON IA</p>
+              <p className="text-[10px] text-muted-foreground">Assistente com voz · mesmo chat do botão flutuante</p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
