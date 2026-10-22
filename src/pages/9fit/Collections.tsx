@@ -100,7 +100,7 @@ export default function NineFitCollections() {
         if (we) {
           b.push({
             tipo: "treino_concluido",
-            dado: `${(we as any).phase_name || "Treino"} · ${(we as any).duration_minutes || 45} min · concluído`,
+            dado: `${(we as any).phase_name || "Treino"}${Number(we.duration_minutes) > 0 ? ` · ${we.duration_minutes} min` : " · duração não registrada"} · concluído`,
             icon: Dumbbell, template: tplByType("treino_concluido"),
           });
         }

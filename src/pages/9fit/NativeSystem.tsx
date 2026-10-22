@@ -31,6 +31,8 @@ export default function NineFitNativeSystem() {
         )}
       </header>
 
+      {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={app.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
+
       {showFallback ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 text-center">
           <div className="w-20 h-20 rounded-full border border-primary/40 grid place-items-center">

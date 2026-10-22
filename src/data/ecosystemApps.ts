@@ -16,8 +16,8 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
   store: {
     key: "store",
     label: "Store",
-    url: "https://fitnessplace.lovable.app",
-    description: "E-commerce e dropshipping 9FIT",
+    url: "https://ninefit.lovable.app",
+    description: "Catálogo e ofertas da 9FIT Store",
     allow: "clipboard-write; fullscreen; payment",
   },
   "fitness-place": {

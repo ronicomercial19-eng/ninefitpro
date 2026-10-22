@@ -336,7 +336,7 @@ const App = () => (
             <Route path="/9fit/progresso/recordes" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
             <Route path="/9fit/premium" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/billing" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
-            <Route path="/9fit/store" element={<NineFitLayout><NineFitFoods /></NineFitLayout>} />
+            <Route path="/9fit/store" element={<Navigate to="/9fit/native-system?app=store" replace />} />
             <Route path="/9fit/events" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
             <Route path="/9fit/compartilhar" element={<NineFitLayout><NineFitCompartilhar /></NineFitLayout>} />
             <Route path="/9fit/move" element={<NineFitLayout><NineFitMove /></NineFitLayout>} />

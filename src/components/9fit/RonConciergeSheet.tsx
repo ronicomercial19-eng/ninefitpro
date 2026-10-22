@@ -29,6 +29,8 @@ import { STATE_LABEL, STATE_COLOR, STATE_INSIGHT } from "@/services/adaptiveStat
 import { executeRonAction, RonAction } from "@/services/ronOperationalCore";
 import { toast } from "sonner";
 import { RonCalendarModal } from "./RonCalendarModal";
+import ReactMarkdown from "react-markdown";
+import { normalizeRonMarkdown } from "@/lib/ronMarkdown";
 
 /**
  * CHAT ÚNICO DO ALUNO.
@@ -99,6 +101,9 @@ export function RonConciergeSheet() {
 
   // ---------- Histórico persistido ----------
   useEffect(() => {
+    setMessages([WELCOME]);
+    setHistoryLoaded(false);
+    introDoneRef.current = false;
     if (!user?.id) return;
     let cancelled = false;
     (async () => {
@@ -529,7 +534,11 @@ export function RonConciergeSheet() {
                               : "bg-white/5 border border-white/10 text-neutral-200 rounded-bl-xs shadow-md"
                           }`}
                         >
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                          {msg.role === "user" ? <p className="whitespace-pre-wrap">{msg.content}</p> : (
+                            <div className="break-words space-y-2 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_a]:underline [&_pre]:overflow-x-auto">
+                              <ReactMarkdown skipHtml components={{ a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a> }}>{normalizeRonMarkdown(msg.content)}</ReactMarkdown>
+                            </div>
+                          )}
                           {msg.actions && msg.actions.length > 0 && (
                             <div className="mt-3 pt-2.5 border-t border-white/10 space-y-2">
                               <p className="text-[10px] uppercase font-bold tracking-wider text-primary">Ações propostas:</p>
