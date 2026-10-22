@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 
-function beep() {
+function beep(freq = 880, dur = 0.25, vol = 0.15) {
   try {
     const AC = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AC();
@@ -9,11 +9,11 @@ function beep() {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    gain.gain.value = 0.15;
+    osc.frequency.value = freq;
+    gain.gain.value = vol;
     osc.start();
-    osc.stop(ctx.currentTime + 0.25);
-    setTimeout(() => ctx.close(), 500);
+    osc.stop(ctx.currentTime + dur);
+    setTimeout(() => ctx.close(), dur * 1000 + 250);
   } catch { /* sem áudio disponível */ }
 }
 const buzz = (ms: number) => { try { navigator.vibrate?.(ms); } catch { /* sem vibração */ } };
@@ -22,22 +22,30 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 interface TimerProps {
   mode: "countdown" | "stopwatch";
   seconds?: number;
+  /** batidas por minuto de um metrônomo durante o teste (ex.: 96 no teste do degrau) */
+  metronomeBpm?: number;
   /** countdown: chamado ao terminar com a duração; stopwatch: chamado ao parar com o tempo medido */
   onDone: (sec: number) => void;
 }
 
 /** Cronômetro de teste: 5 s para se posicionar, depois bipe e contagem. Reduz o erro de medir sozinho. */
-export function TestTimer({ mode, seconds = 30, onDone }: TimerProps) {
+export function TestTimer({ mode, seconds = 30, metronomeBpm, onDone }: TimerProps) {
   const [phase, setPhase] = useState<"idle" | "prep" | "run" | "done">("idle");
   const [shown, setShown] = useState(0);
   const timer = useRef<number | null>(null);
+  const tick = useRef<number | null>(null);
   const t0 = useRef(0);
 
-  const clear = () => { if (timer.current !== null) window.clearInterval(timer.current); timer.current = null; };
+  const clear = () => {
+    if (timer.current !== null) window.clearInterval(timer.current);
+    if (tick.current !== null) window.clearInterval(tick.current);
+    timer.current = null; tick.current = null;
+  };
   useEffect(() => clear, []);
 
   const run = () => {
     t0.current = performance.now();
+    if (metronomeBpm) tick.current = window.setInterval(() => beep(1200, 0.06, 0.08), 60000 / metronomeBpm);
     timer.current = window.setInterval(() => {
       const el = (performance.now() - t0.current) / 1000;
       if (mode === "countdown") {
@@ -85,7 +93,7 @@ export function TestTimer({ mode, seconds = 30, onDone }: TimerProps) {
       <p className="text-xs text-muted-foreground">
         {phase === "idle" && (mode === "countdown" ? "Toque em iniciar: você terá 5 s para se posicionar." : "Toque em iniciar, posicione-se e pare quando a técnica quebrar.")}
         {phase === "prep" && "Posicione-se. O teste começa no bipe."}
-        {phase === "run" && (mode === "countdown" ? "Em andamento. Conte as repetições completas." : "Em andamento. Toque em parar quando não conseguir manter a forma.")}
+        {phase === "run" && (mode === "countdown" ? (metronomeBpm ? "Acompanhe o ritmo dos bipes: um degrau completo a cada 4 bipes." : "Em andamento. Conte as repetições completas.") : "Em andamento. Toque em parar quando não conseguir manter a forma.")}
         {phase === "done" && (mode === "countdown" ? "Tempo! Informe o resultado abaixo." : "Tempo registrado no campo abaixo.")}
       </p>
       <div className="flex gap-2 justify-center">
