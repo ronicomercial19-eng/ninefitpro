@@ -13,6 +13,7 @@ export function AssessmentGoalCard({ goal, rows, onReassessment }: { goal: HubGo
   const remaining = total >= 0 ? Math.max(0, goal.valor_meta - goal.valor_atual) : Math.max(0, goal.valor_atual - goal.valor_meta);
   return <section className="aw-goal" aria-label={goal.titulo}>
     <header><div><h3>{goal.titulo}</h3><p className="aw-muted">Meta de {fmt(goal.valor_meta)} {goal.unidade}</p></div><Target size={22} /></header>
+    <p className="aw-note">Valor atual registrado na meta. O gráfico e a projeção usam avaliações oficiais compatíveis, não a edição manual desse valor.</p>
     <div className="aw-card"><div className="aw-goal-values"><strong>{fmt(goal.valor_atual)} <small>{goal.unidade}</small></strong><span>de {fmt(goal.valor_meta)} {goal.unidade}</span></div>
       <progress value={progress} max={100} aria-label={`Progresso da meta ${goal.titulo}`} />
       <p>{remaining ? `Faltam ${fmt(remaining)} ${goal.unidade}` : 'Meta alcançada'} · {fmt(progress, 0)}% do caminho</p>

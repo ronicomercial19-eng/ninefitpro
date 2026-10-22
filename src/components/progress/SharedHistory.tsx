@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, ChevronDown, Dumbbell, History, RefreshCw, Sparkles, Trophy } from 'lucide-react';
 import { loadProgressHistory, type HistoryAssessment, type ProgressHistory } from '@/services/progressHistoryService';
+import { invalidateAssessmentHub, type AssessmentRow } from '@/services/assessmentHubService';
+import { compatibleMetric, assessmentMetrics, trustFor } from '@/services/assessmentMetrics';
 
 type Panel = 'corpo' | 'performance' | 'historico';
 type MetricKey = 'peso' | 'gordura_corporal' | 'massa_muscular' | 'circunferencia_cintura' | 'score_global';
@@ -63,7 +65,7 @@ export function SharedHistory({ athleteId, compact = false }: { athleteId: strin
   const latestScore = [...assessments].reverse().find(a => a.oficial && numeric(a.score_global) != null)?.score_global;
   const activeMetric = metric ?? metrics.find(item => assessments.some(a => numeric(a[item.key]) != null))?.key ?? 'peso';
   const metricInfo = metrics.find(m => m.key === activeMetric)!;
-  const metricPoints = assessments.flatMap(a => { const value = numeric(a[activeMetric]); return value == null || (activeMetric === 'score_global' && !a.oficial) ? [] : [{ date: a.data_avaliacao, value }]; });
+  const metricPoints = compatibleHistory(assessments,activeMetric).flatMap(a => { const value = numeric(a[activeMetric]); return value == null || (activeMetric === 'score_global' && !a.oficial) ? [] : [{ date: a.data_avaliacao, value }]; });
   const exerciseNames = useMemo(() => [...new Set(loads.map(l => l.exercise))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [loads]);
   const selectedExercise = exercise && exerciseNames.includes(exercise) ? exercise : exerciseNames[0];
   const selectedLoads = loads.filter(l => l.exercise === selectedExercise);
@@ -79,7 +81,7 @@ export function SharedHistory({ athleteId, compact = false }: { athleteId: strin
 
   return <section className={`space-y-4 text-foreground ${compact ? '' : 'mt-6'}`} aria-label="Histórico integrado de avaliações e treinos">
     <div className="rounded-2xl border border-border/10 bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-mono text-[10px] uppercase tracking-[.2em] text-primary">9FIT · Progress Tracker</p><h2 className="mt-1 font-display text-2xl font-bold">Histórico integrado</h2><p className="mt-1 text-sm text-muted-foreground">Avaliações e treinos no mesmo banco, com a origem de cada registro.</p></div><button type="button" onClick={() => setRevision(n => n + 1)} className="rounded-lg border border-border/15 p-2 text-muted-foreground hover:text-foreground" aria-label="Atualizar histórico"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-mono text-[10px] uppercase tracking-[.2em] text-primary">9FIT · Progress Tracker</p><h2 className="mt-1 font-display text-2xl font-bold">Histórico integrado</h2><p className="mt-1 text-sm text-muted-foreground">Avaliações e treinos no mesmo banco, com a origem de cada registro.</p></div><button type="button" onClick={() => { invalidateAssessmentHub(athleteId); setRevision(n => n + 1); }} className="rounded-lg border border-border/15 p-2 text-muted-foreground hover:text-foreground" aria-label="Atualizar histórico"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button></div>
       <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Summary label="Score oficial" value={latestScore == null ? '—' : format(Number(latestScore), 0)} unit="pts" />
         <Summary label="Peso atual" value={latestWeight == null ? '—' : format(Number(latestWeight))} unit="kg" detail={deltaWeight == null ? undefined : `${deltaWeight > 0 ? '+' : ''}${format(deltaWeight)} kg vs primeiro registro`} />
@@ -108,7 +110,8 @@ export function SharedHistory({ athleteId, compact = false }: { athleteId: strin
 
 function Summary({ label, value, unit, detail }: { label: string; value: string; unit: string; detail?: string }) { return <div className="rounded-xl border border-border/10 bg-muted/40 p-3"><p className="font-mono text-[10px] uppercase text-muted-foreground">{label}</p><p className="mt-2 font-display text-2xl font-bold">{value}<span className="ml-1 font-sans text-[10px] font-normal text-muted-foreground">{unit}</span></p>{detail && <p className="mt-1 text-[10px] text-muted-foreground">{detail}</p>}</div>; }
 function Insight({ source, text }: { source: string; text: string }) { return <div className="rounded-lg border border-border/10 bg-muted/40 p-3"><p className="mb-2 font-mono text-[10px] uppercase text-primary">{source}</p><p>{text}</p></div>; }
-function metricDelta(rows: HistoryAssessment[], key: MetricKey) { const values = rows.flatMap(row => { const value = numeric(row[key]); return value == null ? [] : [value]; }); return values.length >= 2 ? values[values.length - 1] - values[0] : null; }
+function compatibleHistory(rows:HistoryAssessment[],key:MetricKey) { const latest=[...rows].reverse().find(r=>numeric(r[key])!=null&&(key!=='score_global'||r.oficial)); return latest?rows.filter(r=>compatibleMetric(latest as AssessmentRow,r as AssessmentRow,key)):[]; }
+function metricDelta(rows: HistoryAssessment[], key: MetricKey) { const metric=assessmentMetrics.find(m=>m.key===key); const values = compatibleHistory(rows,key).filter(r=>!metric||['CONFIRMADO','DERIVADO'].includes(trustFor(r as AssessmentRow,metric))).flatMap(row => { const value = numeric(row[key]); return value == null ? [] : [value]; }); return values.length >= 2 ? values[values.length - 1] - values[0] : null; }
 function Calendar({ dates }: { dates: string[] }) { const counts = new Map<string, number>(); dates.forEach(d => counts.set(d, (counts.get(d) ?? 0) + 1)); const today = new Date(); today.setHours(12, 0, 0, 0); return <div className="mt-5 grid grid-cols-12 gap-1.5" role="img" aria-label="Calendário dos últimos 84 dias de treino">{Array.from({ length: 84 }, (_, i) => { const day = new Date(today); day.setDate(today.getDate() - (83 - i)); const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`; const count = counts.get(key) ?? 0; return <span key={key} title={`${day.toLocaleDateString('pt-BR')}: ${count} treino(s)`} className={`aspect-square rounded-sm ${count > 1 ? 'bg-primary' : count ? 'bg-primary/65' : 'bg-elevated'}`} />; })}</div>; }
 function timeline(assessments: HistoryAssessment[], workouts: ProgressHistory['workouts'], records: ProgressHistory['records']) { return [
   ...assessments.map(a => ({ id: `a:${a.id}`, date: a.data_avaliacao, title: a.origem === 'avaliacao_guiada' ? 'Autoavaliação guiada' : 'Avaliação física', detail: !a.oficial || a.score_global == null ? 'Medidas registradas' : `Score ${format(Number(a.score_global), 0)} pontos` })),

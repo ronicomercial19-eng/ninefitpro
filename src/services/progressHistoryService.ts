@@ -15,6 +15,8 @@ export interface HistoryAssessment {
   rm1_puxar_costas: number | null;
   score_global: number | null;
   oficial?: boolean;
+  dados_adicionais?: unknown;
+  created_at?: string;
 }
 
 export interface HistoryWorkout {

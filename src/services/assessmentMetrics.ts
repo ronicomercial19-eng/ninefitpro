@@ -19,6 +19,12 @@ export const assessmentMetrics: Metric[] = [
   {key:'fc_recuperacao_1min',label:'Recuperação em 1 minuto',unit:'bpm',pillar:'cardio'},
   ...[['mob_overhead_squat','Overhead squat'],['mob_quadril','Mobilidade de quadril'],['mob_tornozelo','Mobilidade de tornozelo'],['mob_ombro','Mobilidade de ombro']].map(([key,label])=>({key,label,unit:'pts',pillar:'mobilidade' as const,higher:true})),
   {key:'gordura_bioimpedancia',label:'Gordura por bioimpedância',unit:'%',pillar:'composicao',trust:'DERIVADO'},
+  {key:'sentar_levantar_30s',label:'Sentar e levantar · 30 segundos',unit:'reps',pillar:'resistencia',higher:true},
+  {key:'step_test_fc_1min',label:'Frequência após step test · 1 minuto',unit:'bpm',pillar:'cardio'},
+  {key:'equilibrio_unipodal_esq_seg',label:'Equilíbrio unipodal esquerdo',unit:'s',pillar:'mobilidade',higher:true},
+  {key:'equilibrio_unipodal_dir_seg',label:'Equilíbrio unipodal direito',unit:'s',pillar:'mobilidade',higher:true},
+  {key:'sentar_alcancar_cm',label:'Sentar e alcançar',unit:'cm',pillar:'mobilidade',higher:true},
+  {key:'circunferencia_pescoco',label:'Circunferência · Pescoço',unit:'cm',pillar:'composicao'},
 ];
 export function extra(row: AssessmentRow): Record<string, unknown> { return row.dados_adicionais && typeof row.dados_adicionais==='object' && !Array.isArray(row.dados_adicionais) ? row.dados_adicionais as Record<string,unknown> : {}; }
 export function metricValue(row: AssessmentRow | null | undefined,key:string): number | null {
@@ -29,14 +35,17 @@ export function metricValue(row: AssessmentRow | null | undefined,key:string): n
 export function trustFor(row:AssessmentRow,metric:Metric):Trust {
   if(metricValue(row,metric.key)===null) return 'NAO_DISPONIVEL';
   if(metric.key==='vo2_estimado') return 'ESTIMADO';
-  const confidence=extra(row).confianca as Record<string,Trust>|undefined;
+  const rawConfidence=extra(row).confianca;
+  const confidence=rawConfidence && typeof rawConfidence==='object' && !Array.isArray(rawConfidence) ? rawConfidence as Record<string,Trust> : undefined;
   if(confidence?.[metric.key]) return ['CONFIRMADO','DERIVADO','ESTIMADO','NAO_DISPONIVEL'].includes(confidence[metric.key]) ? confidence[metric.key] : 'NAO_DISPONIVEL';
   if(metric.trust) return metric.trust;
+  if(isSelf(row) && metric.key.startsWith('rm1_')) return 'ESTIMADO';
+  if(metric.key==='gordura_corporal' && /estim|navy/i.test(String(extra(row).metodo_gordura ?? extra(row).metodo_gordura_score ?? ''))) return 'ESTIMADO';
   if(['imc','massa_magra','massa_gorda'].includes(metric.key)) return 'DERIVADO';
   if(metric.key==='gordura_corporal' && extra(row).metodo_gordura_score==='dobras') return 'DERIVADO';
   return 'CONFIRMADO';
 }
-export const isSelf = (row:AssessmentRow) => ['avaliacao_guiada','peso_avulso','autoavaliacao'].includes(row.origem || '');
+export const isSelf = (row:AssessmentRow) => ['avaliacao_guiada','peso_avulso','autoavaliacao','self_checkin'].includes(row.origem || '');
 export const officialRows=(rows:AssessmentRow[])=>rows.filter(r=>r.oficial);
 export const fmt=(n:number,digits=1)=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:digits}).format(n);
 export const fullDate=(s:string)=>new Date(`${s.slice(0,10)}T12:00:00`).toLocaleDateString('pt-BR');
@@ -49,13 +58,26 @@ export function referenceFor(row:AssessmentRow,metric:Metric,refs:ReferenceBand[
   return band && ref ? {label:band.rotulo,source:ref.fonte,protocol:ref.protocolo}:null;
 }
 export function compareRow(rows:AssessmentRow[],current:AssessmentRow,compare:'primeira'|'anterior') {
-  const previous=rows.filter(r=>r.id!==current.id && r.data_avaliacao<=current.data_avaliacao && (current.oficial?r.oficial:r.origem===current.origem));
+  const previous=rows.filter(r=>r.id!==current.id && assessmentOrder(r,current)<0 && (current.oficial?r.oficial:r.origem===current.origem)).sort(assessmentOrder);
   return compare==='primeira'?previous[0]??null:previous.at(-1)??null;
+}
+export function assessmentOrder(a:AssessmentRow,b:AssessmentRow) {
+  return a.data_avaliacao.localeCompare(b.data_avaliacao) || String(a.created_at??'').localeCompare(String(b.created_at??'')) || a.id.localeCompare(b.id);
+}
+export function compatibleMetric(a:AssessmentRow,b:AssessmentRow,key:string) {
+  if(isSelf(a)!==isSelf(b)) return false;
+  const x=extra(a),y=extra(b);
+  if(key.startsWith('score_')) return (x.score_formula_version??'legacy_v1')===(y.score_formula_version??'legacy_v1') && pillars.every(([p])=>(metricValue(a,`score_${p}`)!==null)===(metricValue(b,`score_${p}`)!==null));
+  if(key==='gordura_corporal') return !!(x.metodo_gordura_score??x.metodo_gordura) && (x.metodo_gordura_score??x.metodo_gordura)===(y.metodo_gordura_score??y.metodo_gordura);
+  const protocol=(e:Record<string,unknown>)=>(e.protocolos as Record<string,unknown>|undefined)?.[key]??e.protocolo;
+  if(protocol(x)||protocol(y)) return !!protocol(x) && protocol(x)===protocol(y);
+  if(key==='peso'||key==='altura'||key.startsWith('circunferencia_')) return a.origem===b.origem;
+  return !!x.versao && x.versao===y.versao && JSON.stringify((x.condicoes_medicao as Record<string,unknown>|undefined)?.flexao_variacao??null)===JSON.stringify((y.condicoes_medicao as Record<string,unknown>|undefined)?.flexao_variacao??null);
 }
 export function metricRecord(row:AssessmentRow,metric:Metric,history:AssessmentRow[]) {
   const value=metricValue(row,metric.key);
   if(!row.oficial || !metric.higher || value===null || !['CONFIRMADO','DERIVADO'].includes(trustFor(row,metric))) return false;
-  const values=history.filter(r=>r.oficial && r.id!==row.id && r.data_avaliacao<row.data_avaliacao && trustFor(r,metric)!=='ESTIMADO').flatMap(r=>{const v=metricValue(r,metric.key);return v===null?[]:[v]});
+  const values=history.filter(r=>r.oficial && r.id!==row.id && assessmentOrder(r,row)<0 && compatibleMetric(row,r,metric.key) && ['CONFIRMADO','DERIVADO'].includes(trustFor(r,metric))).flatMap(r=>{const v=metricValue(r,metric.key);return v===null?[]:[v]});
   return values.length>0 && value>Math.max(...values);
 }
 export function goalHistory(goal:HubGoal,rows:AssessmentRow[]) {

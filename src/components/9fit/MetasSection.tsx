@@ -43,18 +43,21 @@ export function MetasSection() {
   const [values, setValues] = useState<Record<string,string>>({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError,setLoadError]=useState(false);
   const [showNew, setShowNew] = useState(false);
   const [celebrating, setCelebrating] = useState<Meta | null>(null);
   const [form, setForm] = useState({ titulo: "", metrica: "peso", valor_inicial: "", valor_meta: "", unidade: "kg" });
 
   const load = useCallback(async () => {
     if (!athleteId) { setMetas([]); setLoading(false); return; }
-    const { data } = await supabase
+    setLoadError(false);
+    const { data, error } = await supabase
       .from("metas_progresso")
       .select("*")
       .eq("athlete_id", athleteId)
       .order("created_at", { ascending: false });
-    setMetas(data || []);
+    setLoadError(!!error);
+    setMetas(error ? [] : data || []);
     setLoading(false);
   }, [athleteId]);
 
@@ -103,6 +106,7 @@ export function MetasSection() {
   };
 
   if (loading) return null;
+  if(loadError)return <div role="alert">Não foi possível carregar suas metas. <button type="button" onClick={()=>void load()}>Tentar novamente</button></div>;
 
   return (
     <div className="px-4 mt-8">
