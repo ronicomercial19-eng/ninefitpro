@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from 'next-themes'
 import App from './App.tsx'
 import './index.css'
+import './styles/orange-palette.css'
 import { initializeCapacitor } from "./utils/capacitor";
 
 // Initialize Capacitor plugins

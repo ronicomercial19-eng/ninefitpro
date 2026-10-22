@@ -1,0 +1,91 @@
+/**
+ * Paleta de laranjas do 9FIT — tokens + acabamentos.
+ * Use as variáveis (--orange-*) e as classes (.orange-*) em qualquer tela.
+ *
+ * Tons:      50 → 900 (do pêssego claro ao laranja queimado). 500 = laranja da marca (#FF6600).
+ * Acabamentos:
+ *   .orange-soft    suave (fundo translúcido, texto claro)
+ *   .orange-matte   fosco (sem brilho, dessaturado)
+ *   .orange-satin   acetinado (gradiente + reflexo interno)
+ *   .orange-strong  forte (sólido, alto contraste)
+ *   .orange-neon    neon (brilho externo + interno)
+ *   .text-orange-neon        texto neon
+ *   .animate-orange-blink    piscante (respeita prefers-reduced-motion)
+ *   .animate-orange-glow     pulso de brilho
+ */
+:root {
+  --orange-50: #fff4eb;
+  --orange-100: #ffe2c8;
+  --orange-200: #ffc594;
+  --orange-300: #ffa55e;
+  --orange-400: #ff8533;
+  --orange-500: #ff6600;
+  --orange-600: #e05a00;
+  --orange-700: #b04600;
+  --orange-800: #7a3000;
+  --orange-900: #3d1800;
+
+  --orange-neon: #ff7a1a;
+  --orange-neon-glow: rgba(255, 106, 0, 0.55);
+  --orange-matte: #c2602b;
+  --orange-matte-bg: rgba(194, 96, 43, 0.14);
+  --orange-satin-from: #ffa25e;
+  --orange-satin-via: #ff6600;
+  --orange-satin-to: #b84a00;
+}
+
+.orange-soft {
+  background: rgba(255, 165, 94, 0.12);
+  border: 1px solid rgba(255, 165, 94, 0.28);
+  color: var(--orange-200);
+}
+
+.orange-matte {
+  background: var(--orange-matte-bg);
+  border: 1px solid rgba(194, 96, 43, 0.35);
+  color: #e8a27a;
+}
+
+.orange-strong {
+  background: var(--orange-600);
+  border: 1px solid var(--orange-500);
+  color: #fff;
+}
+
+.orange-satin {
+  background: linear-gradient(135deg, var(--orange-satin-from), var(--orange-satin-via) 48%, var(--orange-satin-to));
+  border: 1px solid rgba(255, 190, 140, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 6px 18px -8px rgba(255, 102, 0, 0.6);
+  color: #fff;
+}
+
+.orange-neon {
+  background: rgba(255, 106, 0, 0.08);
+  color: var(--orange-neon);
+  border: 1px solid var(--orange-neon);
+  box-shadow: 0 0 6px var(--orange-neon-glow), 0 0 18px rgba(255, 106, 0, 0.35), inset 0 0 8px rgba(255, 106, 0, 0.18);
+}
+
+.text-orange-neon {
+  color: #ff8a2b;
+  text-shadow: 0 0 6px rgba(255, 122, 26, 0.8), 0 0 16px rgba(255, 102, 0, 0.5);
+}
+
+@keyframes orange-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes orange-glow {
+  0%, 100% { box-shadow: 0 0 6px var(--orange-neon-glow), 0 0 14px rgba(255, 106, 0, 0.25); }
+  50% { box-shadow: 0 0 12px var(--orange-neon-glow), 0 0 28px rgba(255, 106, 0, 0.5); }
+}
+
+.animate-orange-blink { animation: orange-blink 1.4s ease-in-out infinite; }
+.animate-orange-glow { animation: orange-glow 2.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-orange-blink,
+  .animate-orange-glow { animation: none; }
+}
