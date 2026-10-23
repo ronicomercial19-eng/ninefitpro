@@ -1,10 +1,20 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plug, RefreshCw, CheckCircle2, KeyRound, Loader2, AlertTriangle, Activity } from "lucide-react";
+import {
+  Plug,
+  RefreshCw,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  AlertTriangle,
+  Activity,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,11 +53,18 @@ interface Props {
  * Secret nunca é exposto: persistimos apenas `secret_ref` (chave lógica)
  * e o último resumo em `config.apikey_hint`.
  */
-export function ApiConnectorCard(props: Props) {
+function AdminApiConnectorCard(props: Props) {
   const {
-    moduleKey, title, description, healthPath = "/health",
-    icon: Icon = Plug, endpointPlaceholder, docsUrl, provider,
-    authMode = "apikey", onSync,
+    moduleKey,
+    title,
+    description,
+    healthPath = "/health",
+    icon: Icon = Plug,
+    endpointPlaceholder,
+    docsUrl,
+    provider,
+    authMode = "apikey",
+    onSync,
   } = props;
   const [apiKey, setApiKey] = useState("");
   const [endpoint, setEndpoint] = useState("");
@@ -56,7 +73,9 @@ export function ApiConnectorCard(props: Props) {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [probing, setProbing] = useState(false);
-  const [probeStatus, setProbeStatus] = useState<"unknown" | "ok" | "fail">("unknown");
+  const [probeStatus, setProbeStatus] = useState<"unknown" | "ok" | "fail">(
+    "unknown",
+  );
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -72,23 +91,33 @@ export function ApiConnectorCard(props: Props) {
       setConnected(data.status === "active");
       setUpdatedAt(data.updated_at);
       // never re-show secret; only hint
-      const config = data.config && typeof data.config === "object" && !Array.isArray(data.config)
-        ? data.config as ConnectorConfig
-        : null;
+      const config =
+        data.config &&
+        typeof data.config === "object" &&
+        !Array.isArray(data.config)
+          ? (data.config as ConnectorConfig)
+          : null;
       const hint = config?.apikey_hint;
       if (hint) setApiKey(`••••${hint}`);
     }
     setLoading(false);
   }, [moduleKey]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const save = async () => {
     const clean = apiKey.startsWith("••••") ? null : apiKey.trim();
     if (authMode === "apikey" && !clean && !connected) {
-      toast.error("Informe a API Key"); return;
+      toast.error("Informe a API Key");
+      return;
     }
-    const hint = clean ? clean.slice(-4) : (apiKey.startsWith("••••") ? apiKey.slice(-4) : null);
+    const hint = clean
+      ? clean.slice(-4)
+      : apiKey.startsWith("••••")
+        ? apiKey.slice(-4)
+        : null;
     const payload: ConnectorPayload = {
       key: moduleKey,
       provider: provider ?? moduleKey,
@@ -102,7 +131,10 @@ export function ApiConnectorCard(props: Props) {
     const { error } = await supabase
       .from("api_connectors")
       .upsert(payload as any, { onConflict: "key" });
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`${title} salvo. Validando...`);
     setConnected(true);
     if (clean) setApiKey(`••••${hint}`);
@@ -114,9 +146,16 @@ export function ApiConnectorCard(props: Props) {
   const probe = async () => {
     setProbing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("api-connector-proxy", {
-        body: { connector: moduleKey, path: healthPath, init: { method: "GET" } },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "api-connector-proxy",
+        {
+          body: {
+            connector: moduleKey,
+            path: healthPath,
+            init: { method: "GET" },
+          },
+        },
+      );
       if (error) throw error;
       setProbeStatus("ok");
       toast.success("Conexão validada ✓");
@@ -129,7 +168,10 @@ export function ApiConnectorCard(props: Props) {
   };
 
   const disconnect = async () => {
-    await supabase.from("api_connectors").update({ status: "inactive" }).eq("key", moduleKey);
+    await supabase
+      .from("api_connectors")
+      .update({ status: "inactive" })
+      .eq("key", moduleKey);
     setConnected(false);
     setApiKey("");
     toast.info("Desconectado");
@@ -137,19 +179,30 @@ export function ApiConnectorCard(props: Props) {
   };
 
   const sync = async () => {
-    if (!connected) { toast.error("Conecte primeiro"); return; }
+    if (!connected) {
+      toast.error("Conecte primeiro");
+      return;
+    }
     setSyncing(true);
     try {
       if (onSync) await onSync(apiKey, endpoint || undefined);
-      await supabase.from("api_connectors")
-        .update({ config: { apikey_hint: apiKey.slice(-4), last_sync: new Date().toISOString() } })
+      await supabase
+        .from("api_connectors")
+        .update({
+          config: {
+            apikey_hint: apiKey.slice(-4),
+            last_sync: new Date().toISOString(),
+          },
+        })
         .eq("key", moduleKey);
       toast.success("Sincronizado");
       load();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Falha na sincronização";
       toast.error(message);
-    } finally { setSyncing(false); }
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -161,18 +214,26 @@ export function ApiConnectorCard(props: Props) {
               <Icon className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-display uppercase tracking-tight">{title}</h2>
-              <p className="text-xs text-muted-foreground max-w-md">{description}</p>
+              <h2 className="text-lg font-display uppercase tracking-tight">
+                {title}
+              </h2>
+              <p className="text-xs text-muted-foreground max-w-md">
+                {description}
+              </p>
             </div>
           </div>
           {loading ? (
-            <Badge variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Carregando</Badge>
+            <Badge variant="outline">
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Carregando
+            </Badge>
           ) : connected ? (
             <Badge className="bg-primary/15 text-primary border-primary/30">
               <CheckCircle2 className="w-3 h-3 mr-1" /> Conectado
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground">Aguardando API</Badge>
+            <Badge variant="outline" className="text-muted-foreground">
+              Aguardando API
+            </Badge>
           )}
         </div>
 
@@ -192,14 +253,26 @@ export function ApiConnectorCard(props: Props) {
           )}
           {endpointPlaceholder && (
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-widest">Endpoint</Label>
-              <Input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder={endpointPlaceholder} />
+              <Label className="text-xs uppercase tracking-widest">
+                Endpoint
+              </Label>
+              <Input
+                value={endpoint}
+                onChange={(e) => setEndpoint(e.target.value)}
+                placeholder={endpointPlaceholder}
+              />
             </div>
           )}
           {authMode === "iframe_sso" && (
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-widest">Iframe URL</Label>
-              <Input value={iframeUrl} onChange={(e) => setIframeUrl(e.target.value)} placeholder="https://..." />
+              <Label className="text-xs uppercase tracking-widest">
+                Iframe URL
+              </Label>
+              <Input
+                value={iframeUrl}
+                onChange={(e) => setIframeUrl(e.target.value)}
+                placeholder="https://..."
+              />
             </div>
           )}
         </div>
@@ -210,12 +283,21 @@ export function ApiConnectorCard(props: Props) {
             {connected ? "Atualizar" : "Conectar"}
           </Button>
           <Button onClick={sync} disabled={!connected || syncing}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`}
+            />
             Sincronizar
           </Button>
           {connected && (
-            <Button variant="outline" onClick={probe} disabled={probing} className="text-primary">
-              <Activity className={`w-4 h-4 mr-2 ${probing ? "animate-pulse" : ""}`} />
+            <Button
+              variant="outline"
+              onClick={probe}
+              disabled={probing}
+              className="text-primary"
+            >
+              <Activity
+                className={`w-4 h-4 mr-2 ${probing ? "animate-pulse" : ""}`}
+              />
               Validar
             </Button>
           )}
@@ -230,10 +312,21 @@ export function ApiConnectorCard(props: Props) {
             </Badge>
           )}
           {connected && (
-            <Button variant="ghost" onClick={disconnect} className="text-muted-foreground">Desconectar</Button>
+            <Button
+              variant="ghost"
+              onClick={disconnect}
+              className="text-muted-foreground"
+            >
+              Desconectar
+            </Button>
           )}
           {docsUrl && (
-            <a href={docsUrl} target="_blank" rel="noreferrer" className="text-xs text-primary underline ml-auto">
+            <a
+              href={docsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-primary underline ml-auto"
+            >
               Docs da API
             </a>
           )}
@@ -244,6 +337,44 @@ export function ApiConnectorCard(props: Props) {
             Atualizado: {new Date(updatedAt).toLocaleString("pt-BR")}
           </p>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ApiConnectorCard(props: Props) {
+  const { isAdmin, user } = useAuth();
+  const query = useQuery({
+    queryKey: ["connector-summary", user?.id, props.moduleKey],
+    enabled: !!user && !isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("api_connectors")
+        .select("status,updated_at")
+        .eq("key", props.moduleKey)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (isAdmin) return <AdminApiConnectorCard {...props} />;
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <h3 className="font-semibold">{props.title}</h3>
+        <p className="text-sm text-muted-foreground">
+          {query.isLoading
+            ? "Consultando configuração…"
+            : query.isError
+              ? "Não foi possível consultar a configuração."
+              : query.data?.status === "active"
+                ? "Destino configurado. A disponibilidade depende de uma operação confirmada."
+                : "Integração externa não configurada. As ferramentas nativas continuam disponíveis."}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Configuração de provedores e credenciais é responsabilidade da
+          administração.
+        </p>
       </CardContent>
     </Card>
   );

@@ -1,3 +1,4 @@
+import { StudentTrainingCycles } from "@/components/students/StudentTrainingCycles";
 import { toast } from "sonner";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
@@ -9,10 +10,13 @@ import PlanejamentoPro from "@/components/9fit/PlanejamentoPro";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutOfTheDay } from "@/hooks/useWorkoutOfTheDay";
 import { useActivationProgress } from "@/hooks/useActivationProgress";
-import { loadCarryProjection, type ProgressionPoint } from "@/services/training/loadProgression";
+import {
+  loadCarryProjection,
+  type ProgressionPoint,
+} from "@/services/training/loadProgression";
 import { supabase } from "@/integrations/supabase/client";
-import { businessDate } from '@/services/dailyContextRules';
-import { planningTopic } from '@/services/planningModel';
+import { businessDate } from "@/services/dailyContextRules";
+import { planningTopic } from "@/services/planningModel";
 
 /**
  * Planejamento (aluno).
@@ -24,11 +28,25 @@ const FIRST_PLAN_KEY = "9fit_first_plan_marked";
 
 export default function NineFitPlanejamento() {
   const navigate = useNavigate();
-  const { athleteId, loading: athleteLoading, error: athleteError } = useAthleteId();
-  const { week: plannedWeek, today: workoutToday, error: workoutError } = useWorkoutOfTheDay();
-  const { mark, completed, loading: activationLoading } = useActivationProgress();
-  const [visibleMonth,setVisibleMonth] = useState(()=>startOfMonth(new Date(`${businessDate()}T12:00:00`)));
-  const marking = useRef<string|null>(null);
+  const {
+    athleteId,
+    loading: athleteLoading,
+    error: athleteError,
+  } = useAthleteId();
+  const {
+    week: plannedWeek,
+    today: workoutToday,
+    error: workoutError,
+  } = useWorkoutOfTheDay();
+  const {
+    mark,
+    completed,
+    loading: activationLoading,
+  } = useActivationProgress();
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    startOfMonth(new Date(`${businessDate()}T12:00:00`)),
+  );
+  const marking = useRef<string | null>(null);
 
   const [scheduledDates, setScheduledDates] = useState<string[]>([]);
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
@@ -41,28 +59,56 @@ export default function NineFitPlanejamento() {
     setSyncing(true);
     setSyncError(null);
     try {
-      const { data, error } = await supabase.functions.invoke('smartperiodizer-sync', { body: { athlete_id: athleteId } });
-      if (error || data?.ok !== true || data?.verified !== true || !data?.plan_id) throw error || new Error(data?.error || 'A sincronização não confirmou o plano salvo');
+      const { data, error } = await supabase.functions.invoke(
+        "smartperiodizer-sync",
+        { body: { athlete_id: athleteId } },
+      );
+      if (
+        error ||
+        data?.ok !== true ||
+        data?.verified !== true ||
+        !data?.plan_id
+      )
+        throw (
+          error ||
+          new Error(
+            data?.error || "A sincronização não confirmou o plano salvo",
+          )
+        );
       setReloadKey((k) => k + 1);
-      toast.success(data.mode === 'canonical_refresh' ? 'Planejamento atualizado com os dados da equipe' : 'Plano sincronizado e confirmado no app');
+      toast.success(
+        data.mode === "canonical_refresh"
+          ? "Planejamento atualizado com os dados da equipe"
+          : "Plano sincronizado e confirmado no app",
+      );
     } catch (error: any) {
       console.error("[Planejamento] syncNow:", error);
-      setReloadKey(k => k + 1);
-      setSyncError(`Não foi possível confirmar a sincronização. Confira o plano recarregado antes de continuar. ${error?.message || ''}`);
+      setReloadKey((k) => k + 1);
+      setSyncError(
+        `Não foi possível confirmar a sincronização. Confira o plano recarregado antes de continuar. ${error?.message || ""}`,
+      );
     } finally {
       setSyncing(false);
     }
   }
 
   useEffect(() => {
-    setPoints([]);setScheduledDates([]);
+    setPoints([]);
+    setScheduledDates([]);
     if (!athleteId) return;
-    let active=true;
+    let active = true;
 
     const refreshProjection = () =>
       loadCarryProjection(athleteId)
-        .then(data=>{if(active)setPoints(data)})
-        .catch(() => { if(active){setPoints([]); toast.error("Não foi possível carregar o histórico de carga");} });
+        .then((data) => {
+          if (active) setPoints(data);
+        })
+        .catch(() => {
+          if (active) {
+            setPoints([]);
+            toast.error("Não foi possível carregar o histórico de carga");
+          }
+        });
     refreshProjection();
     window.addEventListener("9fit:workout-updated", refreshProjection);
 
@@ -73,74 +119,153 @@ export default function NineFitPlanejamento() {
         .eq("athlete_id", athleteId)
         .gte("workout_date", format(startOfMonth(visibleMonth), "yyyy-MM-dd"))
         .lte("workout_date", format(endOfMonth(visibleMonth), "yyyy-MM-dd"));
-      if(active){setScheduledDates(error?[]:(data || []).map(d=>d.workout_date));if(error)toast.error('Não foi possível carregar os treinos programados');}
+      if (active) {
+        setScheduledDates(error ? [] : (data || []).map((d) => d.workout_date));
+        if (error)
+          toast.error("Não foi possível carregar os treinos programados");
+      }
     };
     void refreshCalendar();
 
     const channel = supabase
-      .channel(`planejamento-shell-${athleteId}-${Math.random().toString(36).slice(2, 8)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "daily_workouts", filter: `athlete_id=eq.${athleteId}` }, refreshCalendar)
-      .on("postgres_changes", { event: "*", schema: "public", table: "workout_executions", filter: `athlete_id=eq.${athleteId}` }, refreshProjection)
+      .channel(
+        `planejamento-shell-${athleteId}-${Math.random().toString(36).slice(2, 8)}`,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "daily_workouts",
+          filter: `athlete_id=eq.${athleteId}`,
+        },
+        refreshCalendar,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "workout_executions",
+          filter: `athlete_id=eq.${athleteId}`,
+        },
+        refreshProjection,
+      )
       .subscribe();
 
     return () => {
-      active=false;
+      active = false;
       window.removeEventListener("9fit:workout-updated", refreshProjection);
       supabase.removeChannel(channel);
     };
-  }, [athleteId,visibleMonth,reloadKey]);
+  }, [athleteId, visibleMonth, reloadKey]);
 
   // Treinos programados = daily_workouts do mês + semana planejada (ignorando sessões de fallback)
-  const plannedDates = Array.from(new Set([
-    ...scheduledDates,
-    ...plannedWeek.filter((s) => s.source !== "fallback").map((s) => s.date),
-  ]));
+  const plannedDates = Array.from(
+    new Set([
+      ...scheduledDates,
+      ...plannedWeek.filter((s) => s.source !== "fallback").map((s) => s.date),
+    ]),
+  );
 
   // Funil de ativação: marca o primeiro plano visto (uma única vez)
-  const handlePlanLoaded = useCallback(async (hasPlan: boolean) => {
-    if (!hasPlan || !athleteId || activationLoading || completed.has('first_plan') || marking.current===athleteId) return;
-    marking.current=athleteId;
-    try {
-      if (!localStorage.getItem(`${FIRST_PLAN_KEY}:${athleteId}`)) {
-        await mark("first_plan");
-        window.dispatchEvent(new Event('9fit:activation-updated'));
-        localStorage.setItem(`${FIRST_PLAN_KEY}:${athleteId}`, "1");
-        localStorage.setItem(FIRST_PLAN_KEY,"1");
+  const handlePlanLoaded = useCallback(
+    async (hasPlan: boolean) => {
+      if (
+        !hasPlan ||
+        !athleteId ||
+        activationLoading ||
+        completed.has("first_plan") ||
+        marking.current === athleteId
+      )
+        return;
+      marking.current = athleteId;
+      try {
+        if (!localStorage.getItem(`${FIRST_PLAN_KEY}:${athleteId}`)) {
+          await mark("first_plan");
+          window.dispatchEvent(new Event("9fit:activation-updated"));
+          localStorage.setItem(`${FIRST_PLAN_KEY}:${athleteId}`, "1");
+          localStorage.setItem(FIRST_PLAN_KEY, "1");
+        }
+      } catch {
+        marking.current = null;
       }
-    } catch { marking.current=null; }
-  }, [athleteId,mark,activationLoading,completed]);
+    },
+    [athleteId, mark, activationLoading, completed],
+  );
 
   const goRon = (topic: string) =>
-    navigate(`/9fit/ron?auto=1&context=planning&topic=${encodeURIComponent(planningTopic(topic))}`);
+    navigate(
+      `/9fit/ron?auto=1&context=planning&topic=${encodeURIComponent(planningTopic(topic))}`,
+    );
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
       <div className="px-4 pt-6 flex items-center gap-2">
-        <button onClick={() => navigate(-1)} aria-label="Voltar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Voltar"
+          className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center"
+        >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT PRO // PLANEJAMENTO</p>
+          <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">
+            9FIT PRO // PLANEJAMENTO
+          </p>
           <h1 className="text-3xl font-display tracking-tight">Planejamento</h1>
         </div>
-        <button onClick={syncNow} disabled={syncing} aria-label="Sincronizar periodização" title="Sincronizar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center disabled:opacity-50">
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+        <button
+          onClick={syncNow}
+          disabled={syncing}
+          aria-label="Sincronizar periodização"
+          title="Sincronizar"
+          className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center disabled:opacity-50"
+        >
+          {syncing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
         </button>
       </div>
 
       <PdiRoadmapView />
-      {athleteLoading&&<p className="mx-4 mt-3 text-sm text-muted-foreground" role="status">Localizando seu perfil…</p>}
-      {athleteError&&<p className="mx-4 mt-3 text-sm text-destructive" role="alert">{athleteError}</p>}
-      {workoutError&&<p className="mx-4 mt-3 text-sm text-destructive" role="alert">{workoutError}</p>}
+      {athleteLoading && (
+        <p className="mx-4 mt-3 text-sm text-muted-foreground" role="status">
+          Localizando seu perfil…
+        </p>
+      )}
+      {athleteError && (
+        <p className="mx-4 mt-3 text-sm text-destructive" role="alert">
+          {athleteError}
+        </p>
+      )}
+      {workoutError && (
+        <p className="mx-4 mt-3 text-sm text-destructive" role="alert">
+          {workoutError}
+        </p>
+      )}
 
       {syncError && (
         <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
           <p className="text-xs text-destructive">{syncError}</p>
-          <button onClick={() => void syncNow()} className="text-xs text-primary shrink-0">Tentar de novo</button>
+          <button
+            onClick={() => void syncNow()}
+            className="text-xs text-primary shrink-0"
+          >
+            Tentar de novo
+          </button>
         </div>
       )}
 
       <div className="px-4 mt-2">
+        {athleteId && (
+          <StudentTrainingCycles
+            athleteId={athleteId}
+            onHasCycles={handlePlanLoaded}
+          />
+        )}
         <PlanejamentoPro
           athleteId={athleteId ?? undefined}
           reloadKey={reloadKey}
@@ -156,7 +281,9 @@ export default function NineFitPlanejamento() {
 
       {workoutToday && (
         <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          Próximo treino: {format(new Date(`${workoutToday.date}T12:00:00`), "dd/MM")} • {workoutToday.label}
+          Próximo treino:{" "}
+          {format(new Date(`${workoutToday.date}T12:00:00`), "dd/MM")} •{" "}
+          {workoutToday.label}
         </p>
       )}
       <BottomNavigation />

@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, UserPlus, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { AdicionarAlunoForm } from '@/components/students/AdicionarAlunoForm';
-import { StudentDetailedView } from '@/components/students/StudentDetailedView';
+import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Search, UserPlus, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { AdicionarAlunoForm } from "@/components/students/AdicionarAlunoForm";
+import { StudentDetailedView } from "@/components/students/StudentDetailedView";
 
 interface Student {
   id: string;
@@ -33,39 +40,33 @@ interface Student {
 }
 
 export default function StudentsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all');
+  const workspace = useProfessorWorkspace();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState("all");
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [workspace.students]);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        toast.error('Usuário não autenticado');
+        toast.error("Usuário não autenticado");
         return;
       }
 
       // A view canônica resolve quais atletas pertencem ao profissional atual.
       // Os detalhes continuam vindo de athletes para preservar o contrato visual.
-      const { data: relationshipRows, error: relationshipError } = await supabase
-        .from('vw_current_relationships')
-        .select('athlete_id')
-        .eq('relationship_role', 'professional');
-
-      if (relationshipError) throw relationshipError;
-      const athleteIds = (relationshipRows || [])
-        .map((row) => row.athlete_id)
-        .filter((id): id is string => Boolean(id));
+      const athleteIds = workspace.students.map((row) => row.id);
 
       if (athleteIds.length === 0) {
         setStudents([]);
@@ -73,27 +74,29 @@ export default function StudentsPage() {
       }
 
       const { data: athletesData, error: athletesError } = await supabase
-        .from('athletes')
-        .select('*')
-        .in('id', athleteIds)
-        .order('created_at', { ascending: false });
+        .from("athletes")
+        .select("*")
+        .in("id", athleteIds)
+        .order("created_at", { ascending: false });
 
       if (athletesError) throw athletesError;
-      
+
       // Mapear dados dos athletes para o formato de Student
-      const mappedStudents: Student[] = (athletesData || []).map(athlete => {
+      const mappedStudents: Student[] = (athletesData || []).map((athlete) => {
         // Extract email from: 1) email column, 2) metadata.email, 3) fallback empty
-        const athleteEmail = athlete.email || 
-          (athlete.metadata as { email?: string } | null)?.email || 
-          '';
-        
+        const athleteEmail =
+          athlete.email ||
+          (athlete.metadata as { email?: string } | null)?.email ||
+          "";
+
         return {
           id: athlete.id,
           nome: athlete.name,
           email: athleteEmail,
           telefone: athlete.phone || undefined,
-          objetivo: athlete.primary_goal || athlete.objetivo || '',
-          nivel_experiencia: athlete.experience_level || athlete.nivel || undefined,
+          objetivo: athlete.primary_goal || athlete.objetivo || "",
+          nivel_experiencia:
+            athlete.experience_level || athlete.nivel || undefined,
           peso_kg: athlete.peso_kg || undefined,
           altura_cm: athlete.altura_cm || undefined,
           observacoes: athlete.injuries_limitations || undefined,
@@ -104,64 +107,77 @@ export default function StudentsPage() {
           data_nascimento: athlete.birthdate || undefined,
         };
       });
-      
+
       setStudents(mappedStudents);
     } catch (error: any) {
-      console.error('Erro ao carregar alunos:', error);
-      toast.error('Erro ao carregar lista de alunos');
+      console.error("Erro ao carregar alunos:", error);
+      toast.error("Erro ao carregar lista de alunos");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    setSelectedStudent(
+      students.find((s) => s.id === workspace.athleteId) ?? null,
+    );
+  }, [students, workspace.athleteId]);
+
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (filter === 'all') return matchesSearch;
-    if (filter === 'blocked') return matchesSearch && !student.ativo;
-    if (filter === 'active') return matchesSearch && student.ativo;
-    
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch =
+      student.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (filter === "all") return matchesSearch;
+    if (filter === "blocked") return matchesSearch && !student.ativo;
+    if (filter === "active") return matchesSearch && student.ativo;
+
     return matchesSearch;
   });
 
   const handleStudentAdded = () => {
     setShowAddForm(false);
     fetchStudents();
-    toast.success('Aluno adicionado com sucesso!');
+    toast.success("Aluno adicionado com sucesso!");
   };
 
   const handleViewStudent = (student: Student) => {
+    workspace.select(student.id);
     setSelectedStudent(student);
   };
 
   const handleEditStudent = (student: Student) => {
     // Go to detailed view for editing
+    workspace.select(student.id);
     setSelectedStudent(student);
   };
 
   const handleBackToList = () => {
+    workspace.select(null);
     setSelectedStudent(null);
   };
 
   const handleStudentUpdated = (updatedStudent: Student) => {
-    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+    setStudents((prev) =>
+      prev.map((s) => (s.id === updatedStudent.id ? updatedStudent : s)),
+    );
     setSelectedStudent(updatedStudent);
   };
 
   // Show student detailed view
   if (selectedStudent) {
     return (
-      <StudentDetailedView 
+      <StudentDetailedView
+        key={selectedStudent.id}
         student={selectedStudent}
         onBack={handleBackToList}
         onStudentUpdated={handleStudentUpdated}
@@ -173,7 +189,7 @@ export default function StudentsPage() {
   if (showAddForm) {
     return (
       <div className="space-y-6">
-        <AdicionarAlunoForm 
+        <AdicionarAlunoForm
           onStudentAdded={handleStudentAdded}
           onCancel={() => setShowAddForm(false)}
         />
@@ -185,7 +201,7 @@ export default function StudentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Alunos</h1>
-        <Button 
+        <Button
           className="bg-green-500 hover:bg-green-600"
           onClick={() => setShowAddForm(true)}
         >
@@ -210,7 +226,7 @@ export default function StudentsPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -241,13 +257,15 @@ export default function StudentsPage() {
                   <div className="relative">
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center overflow-hidden">
                       {student.foto_url ? (
-                        <img 
-                          src={student.foto_url} 
+                        <img
+                          src={student.foto_url}
                           alt={student.nome}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-lg font-semibold">{getInitials(student.nome)}</span>
+                        <span className="text-lg font-semibold">
+                          {getInitials(student.nome)}
+                        </span>
                       )}
                     </div>
                     {!student.ativo && (
@@ -256,30 +274,34 @@ export default function StudentsPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="text-center space-y-1">
-                    <h3 className="font-medium text-sm text-foreground">{student.nome}</h3>
-                    <p className="text-xs text-muted-foreground break-all">{student.email}</p>
+                    <h3 className="font-medium text-sm text-foreground">
+                      {student.nome}
+                    </h3>
+                    <p className="text-xs text-muted-foreground break-all">
+                      {student.email}
+                    </p>
                   </div>
 
-                  {student.status_pagamento === 'atrasado' && (
+                  {student.status_pagamento === "atrasado" && (
                     <Badge variant="destructive" className="text-xs">
                       Inadimplente
                     </Badge>
                   )}
 
                   <div className="flex space-x-2 w-full">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="flex-1 text-xs"
                       onClick={() => handleEditStudent(student)}
                     >
                       Editar
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="flex-1 text-xs"
                       onClick={() => handleViewStudent(student)}
                     >
@@ -298,8 +320,12 @@ export default function StudentsPage() {
           <CardContent className="py-12">
             <div className="text-center">
               <UserPlus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">Nenhum aluno encontrado</h3>
-              <p className="text-muted-foreground mb-4">Tente ajustar os filtros ou adicione um novo aluno.</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Nenhum aluno encontrado
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Tente ajustar os filtros ou adicione um novo aluno.
+              </p>
               <Button onClick={() => setShowAddForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar primeiro aluno
@@ -311,4 +337,3 @@ export default function StudentsPage() {
     </div>
   );
 }
-

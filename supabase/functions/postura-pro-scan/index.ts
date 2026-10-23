@@ -1,34 +1,41 @@
 // Postura Pro Scan — orquestra análise postural via API externa configurada em api_connectors.
 // Recebe scan_id, lê fotos do Storage e envia ao serviço externo, grava resultado.
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
-    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
-function assessmentPath(value: unknown, ownerId: string): string {
+function assessmentPath(value: unknown, ownerIds: string[]): string {
   if (typeof value !== "string") throw new Error("Missing posture image");
   const marker = "/storage/v1/object/public/assessments/";
-  const raw = value.includes(marker) ? value.split(marker)[1]?.split("?")[0] : value;
+  const raw = value.includes(marker)
+    ? value.split(marker)[1]?.split("?")[0]
+    : value;
   const path = decodeURIComponent(raw ?? "");
-  if (!path.startsWith(`${ownerId}/`) || path.includes("..")) throw new Error("Invalid posture image path");
+  if (!ownerIds.some((id) => path.startsWith(`${id}/`)) || path.includes(".."))
+    throw new Error("Invalid posture image path");
   return path;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response("ok", { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer "))
+      return json({ error: "Unauthorized" }, 401);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -41,7 +48,9 @@ Deno.serve(async (req) => {
     if (authErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
     const userId = claims.claims.sub as string;
 
-    const { scan_id } = (await req.json().catch(() => ({}))) as { scan_id?: string };
+    const { scan_id } = (await req.json().catch(() => ({}))) as {
+      scan_id?: string;
+    };
     if (!scan_id) return json({ error: "scan_id required" }, 400);
 
     const admin = createClient(
@@ -50,61 +59,125 @@ Deno.serve(async (req) => {
     );
 
     const { data: scan, error: scanErr } = await admin
-      .from("postura_scans").select("*").eq("id", scan_id).maybeSingle();
+      .from("postura_scans")
+      .select("*")
+      .eq("id", scan_id)
+      .maybeSingle();
     if (scanErr || !scan) return json({ error: "scan not found" }, 404);
-    if (scan.user_id !== userId) return json({ error: "Forbidden" }, 403);
+    if (claims.claims.is_anonymous === true)
+      return json({ error: "Account required" }, 403);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!profile || profile.is_active === false)
+      return json({ error: "Account unavailable" }, 403);
+    const { data: visible, error: accessError } = await supabase
+      .from("postura_scans")
+      .select("id")
+      .eq("id", scan_id)
+      .maybeSingle();
+    if (accessError || !visible) return json({ error: "Forbidden" }, 403);
 
-    await admin.from("postura_scans").update({ status: "processing" }).eq("id", scan_id);
+    await admin
+      .from("postura_scans")
+      .update({ status: "processing" })
+      .eq("id", scan_id);
 
     // Lê configuração do connector
     const { data: connector } = await admin
-      .from("api_connectors").select("*").eq("key", "postura_pro").maybeSingle();
+      .from("api_connectors")
+      .select("*")
+      .eq("key", "postura_pro")
+      .maybeSingle();
 
     if (connector?.status !== "active" || !connector.endpoint) {
-      await admin.from("postura_scans").update({
-        status: "unavailable",
-        result: { error: "Postura Pro API não está configurada; nenhuma análise foi gerada." },
-        updated_at: new Date().toISOString(),
-      }).eq("id", scan_id);
-      return json({ error: "Postura Pro API is not configured; no analysis was generated." }, 503);
+      await admin
+        .from("postura_scans")
+        .update({
+          status: "unavailable",
+          result: {
+            error:
+              "Postura Pro API não está configurada; nenhuma análise foi gerada.",
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", scan_id);
+      return json(
+        {
+          error:
+            "Postura Pro API is not configured; no analysis was generated.",
+        },
+        503,
+      );
     }
 
     let result: any;
     try {
-        const imageUrls: Record<string, string> = {};
-        for (const side of ["front", "back", "left", "right"]) {
-          const path = assessmentPath(scan[`${side}_url`], userId);
-          const { data: signed, error: signError } = await admin.storage.from("assessments").createSignedUrl(path, 600);
-          if (signError || !signed?.signedUrl) throw new Error("Could not access posture image");
-          imageUrls[side] = signed.signedUrl;
-        }
-        const secret = connector.secret_ref ? Deno.env.get(connector.secret_ref) : null;
-        const r = await fetch(`${connector.endpoint.replace(/\/$/, "")}/analyze`, {
+      const imageUrls: Record<string, string> = {};
+      for (const side of ["front", "back", "left", "right"]) {
+        const path = assessmentPath(
+          scan[`${side}_url`],
+          [scan.user_id, scan.athlete_id].filter(Boolean),
+        );
+        const { data: signed, error: signError } = await admin.storage
+          .from("assessments")
+          .createSignedUrl(path, 600);
+        if (signError || !signed?.signedUrl)
+          throw new Error("Could not access posture image");
+        imageUrls[side] = signed.signedUrl;
+      }
+      const secret = connector.secret_ref
+        ? Deno.env.get(connector.secret_ref)
+        : null;
+      const r = await fetch(
+        `${connector.endpoint.replace(/\/$/, "")}/analyze`,
+        {
           method: "POST",
+          signal: AbortSignal.timeout(45000),
           headers: {
             "Content-Type": "application/json",
             ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
           },
           body: JSON.stringify({
-            front: imageUrls.front, back: imageUrls.back,
-            left: imageUrls.left, right: imageUrls.right,
+            front: imageUrls.front,
+            back: imageUrls.back,
+            left: imageUrls.left,
+            right: imageUrls.right,
           }),
-        });
-        if (!r.ok) throw new Error(`Postura Pro provider returned ${r.status}`);
-        result = await r.json();
-        if (!result || typeof result !== "object") throw new Error("Postura Pro provider returned an invalid response");
+        },
+      );
+      if (!r.ok) throw new Error(`Postura Pro provider returned ${r.status}`);
+      result = await r.json();
+      if (!result || typeof result !== "object")
+        throw new Error("Postura Pro provider returned an invalid response");
     } catch (e: any) {
-      await admin.from("postura_scans").update({
-        status: "error",
-        result: { error: "O serviço de análise não respondeu. Tente novamente mais tarde." },
-        updated_at: new Date().toISOString(),
-      }).eq("id", scan_id);
-      return json({ error: e?.message ?? "Postura Pro provider unavailable" }, 502);
+      await admin
+        .from("postura_scans")
+        .update({
+          status: "error",
+          result: {
+            error:
+              "O serviço de análise não respondeu. Tente novamente mais tarde.",
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", scan_id);
+      return json(
+        { error: e?.message ?? "Postura Pro provider unavailable" },
+        502,
+      );
     }
 
-    await admin.from("postura_scans").update({
-      status: "done", result, updated_at: new Date().toISOString(),
-    }).eq("id", scan_id);
+    await admin
+      .from("postura_scans")
+      .update({
+        status: "done",
+        result,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", scan_id);
 
     return json({ ok: true, result });
   } catch (e: any) {

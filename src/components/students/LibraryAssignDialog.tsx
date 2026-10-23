@@ -1,7 +1,20 @@
+import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +48,11 @@ interface LibraryItem {
   payload?: LibraryPayload;
 }
 
-interface Athlete { id: string; name: string; email?: string | null; }
+interface Athlete {
+  id: string;
+  name: string;
+  email?: string | null;
+}
 
 interface Props {
   open: boolean;
@@ -45,6 +62,7 @@ interface Props {
 
 export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
   const { user, isAdmin, isSuperAdmin } = useAuth();
+  const workspace = useProfessorWorkspace();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteId, setAthleteId] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -52,14 +70,26 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    if (!user) { setAthletes([]); return; }
-    let query = supabase.from("athletes").select("id, name, email").order("name").limit(500);
+    setAthleteId(workspace.athleteId || "");
+    if (!user) {
+      setAthletes([]);
+      return;
+    }
+    let query = supabase
+      .from("athletes")
+      .select("id, name, email")
+      .order("name")
+      .limit(500);
     if (!isAdmin && !isSuperAdmin) query = query.eq("coach_id", user.id);
     query.then(({ data, error }) => {
-      if (error) { toast.error("Não foi possível carregar seus alunos."); setAthletes([]); return; }
+      if (error) {
+        toast.error("Não foi possível carregar seus alunos.");
+        setAthletes([]);
+        return;
+      }
       setAthletes(data || []);
     });
-  }, [open, user, isAdmin, isSuperAdmin]);
+  }, [open, user, isAdmin, isSuperAdmin, workspace.athleteId]);
 
   const handleAssign = async () => {
     if (!item || !athleteId) {
@@ -69,35 +99,50 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
     setLoading(true);
     try {
       const p = item.payload ?? {};
-      const content_ref = item.slug || item.external_id || p.id || p.slug || item.name;
+      const content_ref =
+        item.slug || item.external_id || p.id || p.slug || item.name;
 
       // Prefer real image thumbnails over page URLs
-      const thumb = p.thumbnailUrl || p.thumbnail_url || (item.thumbnail_url && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail_url) ? item.thumbnail_url : null) || null;
+      const thumb =
+        p.thumbnailUrl ||
+        p.thumbnail_url ||
+        (item.thumbnail_url &&
+        /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail_url)
+          ? item.thumbnail_url
+          : null) ||
+        null;
 
-      const player_url = p.playerUrl || p.executarUrl || item.player_url || null;
+      const player_url =
+        p.playerUrl || p.executarUrl || item.player_url || null;
       const access_url = p.episodeUrl || p.accessUrl || p.access_url || null;
       const download_url = p.downloadUrl || p.download_url || p.pdfUrl || null;
 
-      const { error } = await supabase.from("student_library_assignments").insert({
-        athlete_id: athleteId,
-        content_type: item.type,
-        content_ref,
-        content_title: item.name,
-        thumbnail_url: thumb,
-        player_url,
-        access_url,
-        download_url,
-        payload: JSON.parse(JSON.stringify(p)),
-        notes: notes || null,
-        assigned_by: user?.id,
-      });
+      const { error } = await supabase
+        .from("student_library_assignments")
+        .insert({
+          athlete_id: athleteId,
+          content_type: item.type,
+          content_ref,
+          content_title: item.name,
+          thumbnail_url: thumb,
+          player_url,
+          access_url,
+          download_url,
+          payload: JSON.parse(JSON.stringify(p)),
+          notes: notes || null,
+          assigned_by: user?.id,
+        });
       if (error) throw error;
+      workspace.select(athleteId);
       toast.success(`${item.name} atribuído!`);
       onOpenChange(false);
-      setAthleteId(""); setNotes("");
+      setAthleteId("");
+      setNotes("");
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Erro ao atribuir";
-      toast.error(message.includes("duplicate") ? "Já atribuído a este aluno" : message);
+      toast.error(
+        message.includes("duplicate") ? "Já atribuído a este aluno" : message,
+      );
     } finally {
       setLoading(false);
     }
@@ -112,26 +157,40 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
         {item && (
           <div className="space-y-4">
             <div className="p-3 bg-muted rounded-md">
-              <p className="text-xs uppercase text-muted-foreground">{item.type}</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                {item.type}
+              </p>
               <p className="font-bold">{item.name}</p>
             </div>
             <div className="space-y-2">
               <Label>Aluno</Label>
               <Select value={athleteId} onValueChange={setAthleteId}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
                 <SelectContent>
-                  {athletes.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  {athletes.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Observações (opcional)</Label>
-              <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ex: programa de 8 semanas..." />
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ex: programa de 8 semanas..."
+              />
             </div>
           </div>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
           <Button onClick={handleAssign} disabled={loading || !athleteId}>
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Atribuir

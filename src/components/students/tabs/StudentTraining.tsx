@@ -1,11 +1,31 @@
-import { AssignedTrainingViewer } from '@/components/9fit/AssignedTrainingViewer';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { withAthlete } from "@/lib/professorWorkspace";
+import { AssignedTrainingViewer } from "@/components/9fit/AssignedTrainingViewer";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Dumbbell, Plus, Eye, Edit, Trash2, Calendar, Upload, FileText, Sparkles, Globe, Code2, Wrench, Target } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Dumbbell,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Calendar,
+  Upload,
+  FileText,
+  Sparkles,
+  Globe,
+  Code2,
+  Wrench,
+  Target,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TrainingContentUpload } from "@/components/students/TrainingContentUpload";
@@ -37,14 +57,18 @@ interface StudentTrainingProps {
   onStudentUpdate: (updatedData: any) => void;
 }
 
-export function StudentTraining({ student, onStudentUpdate }: StudentTrainingProps) {
+export function StudentTraining({
+  student,
+  onStudentUpdate,
+}: StudentTrainingProps) {
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssignProtocol, setShowAssignProtocol] = useState(false);
   const [showHTMLUpload, setShowHTMLUpload] = useState(false);
   const [showCreateWorkout, setShowCreateWorkout] = useState(false);
   const [showPeriodization, setShowPeriodization] = useState(false);
-  const [selectedHTMLTraining, setSelectedHTMLTraining] = useState<TrainingAssignment | null>(null);
+  const [selectedHTMLTraining, setSelectedHTMLTraining] =
+    useState<TrainingAssignment | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,106 +78,132 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
   const fetchTrainings = async () => {
     try {
       const { data, error } = await supabase
-        .from('student_training_assignments')
-        .select('*')
-        .eq('student_id', student.id)
-        .order('created_at', { ascending: false });
+        .from("student_training_assignments")
+        .select("*")
+        .eq("student_id", student.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       setTrainings(data || []);
     } catch (error) {
-      console.error('Erro ao buscar treinos:', error);
-      toast.error('Erro ao carregar treinos');
+      console.error("Erro ao buscar treinos:", error);
+      toast.error("Erro ao carregar treinos");
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleTrainingStatus = async (trainingId: string, currentStatus: boolean) => {
+  const toggleTrainingStatus = async (
+    trainingId: string,
+    currentStatus: boolean,
+  ) => {
     try {
       const { error } = await supabase
-        .from('student_training_assignments')
+        .from("student_training_assignments")
         .update({ is_active: !currentStatus })
-        .eq('id', trainingId);
+        .eq("id", trainingId);
 
       if (error) throw error;
 
-      setTrainings(trainings.map(training =>
-        training.id === trainingId
-          ? { ...training, is_active: !currentStatus }
-          : training
-      ));
+      setTrainings(
+        trainings.map((training) =>
+          training.id === trainingId
+            ? { ...training, is_active: !currentStatus }
+            : training,
+        ),
+      );
 
-      toast.success(`Treino ${!currentStatus ? 'ativado' : 'desativado'} com sucesso`);
+      toast.success(
+        `Treino ${!currentStatus ? "ativado" : "desativado"} com sucesso`,
+      );
     } catch (error) {
-      console.error('Erro ao alterar status:', error);
-      toast.error('Erro ao alterar status do treino');
+      console.error("Erro ao alterar status:", error);
+      toast.error("Erro ao alterar status do treino");
     }
   };
 
   const handleViewTraining = (training: TrainingAssignment) => {
-    if (['html', 'link', 'periodization'].includes(training.training_type || '')) {
+    if (
+      ["html", "link", "periodization"].includes(training.training_type || "")
+    ) {
       setSelectedHTMLTraining(training);
     } else {
-      navigate('/9fit/train', { state: { quickTraining: training } });
+      navigate(withAthlete("/app/acompanhamento", student.id));
     }
   };
 
   const handleDeleteTraining = async (training: TrainingAssignment) => {
-    if (!confirm(`Tem certeza que deseja excluir o treino "${training.training_name}"?`)) {
+    if (
+      !confirm(
+        `Tem certeza que deseja excluir o treino "${training.training_name}"?`,
+      )
+    ) {
       return;
     }
 
     try {
       // If HTML training, delete file from storage first
-      if (training.training_type === 'html' && training.html_file_path) {
+      if (training.training_type === "html" && training.html_file_path) {
         const { error: storageError } = await supabase.storage
-          .from('training-html-files')
+          .from("training-html-files")
           .remove([training.html_file_path]);
-        
+
         if (storageError) {
-          console.error('Erro ao deletar arquivo:', storageError);
+          console.error("Erro ao deletar arquivo:", storageError);
         }
       }
 
       // Delete from database
       const { error } = await supabase
-        .from('student_training_assignments')
+        .from("student_training_assignments")
         .delete()
-        .eq('id', training.id);
+        .eq("id", training.id);
 
       if (error) throw error;
 
-      setTrainings(trainings.filter(t => t.id !== training.id));
-      toast.success('Treino excluído com sucesso');
+      setTrainings(trainings.filter((t) => t.id !== training.id));
+      toast.success("Treino excluído com sucesso");
     } catch (error) {
-      console.error('Erro ao excluir treino:', error);
-      toast.error('Erro ao excluir treino');
+      console.error("Erro ao excluir treino:", error);
+      toast.error("Erro ao excluir treino");
     }
   };
 
   const getTrainingTypeBadge = (training: TrainingAssignment) => {
-    if (training.training_type === 'link') {
+    if (training.training_type === "link") {
       return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-700">
+        <Badge
+          variant="outline"
+          className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-700"
+        >
           <Globe className="w-3 h-3 mr-1" />
           Link
         </Badge>
       );
     }
-    if (training.training_type === 'html') {
+    if (training.training_type === "html") {
       const source = training.training_data?.source;
-      const isCodePaste = source === 'html_code_paste';
+      const isCodePaste = source === "html_code_paste";
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700">
-          {isCodePaste ? <Code2 className="w-3 h-3 mr-1" /> : <FileText className="w-3 h-3 mr-1" />}
-          {isCodePaste ? 'Código' : 'HTML'}
+        <Badge
+          variant="outline"
+          className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700"
+        >
+          {isCodePaste ? (
+            <Code2 className="w-3 h-3 mr-1" />
+          ) : (
+            <FileText className="w-3 h-3 mr-1" />
+          )}
+          {isCodePaste ? "Código" : "HTML"}
         </Badge>
       );
     }
     return (
-      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-700">
+      <Badge
+        variant="outline"
+        className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-700"
+      >
         <Sparkles className="w-3 h-3 mr-1" />
         IA
       </Badge>
@@ -169,19 +219,28 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
     );
   }
 
-  const activeTrainings = trainings.filter(t => t.is_active);
-  const inactiveTrainings = trainings.filter(t => !t.is_active);
+  const activeTrainings = trainings.filter((t) => t.is_active);
+  const inactiveTrainings = trainings.filter((t) => !t.is_active);
 
   return (
     <div className="space-y-6">
-      <Button onClick={() => setShowAssignProtocol(true)}><Plus className="w-4 h-4 mr-2" />Atribuir protocolo</Button>
+      <Button
+        variant="outline"
+        onClick={() => navigate(withAthlete("/app/treino-ia", student.id))}
+      >
+        Revisar e publicar sessão no Train do aluno
+      </Button>
+      <Button onClick={() => setShowAssignProtocol(true)}>
+        <Plus className="w-4 h-4 mr-2" />
+        Atribuir protocolo
+      </Button>
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Dumbbell className="w-5 h-5" />
           <h2 className="text-xl font-semibold">Treino do Aluno</h2>
         </div>
-        
+
         <div className="flex gap-2 flex-wrap">
           <Button onClick={() => setShowCreateWorkout(true)} variant="outline">
             <Wrench className="w-4 h-4 mr-2" />
@@ -191,7 +250,10 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
             <Target className="w-4 h-4 mr-2" />
             Atribuir Periodização
           </Button>
-          <Button onClick={() => setShowHTMLUpload(true)} className="bg-primary hover:bg-primary/90">
+          <Button
+            onClick={() => setShowHTMLUpload(true)}
+            className="bg-primary hover:bg-primary/90"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Atribuir Treino
           </Button>
@@ -211,24 +273,24 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
               </div>
               <div className="text-sm text-muted-foreground">Ativos</div>
             </div>
-            
+
             <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {trainings.filter(t => t.training_type === 'link').length}
+                {trainings.filter((t) => t.training_type === "link").length}
               </div>
               <div className="text-sm text-muted-foreground">Links</div>
             </div>
-            
+
             <div className="text-center p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg">
               <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                {trainings.filter(t => t.training_type === 'html').length}
+                {trainings.filter((t) => t.training_type === "html").length}
               </div>
               <div className="text-sm text-muted-foreground">HTML</div>
             </div>
-            
+
             <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {trainings.filter(t => t.training_type !== 'html').length}
+                {trainings.filter((t) => t.training_type !== "html").length}
               </div>
               <div className="text-sm text-muted-foreground">Treinos IA</div>
             </div>
@@ -256,7 +318,7 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
                   <Sparkles className="w-4 h-4 mr-2" />
                   Criar com IA
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setShowHTMLUpload(true)}
                 >
@@ -271,35 +333,48 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
                 <div
                   key={training.id}
                   className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
-                    training.is_active 
-                      ? 'bg-card hover:bg-muted/50' 
-                      : 'bg-muted/30 opacity-75'
+                    training.is_active
+                      ? "bg-card hover:bg-muted/50"
+                      : "bg-muted/30 opacity-75"
                   }`}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      training.training_type === 'html' 
-                        ? 'bg-blue-100 dark:bg-blue-950' 
-                        : 'bg-purple-100 dark:bg-purple-950'
-                    }`}>
-                      {training.training_type === 'html' ? (
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        training.training_type === "html"
+                          ? "bg-blue-100 dark:bg-blue-950"
+                          : "bg-purple-100 dark:bg-purple-950"
+                      }`}
+                    >
+                      {training.training_type === "html" ? (
                         <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                       ) : (
                         <Dumbbell className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                       )}
                     </div>
-                    
+
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-medium truncate">{training.training_name}</h3>
+                        <h3 className="font-medium truncate">
+                          {training.training_name}
+                        </h3>
                         {getTrainingTypeBadge(training)}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                         <Calendar className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">
-                          Início: {new Date(training.start_date).toLocaleDateString('pt-BR')}
+                          Início:{" "}
+                          {new Date(training.start_date).toLocaleDateString(
+                            "pt-BR",
+                          )}
                           {training.end_date && (
-                            <> - Fim: {new Date(training.end_date).toLocaleDateString('pt-BR')}</>
+                            <>
+                              {" "}
+                              - Fim:{" "}
+                              {new Date(training.end_date).toLocaleDateString(
+                                "pt-BR",
+                              )}
+                            </>
                           )}
                         </span>
                       </div>
@@ -312,46 +387,50 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                    <Badge 
-                      variant={training.is_active ? 'default' : 'secondary'}
-                      className={training.is_active 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300' 
-                        : ''
+                    <Badge
+                      variant={training.is_active ? "default" : "secondary"}
+                      className={
+                        training.is_active
+                          ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                          : ""
                       }
                     >
-                      {training.is_active ? 'Ativo' : 'Inativo'}
+                      {training.is_active ? "Ativo" : "Inativo"}
                     </Badge>
-                    
-                    <Button 
-                      size="sm" 
+
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleViewTraining(training)}
                       title="Ver treino"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      title="Editar treino"
-                    >
+
+                    <Button size="sm" variant="outline" title="Editar treino">
                       <Edit className="w-4 h-4" />
                     </Button>
-                    
+
                     <Button
                       size="sm"
                       variant={training.is_active ? "destructive" : "default"}
-                      onClick={() => training.is_active 
-                        ? toggleTrainingStatus(training.id, training.is_active)
-                        : toggleTrainingStatus(training.id, training.is_active)
+                      onClick={() =>
+                        training.is_active
+                          ? toggleTrainingStatus(
+                              training.id,
+                              training.is_active,
+                            )
+                          : toggleTrainingStatus(
+                              training.id,
+                              training.is_active,
+                            )
                       }
-                      title={training.is_active ? 'Desativar' : 'Ativar'}
+                      title={training.is_active ? "Desativar" : "Ativar"}
                     >
                       {training.is_active ? (
                         <Trash2 className="w-4 h-4" />
                       ) : (
-                        'Ativar'
+                        "Ativar"
                       )}
                     </Button>
                   </div>
@@ -376,31 +455,35 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
             </p>
             <div className="space-y-3">
               {inactiveTrainings.map((training) => (
-                <div 
+                <div
                   key={training.id}
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     {getTrainingTypeBadge(training)}
-                    <span className="font-medium">{training.training_name}</span>
+                    <span className="font-medium">
+                      {training.training_name}
+                    </span>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleViewTraining(training)}
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
-                      onClick={() => toggleTrainingStatus(training.id, training.is_active)}
+                      onClick={() =>
+                        toggleTrainingStatus(training.id, training.is_active)
+                      }
                     >
                       Ativar
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="destructive"
                       onClick={() => handleDeleteTraining(training)}
                     >
@@ -415,11 +498,40 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
       )}
 
       <Dialog open={showAssignProtocol} onOpenChange={setShowAssignProtocol}>
-        <DialogContent><DialogHeader><DialogTitle>Atribuir protocolo — {student.nome}</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Escolha o conteúdo. Após enviar e ativar, o aluno acessa em Seu Protocolo e Train.</p>
-          <Button onClick={() => { setShowAssignProtocol(false); setShowHTMLUpload(true); }}>Arquivo HTML, código ou link</Button>
-          <Button variant="outline" onClick={() => { setShowAssignProtocol(false); setShowPeriodization(true); }}>Modelos de periodização, HTML ou PDF</Button>
-          <Button variant="outline" onClick={() => { setShowAssignProtocol(false); setShowCreateWorkout(true); }}>Criar treino com exercícios</Button>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atribuir protocolo — {student.nome}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Escolha o conteúdo. Após enviar e ativar, o aluno acessa em Seu
+            Protocolo e Train.
+          </p>
+          <Button
+            onClick={() => {
+              setShowAssignProtocol(false);
+              setShowHTMLUpload(true);
+            }}
+          >
+            Arquivo HTML, código ou link
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowAssignProtocol(false);
+              setShowPeriodization(true);
+            }}
+          >
+            Modelos de periodização, HTML ou PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowAssignProtocol(false);
+              setShowCreateWorkout(true);
+            }}
+          >
+            Criar treino com exercícios
+          </Button>
         </DialogContent>
       </Dialog>
 
@@ -469,8 +581,8 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
       </Dialog>
 
       {/* HTML Training Viewer Dialog */}
-      <Dialog 
-        open={!!selectedHTMLTraining} 
+      <Dialog
+        open={!!selectedHTMLTraining}
         onOpenChange={() => setSelectedHTMLTraining(null)}
       >
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
@@ -479,7 +591,10 @@ export function StudentTraining({ student, onStudentUpdate }: StudentTrainingPro
           </DialogHeader>
           <div className="overflow-auto max-h-[70vh] border rounded-lg bg-white">
             {selectedHTMLTraining && (
-              <AssignedTrainingViewer training={{ ...selectedHTMLTraining, student_id: student.id }} onBack={() => setSelectedHTMLTraining(null)} />
+              <AssignedTrainingViewer
+                training={{ ...selectedHTMLTraining, student_id: student.id }}
+                onBack={() => setSelectedHTMLTraining(null)}
+              />
             )}
           </div>
         </DialogContent>

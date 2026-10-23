@@ -1,23 +1,21 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from 'next-themes';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  User, 
-  Bell, 
-  Lock, 
-  Palette, 
-  Save,
-  Camera,
-  Check
-} from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Bell, Lock, Palette, Save, Camera, Check } from "lucide-react";
 
 const DEFAULT_NOTIFICATIONS = {
   email: true,
@@ -33,9 +31,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: profile?.full_name || '',
-    email: user?.email || '',
-    phone: profile?.phone || '',
+    full_name: profile?.full_name || "",
+    email: user?.email || "",
+    phone: profile?.phone || "",
   });
   const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
 
@@ -45,13 +43,16 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!user?.id) return;
     supabase
-      .from('profiles')
-      .select('notification_preferences')
-      .eq('user_id', user.id)
+      .from("profiles")
+      .select("notification_preferences")
+      .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data, error }) => {
         if (!error && data?.notification_preferences) {
-          setNotifications({ ...DEFAULT_NOTIFICATIONS, ...(data.notification_preferences as any) });
+          setNotifications({
+            ...DEFAULT_NOTIFICATIONS,
+            ...(data.notification_preferences as any),
+          });
         }
       });
   }, [user?.id]);
@@ -60,16 +61,18 @@ export default function SettingsPage() {
     if (!user?.id) return;
     setSavingNotifications(true);
     const { error } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({ notification_preferences: notifications })
-      .eq('user_id', user.id);
+      .eq("user_id", user.id)
+      .select("user_id")
+      .single();
     setSavingNotifications(false);
 
     if (error) {
-      toast.error('Erro ao salvar preferências: ' + error.message);
+      toast.error("Erro ao salvar preferências: " + error.message);
       return;
     }
-    toast.success('Preferências salvas!');
+    toast.success("Preferências salvas!");
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -78,18 +81,20 @@ export default function SettingsPage() {
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
         })
-        .eq('id', user?.id);
+        .eq("user_id", user?.id || "")
+        .select("user_id")
+        .single();
 
       if (error) throw error;
 
-      toast.success('Perfil atualizado com sucesso!');
+      toast.success("Perfil atualizado com sucesso!");
     } catch (error: any) {
-      toast.error('Erro ao atualizar perfil: ' + error.message);
+      toast.error("Erro ao atualizar perfil: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -98,11 +103,15 @@ export default function SettingsPage() {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-    const newPassword = (form.elements.namedItem('new_password') as HTMLInputElement).value;
-    const confirmPassword = (form.elements.namedItem('confirm_password') as HTMLInputElement).value;
+    const newPassword = (
+      form.elements.namedItem("new_password") as HTMLInputElement
+    ).value;
+    const confirmPassword = (
+      form.elements.namedItem("confirm_password") as HTMLInputElement
+    ).value;
 
     if (newPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem');
+      toast.error("As senhas não coincidem");
       return;
     }
 
@@ -110,15 +119,15 @@ export default function SettingsPage() {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
 
-      toast.success('Senha alterada com sucesso!');
+      toast.success("Senha alterada com sucesso!");
       form.reset();
     } catch (error: any) {
-      toast.error('Erro ao alterar senha: ' + error.message);
+      toast.error("Erro ao alterar senha: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -128,7 +137,9 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie suas preferências e configurações da conta</p>
+        <p className="text-muted-foreground">
+          Gerencie suas preferências e configurações da conta
+        </p>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
@@ -137,7 +148,10 @@ export default function SettingsPage() {
             <User className="w-4 h-4" />
             <span className="hidden sm:inline">Perfil</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
+          <TabsTrigger
+            value="notifications"
+            className="flex items-center gap-2"
+          >
             <Bell className="w-4 h-4" />
             <span className="hidden sm:inline">Notificações</span>
           </TabsTrigger>
@@ -155,14 +169,16 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Informações do Perfil</CardTitle>
-              <CardDescription>Atualize suas informações pessoais</CardDescription>
+              <CardDescription>
+                Atualize suas informações pessoais
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleProfileUpdate} className="space-y-6">
                 <div className="flex items-center gap-6">
                   <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary-foreground">
-                      {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                      {formData.full_name?.charAt(0)?.toUpperCase() || "U"}
                     </span>
                   </div>
                   <Button type="button" variant="outline" className="gap-2">
@@ -177,7 +193,9 @@ export default function SettingsPage() {
                     <Input
                       id="full_name"
                       value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, full_name: e.target.value })
+                      }
                       placeholder="Seu nome completo"
                     />
                   </div>
@@ -196,7 +214,9 @@ export default function SettingsPage() {
                     <Input
                       id="phone"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
                       placeholder="(11) 99999-9999"
                     />
                   </div>
@@ -204,7 +224,7 @@ export default function SettingsPage() {
 
                 <Button type="submit" disabled={loading} className="gap-2">
                   <Save className="w-4 h-4" />
-                  {loading ? 'Salvando...' : 'Salvar Alterações'}
+                  {loading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </form>
             </CardContent>
@@ -215,7 +235,9 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Preferências de Notificação</CardTitle>
-              <CardDescription>Escolha como deseja receber notificações</CardDescription>
+              <CardDescription>
+                Escolha como deseja receber notificações
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -224,31 +246,43 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Notificações por Email</Label>
-                      <p className="text-sm text-muted-foreground">Receba atualizações por email</p>
+                      <p className="text-sm text-muted-foreground">
+                        Receba atualizações por email
+                      </p>
                     </div>
                     <Switch
                       checked={notifications.email}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
+                      onCheckedChange={(checked) =>
+                        setNotifications({ ...notifications, email: checked })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Notificações Push</Label>
-                      <p className="text-sm text-muted-foreground">Notificações no navegador</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notificações no navegador
+                      </p>
                     </div>
                     <Switch
                       checked={notifications.push}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, push: checked })}
+                      onCheckedChange={(checked) =>
+                        setNotifications({ ...notifications, push: checked })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Notificações SMS</Label>
-                      <p className="text-sm text-muted-foreground">Receba SMS importantes</p>
+                      <p className="text-sm text-muted-foreground">
+                        Receba SMS importantes
+                      </p>
                     </div>
                     <Switch
                       checked={notifications.sms}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, sms: checked })}
+                      onCheckedChange={(checked) =>
+                        setNotifications({ ...notifications, sms: checked })
+                      }
                     />
                   </div>
                 </div>
@@ -260,28 +294,45 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Novo Aluno Cadastrado</Label>
-                      <p className="text-sm text-muted-foreground">Quando um novo aluno se cadastra</p>
+                      <p className="text-sm text-muted-foreground">
+                        Quando um novo aluno se cadastra
+                      </p>
                     </div>
                     <Switch
                       checked={notifications.newStudent}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, newStudent: checked })}
+                      onCheckedChange={(checked) =>
+                        setNotifications({
+                          ...notifications,
+                          newStudent: checked,
+                        })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Lembrete de Pagamento</Label>
-                      <p className="text-sm text-muted-foreground">Lembretes de pagamentos pendentes</p>
+                      <p className="text-sm text-muted-foreground">
+                        Lembretes de pagamentos pendentes
+                      </p>
                     </div>
                     <Switch
                       checked={notifications.paymentReminder}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, paymentReminder: checked })}
+                      onCheckedChange={(checked) =>
+                        setNotifications({
+                          ...notifications,
+                          paymentReminder: checked,
+                        })
+                      }
                     />
                   </div>
                 </div>
               </div>
 
-              <Button onClick={handleSaveNotifications} disabled={savingNotifications}>
-                {savingNotifications ? 'Salvando...' : 'Salvar Preferências'}
+              <Button
+                onClick={handleSaveNotifications}
+                disabled={savingNotifications}
+              >
+                {savingNotifications ? "Salvando..." : "Salvar Preferências"}
               </Button>
             </CardContent>
           </Card>
@@ -294,7 +345,10 @@ export default function SettingsPage() {
               <CardDescription>Atualize sua senha de acesso</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+              <form
+                onSubmit={handlePasswordChange}
+                className="space-y-4 max-w-md"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="new_password">Nova Senha</Label>
                   <Input
@@ -318,7 +372,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Alterando...' : 'Alterar Senha'}
+                  {loading ? "Alterando..." : "Alterar Senha"}
                 </Button>
               </form>
             </CardContent>
@@ -329,7 +383,9 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Aparência</CardTitle>
-              <CardDescription>Personalize a aparência do sistema</CardDescription>
+              <CardDescription>
+                Personalize a aparência do sistema
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -341,30 +397,36 @@ export default function SettingsPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setTheme('light')}
-                      className={`h-20 flex flex-col gap-2 relative ${theme === 'light' ? 'border-primary ring-1 ring-primary' : ''}`}
+                      onClick={() => setTheme("light")}
+                      className={`h-20 flex flex-col gap-2 relative ${theme === "light" ? "border-primary ring-1 ring-primary" : ""}`}
                     >
-                      {theme === 'light' && <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />}
+                      {theme === "light" && (
+                        <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />
+                      )}
                       <div className="w-8 h-8 rounded bg-white border"></div>
                       <span className="text-xs">Claro</span>
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setTheme('dark')}
-                      className={`h-20 flex flex-col gap-2 relative ${theme === 'dark' ? 'border-primary ring-1 ring-primary' : ''}`}
+                      onClick={() => setTheme("dark")}
+                      className={`h-20 flex flex-col gap-2 relative ${theme === "dark" ? "border-primary ring-1 ring-primary" : ""}`}
                     >
-                      {theme === 'dark' && <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />}
+                      {theme === "dark" && (
+                        <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />
+                      )}
                       <div className="w-8 h-8 rounded bg-slate-900"></div>
                       <span className="text-xs">Escuro</span>
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setTheme('system')}
-                      className={`h-20 flex flex-col gap-2 relative ${theme === 'system' ? 'border-primary ring-1 ring-primary' : ''}`}
+                      onClick={() => setTheme("system")}
+                      className={`h-20 flex flex-col gap-2 relative ${theme === "system" ? "border-primary ring-1 ring-primary" : ""}`}
                     >
-                      {theme === 'system' && <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />}
+                      {theme === "system" && (
+                        <Check className="w-3 h-3 text-primary absolute top-1.5 right-1.5" />
+                      )}
                       <div className="w-8 h-8 rounded bg-gradient-to-r from-white to-slate-900"></div>
                       <span className="text-xs">Sistema</span>
                     </Button>

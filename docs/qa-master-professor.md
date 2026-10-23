@@ -28,3 +28,7 @@ trainingFollowUp conta IDs únicos no escopo da consulta. Entre planos ativos do
 ## STEVENT — dependência externa
 
 Achados QA-STAFF-001 a 020 permanecem em fila externa e não verificados. Correção de autenticação/RLS/tenant exige acesso ao código e ao projeto corretos. Rotacionar credenciais ou encerrar sessões exige autorização específica e avaliação de impacto.
+
+## Atualização de 23/10/2026 — integração implementada
+
+A entrega atual está detalhada em [professor-aluno-integracao.md](professor-aluno-integracao.md). Os estados antigos abaixo/acima permanecem como histórico; consultar o novo documento para implementação, backend publicado, testes e fechamento operacional. QA autenticado real e publicação Lovable continuam com o usuário.

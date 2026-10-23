@@ -192,7 +192,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         <button className="mt-2 underline" onClick={() => navigate(pendingFirstAccess ? '/9fit/first-access' : '/9fit/ativacao')}>Continuar configuração</button>
       </section>}
       {children}
-      {!isOnboardingFlow && <RonBubble />}
+      {!isOnboardingFlow && location.pathname!=='/9fit/mensagens' && <RonBubble />}
     </>
   );
 }

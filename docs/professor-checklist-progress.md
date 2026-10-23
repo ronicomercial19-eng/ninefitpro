@@ -90,3 +90,7 @@ Ao mudar o bucket para privado, URLs públicas antigas deixam de ser a forma de 
 Item 5 foi integrado à main pelo PR 78, com CI aprovado. Ainda falta reteste manual na interface publicada.
 
 Item 6: migração `professor_audit_events` aplicada. Dez tabelas críticas registram no banco alterações de acesso, vínculo, agenda, prescrição, periodização e avaliações. O evento guarda apenas campos operacionais selecionados; não copia email, nome, resultados posturais ou fotos. Apenas administrador ativo lê os eventos, e clientes não podem criá-los/alterá-los. Inserção direta no log legado e chamada pública da antiga função de log foram revogadas. Teste transacional antes/depois verificou geração pelo trigger, negação a professor, leitura administrativa e bloqueio de falsificação. O painel visual de consulta administrativa será tratado nos itens de navegação e relatórios; reteste manual ao final.
+
+## Atualização de 23/10/2026 — integração implementada
+
+A entrega atual está detalhada em [professor-aluno-integracao.md](professor-aluno-integracao.md). Os estados antigos abaixo/acima permanecem como histórico; consultar o novo documento para implementação, backend publicado, testes e fechamento operacional. QA autenticado real e publicação Lovable continuam com o usuário.

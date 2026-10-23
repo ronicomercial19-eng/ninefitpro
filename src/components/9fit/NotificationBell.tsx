@@ -1,117 +1,162 @@
-import { useEffect, useState, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
-  Popover, PopoverContent, PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
-
-interface NotificationRow {
+import { toast } from "sonner";
+type Notification = {
   id: string;
-  type: string;
   title: string;
   message: string | null;
   is_read: boolean;
   created_at: string;
   action_url: string | null;
-}
-
+};
 export function NotificationBell() {
-  const { user } = useAuth();
-  const { supported, subscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
-  const [items, setItems] = useState<NotificationRow[]>([]);
+  const { user } = useAuth(),
+    navigate = useNavigate(),
+    qc = useQueryClient();
   const [open, setOpen] = useState(false);
-
-  const fetchNotifications = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("notifications")
-      .select("id, type, title, message, is_read, created_at, action_url")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(30);
-    setItems((data || []) as NotificationRow[]);
-  }, [user]);
-
-  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
-
+  const writing = useRef(false),
+    owner = useRef(user?.id);
+  owner.current = user?.id;
+  const {
+    supported,
+    subscribed,
+    loading: pushLoading,
+    subscribe,
+    unsubscribe,
+  } = usePushNotifications();
+  const query = useQuery({
+    queryKey: ["notifications-bell", user?.id],
+    enabled: !!user,
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id,title,message,is_read,created_at,action_url")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data as Notification[];
+    },
+  });
   useEffect(() => {
-    if (!user) return;
-    const channelName = `notifications-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
-    const ch = supabase
-      .channel(channelName)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        () => fetchNotifications())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user, fetchNotifications]);
-
-  const unreadCount = items.filter(i => !i.is_read).length;
-
-  const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
-    setItems(prev => prev.map(i => i.id === id ? { ...i, is_read: true } : i));
-  };
-
-  const markAllAsRead = async () => {
-    if (!user || unreadCount === 0) return;
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
-    setItems(prev => prev.map(i => ({ ...i, is_read: true })));
-  };
-
+    setOpen(false);
+  }, [user?.id]);
+  const items = query.data ?? [],
+    unread = items.filter((n) => !n.is_read).length;
+  async function read(notification?: Notification) {
+    if (!user || writing.current) return;
+    const uid = user.id;
+    writing.current = true;
+    try {
+      if (!notification?.is_read) {
+        let update = supabase
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("user_id", uid);
+        update = notification
+          ? update.eq("id", notification.id)
+          : update.eq("is_read", false);
+        const { data, error } = await update.select("id");
+        if (error || (notification && !data?.length))
+          throw error || new Error("Leitura não confirmada");
+        await qc.invalidateQueries({ queryKey: ["notifications-bell", uid] });
+      }
+      if (owner.current !== uid) return;
+      if (
+        notification?.action_url &&
+        /^\/(?:app|9fit)(?:\/|[?#]|$)/.test(notification.action_url) &&
+        !notification.action_url.includes("\\")
+      ) {
+        navigate(notification.action_url);
+        setOpen(false);
+      }
+    } catch {
+      if (owner.current === uid)
+        toast.error("Não foi possível confirmar a leitura. Tente novamente.");
+    } finally {
+      writing.current = false;
+    }
+  }
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) fetchNotifications(); }}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="relative w-10 h-10 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center">
-          <Bell className="w-4 h-4 text-foreground" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center">
-              {unreadCount > 9 ? "9+" : unreadCount}
+        <button
+          aria-label={`Notificações${unread ? `: ${unread} não lidas` : ""}`}
+          className="relative rounded-lg p-2"
+        >
+          <Bell className="h-5 w-5" />
+          {unread > 0 && (
+            <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
+              {unread}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 bg-card border-border max-h-[70vh] overflow-hidden flex flex-col">
-        <div className="p-3 border-b border-border flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider">Notificações</p>
-            {supported && (
-              <button onClick={subscribed ? unsubscribe : subscribe} disabled={pushLoading} className="text-[10px] text-primary uppercase tracking-wide mt-1 disabled:opacity-50">
-                {pushLoading ? "Aguarde..." : subscribed ? "Desativar push" : "Ativar push"}
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between border-b p-3">
+          <strong className="text-sm">Notificações</strong>
+          <button
+            disabled={!unread}
+            className="text-xs text-primary"
+            onClick={() => void read()}
+          >
+            Marcar todas
+          </button>
+        </div>
+        <div className="max-h-80 overflow-auto">
+          {query.isError ? (
+            <p role="alert" className="p-4 text-sm">
+              Falha ao carregar.{" "}
+              <button onClick={() => void query.refetch()}>
+                Tentar novamente
               </button>
-            )}
-          </div>
-          {unreadCount > 0 && (
-            <button onClick={markAllAsRead} className="text-[10px] text-primary uppercase tracking-wide">
-              Marcar todas como lidas
-            </button>
+            </p>
+          ) : query.isLoading ? (
+            <p className="p-4 text-sm">Carregando…</p>
+          ) : !items.length ? (
+            <p className="p-4 text-sm text-muted-foreground">
+              Nenhuma notificação.
+            </p>
+          ) : (
+            items.map((n) => (
+              <button
+                key={n.id}
+                className={`w-full border-b p-3 text-left ${n.is_read ? "" : "bg-primary/5"}`}
+                onClick={() => void read(n)}
+              >
+                <strong className="text-sm">{n.title}</strong>
+                <p className="text-xs text-muted-foreground">{n.message}</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {new Date(n.created_at).toLocaleString("pt-BR", {
+                    timeZone: "America/Sao_Paulo",
+                  })}
+                </p>
+              </button>
+            ))
           )}
         </div>
-        <div className="overflow-y-auto">
-          {items.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-8">Nenhuma notificação por aqui.</p>
-          ) : items.map(n => (
-            <button
-              key={n.id}
-              onClick={() => markAsRead(n.id)}
-              className={`w-full text-left px-3 py-3 border-b border-border/50 hover:bg-white/[0.02] transition ${!n.is_read ? "bg-primary/5" : ""}`}
-            >
-              <div className="flex items-start gap-2">
-                {!n.is_read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground">{n.title}</p>
-                  {n.message && <p className="text-[11px] text-muted-foreground mt-0.5">{n.message}</p>}
-                  <p className="text-[10px] text-muted-foreground/70 mt-1">
-                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ptBR })}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+        {supported && (
+          <button
+            disabled={pushLoading}
+            className="w-full border-t p-3 text-xs text-primary"
+            onClick={() => void (subscribed ? unsubscribe() : subscribe())}
+          >
+            {subscribed
+              ? "Desativar notificações neste dispositivo"
+              : "Ativar notificações neste dispositivo"}
+          </button>
+        )}
       </PopoverContent>
     </Popover>
   );
