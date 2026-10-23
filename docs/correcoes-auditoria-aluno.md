@@ -2,6 +2,20 @@
 
 Referência: relatório de 22/10/2026, revisão dee41ee. Implementação na branch codex/correcoes-aluno-auditoria.
 
+## Backend implantado em 23/10/2026
+
+- Projeto Supabase: mfrydtrzjxscbkaiwfnw.
+- Migração student_audit_contracts_and_receipts: versão remota 20261023212315.
+- Migração student_habit_account_policy: versão remota 20261023212444; bloqueia contas anônimas nos hábitos.
+- Edge Function ai-coach: versão 61, ACTIVE; fonte e dois módulos compartilhados conferidos byte a byte após normalização de quebras de linha.
+- Mantida a configuração anterior verify_jwt=false no gateway, com autenticação própria via auth.getUser na função. Requisição sem autenticação retorna HTTP 401; OPTIONS retorna HTTP 200.
+- Consulta como authenticated retornou contexto v3 available, com ficha/observações como objetos e calibração/segurança booleanas.
+- RLS habilitada nas quatro novas tabelas; RPCs de feedback e protocolo não executáveis por anon.
+- Teste transacional no servidor confirmou gravação pelo dono, conclusão diária única e bloqueio de leitura/gravação anônima. ROLLBACK ao final: nenhum hábito de teste permaneceu.
+- As tabelas privadas de recibos e conclusões têm RLS sem políticas de acesso direto e privilégios revogados de clientes. O acesso ocorre pelas funções com autorização explícita; o aviso de ausência de políticas nessas tabelas privadas é intencional.
+- Os nomes locais das migrações foram alinhados às versões efetivamente registradas pelo Supabase MCP, evitando reaplicação em futuros deploys.
+- Pendências a cargo do usuário: publicar frontend no Lovable e executar validação autenticada de ponta a ponta. Aplicativos externos não foram alterados nesta implantação.
+
 ## Entrega por achado
 
 | Achado | Correção implementada |
@@ -27,17 +41,17 @@ Referência: relatório de 22/10/2026, revisão dee41ee. Implementação na bran
 ## Validação e limites
 
 - 29 testes de aplicação passaram (24 da suíte principal e 5 de entrada/assinatura), incluindo acesso de professor, troca de conta e novos contratos do aluno.
-- 10 verificações da migração SQL passaram em PostgreSQL isolado (PGlite): calibração vazia, ficha declarada, sequência com lacuna, feedback repetido, recompensa de protocolo repetida, isolamento de contas e hábitos com RLS.
+- 11 verificações da migração SQL passaram em PostgreSQL isolado (PGlite): calibração vazia, ficha declarada, sequência com lacuna, feedback repetido, recompensa de protocolo repetida, isolamento de contas e hábitos com RLS.
 - Typecheck e compilação do frontend passaram. O build informa avisos de tamanho do bundle e importação de html2canvas.
 - Esses testes usam esquema mínimo de teste. Não substituem aplicação da migração em homologação nem teste autenticado completo no navegador.
-- Nenhum dado de produção, pagamento, mensagem ou publicação foi alterado nesta implementação.
+- A implantação do backend em produção foi autorizada em 23/10/2026. Históricos, assinaturas, pagamentos e mensagens foram preservados; 37 sessões antigas receberam apenas recibos de preservação sem XP adicional.
 - A sincronização entre aplicativos externos não foi implementada nem comprovada: o app passa a apresentar esses destinos honestamente como acesso externo. SSO e contratos de troca de dados dependem de implementação nos dois sistemas.
 - O envio pelo Lovable foi impedido por falta de créditos; a entrega segue pelo repositório conectado.
 
 ## Instalação coordenada
 
-1. Aplicar em homologação a migração 20261023011100_student_audit_contracts_and_receipts.sql.
-2. Publicar a Edge Function ai-coach junto com o módulo compartilhado ronActionContract.
+1. Em outros ambientes, aplicar 20261023212315_student_audit_contracts_and_receipts.sql e 20261023212444_student_habit_account_policy.sql. Na produção indicada abaixo, ambas já foram aplicadas.
+2. Publicar a Edge Function ai-coach junto com o módulo compartilhado ronActionContract. Na produção indicada abaixo, versão 61 já publicada.
 3. Publicar o frontend desta revisão. Hábitos e novos recibos dependem da migração; frontend isolado terá erro recuperável nesses recursos.
 4. Conferir com duas contas: ficha salvar/reler, ação RON confirmar/reler, Move com falha e nova tentativa, hábito na mudança de data, treino/pós-treino repetido, protocolo repetido, notificações e retorno externo.
 5. Verificar os logs antes de liberar produção. Não ativar checkout apenas para testar.
