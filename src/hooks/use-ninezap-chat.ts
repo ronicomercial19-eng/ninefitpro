@@ -24,11 +24,8 @@ export function useZapThread(userId?: string, subject = "Atendimento FitPro") {
     retryDelay: 1200,
     queryFn: async () => {
       const externalKey = `fitpro:user:${userId!}`;
-      const existing = await invokeZap(`threads&external_key=${encodeURIComponent(externalKey)}`);
-      if (existing.error) throw existing.error;
-      const threads = (existing.data as { threads?: Array<{ id: string }> })?.threads ?? [];
-      if (threads[0]?.id) return threads[0].id;
-
+      // Contrato do Core: POST /threads abre OU reaproveita a conversa pelo
+      // external_key (idempotente). Não existe GET /threads?external_key (dava 404).
       const created = await invokeZap("threads.upsert", {
         method: "POST",
         body: { subject, external_key: externalKey, context: { user_id: userId }, participants: [] },
