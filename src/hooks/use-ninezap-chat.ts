@@ -10,8 +10,10 @@ export type ZapMessage = {
   external_id?: string | null;
 };
 
+// supabase.functions.invoke usa POST por padrão; o zap-proxy exige GET em
+// action=threads e action=messages.list (senão responde 400 "unknown action").
 const invokeZap = (action: string, options?: Parameters<typeof supabase.functions.invoke>[1]) =>
-  supabase.functions.invoke(`zap-proxy?action=${action}`, options);
+  supabase.functions.invoke(`zap-proxy?action=${action}`, { method: "GET", ...options });
 
 export function useZapThread(userId?: string, subject = "Atendimento FitPro") {
   return useQuery({
