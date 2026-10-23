@@ -88,13 +88,9 @@ export async function persistAcceptedAdjustment(
   userId: string,
   adjustment: AdaptiveAdjustment,
 ) {
-  try {
-    await supabase.from("ai_context_snapshots" as any).insert({
+    const { error } = await supabase.from("ai_context_snapshots").insert({
       user_id: userId,
-      snapshot_type: "training_adjustment",
-      payload: adjustment as any,
+      context: { type: 'training_adjustment', adjustment } as any,
     });
-  } catch (e) {
-    console.warn("[trainingAgent] snapshot persist skipped", e);
-  }
+    if (error) throw error;
 }

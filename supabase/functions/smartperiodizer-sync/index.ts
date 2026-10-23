@@ -1,5 +1,6 @@
 // SmartPeriodizer sync — busca o plano via api_connectors.smart_periodizer e cacheia em periodization_plans_remote
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { normalizeRemotePlanning } from '../_shared/planningContract.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,7 +20,7 @@ Deno.serve(async (req) => {
   const sbUser = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: auth } } });
   const { data: claims } = await sbUser.auth.getClaims(auth.replace("Bearer ", ""));
-  if (!claims?.claims) return json(401, { error: "unauthorized" });
+  if (!claims?.claims?.sub || claims.claims.is_anonymous === true) return json(401, { error: "unauthorized" });
 
   const body = await req.json().catch(() => ({}));
   const athleteId = body.athlete_id as string | undefined;
@@ -36,32 +37,43 @@ Deno.serve(async (req) => {
   if (conn?.status !== "active" || !conn.endpoint) {
     return json(400, { error: "SmartPeriodizer não conectado. Configure em Admin → SmartPeriodizer." });
   }
+  // The configured FitPro API can be this very project. Its annual plans are
+  // already canonical: never copy a derived snapshot back as a newer remote plan.
+  const endpoint = conn.endpoint.replace(/\/$/, '');
+  if (endpoint === `${Deno.env.get('SUPABASE_URL')}/functions/v1/fitpro-api`) {
+    const { data: local, error: localError } = await sbUser.from('vw_athlete_periodizacao_ativa')
+      .select('plan_id,source').eq('athlete_id', athleteId).maybeSingle();
+    if (localError) return json(502, { error: 'Não foi possível reler o planejamento' });
+    if (!local?.plan_id) return json(404, { error: 'Nenhum planejamento ativo atribuído pela equipe' });
+    return json(200, { ok: true, verified: true, plan_id: local.plan_id, mode: 'canonical_refresh' });
+  }
   const partnerKey = conn.secret_ref ? Deno.env.get(conn.secret_ref) : null;
   if (!partnerKey) return json(503, { error: "SmartPeriodizer secret is not configured" });
 
   try {
-    const r = await fetch(`${conn.endpoint.replace(/\/$/, "")}/plan?athlete=${athleteId}`, {
-      headers: { "Authorization": `Bearer ${partnerKey}` },
+    const r = await fetch(`${endpoint}/v1/fitpro/planejamento?fitpro_student_id=${encodeURIComponent(athleteId)}`, {
+      headers: { "x-api-key": partnerKey }, signal: AbortSignal.timeout(20000),
     });
     if (!r.ok) {
       return json(502, { error: `SmartPeriodizer respondeu ${r.status}` });
     }
-    const plan = await r.json();
-    const waves = Array.isArray(plan.waves) ? plan.waves : Array.isArray(plan.cycles) ? plan.cycles : [];
-    const { error: saveError } = await admin.from("periodization_plans_remote").upsert({
+    const plan = normalizeRemotePlanning(await r.json());
+    const { data: saved, error: saveError } = await admin.from("periodization_plans_remote").upsert({
       athlete_id: athleteId,
-      external_plan_id: String(plan.id ?? plan.plan_id ?? "default"),
-      plan_name: plan.name ?? plan.title ?? "Plano SmartPeriodizer",
-      total_weeks: plan.total_weeks ?? plan.weeks ?? waves.length,
-      current_week: plan.current_week ?? 1,
-      waves,
-      raw_payload: plan,
-      status: plan.status ?? "active",
+      external_plan_id: plan.id,
+      plan_name: plan.name,
+      total_weeks: plan.weeks,
+      current_week: plan.current,
+      waves: plan.waves,
+      raw_payload: plan.payload,
+      status: 'active',
       last_synced_at: new Date().toISOString(),
-    }, { onConflict: "athlete_id,external_plan_id" });
+    }, { onConflict: "athlete_id,external_plan_id" }).select('id,last_synced_at').single();
     if (saveError) return json(502, { error: "Could not save remote plan" });
 
-    return json(200, { ok: true, waves: waves.length });
+    const { data: visible, error: visibleError } = await sbUser.from('vw_athlete_periodizacao_ativa').select('plan_id,source').eq('athlete_id',athleteId).maybeSingle();
+    if (visibleError || !saved || visible?.plan_id !== saved.id || visible?.source !== 'periodization_plans_remote') return json(409,{error:'Plano salvo, mas a leitura canônica não confirmou sua seleção. Recarregue ou solicite revisão.'});
+    return json(200, { ok: true, plan_id:saved.id, synced_at:saved.last_synced_at, verified:true });
   } catch (e) {
     return json(500, { error: String(e) });
   }

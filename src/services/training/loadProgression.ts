@@ -3,19 +3,22 @@ import { format, startOfWeek } from "date-fns";
 export interface ProgressionPoint { weekIndex: number; label: string; realPct: number | null; projectedPct: number; }
 export async function loadCarryProjection(athleteId: string, exerciseName = "Agachamento"): Promise<ProgressionPoint[]> {
   const { data, error } = await supabase.from("workout_exercise_sets")
-    .select("actual_weight, created_at, workout_executions!inner(athlete_id)")
+    .select("actual_weight, workout_executions!inner(athlete_id,workout_date)")
     .eq("workout_executions.athlete_id", athleteId).eq("completed", true).gt("actual_weight", 0)
-    .ilike("exercise_name", `%${exerciseName}%`).order("created_at", { ascending: false }).limit(1000);
+    .eq("exercise_name", exerciseName).order("created_at", { ascending: false }).limit(1000);
   if (error) throw error;
   const rows = [...(data || [])].reverse();
   if (!rows.length) return [];
   const buckets = new Map<number, number[]>();
   for (const row of rows) {
-    const week = startOfWeek(new Date(row.created_at), { weekStartsOn: 1 }).getTime();
+    const date = (row.workout_executions as unknown as {workout_date:string})?.workout_date;
+    if (!date || !Number.isFinite(Number(row.actual_weight))) continue;
+    const week = startOfWeek(new Date(`${date}T12:00:00`), { weekStartsOn: 1 }).getTime();
     const values = buckets.get(week) || [];
     values.push(Number(row.actual_weight)); buckets.set(week, values);
   }
   const weeks = [...buckets.keys()].sort((a,b) => a-b);
+  if (!weeks.length) return [];
   const baseline = Math.max(...buckets.get(weeks[0])!);
   const history = weeks.map(week => ({ week: Math.round((week-weeks[0])/604800000), pct: Math.max(...buckets.get(week)!)/baseline*100 }));
   const n=history.length, sx=history.reduce((s,p)=>s+p.week,0), sy=history.reduce((s,p)=>s+p.pct,0);

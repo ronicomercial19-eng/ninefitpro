@@ -48,7 +48,7 @@ export function MetasSection() {
   const [loadError,setLoadError]=useState(false);
   const [showNew, setShowNew] = useState(false);
   const [celebrating, setCelebrating] = useState<Meta | null>(null);
-  const [form, setForm] = useState({ titulo: "", metrica: "peso", valor_inicial: "", valor_meta: "", unidade: "kg" });
+  const [form, setForm] = useState({ titulo: "", metrica: "peso", exercicio: "", valor_inicial: "", valor_meta: "", unidade: "kg" });
 
   const load = useCallback(async () => {
     if (!athleteId) { setMetas([]); setLoading(false); return; }
@@ -71,6 +71,7 @@ export function MetasSection() {
       return;
     }
     if (saving) return;
+    if (form.metrica === 'carga' && !form.exercicio) return toast.error('Selecione o teste de força desta meta');
     const valorInicial = Number(form.valor_inicial.replace(",", "."));
     const valorMeta = Number(form.valor_meta.replace(",", "."));
     if (![valorInicial,valorMeta].every(Number.isFinite) || valorInicial < 0 || valorMeta <= 0 || valorInicial === valorMeta) return toast.error("Informe valores válidos e uma meta diferente do valor inicial");
@@ -79,6 +80,7 @@ export function MetasSection() {
       athlete_id: athleteId,
       titulo: form.titulo,
       metrica: form.metrica,
+      exercicio: form.metrica === 'carga' ? form.exercicio : null,
       valor_inicial: valorInicial,
       valor_atual: valorInicial,
       valor_meta: valorMeta,
@@ -89,7 +91,7 @@ export function MetasSection() {
     if (error) { toast.error("Erro ao criar meta", { description: error.message }); return; }
     window.dispatchEvent(new Event("9fit:sync_updated"));
     setShowNew(false);
-    setForm({ titulo: "", metrica: "peso", valor_inicial: "", valor_meta: "", unidade: "kg" });
+    setForm({ titulo: "", metrica: "peso", exercicio: "", valor_inicial: "", valor_meta: "", unidade: "kg" });
     load();
   };
 
@@ -203,12 +205,14 @@ export function MetasSection() {
                   className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm"
                 />
                 <input
-                  placeholder="Un." value={form.unidade}
+                  placeholder="Un." value={form.unidade} readOnly aria-label="Unidade da meta"
                   onChange={(e) => setForm((f) => ({ ...f, unidade: e.target.value }))}
                   className="w-16 rounded-lg bg-white/5 border border-white/10 px-2 py-2 text-sm"
                 />
               </div>
               <select aria-label="Tipo da meta" value={form.metrica} onChange={e => setForm(f => ({...f,metrica:e.target.value,unidade:e.target.value === "distancia" ? "km" : e.target.value === "gordura" ? "%" : "kg"}))} className="w-full bg-background border border-white/10 rounded p-2"><option value="peso">Peso corporal</option><option value="carga">Força / carga</option><option value="distancia">Corrida / distância</option><option value="gordura">Gordura corporal</option></select>
+              {form.metrica === 'carga' && <select aria-label="Teste de força da meta" value={form.exercicio} onChange={e => setForm(f => ({...f,exercicio:e.target.value}))} className="w-full bg-background border border-white/10 rounded p-2"><option value="">Selecione o teste</option><option value="supino">Supino · 1RM</option><option value="agachamento">Empurrar perna · 1RM</option><option value="puxada">Puxada / remada · 1RM</option></select>}
+              {form.metrica === 'distancia' && <p className="text-xs text-muted-foreground">Acompanhamento manual da distância, sem projeção automática de data.</p>}
               <button disabled={saving} onClick={createMeta} className="w-full rounded-full bg-primary text-primary-foreground py-3 font-bold">
                 Criar meta
               </button>

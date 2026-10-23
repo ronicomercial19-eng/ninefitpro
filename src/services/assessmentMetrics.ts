@@ -80,17 +80,21 @@ export function metricRecord(row:AssessmentRow,metric:Metric,history:AssessmentR
   const values=history.filter(r=>r.oficial && r.id!==row.id && assessmentOrder(r,row)<0 && compatibleMetric(row,r,metric.key) && ['CONFIRMADO','DERIVADO'].includes(trustFor(r,metric))).flatMap(r=>{const v=metricValue(r,metric.key);return v===null?[]:[v]});
   return values.length>0 && value>Math.max(...values);
 }
-export function goalHistory(goal:HubGoal,rows:AssessmentRow[]) {
+export function goalMetric(goal:Pick<HubGoal,'metrica'|'exercicio'|'unidade'>) {
   const norm=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const aliases:Record<string,string>={supino:'rm1_empurrar_superior',agachamento:'rm1_empurrar_perna',puxada:'rm1_puxar_costas',gordura:'gordura_corporal',peso:'peso'};
   const label=norm(`${goal.metrica} ${goal.exercicio||''}`);
   const metric=assessmentMetrics.find(m=>m.key===goal.metrica)??assessmentMetrics.find(m=>m.key===Object.entries(aliases).find(([word])=>label.includes(word))?.[1]);
+  return metric?.unit === goal.unidade ? metric : null;
+}
+export function goalHistory(goal:HubGoal,rows:AssessmentRow[]) {
+  const metric=goalMetric(goal);
   const daily=new Map<string,number>();
-  if(!metric || metric.unit !== goal.unidade) return [];
+  if(!metric) return [];
   const eligible=rows.filter(r=>r.oficial && !isSelf(r) && ['CONFIRMADO','DERIVADO'].includes(trustFor(r,metric)) && metricValue(r,metric.key)!==null).sort((a,b)=>a.data_avaliacao.localeCompare(b.data_avaliacao));
   const latest=eligible.at(-1);
   if(!latest) return [];
-  eligible.filter(r=>extra(r).protocolo===extra(latest).protocolo && (metric.key!=='gordura_corporal' || extra(r).metodo_gordura_score===extra(latest).metodo_gordura_score)).forEach(r=>{daily.set(r.data_avaliacao.slice(0,10),metricValue(r,metric.key)!)});
+  eligible.filter(r=>compatibleMetric(r,latest,metric.key)).forEach(r=>{daily.set(r.data_avaliacao.slice(0,10),metricValue(r,metric.key)!)});
   return [...daily].sort(([a],[b])=>a.localeCompare(b)).map(([date,value])=>({date,value}));
 }
 export function goalProjection(goal:HubGoal,rows:AssessmentRow[]) {

@@ -1,10 +1,11 @@
 import React from 'react';
 import { Target } from 'lucide-react';
 import type { AssessmentRow, HubGoal } from '@/services/assessmentHubService';
-import { fmt, fullDate, goalHistory, goalProjection } from '@/services/assessmentMetrics';
+import { fmt, fullDate, goalHistory, goalProjection, goalMetric } from '@/services/assessmentMetrics';
 
 export function AssessmentGoalCard({ goal, rows, onReassessment }: { goal: HubGoal; rows: AssessmentRow[]; onReassessment: () => void }) {
   const projection = goalProjection(goal, rows);
+  const projectionAvailable = !!goalMetric(goal);
   const points = goalHistory(goal, rows);
   const values = points.map(p => p.value);
   const low = Math.min(...values, goal.valor_meta), high = Math.max(...values, goal.valor_meta);
@@ -29,11 +30,11 @@ export function AssessmentGoalCard({ goal, rows, onReassessment }: { goal: HubGo
         <polyline points={`${point(points.at(-1)!.value,points.length-1)} 306,${78 - (goal.valor_meta - low) / Math.max(1, high - low) * 60}`} fill="none" stroke="var(--aw-muted)" strokeWidth="2" strokeDasharray="4 6"/>
         <text x="306" y="96" textAnchor="end" fill="var(--aw-muted)" fontSize="10">Meta · {fmt(goal.valor_meta)} {goal.unidade}</text>
       </svg>}
-      <div className="aw-projection-count" aria-label={`${Math.min(projection.count, 4)} de 4 avaliações necessárias`}>
+      {projectionAvailable && <div className="aw-projection-count" aria-label={`${Math.min(projection.count, 4)} de 4 avaliações necessárias`}>
         {[0, 1, 2, 3].map(i => <span key={i} className={projection.count > i ? 'complete' : ''} />)}
         <p>{Math.min(projection.count, 4)} de 4 avaliações necessárias</p>
-      </div>
-      {projection.estimate ? <><span className="aw-trust aw-trust-estimado">Estimado</span><p className="aw-projection-date">{fullDate(projection.estimate.date)}</p><p>Faixa estimada: {fullDate(projection.estimate.from)} a {fullDate(projection.estimate.to)}.</p><p className="aw-muted">Tendência das avaliações oficiais do mesmo teste. A faixa expressa a incerteza; a data não é uma garantia.</p></> : <p className="aw-muted">{projection.count < 4 ? 'A data provável aparece a partir de quatro avaliações oficiais do mesmo teste, com faixa de incerteza e selo Estimado.' : 'Ainda não há tendência consistente em direção à meta para estimar uma data.'}</p>}
+      </div>}
+      {!projectionAvailable ? <p className="aw-muted">Acompanhamento manual. Sem fonte compatível para projeção automática de data.</p> : projection.estimate ? <><span className="aw-trust aw-trust-estimado">Estimado</span><p className="aw-projection-date">{fullDate(projection.estimate.date)}</p><p>Faixa estimada: {fullDate(projection.estimate.from)} a {fullDate(projection.estimate.to)}.</p><p className="aw-muted">Tendência das avaliações oficiais do mesmo teste. A faixa expressa a incerteza; a data não é uma garantia.</p></> : <p className="aw-muted">{projection.count < 4 ? 'A data provável aparece a partir de quatro avaliações oficiais do mesmo teste, com faixa de incerteza e selo Estimado.' : 'Ainda não há tendência consistente em direção à meta para estimar uma data.'}</p>}
     </div>
     <button type="button" className="aw-button" onClick={onReassessment}>Ver próxima reavaliação</button>
   </section>;

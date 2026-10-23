@@ -10,7 +10,6 @@ import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutOfTheDay } from "@/hooks/useWorkoutOfTheDay";
 import { useActivationProgress } from "@/hooks/useActivationProgress";
 import { loadCarryProjection, type ProgressionPoint } from "@/services/training/loadProgression";
-import { smartPeriodizerRequest } from "@/services/smartperiodizer.service";
 import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from '@/services/dailyContextRules';
 import { planningTopic } from '@/services/planningModel';
@@ -42,17 +41,14 @@ export default function NineFitPlanejamento() {
     setSyncing(true);
     setSyncError(null);
     try {
-      await smartPeriodizerRequest({
-        path: "/v1/fitpro/planejamento/sync",
-        method: "POST",
-        payload: { fitpro_student_id: athleteId },
-      });
+      const { data, error } = await supabase.functions.invoke('smartperiodizer-sync', { body: { athlete_id: athleteId } });
+      if (error || data?.ok !== true || data?.verified !== true || !data?.plan_id) throw error || new Error(data?.error || 'A sincronização não confirmou o plano salvo');
       setReloadKey((k) => k + 1);
+      toast.success(data.mode === 'canonical_refresh' ? 'Planejamento atualizado com os dados da equipe' : 'Plano sincronizado e confirmado no app');
     } catch (error: any) {
       console.error("[Planejamento] syncNow:", error);
-      const { error: fallbackError } = await supabase.functions.invoke("smartperiodizer-sync", { body: { athlete_id: athleteId } });
-      if (fallbackError) setSyncError(`Não foi possível sincronizar a periodização: ${error?.message || "erro desconhecido"}`);
-      else setReloadKey((k) => k + 1);
+      setReloadKey(k => k + 1);
+      setSyncError(`Não foi possível confirmar a sincronização. Confira o plano recarregado antes de continuar. ${error?.message || ''}`);
     } finally {
       setSyncing(false);
     }

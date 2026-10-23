@@ -281,7 +281,10 @@ export default function NineFitAjusteTreino() {
       }
       setDirty({});
       setPublished(true);
-      if (applied) await recordAcceptedAdjustment();
+      if (applied) {
+        try { await recordAcceptedAdjustment(); }
+        catch { toast.warning('Treino salvo. Não foi possível registrar o contexto complementar do ajuste.'); }
+      }
       setApplied(false);
       setWorkoutUpdatedAt((data as any)?.updated_at ?? workoutUpdatedAt);
       window.dispatchEvent(new Event("9fit:workout-updated"));
