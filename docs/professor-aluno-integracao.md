@@ -35,6 +35,7 @@ Fontes publicadas conferidas com os arquivos locais. Autenticação interna pres
 ## Validação executada
 
 - TypeScript e build de produção aprovados. Build mantém avisos de tamanho de bundle e importação de html2canvas.
+- Lock npm sincronizado com os três pacotes Capacitor já declarados no projeto. Verificações estáticas legadas atualizadas para o hub de avaliações, feedback transacional e calendário de histórico atuais; cenários não foram desativados. Suítes adicionais de primeiro acesso/login/protocolos (16 testes), fase 2, Macro 02, QA Master, Macro 03 e integração 19 (3 testes) aprovadas localmente.
 - 34 testes Node aprovados, incluindo seleção, identidade, contratos de IA e contagem de pessoas.
 - 11 testes PostgreSQL/PGlite da entrega anterior do aluno aprovados.
 - 26 verificações SQL aprovadas antes e depois da publicação: escopo, autorização, anonimato, publicação, ciclo, mensagens, créditos, agenda, arquivos privados, postura, ajustes e histórico de IA. Fixtures sintéticas executadas em transação com ROLLBACK; nenhuma mensagem real enviada.
