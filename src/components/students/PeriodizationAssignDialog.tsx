@@ -1,6 +1,11 @@
-import { localDate } from '@/lib/assignedProtocols';
+import { localDate } from "@/lib/assignedProtocols";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +31,13 @@ interface PeriodizationModel {
   duration?: string;
 }
 
-export function PeriodizationAssignDialog({ open, onOpenChange, studentId, studentName, onSuccess }: Props) {
+export function PeriodizationAssignDialog({
+  open,
+  onOpenChange,
+  studentId,
+  studentName,
+  onSuccess,
+}: Props) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -82,20 +93,28 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
       const { data: session } = await supabase.auth.getSession();
       const coachId = session.session?.user?.id || "";
       const path = `${studentId}/${Date.now()}-${pdfFile.name}`;
-      const { error: upErr } = await supabase.storage.from("plans-pdfs").upload(path, pdfFile);
+      const { error: upErr } = await supabase.storage
+        .from("plans-pdfs")
+        .upload(path, pdfFile);
       if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage.from("plans-pdfs").getPublicUrl(path);
-      const { error } = await supabase.from("student_training_assignments").insert(
-        baseInsert({
-          created_by: coachId,
-          content_type: "pdf",
-          periodization_file_url: urlData.publicUrl,
-          training_data: { source: "periodization_pdf", file_path: path },
-        }) as any
-      );
+
+      const { error } = await supabase
+        .from("student_training_assignments")
+        .insert(
+          baseInsert({
+            created_by: coachId,
+            content_type: "pdf",
+            periodization_file_url: path,
+            training_data: { source: "periodization_pdf", file_path: path },
+          }) as any,
+        );
       if (error) throw error;
       toast.success("Periodização (PDF) atribuída!");
-      mirrorEvent("periodization_assigned", { athlete_id: studentId, content_type: "pdf" }, studentId);
+      mirrorEvent(
+        "periodization_assigned",
+        { athlete_id: studentId, content_type: "pdf" },
+        studentId,
+      );
       reset();
       onSuccess();
       onOpenChange(false);
@@ -113,17 +132,23 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
     try {
       const { data: session } = await supabase.auth.getSession();
       const coachId = session.session?.user?.id || "";
-      const { error } = await supabase.from("student_training_assignments").insert(
-        baseInsert({
-          created_by: coachId,
-          content_type: "html",
-          periodization_html: htmlContent,
-          training_data: { source: "periodization_html" },
-        }) as any
-      );
+      const { error } = await supabase
+        .from("student_training_assignments")
+        .insert(
+          baseInsert({
+            created_by: coachId,
+            content_type: "html",
+            periodization_html: htmlContent,
+            training_data: { source: "periodization_html" },
+          }) as any,
+        );
       if (error) throw error;
       toast.success("Periodização (HTML) atribuída!");
-      mirrorEvent("periodization_assigned", { athlete_id: studentId, content_type: "html" }, studentId);
+      mirrorEvent(
+        "periodization_assigned",
+        { athlete_id: studentId, content_type: "html" },
+        studentId,
+      );
       reset();
       onSuccess();
       onOpenChange(false);
@@ -141,23 +166,33 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
       const model = models.find((m) => m.id === selectedModel);
       const { data: session } = await supabase.auth.getSession();
       const coachId = session.session?.user?.id || "";
-      const { error } = await supabase.from("student_training_assignments").insert(
-        baseInsert({
-          created_by: coachId,
-          training_name: name.trim() || model?.title || "Periodização",
-          content_type: "model",
-          training_data: {
-            source: "periodization_model",
-            model_id: selectedModel,
-            model_title: model?.title,
-            goal: model?.goal,
-            duration: model?.duration,
-          },
-        }) as any
-      );
+      const { error } = await supabase
+        .from("student_training_assignments")
+        .insert(
+          baseInsert({
+            created_by: coachId,
+            training_name: name.trim() || model?.title || "Periodização",
+            content_type: "model",
+            training_data: {
+              source: "periodization_model",
+              model_id: selectedModel,
+              model_title: model?.title,
+              goal: model?.goal,
+              duration: model?.duration,
+            },
+          }) as any,
+        );
       if (error) throw error;
       toast.success("Periodização atribuída a partir de modelo!");
-      mirrorEvent("periodization_assigned", { athlete_id: studentId, content_type: "model", model_id: selectedModel }, studentId);
+      mirrorEvent(
+        "periodization_assigned",
+        {
+          athlete_id: studentId,
+          content_type: "model",
+          model_id: selectedModel,
+        },
+        studentId,
+      );
       reset();
       onSuccess();
       onOpenChange(false);
@@ -178,26 +213,59 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
         <div className="space-y-3 mb-4">
           <div>
             <Label>Nome da Periodização *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Periodização Hipertrofia 12 sem." />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Periodização Hipertrofia 12 sem."
+            />
           </div>
           <div>
             <Label>Descrição</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
           </div>
         </div>
 
         <Tabs defaultValue="pdf">
           <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="pdf"><Upload className="w-4 h-4 mr-2" />PDF</TabsTrigger>
-            <TabsTrigger value="html"><Code2 className="w-4 h-4 mr-2" />HTML</TabsTrigger>
-            <TabsTrigger value="model"><BookOpen className="w-4 h-4 mr-2" />Modelo</TabsTrigger>
+            <TabsTrigger value="pdf">
+              <Upload className="w-4 h-4 mr-2" />
+              PDF
+            </TabsTrigger>
+            <TabsTrigger value="html">
+              <Code2 className="w-4 h-4 mr-2" />
+              HTML
+            </TabsTrigger>
+            <TabsTrigger value="model">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Modelo
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pdf" className="space-y-4 pt-4">
-            <Input type="file" accept="application/pdf" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} />
-            {pdfFile && <p className="text-xs text-muted-foreground">{pdfFile.name} ({(pdfFile.size / 1024).toFixed(0)} KB)</p>}
-            <Button onClick={handlePdfUpload} disabled={saving || !pdfFile} className="w-full">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+            <Input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+            />
+            {pdfFile && (
+              <p className="text-xs text-muted-foreground">
+                {pdfFile.name} ({(pdfFile.size / 1024).toFixed(0)} KB)
+              </p>
+            )}
+            <Button
+              onClick={handlePdfUpload}
+              disabled={saving || !pdfFile}
+              className="w-full"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
               Enviar PDF e Atribuir
             </Button>
           </TabsContent>
@@ -210,17 +278,29 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
               rows={10}
               className="font-mono text-xs"
             />
-            <Button onClick={handleHtmlSave} disabled={saving || !htmlContent.trim()} className="w-full">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Code2 className="w-4 h-4 mr-2" />}
+            <Button
+              onClick={handleHtmlSave}
+              disabled={saving || !htmlContent.trim()}
+              className="w-full"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Code2 className="w-4 h-4 mr-2" />
+              )}
               Salvar HTML e Atribuir
             </Button>
           </TabsContent>
 
           <TabsContent value="model" className="space-y-4 pt-4">
             {loadingModels ? (
-              <p className="text-center text-muted-foreground py-4">Carregando modelos...</p>
+              <p className="text-center text-muted-foreground py-4">
+                Carregando modelos...
+              </p>
             ) : models.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">Nenhum modelo cadastrado.</p>
+              <p className="text-center text-muted-foreground py-4">
+                Nenhum modelo cadastrado.
+              </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {models.map((m) => (
@@ -228,7 +308,9 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
                     key={m.id}
                     onClick={() => setSelectedModel(m.id)}
                     className={`w-full text-left p-3 border rounded-md transition-colors ${
-                      selectedModel === m.id ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                      selectedModel === m.id
+                        ? "border-primary bg-primary/5"
+                        : "hover:bg-muted/50"
                     }`}
                   >
                     <p className="font-medium text-sm">{m.title}</p>
@@ -240,8 +322,16 @@ export function PeriodizationAssignDialog({ open, onOpenChange, studentId, stude
                 ))}
               </div>
             )}
-            <Button onClick={handleModelAssign} disabled={saving || !selectedModel} className="w-full">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <BookOpen className="w-4 h-4 mr-2" />}
+            <Button
+              onClick={handleModelAssign}
+              disabled={saving || !selectedModel}
+              className="w-full"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <BookOpen className="w-4 h-4 mr-2" />
+              )}
               Atribuir Modelo
             </Button>
           </TabsContent>

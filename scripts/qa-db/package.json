@@ -1,1 +1,1 @@
-{"name":"qa-aluno-isolado","private":true,"type":"module","dependencies":{"@electric-sql/pglite":"0.5.11"}}
+{"name":"qa-aluno-isolado","private":true,"type":"module","dependencies":{"@electric-sql/pglite":"0.5.11"},"devDependencies":{"playwright":"1.64.1"}}

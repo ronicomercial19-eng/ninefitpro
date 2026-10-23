@@ -1,16 +1,29 @@
-import { useState, useEffect } from 'react';
+import { CoachStudentPanel } from "./CoachStudentPanel";
+import { useNavigate } from "react-router-dom";
+import { withAthlete } from "@/lib/professorWorkspace";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { 
-  User, 
-  Dumbbell, 
-  Activity, 
-  Ruler, 
-  ClipboardList, 
-  Camera, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  User,
+  Dumbbell,
+  Activity,
+  Ruler,
+  ClipboardList,
+  Camera,
   CreditCard,
   ArrowLeft,
   Mail,
@@ -23,7 +36,7 @@ import {
   Send,
   Utensils,
   Trash2,
-  KeyRound
+  KeyRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,7 +48,10 @@ import { StudentAnamnesis } from "./tabs/StudentAnamnesis";
 import { StudentPhotos } from "./tabs/StudentPhotos";
 import { StudentPayments } from "./tabs/StudentPayments";
 import { StudentDiet } from "./tabs/StudentDiet";
-import { loadCoachStudentsPerformance, type CoachStudentPerformance } from "@/integrations/coachStudentPerformance";
+import {
+  loadCoachStudentsPerformance,
+  type CoachStudentPerformance,
+} from "@/integrations/coachStudentPerformance";
 
 interface Student {
   id: string;
@@ -69,16 +85,27 @@ interface StudentDetailedViewProps {
   onStudentDeleted?: () => void;
 }
 
-export function StudentDetailedView({ student, onBack, onStudentUpdated, onStudentDeleted }: StudentDetailedViewProps) {
+export function StudentDetailedView({
+  student,
+  onBack,
+  onStudentUpdated,
+  onStudentDeleted,
+}: StudentDetailedViewProps) {
+  const navigate = useNavigate();
   const [currentStudent, setCurrentStudent] = useState<Student>(student);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
-  const [performance, setPerformance] = useState<CoachStudentPerformance | null>(null);
+  const [performance, setPerformance] =
+    useState<CoachStudentPerformance | null>(null);
 
   useEffect(() => {
     loadCoachStudentsPerformance()
-      .then((rows) => setPerformance(rows.find((row) => row.athlete_id === student.id) ?? null))
+      .then((rows) =>
+        setPerformance(
+          rows.find((row) => row.athlete_id === student.id) ?? null,
+        ),
+      )
       .catch((error) => console.warn("Performance summary unavailable", error));
   }, [student.id]);
 
@@ -88,27 +115,30 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
     const birth = new Date(birthDate);
     const age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
       return age - 1;
     }
     return age;
   };
 
-  const getStatusBadge = (status: string = 'em_dia') => {
+  const getStatusBadge = (status?: string) => {
+    if (!status)
+      return <Badge variant="outline">Pagamento não verificado</Badge>;
     const statusConfig = {
-      'em_dia': { color: 'bg-green-100 text-green-800', text: 'Em Dia' },
-      'atrasado': { color: 'bg-red-100 text-red-800', text: 'Atrasado' },
-      'suspenso': { color: 'bg-yellow-100 text-yellow-800', text: 'Suspenso' }
+      em_dia: { color: "bg-green-100 text-green-800", text: "Em Dia" },
+      atrasado: { color: "bg-red-100 text-red-800", text: "Atrasado" },
+      suspenso: { color: "bg-yellow-100 text-yellow-800", text: "Suspenso" },
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['em_dia'];
-    
-    return (
-      <Badge className={config.color}>
-        {config.text}
-      </Badge>
-    );
+
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig["em_dia"];
+
+    return <Badge className={config.color}>{config.text}</Badge>;
   };
 
   const handleStudentUpdate = (updatedData: Partial<Student>) => {
@@ -121,77 +151,41 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
     setDeleting(true);
     try {
       const { error } = await supabase
-        .from('athletes')
+        .from("athletes")
         .delete()
-        .eq('id', currentStudent.id);
+        .eq("id", currentStudent.id);
 
       if (error) throw error;
-      toast.success('Aluno excluído com sucesso');
+      toast.success("Aluno excluído com sucesso");
       onStudentDeleted?.();
     } catch (error: any) {
-      toast.error('Erro ao excluir aluno: ' + error.message);
+      toast.error("Erro ao excluir aluno: " + error.message);
     } finally {
       setDeleting(false);
     }
   };
 
   const handleResetPassword = async () => {
-    setResettingPassword(true);
-    const newTempPassword = generateTempPassword();
-    try {
-      // Update athlete record with new temp password
-      const { error } = await supabase
-        .from('athletes')
-        .update({ 
-          password_changed: false 
-        })
-        .eq('id', currentStudent.id);
-
-      if (error) throw error;
-
-      // Try to reset via edge function
-      try {
-        const session = await supabase.auth.getSession();
-        await fetch(
-          `https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/create-athlete-user`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.data.session?.access_token}`,
-            },
-            body: JSON.stringify({
-              athleteId: currentStudent.id,
-              email: currentStudent.email,
-              password: newTempPassword,
-              name: currentStudent.nome,
-            }),
-          }
-        );
-      } catch (e) {
-        console.warn('Edge function call failed, password updated in DB only');
-      }
-
-      // Clear localStorage for this user so they go through first-access again
-      toast.success(`Senha resetada! Nova senha temporária: ${newTempPassword}`);
-    } catch (error: any) {
-      toast.error('Erro ao resetar senha: ' + error.message);
-    } finally {
-      setResettingPassword(false);
-    }
+    if (resettingPassword) return;
+    navigate("/forgot-password");
+    toast.info(
+      "A recuperação deve ser solicitada pelo aluno com seu e-mail. A senha atual foi preservada.",
+    );
   };
 
   // Generate cryptographically secure temporary password (12 chars, mixed alphanumeric)
   const generateTempPassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
     const bytes = crypto.getRandomValues(new Uint8Array(12));
-    return Array.from(bytes).map((b) => chars[b % chars.length]).join('');
+    return Array.from(bytes)
+      .map((b) => chars[b % chars.length])
+      .join("");
   };
 
   const handleSendWhatsAppRegistration = async () => {
     const phone = currentStudent.telefone || currentStudent.whatsapp;
     if (!phone) {
-      toast.error('Aluno não possui telefone cadastrado');
+      toast.error("Aluno não possui telefone cadastrado");
       return;
     }
 
@@ -203,10 +197,10 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
       const response = await fetch(
         `https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/create-athlete-user`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           },
           body: JSON.stringify({
             athleteId: currentStudent.id,
@@ -214,22 +208,28 @@ export function StudentDetailedView({ student, onBack, onStudentUpdated, onStude
             password: tempPassword,
             name: currentStudent.nome,
           }),
-        }
+        },
       );
 
       const result = await response.json();
-      
-      if (!result.success) {
-        console.error('Error creating user:', result.error);
-        // Continue with WhatsApp even if user creation fails (might already exist)
-      }
+
+      if (!response.ok || !result.success)
+        throw new Error(
+          result.error?.message ||
+            result.error ||
+            "Não foi possível confirmar o acesso.",
+        );
     } catch (error) {
-      console.error('Error calling edge function:', error);
+      toast.error(
+        error instanceof Error ? error.message : "Falha ao criar o acesso.",
+      );
+      setLoading(false);
+      return;
     }
 
-    const cleanPhone = phone.replace(/\D/g, '');
+    const cleanPhone = phone.replace(/\D/g, "");
     const appUrl = `${window.location.origin}/9fit/login`;
-    
+
     const message = `🏋️ *Bem-vindo ao 9FIT PRO!*
 
 Olá ${currentStudent.nome}! 👋
@@ -242,7 +242,7 @@ Seu cadastro foi realizado com sucesso! 🎉
 
 *Dados do seu perfil:*
 🎯 Objetivo: ${currentStudent.objetivo}
-${currentStudent.nivel_experiencia ? `💪 Nível: ${currentStudent.nivel_experiencia}` : ''}
+${currentStudent.nivel_experiencia ? `💪 Nível: ${currentStudent.nivel_experiencia}` : ""}
 
 📱 *Acesse o app pelo link:*
 ${appUrl}
@@ -252,21 +252,23 @@ ${appUrl}
 Bons treinos! 💪🔥`;
 
     const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    toast.success('Usuário criado e redirecionando para WhatsApp...');
+    window.open(whatsappUrl, "_blank");
+    toast.info(
+      "Acesso confirmado. Revise a mensagem no WhatsApp antes de enviar.",
+    );
     setLoading(false);
   };
 
   const handleSendNewTrainingNotification = () => {
     const phone = currentStudent.telefone || currentStudent.whatsapp;
     if (!phone) {
-      toast.error('Aluno não possui telefone cadastrado');
+      toast.error("Aluno não possui telefone cadastrado");
       return;
     }
 
-    const cleanPhone = phone.replace(/\D/g, '');
+    const cleanPhone = phone.replace(/\D/g, "");
     const appUrl = `${window.location.origin}/9fit/train`;
-    
+
     const message = `🆕 *Novo Treino Disponível!*
 
 Olá ${currentStudent.nome}! 👋
@@ -281,19 +283,17 @@ Não esqueça de conferir e começar a treinar! 💪🔥
 Bons treinos! 🎯`;
 
     const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    toast.success('Notificação enviada via WhatsApp!');
+    window.open(whatsappUrl, "_blank");
+    toast.info(
+      "WhatsApp aberto com rascunho. O envio depende da sua confirmação.",
+    );
   };
 
   return (
     <div className="space-y-6">
       {/* Header com informações básicas */}
       <div className="flex items-start justify-between">
-        <Button 
-          variant="outline" 
-          onClick={onBack}
-          className="mb-4"
-        >
+        <Button variant="outline" onClick={onBack} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar para Lista
         </Button>
@@ -302,11 +302,38 @@ Bons treinos! 🎯`;
       {performance && (
         <Card>
           <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4">
-            <div><p className="text-xs text-muted-foreground">Sync Score</p><p className="text-xl font-semibold">{performance.sync_score ?? "—"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Plano</p><p className="text-sm font-medium truncate">{performance.plan_title ?? "Sem plano"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Fase</p><p className="text-sm font-medium">{performance.current_phase ?? "—"}</p></div>
-            <div><p className="text-xs text-muted-foreground">Treinos concluídos</p><p className="text-xl font-semibold">{performance.completed_workouts ?? 0}</p></div>
-            <div><p className="text-xs text-muted-foreground">RPE médio</p><p className="text-xl font-semibold">{performance.avg_rpe ?? "—"}</p></div>
+            <div>
+              <p className="text-xs text-muted-foreground">Sync Score</p>
+              <p className="text-xl font-semibold">
+                {performance.sync_score ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Plano</p>
+              <p className="text-sm font-medium truncate">
+                {performance.plan_title ?? "Sem plano"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Fase</p>
+              <p className="text-sm font-medium">
+                {performance.current_phase ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Treinos concluídos
+              </p>
+              <p className="text-xl font-semibold">
+                {performance.completed_workouts ?? 0}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">RPE médio</p>
+              <p className="text-xl font-semibold">
+                {performance.avg_rpe ?? "—"}
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -318,8 +345,8 @@ Bons treinos! 🎯`;
             {/* Avatar */}
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
               {currentStudent.foto_url ? (
-                <img 
-                  src={currentStudent.foto_url} 
+                <img
+                  src={currentStudent.foto_url}
                   alt={currentStudent.nome}
                   className="w-full h-full object-cover"
                 />
@@ -332,8 +359,14 @@ Bons treinos! 🎯`;
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-bold">{currentStudent.nome}</h1>
-                <Badge className={currentStudent.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                  {currentStudent.ativo ? 'Ativo' : 'Inativo'}
+                <Badge
+                  className={
+                    currentStudent.ativo
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }
+                >
+                  {currentStudent.ativo ? "Ativo" : "Inativo"}
                 </Badge>
                 {getStatusBadge(currentStudent.status_pagamento)}
               </div>
@@ -343,18 +376,20 @@ Bons treinos! 🎯`;
                   <Mail className="w-4 h-4 text-gray-400" />
                   <span>{currentStudent.email}</span>
                 </div>
-                
+
                 {currentStudent.telefone && (
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-gray-400" />
                     <span>{currentStudent.telefone}</span>
                   </div>
                 )}
-                
+
                 {currentStudent.data_nascimento && (
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    <span>{calculateAge(currentStudent.data_nascimento)} anos</span>
+                    <span>
+                      {calculateAge(currentStudent.data_nascimento)} anos
+                    </span>
                   </div>
                 )}
 
@@ -381,8 +416,8 @@ Bons treinos! 🎯`;
 
             {/* Quick actions */}
             <div className="flex flex-col gap-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={handleSendWhatsAppRegistration}
                 className="bg-green-500 hover:bg-green-600 text-white border-green-500"
@@ -390,8 +425,8 @@ Bons treinos! 🎯`;
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Enviar Cadastro
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={handleSendNewTrainingNotification}
                 className="bg-neon-400 hover:bg-neon-400/90 text-black border-neon-400"
@@ -399,77 +434,120 @@ Bons treinos! 🎯`;
                 <Bell className="w-4 h-4 mr-2" />
                 Notificar Treino
               </Button>
-              <Button size="sm" variant="outline">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  document.getElementById("student-personal-tab")?.click()
+                }
+              >
                 Editar Perfil
               </Button>
-              <Button size="sm" variant="outline">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  navigate(withAthlete("/app/agenda", currentStudent.id))
+                }
+              >
                 Agendar Aula
               </Button>
-              
+
               {/* Reset Password */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                  >
                     <KeyRound className="w-4 h-4 mr-2" />
-                    Resetar Senha
+                    Recuperar acesso
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Resetar senha do aluno?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Orientar recuperação de acesso?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Uma nova senha temporária será gerada para {currentStudent.nome}. O aluno precisará alterá-la no próximo acesso.
+                      A recuperação será solicitada pelo aluno com seu e-mail.
+                      Nenhuma senha será alterada por esta tela.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetPassword} disabled={resettingPassword}>
-                      {resettingPassword ? 'Resetando...' : 'Confirmar Reset'}
+                    <AlertDialogAction
+                      onClick={handleResetPassword}
+                      disabled={resettingPassword}
+                    >
+                      Abrir orientação de recuperação
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
 
               {/* Toggle Active/Inactive */}
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
-                className={currentStudent.ativo 
-                  ? "border-amber-500/50 text-amber-500 hover:bg-amber-500/10" 
-                  : "border-green-500/50 text-green-500 hover:bg-green-500/10"
+                className={
+                  currentStudent.ativo
+                    ? "border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                    : "border-green-500/50 text-green-500 hover:bg-green-500/10"
                 }
                 onClick={async () => {
                   try {
                     const newStatus = !currentStudent.ativo;
-                    const { error } = await supabase.from('athletes').update({ activated: newStatus } as any).eq('id', currentStudent.id);
+                    const { error } = await supabase
+                      .from("athletes")
+                      .update({ activated: newStatus } as any)
+                      .eq("id", currentStudent.id)
+                      .select("id")
+                      .single();
                     if (error) throw error;
                     handleStudentUpdate({ ativo: newStatus });
-                    toast.success(newStatus ? 'Aluno ativado!' : 'Aluno desativado!');
-                  } catch (e: any) { toast.error('Erro: ' + e.message); }
+                    toast.success(
+                      newStatus ? "Aluno ativado!" : "Aluno desativado!",
+                    );
+                  } catch (e: any) {
+                    toast.error("Erro: " + e.message);
+                  }
                 }}
               >
-                {currentStudent.ativo ? 'Desativar' : 'Ativar'} Aluno
+                {currentStudent.ativo ? "Desativar" : "Ativar"} Aluno
               </Button>
 
               {/* Delete Student */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                  >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Excluir Aluno
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir aluno permanentemente?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Excluir aluno permanentemente?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta ação é irreversível. Todos os dados de {currentStudent.nome} serão removidos permanentemente.
+                      Esta ação é irreversível. Todos os dados de{" "}
+                      {currentStudent.nome} serão removidos permanentemente.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteStudent} disabled={deleting} className="bg-destructive hover:bg-destructive/90">
-                      {deleting ? 'Excluindo...' : 'Excluir Permanentemente'}
+                    <AlertDialogAction
+                      onClick={handleDeleteStudent}
+                      disabled={deleting}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      {deleting ? "Excluindo..." : "Excluir Permanentemente"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -479,10 +557,26 @@ Bons treinos! 🎯`;
         </CardHeader>
       </Card>
 
+      <Button
+        variant="outline"
+        onClick={() =>
+          navigate(withAthlete("/app/mensagens", currentStudent.id))
+        }
+      >
+        Abrir conversa com o aluno
+      </Button>
+      <CoachStudentPanel
+        key={currentStudent.id}
+        athleteId={currentStudent.id}
+      />
       {/* Abas principais */}
       <Tabs defaultValue="dados-pessoais" className="w-full">
         <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="dados-pessoais" className="flex items-center gap-2">
+          <TabsTrigger
+            id="student-personal-tab"
+            value="dados-pessoais"
+            className="flex items-center gap-2"
+          >
             <User className="w-4 h-4" />
             <span className="hidden lg:inline">Dados</span>
           </TabsTrigger>
@@ -517,14 +611,14 @@ Bons treinos! 🎯`;
         </TabsList>
 
         <TabsContent value="dados-pessoais">
-          <StudentPersonalData 
-            student={currentStudent} 
+          <StudentPersonalData
+            student={currentStudent}
             onStudentUpdate={handleStudentUpdate}
           />
         </TabsContent>
 
         <TabsContent value="treino">
-          <StudentTraining 
+          <StudentTraining
             student={currentStudent}
             onStudentUpdate={handleStudentUpdate}
           />
@@ -551,7 +645,7 @@ Bons treinos! 🎯`;
         </TabsContent>
 
         <TabsContent value="mensalidade">
-          <StudentPayments 
+          <StudentPayments
             student={currentStudent}
             onStudentUpdate={handleStudentUpdate}
           />

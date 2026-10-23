@@ -1,3 +1,5 @@
+import ProfessorWorkspacePage from '@/pages/ProfessorWorkspacePage';
+import ProfessorMessagesPage from '@/pages/ProfessorMessagesPage';
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -274,6 +276,8 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
+            <Route path="/app/acompanhamento" element={<PrivateRoute><AppLayout><ProfessorWorkspacePage /></AppLayout></PrivateRoute>} />
+            <Route path="/app/mensagens" element={<PrivateRoute><AppLayout><ProfessorMessagesPage /></AppLayout></PrivateRoute>} />
             <Route path="/app/ajustes-treino" element={
               <PrivateRoute><AppLayout><TrainingAdjustmentsPage /></AppLayout></PrivateRoute>
             } />
