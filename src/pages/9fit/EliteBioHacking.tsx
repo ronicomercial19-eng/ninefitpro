@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Brain, Droplet, HeartPulse, Moon, Pill, Wind, Zap } from "lucide-react";
@@ -21,7 +22,7 @@ export default function EliteBioHackingPage() {
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT ELITE</p>
         <h1 className="text-massive text-4xl text-foreground mt-1">Bio-Hacking</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Protocolos avançados de performance e longevidade.
+          Temas de recuperação e bem-estar. Abra o catálogo para conferir os protocolos disponíveis.
         </p>
       </div>
 
@@ -58,6 +59,7 @@ export default function EliteBioHackingPage() {
         </Card>
       </div>
 
+      <Link to="/9fit/protocols" className="block mx-4 mt-6 rounded-xl bg-primary p-4 text-center text-primary-foreground">Ver protocolos disponíveis</Link>
       <BottomNavigation />
     </div>
   );

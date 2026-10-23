@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Beaker, Clock, ArrowLeft, Play, CheckCircle2 } from "lucide-react";
-import { awardXP } from "@/services/engrenagem/gamificationEngine";
+import { toast } from "sonner";
 
 const CAT_LABELS: Record<string, string> = {
   sleep: "Sono", recovery: "Recuperação", energy: "Energia", performance: "Performance",
@@ -16,34 +16,42 @@ export default function NineFitProtocols() {
   const navigate = useNavigate();
   const [items, setItems] = useState<any[]>([]);
   const [current, setCurrent] = useState<any>(null);
+  const [completing,setCompleting]=useState(false);
 
+  const [loading,setLoading]=useState(true);
+  const [loadError,setLoadError]=useState(false);
+  const [reload,setReload]=useState(0);
   useEffect(() => {
-    if (id) {
-      supabase.from("biohacker_protocols").select("*").eq("id", id).maybeSingle()
-        .then(({ data }) => setCurrent(data));
-    } else if (category) {
-      supabase.from("biohacker_protocols").select("*").eq("category", category).eq("status","active")
-        .order("difficulty").then(({ data }) => setItems(data ?? []));
-    } else {
-      supabase.from("biohacker_protocols").select("*").eq("status","active").limit(20)
-        .then(({ data }) => setItems(data ?? []));
-    }
-  }, [category, id]);
+    let active=true;setLoading(true);setLoadError(false);setCurrent(null);setItems([]);
+    let query=supabase.from('biohacker_protocols').select('*').eq('status','active');
+    if(id)query=query.eq('id',id);
+    else if(category)query=query.eq('category',category);
+    void query.order('difficulty').limit(20).then(({data,error})=>{
+      if(!active)return;
+      setLoading(false);
+      if(error){setLoadError(true);return;}
+      if(id)setCurrent(data?.[0]??null);else setItems(data??[]);
+    });
+    return()=>{active=false;};
+  }, [category,id,reload]);
 
   async function complete() {
-    if (!current) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("skill_events").insert({
-        skill_id: current.skill_id, user_id: user.id, event_type: "complete",
-        metadata: { protocol_id: current.id },
-      } as any);
-      await awardXP("protocol_completed");
-    }
-    window.dispatchEvent(new CustomEvent("9fit:protocol_completed", { detail: { id: current.id } }));
-    navigate(`/9fit/protocols/${current.category}`);
+    if (!current || completing) return;
+    setCompleting(true);
+    try {
+      const {data,error}=await supabase.rpc('fn_complete_student_protocol' as any,{p_protocol_id:current.id});
+      if(error || !(data as any)?.saved)throw error || new Error('Conclusão não confirmada');
+      window.dispatchEvent(new Event('9fit:protocol_completed'));
+      window.dispatchEvent(new Event('9fit:xp_awarded'));
+      toast.success((data as any).already_completed?'Protocolo já registrado hoje.':'Conclusão registrada');
+      navigate(`/9fit/protocols/${current.category}`);
+    } catch {toast.error('Não foi possível registrar a conclusão. Tente novamente.');}
+    finally {setCompleting(false);}
   }
 
+  if(loading)return <div className="p-6">Carregando protocolos…</div>;
+  if(loadError)return <div className="p-6 space-y-4"><p>Não foi possível carregar os protocolos.</p><Button onClick={()=>setReload(value=>value+1)}>Tentar novamente</Button></div>;
+  if(id && !current)return <div className="p-6 space-y-4"><p>Protocolo não disponível.</p><Button onClick={()=>navigate('/9fit/protocols')}>Ver protocolos</Button></div>;
   if (current) {
     const steps: any[] = Array.isArray(current.steps) ? current.steps : [];
     return (
@@ -65,7 +73,7 @@ export default function NineFitProtocols() {
             </li>
           ))}
         </ol>
-        <Button size="lg" className="w-full" onClick={complete}><CheckCircle2 className="w-4 h-4 mr-2" /> Marcar concluído</Button>
+        <Button size="lg" className="w-full" onClick={complete} disabled={completing}><CheckCircle2 className="w-4 h-4 mr-2" /> Marcar concluído</Button>
       </div>
     );
   }

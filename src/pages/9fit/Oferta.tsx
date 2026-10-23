@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { trackMonetizationEvent } from "@/services/monetization";
 import { Crown, ArrowRight, Loader2 } from "lucide-react";
 
+import { CHECKOUT_READY } from "@/config/commercialOffer";
+
 export default function NineFitOferta() {
   const { offerId } = useParams<{ offerId: string }>();
   const navigate = useNavigate();
@@ -44,10 +46,10 @@ export default function NineFitOferta() {
             className="w-full"
             onClick={() => {
               trackMonetizationEvent("select_plan", offerId, "dedicated_screen");
-              navigate(`/9fit/checkout/${offerId}`);
+              navigate(CHECKOUT_READY ? `/9fit/checkout/${offerId}` : "/9fit/planos");
             }}
           >
-            Assinar agora <ArrowRight className="w-4 h-4 ml-2" />
+            {CHECKOUT_READY ? "Ver condições de contratação" : "Consultar disponibilidade"} <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </Card>
       </div>

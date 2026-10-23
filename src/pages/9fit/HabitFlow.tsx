@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,59 +8,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-interface Habit { id: string; title: string; streak: number; today_done: boolean; target_per_week: number; }
+import { useStudentHabits } from "@/hooks/useStudentHabits";
 
 export default function HabitFlowPage() {
-  const { user } = useAuth();
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const { habits, loading, busy, error, reload, toggle, add, remove, importLegacy } = useStudentHabits();
   const [newHabit, setNewHabit] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const stored = localStorage.getItem(`9fit.habits.${user.id}`);
-    if (stored) {
-      try { setHabits(JSON.parse(stored)); } catch {}
-    } else {
-      setHabits([
-        { id: "1", title: "Hidratação 2L", streak: 0, today_done: false, target_per_week: 7 },
-        { id: "2", title: "Treino do dia", streak: 0, today_done: false, target_per_week: 5 },
-        { id: "3", title: "Sono 7h+", streak: 0, today_done: false, target_per_week: 7 },
-      ]);
-    }
-    setLoading(false);
-  }, [user?.id]);
-
-  const persist = (next: Habit[]) => {
-    setHabits(next);
-    if (user?.id) localStorage.setItem(`9fit.habits.${user.id}`, JSON.stringify(next));
-  };
-
-  const toggle = (id: string) => {
-    const next = habits.map((h) =>
-      h.id === id
-        ? { ...h, today_done: !h.today_done, streak: !h.today_done ? h.streak + 1 : Math.max(0, h.streak - 1) }
-        : h
-    );
-    persist(next);
-    const h = next.find((x) => x.id === id);
-    if (h?.today_done) {
-      toast.success(`+1 dia · ${h.title}`);
-      if (user?.id) {
-        supabase.from("master_registry" as any).insert({
-          user_id: user.id,
-          event_type: "habit_check",
-          source: "habit_flow",
-          payload: { habit: h.title, streak: h.streak },
-        }).then(() => {});
-      }
-    }
-  };
-
-  const addHabit = () => {
-    if (!newHabit.trim()) return;
-    persist([...habits, { id: crypto.randomUUID(), title: newHabit.trim(), streak: 0, today_done: false, target_per_week: 5 }]);
-    setNewHabit("");
+  const addHabit = async () => {
+    if (!newHabit.trim() || busy) return;
+    if (await add(newHabit)) setNewHabit("");
   };
 
   const adherence = habits.length
@@ -93,12 +48,15 @@ export default function HabitFlowPage() {
       </div>
 
       <div className="px-4 space-y-2 mb-4">
+        {error && <div role="alert"><p>Não foi possível carregar seus hábitos.</p><button onClick={() => void reload()}>Tentar novamente</button></div>}
+        {!loading && !error && habits.length === 0 && <p className="text-sm text-muted-foreground">Adicione seu primeiro hábito. As conclusões serão salvas por dia.</p>}
         {loading ? (
           <div className="h-20 glass-mission rounded-xl animate-pulse" />
         ) : (
           habits.map((h) => (
             <button
               key={h.id}
+              disabled={busy}
               onClick={() => toggle(h.id)}
               className={`w-full glass-mission rounded-xl p-3 flex items-center gap-3 text-left transition-all ${
                 h.today_done ? "border border-primary/40 bg-primary/5" : "border border-white/5"
@@ -127,12 +85,14 @@ export default function HabitFlowPage() {
             placeholder="Novo hábito..."
             className="bg-transparent border-white/10"
           />
-          <Button onClick={addHabit} size="sm" className="shrink-0">
+          <Button disabled={busy || !newHabit.trim()} onClick={addHabit} size="sm" className="shrink-0">
             <Plus className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
+      {habits.length > 0 && <details className="mx-4 mb-4"><summary className="text-sm text-muted-foreground">Gerenciar hábitos</summary>{habits.map(h => <button key={h.id} disabled={busy} className="block py-2 text-sm text-muted-foreground" onClick={() => { if(window.confirm(`Excluir o hábito “${h.title}” e suas marcações?`)) void remove(h.id); }}>Excluir {h.title}</button>)}</details>}
+      <button disabled={busy} onClick={()=>void importLegacy()} className="mx-4 mb-6 text-xs text-muted-foreground underline">Recuperar hábitos antigos desta conta neste navegador</button>
       <BottomNavigation />
     </div>
   );

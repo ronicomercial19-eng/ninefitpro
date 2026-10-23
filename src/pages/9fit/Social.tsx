@@ -64,10 +64,10 @@ export default function NineFitSocial() {
     <div className="min-h-screen bg-background pb-24">
       <div className="px-4 pt-6 pb-4">
         <h1 className="text-2xl font-black italic uppercase tracking-tighter text-foreground">
-          Comunidade
+          Ranking dos atletas
         </h1>
         <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">
-          Conquistas recentes dos atletas
+          Classificação por XP e nível
         </p>
       </div>
 

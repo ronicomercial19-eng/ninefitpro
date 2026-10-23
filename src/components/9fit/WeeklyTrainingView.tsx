@@ -334,7 +334,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
                       <button
                         key={j}
                         type="button"
-                        disabled={isDone || !isToday}
+                        disabled={isDone || isSkipped || !isToday}
                       onClick={() => onExecuteToday(d)}
                         className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-primary/40 transition-all text-left cursor-pointer group/item"
                       >

@@ -62,7 +62,7 @@ export default function NineFitTrain() {
   const initialCalendarDate = new URLSearchParams(location.search).get("date") || undefined;
 
   useEffect(() => {
-    if (new URLSearchParams(location.search).get("tab") === "semana" || initialCalendarDate) setSubTab("semana");
+    setSubTab(new URLSearchParams(location.search).get("tab") === "semana" || initialCalendarDate ? "semana" : "train");
   }, [location.search, initialCalendarDate]);
 
   // Workout flow state
@@ -230,14 +230,7 @@ export default function NineFitTrain() {
     }));
 
     if (exercises.length === 0) {
-      // Sem exercícios estruturados nesse dia — fallback ao fluxo antigo
-      // (primeira atribuição ativa) só quando não há nada para executar direto.
-      if (trainings[0]) {
-        setSelectedTraining(trainings[0]);
-        setFlow("OVERVIEW");
-      } else {
-        setQuickOpen(true);
-      }
+      toast.info("Esta sessão ainda não tem exercícios prescritos. Consulte seu profissional antes de executar.");
       return;
     }
 
@@ -350,7 +343,12 @@ export default function NineFitTrain() {
                   onClick={() => {
                     if (k === "healthflix") navigate("/9fit/healthflix");
                     else if (k === "protocol") navigate("/9fit/protocolo");
-                    else setSubTab(k as any);
+                    else {
+                      const params = new URLSearchParams(location.search);
+                      params.delete("date");
+                      if (k === "semana") params.set("tab", "semana"); else params.delete("tab");
+                      navigate({ pathname: location.pathname, search: params.toString() });
+                    }
                   }}
                   className={`py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     isActive

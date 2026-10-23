@@ -1,3 +1,4 @@
+import { recordRonAction } from "./ronRecords";
 /**
  * RON Operational Core — Centro de Inteligência, Guia Operacional e Concierge do 9FIT PRO
  * 
@@ -136,38 +137,7 @@ export const APP_KNOWLEDGE_GRAPH = {
 /**
  * Cache local e sincronização de dados operacionais rápidos
  */
-const STORAGE_KEYS = {
-  WATER_LOG: "9fit_daily_water_ml",
-  PAIN_POINTS: "9fit_active_pain_points",
-  CUSTOM_MEALS: "9fit_custom_meals_log",
-  COMPLETED_MISSIONS: "9fit_completed_missions_cache"
-};
 
-/**
- * Obter estado de dados operacionais locais
- */
-export function getRonOperationalData() {
-  try {
-    const water = parseInt(localStorage.getItem(STORAGE_KEYS.WATER_LOG) || "0", 10);
-    const painPoints: string[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAIN_POINTS) || "[]");
-    const customMeals: any[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_MEALS) || "[]");
-    const completedMissions: string[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_MISSIONS) || "[]");
-
-    return {
-      waterMl: isNaN(water) ? 0 : water,
-      painPoints,
-      customMeals,
-      completedMissions
-    };
-  } catch (e) {
-    return {
-      waterMl: 0,
-      painPoints: [],
-      customMeals: [],
-      completedMissions: []
-    };
-  }
-}
 
 /**
  * Executa uma ação operacional disparada pelo RON
@@ -185,11 +155,12 @@ export async function executeRonAction(
     switch (type) {
       case "NAVIGATE": {
         const target = payload.path || "/9fit/hub";
+        if(typeof target!=='string' || !target.startsWith('/9fit/') || target.includes('\\')) throw new Error('Destino inválido.');
         if (options?.navigate) {
           options.navigate(target);
           toast.info(`Navegando para ${target}`);
         } else {
-          window.location.hash = target;
+          window.location.assign(target);
         }
         return { success: true, message: `Navegação realizada para ${target}` };
       }
@@ -206,141 +177,32 @@ export async function executeRonAction(
       }
 
       case "SYNC_WEEK_CALENDAR": {
-        const token = getAccessToken();
-        if (!token) {
-          toast.error("Conecte sua Google Agenda no topo do RON antes de sincronizar.");
-          return { success: false, message: "Google Agenda desconectada." };
-        }
-        const defaultSchedule = [
-          { title: "Treino A — Peito, Tríceps & Ombros", dayOffset: 1, hour: 8, durationMinutes: 60 },
-          { title: "Treino B — Costas, Bíceps & Core", dayOffset: 2, hour: 8, durationMinutes: 60 },
-          { title: "Treino C — Pernas Completo & Glúteos", dayOffset: 4, hour: 8, durationMinutes: 70 },
-          { title: "Recovery Ativo & Mobilidade", dayOffset: 5, hour: 9, durationMinutes: 30 }
-        ];
-        try {
-          await syncWeeklyWorkouts(token, defaultSchedule);
-          toast.success("Todos os treinos da semana foram sincronizados na sua Google Agenda!");
-          return { success: true, message: "Semana sincronizada com sucesso no Google Calendar." };
-        } catch (e: any) {
-          toast.error("Falha ao sincronizar semana com Google Calendar.");
-          return { success: false, message: e?.message || "Erro no Google Calendar." };
-        }
+        if (options?.onCalendarOpen) options.onCalendarOpen();
+        else options?.navigate?.('/9fit/aulas-creditos');
+        return { success: true, message: 'Confira os compromissos confirmados antes de sincronizar.' };
       }
-
       case "START_WORKOUT": {
-        if (options?.navigate) {
-          options.navigate("/9fit/train");
-        }
-        emitNexus("9fit:workout:start", payload);
-        toast.success("Sessão de treino iniciada com acompanhamento do RON!");
-        return { success: true, message: "Treino iniciado." };
+        options?.navigate?.('/9fit/train');
+        return {success:true,message:'Abra a sessão prescrita para iniciar o treino.'};
       }
-
-      case "LOG_WATER": {
-        const amount = payload.amountMl || 250;
-        const current = parseInt(localStorage.getItem(STORAGE_KEYS.WATER_LOG) || "0", 10);
-        const next = Math.max(0, current + amount);
-        localStorage.setItem(STORAGE_KEYS.WATER_LOG, next.toString());
-        
-        emitNexus("9fit:water:updated", { totalMl: next, addedMl: amount });
-        window.dispatchEvent(new CustomEvent("9fit:water-updated", { detail: { totalMl: next } }));
-        
-        toast.success(`+${amount}ml de água registrados! Total hoje: ${next}ml`);
-        return { success: true, message: `Hidratação atualizada para ${next}ml` };
+      case "LOG_WATER": case "LOG_NUTRITION": case "DELETE_NUTRITION": case "REGISTER_PAIN": {
+        action.id ||= crypto.randomUUID();
+        await recordRonAction(type,payload,action.id);
+        const message=type==='LOG_WATER'?'Água registrada no seu diário.':type==='LOG_NUTRITION'?'Refeição registrada no seu diário.':type==='DELETE_NUTRITION'?'Remoção confirmada no diário.':'Relato registrado. Revise a atividade com seu profissional; a prescrição não foi alterada.';
+        toast.success(message); return {success:true,message};
       }
-
-      case "LOG_NUTRITION": {
-        const currentMeals = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_MEALS) || "[]");
-        const newMeal = {
-          id: `meal_${Date.now()}`,
-          name: payload.mealName || "Refeição Registrada",
-          time: payload.time || new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-          calories: payload.calories || 450,
-          protein: payload.protein || 35,
-          carbs: payload.carbs || 45,
-          fats: payload.fats || 12,
-          created_at: new Date().toISOString()
-        };
-        currentMeals.unshift(newMeal);
-        localStorage.setItem(STORAGE_KEYS.CUSTOM_MEALS, JSON.stringify(currentMeals));
-
-        emitNexus("9fit:nutrition:logged", newMeal);
-        window.dispatchEvent(new CustomEvent("9fit:nutrition-updated", { detail: newMeal }));
-
-        toast.success(`Refeição "${newMeal.name}" adicionada ao diário nutricional!`);
-        return { success: true, message: "Refeição registrada com sucesso." };
-      }
-
-      case "DELETE_NUTRITION": {
-        const currentMeals = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_MEALS) || "[]");
-        const mealId = payload.mealId;
-        const filtered = mealId 
-          ? currentMeals.filter((m: any) => m.id !== mealId)
-          : currentMeals.slice(1); // remove última se não especificada
-        
-        localStorage.setItem(STORAGE_KEYS.CUSTOM_MEALS, JSON.stringify(filtered));
-        emitNexus("9fit:nutrition:deleted", { mealId });
-        window.dispatchEvent(new CustomEvent("9fit:nutrition-updated", { detail: { deleted: true } }));
-
-        toast.info("Refeição removida do diário nutricional.");
-        return { success: true, message: "Refeição removida." };
-      }
-
-      case "REGISTER_PAIN": {
-        const region = payload.region || "Geral";
-        const intensity = payload.intensity || 5;
-        const painPoints: any[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAIN_POINTS) || "[]");
-        
-        const entry = {
-          id: `pain_${Date.now()}`,
-          region,
-          intensity,
-          date: new Date().toISOString(),
-          adaptationSuggested: getBiomechanicalSubstitution(region)
-        };
-        painPoints.push(entry);
-        localStorage.setItem(STORAGE_KEYS.PAIN_POINTS, JSON.stringify(painPoints));
-
-        // Interliga imediatamente com a prescrição do treino
-        emitNexus("9fit:pain:registered", entry);
-        window.dispatchEvent(new CustomEvent("9fit:pain-registered", { detail: entry }));
-
-        toast.warning(
-          `Alerta de dor registrado em [${region}]. RON ajustou os treinos para proteger a articulação.`,
-          { duration: 6000 }
-        );
-        return { success: true, message: `Dor em ${region} registrada e adaptações aplicadas.` };
-      }
-
       case "CLEAR_PAIN": {
-        localStorage.setItem(STORAGE_KEYS.PAIN_POINTS, JSON.stringify([]));
-        emitNexus("9fit:pain:cleared", {});
-        window.dispatchEvent(new CustomEvent("9fit:pain-cleared", { detail: {} }));
-        toast.success("Histórico de dores reiniciado. Bloqueios articulares liberados.");
-        return { success: true, message: "Histórico de dor zerado." };
+        options?.navigate?.('/9fit/ajuste-treino');
+        return {success:true,message:'Revise os relatos com seu profissional. O histórico foi preservado.'};
       }
-
       case "TRIGGER_RECOVERY": {
-        emitNexus("9fit:recovery:triggered", payload);
-        toast.success("Protocolo de Recuperação Ativa ativado! Reduzindo carga e estresse neuromuscular.");
-        if (options?.navigate) {
-          options.navigate("/9fit/recovery");
-        }
-        return { success: true, message: "Protocolo de recuperação iniciado." };
+        options?.navigate?.('/9fit/recovery');
+        return {success:true,message:'Abrindo o módulo de recuperação. Nenhuma carga foi alterada.'};
       }
-
       case "COMPLETE_MISSION": {
-        const missionId = payload.missionId || "daily_sync";
-        const missions: string[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_MISSIONS) || "[]");
-        if (!missions.includes(missionId)) {
-          missions.push(missionId);
-          localStorage.setItem(STORAGE_KEYS.COMPLETED_MISSIONS, JSON.stringify(missions));
-        }
-        emitNexus("9fit:mission:completed", { missionId, xp: 50 });
-        toast.success("+50 XP! Missão concluída com validação do RON.");
-        return { success: true, message: "Missão finalizada." };
+        options?.navigate?.('/9fit/progresso/historico');
+        return {success:true,message:'Confira as atividades confirmadas no histórico. Nenhum XP foi concedido por esta ação.'};
       }
-
       case "ADJUST_TRAINING_VOLUME": {
         const { data: currentAthleteId, error: identityError } = await supabase.rpc("fn_current_athlete_id");
         if (identityError || !currentAthleteId) throw new Error("Não consegui confirmar seu perfil de atleta.");
@@ -390,7 +252,7 @@ export async function executeRonAction(
       }
 
       default:
-        return { success: true, message: `Ação ${type} processada.` };
+        return { success: false, message: "Esta ação ainda não está disponível." };
     }
   } catch (error: any) {
     console.error("[RonOperationalCore] Erro ao executar ação:", error);

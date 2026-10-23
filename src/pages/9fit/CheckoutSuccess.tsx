@@ -5,6 +5,8 @@ import { CheckCircle2, Clock3, Crown, Loader2, RefreshCw, TriangleAlert } from "
 import { supabase } from "@/integrations/supabase/client";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 
+import { confirmedAccess } from "@/lib/customerEntry";
+
 type VerificationStatus = "checking" | "active" | "pending" | "error";
 
 export default function NineFitCheckoutSuccess() {
@@ -22,24 +24,25 @@ export default function NineFitCheckoutSuccess() {
 
     let planId: string | null = null;
     if (offerId) {
-      const { data: offer } = await supabase
+      const { data: offer, error: offerError } = await supabase
         .from("monetization_offers")
         .select("plan_id")
         .eq("id", offerId)
         .maybeSingle();
-      planId = offer?.plan_id ?? null;
+      if (offerError || !offer?.plan_id) { setStatus("error"); return; }
+      planId = offer.plan_id;
     }
 
     let query = supabase
       .from("user_subscriptions" as any)
-      .select("status, plan_id, activated_at")
+      .select("status, plan_id, activated_at, expires_at")
       .eq("user_id", authData.user.id)
-      .eq("status", "active");
+      .in("status", ["active", "trialing"]);
     if (planId) query = query.eq("plan_id", planId);
 
-    const { data, error } = await query.order("activated_at", { ascending: false }).limit(1).maybeSingle();
+    const { data, error } = await query.order("activated_at", { ascending: false });
     if (error) setStatus("error");
-    else setStatus(data ? "active" : "pending");
+    else setStatus((data || []).some(row => confirmedAccess(row as any)) ? "active" : "pending");
   }, [offerId]);
 
   useEffect(() => { void verifyEntitlement(); }, [verifyEntitlement]);

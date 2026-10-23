@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import type { DailyContext } from '@/services/dailyContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { parseDailyContext } from '@/lib/dailyContextContract';
 
 export type HubMetricStatus = "not_collected" | "available" | "stale" | "error" | "offline";
 export type HubScoreStatus = "loading" | "available" | "calibrating" | "stale" | "error" | "offline";
@@ -82,7 +83,7 @@ function mapPayload(raw: unknown): HubSnapshot | null {
 
   return {
     version: count(value.version) || 1,
-    context: value.context as DailyContext | undefined,
+    context: value.context ? parseDailyContext(value.context) : undefined,
     status: typeof value.status === "string" ? value.status : "calibrating",
     generated_at: typeof value.generated_at === "string" ? value.generated_at : null,
     athlete: value.athlete && typeof value.athlete === "object"

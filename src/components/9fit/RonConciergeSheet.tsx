@@ -321,14 +321,8 @@ export function RonConciergeSheet() {
       void persist("assistant", botReply);
       speak(botReply);
 
-      for (const act of actions) {
-        if (act.autoExecute) {
-          executeRonAction(act, {
-            navigate,
-            onCalendarOpen: () => setCalendarModalOpen(true),
-          });
-        }
-      }
+      // Mutations are proposals; execution only happens after a user click.
+
     } catch (err: any) {
       console.warn("[RON] erro", err);
       addAssistant(err?.message || "RON indisponível. Tente novamente em instantes.");
@@ -339,12 +333,21 @@ export function RonConciergeSheet() {
   // sempre a versão mais recente (voz e eventos globais não usam closure velha)
   sendRef.current = (t?: string) => { void handleSend(t); };
 
+  const executingAction = useRef(false);
+  const completedActions = useRef(new Set<string>());
+  useEffect(()=>{completedActions.current.clear();},[user?.id]);
   const handleActionClick = async (action: RonAction) => {
+    action.id ||= crypto.randomUUID();
+    if(executingAction.current || completedActions.current.has(action.id)) return;
+    executingAction.current=true;
+    try {
     const res = await executeRonAction(action, {
       navigate,
       onCalendarOpen: () => setCalendarModalOpen(true),
     });
+    if(res.success && action.id) completedActions.current.add(action.id);
     if (res?.success && action.type === "NAVIGATE") closeChat();
+    } finally { executingAction.current=false; }
   };
 
   const closeChat = () => {
