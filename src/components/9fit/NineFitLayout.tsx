@@ -5,6 +5,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { NineFitTopBar } from "./NineFitTopBar";
 import { RonBubble } from "./RonBubble";
 import { BackButton } from "./BackButton";
+import { useDailyContext } from '@/hooks/useDailyContext';
 
 
 interface NineFitLayoutProps {
@@ -19,6 +20,11 @@ interface NineFitLayoutProps {
  *  4. Liberado                   → renderiza
  */
 export function NineFitLayout({ children }: NineFitLayoutProps) {
+  const context = useDailyContext();
+  useEffect(() => {
+    document.documentElement.dataset.reducedMotion = context.data?.profile.preferences.reduced_motion ? 'true' : 'false';
+    return () => { delete document.documentElement.dataset.reducedMotion; };
+  }, [context.data?.profile.preferences.reduced_motion]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pendingFirstAccess, setPendingFirstAccess] = useState(false);

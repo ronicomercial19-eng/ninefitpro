@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +40,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
   const [duration, setDuration] = useState(45);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const submitting=useRef(false);
   const [xpGained, setXpGained] = useState(0);
   const [caloriesBurned, setCaloriesBurned] = useState(0);
   const [lastRpe, setLastRpe] = useState<number | null>(null);
@@ -48,118 +49,46 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
   const calculatedCalories = Math.round(duration * rpe * 1.2);
 
   useEffect(() => {
+    let active = true;
     if (open) {
-      setStep("pse");
-      setRpe(5);
-      setDuration(45);
-      setNotes("");
-      fetchLastRpe();
+      setStep("pse"); setRpe(5); setDuration(1); setNotes(""); setLastRpe(null); setXpGained(0);
+      void supabase.from('workout_executions').select('duration_minutes,avg_rpe').eq('id',executionId).eq('athlete_id',athleteId).single().then(({data})=>{
+        if(active && data){setDuration(Math.max(1,data.duration_minutes||1));if(data.avg_rpe!=null)setRpe(Number(data.avg_rpe));}
+      });
+      void supabase.from('workout_executions').select('avg_rpe').eq('athlete_id',athleteId).eq('status','completed').neq('id',executionId).not('avg_rpe','is',null).order('completed_at',{ascending:false}).limit(1).maybeSingle().then(({data})=>{
+        if(active && data?.avg_rpe!=null)setLastRpe(Number(data.avg_rpe));
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const fetchLastRpe = async () => {
-    // Fonte de verdade: workout_executions
-    const { data: exec } = await supabase
-      .from("workout_executions")
-      .select("rpe")
-      .eq("athlete_id", athleteId)
-      .eq("status", "completed").neq("id", executionId || "00000000-0000-0000-0000-000000000000")
-      .not("rpe", "is", null)
-      .order("completed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (exec?.rpe != null) {
-      setLastRpe(Number(exec.rpe));
-      return;
-    }
-
-    // Fallback legado
-    const { data } = await supabase
-      .from("workout_progress")
-      .select("rpe")
-      .eq("aluno_id", athleteId)
-      .not("rpe", "is", null)
-      .order("completed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (data?.rpe != null) setLastRpe(Number(data.rpe));
-  };
+    return () => { active = false; };
+  }, [open,executionId,athleteId]);
 
   const handleSubmit = async () => {
-    if (saving) return;
+    if (submitting.current) return;
     if (!executionId) {
       toast.error("Não foi possível identificar a sessão de treino. Tente novamente.");
       return;
     }
-    setSaving(true);
+    submitting.current=true; setSaving(true);
     try {
       const cal = calculatedCalories;
 
-      // 1) Fonte de verdade: workout_executions
-      // `rpe` é coluna GERADA (= avg_rpe) no banco: nunca escrever nela, só em avg_rpe.
-      const { error: execError } = await supabase
-        .from("workout_executions")
-        .update({
-          avg_rpe: rpe,
-          rating: Math.min(5, Math.max(1, Math.ceil(rpe / 2))),
-          notes: notes || null,
-          duration_minutes: duration,
-        })
-        .eq("id", executionId).eq("athlete_id", athleteId).select("id").single();
-
-      if (execError) {
-        console.warn("[PostWorkout] update workout_executions falhou:", execError.message);
-        toast.error("Não foi possível salvar seu treino agora. Tente novamente.");
-        return;
-      }
-
-      // 2) Compatibilidade legada — nunca bloqueia
-      const todayDate = format(new Date(),"yyyy-MM-dd");
-      const { error: legacyError } = await supabase.from("workout_progress").insert({
-        aluno_id: athleteId,
-        exercise_name: trainingName,
-        training_name: trainingName,
-        completed_at: new Date().toISOString(),
-        calories_burned: cal,
-        duration_minutes: duration,
-        rpe,
-        notes: notes || null,
-        sets: 0,
-        reps: 0,
-        date: todayDate,
+      const { data, error } = await supabase.rpc('fn_submit_workout_feedback' as any, {
+        p_execution_id:executionId,p_rpe:rpe,p_duration_minutes:duration,p_notes:notes||null,
       });
-      if (legacyError) console.warn("[PostWorkout] legacy workout_progress insert falhou:", legacyError.message);
-
-      // 3) XP — não bloqueia o pós-treino
-      const xp = 100 + (rpe > 7 ? 50 : rpe > 4 ? 25 : 0);
-      const { error: xpError } = await supabase.rpc("fn_award_xp", {
-        p_athlete_id: athleteId,
-        p_amount: xp,
-        p_source: "workout_completed",
-        p_metadata: { training_name: trainingName, rpe, duration_minutes: duration },
-      });
-      if (xpError) console.warn("[PostWorkout] fn_award_xp falhou:", xpError.message);
-
-      const {data:{user}}=await supabase.auth.getUser();
-      if(user) { const {error:feedbackError}=await supabase.from("sync_score_logs").insert({user_id:user.id,score:rpe,source:"post_workout",feedback_text:`Esforço ${rpe}/10. ${notes || ""}`}); if(feedbackError) console.warn("Feedback synchronization pending",feedbackError); }
-      window.dispatchEvent(new Event("9fit:user-state-invalidated"));
-      window.dispatchEvent(new Event("9fit:workout-updated"));
-      if(!xpError) window.dispatchEvent(new Event("9fit:xp_awarded"));
-      setXpGained(xpError ? 0 : xp);
-      setCaloriesBurned(cal);
-      setShareMessage(`Treino concluído: ${trainingName}
-RPE: ${rpe}/10
-Duração: ${duration} min
-Calorias: ${cal} kcal
-XP: +${xp}`);
+      const result=data as {saved?:boolean;xp_awarded?:number};
+      if(error || !result?.saved) throw error || new Error('Feedback não confirmado.');
+      const xp=Number(result.xp_awarded||0);
+      window.dispatchEvent(new Event('9fit:workout-updated'));
+      window.dispatchEvent(new Event('9fit:sync_updated'));
+      if(xp>0)window.dispatchEvent(new Event('9fit:xp_awarded'));
+      setXpGained(xp);setCaloriesBurned(cal);
+      setShareMessage(`Treino concluído: ${trainingName}\nRPE: ${rpe}/10\nDuração: ${duration} min\nCalorias estimadas: ${cal} kcal\nXP confirmado nesta operação: +${xp}`);
       setStep("summary");
     } catch (e) {
       toast.error("Erro ao salvar progresso");
       console.warn("[PostWorkout] erro inesperado:", e);
     } finally {
-      setSaving(false);
+      submitting.current=false; setSaving(false);
     }
   };
 

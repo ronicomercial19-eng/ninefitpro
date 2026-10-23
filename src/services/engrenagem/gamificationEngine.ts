@@ -57,53 +57,14 @@ export async function awardXP(
     const xp = Math.round(base * mult);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      window.dispatchEvent(new CustomEvent('9fit:xp_awarded', { detail: { action, xp, multiplier: mult, ephemeral: true } }));
-      return { xp, newTotal: xp, newLevel: 1, leveledUp: false };
-    }
-
-    // Resolve athlete
-    const { data: athlete } = await supabase
-      .from('athletes')
-      .select('id, total_xp, level')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    const prevXp = (athlete as any)?.total_xp ?? 0;
-    const prevLevel = (athlete as any)?.level ?? levelFromXP(prevXp);
-    let newTotal = prevXp + xp;
-    let newLevel = levelFromXP(newTotal);
-    let leveledUp = newLevel > prevLevel;
-
-    if (athlete?.id) {
-      const { data: rpcRes } = await supabase.rpc('fn_award_xp' as any, {
-        p_athlete_id: athlete.id,
-        p_amount: xp,
-        p_source: action,
-        p_metadata: meta as any,
-      });
-      const row = Array.isArray(rpcRes) ? rpcRes[0] : rpcRes;
-      if (row) {
-        newTotal = (row as any).new_total_xp ?? newTotal;
-        newLevel = (row as any).new_level ?? newLevel;
-        leveledUp = (row as any).leveled_up ?? leveledUp;
-      }
-    }
-
-    // Best-effort event log
-    try {
-      await supabase.from('gamification_events' as any).insert({
-        user_id: user.id,
-        athlete_id: athlete?.id ?? null,
-        event_type: action,
-        xp_awarded: xp,
-        multiplier: mult,
-        metadata: meta,
-      });
-    } catch (e) {
-      console.debug('[gamification] event log skipped', e);
-    }
-
+    if (!user) return null;
+    const {data:athleteId,error:identityError}=await supabase.rpc('fn_current_athlete_id');
+    if(identityError || !athleteId)throw identityError || new Error('Perfil de atleta não encontrado');
+    const {data:rpcRes,error}=await supabase.rpc('fn_award_xp',{p_athlete_id:athleteId,p_amount:xp,p_source:action,p_metadata:meta as any});
+    if(error)throw error;
+    const row=Array.isArray(rpcRes)?rpcRes[0]:rpcRes;
+    if(!row)throw new Error('Recompensa não confirmada');
+    const newTotal=row.new_total_xp,newLevel=row.new_level,leveledUp=row.leveled_up;
     window.dispatchEvent(new CustomEvent('9fit:xp_awarded', {
       detail: { action, xp, multiplier: mult, newTotal, newLevel, leveledUp },
     }));

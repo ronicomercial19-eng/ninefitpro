@@ -25,3 +25,5 @@ dist-ssr
 *.bundle
 *.tar.gz
 *.tsbuildinfo
+
+/supabase/.temp/

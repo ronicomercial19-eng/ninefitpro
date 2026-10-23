@@ -1,15 +1,19 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, MessageCircle, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { safeExternalAppUrl } from "@/lib/externalApps";
 import { getEmbeddedApp } from "@/data/ecosystemApps";
 
 export default function NineFitNativeSystem() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const appKey = params.get("app") ?? "fitness-place";
-  const app = getEmbeddedApp(appKey) ?? getEmbeddedApp("fitness-place")!;
+  const app = getEmbeddedApp(appKey);
+  if (!app) return <div className="p-6"><p>Módulo não encontrado.</p><Link to="/9fit/hub">Voltar ao início</Link></div>;
 
   // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
-  const showFallback = !app.url;
+  const externalUrl = safeExternalAppUrl(app.url);
+  const showFallback = !externalUrl;
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
@@ -18,11 +22,11 @@ export default function NineFitNativeSystem() {
           <ArrowLeft className="w-4 h-4 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Sistema Nativo</p>
+          <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Aplicativo externo</p>
           <p className="font-display text-sm truncate">{app.label}</p>
         </div>
-        {app.url && (
-          <a href={app.url} target="_blank" rel="noreferrer"
+        {externalUrl && (
+          <a href={externalUrl ?? undefined} target="_blank" rel="noreferrer"
             className="w-9 h-9 rounded-lg border border-primary/40 grid place-items-center text-primary">
             <ExternalLink className="w-4 h-4" />
           </a>
@@ -31,11 +35,12 @@ export default function NineFitNativeSystem() {
 
       {appKey === 'staff' && <div className="px-4 py-3 border-b border-primary/20 text-xs text-muted-foreground space-y-2">
         <p>Fluxo externo 9FIT Staff · prévia com profissionais e reservas demonstrativos. Confirmações nesta prévia não comprovam reserva na agenda FitPro. O acesso Staff / Prof exige autenticação própria.</p>
-        <div className="flex flex-wrap gap-4"><button type="button" onClick={() => navigate('/9fit/aulas-creditos')} className="text-primary underline">Abrir minha agenda FitPro</button><a href={app.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Fluxo não apareceu? Abrir em nova aba</a></div>
+        <div className="flex flex-wrap gap-4"><button type="button" onClick={() => navigate('/9fit/aulas-creditos')} className="text-primary underline">Abrir minha agenda FitPro</button><a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">Fluxo não apareceu? Abrir em nova aba</a></div>
       </div>}
 
-      {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={app.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
+      {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
 
+      <p className="px-4 py-2 text-xs text-muted-foreground">Aplicativo externo. Pode solicitar acesso próprio; seus registros aqui não comprovam sincronização com o 9FIT.</p>
       {showFallback ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 text-center">
           <div className="w-20 h-20 rounded-full border border-primary/40 grid place-items-center">
@@ -47,7 +52,8 @@ export default function NineFitNativeSystem() {
               {app.description ?? "Este módulo ainda não tem URL operacional configurada. Use o atendimento para continuar sem perder contexto."}
             </p>
           </div>
-          {app.fallback?.type === "whatsapp" && (
+          <Link to="/9fit/mensagens" className="text-primary underline">Falar com a equipe no app</Link>
+          {app.fallback?.type === "whatsapp" && !!app.fallback.phone && (
             <a
               href={`https://wa.me/${app.fallback.phone}?text=${encodeURIComponent(app.fallback.message)}`}
               target="_blank" rel="noreferrer"
@@ -59,7 +65,7 @@ export default function NineFitNativeSystem() {
         </div>
       ) : (
         <iframe
-          src={app.url}
+          src={externalUrl!}
           title={app.label}
           className="flex-1 w-full border-0 bg-black"
           allow={app.allow ?? "clipboard-write; fullscreen"}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, ChevronRight, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -6,6 +6,8 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+
+import { toast } from "sonner";
 
 interface NotificationRow {
   id: string;
@@ -24,9 +26,12 @@ export default function NineFitNotificacoes() {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const owner = useRef(user?.id); owner.current = user?.id;
+  const writing = useRef(false);
 
   const load = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) { setItems([]); setLoading(false); return; }
+    const uid = user.id;
     setLoading(true);
     setError(false);
     try {
@@ -40,33 +45,39 @@ export default function NineFitNotificacoes() {
         .then((r) => r);
       const { data, error: err } = (await Promise.race([query, timeout])) as any;
       if (err) throw err;
-      setItems((data || []) as NotificationRow[]);
+      if (owner.current === uid) setItems((data || []) as NotificationRow[]);
     } catch (e) {
       console.error("notifications load failed", e);
-      setError(true);
+      if (owner.current === uid) setError(true);
     } finally {
-      setLoading(false);
+      if (owner.current === uid) setLoading(false);
     }
   }, [user?.id]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { setItems([]); void load(); }, [load]);
 
   const unread = items.filter((i) => !i.is_read).length;
 
+  const markRead = async (id?: string) => {
+    if (!user || writing.current) return false;
+    const uid = user.id; writing.current = true;
+    try {
+      let query = supabase.from("notifications").update({ is_read: true }).eq("user_id", uid);
+      if (id) query = query.eq("id", id); else query = query.eq("is_read", false);
+      const { data, error } = await query.select("id");
+      if (error || (id && !data?.length)) throw error || new Error("not_updated");
+      if (owner.current !== uid) return false;
+      const updated = new Set((data || []).map(row => row.id));
+      setItems(prev => prev.map(item => updated.has(item.id) ? { ...item, is_read: true } : item));
+      return true;
+    } catch { if (owner.current === uid) toast.error("Não foi possível marcar a leitura. Tente novamente."); return false; }
+    finally { writing.current = false; }
+  };
   const open = async (n: NotificationRow) => {
-    if (!n.is_read) {
-      setItems((prev) => prev.map((i) => (i.id === n.id ? { ...i, is_read: true } : i)));
-      await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
-    }
-    // Só navega para rotas internas; sem destino, a notificação apenas é marcada como lida.
-    if (n.action_url && n.action_url.startsWith("/")) navigate(n.action_url);
+    if (!n.is_read && !await markRead(n.id)) return;
+    if (n.action_url?.startsWith("/9fit/") && !n.action_url.includes("\\")) navigate(n.action_url);
   };
-
-  const markAll = async () => {
-    if (!user?.id || unread === 0) return;
-    setItems((prev) => prev.map((i) => ({ ...i, is_read: true })));
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
-  };
+  const markAll = () => { if(unread) void markRead(); };
 
   return (
     <div className="min-h-screen gradient-mission pb-28">

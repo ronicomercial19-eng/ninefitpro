@@ -29,7 +29,7 @@ export default function CustomerEntry() {
           supabase.from('profiles').select('role,first_access_completed').eq('user_id', user.id).maybeSingle(),
           supabase.from('user_roles').select('role').eq('user_id', user.id),
           supabase.rpc('fn_current_athlete_id'),
-          supabase.from('user_subscriptions' as any).select('status,expires_at').eq('user_id', user.id).order('activated_at', { ascending: false }).limit(1).maybeSingle(),
+          supabase.from('user_subscriptions' as any).select('status,expires_at').eq('user_id', user.id).order('activated_at', { ascending: false }),
           supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', user.id).maybeSingle(),
         ]);
         for (const result of [profile, roles, identity, subscription, settings]) if (result.error) throw result.error;
@@ -45,8 +45,8 @@ export default function CustomerEntry() {
           firstAccessDone ||= athlete.data.password_changed === true;
         }
         const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: !!(settings.data as any)?.pdi_completed_at, intent: purchase ? 'purchase' : paymentReturn ? 'payment_return' : readEntry(entryStorage()) || 'start' });
-        const registeredAccess = subscription.data as unknown as { status: string; expires_at: string | null } | null;
-        if (active) setState({ destination, access: confirmedAccess(registeredAccess), missingProfile: !identity.data && roleHome !== '/app' });
+        const registeredAccess = ((subscription.data || []) as unknown as { status: string; expires_at: string | null }[]).some(row => confirmedAccess(row));
+        if (active) setState({ destination, access: registeredAccess, missingProfile: !identity.data && roleHome !== '/app' });
       } catch { if (active) setError(true); }
     })();
     return () => { active = false; };

@@ -314,8 +314,8 @@ const App = () => (
             <Route path="/9fit/habit-flow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
             <Route path="/9fit/habitflow" element={<NineFitLayout><NineFitHabitFlow /></NineFitLayout>} />
             <Route path="/9fit/elite-bio" element={<NineFitLayout><NineFitEliteBio /></NineFitLayout>} />
-            <Route path="/9fit/kitchen" element={<NineFitKitchen />} />
-            <Route path="/9fit/recovery" element={<NineFitRecovery />} />
+            <Route path="/9fit/kitchen" element={<NineFitLayout><NineFitKitchen /></NineFitLayout>} />
+            <Route path="/9fit/recovery" element={<NineFitLayout><NineFitRecovery /></NineFitLayout>} />
             <Route path="/9fit/protocolo" element={<NineFitLayout><NineFitProtocolo /></NineFitLayout>} />
             <Route path="/9fit/planos" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/prime" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
@@ -349,7 +349,7 @@ const App = () => (
             <Route path="/9fit/ajuste-treino" element={<NineFitLayout><NineFitAjusteTreino /></NineFitLayout>} />
             <Route path="/9fit/pos-treino" element={<NineFitLayout><NineFitPostWorkout /></NineFitLayout>} />
             <Route path="/9fit/collections" element={<NineFitLayout><NineFitCollections /></NineFitLayout>} />
-            <Route path="/9fit/native-system" element={<NineFitNativeSystem />} />
+            <Route path="/9fit/native-system" element={<NineFitLayout><NineFitNativeSystem /></NineFitLayout>} />
 
             <Route path="/app/monetizacao" element={
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>

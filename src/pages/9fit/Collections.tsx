@@ -165,9 +165,9 @@ export default function NineFitCollections() {
       <div className="px-4 pt-6">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT COLLECTIONS</p>
         <h1 className="text-2xl font-display tracking-tight flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-primary" /> Seus benchmarks
+          <Sparkles className="w-6 h-6 text-primary" /> Cartões de conquistas
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">Compartilhe suas conquistas · +20 XP por share</p>
+        <p className="text-xs text-muted-foreground mt-1">Compartilhe suas conquistas · XP após confirmação do compartilhamento</p>
       </div>
 
       {loading && (

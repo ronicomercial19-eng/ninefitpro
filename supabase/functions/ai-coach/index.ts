@@ -1,3 +1,4 @@
+import { decodeRonChat } from "../_shared/ronActionContract.ts";
 import { missingPhysiologyReply } from "../_shared/ronSnapshotGuard.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
@@ -301,6 +302,12 @@ ${richCtx || 'Sem dados adicionais fornecidos — gere recomendações pedindo q
 
     // Tenta cada provedor na ordem; só devolve erro ao usuário se todos falharem (ou responderem vazio).
     let content: string | null = null;
+    if (mode === 'chat') systemPrompt += `
+Retorne JSON com {"content":"resposta em português","actions":[]}. Ações são propostas para confirmação humana, nunca operações já executadas.
+Use no máximo 5 ações. Tipos permitidos: NAVIGATE(payload.path em /9fit/os,/9fit/hub,/9fit/train,/9fit/planejamento,/9fit/progresso,/9fit/dieta,/9fit/dieta?action=log,/9fit/profile,/9fit/staff,/9fit/aulas-creditos,/9fit/ajuste-treino,/9fit/recovery,/9fit/avaliacao-guiada,/9fit/habit-flow); START_WORKOUT; SCHEDULE_CALENDAR; TRIGGER_RECOVERY; ADJUST_TRAINING_VOLUME.
+LOG_WATER exige amountMl inteiro explícito entre 1 e 5000. LOG_NUTRITION exige mealName e calories/protein/carbs/fats numéricos informados pelo aluno: não invente macros. Se faltarem dados proponha NAVIGATE para o diário.
+REGISTER_PAIN exige region e intensity explícitos de 1 a 10; não prometa liberação ou mudança da prescrição. DELETE_NUTRITION só com mealId conhecido do registro.
+Toda ação tem type,title,payload e autoExecute:false. Sem solicitação clara, actions vazio. Nunca inclua tokens, identidade do usuário ou promessas de XP.`;
     let lastStatus = 0;
     for (const provider of providers) {
       try {
@@ -360,7 +367,7 @@ ${richCtx || 'Sem dados adicionais fornecidos — gere recomendações pedindo q
       }
     }
 
-    return apiResponse({ content });
+    return apiResponse(mode === "chat" ? decodeRonChat(content) : { content });
   } catch (e: any) {
     console.error("ai-coach error:", e?.message, e?.stack);
     return apiError('INTERNAL_ERROR', e?.message || 'Erro interno', 500);

@@ -72,7 +72,7 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
     description: "Mensageria e ofertas (em integração)",
     fallback: {
       type: "whatsapp",
-      phone: "5500000000000",
+      phone: "",
       message: "Olá! Quero suporte 9FIT PRO.",
     },
   },

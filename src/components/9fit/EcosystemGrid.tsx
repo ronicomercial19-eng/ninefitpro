@@ -303,7 +303,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   const [showOverlay, setShowOverlay] = useState(false);
   const [previewModuleKey, setPreviewModuleKey] = useState<string | null>(null);
   const [items, setItems] = useState<PhysioModule[]>([]);
-  const [statusByKey, setStatusByKey] = useState<Record<string, "online" | "waiting" | "not_configured">>({});
+  const [statusByKey, setStatusByKey] = useState<Record<string, "native" | "configured" | "waiting" | "not_configured">>({});
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -327,6 +327,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         const { data, error } = await q;
 
         if (cancelled) return;
+        if (error) throw error;
 
         // Merge fetched data with CANONICAL_MODULES to guarantee full coverage
         const dbItems = (data ?? []).filter(
@@ -349,12 +350,13 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         setItems(list);
 
         const keys = list.map((m) => m.connector_key).filter(Boolean);
-        const { data: conns } = keys.length
+        const { data: conns, error: connectorError } = keys.length
           ? await supabase.from("api_connectors").select("key, status, iframe_url").in("key", keys)
-          : { data: [] };
+          : { data: [], error: null };
 
+        if (connectorError) throw connectorError;
         const connectorByKey = new Map((conns || []).map((c) => [c.key, c]));
-        const map: Record<string, "online" | "waiting" | "not_configured"> = {};
+        const map: Record<string, "native" | "configured" | "waiting" | "not_configured"> = {};
         const iframeMap: Record<string, string | null> = {};
 
         list.forEach((m) => {
@@ -364,10 +366,10 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
             const c = connectorByKey.get(m.connector_key);
             const hasTarget = Boolean(target || c?.iframe_url);
             const isInternal = target?.startsWith("/");
-            map[m.key] = !hasTarget || (!isInternal && c?.status !== "active") ? "not_configured" : "online";
+            map[m.key] = isInternal ? "native" : hasTarget && c?.status === "active" ? "configured" : "not_configured";
             iframeMap[m.key] = c?.status === "active" ? c?.iframe_url || null : null;
           } else {
-            map[m.key] = target ? "online" : "not_configured";
+            map[m.key] = target?.startsWith("/") ? "native" : target ? "configured" : "not_configured";
             iframeMap[m.key] = null;
           }
         });
@@ -381,8 +383,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         console.error("[EcosystemGrid] Load error:", err);
         if (!cancelled) {
           setItems(CANONICAL_MODULES);
-          const fallbackStatus: Record<string, "online"> = {};
-          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "online"; });
+          const fallbackStatus: Record<string, "waiting"> = {};
+          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "waiting"; });
           setStatusByKey(fallbackStatus);
           setLoading(false);
         }
@@ -395,7 +397,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     };
   }, [category, reloadToken]);
 
-  const activeCount = Object.values(statusByKey).filter((s) => s === "online").length;
+  const activeCount = Object.values(statusByKey).filter((s) => s === "native" || s === "configured").length;
   const visibleItems = showAll ? items : items;
   const gridClass =
     variant === "rail"
@@ -501,7 +503,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
             EXPLORAR ECOSSISTEMA
           </h2>
           <p className="font-mono text-[11px] text-primary mt-2">
-            {activeCount} DE {items.length} MÓDULOS DISPONÍVEIS
+            {activeCount} DE {items.length} DESTINOS CONFIGURADOS
           </p>
           {items.length > 2 && !showAll && (
             <button
@@ -520,7 +522,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
 
       {(!showHeader || showAll) && <div className={gridClass}>{visibleItems.map((m, index) => {
         const route = moduleRoute(m) || fallbackRoutes[m.key];
-        return <button key={m.id} type="button" onClick={() => { if (onModuleSelect) onModuleSelect(m); else { setPreviewModuleKey(m.key); setShowOverlay(true); } }} className="rounded-2xl border border-white/10 bg-card p-4 text-left"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="text-xs text-primary">Experimentar módulo →</span></button>;
+        return <button key={m.id} type="button" onClick={() => { if (onModuleSelect) onModuleSelect(m); else { setPreviewModuleKey(m.key); setShowOverlay(true); } }} className="rounded-2xl border border-white/10 bg-card p-4 text-left"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="block text-xs text-muted-foreground">{statusByKey[m.key] === "native" ? "Tela no app" : statusByKey[m.key] === "configured" ? "Destino configurado · disponibilidade externa não verificada" : statusByKey[m.key] === "waiting" ? "Catálogo temporariamente indisponível" : "Integração não configurada"}</span><span className="text-xs text-primary">Ver módulo →</span></button>;
       })}</div>}
     </section>
   );

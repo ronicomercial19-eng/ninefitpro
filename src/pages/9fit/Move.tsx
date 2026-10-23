@@ -69,6 +69,11 @@ export default function NineFitMove() {
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [activitySaved, setActivitySaved] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
+  const [saveFailed,setSaveFailed]=useState(false);
+  const [savingActivity,setSavingActivity]=useState(false);
+  const savingRef=useRef(false);
+  const sessionRef=useRef<{id:string;userId:string;recordedAt?:string}|null>(null);
+  const currentUserRef=useRef(user?.id);currentUserRef.current=user?.id;
   const [voiceAudio, setVoiceAudio] = useState(true);
   const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
 
@@ -90,6 +95,15 @@ export default function NineFitMove() {
   const lastGeocodedCoordRef = useRef<LatLng | null>(null);
   const captureCardRef = useRef<HTMLDivElement>(null);
 
+  useEffect(()=>{
+    if(sessionRef.current && sessionRef.current.userId!==user?.id){
+      if(watchIdRef.current!==null)navigator.geolocation.clearWatch(watchIdRef.current);
+      if(simIntervalRef.current!==null)window.clearInterval(simIntervalRef.current);
+      watchIdRef.current=null;simIntervalRef.current=null;sessionRef.current=null;
+      setRunning(false);setActivitySaved(false);setSaveFailed(false);setSeconds(0);setDistanceKm(0);
+    }
+  },[user?.id]);
+
   const generateStaticMapUrl = async (path: LatLng[]) => {
     try {
       const apiKey = await getGoogleMapsApiKey();
@@ -109,12 +123,12 @@ export default function NineFitMove() {
   useEffect(() => {
     if (!user?.id) { setRecentRuns([]); return; }
     let active = true;
-    void supabase.from('bio_activity_logs').select('distance_m,recorded_at').eq('user_id', user.id).eq('source', 'move_gps').order('recorded_at', { ascending: false }).limit(10).then(({ data, error }) => {
-      if (!active || error) return;
-      const rows = (data ?? []).map((row) => ({ distanceKm: Number(row.distance_m ?? 0) / 1000, durationSeconds: 0, date: row.recorded_at ?? '' })).filter((row) => row.distanceKm > 0);
-      const local = JSON.parse(localStorage.getItem('9fit_move_history') || '[]') as Array<{ distanceKm: number; durationSeconds: number; date: string }>;
-      const merged = [...local, ...rows].filter((run, index, all) => all.findIndex((candidate) => Math.abs(candidate.distanceKm - run.distanceKm) < 0.01 && candidate.date === run.date) === index).slice(0, 10);
-      setRecentRuns(merged);
+    setRecentRuns([]);
+    void (supabase as any).from('bio_activity_logs').select('id,distance_m,recorded_at,duration_seconds').eq('user_id',user.id).eq('source','move_gps').order('recorded_at',{ascending:false}).limit(10).then(({data,error}:any)=>{
+      if(!active)return;
+      if(error){toast.error('Não foi possível carregar seu histórico de corridas.');return;}
+      const rows=(data||[]).map((row:any)=>({distanceKm:Number(row.distance_m||0)/1000,durationSeconds:row.duration_seconds,date:row.recorded_at})).filter((row:any)=>row.distanceKm>0);
+      setRecentRuns(rows);
     });
     return () => { active = false; };
   }, [user?.id, activitySaved]);
@@ -332,6 +346,9 @@ export default function NineFitMove() {
   );
 
   const startRealGps = () => {
+    if(!user)return toast.error('Entre para iniciar uma atividade.');
+    if(saveFailed)return toast.error('Salve a atividade pendente antes de iniciar outra.');
+    sessionRef.current={id:crypto.randomUUID(),userId:user.id};setSaveFailed(false);
     if (!("geolocation" in navigator)) {
       toast.error("Geolocalização não suportada neste navegador.");
       return;
@@ -399,6 +416,9 @@ export default function NineFitMove() {
   };
 
   const startSimulation = () => {
+    if(!user)return toast.error('Entre para iniciar uma atividade.');
+    if(saveFailed)return toast.error('Salve a atividade pendente antes de iniciar outra.');
+    sessionRef.current={id:crypto.randomUUID(),userId:user.id};setSaveFailed(false);
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
@@ -457,71 +477,38 @@ export default function NineFitMove() {
   };
 
   const stopAndSave = async () => {
-    setRunning(false);
-    setIsPaused(false);
-
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    if (simIntervalRef.current !== null) {
-      window.clearInterval(simIntervalRef.current);
-      simIntervalRef.current = null;
-    }
-
-    const finalDistanceMeters = Math.round(distanceKm * 1000);
-    const avgSpeed = distanceKm > 0 ? (distanceKm / (seconds / 3600)) : 0;
-    const caloriesBurned = Math.round(distanceKm * 65);
-
-    const mapUrl = await generateStaticMapUrl(pathCoordinatesRef.current);
-    setStaticMapUrl(mapUrl);
-
-    try {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-
-      if (currentUser) {
-        await supabase.from("bio_activity_logs").insert({
-          user_id: currentUser.id,
-          distance_m: finalDistanceMeters,
-          calories: caloriesBurned,
-          source: "move_gps",
-          recorded_at: new Date().toISOString(),
-        });
+    if(savingRef.current || activitySaved)return;
+    setRunning(false);setIsPaused(false);
+    if(watchIdRef.current!==null){navigator.geolocation.clearWatch(watchIdRef.current);watchIdRef.current=null;}
+    if(simIntervalRef.current!==null){window.clearInterval(simIntervalRef.current);simIntervalRef.current=null;}
+    if(isSimulationMode){toast.info('Simulação encerrada. Nenhuma atividade real ou recompensa foi registrada.');return;}
+    const session=sessionRef.current;
+    if(!session || session.userId!==currentUserRef.current)return toast.error('A conta da atividade mudou. Entre na conta original.');
+    if(seconds<1 || !Number.isFinite(distanceKm) || distanceKm<=0)return toast.error('Ainda não há distância válida para salvar.');
+    savingRef.current=true;setSavingActivity(true);setSaveFailed(false);
+    try{
+      const {data:auth,error:authError}=await supabase.auth.getUser();
+      if(authError || auth.user?.id!==session.userId)throw new Error('session_changed');
+      session.recordedAt ||= new Date().toISOString();
+      const row={id:session.id,user_id:session.userId,distance_m:Math.round(distanceKm*1000),duration_seconds:seconds,calories:Math.round(distanceKm*65),source:'move_gps',recorded_at:session.recordedAt};
+      const {error}=await (supabase as any).from('bio_activity_logs').insert(row).select('id').single();
+      if(error){
+        if(error.code!=='23505')throw error;
+        const {data:receipt,error:readError}=await supabase.from('bio_activity_logs').select('id').eq('id',session.id).eq('user_id',session.userId).single();
+        if(readError || !receipt)throw readError || new Error('receipt_missing');
       }
-
-      const localHistory = JSON.parse(
-        localStorage.getItem("9fit_move_history") || "[]"
-      );
-      localHistory.unshift({
-        id: `run_${Date.now()}`,
-        date: new Date().toLocaleDateString("pt-BR"),
-        time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-        distanceKm,
-        durationSeconds: seconds,
-        avgSpeedKmh: avgSpeed,
-        street: currentStreet,
-        neighborhood: currentNeighborhood,
-        calories: caloriesBurned,
-        staticMapUrl: mapUrl,
-      });
-      localStorage.setItem("9fit_move_history", JSON.stringify(localHistory.slice(0, 20)));
-
-      emitNexus("9fit:mission_completed", { missionId: "move_session", xp: 100 });
-      emitNexus("9fit:run:finished", {
-        distanceKm,
-        durationMinutes: Math.round(seconds / 60),
-      });
-
+      if(currentUserRef.current!==session.userId)return;
+      // Server history is authoritative; an old anonymous cache is never imported.
+      try{localStorage.setItem(`9fit_move_history:${session.userId}`,JSON.stringify([row]));}catch{/* Optional cache. */}
       setActivitySaved(true);
-      toast.success(
-        `🏆 Corrida Finalizada! ${distanceKm.toFixed(2)}km registrados e sincronizados com seu progresso.`
-      );
-    } catch (e) {
-      console.error(e);
-      toast.error("Não foi possível salvar a corrida no servidor.");
-    }
+      emitNexus('9fit:run:finished',{distanceKm,durationMinutes:Math.round(seconds/60)});
+      window.dispatchEvent(new Event('9fit:user-state-invalidated'));
+      toast.success('Atividade registrada no seu histórico. Calorias são uma estimativa.');
+      const map=await generateStaticMapUrl(pathCoordinatesRef.current);
+      if(currentUserRef.current===session.userId)setStaticMapUrl(map);
+    }catch(error){
+      if(currentUserRef.current===session.userId){setSaveFailed(true);toast.error('Não foi possível confirmar a gravação. Sua atividade continua nesta tela para tentar novamente.');}
+    }finally{savingRef.current=false;setSavingActivity(false);}
   };
 
   const recenterMap = () => {
@@ -742,11 +729,12 @@ export default function NineFitMove() {
 
       {/* BOTÕES DE CONTROLE DA CORRIDA */}
       <div className="mx-5 mt-4 space-y-2.5">
+        {saveFailed && <button type="button" disabled={savingActivity} onClick={()=>void stopAndSave()} className="w-full rounded-xl border border-amber-400 p-4 text-amber-300">{savingActivity?'Salvando…':'Tentar salvar atividade novamente'}</button>}
         {!running ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button
               type="button"
-              onClick={startRealGps}
+              onClick={startRealGps} disabled={savingActivity || saveFailed}
               className="w-full py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25 text-sm cursor-pointer"
             >
               <Play className="w-5 h-5 fill-current" />
@@ -755,7 +743,7 @@ export default function NineFitMove() {
             {showSimulationControls && (
               <button
                 type="button"
-                onClick={startSimulation}
+                onClick={startSimulation} disabled={savingActivity || saveFailed}
                 className="w-full py-4 rounded-xl font-semibold border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
