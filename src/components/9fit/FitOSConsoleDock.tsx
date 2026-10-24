@@ -36,15 +36,13 @@ interface Props {
   protocolCount: number;
 }
 
-type Finish = "orange-satin" | "orange-matte" | "orange-neon" | "orange-soft" | "orange-strong";
-
 interface Shortcut {
   key: string;
   title: string;
   status: string;
   icon: any;
-  finish: Finish;
-  blink?: boolean;
+  /** só true quando houver novidade/pendência real — sem novidade, sem bolinha */
+  hasNews?: boolean;
   /** rota ao tocar; sem rota = abre splash (apenas Radar 3D, que depende dos dados do Hub) */
   route?: string;
 }
@@ -69,12 +67,12 @@ export function FitOSConsoleDock({
 
   // Comandos & Sinais: Staff / Store / Metas  ·  Compromissos / Radar 3D / Prime Pass
   const shortcuts: Shortcut[] = [
-    { key: "staff", title: "Staff", status: "EQUIPE", icon: Users, finish: "orange-satin", route: "/9fit/staff" },
-    { key: "store", title: "Store", status: "LOJA", icon: ShoppingBag, finish: "orange-matte", route: "/9fit/native-system?app=store" },
-    { key: "metas", title: "Metas", status: "EVOLUÇÃO", icon: Target, finish: "orange-neon", route: "/9fit/progresso" },
-    { key: "compromissos", title: "Compromissos", status: "AGENDA", icon: CalendarCheck, finish: "orange-soft", route: "/9fit/aulas-creditos?tab=schedule" },
-    { key: "radar", title: "Radar 3D", status: "SEMANA", icon: Compass, finish: "orange-strong" },
-    { key: "prime", title: "Prime Pass", status: "BENEFÍCIOS", icon: Crown, finish: "orange-satin", blink: true, route: "/9fit/primepass" },
+    { key: "staff", title: "Staff", status: "EQUIPE", icon: Users, route: "/9fit/staff" },
+    { key: "store", title: "Store", status: "LOJA", icon: ShoppingBag, route: "/9fit/native-system?app=store" },
+    { key: "metas", title: "Metas", status: "EVOLUÇÃO", icon: Target, route: "/9fit/progresso" },
+    { key: "compromissos", title: "Compromissos", status: "AGENDA", icon: CalendarCheck, route: "/9fit/aulas-creditos?tab=schedule" },
+    { key: "radar", title: "Radar 3D", status: "SEMANA", icon: Compass },
+    { key: "prime", title: "Prime Pass", status: "BENEFÍCIOS", icon: Crown, route: "/9fit/primepass" },
   ];
 
   const onShortcut = (s: Shortcut) => {
@@ -116,27 +114,24 @@ export function FitOSConsoleDock({
         whileHover={{ y: -2 }}
         transition={{ duration: 0.25 }}
         onClick={() => navigate("/9fit/planejamento")}
-        className="hub-card-interactive relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#161720] via-[#0e0f14] to-[#08080b] p-4 sm:p-5 shadow-2xl shadow-black/70 cursor-pointer group"
+        className="relative overflow-hidden rounded-3xl border border-[#EF7A45]/25 bg-[#0B0B0C] bg-gradient-to-b from-[#EF7A45]/[0.05] to-transparent p-4 sm:p-5 cursor-pointer group"
       >
-        <div className="absolute top-0 right-0 w-64 h-32 bg-[var(--orange-500)]/15 blur-3xl pointer-events-none group-hover:bg-[var(--orange-500)]/25 transition-all" />
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--orange-500)] to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-
-        <div className="relative z-10 space-y-3">
+        <div className="relative z-10 space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-mono tracking-[0.25em] font-bold text-[var(--orange-400)] uppercase">
+            <span className="text-[11px] font-mono tracking-[0.12em] font-bold text-[#EF7A45] uppercase">
               FOCO ATUAL · FIT OS
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-wider text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-[0.08em] text-[#EF7A45] bg-[#EF7A45]/15 border border-[#EF7A45]/25">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
               CICLO EM ANDAMENTO
             </span>
           </div>
 
           <div>
-            <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
               {performancePlanTitle || "Defina seu objetivo"}
             </h3>
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-white/65 mt-1">
               {protocolCount > 0
                 ? `${protocolCount} conteúdos atribuídos ainda não concluídos na Biblioteca. A rotina diária é acompanhada separadamente.`
                 : "Nenhuma intervenção prescrita disponível."}
@@ -144,36 +139,36 @@ export function FitOSConsoleDock({
           </div>
 
           {/* Brief: estado atual em treino e dieta + orientação */}
-          <div className="rounded-xl border border-white/[0.07] bg-black/30 p-3 space-y-2">
-            <p className="text-[9px] font-mono tracking-[0.22em] uppercase font-bold text-[var(--orange-300)]">
+          <div className="rounded-2xl border border-[#EF7A45]/25 bg-black/30 p-3 space-y-2.5">
+            <p className="text-[11px] font-mono tracking-[0.12em] uppercase font-bold text-[#EF7A45]">
               Brief do atleta
             </p>
-            <div className="flex items-start gap-2 text-[12px] text-neutral-200">
-              <Dumbbell className="w-3.5 h-3.5 mt-0.5 text-[var(--orange-400)] shrink-0" />
-              <span><b className="text-white">Treino:</b> {trainStatus} · {weekly.treinos}/5 sessões</span>
+            <div className="flex items-start gap-2.5 text-[12px] text-white/65">
+              <Dumbbell strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
+              <span><b className="font-semibold text-white">Treino:</b> {trainStatus} · {weekly.treinos}/5 sessões</span>
             </div>
-            <div className="flex items-start gap-2 text-[12px] text-neutral-200">
-              <Utensils className="w-3.5 h-3.5 mt-0.5 text-[var(--orange-400)] shrink-0" />
-              <span><b className="text-white">Dieta:</b> {dietStatus}</span>
+            <div className="flex items-start gap-2.5 text-[12px] text-white/65">
+              <Utensils strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
+              <span><b className="font-semibold text-white">Dieta:</b> {dietStatus}</span>
             </div>
-            <div className="flex items-start gap-2 text-[12px] text-neutral-100">
-              <Lightbulb className="w-3.5 h-3.5 mt-0.5 text-[var(--orange-200)] shrink-0" />
-              <span><b className="text-[var(--orange-200)]">Para melhorar:</b> {guidance}</span>
+            <div className="flex items-start gap-2.5 text-[12px] text-white/65">
+              <Lightbulb strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
+              <span><b className="font-semibold text-white">Para melhorar:</b> {guidance}</span>
             </div>
           </div>
 
           <div>
-            <div className="orange-satin inline-flex items-center gap-1.5 px-5 py-2 rounded-full font-bold text-xs group-hover:brightness-110 active:scale-95 transition-all">
+            <div className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl bg-[#EF7A45] text-white font-semibold text-sm shadow-[0_8px_24px_rgba(239,122,69,0.25)] active:scale-95 transition-transform">
               <span>Acessar</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between gap-3 text-[11px] font-mono text-neutral-400">
-            <span className="text-neutral-300 font-medium shrink-0">Consistência do ciclo:</span>
-            <div className="flex-1 h-1.5 rounded-full bg-neutral-800 overflow-hidden mx-2">
+          <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between gap-3 text-[11px] font-mono text-white/65">
+            <span className="shrink-0">Consistência do ciclo:</span>
+            <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden mx-2">
               <div
-                className="h-full bg-gradient-to-r from-[var(--orange-300)] via-[var(--orange-500)] to-[var(--orange-700)] rounded-full transition-all duration-1000"
+                className="h-full bg-[#EF7A45] rounded-full transition-all duration-1000"
                 style={{ width: `${Math.min(100, Math.max(0, (weekly.treinos / 5) * 100))}%` }}
               />
             </div>
@@ -183,40 +178,44 @@ export function FitOSConsoleDock({
       </motion.div>
 
       {/* COMANDOS & SINAIS — atalhos com rota própria */}
-      <div className="space-y-2">
+      <div className="space-y-2 pb-20">
         <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-mono tracking-[0.25em] text-[var(--orange-400)] uppercase font-bold flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-mono tracking-[0.12em] text-white/45 uppercase font-bold flex items-center gap-1.5">
+            <Zap strokeWidth={1.75} className="w-3.5 h-3.5 text-[#EF7A45]" />
             COMANDOS & SINAIS
           </span>
-          <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider">TOQUE PARA ABRIR</span>
+          <span className="text-[10px] font-mono text-white/35 uppercase tracking-[0.12em]">TOQUE PARA ABRIR</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
           {shortcuts.map((s) => {
             const Icon = s.icon;
+            const active = s.key === "radar" && radarOpen;
             return (
               <motion.button
                 key={s.key}
                 type="button"
-                whileHover={{ y: -3, scale: 1.03 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.97 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => onShortcut(s)}
-                className="hub-card-interactive squircle-interactive relative flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#14151b] to-[#0a0a0d] shadow-lg shadow-black/50 group text-center cursor-pointer overflow-hidden"
+                className={`relative flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-[20px] border text-center cursor-pointer overflow-hidden transition-colors ${
+                  active
+                    ? "border-[#EF7A45]/60 bg-[#EF7A45]/[0.08]"
+                    : "border-[#EF7A45]/25 bg-[#0B0B0C]"
+                }`}
               >
-                <span className="absolute top-2 right-2 flex h-1.5 w-1.5">
-                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--orange-400)] ${s.blink ? "animate-orange-blink" : ""}`} />
-                </span>
+                {s.hasNews && (
+                  <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-[#EF7A45]" />
+                )}
 
-                <div className={`${s.finish} w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-110 ${s.finish === "orange-neon" ? "animate-orange-glow" : ""}`}>
-                  <Icon className="w-5 h-5" />
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2 bg-[#EF7A45]/[0.12] border border-[#EF7A45]/25">
+                  <Icon strokeWidth={1.75} className="w-6 h-6 text-[#EF7A45]" />
                 </div>
 
-                <span className="text-[11px] sm:text-xs font-bold text-white font-display leading-tight truncate w-full">
+                <span className="text-[15px] sm:text-base font-bold text-white font-display leading-tight truncate w-full">
                   {s.title}
                 </span>
-                <span className="text-[8px] font-mono text-neutral-400 uppercase tracking-tight mt-0.5 truncate w-full">
+                <span className="text-[11px] font-mono text-white/45 uppercase tracking-[0.08em] mt-0.5 truncate w-full">
                   {s.status}
                 </span>
               </motion.button>
