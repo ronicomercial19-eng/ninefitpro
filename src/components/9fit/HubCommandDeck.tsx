@@ -48,25 +48,21 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
 
   return (
     <section className="w-full" aria-label="Comando do dia">
-      <div className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0c0d10] p-3.5 sm:p-4.5 shadow-xl transition-all">
-        {/* Hairline subtle top light */}
-        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-        <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
-
+      <div className="relative overflow-hidden rounded-3xl border border-[#EF7A45]/25 bg-[#0B0B0C] bg-gradient-to-b from-[#EF7A45]/[0.04] to-transparent p-3.5 sm:p-5 transition-all">
         <div className="relative">
           {/* Header do Card */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-primary/40 bg-primary/10">
-                <Sparkles className="h-3 w-3 text-primary" />
+              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-[#EF7A45]/25 bg-[#EF7A45]/[0.12]">
+                <Sparkles strokeWidth={1.75} className="h-3 w-3 text-[#EF7A45]" />
               </span>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-primary">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-[#EF7A45]">
                 Comando do Dia
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={`h-1.5 w-1.5 rounded-full ${scoreReady ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
-              <span className="font-mono text-[9.5px] uppercase tracking-wider text-neutral-400 font-medium">
+              <span className={`h-1.5 w-1.5 rounded-full bg-[#5BC8E8] ${scoreReady ? "" : "animate-pulse opacity-70"}`} />
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-white/45 font-medium">
                 {scoreReady ? `SYNC ${Math.round(syncScore!)}` : "CALIBRANDO"}
               </span>
             </div>
@@ -78,7 +74,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
               <h2 className="text-base sm:text-lg font-bold tracking-tight text-white leading-snug font-display">
                 {name}, {headline}
               </h2>
-              <p className="mt-0.5 text-[11.5px] text-neutral-400 leading-normal">
+              <p className="mt-0.5 text-[11.5px] text-white/65 leading-normal">
                 {command?.description || 'A próxima ação depende dos seus registros confirmados.'}
               </p>
             </div>
@@ -90,20 +86,20 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
             type="button"
             onClick={act}
             disabled={!context.online || context.isFetching}
-            className="mt-3 flex w-full items-center justify-between gap-2.5 rounded-lg bg-primary hover:bg-primary/90 px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-primary-foreground transition-all active:scale-[0.99] shadow-sm"
+            className="mt-3 flex w-full items-center justify-between gap-2.5 rounded-2xl bg-[#EF7A45] hover:bg-[#EF7A45]/90 px-3.5 py-3 text-left text-xs font-semibold tracking-wide text-white shadow-[0_8px_24px_rgba(239,122,69,0.25)] transition-all active:scale-[0.99]"
           >
             <span className="flex items-center gap-2">
-              <Dumbbell className="h-3.5 w-3.5" />
+              <Dumbbell strokeWidth={1.75} className="h-3.5 w-3.5" />
               <span>{primaryLabel}</span>
             </span>
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            <ArrowUpRight strokeWidth={1.75} className="h-3.5 w-3.5" />
           </button>
-          {progress && <p className="mt-2 text-xs text-neutral-400" aria-live="polite">{progress.completed}/{progress.total} etapas registradas · {current?.today.rest_day ? 'Descanso registrado' : 'Jornada de hoje'}</p>}
-          {(command?.key === 'training' || command?.key === 'safety') && <button type="button" disabled={saving || !navigator.onLine} onClick={() => void record({ training_choice: 'rest' })} className="mt-2 text-xs text-neutral-400 underline">Hoje vou descansar</button>}
+          {progress && <p className="mt-2 text-xs text-white/65" aria-live="polite">{progress.completed}/{progress.total} etapas registradas · {current?.today.rest_day ? 'Descanso registrado' : 'Jornada de hoje'}</p>}
+          {(command?.key === 'training' || command?.key === 'safety') && <button type="button" disabled={saving || !navigator.onLine} onClick={() => void record({ training_choice: 'rest' })} className="mt-2 text-xs text-white/65 underline">Hoje vou descansar</button>}
           {context.isError && <p role="alert" className="mt-2 text-xs text-amber-400">Falha ao atualizar. Conecte-se e tente novamente antes de continuar.</p>}
           {!context.online && <p role="status" className="mt-2 text-xs text-amber-400">Sem conexão. Seus últimos registros ficam visíveis; reconecte para continuar.</p>}
 
-          {/* Métricas Semanais — Números Elegantes & Labels Nítidos */}
+          {/* Métricas Semanais */}
           <div className="mt-2.5 grid grid-cols-3 gap-2">
             <CommandMetric label="Treinos" value={weekly.treinos} suffix="sem" progress={consistency} />
             <CommandMetric label="Minutos" value={weekly.minutos} suffix="min" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
@@ -115,17 +111,17 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
             <button
               type="button"
               onClick={() => navigate("/9fit/ron?context=hub_command")}
-              className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
+              className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2.5 text-[11px] font-medium text-white/65 hover:text-white transition-colors"
             >
-              <Brain className="h-3.5 w-3.5 text-primary" />
+              <Brain strokeWidth={1.75} className="h-4 w-4 text-[#EF7A45]" />
               <span>Perguntar ao RON</span>
             </button>
             <button
               type="button"
               onClick={() => setModal('calibration')}
-              className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-neutral-300 hover:text-white transition-colors"
+              className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2.5 text-[11px] font-medium text-white/65 hover:text-white transition-colors"
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              <CheckCircle2 strokeWidth={1.75} className="h-4 w-4 text-[#EF7A45]" />
               <span>Registrar sinal</span>
             </button>
           </div>
@@ -154,20 +150,20 @@ function SyncDial({ score }: { score: number | null }) {
           cy="44"
           r="36"
           fill="none"
-          stroke="currentColor"
+          stroke="#EF7A45"
           strokeWidth="4"
           strokeLinecap="round"
-          className="text-primary transition-all duration-700"
+          className="transition-all duration-700"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - value / 100)}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-neutral-400 font-semibold">SYNC</span>
+        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/45 font-semibold">SYNC</span>
         <span className="text-xl sm:text-2xl font-bold tracking-tight text-white tabular-nums font-mono leading-none my-0.5">
           {score === null ? "—" : score}
         </span>
-        <span className="font-mono text-[8.5px] text-neutral-500 tracking-wider font-medium">/ 100</span>
+        <span className="font-mono text-[9px] text-white/35 tracking-wider font-medium">/ 100</span>
       </div>
     </div>
   );
@@ -178,21 +174,21 @@ function CommandMetric({ label, value, suffix, progress }: { label: string; valu
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2 sm:p-2.5 transition-all"
+      className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-2 sm:p-2.5 transition-all"
     >
-      <p className="text-[9.5px] font-mono font-semibold uppercase tracking-[0.16em] text-neutral-400">
+      <p className="text-[10px] font-mono font-semibold uppercase tracking-[0.12em] text-white/45">
         {label}
       </p>
       <div className="mt-1 flex items-baseline gap-1">
         <span className="text-base sm:text-lg font-bold tracking-tight text-white tabular-nums font-mono leading-none">
           {value}
         </span>
-        <span className="text-[9.5px] font-mono font-medium text-neutral-500 lowercase">
+        <span className="text-[10px] font-mono font-medium text-white/45 lowercase">
           {suffix}
         </span>
       </div>
       <div className="mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-[#EF7A45] transition-all duration-500" style={{ width: `${progress}%` }} />
       </div>
     </motion.div>
   );
