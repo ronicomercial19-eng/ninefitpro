@@ -27,7 +27,14 @@ function Builder({ athleteId, name }: { athleteId: string; name: string }) {
     [reviewed, setReviewed] = useState(false),
     [busy, setBusy] = useState(false);
   const receipt = useRef<{ fingerprint: string; id: string } | null>(null),
-    writing = useRef(false);
+    writing = useRef(false),
+    alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   const qc = useQueryClient();
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(`${start}T12:00:00Z`);
@@ -87,6 +94,7 @@ function Builder({ athleteId, name }: { athleteId: string; name: string }) {
       );
       if (error) throw error;
       if (!(data as any)?.saved) throw new Error("Publicação não confirmada");
+      if (!alive.current) return;
       toast.success(
         `Ciclo publicado para ${name}: ${(data as any).sessions} sessões.`,
       );
@@ -94,13 +102,14 @@ function Builder({ athleteId, name }: { athleteId: string; name: string }) {
       await qc.invalidateQueries({ queryKey: ["student-training-cycles"] });
       await qc.invalidateQueries({ queryKey: ["coach-student-context"] });
     } catch (e) {
-      toast.error(
-        "Não foi possível publicar o ciclo. " +
-          ((e as any)?.message || "Tente novamente."),
-      );
+      if (alive.current)
+        toast.error(
+          "Não foi possível publicar o ciclo. " +
+            ((e as any)?.message || "Tente novamente."),
+        );
     } finally {
       writing.current = false;
-      setBusy(false);
+      if (alive.current) setBusy(false);
     }
   }
   return (

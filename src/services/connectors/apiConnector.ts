@@ -18,8 +18,11 @@ export interface ConnectorRecord {
 }
 
 const cache = new Map<string, ConnectorRecord>();
+supabase.auth.onAuthStateChange(() => cache.clear());
 
-export async function getConnector(key: string): Promise<ConnectorRecord | null> {
+export async function getConnector(
+  key: string,
+): Promise<ConnectorRecord | null> {
   if (cache.has(key)) return cache.get(key)!;
   const { data, error } = await supabase
     .from("api_connectors")
@@ -32,7 +35,8 @@ export async function getConnector(key: string): Promise<ConnectorRecord | null>
 }
 
 export function invalidateConnector(key?: string) {
-  if (key) cache.delete(key); else cache.clear();
+  if (key) cache.delete(key);
+  else cache.clear();
 }
 
 export async function apiConnector(key: string) {
@@ -57,22 +61,43 @@ export async function apiConnector(key: string) {
           body: JSON.stringify({
             connector: key,
             path,
-            init: { method: init.method ?? "GET", body: init.body, headers: init.headers },
+            init: {
+              method: init.method ?? "GET",
+              body: init.body,
+              headers: init.headers,
+            },
           }),
         },
       );
     }
-    // none/oauth fallback: direct fetch
-    const base = rec!.endpoint?.replace(/\/$/, "") ?? "";
-    return fetch(`${base}${path}`, init);
+    if (rec!.auth_mode !== "none")
+      throw new Error(
+        "Este modo de autenticação exige um contrato específico do provedor.",
+      );
+    const base = new URL(rec!.endpoint || "");
+    const url = new URL(base.toString().replace(/\/$/, "") + path);
+    if (
+      base.protocol !== "https:" ||
+      url.origin !== base.origin ||
+      base.username ||
+      base.password ||
+      !path.startsWith("/") ||
+      path.startsWith("//")
+    )
+      throw new Error("Destino inválido.");
+    return fetch(url, { ...init, credentials: "omit", redirect: "error" });
   }
-
   async function ssoIframeUrl(extra?: Record<string, string>) {
-    const { data: sess } = await supabase.auth.getSession();
-    const token = sess.session?.access_token ?? "";
-    const url = new URL(rec!.iframe_url ?? rec!.endpoint ?? "about:blank");
-    if (token) url.searchParams.set("token", token);
-    for (const [k, v] of Object.entries(extra ?? {})) url.searchParams.set(k, v);
+    const url = new URL(rec!.iframe_url || rec!.endpoint || "");
+    if (url.protocol !== "https:" || url.username || url.password)
+      throw new Error("Destino inválido.");
+    for (const key of [...url.searchParams.keys()])
+      if (/token|secret|password|authorization/i.test(key))
+        url.searchParams.delete(key);
+    for (const [key, value] of Object.entries(extra || {}))
+      if (!/token|secret|password|authorization/i.test(key))
+        url.searchParams.set(key, value);
+    url.hash = "";
     return url.toString();
   }
 
@@ -80,6 +105,10 @@ export async function apiConnector(key: string) {
     record: rec,
     fetch: authedFetch,
     openIframe: ssoIframeUrl,
-    sso: ssoIframeUrl,
+    sso: async () => {
+      throw new Error(
+        "SSO requer troca de ticket assinada específica do provedor; use a abertura com login próprio.",
+      );
+    },
   };
 }

@@ -37,13 +37,19 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
   const [count, setCount] = useState<number | null>(null);
 
   const handleFile = async (f: File) => {
-    setBusy(true); setCount(null);
+    setBusy(true);
+    setCount(null);
     try {
       const txt = await f.text();
       const raw: unknown = JSON.parse(txt);
-      const list = (Array.isArray(raw) ? raw : [raw])
-        .filter((s): s is RawSkill => typeof s === "object" && s !== null && "slug" in s && "name" in s);
-      if (!list.length) { toast.error("Nenhuma skill válida no arquivo"); return; }
+      const list = (Array.isArray(raw) ? raw : [raw]).filter(
+        (s): s is RawSkill =>
+          typeof s === "object" && s !== null && "slug" in s && "name" in s,
+      );
+      if (!list.length) {
+        toast.error("Nenhuma skill válida no arquivo");
+        return;
+      }
 
       const payload: SkillPayload[] = list.map((s) => ({
         slug: String(s.slug),
@@ -53,14 +59,24 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
         tags: Array.isArray(s.tags) ? s.tags.map(String) : [],
         version: Number(s.version) || 1,
         status: typeof s.status === "string" ? s.status : "draft",
-        content: typeof s.content === "object" && s.content !== null && !Array.isArray(s.content) ? s.content as Record<string, unknown> : {},
+        content:
+          typeof s.content === "object" &&
+          s.content !== null &&
+          !Array.isArray(s.content)
+            ? (s.content as Record<string, unknown>)
+            : {},
       }));
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("skills")
-        .upsert(payload as any, { onConflict: "slug" });
+        .upsert(payload as any, { onConflict: "slug" })
+        .select("id");
 
       if (error) throw error;
+      if (data?.length !== payload.length)
+        throw new Error(
+          "Importação incompleta; recarregue a lista antes de repetir.",
+        );
       setCount(payload.length);
       toast.success(`${payload.length} skill(s) importadas`);
       onDone?.();
@@ -78,7 +94,8 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
       <div className="flex-1">
         <p className="text-sm font-semibold">Upload de Skills (JSON)</p>
         <p className="text-xs text-muted-foreground">
-          Aceita objeto ou array com <code className="font-mono">slug, name, category, content</code>.
+          Aceita objeto ou array com{" "}
+          <code className="font-mono">slug, name, category, content</code>.
         </p>
         {count !== null && (
           <p className="text-xs text-primary mt-1 flex items-center gap-1">
@@ -94,7 +111,11 @@ export function SkillUploader({ onDone }: { onDone?: () => void }) {
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
       />
       <Button onClick={() => ref.current?.click()} disabled={busy}>
-        {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+        {busy ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <Upload className="w-4 h-4 mr-2" />
+        )}
         Importar
       </Button>
     </div>

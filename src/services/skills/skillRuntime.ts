@@ -17,8 +17,17 @@ export type ActiveSkill = {
 export type SkillContext = {
   userId: string;
   athleteId?: string;
-  profile?: { level?: number; objective?: string; experience?: string; restrictions?: string | null };
-  bio?: { hrv?: number | null; sleep?: number | null; recovery?: number | null };
+  profile?: {
+    level?: number;
+    objective?: string;
+    experience?: string;
+    restrictions?: string | null;
+  };
+  bio?: {
+    hrv?: number | null;
+    sleep?: number | null;
+    recovery?: number | null;
+  };
   activeSkills: ActiveSkill[];
   moduleContext?: string;
   timestamp: string;
@@ -27,7 +36,9 @@ export type SkillContext = {
 const CACHE_TTL = 60 * 60 * 1000; // 1h
 const skillCache = new Map<string, { prompt: string; t: number }>();
 
-export async function loadActiveSkillsFor(_userId: string): Promise<ActiveSkill[]> {
+export async function loadActiveSkillsFor(
+  _userId: string,
+): Promise<ActiveSkill[]> {
   const { data } = await supabase
     .from("skills")
     .select("id, slug, name, category, description, content, version")
@@ -36,10 +47,17 @@ export async function loadActiveSkillsFor(_userId: string): Promise<ActiveSkill[
   return (data ?? []) as ActiveSkill[];
 }
 
-export async function buildSkillContext(userId: string, moduleContext = "general"): Promise<SkillContext> {
+export async function buildSkillContext(
+  userId: string,
+  moduleContext = "general",
+): Promise<SkillContext> {
   const { data: canonicalId } = await supabase.rpc("fn_current_athlete_id");
   const [{ data: athleteRaw }, skills] = await Promise.all([
-    supabase.from("athletes").select("id, level, experience_level, primary_goal, injuries_limitations").eq("id", canonicalId || "").maybeSingle(),
+    supabase
+      .from("athletes")
+      .select("id, level, experience_level, primary_goal, injuries_limitations")
+      .eq("id", canonicalId || "")
+      .maybeSingle(),
     loadActiveSkillsFor(userId),
   ]);
   const athlete = athleteRaw as any;
@@ -47,17 +65,46 @@ export async function buildSkillContext(userId: string, moduleContext = "general
   let bio: SkillContext["bio"] = {};
   if (athlete?.id) {
     const [{ data: hrv }, { data: sleep }, { data: rec }] = await Promise.all([
-      supabase.from("bio_hrv_logs" as any).select("hrv_ms").eq("user_id", userId).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("bio_sleep_logs" as any).select("duration_min").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("bio_recovery_state" as any).select("score").eq("athlete_id", athlete.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase
+        .from("bio_hrv_logs" as any)
+        .select("hrv_ms")
+        .eq("user_id", userId)
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("bio_sleep_logs" as any)
+        .select("duration_min")
+        .eq("athlete_id", athlete.id)
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("bio_recovery_state" as any)
+        .select("score")
+        .eq("athlete_id", athlete.id)
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
-    bio = { hrv: (hrv as any)?.hrv_ms ?? null, sleep: (sleep as any)?.duration_min ?? null, recovery: (rec as any)?.recovery_score ?? null };
+    bio = {
+      hrv: (hrv as any)?.hrv_ms ?? null,
+      sleep: (sleep as any)?.duration_min ?? null,
+      recovery: (rec as any)?.score ?? null,
+    };
   }
 
   return {
     userId,
     athleteId: athlete?.id,
-    profile: athlete ? { level: athlete.level, experience: athlete.experience_level, objective: athlete.primary_goal, restrictions: athlete.injuries_limitations } : undefined,
+    profile: athlete
+      ? {
+          level: athlete.level,
+          experience: athlete.experience_level,
+          objective: athlete.primary_goal,
+          restrictions: athlete.injuries_limitations,
+        }
+      : undefined,
     bio,
     activeSkills: skills,
     moduleContext,
@@ -68,7 +115,10 @@ export async function buildSkillContext(userId: string, moduleContext = "general
 function compileSkills(skills: ActiveSkill[]): string {
   if (!skills.length) return "";
   const parts = skills.map((s) => {
-    const body = typeof s.content === "string" ? s.content : JSON.stringify(s.content, null, 0);
+    const body =
+      typeof s.content === "string"
+        ? s.content
+        : JSON.stringify(s.content, null, 0);
     return `### SKILL ${s.slug} (${s.category}) v${s.version}\n${s.description ?? ""}\n${body}`;
   });
   return `\n\n## SKILLS ATIVAS (Nexus)\n${parts.join("\n\n")}\n`;
@@ -78,20 +128,25 @@ function cacheKey(ctx: SkillContext) {
   return `${ctx.userId}:${ctx.moduleContext}:${ctx.activeSkills.map((s) => `${s.slug}@${s.version}`).join(",")}`;
 }
 
-export function injectSkillsIntoPrompt(ctx: SkillContext, basePrompt: string): { enriched: string; cacheHit: boolean; applied: string[] } {
+export function injectSkillsIntoPrompt(
+  ctx: SkillContext,
+  basePrompt: string,
+): { enriched: string; cacheHit: boolean; applied: string[] } {
   const key = cacheKey(ctx);
   const cached = skillCache.get(key);
-  if (cached && Date.now() - cached.t < CACHE_TTL) {
-    return { enriched: `${cached.prompt}\n\n${basePrompt}`, cacheHit: true, applied: ctx.activeSkills.map((s) => s.slug) };
-  }
-  const header = compileSkills(ctx.activeSkills);
+  const cacheHit = !!cached && Date.now() - cached.t < CACHE_TTL;
+  const header = cacheHit ? cached.prompt : compileSkills(ctx.activeSkills);
   const bioLine = ctx.bio
     ? `\n## ESTADO FISIO ATUAL\nHRV:${ctx.bio.hrv ?? "—"} | Sono(min):${ctx.bio.sleep ?? "—"} | Recovery:${ctx.bio.recovery ?? "—"}\n`
     : "";
   const prompt = `${header}${bioLine}`;
-  skillCache.set(key, { prompt, t: Date.now() });
+  skillCache.set(key, { prompt: header, t: Date.now() });
   void logApplied(ctx);
-  return { enriched: `${prompt}\n\n${basePrompt}`, cacheHit: false, applied: ctx.activeSkills.map((s) => s.slug) };
+  return {
+    enriched: `${prompt}\n\n${basePrompt}`,
+    cacheHit,
+    applied: ctx.activeSkills.map((s) => s.slug),
+  };
 }
 
 async function logApplied(ctx: SkillContext) {
@@ -103,7 +158,7 @@ async function logApplied(ctx: SkillContext) {
         user_id: ctx.userId,
         event_type: "applied",
         payload: { module: ctx.moduleContext, ts: ctx.timestamp },
-      })) as any
+      })) as any,
     );
   } catch {
     /* fail silent */

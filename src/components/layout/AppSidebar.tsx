@@ -42,6 +42,12 @@ const menuItems = [
   { title: "Mensagens", url: "/app/mensagens", icon: Users },
   { title: "Alunos", url: "/app/alunos", icon: Users },
   { title: "Exercícios", url: "/app/exercicios", icon: Dumbbell },
+  { title: "Super Séries", url: "/app/super-series", icon: Zap },
+  {
+    title: "Séries de referência",
+    url: "/app/series-referencia",
+    icon: Dumbbell,
+  },
   { title: "SmartTreino", url: "/app/smart-treino", icon: Zap },
   {
     title: "SmartPeriodizer",
@@ -53,11 +59,13 @@ const menuItems = [
   { title: "Assistente IA", url: "/app/assistente-ia", icon: Sparkles },
   { title: "Análise IA", url: "/app/analise-ia", icon: Brain },
   { title: "HealthFlix", url: "/app/healthflix", icon: Film },
+  { title: "Comunidade", url: "/app/community", icon: Users },
   { title: "Postura Pro", url: "/app/postura-pro", icon: Activity },
   { title: "RON", url: "/app/ron", icon: Bot },
   { title: "NEXUS", url: "/app/nexus", icon: Atom },
   { title: "Skills", url: "/app/skills", icon: Brain },
   { title: "Monetização", url: "/app/monetizacao", icon: Sparkles },
+  { title: "Modelos 9FIT", url: "/app/modelos-ninefit", icon: FileText },
   { title: "Estatísticas", url: "/app/estatisticas", icon: BarChart3 },
   { title: "Relatórios", url: "/app/relatorios", icon: FileText },
   { title: "Roadmap", url: "/app/roadmap", icon: Map },
@@ -114,7 +122,12 @@ export function AppSidebar() {
                 .filter(
                   (item) =>
                     isAdmin ||
-                    !["/app/skills", "/app/monetizacao"].includes(item.url),
+                    ![
+                      "/app/skills",
+                      "/app/monetizacao",
+                      "/app/nexus",
+                      "/app/modelos-ninefit",
+                    ].includes(item.url),
                 )
                 .map((item) => (
                   <SidebarMenuItem key={item.title}>
