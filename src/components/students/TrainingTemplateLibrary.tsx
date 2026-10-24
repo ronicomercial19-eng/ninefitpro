@@ -84,7 +84,7 @@ export function TrainingTemplateLibrary({
             .from(kind)
             .update(payload as any)
             .eq("id", editing.id)
-            .eq("updated_at", existing.updated_at)
+            .eq("updated_at", editing.updated_at)
             .select("id")
             .single()
         : await supabase
