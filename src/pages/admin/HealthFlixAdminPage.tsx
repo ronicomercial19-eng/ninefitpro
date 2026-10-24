@@ -191,6 +191,35 @@ export default function HealthFlixAdminPage() {
               </article>
             ))}
           </div>
+          {!!q.data?.hiddenItems.length && (
+            <section className="space-y-3 rounded border p-4">
+              <h2 className="font-semibold">Ocultados no FitPro</h2>
+              {q.data.hiddenItems.map((v) => (
+                <div
+                  key={v.external_id}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <span>{v.title}</span>
+                  <Button
+                    disabled={busy}
+                    variant="outline"
+                    onClick={() =>
+                      setEditing({
+                        external_id: v.external_id,
+                        name: v.title,
+                        player_url: v.video_url,
+                        thumbnail_url: v.thumbnail,
+                        category: v.category,
+                        payload: v.payload,
+                      })
+                    }
+                  >
+                    Revisar e republicar
+                  </Button>
+                </div>
+              ))}
+            </section>
+          )}
         </>
       )}
     </div>

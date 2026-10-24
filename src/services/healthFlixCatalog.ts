@@ -34,6 +34,15 @@ export async function loadHealthFlixCatalog() {
     );
   return {
     items: mergeHealthCatalog(valid ? upstream.data.items : [], local),
+    hiddenItems: mergeHealthCatalog(
+      [],
+      local
+        .filter((r) => r.payload?.fitpro_hidden === true)
+        .map((r) => ({
+          ...r,
+          payload: { ...r.payload, fitpro_hidden: false },
+        })),
+    ),
     externalAvailable: valid,
   };
 }
