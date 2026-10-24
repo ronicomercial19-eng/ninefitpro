@@ -1,0 +1,69 @@
+/*
+ * Feedback de toque/hover discreto (efeito interno) — padrão visual 9FIT.
+ * Só box-shadow inset: não altera layout, fundo nem gradientes dos componentes.
+ * Mantém a sombra externa (Tailwind --tw-shadow) quando existir.
+ * Alvos: cards/tiles clicáveis com borda laranja ou branca do padrão, e botões laranja chapados.
+ */
+
+/* ---------- Cards e tiles clicáveis ---------- */
+[class*="border-[#EF7A45]/25"][class*="cursor-pointer"],
+[class*="border-white/[0.08]"][class*="cursor-pointer"],
+button[class*="bg-white/[0.02]"][class*="border-white/[0.08]"] {
+  -webkit-tap-highlight-color: transparent;
+  transition-property: box-shadow, background-color, border-color, transform, color, opacity;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+}
+
+@media (hover: hover) {
+  [class*="border-[#EF7A45]/25"][class*="cursor-pointer"]:hover,
+  [class*="border-white/[0.08]"][class*="cursor-pointer"]:hover,
+  button[class*="bg-white/[0.02]"][class*="border-white/[0.08]"]:hover {
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000),
+      var(--tw-ring-shadow, 0 0 #0000),
+      var(--tw-shadow, 0 0 #0000),
+      inset 0 0 22px rgba(239, 122, 69, 0.08),
+      inset 0 0 0 1px rgba(239, 122, 69, 0.14);
+  }
+}
+
+[class*="border-[#EF7A45]/25"][class*="cursor-pointer"]:active,
+[class*="border-[#EF7A45]/25"][class*="cursor-pointer"]:focus-visible,
+[class*="border-white/[0.08]"][class*="cursor-pointer"]:active,
+[class*="border-white/[0.08]"][class*="cursor-pointer"]:focus-visible,
+button[class*="bg-white/[0.02]"][class*="border-white/[0.08]"]:active,
+button[class*="bg-white/[0.02]"][class*="border-white/[0.08]"]:focus-visible {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000),
+    inset 0 0 26px rgba(239, 122, 69, 0.12),
+    inset 0 0 0 1px rgba(239, 122, 69, 0.2);
+}
+
+/* ---------- Botões laranja chapados (CTA): brilho interno claro ---------- */
+button[class*="bg-[#EF7A45]"]:not([class*="bg-[#EF7A45]/"]) {
+  -webkit-tap-highlight-color: transparent;
+  transition-property: box-shadow, transform, opacity;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+}
+
+@media (hover: hover) {
+  button[class*="bg-[#EF7A45]"]:not([class*="bg-[#EF7A45]/"]):hover {
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000),
+      var(--tw-ring-shadow, 0 0 #0000),
+      var(--tw-shadow, 0 0 #0000),
+      inset 0 0 18px rgba(255, 255, 255, 0.14);
+  }
+}
+
+button[class*="bg-[#EF7A45]"]:not([class*="bg-[#EF7A45]/"]):active {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000),
+    inset 0 0 22px rgba(255, 255, 255, 0.2);
+}

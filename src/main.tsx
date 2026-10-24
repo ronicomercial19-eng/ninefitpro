@@ -5,10 +5,15 @@ import { ThemeProvider } from 'next-themes'
 import App from './App.tsx'
 import './index.css'
 import './styles/orange-palette.css'
+import './styles/touch-feedback.css'
 import { initializeCapacitor } from "./utils/capacitor";
 
 // Initialize Capacitor plugins
 initializeCapacitor();
+
+// iOS Safari só aplica :active em toque se existir um listener de touchstart no documento
+// (necessário pro feedback interno de toque em cards/botões).
+document.addEventListener('touchstart', () => {}, { passive: true });
 
 // Register the PWA service worker only in production-capable browsers.
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
