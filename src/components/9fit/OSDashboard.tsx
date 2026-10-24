@@ -211,12 +211,12 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
             <span className="font-display font-bold text-xs sm:text-sm tracking-[0.24em] text-white uppercase">
-              9FIT <span className="text-primary font-normal">OS</span>
+              9FIT <span className="text-[#EF7A45] font-normal">OS</span>
             </span>
           </div>
-          <span className="text-[8.5px] font-mono tracking-[0.2em] text-neutral-400 uppercase mt-0.5 font-medium">
+          <span className="text-[8.5px] font-mono tracking-[0.2em] text-white/45 uppercase mt-0.5 font-medium">
             High Performance Architecture
           </span>
         </div>
@@ -242,23 +242,15 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       {/* =========================================================================
           ATALHOS DO DIA (antes "Consultoria 360°") — 6 ações rápidas com efeito de fundo radar
          ========================================================================= */}
-      <section className="relative rounded-xl border border-white/[0.09] bg-gradient-to-br from-[#12141a] via-[#0c0d11] to-[#090a0d] p-3 sm:p-3.5 shadow-2xl transition-all overflow-hidden">
-        {/* Subtle hairline edge lighting no topo */}
-        <div className="absolute top-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-        {/* EFEITOS DE FUNDO VISUAIS: Brilhos ambientes + Malha e Radar 360° */}
+      <section className="relative rounded-3xl border border-[#EF7A45]/25 bg-[#0B0B0C] p-3 sm:p-3.5 transition-all overflow-hidden">
+        {/* EFEITOS DE FUNDO: malha + radar 360° — bem discretos, sem glow colorido */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-          {/* Brilho radial primário no topo */}
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-80 h-40 bg-primary/[0.12] rounded-full blur-3xl" />
-          {/* Brilho âmbar difuso no canto inferior direito */}
-          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-amber-500/[0.06] rounded-full blur-2xl" />
-
           {/* Malha sutil de micro-pontos */}
-          <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:14px_14px] opacity-70" />
+          <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:14px_14px] opacity-40" />
 
-          {/* Radar 360° Geométrico em SVG (Marca d'água técnica de alta precisão) */}
+          {/* Radar 360° Geométrico em SVG (marca d'água técnica) */}
           <svg
-            className="absolute right-[-30px] top-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 text-primary/[0.08] pointer-events-none"
+            className="absolute right-[-30px] top-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 text-[#EF7A45]/[0.05] pointer-events-none"
             viewBox="0 0 200 200"
             fill="none"
           >
@@ -283,20 +275,17 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         {/* Cabeçalho do Card */}
         <div className="relative z-10 flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[9.5px] font-mono uppercase tracking-[0.22em] text-primary font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
+            <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#EF7A45] font-bold">
               ATALHOS DO DIA
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-emerald-400" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-neutral-400 font-medium">
-              AÇÕES RÁPIDAS
-            </span>
-          </div>
+          <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-white/45 font-medium">
+            AÇÕES RÁPIDAS
+          </span>
         </div>
 
-        {/* Grid dos 6 atalhos com efeito translúcido (Glassmorphism sutil sobre o radar) */}
+        {/* Grid dos 6 atalhos */}
         <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
           {pillars.map((pillar) => (
             <button
@@ -311,17 +300,16 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                    setActiveModal(pillar.id);
                 }
               }}
-              className="flex items-center justify-between text-left px-2.5 py-2 rounded-lg backdrop-blur-md bg-white/[0.025] hover:bg-white/[0.07] border border-white/[0.05] hover:border-primary/40 shadow-sm transition-all group cursor-pointer active:scale-[0.99]"
+              className="flex items-center justify-between text-left px-2.5 py-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-[#EF7A45]/40 transition-colors group cursor-pointer active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 min-w-0">
-                {/* Checkmark com acento laranja de alta precisão */}
-                <Check className="w-3 h-3 text-primary shrink-0 transition-transform group-hover:scale-110" strokeWidth={2.5} />
-                <span className="font-semibold text-[11px] sm:text-xs tracking-wider text-neutral-100 truncate group-hover:text-white transition-colors uppercase">
+                <Check className="w-3.5 h-3.5 text-[#EF7A45] shrink-0" strokeWidth={2} />
+                <span className="font-semibold text-[11px] sm:text-xs tracking-wider text-white/90 truncate group-hover:text-white transition-colors uppercase">
                   {pillar.name}
                 </span>
               </div>
 
-              <span className="text-[8.5px] sm:text-[9px] font-mono font-medium tracking-wider text-neutral-400 group-hover:text-primary transition-colors shrink-0 ml-1">
+              <span className="text-[9px] sm:text-[10px] font-mono font-medium tracking-wider text-white/45 group-hover:text-[#EF7A45] transition-colors shrink-0 ml-1">
                 {pillar.status}
               </span>
             </button>
@@ -332,12 +320,12 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
       {/* =========================================================================
           COMUNIDADE & NOTÍCIAS — Apresentação 100% Visual com Imagens Cinematográficas
          ========================================================================= */}
-      <section className="rounded-xl border border-white/[0.08] bg-[#0c0d10] p-3 sm:p-3.5 shadow-xl relative overflow-hidden space-y-2.5">
+      <section className="rounded-3xl border border-[#EF7A45]/25 bg-[#0B0B0C] p-3 sm:p-3.5 relative overflow-hidden space-y-2.5">
         {/* Header Superior */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[9.5px] font-mono uppercase tracking-[0.2em] text-primary font-bold">
+            <Users strokeWidth={1.75} className="w-3.5 h-3.5 text-[#EF7A45]" />
+            <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#EF7A45] font-bold">
               COMUNIDADE & NOTÍCIAS
             </span>
           </div>
@@ -363,7 +351,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         </div>
 
         {/* Hero Visual Principal — 100% Baseado em Imagem */}
-        <div className="relative rounded-lg overflow-hidden border border-white/10 group">
+        <div className="relative rounded-2xl overflow-hidden border border-white/10 group">
           <div className="relative h-44 sm:h-52 md:h-60 w-full overflow-hidden bg-black">
             <img
               src={currentEvent.image}
@@ -378,27 +366,27 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
           {/* Tag Flutuante no Topo da Imagem */}
           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md border border-white/15">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-200 font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-white/90 font-semibold">
               {currentEvent.tag}
             </span>
           </div>
 
-          <div className="absolute top-2.5 right-2.5 hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-mono text-amber-300 font-medium">
-            <Sparkles className="w-3 h-3 text-primary" />
+          <div className="absolute top-2.5 right-2.5 hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono text-white/65 font-medium">
+            <Sparkles strokeWidth={1.75} className="w-3 h-3 text-[#EF7A45]" />
             <span>{currentEvent.stats}</span>
           </div>
 
           {/* Informações e Ação Sobrepostas na Imagem */}
           <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <span className="text-[8.5px] font-mono uppercase tracking-widest text-primary font-bold block mb-1">
+              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[#EF7A45] font-bold block mb-1">
                 {currentEvent.category}
               </span>
               <h3 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-tight leading-tight font-display drop-shadow-md">
                 {currentEvent.title}
               </h3>
-              <p className="text-[11.5px] sm:text-xs text-neutral-300 mt-1 line-clamp-1 sm:line-clamp-2 max-w-xl font-normal drop-shadow">
+              <p className="text-[11.5px] sm:text-xs text-white/65 mt-1 line-clamp-1 sm:line-clamp-2 max-w-xl font-normal drop-shadow">
                 {currentEvent.description}
               </p>
             </div>
@@ -412,10 +400,10 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                   navigate(currentEvent.route);
                 }
               }}
-              className="py-2 px-3.5 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all active:scale-95 cursor-pointer shrink-0 self-start sm:self-end"
+              className="py-2.5 px-4 rounded-2xl font-semibold text-xs flex items-center justify-center gap-1.5 bg-[#EF7A45] hover:bg-[#EF7A45]/90 text-white shadow-[0_8px_24px_rgba(239,122,69,0.25)] transition-all active:scale-95 cursor-pointer shrink-0 self-start sm:self-end"
             >
               <span>{currentEvent.cta}</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight strokeWidth={1.75} className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -429,9 +417,9 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                 key={item.id}
                 type="button"
                 onClick={() => setEventIdx(i)}
-                className={`relative rounded-md overflow-hidden text-left border transition-all cursor-pointer group/thumb h-14 sm:h-16 ${
+                className={`relative rounded-xl overflow-hidden text-left border transition-all cursor-pointer group/thumb h-14 sm:h-16 ${
                   isSelected
-                    ? 'border-primary ring-1 ring-primary/60 shadow-md scale-[1.02]'
+                    ? 'border-[#EF7A45]/60'
                     : 'border-white/10 opacity-60 hover:opacity-100 hover:border-white/30'
                 }`}
               >
@@ -446,7 +434,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                   <span className="text-[8px] sm:text-[9.5px] font-semibold text-white truncate block leading-tight">
                     {item.title}
                   </span>
-                  <span className="text-[7px] sm:text-[8px] font-mono text-neutral-400 block truncate">
+                  <span className="text-[7px] sm:text-[8px] font-mono text-white/45 block truncate">
                     {item.tag}
                   </span>
                 </div>
