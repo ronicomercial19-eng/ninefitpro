@@ -25,6 +25,9 @@ export default function NineFitMensagens() {
     <div className="mx-auto min-h-screen max-w-3xl space-y-5 p-5 pt-16 pb-28">
       <h1 className="text-2xl font-display">Mensagens</h1>
       <div className="flex flex-wrap gap-4 text-sm">
+        <Link to="/9fit/acompanhamento" className="text-primary underline">
+          Solicitações e devolutivas
+        </Link>
         <Link to="/9fit/ron" className="text-primary underline">
           Falar com RON · IA
         </Link>
