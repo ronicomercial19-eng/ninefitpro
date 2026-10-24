@@ -25,7 +25,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   const { state, reasoning } = useUserState();
   const insights = STATE_INSIGHT[state];
   const reliable = scoreStatus === "available" && syncScore !== null;
-  const color = reliable ? STATE_COLOR[state] || '#FF6600' : '#FF6600';
+  const color = reliable ? STATE_COLOR[state] || '#EF7A45' : '#EF7A45';
   const {athleteId}=useAthleteId();
   const results=useRonResultCards(athleteId);
   const waterBusy=useRef(false);
@@ -45,7 +45,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   useEffect(()=>{if(hovered||focused||manualPause||calibration||slides.length<2)return;const timer=window.setInterval(()=>{if(!document.hidden)setIndex(i=>(i+1)%slides.length);},20000);return()=>window.clearInterval(timer);},[hovered,focused,manualPause,calibration,slides.length]);
 
   const tiltRef = useTiltCard<HTMLButtonElement>({
-    haloColor: `${color}45`,
+    haloColor: `${color}1A`,
     maxTilt: 5,
     scale: 1.012,
   });
@@ -59,22 +59,22 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
       onKeyDown={e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();navigate(selected.route);}}}
       onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
       onFocusCapture={()=>setFocused(true)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setFocused(false);}}
-      className="w-full text-left hub-card-interactive rounded-2xl border p-4 sm:p-5 relative overflow-hidden group border-white/10 hover:border-primary/40 bg-gradient-to-r from-[#121318] via-[#0d0e12] to-[#0b0b0e] cursor-pointer shadow-xl shadow-black/60 transition-all duration-300"
+      className="w-full text-left hub-card-interactive rounded-3xl border p-4 sm:p-5 relative overflow-hidden group border-[#EF7A45]/25 hover:border-[#EF7A45]/40 bg-[#0B0B0C] cursor-pointer transition-all duration-300"
       style={{
-        boxShadow: `0 8px 30px -10px ${color}25`,
+        boxShadow: `0 8px 30px -12px ${color}12`,
       }}
     >
-      {/* Luz Periférica & Halo Dinâmico */}
+      {/* Luz periférica — bem suave, pra não competir com o resto do Hub */}
       <div
-        className="absolute inset-0 opacity-15 pointer-events-none transition-opacity duration-500 group-hover:opacity-30"
+        className="absolute inset-0 opacity-[0.06] pointer-events-none transition-opacity duration-500 group-hover:opacity-[0.10]"
         style={{
           background: `radial-gradient(circle at 10% 20%, ${color}, transparent 65%)`,
         }}
       />
 
-      {/* Hairline luminoso sutil com a cor de estado do Ron */}
+      {/* Hairline sutil com a cor de estado do Ron */}
       <div
-        className="absolute top-0 left-0 right-0 h-[1.5px] opacity-60 group-hover:opacity-100 transition-opacity"
+        className="absolute top-0 left-0 right-0 h-[1px] opacity-30 group-hover:opacity-50 transition-opacity"
         style={{
           background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
         }}
@@ -96,13 +96,13 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
               RON IA · {reliable?STATE_LABEL[state]:'LEITURA DO DIA'}
             </span>
 
-            <span className="flex items-center gap-1 text-[10px] font-mono text-[#FF6600]">
-              <Sparkles className="w-3 h-3 text-[#FF6600]" />
+            <span className="flex items-center gap-1 text-[10px] font-mono text-[#EF7A45]">
+              <Sparkles className="w-3 h-3 text-[#EF7A45]" />
               RON IA
             </span>
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-neutral-400">
-              <Zap className="w-3 h-3 text-[#FF6600]" />
+              <Zap className="w-3 h-3 text-[#EF7A45]" />
               {!reliable
                 ? scoreStatus === "offline" ? "Offline" : "Atualizar leitura"
                 : `${Math.round(syncScore)}% sync`}
