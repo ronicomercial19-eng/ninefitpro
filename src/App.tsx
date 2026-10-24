@@ -1,3 +1,4 @@
+import StudentCarePage from "@/pages/9fit/Acompanhamento";
 import ProfessorWorkspacePage from '@/pages/ProfessorWorkspacePage';
 import ProfessorMessagesPage from '@/pages/ProfessorMessagesPage';
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
@@ -306,6 +307,7 @@ const App = () => (
             <Route path="/9fit/profile" element={<NineFitLayout><NineFitProfile /></NineFitLayout>} />
             <Route path="/9fit/dieta" element={<NineFitLayout><NineFitDieta /></NineFitLayout>} />
             <Route path="/9fit/foods" element={<NineFitLayout><NineFitFoods /></NineFitLayout>} />
+            <Route path="/9fit/acompanhamento" element={<NineFitLayout><StudentCarePage /></NineFitLayout>} />
             <Route path="/9fit/mensagens" element={<NineFitLayout><NineFitMensagens /></NineFitLayout>} />
             <Route path="/9fit/notificacoes" element={<NineFitLayout><NineFitNotificacoes /></NineFitLayout>} />
             <Route path="/9fit/social" element={<NineFitLayout><NineFitSocial /></NineFitLayout>} />

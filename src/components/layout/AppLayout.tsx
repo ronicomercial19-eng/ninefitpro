@@ -1,3 +1,4 @@
+import { CareReturnBanner } from "@/components/students/CareReturnBanner";
 import {
   ProfessorWorkspaceProvider,
   ProfessorStudentBar,
@@ -180,6 +181,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             {/* Main Content */}
             <main className="min-w-0 flex-1 p-3 sm:p-6 bg-muted/20">
               <ProfessorStudentBar />
+            <CareReturnBanner professional />
               <ProfessorScope>{children}</ProfessorScope>
             </main>
           </div>
