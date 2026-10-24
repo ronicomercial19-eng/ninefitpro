@@ -369,7 +369,7 @@ function CareDetail({
     };
   }, []);
   const q = useQuery({
-    queryKey: ["care-detail", user?.id, id, limit],
+    queryKey: ["care-detail", user?.id, professional, athleteId, id, limit],
     refetchInterval: 15000,
     queryFn: async () => {
       const { data: t, error } = await (supabase as any)
