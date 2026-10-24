@@ -80,11 +80,13 @@ function AdminApiConnectorCard(props: Props) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("api_connectors")
       .select("*")
       .eq("key", moduleKey)
       .maybeSingle();
+    if (error)
+      toast.error("Não foi possível carregar a configuração do conector.");
     if (data) {
       setEndpoint(data.endpoint ?? "");
       setIframeUrl(data.iframe_url ?? "");
@@ -118,23 +120,23 @@ function AdminApiConnectorCard(props: Props) {
       : apiKey.startsWith("••••")
         ? apiKey.slice(-4)
         : null;
-    const payload: ConnectorPayload = {
-      key: moduleKey,
-      provider: provider ?? moduleKey,
-      auth_mode: authMode,
-      endpoint: endpoint || null,
-      iframe_url: iframeUrl || null,
-      status: "active",
-      secret_ref: clean ? `${moduleKey}:${Date.now()}` : undefined,
-      config: { apikey_hint: hint },
-    };
-    const { error } = await supabase
-      .from("api_connectors")
-      .upsert(payload as any, { onConflict: "key" });
+    const { data, error } = await supabase.rpc("fn_save_api_connector" as any, {
+      p_key: moduleKey,
+      p_provider: provider ?? moduleKey,
+      p_endpoint: endpoint.trim() || null,
+      p_auth_mode: authMode,
+      p_iframe_url: iframeUrl.trim() || null,
+      p_api_key: clean,
+    });
     if (error) {
       toast.error(error.message);
       return;
     }
+    if (!(data as any)?.saved) {
+      toast.error("Configuração não confirmada.");
+      return;
+    }
+    setProbeStatus("unknown");
     toast.success(`${title} salvo. Validando...`);
     setConnected(true);
     if (clean) setApiKey(`••••${hint}`);
@@ -156,9 +158,10 @@ function AdminApiConnectorCard(props: Props) {
           },
         },
       );
-      if (error) throw error;
+      if (error || data?.verified !== true)
+        throw error || new Error("Validação não confirmada.");
       setProbeStatus("ok");
-      toast.success("Conexão validada ✓");
+      toast.success("Endpoint respondeu com JSON válido.");
     } catch (e: unknown) {
       setProbeStatus("fail");
       toast.warning("Endpoint não respondeu — verifique credenciais");
@@ -168,10 +171,17 @@ function AdminApiConnectorCard(props: Props) {
   };
 
   const disconnect = async () => {
-    await supabase
+    const { error } = await supabase
       .from("api_connectors")
       .update({ status: "inactive" })
-      .eq("key", moduleKey);
+      .eq("key", moduleKey)
+      .select("key")
+      .single();
+    if (error) {
+      toast.error("Não foi possível confirmar a desconexão.");
+      return;
+    }
+    setProbeStatus("unknown");
     setConnected(false);
     setApiKey("");
     toast.info("Desconectado");
@@ -179,6 +189,12 @@ function AdminApiConnectorCard(props: Props) {
   };
 
   const sync = async () => {
+    if (!onSync) {
+      toast.error(
+        "Este módulo não possui operação de sincronização configurada.",
+      );
+      return;
+    }
     if (!connected) {
       toast.error("Conecte primeiro");
       return;
@@ -186,7 +202,7 @@ function AdminApiConnectorCard(props: Props) {
     setSyncing(true);
     try {
       if (onSync) await onSync(apiKey, endpoint || undefined);
-      await supabase
+      const { error: receiptError } = await supabase
         .from("api_connectors")
         .update({
           config: {
@@ -194,7 +210,10 @@ function AdminApiConnectorCard(props: Props) {
             last_sync: new Date().toISOString(),
           },
         })
-        .eq("key", moduleKey);
+        .eq("key", moduleKey)
+        .select("key")
+        .single();
+      if (receiptError) throw receiptError;
       toast.success("Sincronizado");
       load();
     } catch (e: unknown) {
@@ -228,7 +247,7 @@ function AdminApiConnectorCard(props: Props) {
             </Badge>
           ) : connected ? (
             <Badge className="bg-primary/15 text-primary border-primary/30">
-              <CheckCircle2 className="w-3 h-3 mr-1" /> Conectado
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Configurado
             </Badge>
           ) : (
             <Badge variant="outline" className="text-muted-foreground">
@@ -251,7 +270,7 @@ function AdminApiConnectorCard(props: Props) {
               />
             </div>
           )}
-          {endpointPlaceholder && (
+          {authMode !== "iframe_sso" && (
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-widest">
                 Endpoint
@@ -259,7 +278,7 @@ function AdminApiConnectorCard(props: Props) {
               <Input
                 value={endpoint}
                 onChange={(e) => setEndpoint(e.target.value)}
-                placeholder={endpointPlaceholder}
+                placeholder={endpointPlaceholder || "https://api.exemplo.com"}
               />
             </div>
           )}
@@ -282,7 +301,7 @@ function AdminApiConnectorCard(props: Props) {
             <Plug className="w-4 h-4 mr-2" />
             {connected ? "Atualizar" : "Conectar"}
           </Button>
-          <Button onClick={sync} disabled={!connected || syncing}>
+          <Button onClick={sync} disabled={!onSync || !connected || syncing}>
             <RefreshCw
               className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`}
             />
@@ -303,7 +322,7 @@ function AdminApiConnectorCard(props: Props) {
           )}
           {probeStatus === "ok" && (
             <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
-              <CheckCircle2 className="w-3 h-3 mr-1" /> Validado
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Resposta verificada
             </Badge>
           )}
           {probeStatus === "fail" && (

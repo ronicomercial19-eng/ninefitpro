@@ -33,6 +33,8 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
   const queryDate = new URLSearchParams(location.search).get("date");
   const recParam = new URLSearchParams(location.search).get("recommendation");
   const recommendationId = isAthleteId(recParam) ? recParam : null;
+  const templateId = new URLSearchParams(location.search).get("template");
+  const templateKind = new URLSearchParams(location.search).get("templateKind");
   const [date, setDate] = useState(
       queryDate && /^\d{4}-\d{2}-\d{2}$/.test(queryDate)
         ? queryDate
@@ -209,6 +211,64 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
       if (alive.current) setBusy(false);
     }
   }
+  async function importTemplate() {
+    if (
+      writing.current ||
+      !isAthleteId(templateId) ||
+      !["super_sets", "reference_series"].includes(templateKind || "")
+    )
+      return;
+    if (
+      rows.length &&
+      !window.confirm(
+        "Substituir os exercícios deste rascunho pelo modelo? A sessão publicada só muda após revisão e publicação.",
+      )
+    )
+      return;
+    writing.current = true;
+    setBusy(true);
+    const request = revision.current;
+    try {
+      const { data, error } = await supabase
+        .from(templateKind as "super_sets" | "reference_series")
+        .select("name,exercises")
+        .eq("id", templateId)
+        .single();
+      if (error) throw error;
+      const validated = validatePrescriptionExercises(data.exercises);
+      const { data: catalogRows, error: catalogError } = await supabase
+        .from("exercises")
+        .select("id,name")
+        .in(
+          "id",
+          validated.map((e) => e.exercise_id),
+        );
+      if (catalogError) throw catalogError;
+      if (!alive.current || request !== revision.current) return;
+      const names = new Map((catalogRows || []).map((e) => [e.id, e.name]));
+      if (validated.some((e) => !names.has(e.exercise_id)))
+        throw new Error("Modelo contém exercício indisponível.");
+      setRows(
+        validated.map((e) => ({
+          ...e,
+          name: names.get(e.exercise_id),
+          notes:
+            templateKind === "super_sets"
+              ? `Super série: ${data.name}. ${e.notes || ""}`
+              : e.notes,
+        })),
+      );
+      setTitle(data.name);
+      changed();
+      toast.info("Modelo carregado no rascunho. Revise antes de publicar.");
+    } catch (e) {
+      if (alive.current)
+        toast.error((e as Error).message || "Modelo indisponível.");
+    } finally {
+      writing.current = false;
+      if (alive.current) setBusy(false);
+    }
+  }
   async function publish() {
     if (writing.current || !reviewed) return;
     let exercises: PrescriptionExercise[];
@@ -311,6 +371,15 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
         </div>
       ) : (
         <>
+          {isAthleteId(templateId) && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void importTemplate()}
+            >
+              Carregar modelo selecionado para revisão
+            </Button>
+          )}
           <details className="rounded-lg border p-3">
             <summary className="cursor-pointer">Pedir rascunho à IA</summary>
             <textarea

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,7 +232,15 @@ export default function ExercisesPage() {
     return () => clearTimeout(timer);
   }, [page, searchTerm, muscleFilter, equipmentFilter, goalFilter]);
 
+  const readRevision = useRef(0);
+  useEffect(
+    () => () => {
+      readRevision.current++;
+    },
+    [],
+  );
   const fetchExercises = async () => {
+    const revision = ++readRevision.current;
     setLoading(true);
     setExerciseError(false);
     let query = supabase
@@ -255,6 +263,7 @@ export default function ExercisesPage() {
       .order("name")
       .order("id")
       .range(page * 30, page * 30 + 29);
+    if (revision !== readRevision.current) return;
     if (error) {
       setExerciseError(true);
       setExercises([]);

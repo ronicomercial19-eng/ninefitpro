@@ -1,149 +1,226 @@
-import { useEffect, useState } from "react";
-import { Film, Plus, RefreshCw, Loader2 } from "lucide-react";
-import { ApiConnectorCard } from "@/components/admin/ApiConnectorCard";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ApiConnectorCard } from "@/components/admin/ApiConnectorCard";
+import { Button } from "@/components/ui/button";
+import {
+  loadHealthFlixCatalog,
+  type HealthVideo,
+} from "@/services/healthFlixCatalog";
 import { toast } from "sonner";
-
-interface Vid {
-  id: string;
-  external_id: string;
-  name: string;
-  thumbnail_url: string | null;
-  player_url: string | null;
-  category: string | null;
-  synced_at: string | null;
-}
-
 export default function HealthFlixAdminPage() {
-  const [videos, setVideos] = useState<Vid[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ external_id: "", name: "", thumbnail_url: "", player_url: "", category: "geral" });
-
-  async function load() {
-    setLoading(true);
-    const { data } = await supabase.from("library_items" as any)
-      .select("id, external_id, name, thumbnail_url, player_url, category, synced_at")
-      .eq("type", "videos").order("synced_at", { ascending: false }).limit(80);
-    setVideos(((data as any[]) || []) as Vid[]);
-    setLoading(false);
-  }
-  useEffect(() => { load(); }, []);
-
-  async function syncFromApi() {
-    toast.info("Disparando sincronização...");
+  const qc = useQueryClient(),
+    [busy, setBusy] = useState(false),
+    [editing, setEditing] = useState<any>(null);
+  const q = useQuery({
+    queryKey: ["healthflix-catalog"],
+    queryFn: loadHealthFlixCatalog,
+  });
+  async function save(hidden = false, video?: HealthVideo) {
+    if (busy) return;
+    setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke("sync-library-full");
-      if (error) throw error;
-      const synced = (data as any)?.data?.synced ?? 0;
-      toast.success(`Sync concluído: ${synced} itens`);
-      load();
-    } catch (e: any) {
-      toast.warning("Sync indisponível — conecte a API HealthFlix");
+      const row = video
+        ? {
+            external_id: video.external_id,
+            name: video.title,
+            thumbnail_url: video.thumbnail || null,
+            player_url: video.video_url || null,
+            category: video.category || null,
+            payload: {
+              ...(video.payload || {}),
+              fitpro_hidden: hidden,
+              fitpro_override: true,
+            },
+          }
+        : {
+            ...editing,
+            payload: {
+              ...(editing.payload || {}),
+              fitpro_hidden: false,
+              fitpro_override: true,
+            },
+          };
+      if (!row.external_id?.trim() || !row.name?.trim())
+        throw new Error("ID e nome obrigatórios.");
+      if (!hidden) {
+        const u = new URL(row.player_url);
+        if (u.protocol !== "https:" || u.username || u.password)
+          throw new Error("Informe uma URL HTTPS de vídeo válida.");
+      }
+      const { data, error } = await supabase
+        .from("library_items")
+        .upsert(
+          { ...row, type: "videos", synced_at: new Date().toISOString() },
+          { onConflict: "type,external_id" },
+        )
+        .select("id")
+        .single();
+      if (error || !data) throw error || new Error("Gravação não confirmada.");
+      setEditing(null);
+      await qc.invalidateQueries({ queryKey: ["healthflix-catalog"] });
+      toast.success(
+        hidden
+          ? "Conteúdo ocultado do catálogo FitPro."
+          : "Vídeo publicado no catálogo compartilhado com o aluno.",
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
     }
   }
-
-  async function validateConnection() {
-    try {
-      const r = await fetch("https://kixjiwsfogqztlgiiztp.supabase.co/functions/v1/fitpro-health");
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const j = await r.json();
-      toast.success(`HealthFlix online · v${j.version}`);
-    } catch (e: any) {
-      toast.error(`Validação falhou: ${e?.message || "sem resposta"}`);
-    }
-  }
-
-  async function addVideo() {
-    if (!form.external_id || !form.name) { toast.error("ID e nome obrigatórios"); return; }
-    const { error } = await supabase.from("library_items" as any).upsert({
-      ...form, type: "videos", synced_at: new Date().toISOString(),
-    }, { onConflict: "external_id" });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Vídeo adicionado — refletindo nos alunos em tempo real");
-    setForm({ external_id: "", name: "", thumbnail_url: "", player_url: "", category: "geral" });
-    setAdding(false);
-    load();
-  }
-
-  async function remove(id: string) {
-    if (!confirm("Remover do catálogo?")) return;
-    await supabase.from("library_items" as any).delete().eq("id", id);
-    load();
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-display uppercase tracking-tight flex items-center gap-3">
-            <Film className="w-7 h-7 text-primary" /> HealthFlix
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Catálogo de streaming. Tudo que você publicar aqui aparece em tempo real no app do aluno.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={validateConnection}>Validar</Button>
-          <Button variant="outline" onClick={syncFromApi}><RefreshCw className="w-4 h-4 mr-2" /> Sync API</Button>
-          <Button onClick={() => setAdding(!adding)}><Plus className="w-4 h-4 mr-2" /> Novo vídeo</Button>
-        </div>
-      </div>
-
+    <div className="space-y-5">
+      <h1 className="text-2xl font-semibold">HealthFlix</h1>
+      <p>
+        Este é o catálogo efetivo usado pelo aluno: conteúdo externo e
+        publicações locais. Ocultar atua no FitPro; não exclui o original do
+        provedor.
+      </p>
       <ApiConnectorCard
         moduleKey="healthflix"
         title="HealthFlix API"
-        description="Conecte a API do HealthFlix para sincronizar o catálogo automaticamente."
-        endpointPlaceholder="https://api.healthflix.example.com/v1"
-        healthPath="/videos"
+        description="Configuração administrativa e verificação da integração externa."
+        healthPath="/fitpro-health"
       />
-
-      {adding && (
-        <Card className="border-primary/40">
-          <CardContent className="p-6 space-y-3">
-            <h3 className="font-display text-lg">Adicionar vídeo manual</h3>
-            <div className="grid md:grid-cols-2 gap-3">
-              <div><Label>ID externo</Label><Input value={form.external_id} onChange={e => setForm({ ...form, external_id: e.target.value })} /></div>
-              <div><Label>Nome</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-              <div><Label>Thumbnail URL</Label><Input value={form.thumbnail_url} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} /></div>
-              <div><Label>Player URL (YouTube/Vimeo embed)</Label><Input value={form.player_url} onChange={e => setForm({ ...form, player_url: e.target.value })} /></div>
-              <div><Label>Categoria</Label><Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setAdding(false)}>Cancelar</Button>
-              <Button onClick={addVideo}>Salvar</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {loading ? (
-        <div className="grid place-items-center py-12"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {videos.map(v => (
-            <Card key={v.id} className="overflow-hidden">
-              <div className="aspect-video bg-muted">
-                {v.thumbnail_url ? <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover" /> : <Film className="w-6 h-6 text-muted-foreground m-auto mt-12" />}
-              </div>
-              <CardContent className="p-3 space-y-2">
-                <p className="text-xs font-semibold line-clamp-2">{v.name}</p>
-                {v.category && <Badge variant="outline" className="text-[10px]">{v.category}</Badge>}
-                <Button variant="ghost" size="sm" className="w-full text-destructive text-xs" onClick={() => remove(v.id)}>Remover</Button>
-              </CardContent>
-            </Card>
+      <div className="flex gap-2">
+        <Button
+          disabled={busy || q.isFetching}
+          onClick={() => void q.refetch()}
+        >
+          Atualizar catálogo
+        </Button>
+        <Button
+          disabled={busy}
+          onClick={() =>
+            setEditing({
+              external_id: `manual-${crypto.randomUUID()}`,
+              name: "",
+              player_url: "",
+              thumbnail_url: "",
+              category: "geral",
+            })
+          }
+        >
+          Novo vídeo
+        </Button>
+      </div>
+      {editing && (
+        <section className="rounded border p-4 space-y-3">
+          {[
+            ["Nome", "name"],
+            ["URL HTTPS do vídeo", "player_url"],
+            ["Imagem", "thumbnail_url"],
+            ["Categoria", "category"],
+          ].map(([label, key]) => (
+            <label key={key} className="block">
+              {label}
+              <input
+                disabled={busy}
+                value={editing[key] || ""}
+                onChange={(e) =>
+                  setEditing({ ...editing, [key]: e.target.value })
+                }
+                className="block w-full rounded border bg-background p-2"
+              />
+            </label>
           ))}
-          {!videos.length && (
-            <p className="col-span-full text-sm text-muted-foreground text-center py-8">
-              Nenhum vídeo no catálogo. Conecte a API ou adicione manualmente.
-            </p>
+          <Button disabled={busy} onClick={() => void save()}>
+            Publicar
+          </Button>{" "}
+          <Button
+            disabled={busy}
+            variant="outline"
+            onClick={() => setEditing(null)}
+          >
+            Cancelar
+          </Button>
+        </section>
+      )}
+      {q.isError ? (
+        <p role="alert">
+          {(q.error as Error).message}{" "}
+          <Button onClick={() => void q.refetch()}>Tentar novamente</Button>
+        </p>
+      ) : q.isLoading ? (
+        <p>Carregando…</p>
+      ) : (
+        <>
+          <p>
+            {q.data?.externalAvailable
+              ? "Catálogo externo carregado."
+              : "Provedor externo indisponível. Exibindo publicações locais."}
+          </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {q.data?.items.map((v) => (
+              <article
+                key={v.external_id}
+                className="rounded border p-4 space-y-3"
+              >
+                <h2>{v.title}</h2>
+                <p>{v.category}</p>
+                <Button
+                  disabled={busy}
+                  variant="outline"
+                  onClick={() =>
+                    setEditing({
+                      external_id: v.external_id,
+                      name: v.title,
+                      player_url: v.video_url,
+                      thumbnail_url: v.thumbnail,
+                      category: v.category,
+                      payload: v.payload,
+                    })
+                  }
+                >
+                  Editar no FitPro
+                </Button>{" "}
+                <Button
+                  disabled={busy}
+                  variant="destructive"
+                  onClick={() => {
+                    if (
+                      window.confirm(`Ocultar ${v.title} do catálogo do aluno?`)
+                    )
+                      void save(true, v);
+                  }}
+                >
+                  Ocultar
+                </Button>
+              </article>
+            ))}
+          </div>
+          {!!q.data?.hiddenItems.length && (
+            <section className="space-y-3 rounded border p-4">
+              <h2 className="font-semibold">Ocultados no FitPro</h2>
+              {q.data.hiddenItems.map((v) => (
+                <div
+                  key={v.external_id}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <span>{v.title}</span>
+                  <Button
+                    disabled={busy}
+                    variant="outline"
+                    onClick={() =>
+                      setEditing({
+                        external_id: v.external_id,
+                        name: v.title,
+                        player_url: v.video_url,
+                        thumbnail_url: v.thumbnail,
+                        category: v.category,
+                        payload: v.payload,
+                      })
+                    }
+                  >
+                    Revisar e republicar
+                  </Button>
+                </div>
+              ))}
+            </section>
           )}
-        </div>
+        </>
       )}
     </div>
   );
