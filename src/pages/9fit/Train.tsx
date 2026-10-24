@@ -278,27 +278,23 @@ export default function NineFitTrain() {
 
   return (
     <div className="min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
-      {/* Hairline luminoso e ambiência */}
-      <div className="fixed top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none z-20" />
-      <div className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[520px] h-[320px] bg-primary/[0.04] rounded-full blur-[130px] pointer-events-none z-0" />
-
-      {/* Header High-Ticket */}
+      {/* Header */}
       <div className="px-4 pt-5 pb-2.5 relative z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <p className="text-[9.5px] font-mono tracking-[0.25em] text-primary font-bold uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
+            <p className="text-[11px] font-mono tracking-[0.12em] text-[#EF7A45] font-bold uppercase">
               9FIT // TREINO
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => navigate('/9fit/move')}
-              className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-primary/20 transition-colors"
+              className="px-2.5 py-1 bg-[#EF7A45]/15 border border-[#EF7A45]/25 text-[#EF7A45] text-[10px] font-bold uppercase tracking-[0.08em] rounded-lg hover:bg-[#EF7A45]/25 transition-colors"
             >
               Move GPS
             </button>
-            <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
+            <span className="text-[10px] font-mono text-white/45 uppercase tracking-[0.08em]">
               {athleteName || "ATLETA 9FIT"}
             </span>
           </div>
@@ -325,10 +321,10 @@ export default function NineFitTrain() {
         />
       </div>
 
-      {/* Sub-tabs no padrão Pill Segmented Control High-Ticket */}
+      {/* Sub-tabs no padrão Pill Segmented Control */}
       {flow === "HOME" && (
         <div className="px-4 mb-3.5 relative z-10">
-          <div className="rounded-xl bg-[#0f1015] border border-white/[0.08] p-1 grid grid-cols-4 gap-1 shadow-inner">
+          <div className="rounded-2xl bg-[#0B0B0C] border border-[#EF7A45]/25 p-1 grid grid-cols-4 gap-1">
             {[
               { k: "train", l: "Hoje", I: DumbIcon },
               { k: "semana", l: "Semana", I: Calendar },
@@ -350,13 +346,13 @@ export default function NineFitTrain() {
                       navigate({ pathname: location.pathname, search: params.toString() });
                     }
                   }}
-                  className={`py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-md font-bold"
-                      : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-[#EF7A45] text-white"
+                      : "text-white/45 hover:text-white hover:bg-white/[0.04]"
                   }`}
                 >
-                  <I className="w-3.5 h-3.5" />
+                  <I strokeWidth={1.75} className="w-3.5 h-3.5" />
                   <span>{l}</span>
                 </button>
               );
@@ -411,28 +407,28 @@ export default function NineFitTrain() {
           />
         ) : (
           <>
-            {/* Botão Treino Rápido High-Ticket */}
+            {/* Botão Treino Rápido */}
             <button 
               type="button"
               onClick={() => setQuickOpen(true)}
-              className="w-full mb-3.5 p-3 rounded-xl border border-primary/30 hover:border-primary/60 bg-gradient-to-r from-primary/[0.12] via-[#121319] to-primary/[0.06] flex items-center justify-between transition-all group cursor-pointer shadow-lg active:scale-[0.99]"
+              className="w-full mb-3.5 p-3 rounded-3xl border border-[#EF7A45]/25 hover:border-[#EF7A45]/40 bg-[#0B0B0C] flex items-center justify-between transition-colors group cursor-pointer active:scale-[0.99]"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
-                  <Zap className="w-4 h-4 fill-primary" />
+                <div className="w-10 h-10 rounded-2xl bg-[#EF7A45]/[0.12] border border-[#EF7A45]/25 flex items-center justify-center text-[#EF7A45]">
+                  <Zap strokeWidth={1.75} className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <span className="text-xs font-bold text-white block group-hover:text-primary transition-colors">
+                  <span className="text-xs font-bold text-white block">
                     Calibrar Treino Rápido
                   </span>
-                  <span className="text-[10px] font-mono text-neutral-400 block">
+                  <span className="text-[10px] font-mono text-white/45 block">
                     Ajuste dinâmico por tempo disponível e energia (3 etapas)
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-[11px] font-semibold text-primary">
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-[#EF7A45]">
                 <span>Calibrar</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
+                <ArrowUpRight strokeWidth={1.75} className="w-3.5 h-3.5" />
               </div>
             </button>
 
