@@ -35,5 +35,17 @@ BEGIN
  PERFORM public.fn_record_staff_sync(v_appt,'qa-booking','pendente');
  IF (SELECT count(*) FROM public.notifications WHERE related_id=v_appt)<>v_count THEN RAISE EXCEPTION 'duplicate_staff_notification'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.appointments WHERE id=v_appt AND staff_booking_id='qa-booking' AND staff_status='pendente' AND integration_status='sent') THEN RAISE EXCEPTION 'staff_receipt_missing'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated','is_anonymous',false)::text,true);
+ v_path:=a::text||'/qa_legacy_photo.jpg';
+ PERFORM public.fn_salvar_avaliacao_guiada_v2(a,jsonb_build_object('fotos',jsonb_build_array(v_path),'share_photos_with_coach',true),false,DATE '2000-01-01');
+ IF NOT EXISTS(SELECT 1 FROM public.student_photos WHERE photo_url=v_path AND consent_source='legacy_wizard_checkbox' AND NOT share_with_coach) THEN RAISE EXCEPTION 'legacy_consent_rollout_unsafe'; END IF;
+ BEGIN
+  PERFORM public.fn_salvar_avaliacao_guiada_v2(a,jsonb_build_object('fotos',jsonb_build_array(v_path),'photo_consent',false),false,DATE '2000-01-01');
+  RAISE EXCEPTION 'explicit_photo_refusal_ignored';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'photo_consent_required' THEN RAISE; END IF; END;
+ v_path:=a::text||'/qa_explicit_photo.jpg';
+ PERFORM public.fn_salvar_avaliacao_guiada_v2(a,jsonb_build_object('fotos',jsonb_build_array(v_path),'photo_consent',true,'share_photos_with_coach',true),false,DATE '2000-01-01');
+ IF NOT EXISTS(SELECT 1 FROM public.student_photos WHERE photo_url=v_path AND consent_source='explicit_v1' AND share_with_coach) THEN RAISE EXCEPTION 'explicit_photo_sharing_not_recorded'; END IF;
 END $$;
 SELECT 'PASS: owner photos, coach opt-in, storage opt-in, revoke, service-only booking receipts' result;

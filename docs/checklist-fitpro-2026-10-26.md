@@ -58,6 +58,6 @@ Backend aplicado nos projetos FitPro `mfrydtrzjxscbkaiwfnw` e Staff `xtexysqtfso
 
 ## Implantação e compatibilidade
 
-As quatro migrações FitPro e a migração separada em staff-provider têm versões alinhadas ao histórico real dos respectivos bancos. A edge `staff-api` do FitPro é um adaptador para `fitpro-staff-gateway` no banco Staff, sem compartilhar chaves de serviço. A chave embutida desse gateway é a chave pública FitPro.
+As cinco migrações FitPro e a migração separada em staff-provider têm versões alinhadas ao histórico real dos respectivos bancos. A edge `staff-api` do FitPro é um adaptador para `fitpro-staff-gateway` no banco Staff, sem compartilhar chaves de serviço. A chave embutida desse gateway é a chave pública FitPro.
 
-O frontend novo precisa acompanhar o backend: upload de fotos exige os campos de consentimento, e a interface Staff depende dos novos campos de recibo. Não testar novas fotos com uma versão antiga do frontend. A conclusão de checklist depende ainda da revisão profissional da prescrição suspensa, da classificação anatômica pendente e da publicação/validação móvel.
+O frontend novo traz os controles separados de consentimento e a interface Staff usa os novos recibos. O formulário publicado anteriormente já exigia checkbox de guarda, mas não enviava booleano: sua compatibilidade foi preservada com provenance legacy_wizard_checkbox, sempre sem compartilhamento com profissionais. Só o contrato novo com consentimento e permissão explícitos pode ativar compartilhamento. Recusa explícita é rejeitada no servidor. A conclusão do checklist depende ainda da revisão profissional da prescrição suspensa, da classificação anatômica pendente e da publicação/validação móvel.
