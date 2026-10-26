@@ -14,7 +14,7 @@ interface WeeklyTrainingViewProps {
   initialDate?: string;
 }
 
-type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; completed?: boolean; video_url?: string | null; gif_url?: string | null };
+type DayExercise = { id?: string; name: string; sets?: number|string; reps?: string; rest_seconds?: number; notes?: string; tempo?: string; completed?: boolean; video_url?: string | null; gif_url?: string | null };
 type DayPlan = {
   id?: string;
   prescription_issue?: string | null;
@@ -45,6 +45,8 @@ interface WeekPayload {
       reps_range?: string;
       reps?: string;
       rest_seconds?: number;
+      notes?: string;
+      tempo?: string;
       video_url?: string | null;
       gif_url?: string | null;
     }>;
@@ -86,7 +88,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
       if (error) throw error;
       const payload = (data || {}) as WeekPayload;
       setPhase(String(payload.phase_status || ""));
-      const { data: executions, error: executionsError } = await supabase.from('workout_executions').select('daily_workout_id,workout_date,status').eq('athlete_id', athleteId).gte('workout_date', weekStartISO).lte('workout_date', weekEndISO);
+      const { data: executions, error: executionsError } = await supabase.from('workout_executions').select('daily_workout_id,workout_date,status').eq('athlete_id', athleteId).eq('completion_valid',true).gte('workout_date', weekStartISO).lte('workout_date', weekEndISO);
       if (executionsError) throw executionsError;
       const week = (payload.week || []).map(day => {
         const id = day.id || day.daily_workout_id || day.workout_id;
@@ -106,6 +108,8 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
           id: e.id,
           completed: new Set((recordedSets || []).filter(s => s.exercise_name === e.name && s.workout_executions.daily_workout_id === d.id && s.workout_executions.workout_date === (d.workout_date || d.date)).map(s=>s.set_number)).size >= Number(e.sets || 3),
           name: e.name,
+          notes: e.notes,
+          tempo: e.tempo,
           sets: e.sets,
           reps: e.reps_range || e.reps,
           rest_seconds: e.rest_seconds,

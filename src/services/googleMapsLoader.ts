@@ -1,10 +1,11 @@
 /// <reference types="google.maps" />
-import { Loader } from "@googlemaps/js-api-loader";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
 export const SOLUTION_ATTRIBUTION_ID = "gmp_git_agentskills_v1";
 
 let loaderPromise: Promise<typeof google> | null = null;
 let cachedApiKey: string | null = null;
+let loaderConfigured = false;
 
 /**
  * Obtém a chave do Google Maps de forma robusta
@@ -42,25 +43,33 @@ export async function getGoogleMapsApiKey(): Promise<string> {
  * Carrega a API do Google Maps com tratamento de singleton
  */
 export async function loadGoogleMaps(): Promise<typeof google> {
-  if (window.google?.maps) {
+  // A bootstrap namespace can exist before the actual libraries are ready.
+  if (window.google?.maps?.Map && window.google.maps.Polyline &&
+      window.google.maps.Marker && window.google.maps.geometry?.spherical &&
+      window.google.maps.Geocoder) {
     return window.google;
   }
 
-  if (loaderPromise) {
-    return loaderPromise;
-  }
-
-  loaderPromise = (async () => {
-    const apiKey = await getGoogleMapsApiKey();
-    const loader = new Loader({
-      apiKey: apiKey,
-      version: "weekly",
-      libraries: ["maps", "geometry", "marker", "geocoding"],
+  if (!loaderPromise) {
+    loaderPromise = (async () => {
+      if (!loaderConfigured) {
+        const apiKey = await getGoogleMapsApiKey();
+        setOptions({ key: apiKey, v: "weekly" });
+        loaderConfigured = true;
+      }
+      await Promise.all([
+        importLibrary("maps"),
+        importLibrary("geometry"),
+        importLibrary("marker"),
+        importLibrary("geocoding"),
+      ]);
+      return window.google;
+    })().catch((error) => {
+      // Do not cache a rejected promise: a later attempt can recover.
+      loaderPromise = null;
+      throw error;
     });
-    await (loader as any).load();
-    return window.google;
-  })();
-
+  }
   return loaderPromise;
 }
 

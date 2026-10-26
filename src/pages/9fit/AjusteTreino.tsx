@@ -354,7 +354,7 @@ export default function NineFitAjusteTreino() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-48 text-foreground">
+    <div className="fitpro-orange min-h-screen bg-background pb-48 text-foreground">
       <div className="mx-auto max-w-2xl px-4 pt-6 flex items-center gap-2">
         <button onClick={() => navigate(-1)} aria-label="Voltar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
           <ChevronLeft className="w-5 h-5" />

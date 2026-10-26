@@ -43,7 +43,7 @@ const WEIGHT_SOURCE_LABEL: Record<string, string> = {
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
-  const { totalXp, level, syncScore, streak, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
+  const { totalXp, level, syncScore, streak, weightKg, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
   const { athleteId, athleteName } = useAthleteId();
   const directory = useStaffDirectory();
   const [fichaOpen, setFichaOpen] = useState(false);
@@ -56,7 +56,7 @@ export default function NineFitProfile() {
     (async () => {
       const { data } = await supabase
         .from("athletes")
-        .select("avatar_url, age, height_cm:altura_cm, weight_kg:peso_kg")
+        .select("avatar_url, age, height_cm:altura_cm")
         .eq("id", athleteId)
         .maybeSingle();
       if (data) setBio(data as any);
@@ -98,7 +98,7 @@ export default function NineFitProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32 text-foreground">
+    <div className="fitpro-orange min-h-screen bg-background pb-32 text-foreground">
       {/* Top bar */}
       <header className="px-4 pt-6 flex items-center gap-2 border-b border-primary/30 pb-3">
         <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
@@ -120,11 +120,11 @@ export default function NineFitProfile() {
           avatarUrl={bio.avatar_url}
           age={bio.age}
           heightCm={bio.height_cm}
-          weightKg={bio.weight_kg}
+          weightKg={weightKg}
         />}
-        {bio.weight_kg != null && weightMeta && (
+        {weightKg != null && weightMeta && (
           <p className="mt-2 px-1 text-[11px] text-muted-foreground">
-            Peso {bio.weight_kg} kg · {WEIGHT_SOURCE_LABEL[weightMeta.source] || weightMeta.source}
+            Peso {weightKg} kg · {WEIGHT_SOURCE_LABEL[weightMeta.source] || weightMeta.source}
             {weightMeta.source !== "baseline" ? ` em ${new Date(weightMeta.created_at).toLocaleDateString("pt-BR")}` : ""}
           </p>
         )}

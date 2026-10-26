@@ -4,7 +4,7 @@
  * for the OS dashboard and Hub. Mirrors the v2 prototype's agentService.
  */
 import { supabase } from '@/integrations/supabase/client';
-import { fetchDailyContext } from '@/services/dailyContext';
+import { getAthleteScores } from '@/hooks/useAthleteScores';
 
 export type Squad = 'EPSILON' | 'BETA' | 'ZETA' | 'OMEGA' | 'SIGMA';
 export type InsightPriority = 'high' | 'medium' | 'low';
@@ -25,6 +25,7 @@ interface EngrenagemContext {
   level: number;
   syncScore: number | null;
   streak: number;
+  weightKg?: number | null;
   lastHrv?: number | null;
   lastSleepH?: number | null;
   hasActiveProtocol?: boolean;
@@ -82,7 +83,10 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
     ctx.hasActiveProtocol = (count ?? 0) > 0;
   }
 
-  try { const day = await fetchDailyContext(); ctx.syncScore = day.sync.value; ctx.streak = day.streak; } catch { /* Do not infer new readiness from failed context reads. */ ctx.syncScore = null; }
+  const snapshot = await getAthleteScores();
+  ctx.syncScore = snapshot?.sync.value ?? null;
+  ctx.streak = snapshot?.streak ?? 0;
+  ctx.weightKg = snapshot?.weight.value ?? null;
   return ctx;
 }
 

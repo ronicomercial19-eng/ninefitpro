@@ -13,8 +13,7 @@ interface ModuleDef {
 
 const MODULES: ModuleDef[] = [
   { key: "community",   label: "FitCommunity",  sub: "Tribos & Feed",     icon: Users,          path: "/9fit/community",       group: "SOCIAL" },
-  { key: "mensagens",   label: "Mensagens",     sub: "Chat 9ZAP",         icon: MessageSquare,  path: "/9fit/mensagens",       group: "SOCIAL" },
-  { key: "ron",         label: "O Ron",         sub: "Neural Coach",      icon: Brain,          path: "/9fit/ron",             group: "SOCIAL" },
+  { key: "ron",         label: "Mensagens & RON", sub: "Equipe e coach",    icon: MessageSquare,  path: "/9fit/ron",             group: "SOCIAL" },
   { key: "primepass",   label: "PrimePass",     sub: "Elite Access",      icon: Crown,          path: "/9fit/primepass",       group: "ELITE" },
   { key: "9store",      label: "9Store",        sub: "Performance Shop",  icon: ShoppingBag,    path: "/9fit/native-system?app=store",           group: "ELITE" },
   { key: "elitebio",    label: "9PRIME Bio",    sub: "LongeVita",         icon: Sparkles,       path: "/9fit/elite-bio",       group: "ELITE" },
@@ -53,7 +52,7 @@ export function ModuleGrid({ priorityKey, recommendedKeys }: { priorityKey?: str
                 return (
                   <motion.button
                     key={m.key}
-                    onClick={() => navigate(m.path)}
+                    onClick={() => m.key === 'ron' ? window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge')) : navigate(m.path)}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04, duration: 0.3 }}

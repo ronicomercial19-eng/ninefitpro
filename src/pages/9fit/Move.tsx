@@ -32,7 +32,6 @@ import {
   getGoogleMapsApiKey,
 } from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapDiagnostics } from "@/components/9fit/MapDiagnostics";
 import { ProgressGraph } from "@/components/9fit/ProgressGraph";
 
 type LatLng = { lat: number; lng: number };
@@ -67,6 +66,15 @@ export default function NineFitMove() {
   const [currentStreet, setCurrentStreet] = useState("Aguardando sinal GPS...");
   const [currentNeighborhood, setCurrentNeighborhood] = useState("");
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [fallbackCenter, setFallbackCenter] = useState<LatLng | null>(null);
+  const [lastFixAt, setLastFixAt] = useState<number | null>(null);
+  const lastCoordinateAtRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!lastFixAt) return;
+    const timer = window.setTimeout(() => { setGpsAccuracy(null); setCurrentStreet('Aguardando sinal GPS…'); }, 20000);
+    return () => clearTimeout(timer);
+  }, [lastFixAt]);
   const [activitySaved, setActivitySaved] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [saveFailed,setSaveFailed]=useState(false);
@@ -75,6 +83,8 @@ export default function NineFitMove() {
   const sessionRef=useRef<{id:string;userId:string;recordedAt?:string}|null>(null);
   const currentUserRef=useRef(user?.id);currentUserRef.current=user?.id;
   const [voiceAudio, setVoiceAudio] = useState(true);
+  const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [mapAttempt, setMapAttempt] = useState(0);
   const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -124,7 +134,7 @@ export default function NineFitMove() {
     if (!user?.id) { setRecentRuns([]); return; }
     let active = true;
     setRecentRuns([]);
-    void (supabase as any).from('bio_activity_logs').select('id,distance_m,recorded_at,duration_seconds').eq('user_id',user.id).eq('source','move_gps').order('recorded_at',{ascending:false}).limit(10).then(({data,error}:any)=>{
+    void (supabase as any).from('bio_activity_logs').select('id,distance_m,recorded_at,duration_seconds').eq('user_id',user.id).eq('source','move_gps').gte('distance_m',200).gte('duration_seconds',120).order('recorded_at',{ascending:false}).limit(10).then(({data,error}:any)=>{
       if(!active)return;
       if(error){toast.error('Não foi possível carregar seu histórico de corridas.');return;}
       const rows=(data||[]).map((row:any)=>({distanceKm:Number(row.distance_m||0)/1000,durationSeconds:row.duration_seconds,date:row.recorded_at})).filter((row:any)=>row.distanceKm>0);
@@ -137,10 +147,9 @@ export default function NineFitMove() {
     let mounted = true;
 
     async function initMap() {
+      setMapStatus("loading");
       try {
         console.log("[NineFitMove] Iniciando carregamento do mapa...");
-        const apiKey = await getGoogleMapsApiKey();
-        console.log("[NineFitMove] API Key obtida com sucesso.");
         
         const g = await loadGoogleMaps();
         console.log("[NineFitMove] Bibliotecas do Google Maps carregadas.");
@@ -166,7 +175,7 @@ export default function NineFitMove() {
 
         mapInstanceRef.current = map;
         console.log("[NineFitMove] Instância do mapa criada com sucesso.");
-        // ... rest of initMap ...
+        setMapStatus("ready");
         
         polylineRef.current = new g.maps.Polyline({
           map,
@@ -194,6 +203,8 @@ export default function NineFitMove() {
           );
         }
       } catch (err) {
+        if (!mounted) return;
+        setMapStatus("error");
         console.error("[NineFitMove] Falha crítica ao inicializar mapa:", err);
         toast.error("Não foi possível carregar o Google Maps. Verifique sua conexão.");
       }
@@ -203,13 +214,20 @@ export default function NineFitMove() {
 
     return () => {
       mounted = false;
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
-      if (simIntervalRef.current !== null) {
-        window.clearInterval(simIntervalRef.current);
-      }
+      polylineRef.current?.setMap(null);
+      currentMarkerRef.current?.setMap(null);
+      startMarkerRef.current?.setMap(null);
+      if (mapInstanceRef.current) window.google?.maps.event.clearInstanceListeners(mapInstanceRef.current);
+      mapInstanceRef.current = null;
+      polylineRef.current = null;
+      currentMarkerRef.current = null;
+      startMarkerRef.current = null;
     };
+  }, [mapAttempt]);
+
+  useEffect(() => () => {
+    if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+    if (simIntervalRef.current !== null) window.clearInterval(simIntervalRef.current);
   }, []);
 
   useEffect(() => {
@@ -243,29 +261,18 @@ export default function NineFitMove() {
 
   const handleNewCoordinate = useCallback(
     (lat: number, lng: number, speedMps?: number | null, accuracy?: number | null) => {
-      const g = window.google;
-      if (!g?.maps || !mapInstanceRef.current) return;
-
+      setLastFixAt(Date.now());
+      setGpsError(null);
+      const center = { lat: Math.round(lat * 1000) / 1000, lng: Math.round(lng * 1000) / 1000 };
+      setFallbackCenter(previous => previous?.lat === center.lat && previous?.lng === center.lng ? previous : center);
       const currentLatLng = { lat, lng };
-      const currentGoogleLatLng = new g.maps.LatLng(lat, lng);
 
       if (accuracy !== undefined && accuracy !== null) {
         setGpsAccuracy(Math.round(accuracy));
       }
 
+      let deltaMeters = 0;
       if (lastCoordRef.current) {
-        const lastGoogleLatLng = new g.maps.LatLng(
-          lastCoordRef.current.lat,
-          lastCoordRef.current.lng
-        );
-
-        let deltaMeters = 0;
-        if (g.maps.geometry?.spherical) {
-          deltaMeters = g.maps.geometry.spherical.computeDistanceBetween(
-            lastGoogleLatLng,
-            currentGoogleLatLng
-          );
-        } else {
           const R = 6371000;
           const dLat = ((lat - lastCoordRef.current.lat) * Math.PI) / 180;
           const dLng = ((lng - lastCoordRef.current.lng) * Math.PI) / 180;
@@ -276,8 +283,6 @@ export default function NineFitMove() {
               Math.sin(dLng / 2) *
               Math.sin(dLng / 2);
           deltaMeters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-
         if (deltaMeters > 2.0) {
           setDistanceKm((prev) => {
             const nextDist = prev + deltaMeters / 1000;
@@ -289,8 +294,9 @@ export default function NineFitMove() {
       let instantSpeedKmh = 0;
       if (speedMps !== null && speedMps !== undefined && speedMps >= 0) {
         instantSpeedKmh = Math.round(speedMps * 3.6 * 10) / 10;
-      } else if (lastCoordRef.current) {
-        instantSpeedKmh = 10.2; 
+      } else if (lastCoordinateAtRef.current) {
+        const elapsedSeconds = (Date.now() - lastCoordinateAtRef.current) / 1000;
+        if (elapsedSeconds > 0) instantSpeedKmh = Math.round(deltaMeters / elapsedSeconds * 36) / 10;
       }
 
       setCurrentSpeedKmh(instantSpeedKmh);
@@ -298,6 +304,12 @@ export default function NineFitMove() {
 
       pathCoordinatesRef.current.push(currentLatLng);
       lastCoordRef.current = currentLatLng;
+      lastCoordinateAtRef.current = Date.now();
+
+      // GPS tracking is independent of the Google Maps renderer.
+      const g = window.google;
+      if (!g?.maps || !mapInstanceRef.current) { setCurrentStreet('GPS ativo · mapa alternativo'); return; }
+      const currentGoogleLatLng = new g.maps.LatLng(lat, lng);
 
       if (polylineRef.current) {
         polylineRef.current.getPath().push(currentGoogleLatLng);
@@ -361,6 +373,8 @@ export default function NineFitMove() {
     setMaxSpeedKmh(0);
     pathCoordinatesRef.current = [];
     lastCoordRef.current = null;
+    lastCoordinateAtRef.current = null;
+    setGpsAccuracy(null); setGpsError(null); setLastFixAt(null);
 
     if (polylineRef.current) {
       polylineRef.current.setPath([]);
@@ -406,9 +420,17 @@ export default function NineFitMove() {
           message: err.message,
           timestamp: Date.now()
         });
-        let msg = "Erro no sinal de GPS.";
+        setGpsAccuracy(null);
+        let msg = "Aguardando sinal GPS.";
         if (err.code === err.PERMISSION_DENIED) msg = "Permissão de localização negada.";
         if (err.code === err.POSITION_UNAVAILABLE) msg = "Sinal de GPS indisponível.";
+        setGpsError(msg);
+        setCurrentStreet(msg);
+        if (err.code === err.PERMISSION_DENIED) {
+          setRunning(false);
+          if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = null;
+        }
         toast.warning(msg);
       },
       options
@@ -568,7 +590,6 @@ export default function NineFitMove() {
 
   return (
     <div className="min-h-screen bg-[#07080b] pb-28 text-foreground selection:bg-primary/30">
-      <MapDiagnostics />
       {/* Top Header */}
       <div className="px-5 pt-8 pb-3 flex items-center justify-between">
         <div>
@@ -623,7 +644,7 @@ export default function NineFitMove() {
         <div className="flex flex-col items-end shrink-0">
           <span className="text-[9px] font-mono text-neutral-400 uppercase">PRECISÃO</span>
           <span className="text-xs font-mono font-bold text-emerald-400">
-            {gpsAccuracy ? `±${gpsAccuracy}m` : "ALTA (GPS)"}
+            {isSimulationMode ? 'Simulação' : gpsError ? 'Sem sinal' : gpsAccuracy !== null ? `±${gpsAccuracy} m` : 'Aguardando sinal'}
           </span>
         </div>
       </div>
@@ -632,6 +653,26 @@ export default function NineFitMove() {
       <div ref={captureCardRef} className="mx-5 relative rounded-2xl overflow-hidden border border-white/15 bg-[#0b0d13] shadow-2xl h-[330px]">
         {/* Container do Mapa */}
         <div ref={mapElementRef} className="w-full h-full" />
+        {mapStatus === "error" && <iframe
+          title="Mapa alternativo OpenStreetMap"
+          className="absolute inset-0 h-full w-full border-0"
+          src={fallbackCenter
+            ? `https://www.openstreetmap.org/export/embed.html?bbox=${fallbackCenter.lng-0.008},${fallbackCenter.lat-0.006},${fallbackCenter.lng+0.008},${fallbackCenter.lat+0.006}&layer=mapnik&marker=${fallbackCenter.lat},${fallbackCenter.lng}`
+            : 'https://www.openstreetmap.org/export/embed.html?bbox=-180,-80,180,80&layer=mapnik'}
+        />}
+        {mapStatus === "loading" && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[#0b0d13] px-6 text-center" role="status" aria-live="polite">
+            <MapPin className="h-7 w-7 text-primary" aria-hidden="true" />
+            <p className="text-sm text-neutral-300">
+              Carregando mapa…
+            </p>
+          </div>
+        )}
+        {mapStatus === 'error' && <div className="absolute inset-x-3 bottom-3 rounded-xl bg-black/85 p-3 text-xs text-white">
+          <p>Mapa alternativo · © OpenStreetMap. O GPS continua registrando sua atividade.</p>
+          {!fallbackCenter && <p>Inicie o GPS para centralizar o mapa.</p>}
+          <button className="mt-2 min-h-10 text-primary" onClick={() => setMapAttempt(attempt => attempt+1)}>Tentar Google Maps novamente</button>
+        </div>}
 
         {/* Overlay Superior Esquerdo: Status do GPS */}
         <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/75 backdrop-blur-md px-3 py-1.5 border border-white/10 text-xs shadow-md">
@@ -646,7 +687,7 @@ export default function NineFitMove() {
                 ? "PAUSADO"
                 : isSimulationMode
                 ? "SIMULAÇÃO GPS ATIVA"
-                : "GPS REAL ATIVO"
+                : gpsAccuracy === null ? "AGUARDANDO SINAL" : "GPS REAL ATIVO"
               : "GPS EM ESPERA"}
           </span>
         </div>

@@ -131,7 +131,11 @@ export default function NineFitHub() {
       void loadHubData();
     };
     window.addEventListener('9fit:protocol_completed', onComplete);
-    return () => window.removeEventListener('9fit:protocol_completed', onComplete);
+    window.addEventListener('9fit:sync_updated', onComplete);
+    return () => {
+      window.removeEventListener('9fit:protocol_completed', onComplete);
+      window.removeEventListener('9fit:sync_updated', onComplete);
+    };
   }, [invalidate, refreshScores]);
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
@@ -197,6 +201,11 @@ export default function NineFitHub() {
         <motion.div variants={hubStaggerItem}>
           <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
         </motion.div>
+        <div className="flex flex-wrap gap-3 rounded-2xl border border-primary/20 p-3 text-xs text-muted-foreground" aria-label="Resumo do perfil e da rotina">
+          <span>Peso: {liveScores?.weight.value == null ? 'Não registrado' : `${liveScores.weight.value} kg`}</span>
+          <span>Sequência de calibração: {liveScores?.streak ?? 0} dias</span>
+          <span>Engajamento: {liveScores?.engagement.value == null ? 'Sem leitura' : `${liveScores.engagement.value}/100`}</span>
+        </div>
 
         <motion.div variants={hubStaggerItem}>
           <FitOSConsoleDock

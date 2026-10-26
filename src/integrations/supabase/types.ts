@@ -19439,6 +19439,8 @@ export type Database = {
       }
       workout_executions: {
         Row: {
+          completion_valid: boolean
+          completion_validation_reason: string | null
           assignment_id: string | null
           athlete_id: string
           avg_rpe: number | null
@@ -19460,6 +19462,8 @@ export type Database = {
           workout_date: string
         }
         Insert: {
+          completion_valid?: boolean
+          completion_validation_reason?: string | null
           assignment_id?: string | null
           athlete_id: string
           avg_rpe?: number | null
@@ -19481,6 +19485,8 @@ export type Database = {
           workout_date?: string
         }
         Update: {
+          completion_valid?: boolean
+          completion_validation_reason?: string | null
           assignment_id?: string | null
           athlete_id?: string
           avg_rpe?: number | null

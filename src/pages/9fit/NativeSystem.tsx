@@ -3,6 +3,7 @@ import { ArrowLeft, ExternalLink, MessageCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { safeExternalAppUrl } from "@/lib/externalApps";
 import { getEmbeddedApp } from "@/data/ecosystemApps";
+import { StaffBookingStatus } from '@/components/9fit/StaffBookingStatus';
 
 export default function NineFitNativeSystem() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function NineFitNativeSystem() {
   // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
   const externalUrl = safeExternalAppUrl(app.url);
   const showFallback = !externalUrl;
+  if (appKey === 'staff') return <main className="min-h-screen bg-background p-4 pt-16 space-y-4"><h1 className="text-2xl font-bold">9FIT Staff</h1><StaffBookingStatus /><Link className="block min-h-11 text-primary" to="/9fit/staff">Escolher profissional</Link><Link className="block min-h-11 text-primary" to="/9fit/aulas-creditos?tab=schedule">Abrir agenda</Link><button className="min-h-11" onClick={()=>navigate(-1)}>Voltar</button></main>;
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
@@ -32,11 +34,6 @@ export default function NineFitNativeSystem() {
           </a>
         )}
       </header>
-
-      {appKey === 'staff' && <div className="px-4 py-3 border-b border-primary/20 text-xs text-muted-foreground space-y-2">
-        <p>Fluxo externo 9FIT Staff · prévia com profissionais e reservas demonstrativos. Confirmações nesta prévia não comprovam reserva na agenda FitPro. O acesso Staff / Prof exige autenticação própria.</p>
-        <div className="flex flex-wrap gap-4"><button type="button" onClick={() => navigate('/9fit/aulas-creditos')} className="text-primary underline">Abrir minha agenda FitPro</button><a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">Fluxo não apareceu? Abrir em nova aba</a></div>
-      </div>}
 
       {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
 

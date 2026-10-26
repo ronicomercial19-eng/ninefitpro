@@ -87,6 +87,7 @@ export default function NineFitAvaliacaoGuiada() {
   const [openExtra, setOpenExtra] = useState<Record<string, boolean>>({});
   const [photos, setPhotos] = useState<Partial<Record<PhotoView, File>>>({});
   const [photoConsent, setPhotoConsent] = useState(false);
+  const [sharePhotosWithCoach, setSharePhotosWithCoach] = useState(false);
   const [updateProfile, setUpdateProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [frequency, setFrequency] = useState(3);
@@ -198,7 +199,9 @@ export default function NineFitAvaliacaoGuiada() {
   async function save() {
     if (!athleteId || saving) return;
     const n = (k: string) => parseNum(values[k]);
-    const data: Record<string, number | string | object> = {};
+    const data: Record<string, number | string | object | boolean> = {};
+    data.photo_consent = photoConsent;
+    data.share_photos_with_coach = photoConsent && sharePhotosWithCoach;
     const put = (key: string, v: number | null) => { if (v !== null) data[key] = v; };
     for (const f of MEASURES) put(f.key, res[f.key].value);
     put('idade', parseNum(idade));
@@ -454,8 +457,17 @@ export default function NineFitAvaliacaoGuiada() {
               </div>
               <label className="flex items-start gap-2 text-xs">
                 <input type="checkbox" checked={photoConsent} onChange={(e) => setPhotoConsent(e.target.checked)} className="mt-0.5" />
-                <span>Autorizo guardar estas fotos em área privada. Apenas eu e os profissionais vinculados a mim podemos ver. Posso apagar quando quiser.</span>
+                <span>Autorizo guardar estas fotos em área privada, visível apenas para mim. Posso apagar quando quiser.</span>
               </label>
+              <label className="flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={sharePhotosWithCoach} disabled={!photoConsent} onChange={e=>setSharePhotosWithCoach(e.target.checked)} className="mt-0.5" />
+                <span>Também autorizo os profissionais vinculados a mim a ver estas fotos. Esta permissão é opcional.</span>
+              </label>
+              <button type="button" className="min-h-10 text-xs text-primary underline" onClick={async()=>{
+                if (!athleteId) return;
+                const {error}=await (supabase as any).from('student_photos').update({share_with_coach:false}).eq('athlete_id',athleteId);
+                if(error)toast.error('Não foi possível revogar a permissão. Tente novamente.');else toast.success('Compartilhamento das fotos anteriores revogado.');
+              }}>Revogar compartilhamento das fotos anteriores</button>
             </div>
           </div>
         )}

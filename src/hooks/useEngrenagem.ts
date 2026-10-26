@@ -14,5 +14,5 @@ export function useEngrenagem() {
     return () => events.forEach(event => window.removeEventListener(event, refresh));
   }, [client, user?.id]);
   const data = query.isError ? undefined : query.data;
-  return { loading: query.isPending, error: query.isError, totalXp: data?.totalXp ?? 0, level: data?.level ?? 1, syncScore: data?.syncScore ?? null, streak: data?.streak ?? 0, isPremium: data?.isPremium ?? false, insights: data ? getSquadInsights(data) : [], refresh: async () => { await query.refetch(); } };
+  return { loading: query.isPending, error: query.isError, totalXp: data?.totalXp ?? 0, level: data?.level ?? 1, syncScore: data?.syncScore ?? null, streak: data?.streak ?? 0, weightKg: data?.weightKg ?? null, isPremium: data?.isPremium ?? false, insights: data ? getSquadInsights(data) : [], refresh: async () => { await query.refetch(); } };
 }

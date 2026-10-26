@@ -217,6 +217,7 @@ export default function AulasCreditos() {
         const { data: external, error: externalError } = await supabase.functions.invoke("staff-api/booking", {
           body: {
             action: "booking",
+            appointment_id: appointmentId,
             freelancer_id: staffProfessionalId,
             method: staffMethodId || "aula",
             slot: when.toISOString(),

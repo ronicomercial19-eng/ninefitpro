@@ -57,12 +57,12 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
          ========================================================================= */}
       <div className="relative rounded-3xl overflow-hidden border border-[#EF7A45]/25 bg-[#0B0B0C] flex flex-col group">
         {/* Bloco 1: Imagem Superior com Gradiente de Sobreposição (fundo -> topo) */}
-        <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-black shrink-0">
+        <div className="relative aspect-[16/7] min-h-40 w-full overflow-hidden bg-black shrink-0">
           <img
             src={trainHeroBanner}
             alt="Treino Principal 9FIT"
             referrerPolicy="no-referrer"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-full object-cover object-center"
           />
           {/* Gradiente de sobreposição sutil que sobe a partir da base em direção ao topo */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-[#0B0B0C]/60 to-transparent" />
