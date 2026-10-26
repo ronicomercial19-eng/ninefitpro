@@ -20,11 +20,29 @@ type Ex = {
   new_exercise_name?: string;
   intensidade?: number;
   muscle_groups?: string[];
+  notes?: string;
 };
 type ExerciseOption = { name: string; muscle_groups: string[] };
 
 const doseLabel = (dose: string) => /(?:\d|\s)(?:km|m|metros?)\b/i.test(dose)
   ? "Distância" : /(?:\d|\s)(?:min|seg|s|segundos?)\b/i.test(dose) ? "Duração" : "Reps / dose";
+
+const ACTIVE_STATUSES = ["started", "in_progress", "paused"];
+
+/** Texto legível para o status da execução (antes aparecia o valor cru, ex.: "in_progress"). */
+const executionMessage = (status: string) =>
+  ACTIVE_STATUSES.includes(status)
+    ? "Este treino foi iniciado e ainda não foi finalizado. Retome no player para concluí-lo; depois você poderá ajustar as próximas sessões."
+    : status === "completed"
+      ? "Treino de hoje concluído. A prescrição executada fica preservada; escolha uma sessão futura para ajustar."
+      : "Esta sessão foi pulada. Escolha uma sessão futura para ajustar.";
+
+/** O catálogo tem muscle_groups vazio; target_muscles é o campo preenchido. */
+const toGroups = (e: any): string[] => {
+  const direct = Array.isArray(e?.muscle_groups) ? e.muscle_groups.filter((g: unknown): g is string => typeof g === "string") : [];
+  if (direct.length) return direct;
+  return Array.isArray(e?.target_muscles) ? e.target_muscles.filter((g: unknown): g is string => typeof g === "string") : [];
+};
 
 export default function NineFitAjusteTreino() {
   const navigate = useNavigate();
@@ -63,6 +81,7 @@ export default function NineFitAjusteTreino() {
   const { adjustment, loading, error: adjustmentError, generate, apply: recordAcceptedAdjustment, reset: resetAdjustment } = useAdaptiveAdjustment();
 
   const today = businessDate();
+  const pending = Object.keys(dirty).length;
 
   useEffect(() => {
     const target = scores?.sync.status === 'available' ? scores.sync.value : null;
@@ -105,7 +124,7 @@ export default function NineFitAjusteTreino() {
       setExecutionStatus((executions ?? []).find((row) => ["started", "in_progress", "paused", "completed", "skipped"].includes(row.status))?.status ?? null);
       const { data: rows, error: rowsError } = await supabase
         .from("workout_exercises" as any)
-        .select("*, exercises(name,video_url,muscle_groups)")
+        .select("*, exercises(name,video_url,muscle_groups,target_muscles)")
         .eq("daily_workout_id", (dw as any).id).order("exercise_order");
       if (token !== loadToken.current) return;
       if (rowsError) throw rowsError;
@@ -118,7 +137,8 @@ export default function NineFitAjusteTreino() {
         rest_seconds: r.rest_seconds ?? 60,
         intensidade: r.rpe_target ?? undefined,
         video_url: r.exercises?.video_url || r.video_url,
-        muscle_groups: Array.isArray(r.exercises?.muscle_groups) ? r.exercises.muscle_groups : [],
+        muscle_groups: toGroups(r.exercises),
+        notes: r.notes ? String(r.notes) : undefined,
       }));
       setExercises(loaded);
       setOriginal(loaded);
@@ -139,9 +159,14 @@ export default function NineFitAjusteTreino() {
   }, [athleteId, selectedDate]);
 
   useEffect(() => {
-    void supabase.from("exercises").select("name,muscle_groups").order("name").limit(1000)
-      .then(({ data }) => setExerciseOptions((data ?? []).filter(row => !!row.name).map(row => ({ name: row.name, muscle_groups: Array.isArray(row.muscle_groups) ? row.muscle_groups.filter((group): group is string => typeof group === "string") : [] }))));
+    void supabase.from("exercises").select("name,muscle_groups,target_muscles").order("name").limit(1000)
+      .then(({ data }) => setExerciseOptions(((data ?? []) as any[]).filter(row => !!row.name).map(row => ({ name: row.name as string, muscle_groups: toGroups(row) }))));
   }, []);
+
+  /** Troca segura: só oferece exercícios do mesmo grupo. Sem grupo conhecido, não oferece nada. */
+  const swapChoicesFor = (ex: Ex) => exerciseOptions
+    .filter(option => option.name !== ex.name && !!ex.muscle_groups?.length && option.muscle_groups.some(group => ex.muscle_groups?.includes(group)))
+    .slice(0, 4);
 
   const runCopilot = async (customRequest = "") => {
     if (customRequest && Object.keys(dirty).length && !applied) { toast.info("Aplique ou desfaça as mudanças manuais antes de pedir outro ajuste."); return; }
@@ -174,8 +199,9 @@ export default function NineFitAjusteTreino() {
     const preview = (id: string, delta: Partial<Ex>) => { nextDirty[id] = { ...nextDirty[id], ...delta }; };
     adjustment.swaps.forEach((swap) => {
       const target = original.find((exercise) => exercise.name.toLocaleLowerCase() === swap.from.toLocaleLowerCase());
+      // Troca só é aceita se o grupo muscular do exercício original for conhecido e coincidir.
       const replacement = exerciseOptions.find(option => option.name.toLocaleLowerCase() === swap.to.toLocaleLowerCase()
-        && (!target?.muscle_groups?.length || option.muscle_groups.some(group => target.muscle_groups?.includes(group))))?.name;
+        && !!target?.muscle_groups?.length && option.muscle_groups.some(group => target.muscle_groups?.includes(group)))?.name;
       if (target && replacement) {
         preview(target.id, { new_exercise_name: replacement });
         nextReasons[target.id] = swap.reason;
@@ -328,7 +354,7 @@ export default function NineFitAjusteTreino() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32 text-foreground">
+    <div className="min-h-screen bg-background pb-48 text-foreground">
       <div className="mx-auto max-w-2xl px-4 pt-6 flex items-center gap-2">
         <button onClick={() => navigate(-1)} aria-label="Voltar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
           <ChevronLeft className="w-5 h-5" />
@@ -348,7 +374,14 @@ export default function NineFitAjusteTreino() {
           <input type="date" min={today} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}
             className="mt-2 block w-full rounded-lg border border-white/10 bg-background p-2 text-foreground" />
         </label>
-        {executionStatus && <p className="mt-3 text-sm text-amber-400">Treino {executionStatus}. A prescrição executada fica preservada; escolha uma sessão futura para ajustar.</p>}
+        {executionStatus && (
+          <div className="mt-3 space-y-2">
+            <p className="text-sm text-amber-400">{executionMessage(executionStatus)}</p>
+            {ACTIVE_STATUSES.includes(executionStatus) && selectedDate === today && (
+              <button type="button" onClick={() => navigate("/9fit/train")} className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-bold text-primary"><Play className="h-3.5 w-3.5" />Retomar no player</button>
+            )}
+          </div>
+        )}
         {redFlagSource && <p className="mt-3 rounded-xl border border-rose-400/40 bg-rose-400/10 p-3 text-xs text-rose-100">Alerta de dor registrado{painRegion ? ` em ${painRegion}` : ""}. Esta revisão considera a prescrição e a periodização ativa; não retome o treino antes de publicar uma decisão revisada ou falar com a equipe.</p>}
         {scores?.context?.safety.review_required && <p className="mt-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-xs text-amber-200">Há dor ou restrição registrada. Revise qualquer troca com seu profissional antes de executar o treino.</p>}
       </details></div>
@@ -377,7 +410,7 @@ export default function NineFitAjusteTreino() {
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">{adjustment.rationale}</p>
           <p className="mt-2 text-[11px] text-muted-foreground">Base: {adjustment.contextual?.sources.join(' · ') || 'prescrição atual'}. Objetivo, exercícios, dose e descanso preservados pelo motor.</p>
           {adjustment.contextual && <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">{adjustment.contextual.limitations.map(note => <li key={note}>{note}</li>)}</ul>}
-          <p className="mt-3 inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">{Object.keys(dirty).length} exercícios ajustados</p>
+          <p className="mt-3 inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">{pending === 0 ? "Nenhum exercício ajustado" : pending === 1 ? "1 exercício ajustado" : `${pending} exercícios ajustados`}</p>
           <div className="mt-4 rounded-xl bg-background/60 p-3 text-xs"><span className="text-primary font-semibold">Decisão: </span>{adjustment.contextual?.kind === 'review' ? 'Revisão profissional' : adjustment.contextual?.kind === 'shorten' ? 'Encurtar volume' : adjustment.contextual?.kind === 'reduce' ? 'Reduzir volume' : 'Manter prescrição'}<p className="mt-1 text-muted-foreground">Não é uma avaliação clínica nem liberação para treinar com dor.</p></div>
           {!applied && adjustment.changes.length + adjustment.swaps.length === 0 && <p className="mt-3 text-xs text-muted-foreground">Sem mudança recomendada com os dados atuais. Você ainda pode ajustar manualmente.</p>}
           {published && <p role="status" className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm text-emerald-300"><Check className="mr-2 inline h-4 w-4" />Treino atualizado — bom treino!</p>}
@@ -404,13 +437,14 @@ export default function NineFitAjusteTreino() {
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {ex.sets} × {ex.reps_range} · {ex.rest_seconds} s de descanso
                 </p>
+                {ex.notes && <p className="mt-1 text-[11px] text-foreground/70">{ex.notes}</p>}
               </div>
               <div className="flex items-center gap-2">
                 {!executionStatus && <button type="button" aria-label={`Trocar exercício: ${ex.name}`} aria-expanded={swapOpen === ex.id} onClick={() => setSwapOpen(swapOpen === ex.id ? null : ex.id)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-2 text-[10px] ${swapOpen === ex.id ? "border-primary/50 bg-primary/10 text-primary" : "border-white/10 text-muted-foreground"}`}><ArrowLeftRight className="h-3.5 w-3.5" />Trocar exercício</button>}
                 {ex.video_url && <Play className="w-4 h-4 text-primary/60" />}
               </div>
             </div>
-            {swapOpen === ex.id && !executionStatus && <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-background/60 p-2"><p className="px-1 text-[10px] uppercase text-muted-foreground">Trocar · mesmo grupo / restrição do dia</p>{exerciseOptions.filter(option => option.name !== ex.name && (!ex.muscle_groups?.length || option.muscle_groups.some(group => ex.muscle_groups?.includes(group)))).slice(0, 4).map(option => <button key={option.name} type="button" onClick={() => pickSwap(ex, option)} className="flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-left text-xs"><span>{option.name}</span><ArrowLeftRight className="h-3 w-3 text-primary" /></button>)}</div>}
+            {swapOpen === ex.id && !executionStatus && <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-background/60 p-2"><p className="px-1 text-[10px] uppercase text-muted-foreground">Trocar · mesmo grupo / restrição do dia</p>{swapChoicesFor(ex).length === 0 ? <p className="px-1 py-2 text-xs text-muted-foreground">Sem troca segura disponível no catálogo para este exercício. Fale com a equipe para ajustar.</p> : swapChoicesFor(ex).map(option => <button key={option.name} type="button" onClick={() => pickSwap(ex, option)} className="flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-left text-xs"><span>{option.name}</span><ArrowLeftRight className="h-3 w-3 text-primary" /></button>)}</div>}
             {reasons[ex.id] && <p className="mt-2 rounded-lg bg-primary/10 p-2 text-xs text-primary">{reasons[ex.id]}</p>}
             {dirty[ex.id] && <button onClick={() => undo(ex.id)} className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground underline"><RotateCcw className="h-3 w-3" />Desfazer neste exercício</button>}
             <div className={`mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 ${mode === "suggestion" ? "hidden" : ""}`}>
@@ -443,15 +477,23 @@ export default function NineFitAjusteTreino() {
         ))}
       </div>
 
-
-      <div className="sticky bottom-20 z-20 mt-6 border-t border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
-        <button onClick={onSave} disabled={saving || !!executionStatus || Object.keys(dirty).length === 0}
-          className={`w-full rounded-full py-4 font-bold uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)] disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-2 ${published ? "bg-emerald-500" : "bg-primary"}`}>
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          {saving ? "Aplicando..." : published ? "Treino ajustado!" : `Aplicar ${Object.keys(dirty).length} ajustes`}
-        </button>
-        {published && <p className="mt-2 text-center text-xs text-emerald-300"><Check className="mr-1 inline h-3 w-3" />Alteração registrada no histórico da sessão.</p>}
-      </div>
+      {/* Barra de confirmação: fica acima da navegação inferior e só mostra "Aplicar" quando há algo a aplicar. */}
+      {exercises.length > 0 && (
+        <div className="sticky bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] z-20 mt-6 border-t border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
+          {pending > 0 || published ? (
+            <button onClick={onSave} disabled={saving || !!executionStatus || pending === 0}
+              className={`w-full rounded-full py-4 font-bold uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)] disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-2 ${published ? "bg-emerald-500" : "bg-primary"}`}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {saving ? "Aplicando..." : published ? "Treino ajustado!" : `Aplicar ${pending} ${pending === 1 ? "ajuste" : "ajustes"}`}
+            </button>
+          ) : (
+            <p className="py-1 text-center text-xs text-muted-foreground">
+              {executionStatus ? "Sessão iniciada: ajustes bloqueados." : "Nenhum ajuste pendente. Sua prescrição de hoje está mantida."}
+            </p>
+          )}
+          {published && <p className="mt-2 text-center text-xs text-emerald-300"><Check className="mr-1 inline h-3 w-3" />Alteração registrada no histórico da sessão.</p>}
+        </div>
+      )}
 
       {requestSheetOpen && !executionStatus && <div className="fixed inset-0 z-50 flex items-end bg-black/60 backdrop-blur-sm" onClick={() => setRequestSheetOpen(false)}><div className="w-full rounded-t-3xl border border-white/10 bg-background p-5" onClick={event => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 font-bold"><SlidersHorizontal className="h-4 w-4 text-primary" />O que você quer mudar?</h2><button type="button" aria-label="Fechar" onClick={() => setRequestSheetOpen(false)} className="rounded-full bg-white/10 p-2"><X className="h-4 w-4" /></button></div><div className="mb-4 flex flex-wrap gap-2">{["Mais leve hoje", "Pouco tempo, encurtar", "Poupar ombro", "Mais intenso"].map(option => <button key={option} type="button" onClick={() => setRequest(option)} className={`rounded-full border px-3 py-2 text-xs ${request === option ? "border-primary/50 bg-primary/10 text-primary" : "border-white/10 text-muted-foreground"}`}>{option}</button>)}</div><div className="flex gap-2"><input autoFocus value={request} onChange={event => setRequest(event.target.value)} maxLength={300} placeholder="Ex.: trocar supino, joelho incomodando…" className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm" /><button type="button" onClick={() => { setRequestSheetOpen(false); void runCopilot(request); }} disabled={loading || !request.trim()} className="rounded-full bg-primary p-3 text-primary-foreground disabled:opacity-40"><Send className="h-4 w-4" /></button></div></div></div>}
 
