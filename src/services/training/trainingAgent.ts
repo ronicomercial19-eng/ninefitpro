@@ -39,14 +39,29 @@ export interface TrainingAgentContext {
   focusMuscles?: string[];
   safetyReason?: string | null;
   painRegion?: string | null;
-  periodization?: { model?: string | null; status?: string | null; notes?: string | null };
+  periodization?: {
+    model?: string | null;
+    status?: string | null;
+    notes?: string | null;
+    phase?: string | null;
+    category?: string | null;
+    week?: number | null;
+    rpeCap?: number | null;
+  };
 }
 
 export async function requestAdaptiveAdjustment(
   ctx: TrainingAgentContext,
 ): Promise<AdaptiveAdjustment | null> {
   if (ctx.prescription) {
-    const decision = decideContextualAdjustment({ prescription: ctx.prescription, request: ctx.request, reviewRequired: ctx.reviewRequired || !!ctx.safetyReason || !!ctx.painRegion, calibration: ctx.calibration });
+    const decision = decideContextualAdjustment({
+      prescription: ctx.prescription,
+      request: ctx.request,
+      reviewRequired: ctx.reviewRequired || !!ctx.safetyReason || !!ctx.painRegion,
+      calibration: ctx.calibration,
+      rpeCap: ctx.periodization?.rpeCap ?? null,
+      periodizationLabel: ctx.periodization?.phase ?? null,
+    });
     return { intensity: 'moderada', swaps: [], changes: decision.changes, addOns: [], rationale: decision.rationale, generatedAt: new Date().toISOString(), contextual: decision };
   }
   try {

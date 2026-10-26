@@ -4,6 +4,9 @@ export interface ContextualInput {
   reviewRequired?: boolean;
   sessionLocked?: boolean;
   calibration?: { sleep: number | null; energy: number | null };
+  /** Teto de esforço (RPE) da fase ativa da periodização. Só é usado para REDUZIR intensidade. */
+  rpeCap?: number | null;
+  periodizationLabel?: string | null;
 }
 export interface ContextualDecision {
   kind: 'maintain' | 'reduce' | 'shorten' | 'review';
@@ -35,6 +38,16 @@ export function decideContextualAdjustment(input: ContextualInput): ContextualDe
       result.rationale = 'Sono ou energia declarados estão baixos. Confirme se precisa de uma sessão mais leve; não alteramos a prescrição apenas pelo check-in.';
     }
   } else result.limitations.push('Sem check-in atual válido.');
+  if (input.rpeCap != null && Number.isFinite(input.rpeCap)) {
+    const cap = Math.floor(input.rpeCap);
+    result.sources.push(`Periodização ativa${input.periodizationLabel ? ` · ${input.periodizationLabel}` : ''} (RPE até ${cap})`);
+    const over = input.prescription.filter(ex => ex.rpe != null && ex.rpe > cap);
+    over.forEach(ex => result.changes.push({ exercise: ex.name, rpe: cap, reason: `Intensidade acima do teto da fase atual (RPE ${cap}). Só o esforço é reduzido.` }));
+    if (over.length) {
+      result.kind = 'reduce';
+      result.rationale = `${over.length} ${over.length === 1 ? 'exercício está' : 'exercícios estão'} acima do teto de esforço da periodização ativa. A proposta reduz apenas a intensidade; confirme antes de aplicar.`;
+    }
+  } else result.limitations.push('Sem periodização ativa com teto de esforço definido.');
   if (request) result.sources.push('Solicitação informada nesta sessão');
   if (/intens|pesad|progred|aument/.test(request)) return { ...result, rationale: 'Não aumentamos carga, séries ou esforço sem execuções comparáveis e limites do professor. Mantenha a prescrição ou solicite uma revisão.' };
   if (/equipamento|máquina|maquina|trocar|substitu/.test(request)) return { ...result, rationale: 'Use Trocar exercício para escolher uma alternativa. A equivalência de equipamento e carga não é inferida automaticamente.' };
