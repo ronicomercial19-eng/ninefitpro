@@ -71,7 +71,7 @@ export default function NineFitAjusteTreino() {
   const [dayNumber, setDayNumber] = useState<number | null>(null);
   const [workoutType, setWorkoutType] = useState<string | null>(null);
   const [focusMuscles, setFocusMuscles] = useState<string[]>([]);
-  const [periodization, setPeriodization] = useState<{ model?: string | null; status?: string | null; notes?: string | null }>({});
+  const [periodization, setPeriodization] = useState<{ model?: string | null; status?: string | null; notes?: string | null; phase?: string | null; category?: string | null; week?: number | null; rpeCap?: number | null }>({});
   const [dirty, setDirty] = useState<Record<string, Partial<Ex>>>({});
   const [saving, setSaving] = useState(false);
   const [reloading, setReloading] = useState(false);
@@ -113,8 +113,15 @@ export default function NineFitAjusteTreino() {
       setDayNumber((dw as any)?.day_number ?? null);
       setWorkoutType((dw as any)?.workout_type ?? null);
       setFocusMuscles(Array.isArray((dw as any)?.focus_muscles) ? (dw as any).focus_muscles : []);
-      const { data: activePeriodization } = await supabase.from("athlete_periodizations" as any).select("periodization_model_id,status,notes").eq("athlete_id", athleteId).in("status", ["active", "ativo"]).order("assigned_at", { ascending: false }).limit(1).maybeSingle();
-      setPeriodization(activePeriodization ? { model: (activePeriodization as any).periodization_model_id, status: (activePeriodization as any).status, notes: (activePeriodization as any).notes } : {});
+      // Fonte padronizada da periodização ativa (mesma view usada em Planejamento).
+      // Antes lia athlete_periodizations com status 'active'/'ativo', que nunca existem na tabela (real: in_progress/pending/archived).
+      const { data: activePeriodization } = await supabase.from("vw_athlete_periodizacao_ativa" as any)
+        .select("plan_name,status,current_phase,current_phase_category,current_week_index,rpe_cap")
+        .eq("athlete_id", athleteId).limit(1).maybeSingle();
+      const ap: any = activePeriodization;
+      const capValues = ap?.rpe_cap ? String(ap.rpe_cap).split("-").map(Number).filter(Number.isFinite) : [];
+      const capMax = capValues.length ? Math.max(...capValues) : null;
+      setPeriodization(ap ? { model: ap.plan_name, status: ap.status, phase: ap.current_phase, category: ap.current_phase_category, week: ap.current_week_index ?? null, rpeCap: capMax } : {});
       setSessionName((dw as any)?.day_name || workoutName);
       if (!(dw as any)?.id) { setExercises([]); setOriginal([]); setExecutionStatus(null); setDirty({}); return; }
       const { data: executions, error: executionError } = await supabase.from("workout_executions")
@@ -399,7 +406,7 @@ export default function NineFitAjusteTreino() {
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Sync</p><p className="mt-1 text-xl font-bold tabular-nums text-primary">{scores?.sync.status === "available" && scores.sync.value != null ? `${animatedSync}%` : "—"}</p><p className="text-[10px] text-muted-foreground">sinal de hoje</p></div>
           <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Contexto</p><p className="mt-1 text-sm font-semibold text-primary">{selectedDate === today && scores?.context?.date === today ? 'Check-in do dia' : 'Parcial'}</p><p className="text-[10px] text-muted-foreground">declarado, não clínico</p></div>
-          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Dia do ciclo</p><p className="mt-1 text-sm font-semibold">{dayNumber ? `Dia ${dayNumber}` : "—"}</p><p className="text-[10px] text-muted-foreground">periodização</p></div>
+          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Dia do ciclo</p><p className="mt-1 text-sm font-semibold">{dayNumber ? `Dia ${dayNumber}` : "—"}</p><p className="text-[10px] text-muted-foreground">{periodization.phase ? `${periodization.phase}${periodization.week ? ` · sem ${periodization.week}` : ""}${periodization.rpeCap ? ` · RPE ≤ ${Math.floor(periodization.rpeCap)}` : ""}` : "sem periodização ativa"}</p></div>
         </div>
         <div className="mt-5 rounded-2xl border border-primary/20 bg-background/40 p-4"><div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><h2 className="font-bold">Motor contextual · ajuste para esta sessão</h2></div>
         <p className="mt-2 text-xs text-muted-foreground">Melhor hoje pode ser manter. Sua prescrição só muda após confirmar em Aplicar ajustes.</p>
