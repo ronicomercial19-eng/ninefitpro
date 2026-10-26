@@ -61,3 +61,8 @@ Backend aplicado nos projetos FitPro `mfrydtrzjxscbkaiwfnw` e Staff `xtexysqtfso
 As cinco migrações FitPro e a migração separada em staff-provider têm versões alinhadas ao histórico real dos respectivos bancos. A edge `staff-api` do FitPro é um adaptador para `fitpro-staff-gateway` no banco Staff, sem compartilhar chaves de serviço. A chave embutida desse gateway é a chave pública FitPro.
 
 O frontend novo traz os controles separados de consentimento e a interface Staff usa os novos recibos. O formulário publicado anteriormente já exigia checkbox de guarda, mas não enviava booleano: sua compatibilidade foi preservada com provenance legacy_wizard_checkbox, sempre sem compartilhamento com profissionais. Só o contrato novo com consentimento e permissão explícitos pode ativar compartilhamento. Recusa explícita é rejeitada no servidor. A conclusão do checklist depende ainda da revisão profissional da prescrição suspensa, da classificação anatômica pendente e da publicação/validação móvel.
+
+
+## Complemento do relatório exploratório
+
+Por solicitação do usuário, F-001 foi pulado; os demais achados implementáveis e parciais foram tratados no código. Detalhes em [qa-implementation-2026-10-26.md](qa-implementation-2026-10-26.md). QA no aplicativo fica com o usuário. O alias HTTPS com www depende do Lovable, e merge/publicação dos frontends e da edge aposentada da Store continuam pendentes.

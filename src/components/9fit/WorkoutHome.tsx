@@ -1,3 +1,4 @@
+import { isExecutableTraining } from '@/lib/executableTraining';
 import { useNavigate } from "react-router-dom";
 import { TrainingHistory } from "./TrainingHistory";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -44,7 +45,8 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
   const setSupportLevel=(values:number[])=>setLevel(values[0]);
   const currentSupport=ASSISTANCE_LEVELS[level];
 
-  const activeWorkout = trainings[0];
+  const activeWorkout = trainings.find(isExecutableTraining) || trainings[0];
+  const executable = isExecutableTraining(activeWorkout);
   const startDate = trainings.length > 0 
     ? new Date(`${trainings[0].start_date}T12:00:00`).toLocaleDateString("pt-BR") 
     : "--";
@@ -72,7 +74,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
           <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/15">
             <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
             <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-white/90 font-bold">
-              {activeWorkout ? "PRESCRIÇÃO ATIVA" : "SEM PRESCRIÇÃO"}
+              {executable ? "PRESCRIÇÃO ATIVA" : activeWorkout ? "EM PREPARAÇÃO" : "SEM PRESCRIÇÃO"}
             </span>
           </div>
 
@@ -101,7 +103,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
             </h2>
 
             <p className="text-xs text-white/65 mt-1.5 line-clamp-2 max-w-xl font-normal leading-relaxed">
-              {activeWorkout?.training_description || "Confira os exercícios e os parâmetros definidos na sua prescrição."}
+              {!executable ? "Seu profissional precisa preparar e confirmar os exercícios, séries e doses antes de liberar esta sessão." : activeWorkout?.training_description || "Confira os exercícios e os parâmetros definidos na sua prescrição."}
             </p>
 
             <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 mt-3 text-[10px] font-mono font-medium">
@@ -122,11 +124,12 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
 
           <button
             type="button"
-            onClick={() => activeWorkout ? onSelectWorkout(activeWorkout) : onStartQuick()}
-            className="py-3 px-6 rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 bg-[#EF7A45] hover:bg-[#EF7A45]/90 text-white shadow-[0_8px_24px_rgba(239,122,69,0.25)] transition-all active:scale-95 cursor-pointer shrink-0 self-stretch sm:self-end"
+            onClick={() => activeWorkout && onSelectWorkout(activeWorkout)}
+            disabled={!executable}
+            className="py-3 px-6 rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 bg-[#EF7A45] hover:bg-[#EF7A45]/90 text-white shadow-[0_8px_24px_rgba(239,122,69,0.25)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 self-stretch sm:self-end"
           >
             <Play strokeWidth={1.75} className="w-4 h-4 fill-current" />
-            <span>INICIAR TREINO</span>
+            <span>{executable ? "VER TREINO" : "AGUARDANDO PRESCRIÇÃO"}</span>
           </button>
         </div>
       </div>

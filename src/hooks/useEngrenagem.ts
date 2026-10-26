@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { withTimeout } from '@/lib/withTimeout';
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { loadEngrenagemContext, getSquadInsights } from '@/services/engrenagem/recommendationEngine';
@@ -6,7 +7,7 @@ import { loadEngrenagemContext, getSquadInsights } from '@/services/engrenagem/r
 export function useEngrenagem() {
   const { user } = useAuth();
   const client = useQueryClient();
-  const query = useQuery({ queryKey: ['athlete-profile-state', user?.id], queryFn: loadEngrenagemContext, enabled: !!user?.id, refetchOnWindowFocus: true });
+  const query = useQuery({ queryKey: ['athlete-profile-state', user?.id], queryFn: () => withTimeout(loadEngrenagemContext()), enabled: !!user?.id, retry: 1, refetchOnWindowFocus: true });
   useEffect(() => {
     const refresh = () => { void client.invalidateQueries({ queryKey: ['athlete-profile-state', user?.id] }); };
     const events = ['9fit:sync_updated', '9fit:workout-updated', '9fit:user-state-invalidated', '9fit:profile-updated', '9fit:xp_awarded', '9fit:protocol_completed', '9fit:mission_completed'];

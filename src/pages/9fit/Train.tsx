@@ -1,3 +1,4 @@
+import { isExecutableTraining } from '@/lib/executableTraining';
 import { loadActivitySummary } from "@/services/activitySummary";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
@@ -90,12 +91,15 @@ export default function NineFitTrain() {
           .eq('id',previousSession.daily_workout_id).eq('athlete_id',athleteId).single();
         if (error) throw error;
         if (data.prescription_issue) throw new Error('A prescrição precisa de revisão do profissional antes da retomada.');
-        setSelectedTraining({ id:data.id,daily_workout_id:data.id,execution_id:previousSession.id,training_name:data.day_name,
-          start_date:data.workout_date,is_active:true,training_type:'structured',training_data:{exercises:data.workout_exercises.sort((a:any,b:any)=>a.exercise_order-b.exercise_order).map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes || e.notes}))} });
+        const resumedTraining = { id:data.id,daily_workout_id:data.id,execution_id:previousSession.id,training_name:data.day_name,
+          start_date:data.workout_date,is_active:true,training_type:'structured',training_data:{exercises:data.workout_exercises.sort((a:any,b:any)=>a.exercise_order-b.exercise_order).map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes || e.notes}))} };
+        if (!isExecutableTraining(resumedTraining)) throw new Error("A sessão original precisa de exercícios, séries e doses confirmados.");
+        setSelectedTraining(resumedTraining);
         setFlow('EXECUTION');
       } else {
         const training = trainings.find(item=>item.id===previousSession.assignment_id);
         if (!training) throw new Error('A atribuição original não está disponível. Finalize o registro ou fale com seu profissional.');
+        if (!isExecutableTraining(training)) throw new Error('A prescrição precisa ser completada pelo profissional.');
         setSelectedTraining({...training,execution_id:previousSession.id});setFlow('EXECUTION');
       }
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Não foi possível consultar a sessão.'); }
@@ -128,7 +132,7 @@ export default function NineFitTrain() {
   // direto no WorkoutExecution.
   useEffect(() => {
     const quick = (location.state as any)?.quickTraining;
-    if (quick) {
+    if (quick && isExecutableTraining(quick)) {
       setSelectedTraining(quick);
       setFlow("EXECUTION");
       // Limpa o state da entrada de histórico para não reabrir em back/forward
@@ -228,8 +232,7 @@ export default function NineFitTrain() {
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
     if (["html", "link", "periodization"].includes(training.training_type || "")) { navigate("/9fit/protocolo"); return; }
-    const exercises = training.training_data?.exercises;
-    if (training.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
+    if (!isExecutableTraining(training)) {
       toast.info("Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca.");
       navigate("/9fit/biblioteca");
       return;
@@ -239,8 +242,7 @@ export default function NineFitTrain() {
   };
 
   const handleStartExecution = () => {
-    const exercises = selectedTraining?.training_data?.exercises;
-    if (selectedTraining?.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
+    if (!isExecutableTraining(selectedTraining)) {
       toast.info("A prescrição deste protocolo ainda está sendo preparada.");
       navigate("/9fit/biblioteca");
       return;
@@ -273,7 +275,7 @@ export default function NineFitTrain() {
       gif_url: e.gif_url,
     }));
 
-    if (exercises.length === 0) {
+    if (!isExecutableTraining({ training_data: { exercises } })) {
       toast.info("Esta sessão ainda não tem exercícios prescritos. Consulte seu profissional antes de executar.");
       return;
     }

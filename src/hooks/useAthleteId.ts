@@ -1,3 +1,4 @@
+import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,10 +15,10 @@ export function useAthleteId(): UseAthleteIdResult {
     if(!user) return;
     void (async()=>{
       try {
-        const {data:id,error}=await supabase.rpc('fn_current_athlete_id');
+        const {data:id,error}=await withTimeout(supabase.rpc('fn_current_athlete_id'));
         if(error) throw error;
         if(!id) throw new Error('Perfil de atleta não encontrado');
-        const {data:athlete,error:profileError}=await supabase.from('athletes').select('id,name').eq('id',id).single();
+        const {data:athlete,error:profileError}=await withTimeout(supabase.from('athletes').select('id,name').eq('id',id).single());
         if(profileError) throw profileError;
         if(active) setState({athleteId:athlete.id,athleteName:athlete.name,loading:false,error:null});
       } catch(error) { if(active) setState({athleteId:null,athleteName:null,loading:false,error:error instanceof Error ? error.message : 'Erro ao carregar perfil'}); }

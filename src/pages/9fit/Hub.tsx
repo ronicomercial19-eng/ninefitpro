@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { withTimeout } from '@/lib/withTimeout';
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -64,6 +65,7 @@ export default function NineFitHub() {
   const [protocolCount, setProtocolCount] = useState(0);
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
   const [hubLoading, setHubLoading] = useState(true);
+  const hubRequest = useRef(0);
   const [hubError, setHubError] = useState<string | null>(null);
 
   const breakdown = {
@@ -76,15 +78,18 @@ export default function NineFitHub() {
   const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
 
   const loadHubData = async () => {
-    if (!athleteId) { setHubLoading(athleteLoading); return; }
+    const request = ++hubRequest.current;
+    if (!athleteId) { setHubLoading(athleteLoading); setPerformancePlanTitle(null); setProtocolCount(0); return; }
     setHubLoading(true);
     setHubError(null);
     try {
-      const [hubResult, performanceResult, libraryResult] = await Promise.all([
+      const [hubResult, performanceResult, libraryResult] = await withTimeout(Promise.all([
         supabase.from("vw_hub_status" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
         supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle(),
         supabase.from("student_library_assignments").select("id", { count: "exact", head: true }).eq("athlete_id", athleteId).is("completed_at", null),
-      ]);
+      ]));
+      if (request !== hubRequest.current) return;
+      if (hubResult.error || performanceResult.error || libraryResult.error) throw hubResult.error || performanceResult.error || libraryResult.error;
 
       setPerformancePlanTitle((performanceResult.data as any)?.plan_title || null);
       setProtocolCount(libraryResult.count || 0);
@@ -92,13 +97,13 @@ export default function NineFitHub() {
         setHubError("Alguns sinais estão sincronizando.");
       }
     } catch (e: any) {
-      setHubError("Não foi possível carregar seus dados agora.");
+      if (request === hubRequest.current) setHubError("Não foi possível carregar seus dados agora.");
     } finally {
-      setHubLoading(false);
+      if (request === hubRequest.current) setHubLoading(false);
     }
   };
 
-  useEffect(() => { loadHubData(); }, [athleteId, user?.id, athleteLoading]);
+  useEffect(() => { void loadHubData(); return () => { ++hubRequest.current; }; }, [athleteId, user?.id, athleteLoading]);
 
   useRealtimeTable(
     {

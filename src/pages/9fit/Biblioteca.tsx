@@ -1,3 +1,4 @@
+import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -28,40 +29,44 @@ const sections = ["videos", "infoproducts", "apps", "nineMethods", "challenges",
 const labels: Record<string, string> = { videos: "Vídeos", infoproducts: "Infoprodutos", apps: "Apps", nineMethods: "Métodos", challenges: "Desafios", assessments: "Avaliações", certifications: "Certificações" };
 
 export default function NineFitBiblioteca() {
-  const { athleteId, error: athleteError } = useAthleteId();
+  const { athleteId, loading: identityLoading, error: athleteError } = useAthleteId();
   const [items, setItems] = useState<LibItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [activeSection, setActiveSection] = useState<(typeof sections)[number]>("videos");
-  const [tier, setTier] = useState("bronze");
+  const [tier, setTier] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!athleteId) return;
+    if (!athleteId) { setLoading(identityLoading); setError(!!athleteError); return; }
+    let active = true;
     (async () => {
       setLoading(true);
       setError(false);
       try {
-        const { data, error: invokeError } = await supabase.functions.invoke(`library-full-proxy?student_external_id=${encodeURIComponent(athleteId)}&section=${activeSection}`, { method: "GET" });
+        const { data, error: invokeError } = await withTimeout(supabase.functions.invoke(`library-full-proxy?student_external_id=${encodeURIComponent(athleteId)}&section=${activeSection}`, { method: "GET" }));
         if (invokeError) throw invokeError;
+        if (!active) return;
         const payload = data as any;
-        setTier(payload?.userTier || payload?.student?.tier || "bronze");
+        setTier(payload?.userTier || payload?.student?.tier || null);
         setItems(payload?.sections?.[activeSection]?.items || []);
       } catch (e: any) {
+        if (!active) return;
         setError(true);
         toast.error("Biblioteca indisponível agora");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     })();
-  }, [athleteId, reloadKey, activeSection]);
+    return () => { active = false; };
+  }, [athleteId, reloadKey, activeSection, identityLoading, athleteError]);
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
       <div className="px-4 pt-6 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // BIBLIOTECA</p>
         <h1 className="text-massive text-4xl text-foreground mt-1">BIBLIOTECA 9FIT</h1>
-        <p className="text-xs text-muted-foreground mt-1">Acervo nativo · plano {tier}</p>
+        <p className="text-xs text-muted-foreground mt-1">Acervo nativo{loading ? " · consultando acesso…" : error ? " · acesso não confirmado" : tier ? ` · acesso ao acervo ${tier}` : ""}</p>
       </div>
 
       <div className="px-4 mb-5 flex gap-2 overflow-x-auto scrollbar-hide">{sections.map((section) => <button key={section} type="button" onClick={() => setActiveSection(section)} className={`shrink-0 rounded-full border px-3 py-2 text-[10px] font-semibold uppercase tracking-wider ${activeSection === section ? "border-primary bg-primary text-primary-foreground" : "border-white/10 text-muted-foreground"}`}>{labels[section]}</button>)}</div>
@@ -93,7 +98,7 @@ export default function NineFitBiblioteca() {
             <p className="text-xs text-muted-foreground">Sem conteúdos atribuídos ainda.</p>
           </div>
         )}
-        {items.map((it, i) => {
+        {!loading && !error && items.map((it, i) => {
           const title = it.title || it.name || "Sem título";
           const thumb = it.thumbnail || it.cover || null;
           const url = it.playerUrl || it.url || it.detailUrl || it.detail_url || null;

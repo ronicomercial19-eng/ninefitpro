@@ -1,3 +1,4 @@
+import { isExecutableTraining } from '@/lib/executableTraining';
 import { useState, useMemo } from "react";
 import { formatWorkoutDose } from '@/lib/workoutDose';
 import { 
@@ -291,10 +292,11 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
       {/* Start Button */}
       <Button
         onClick={onStart}
+        disabled={!isExecutableTraining(training)}
         className="w-full nine-pro-gradient nine-pro-clip text-primary-foreground font-black uppercase py-6 text-base hover:opacity-90 transition-opacity"
       >
         <Play className="w-5 h-5 mr-2" />
-        Iniciar Treino
+        {isExecutableTraining(training) ? "Iniciar treino" : "Prescrição em preparação"}
       </Button>
     </div>
   );

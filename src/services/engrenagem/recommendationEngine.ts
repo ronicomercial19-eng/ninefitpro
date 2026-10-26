@@ -33,7 +33,8 @@ interface EngrenagemContext {
 }
 
 export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw authError || new Error('Sessão expirada. Entre novamente.');
   const ctx: EngrenagemContext = {
     athleteId: null, totalXp: 0, level: 1, syncScore: null, streak: 0,
   };
@@ -41,18 +42,14 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
 
   const { data: canonicalId, error: identityError } = await supabase.rpc("fn_current_athlete_id");
   if (identityError || !canonicalId) throw identityError || new Error('Perfil indisponível');
-  const { data: athlete, error: athleteError } = await supabase
-    .from('athletes')
-    .select('id, total_xp, level')
-    .eq('id', canonicalId || '')
-    .maybeSingle();
-  if (athleteError || !athlete) throw athleteError || new Error('Perfil indisponível');
-  if (athlete) {
-    ctx.athleteId = (athlete as any).id;
-    ctx.totalXp = (athlete as any).total_xp ?? 0;
-    ctx.level = (athlete as any).level ?? 1;
-    ctx.syncScore = null;
-  }
+  const snapshot = await getAthleteScores();
+  if (!snapshot?.athlete || snapshot.athlete.id !== canonicalId) throw new Error('Não foi possível confirmar a ficha do atleta.');
+  ctx.athleteId = snapshot.athlete.id;
+  ctx.totalXp = snapshot.athlete.total_xp ?? 0;
+  ctx.level = snapshot.athlete.level ?? 1;
+  ctx.syncScore = snapshot.sync.value;
+  ctx.streak = snapshot.streak;
+  ctx.weightKg = snapshot.weight.value;
 
   try {
     const { data: hrv } = await supabase
@@ -83,10 +80,6 @@ export async function loadEngrenagemContext(): Promise<EngrenagemContext> {
     ctx.hasActiveProtocol = (count ?? 0) > 0;
   }
 
-  const snapshot = await getAthleteScores();
-  ctx.syncScore = snapshot?.sync.value ?? null;
-  ctx.streak = snapshot?.streak ?? 0;
-  ctx.weightKg = snapshot?.weight.value ?? null;
   return ctx;
 }
 

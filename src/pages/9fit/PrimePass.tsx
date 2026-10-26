@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { usePrimeState } from "@/hooks/usePrimeState";
 import { AssinaturaStatus } from "@/components/9fit/AssinaturaStatus";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { motion } from "framer-motion";
 import { Crown, Zap, Star } from "lucide-react";
-import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL } from "@/config/commercialOffer";
+import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, commercialPlanHref } from "@/config/commercialOffer";
 import { AppSupport } from "@/components/9fit/AppSupport";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +14,12 @@ const PLANS = COMMERCIAL_PLANS;
 
 export default function NineFitPrimePass() {
   const { user } = useAuth();
+  const location = useLocation();
+  const selectedPlan = new URLSearchParams(location.search).get('plan');
+  useEffect(() => {
+    const anchor = location.hash.slice(1);
+    if (anchor) document.getElementById(anchor)?.scrollIntoView({ block: 'start' });
+  }, [location.hash]);
   const {data:prime,isLoading,error,refetch}=usePrimeState();
   if (!user) return null;
 
@@ -26,7 +34,7 @@ export default function NineFitPrimePass() {
         <p className="text-sm text-muted-foreground">{prime?.entitlement === "active" || prime?.entitlement === "trial" ? "Você já tem acesso. Consulte as condições de alteração antes de contratar outro plano." : "Ofertas disponíveis. O acesso só é confirmado após o registro da contratação."} Valores, renovação e cobrança são confirmados pelo provedor de pagamento; o aplicativo não informa uma próxima cobrança sem esse registro.</p>
         {!CHECKOUT_READY && <p role="status" className="rounded-xl border border-primary/30 p-4 text-sm">Contratação online em configuração. Não faça pagamentos para liberar acesso sem confirmação da equipe. Os valores abaixo são a proposta comercial; fale com a NINE FIT para confirmar disponibilidade e condições.</p>}
         {PLANS.map((plan) => (
-          <motion.div key={plan.id} className="glass-mission rounded-2xl p-6 border border-white/10">
+          <motion.div id={`plano-${plan.id}`} key={plan.id} className={`glass-mission rounded-2xl p-6 border ${selectedPlan === plan.id ? "border-primary" : "border-white/10"}`}>
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-display font-black">{plan.name}</h2>
@@ -43,7 +51,7 @@ export default function NineFitPrimePass() {
               ))}
             </ul>
             <a
-              href={CHECKOUT_READY ? plan.link : `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Interesse em ' + plan.name)}`}
+              href={commercialPlanHref(plan)}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center bg-primary text-primary-foreground font-black py-4 rounded-xl hover:opacity-90 transition-all"

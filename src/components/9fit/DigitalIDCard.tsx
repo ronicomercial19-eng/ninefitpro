@@ -104,6 +104,8 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
             </button>
           )}
 
+          {hasBioData && (!age || !heightCm || !weightKg) && <button onClick={() => setAdjusting(true)} className="text-sm text-primary underline">Completar ({[age, heightCm, weightKg].filter(Boolean).length}/3 dados): {[!age && 'idade', !heightCm && 'altura', !weightKg && 'peso'].filter(Boolean).join(', ')}</button>}
+
           {/* XP bar — única barra, decisão principal do card */}
           <div>
             <div className="flex items-center justify-between mb-1.5">

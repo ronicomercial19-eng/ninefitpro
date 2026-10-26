@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from '@/lib/withTimeout';
 
 export type ZapMessage = {
   id: string;
@@ -20,10 +21,10 @@ export function useZapThread(userId?: string, _subject = "Atendimento FitPro") {
     queryKey: ["zap", "thread", userId],
     enabled: Boolean(userId),
     staleTime: Infinity,
-    retry: 2,
+    retry: false,
     retryDelay: 1200,
     queryFn: async () => {
-      const { data, error } = await invokeZap("thread.ensure", { method: "POST" });
+      const { data, error } = await withTimeout(invokeZap("thread.ensure", { method: "POST" }));
       if (error) throw error;
       const id = (data as { thread_id?: string })?.thread_id;
       if (!id) throw new Error("9ZAP não retornou a conversa");
@@ -36,9 +37,10 @@ export function useZapMessages(threadId?: string) {
   return useQuery({
     queryKey: ["zap", "messages", threadId],
     enabled: Boolean(threadId),
-    refetchInterval: 4000,
+    retry: false,
+    refetchInterval: query => query.state.status === "error" ? false : 4000,
     queryFn: async () => {
-      const { data, error } = await invokeZap("messages.list");
+      const { data, error } = await withTimeout(invokeZap("messages.list"));
       if (error) throw error;
       return ((data as { messages?: ZapMessage[] })?.messages ?? []);
     },
