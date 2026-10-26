@@ -52,7 +52,7 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
           </h1>
         </div>
 
-        <p className="text-xs text-muted-foreground mb-2">SYNC combina sono, energia, humor, motivação, dor e cobertura dos registros. Concluir a rotina não coleta HRV nem frequência cardíaca.</p>
+        <p className="text-xs text-muted-foreground mb-2">SYNC é a prontidão percebida de hoje: sono, energia, humor, motivação e dor. A cobertura dos registros e o Engajamento são apresentados separadamente.</p>
       <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} />
         {onRefresh && <button type="button" onClick={onRefresh} disabled={scoreStatus === "loading"} className="text-xs text-primary disabled:opacity-50 min-h-10">
           {scoreStatus === "loading" ? "Atualizando…" : "Atualizar meus dados"}

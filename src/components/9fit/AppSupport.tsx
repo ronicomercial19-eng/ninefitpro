@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPPORT_EMAIL } from '@/config/commercialOffer';
 
-export function AppSupport() {
+export function AppSupport({ initialMessage = "" }: { initialMessage?: string } = {}) {
   const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState('');
   async function submit(e: React.FormEvent) {
@@ -17,7 +17,7 @@ export function AppSupport() {
     } catch { setResult('Não foi possível confirmar o envio. Tente novamente ou envie diretamente pelo e-mail abaixo.'); }
     finally { setBusy(false); }
   }
-  return <section className="rounded-xl border border-border p-4 space-y-3" aria-label="Suporte NINE FIT">
+  return <section id="suporte" className="rounded-xl border border-border p-4 space-y-3" aria-label="Suporte NINE FIT">
     <h2 className="font-bold">Suporte NINE FIT</h2>
     <p className="text-sm text-muted-foreground">Envie pelo app. Nossa equipe responde por e-mail em até 24 horas. Suporte de uso e acesso; não é consulta profissional ou atendimento de urgência.</p>
     <form onSubmit={submit} className="space-y-3">

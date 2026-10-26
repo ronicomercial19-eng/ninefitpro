@@ -1,3 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { withTimeout } from '@/lib/withTimeout';
+import { getAthleteScores } from '@/hooks/useAthleteScores';
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, Dumbbell, Share2, MessageCircle, Trophy, Check } from "lucide-react";
@@ -13,6 +16,7 @@ interface LegacyAthleteRow { id: string; name?: string | null; altura_cm?: numbe
 
 export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { mark } = useActivationProgress();
   const [step, setStep] = useState(0);
@@ -33,9 +37,9 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
     let cancelled = false;
     (async () => {
       try {
-      const { data: canonicalId, error: identityError } = await supabase.rpc("fn_current_athlete_id");
+      const { data: canonicalId, error: identityError } = await withTimeout(supabase.rpc("fn_current_athlete_id"));
       if (identityError || !canonicalId) throw identityError || new Error("Perfil indisponível");
-      const { data: ath, error: athleteError } = await supabase.from("athletes").select("*").eq("id", canonicalId).single();
+      const { data: ath, error: athleteError } = await withTimeout(supabase.from("athletes").select("*").eq("id", canonicalId).single());
       if (athleteError) throw athleteError;
       if (cancelled) return;
       if (ath) {
@@ -49,24 +53,12 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
         });
       }
       if (editOnly) return;
-      const { data: ck } = ath?.id ? await supabase
-        .from("ninefit_checkins")
-        .select("created_at")
-        .eq("athlete_id", ath.id)
-        .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
-        .order("created_at", { ascending: false }) : { data: [] };
-      const days = new Set((ck || []).map((r) => new Date(r.created_at).toDateString()));
-      let streak = 0;
-      for (let i = 0; i < 14; i++) {
-        const d = new Date(Date.now() - i * 86400000).toDateString();
-        if (days.has(d)) streak++; else break;
-      }
-      if (!cancelled) setStreakDays(streak);
-      const { count } = ath?.id ? await supabase
-        .from("workout_executions")
-        .select("id", { count: "exact", head: true })
-        .eq("athlete_id", ath.id).eq("status", "completed") : { count: 0 };
-      if (!cancelled) setWorkoutsDone(count || 0);
+      const snapshot = await getAthleteScores();
+      const { count, error: countError } = await withTimeout(supabase.from("workout_executions")
+        .select("id", { count: "exact", head: true }).eq("athlete_id", canonicalId)
+        .eq("status", "completed").eq("completion_valid", true));
+      if (countError) throw countError;
+      if (!cancelled) { setStreakDays(snapshot?.streak ?? 0); setWorkoutsDone(count ?? 0); }
       } catch { if (!cancelled) setReadError(true); } finally { if (!cancelled) setReading(false); }
     })();
     return () => { cancelled = true; };
@@ -78,6 +70,12 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
   const saveProfile = async () => {
     if (!user?.id || !athleteId || saving || reading || readError) return;
     if (!profile.full_name.trim()) { toast.error("Informe seu nome completo."); return; }
+    const fields = [{ value: profile.age, label: 'idade', max: 120, integer: true }, { value: profile.height_cm, label: 'altura', max: 300 }, { value: profile.weight_kg, label: 'peso', max: 600 }];
+    for (const field of fields) {
+      const number = Number(String(field.value).replace(',', '.'));
+      if (field.value !== '' && (!Number.isFinite(number) || number <= 0 || number > field.max || (field.integer && !Number.isInteger(number)))) { toast.error(`Confira o campo ${field.label}.`); return; }
+      if (!editOnly && field.value === '') { toast.error(`Preencha o campo ${field.label} para completar o perfil.`); return; }
+    }
     setSaving(true);
     try {
       let photoUrl: string | null = null;
@@ -109,6 +107,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
           snapshot_data: { ...profile, photo: photoUrl, at: new Date().toISOString() },
         });
       }
+      void queryClient.invalidateQueries({ queryKey: ["athlete-profile-state", user.id] });
       window.dispatchEvent(new Event("9fit:profile-updated"));
       toast.success("Perfil salvo");
       if (editOnly) {
@@ -173,16 +172,17 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
           {readError && <button className="text-sm text-destructive" onClick={() => setReload(value => value + 1)}>Não foi possível carregar seu perfil. Tentar novamente</button>}
           {!reading && !readError && step === 0 && (
             <div className="space-y-3">
+              {(!profile.age || !profile.height_cm || !profile.weight_kg) && <p role="status" className="text-sm text-primary">Falta preencher: {[!profile.age && 'idade', !profile.height_cm && 'altura', !profile.weight_kg && 'peso'].filter(Boolean).join(', ')}.</p>}
               <p className="font-display text-lg flex items-center gap-2"><Camera className="w-5 h-5 text-primary" /> Dados + foto</p>
               <input className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
                 placeholder="Nome completo" value={profile.full_name}
                 onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
               <div className="grid grid-cols-3 gap-2">
-                <input className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm" placeholder="Idade" type="number"
+                <input className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm" aria-label="Idade" autoFocus={!profile.age} placeholder="Idade" min="1" max="120" type="number"
                   value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value })} />
-                <input className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm" placeholder="Altura(cm)" type="number"
+                <input className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm" aria-label="Altura em centímetros" autoFocus={!!profile.age && !profile.height_cm} placeholder="Altura(cm)" min="1" max="300" type="number"
                   value={profile.height_cm} onChange={(e) => setProfile({ ...profile, height_cm: e.target.value })} />
-                <input className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm" placeholder="Peso(kg)" type="number"
+                <input className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm" aria-label="Peso em quilogramas" autoFocus={!!profile.age && !!profile.height_cm && !profile.weight_kg} placeholder="Peso(kg)" min="1" max="600" step="0.1" type="number"
                   value={profile.weight_kg} onChange={(e) => setProfile({ ...profile, weight_kg: e.target.value })} />
               </div>
               <label className="block rounded-xl border border-dashed border-primary/40 bg-primary/[0.04] p-4 text-center cursor-pointer">

@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import { withTimeout } from '@/lib/withTimeout';
 
 export type Trust = 'CONFIRMADO' | 'DERIVADO' | 'ESTIMADO' | 'NAO_DISPONIVEL';
 export type AssessmentRow = Tables<'avaliacoes_unificadas'> & { oficial: boolean; protocolo_alterado?: boolean | null };
@@ -28,7 +29,7 @@ export function loadAssessmentHub(athleteId: string): Promise<AssessmentHub> {
   const existing = cache.get(athleteId);
   if (existing && existing.expires > Date.now()) return existing.promise;
   const promise = (async () => {
-    const { data, error } = await supabase.rpc('fn_get_assessment_hub', { p_athlete_id: athleteId });
+    const { data, error } = await withTimeout(supabase.rpc('fn_get_assessment_hub', { p_athlete_id: athleteId }));
     if (error) throw new Error(permissionMessage(error));
     return data as unknown as AssessmentHub;
   })().catch(error => { cache.delete(athleteId); throw error; });
@@ -36,7 +37,7 @@ export function loadAssessmentHub(athleteId: string): Promise<AssessmentHub> {
   return promise;
 }
 export async function loadAssessmentDetail(athleteId: string, assessmentId: string, compare: 'primeira' | 'anterior') {
-  const { data, error } = await supabase.rpc('fn_get_avaliacao_detalhe', { p_athlete_id: athleteId, p_avaliacao_id: assessmentId, p_comparar: compare });
+  const { data, error } = await withTimeout(supabase.rpc('fn_get_avaliacao_detalhe', { p_athlete_id: athleteId, p_avaliacao_id: assessmentId, p_comparar: compare }));
   if (error) throw new Error(permissionMessage(error));
   return data as unknown as AssessmentDetail;
 }

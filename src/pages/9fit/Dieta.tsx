@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { withTimeout } from '@/lib/withTimeout';
+import { useState, useEffect, useRef } from "react";
 import { format, parseISO, isAfter, isBefore, isEqual } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
@@ -119,9 +120,11 @@ function injectMobileViewport(html: string): string {
 export default function NineFitDieta() {
   const [searchParams,setSearchParams]=useSearchParams();
   const { user } = useAuth();
-  const { athleteId, loading: athleteLoading } = useAthleteId();
+  const { athleteId, loading: athleteLoading, error: athleteError } = useAthleteId();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const dietRequest = useRef(0);
+  const [dietError, setDietError] = useState(false);
   const [assignedDiets, setAssignedDiets] = useState<DietAssignment[]>([]);
   const [selectedDiet, setSelectedDiet] = useState<DietAssignment | null>(null);
   const [dietContent, setDietContent] = useState<string>('');
@@ -166,15 +169,17 @@ export default function NineFitDieta() {
 
   // Fetch assigned diets from database
   const fetchAssignedDiets = async () => {
-    if (!athleteId) { setLoading(false); return; }
-    setLoading(true);
+    const request = ++dietRequest.current;
+    if (!athleteId) { setAssignedDiets([]); setLoading(athleteLoading); setDietError(!!athleteError); return; }
+    setLoading(true); setDietError(false);
     try {
-      const { data: diets, error } = await supabase
-        .from('student_diet_assignments')
-        .select('*')
-        .eq('student_id', athleteId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      const [assignment, context] = await withTimeout(Promise.all([
+        supabase.from('student_diet_assignments').select('*').eq('student_id', athleteId).eq('is_active', true).order('created_at', { ascending: false }),
+        supabase.from('vw_fitpro_diet_context' as any).select('diet_mode,diet_data').eq('athlete_id', athleteId).maybeSingle(),
+      ]));
+      if (request !== dietRequest.current) return;
+      const { data: diets, error } = assignment;
+      if (context.error) throw context.error;
       if (error) throw error;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -186,15 +191,21 @@ export default function NineFitDieta() {
         return startValid && endValid;
       });
       setAssignedDiets(validDiets);
+      const row = context.data as any;
+      setDietMode(validDiets.length ? 'assigned' : row?.diet_mode === 'inactive' ? 'inactive' : 'self_guided');
+      const goal = Number(row?.diet_data?.calories_goal || row?.diet_data?.daily_calories || 0);
+      setCaloriesGoal(goal > 0 ? goal : null);
     } catch (error) {
+      if (request !== dietRequest.current) return;
+      setDietError(true);
       console.error('Error fetching diets:', error);
       toast.error('Erro ao carregar planos alimentares');
     } finally {
-      setLoading(false);
+      if (request === dietRequest.current) setLoading(false);
     }
   };
 
-  useEffect(() => { fetchAssignedDiets(); if (athleteId) supabase.from("vw_fitpro_diet_context" as any).select("diet_mode,diet_data").eq("athlete_id", athleteId).maybeSingle().then(({ data }) => { const row: any = data || {}; setDietMode(row.diet_mode || "self_guided"); const goal = Number(row.diet_data?.calories_goal || row.diet_data?.daily_calories || 0); setCaloriesGoal(goal > 0 ? goal : null); }); }, [athleteId]);
+  useEffect(() => { void fetchAssignedDiets(); return () => { ++dietRequest.current; }; }, [athleteId, athleteLoading, athleteError]);
 
   // Listener para abertura do scanner via evento global
   useEffect(() => {
@@ -315,7 +326,7 @@ export default function NineFitDieta() {
         <div className="px-4">
           <DietaSkeleton />
         </div>
-      ) : assignedDiets.length === 0 ? (
+      ) : dietError ? <div role="alert" className="px-4"><p>Não foi possível confirmar seu plano alimentar.</p><Button onClick={() => void fetchAssignedDiets()}>Tentar novamente</Button></div> : assignedDiets.length === 0 ? (
         <div className="px-4 space-y-5">
           {/* Scanner de Alimentos IA Banner */}
           <div className="rounded-xl bg-gradient-to-r from-primary/20 via-[#111218] to-black border border-primary/30 p-3.5 shadow-md flex items-center justify-between gap-3">

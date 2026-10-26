@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { isExecutableTraining } from '@/lib/executableTraining';
+import { withTimeout } from '@/lib/withTimeout';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeTable } from '@/hooks/useRealtimeTable';
 import { AssignedTraining, isAvailableTraining, trainingMedia } from '@/lib/assignedProtocols';
@@ -9,23 +11,27 @@ import { Button } from '@/components/ui/button';
 // Lista única de tudo o que o coach (ou o NINE/LIMA) entregou ao aluno, separada em dois grupos:
 // prescrições/modelos de treino e conteúdos (infoprodutos, e-books, sistemas, HTML).
 export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
+  const requestRef = useRef(0);
   const [trainings, setTrainings] = useState<AssignedTraining[]>([]);
   const [library, setLibrary] = useState<any[]>([]);
   const [selected, setSelected] = useState<{ source: 'training' | 'library'; row: any } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const load = useCallback(async () => {
-    if (!athleteId) { setLoading(false); return; }
+    const request = ++requestRef.current;
+    if (!athleteId) { setTrainings([]); setLibrary([]); setLoading(false); return; }
     setLoading(true); setError(false);
-    const [training, contents] = await Promise.all([
+    try {
+    const [training, contents] = await withTimeout(Promise.all([
       supabase.from('student_training_assignments').select('*').eq('student_id', athleteId).eq('is_active', true).order('created_at', { ascending: false }),
       supabase.from('student_library_assignments').select('*').eq('athlete_id', athleteId).order('assigned_at', { ascending: false }),
-    ]);
+    ]));
+    if (request !== requestRef.current) return;
     if (training.error || contents.error) setError(true);
     else { setTrainings((training.data || []).map(row => ({ ...row, training_data: row.training_data && typeof row.training_data === 'object' && !Array.isArray(row.training_data) ? row.training_data : null })).filter(row => isAvailableTraining(row))); setLibrary((contents.data || []).filter(row => row.status !== 'cancelled')); }
-    setLoading(false);
+    } catch { if (request === requestRef.current) setError(true); } finally { if (request === requestRef.current) setLoading(false); }
   }, [athleteId]);
-  useEffect(() => { setSelected(null); void load(); }, [load]);
+  useEffect(() => { setSelected(null); void load(); return () => { ++requestRef.current; }; }, [load]);
   useEffect(() => {
     const refresh = () => { void load(); };
     const visibility = () => { if (document.visibilityState === 'visible') refresh(); };
@@ -44,16 +50,15 @@ export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
   const doneLibrary = library.filter(row => !!row.completed_at);
 
   return <div className="space-y-5">
-    {trainings.length > 0 && (
-      <div>
-        <p className="text-label mb-2">PRESCRIÇÕES E MODELOS ({trainings.length})</p>
-        <div className="space-y-2">
-          {trainings.map(row => <button key={row.id} className="surface-card p-4 w-full text-left hover:border-primary/40" onClick={() => setSelected({ source: 'training', row })}>
-            <p className="text-xs uppercase text-primary">{trainingMedia(row).kind === 'model' ? 'Prescrição / modelo' : trainingMedia(row).kind}</p><p className="font-semibold">{row.training_name}</p><p className="text-xs text-muted-foreground mt-1">Abrir protocolo →</p>
-          </button>)}
-        </div>
-      </div>
-    )}
+    {[{ label: 'PRESCRIÇÕES COM EXERCÍCIOS', rows: trainings.filter(isExecutableTraining) },
+      { label: 'MODELOS EM PREPARAÇÃO', rows: trainings.filter(row => trainingMedia(row).kind === 'model' && !isExecutableTraining(row)) },
+      { label: 'ARQUIVOS DO PROFISSIONAL', rows: trainings.filter(row => trainingMedia(row).kind !== 'model' && !isExecutableTraining(row)) }].map(group => group.rows.length > 0 && <section key={group.label}>
+      <p className="text-label mb-2">{group.label} ({group.rows.length})</p>
+      <div className="space-y-2">{group.rows.map(row => <button key={row.id} className="surface-card p-4 w-full text-left hover:border-primary/40" onClick={() => setSelected({ source: 'training', row })}>
+        <p className="font-semibold">{row.training_name}</p>
+        <p className="text-xs text-muted-foreground mt-1">{group.label === 'MODELOS EM PREPARAÇÃO' ? 'Aguardando exercícios, séries e doses do profissional. Consultar modelo →' : 'Consultar prescrição →'}</p>
+      </button>)}</div>
+    </section>)}
     {activeLibrary.length > 0 && (
       <div>
         <p className="text-label mb-2">CONTEÚDOS E INFOPRODUTOS ({activeLibrary.length})</p>

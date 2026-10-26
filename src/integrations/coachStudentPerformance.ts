@@ -9,6 +9,7 @@ export interface CoachStudentPerformance {
   primary_goal: string | null;
   level: number | null;
   sync_score: number | null;
+  engagement_score: number | null;
   plan_id: string | null;
   plan_title: string | null;
   plan_status: string | null;

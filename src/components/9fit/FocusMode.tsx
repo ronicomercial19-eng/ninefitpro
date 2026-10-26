@@ -19,6 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatWorkoutDose } from '@/lib/workoutDose';
 import { Badge } from "@/components/ui/badge";
 import { ExerciseVideoPlayer, getYoutubeEmbedUrl } from "@/components/exercises/ExerciseVideoPlayer";
 
@@ -179,7 +180,7 @@ export function FocusMode({
         {/* 2. Maximized Central Exercise Stage */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 flex flex-col items-center justify-start max-w-4xl mx-auto w-full">
           {/* Main Visual & Media - Expanded and Maximized */}
-          <div className="w-full relative rounded-2xl overflow-hidden border border-white/10 bg-[#0d0e13] shadow-2xl shadow-black/80 flex flex-col">
+          <div className="w-full relative rounded-3xl overflow-hidden border border-primary/25 bg-gradient-to-br from-[#24150f] via-[#0d0e13] to-[#120e0a] shadow-2xl shadow-black/80 flex flex-col">
             {/* Video / GIF Player */}
             {exercise.exercise_id ? (
               <div className="w-full aspect-video max-h-[46vh] bg-black">
@@ -256,7 +257,7 @@ export function FocusMode({
                   </div>
                   <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-center">
                     <p className="text-[9px] font-mono uppercase tracking-wider text-neutral-400">REPS</p>
-                    <p className="text-lg font-mono font-black text-[#FF6600]">{exercise.reps || "—"}</p>
+                    <p className="text-base font-mono font-bold text-[#FF8A4C]">{formatWorkoutDose(exercise)}</p>
                   </div>
                   {exercise.tempo && (
                     <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-center">

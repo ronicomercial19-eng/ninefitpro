@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, SUPPORT_EMAIL } from './commercialOffer';
+import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, SUPPORT_EMAIL, commercialPlanHref } from './commercialOffer';
 import { readFileSync } from 'node:fs';
 
 test('um produto, dois períodos, links existentes e suporte definido', () => {
@@ -26,4 +26,14 @@ test('suporte exige autenticação e não declara e-mail enviado sem confirmaç�
   assert.match(handler, /emailSent = response.ok/);
   assert.match(handler, /email_sent: emailSent/);
   assert.match(handler, /SUPPORT_FROM_EMAIL/);
+});
+
+test('a consulta mantém o plano e seu período sem enviar à avaliação gratuita', () => {
+  for (const plan of COMMERCIAL_PLANS) {
+    const link = commercialPlanHref(plan);
+    assert.equal(new URL(link).protocol, 'mailto:');
+    assert.match(decodeURIComponent(link), new RegExp(plan.name));
+    assert.ok(decodeURIComponent(link).includes(plan.price + plan.period));
+    assert.doesNotMatch(link, /assessment/);
+  }
 });

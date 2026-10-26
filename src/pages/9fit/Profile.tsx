@@ -1,3 +1,4 @@
+import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -43,34 +44,45 @@ const WEIGHT_SOURCE_LABEL: Record<string, string> = {
 export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
-  const { totalXp, level, syncScore, streak, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
-  const { athleteId, athleteName } = useAthleteId();
+  const { totalXp, level, syncScore, streak, weightKg, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
+  const { athleteId, athleteName, loading: identityLoading, error: identityError } = useAthleteId();
   const directory = useStaffDirectory();
   const [fichaOpen, setFichaOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
+  const [bioError, setBioError] = useState(false);
+  const [bioLoading, setBioLoading] = useState(true);
+  const [bioReload, setBioReload] = useState(0);
   const [weightMeta, setWeightMeta] = useState<WeightMeta | null>(null);
 
   useEffect(() => {
-    if (!athleteId) return;
+    if (!athleteId) { setBioLoading(identityLoading); setBioError(!!identityError); return; }
+    let cancelled = false;
+    setBioLoading(true); setBioError(false);
     (async () => {
-      const { data } = await supabase
+      try {
+      const { data, error } = await withTimeout(supabase
         .from("athletes")
-        .select("avatar_url, age, height_cm:altura_cm, weight_kg:peso_kg")
+        .select("avatar_url, age, height_cm:altura_cm")
         .eq("id", athleteId)
-        .maybeSingle();
-      if (data) setBio(data as any);
+        .maybeSingle());
+      if (error || !data) throw error || new Error("Perfil indisponível");
+      if (!cancelled) setBio(data as any);
 
-      const { data: hist } = await supabase
+      const { data: hist } = await withTimeout(supabase
         .from("athlete_weight_history" as any)
         .select("source, created_at")
         .eq("athlete_id", athleteId)
         .order("created_at", { ascending: false })
         .limit(1)
-        .maybeSingle();
-      setWeightMeta((hist as any) ?? null);
+        .maybeSingle());
+      if (!cancelled) setWeightMeta((hist as any) ?? null);
+      } catch { if (!cancelled) setBioError(true); } finally { if (!cancelled) setBioLoading(false); }
     })();
-  }, [athleteId, completeOpen, fichaOpen]); // recarrega ao fechar o wizard ou a ficha
+    const refresh = () => setBioReload(value => value + 1);
+    window.addEventListener("9fit:profile-updated", refresh);
+    return () => { cancelled = true; window.removeEventListener("9fit:profile-updated", refresh); };
+  }, [athleteId, completeOpen, fichaOpen, bioReload, identityLoading, identityError]); // recarrega ao fechar o wizard ou a ficha
 
   const displayName = athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
@@ -98,7 +110,7 @@ export default function NineFitProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32 text-foreground">
+    <div className="fitpro-orange min-h-screen bg-background pb-32 text-foreground">
       {/* Top bar */}
       <header className="px-4 pt-6 flex items-center gap-2 border-b border-primary/30 pb-3">
         <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
@@ -111,7 +123,7 @@ export default function NineFitProfile() {
       {/* ID Card — decisão principal da tela: 1 barra de XP, dados físicos ou
           CTA de completar perfil já embutido, Sync/Streak como texto de apoio */}
       <section className="px-4 mt-5">
-        {profileLoading ? <p>Carregando pontos e nível…</p> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
+        {profileLoading || bioLoading ? <p role="status">Carregando seu perfil…</p> : bioError ? <button onClick={() => { setBioReload(value => value + 1); window.dispatchEvent(new Event("9fit:profile-updated")); }}>Não foi possível confirmar os dados do perfil. Tentar novamente</button> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
           name={displayName}
           level={level}
           syncScore={syncScore}
@@ -120,11 +132,11 @@ export default function NineFitProfile() {
           avatarUrl={bio.avatar_url}
           age={bio.age}
           heightCm={bio.height_cm}
-          weightKg={bio.weight_kg}
+          weightKg={weightKg}
         />}
-        {bio.weight_kg != null && weightMeta && (
+        {weightKg != null && weightMeta && (
           <p className="mt-2 px-1 text-[11px] text-muted-foreground">
-            Peso {bio.weight_kg} kg · {WEIGHT_SOURCE_LABEL[weightMeta.source] || weightMeta.source}
+            Peso {weightKg} kg · {WEIGHT_SOURCE_LABEL[weightMeta.source] || weightMeta.source}
             {weightMeta.source !== "baseline" ? ` em ${new Date(weightMeta.created_at).toLocaleDateString("pt-BR")}` : ""}
           </p>
         )}

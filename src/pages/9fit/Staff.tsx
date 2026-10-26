@@ -5,6 +5,8 @@ import { useNavigate,useLocation,useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useStaffDirectory } from "@/hooks/useStaffDirectory";
 import { AppSupport } from "@/components/9fit/AppSupport";
+import { useStaffProfessionals } from '@/hooks/useStaffProfessionals';
+import { StaffBookingStatus } from '@/components/9fit/StaffBookingStatus';
 
 // Fluxo Staff (profissionais externos / eventos). Trocar pela rota final do fluxo quando a equipe definir.
 const STAFF_FLOW_ROUTE = "/9fit/aulas-creditos?tab=schedule";
@@ -47,6 +49,8 @@ export default function NineFitStaff() {
   const dietReview=searchParams.get("context")=="diet_review";
   const [tab, setTab] = useState<"team" | "support" | "schedule">("team");
   const directory = useStaffDirectory();
+  const [staffMethod,setStaffMethod]=useState('strength');
+  const staffProfessionals=useStaffProfessionals(staffMethod);
   const pros = directory.data || [];
   const loading = directory.isPending;
   const [selected, setSelected] = useState<Pro | null>(null);
@@ -74,7 +78,7 @@ export default function NineFitStaff() {
   };
 
   return (
-    <div className="min-h-screen gradient-mission pb-28">
+    <div className="fitpro-orange min-h-screen gradient-mission pb-28">
       {/* pt-16: espaço para o botão VOLTAR fixo (BackButton) não cobrir o título */}
       <div className="px-4 pt-16 pb-3">
         <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // EQUIPE</p>
@@ -83,6 +87,12 @@ export default function NineFitStaff() {
       </div>
 
       <div className="px-4 mb-4">
+        <section className="mb-4 rounded-2xl border border-primary/25 bg-primary/[0.04] p-4 space-y-3">
+          <h2 className="font-semibold">Profissionais da equipe Staff</h2>
+          <label className="block text-xs">Serviço<select aria-label="Serviço Staff" className="mt-2 w-full rounded-xl bg-background p-3 border border-primary/30" value={staffMethod} onChange={e=>setStaffMethod(e.target.value)}><option value="strength">Treino e força</option><option value="mobility">Mobilidade</option><option value="recovery">Recuperação</option><option value="running">Corrida</option><option value="rehab">Reabilitação</option></select></label>
+          {staffProfessionals.isPending?<p role="status" className="text-xs">Consultando equipe Staff…</p>:staffProfessionals.isError?<button className="min-h-11 text-xs text-primary" onClick={()=>void staffProfessionals.refetch()}>Não foi possível consultar a Staff. Tentar novamente</button>:!staffProfessionals.data?.length?<p className="text-xs text-muted-foreground">Nenhum profissional ativo encontrado para este serviço.</p>:staffProfessionals.data.map(pro=><button key={pro.id} className="w-full rounded-xl border border-primary/20 p-3 text-left" onClick={()=>navigate(`/9fit/aulas-creditos?tab=schedule&staff_professional_id=${encodeURIComponent(pro.id)}&staff_method_id=${encodeURIComponent(staffMethod)}`)}><strong className="text-sm">{pro.name}</strong><span className="block text-xs text-muted-foreground">{pro.role} · {pro.location || 'Local a combinar'}</span><span className="block mt-2 text-xs text-primary">Solicitar reserva →</span></button>)}
+        </section>
+        <StaffBookingStatus />
         <div className="glass-mission rounded-full p-1 flex gap-1">
           {[
             { k: "team", l: "Equipe" },
@@ -135,7 +145,7 @@ export default function NineFitStaff() {
               <p className="text-[9px] font-data tracking-[0.3em] text-primary">9FIT STAFF</p>
               <h2 className="text-editorial text-lg text-foreground">Selecionar profissional</h2>
               <p className="text-xs text-muted-foreground">Abrir fluxo Cliente ou Staff / Prof · categorias, métodos e jornada</p>
-              <p className="mt-1 text-[10px] text-muted-foreground">Prévia externa com dados demonstrativos. Reservas reais: aba Agenda.</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">Acompanhe Staff Sync, Gateway e Crédito nas suas reservas.</p>
             </div>
             <ChevronRight className="w-5 h-5 shrink-0 text-primary" />
           </button>

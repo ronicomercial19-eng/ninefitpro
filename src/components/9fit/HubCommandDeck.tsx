@@ -1,3 +1,4 @@
+import { readFailure } from '@/lib/readFailure';
 import { motion } from "framer-motion";
 import { ArrowUpRight, Brain, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -29,10 +30,11 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
   const current = !context.isError && context.data?.date === businessDate() ? context.data : null;
   const command = current ? selectDayCommand(current) : null;
   const progress = current ? dayProgress(current) : null;
-  const scoreReady = typeof syncScore === "number" && scoreStatus === "available";
+  const scoreReady = !context.isError && typeof syncScore === "number" && scoreStatus === "available";
   const headline = command?.title || (context.isError ? 'Não consegui ler seu dia.' : 'Lendo seus registros de hoje…');
-  const primaryLabel = command?.label || 'Tentar atualizar';
-  const act = () => { if (!command) { void context.refetch(); return; } if (command.route) navigate(command.route); else if (['calibration', 'profile', 'review'].includes(command.key)) setModal(command.key as 'calibration' | 'profile' | 'review'); };
+  const failure = context.isError ? readFailure(context.error, context.online) : null;
+  const primaryLabel = failure?.action || command?.label || 'Atualizando…';
+  const act = () => { if (failure?.kind === 'auth') { navigate('/login'); return; } if (!command) { void context.refetch(); return; } if (command.route) navigate(command.route); else if (['calibration', 'profile', 'review'].includes(command.key)) setModal(command.key as 'calibration' | 'profile' | 'review'); };
   const record = async (patch: { rating?: number; training_choice?: string }) => {
     if (!athleteId || saving) return;
     setSaving(true);
@@ -63,7 +65,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
             <div className="flex items-center gap-1.5">
               <span className={`h-1.5 w-1.5 rounded-full bg-[#5BC8E8] ${scoreReady ? "" : "animate-pulse opacity-70"}`} />
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-white/45 font-medium">
-                {scoreReady ? `SYNC ${Math.round(syncScore!)}` : "CALIBRANDO"}
+                {context.isError ? 'LEITURA INDISPONÍVEL' : scoreReady ? `SYNC ${Math.round(syncScore!)}` : 'CALIBRANDO'}
               </span>
             </div>
           </div>
@@ -75,7 +77,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
                 {name}, {headline}
               </h2>
               <p className="mt-0.5 text-[11.5px] text-white/65 leading-normal">
-                {command?.description || 'A próxima ação depende dos seus registros confirmados.'}
+                {failure?.message || command?.description || 'A próxima ação depende dos seus registros confirmados.'}
               </p>
             </div>
             <SyncDial score={scoreReady ? Math.round(syncScore!) : null} />
@@ -96,16 +98,17 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
           </button>
           {progress && <p className="mt-2 text-xs text-white/65" aria-live="polite">{progress.completed}/{progress.total} etapas registradas · {current?.today.rest_day ? 'Descanso registrado' : 'Jornada de hoje'}</p>}
           {(command?.key === 'training' || command?.key === 'safety') && <button type="button" disabled={saving || !navigator.onLine} onClick={() => void record({ training_choice: 'rest' })} className="mt-2 text-xs text-white/65 underline">Hoje vou descansar</button>}
-          {context.isError && <p role="alert" className="mt-2 text-xs text-amber-400">Falha ao atualizar. Conecte-se e tente novamente antes de continuar.</p>}
+          {context.isError && <p role="alert" className="mt-2 text-xs text-amber-400">{failure?.message}</p>}
           {!context.online && <p role="status" className="mt-2 text-xs text-amber-400">Sem conexão. Seus últimos registros ficam visíveis; reconecte para continuar.</p>}
 
           {/* Métricas Semanais */}
-          <div className="mt-2.5 grid grid-cols-3 gap-2">
+          {!context.isError && scoreStatus !== "loading" && scoreStatus !== "error" && <div className="mt-2.5 grid grid-cols-3 gap-2">
             <CommandMetric label="Treinos" value={weekly.treinos} suffix="sem" progress={consistency} />
             <CommandMetric label="Minutos" value={weekly.minutos} suffix="min" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
             <CommandMetric label="Nutrição" value={weekly.nutri} suffix="reg" progress={Math.min(100, weekly.nutri * 20)} />
           </div>
 
+          }
           {/* Ações Secundárias Compactas */}
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button

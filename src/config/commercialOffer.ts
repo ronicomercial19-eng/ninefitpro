@@ -14,3 +14,8 @@ export const COMMERCIAL_PLANS = [
   { id: 'annual', name: '9FIT PRO · Anual', price: 'R$ 997,00', period: '/ano', link: 'https://invoice.infinitepay.io/plans/ronynapoleao/TatHaBMsUX' },
 ] as const;
 export const OFFER_SCOPE = 'Profissionais são contratados separadamente via Staff, conforme disponibilidade e condições de cada serviço. A assinatura não inclui consultas, acompanhamento individual humano ou atendimento de urgência.';
+
+export type CommercialPlan = typeof COMMERCIAL_PLANS[number];
+export function commercialPlanHref(plan: CommercialPlan) {
+  return CHECKOUT_READY ? plan.link : `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Interesse em ${plan.name} — ${plan.price}${plan.period}`)}`;
+}

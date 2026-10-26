@@ -20,6 +20,7 @@ import type { WorkoutExecutionStatus } from "@/types/training";
 import { useWorkoutAssistance } from '@/hooks/useWorkoutAssistance';
 import { WorkoutRonAssistance } from './WorkoutRonAssistance';
 import { businessDate } from '@/services/dailyContextRules';
+import { formatWorkoutDose } from '@/lib/workoutDose';
 
 
 interface WorkoutExercise {
@@ -510,7 +511,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       toast.error("Não foi possível salvar esta série. Tente novamente.");
     } else {
       setExecutionError(null);
-      if(next[setIdx] && assistanceLevel>0 && exercise.rest_seconds){setTimerInitial(exercise.rest_seconds);setTimerSeconds(exercise.rest_seconds);setTimerRunning(true);}
+      if(next[setIdx] && exercise.rest_seconds){setTimerInitial(exercise.rest_seconds);setTimerSeconds(exercise.rest_seconds);setTimerRunning(true);}
 
       // Verificação e disparo automático de Recorde Pessoal (PR)
       if (next[setIdx]) {
@@ -595,6 +596,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       window.dispatchEvent(new Event('9fit:workout-updated'));
       window.dispatchEvent(new Event('9fit:sync_updated'));
       window.dispatchEvent(new Event('9fit:xp_awarded'));
+      if ('completion_valid' in data && data.completion_valid === false) {
+        toast.info('Sessão salva. Para contar como treino concluído, registre uma série e pelo menos 5 minutos.');
+        onBack();
+        return;
+      }
       await mirrorEvent("workout_completed", {
         execution_id: executionId,
         training_id: training.id,
@@ -655,16 +661,16 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const assistance=currentExercise ? <div className="space-y-2"><label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Informe antes de marcar a série" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label><WorkoutRonAssistance level={assistanceLevel} onLevelChange={setAssistanceLevel} trainingName={liveTraining.training_name} exercise={currentExercise} completedSets={completedSets[String(currentIdx)] || []} weight={weights[currentIdx] ?? null} actualReps={actualRepsByExercise[currentIdx] ?? null} executionId={executionId} paused={safetyPaused} onPain={()=>void setPainReview(true)} onReviewed={()=>void setPainReview(false)}/></div> : null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="fitpro-orange min-h-screen bg-background flex flex-col">
       {!focusModeOpen && assistance && <div className="px-4 py-3">{assistance}</div>}
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border flex-shrink-0">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-card border-b border-primary/20 flex-shrink-0">
+        <button onClick={onBack} aria-label="Voltar à visão geral" className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <div className="text-center">
+        <div className="min-w-0 flex-1">
           <p className="text-xs text-primary font-bold uppercase tracking-widest">Em Execução</p>
-          <p className="text-sm font-bold text-foreground truncate max-w-[170px] sm:max-w-[240px]">{liveTraining.training_name}</p>
+          <p className="text-sm font-bold text-foreground break-words leading-snug">{liveTraining.training_name}</p>
         </div>
         <div className="flex items-center gap-2">
           {isStructured && currentExercise && (
@@ -749,7 +755,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
             {/* Current Exercise Card */}
             {currentExercise && (
-              <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="bg-gradient-to-br from-[#24150f] via-card to-[#100d0a] border border-primary/25 rounded-3xl overflow-hidden shadow-xl">
                 {/* Video/GIF player — usa o player real (loading, fallback, toggle gif/video) */}
                 {currentExercise.exercise_id ? (
                   <ExerciseVideoPlayer
@@ -805,7 +811,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                     </div>
                     <div className="bg-muted/50 rounded p-2 text-center">
                       <p className="text-[10px] text-muted-foreground uppercase">Reps</p>
-                      <p className="text-xl font-black text-foreground">{currentExercise.reps}</p>
+                      <p className="text-lg font-bold text-primary">{formatWorkoutDose(currentExercise)}</p>
                     </div>
                     <div className="bg-muted/50 rounded p-2 text-center">
                       <p className="text-[10px] text-muted-foreground uppercase">Descanso</p>

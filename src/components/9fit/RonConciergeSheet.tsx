@@ -1,3 +1,4 @@
+import { AppSupport } from './AppSupport';
 import { getAccessToken, googleSignIn, initGoogleAuth } from "@/services/googleAuth";
 import { requestRonChat } from "@/services/ronChat";
 import { useState, useEffect, useRef } from "react";
@@ -98,6 +99,7 @@ export function RonConciergeSheet() {
   );
   const zapMessages = useZapMessages(teamActive ? zapThread.data : undefined);
   const sendZap = useSendZap(zapThread.data, user?.id);
+  const teamConnected = !!zapThread.data && !zapThread.isError && !zapMessages.isPending && !zapMessages.isError;
 
   // ---------- Histórico persistido ----------
   useEffect(() => {
@@ -360,7 +362,7 @@ export function RonConciergeSheet() {
 
   const sendTeam = async () => {
     const text = teamInput.trim();
-    if (!text || sendZap.isPending) return;
+    if (!text || sendZap.isPending || !teamConnected) return;
     try {
       await sendZap.mutateAsync(text);
       setTeamInput("");
@@ -640,15 +642,15 @@ export function RonConciergeSheet() {
                       Fale com a equipe 9FIT · respondemos assim que possível
                     </p>
                     {zapThread.isPending && <p className="text-[11px] text-muted-foreground text-center">Conectando ao atendimento...</p>}
-                    {zapThread.isError && (
-                      <button
-                        onClick={() => void zapThread.refetch()}
+                    {(zapThread.isError || zapMessages.isError || sendZap.isError) && (
+                      <div role="alert" className="space-y-3 text-center"><button
+                        onClick={() => { void zapThread.refetch(); if (zapThread.data) void zapMessages.refetch(); }}
                         className="block mx-auto text-[11px] text-muted-foreground underline underline-offset-2"
                       >
                         Não foi possível conectar ao atendimento. Tentar novamente
-                      </button>
+                      </button><details className="text-left"><summary className="cursor-pointer text-primary underline text-sm">Abrir chamado de suporte</summary><AppSupport initialMessage={teamInput} /></details></div>
                     )}
-                    {!zapThread.isPending && !zapThread.isError && zapList.length === 0 && (
+                    {teamConnected && zapList.length === 0 && (
                       <p className="text-[11px] text-muted-foreground text-center">Nenhuma mensagem ainda. Escreva abaixo para falar com a equipe.</p>
                     )}
                     {zapList.map((m) => (
@@ -680,12 +682,12 @@ export function RonConciergeSheet() {
                         value={teamInput}
                         onChange={(e) => setTeamInput(e.target.value)}
                         placeholder="Escreva para a equipe..."
-                        disabled={!zapThread.data}
+                        disabled={!teamConnected}
                         className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-muted-foreground focus:outline-hidden focus:border-primary/60 transition-colors disabled:opacity-50"
                       />
                       <button
                         type="submit"
-                        disabled={!teamInput.trim() || sendZap.isPending || !zapThread.data}
+                        disabled={!teamInput.trim() || sendZap.isPending || !teamConnected}
                         className="p-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:brightness-110 disabled:opacity-40 transition-all"
                       >
                         <Send className="w-4 h-4" />

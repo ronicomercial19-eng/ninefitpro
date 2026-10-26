@@ -1,4 +1,6 @@
+import { isExecutableTraining } from '@/lib/executableTraining';
 import { useState, useMemo } from "react";
+import { formatWorkoutDose } from '@/lib/workoutDose';
 import { 
   ArrowLeft, Play, Clock, Target, Dumbbell, Zap, FileText, Globe, Code2, Video
 } from "lucide-react";
@@ -11,6 +13,7 @@ interface WorkoutExercise {
   name?: string;
   sets?: number | string;
   reps?: number | string;
+  notes?: string;
   rest_seconds?: number;
   gif_url?: string | null;
   external_video_id?: string | null;
@@ -111,7 +114,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
   };
 
   const renderExercise = (ex: WorkoutExercise, idx: number) => (
-    <div key={ex.exercise_id || idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-sm border border-border/50">
+    <div key={ex.exercise_id || idx} className="flex items-center gap-3 p-4 bg-primary/[0.04] rounded-2xl border border-primary/20">
       {ex.gif_url ? (
         <img src={ex.gif_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
       ) : (
@@ -120,9 +123,10 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
+        <p className="text-sm font-medium text-foreground break-words">{ex.name}</p>
+        {ex.notes && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{ex.notes}</p>}
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{ex.sets}x{ex.reps}</Badge>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{ex.sets} × {formatWorkoutDose(ex)}</Badge>
           {ex.rest_seconds && (
             <span className="text-[10px] text-muted-foreground">{ex.rest_seconds}s desc</span>
           )}
@@ -144,12 +148,12 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="w-10 h-10 bg-card border border-border rounded-sm flex items-center justify-center hover:border-primary/50 transition-colors">
+        <button onClick={onBack} aria-label="Voltar aos treinos" className="w-10 h-10 shrink-0 bg-card border border-primary/30 rounded-xl flex items-center justify-center hover:border-primary/50 transition-colors">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-[10px] text-primary uppercase tracking-widest font-bold">Visão Geral</p>
-          <h2 className="text-lg font-black italic uppercase tracking-tight text-foreground truncate">
+          <h2 className="text-lg font-black uppercase tracking-tight text-foreground break-words leading-snug">
             {training.training_name}
           </h2>
         </div>
@@ -288,10 +292,11 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
       {/* Start Button */}
       <Button
         onClick={onStart}
+        disabled={!isExecutableTraining(training)}
         className="w-full nine-pro-gradient nine-pro-clip text-primary-foreground font-black uppercase py-6 text-base hover:opacity-90 transition-opacity"
       >
         <Play className="w-5 h-5 mr-2" />
-        Iniciar Treino
+        {isExecutableTraining(training) ? "Iniciar treino" : "Prescrição em preparação"}
       </Button>
     </div>
   );

@@ -303,10 +303,11 @@ Bons treinos! 🎯`;
         <Card>
           <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4">
             <div>
-              <p className="text-xs text-muted-foreground">Sync Score</p>
+              <p className="text-xs text-muted-foreground">SYNC · prontidão de hoje</p>
               <p className="text-xl font-semibold">
                 {performance.sync_score ?? "—"}
               </p>
+              <p className="text-xs text-muted-foreground">Engajamento: {performance.engagement_score ?? "—"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Plano</p>

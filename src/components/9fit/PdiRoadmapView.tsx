@@ -12,7 +12,7 @@ export function PdiRoadmapView() {
   useEffect(()=>{
     let active=true;setCount(null);
     if(!athleteId)return;
-    const refresh=async()=>{const {count,error}=await supabase.from('workout_executions').select('id',{count:'exact',head:true}).eq('athlete_id',athleteId).eq('status','completed');if(active)setCount(error?null:count??0)};
+    const refresh=async()=>{const {count,error}=await supabase.from('workout_executions').select('id',{count:'exact',head:true}).eq('athlete_id',athleteId).eq('status','completed').eq('completion_valid',true);if(active)setCount(error?null:count??0)};
     void refresh();window.addEventListener('9fit:workout-updated',refresh);
     const channel=supabase.channel(`planning-roadmap-${athleteId}`).on('postgres_changes',{event:'*',schema:'public',table:'workout_executions',filter:`athlete_id=eq.${athleteId}`},refresh).subscribe();
     return()=>{active=false;window.removeEventListener('9fit:workout-updated',refresh);void supabase.removeChannel(channel)};

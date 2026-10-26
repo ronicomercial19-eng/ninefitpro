@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { toast } from "sonner";
 import { businessDate, fetchDailyContext } from '@/services/dailyContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Q = { key: string; label: string; emojis: { e: string; v: number; l: string }[] };
 
@@ -34,6 +36,8 @@ function todayISO() {
 
 export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: number | null) => void }) {
   const { athleteId } = useAthleteId();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const today = todayISO();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -98,7 +102,13 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
     }
 
     let score: number | null = null;
-    try { score = (await fetchDailyContext()).sync.value; } catch { /* Calibration is durable; never fabricate a score when the read model fails. */ }
+    try {
+      const context = await fetchDailyContext();
+      score = context.sync.value;
+      queryClient.setQueryData(['daily-context', user?.id], context);
+    } catch {
+      void queryClient.resetQueries({ queryKey: ['daily-context', user?.id] });
+    }
     try { localStorage.setItem(STORAGE_KEY, businessDate()); } catch { /* Storage is optional. */ }
     setDone(true);
     onComplete?.(score);

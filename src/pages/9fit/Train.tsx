@@ -1,3 +1,4 @@
+import { isExecutableTraining } from '@/lib/executableTraining';
 import { loadActivitySummary } from "@/services/activitySummary";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
@@ -24,6 +25,7 @@ import { businessDate } from "@/services/dailyContextRules";
 interface TrainingAssignment {
   id: string;
   daily_workout_id?: string;
+  execution_id?: string;
   training_name: string;
   training_description?: string;
   start_date: string;
@@ -59,6 +61,50 @@ export default function NineFitTrain() {
   const [completedCount, setCompletedCount] = useState(0);
   const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
   const [quickOpen, setQuickOpen] = useState(false);
+  const [previousSession, setPreviousSession] = useState<{ id: string; workout_date: string; daily_workout_id: string | null; assignment_id: string | null } | null>(null);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  useEffect(() => {
+    setPreviousSession(null);
+    if (!athleteId) return;
+    let active = true;
+    void supabase.from('workout_executions').select('id,workout_date,daily_workout_id,assignment_id')
+      .eq('athlete_id', athleteId).eq('status','in_progress').lt('workout_date',businessDate())
+      .order('created_at',{ascending:false}).limit(1).maybeSingle().then(({data,error}) => {
+        if (active && !error) setPreviousSession(data);
+      });
+    return () => { active = false; };
+  }, [athleteId, completedCount]);
+
+  async function handlePreviousSession(resume: boolean) {
+    if (!previousSession || !athleteId || sessionBusy) return;
+    setSessionBusy(true);
+    try {
+      if (!resume) {
+        const { data, error } = await supabase.rpc('fn_complete_workout_execution',{p_execution_id:previousSession.id,p_duration_seconds:0});
+        if (error || !(data as any)?.ok) throw error || new Error('Não foi possível finalizar.');
+        toast.info((data as any).completion_valid ? 'Treino finalizado.' : 'Sessão salva sem entrar nos contadores.');
+        setPreviousSession(null);
+        await fetchCompletedCount(athleteId);
+      } else if (previousSession.daily_workout_id) {
+        const { data, error } = await (supabase as any).from('daily_workouts')
+          .select('id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes)')
+          .eq('id',previousSession.daily_workout_id).eq('athlete_id',athleteId).single();
+        if (error) throw error;
+        if (data.prescription_issue) throw new Error('A prescrição precisa de revisão do profissional antes da retomada.');
+        const resumedTraining = { id:data.id,daily_workout_id:data.id,execution_id:previousSession.id,training_name:data.day_name,
+          start_date:data.workout_date,is_active:true,training_type:'structured',training_data:{exercises:data.workout_exercises.sort((a:any,b:any)=>a.exercise_order-b.exercise_order).map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes || e.notes}))} };
+        if (!isExecutableTraining(resumedTraining)) throw new Error("A sessão original precisa de exercícios, séries e doses confirmados.");
+        setSelectedTraining(resumedTraining);
+        setFlow('EXECUTION');
+      } else {
+        const training = trainings.find(item=>item.id===previousSession.assignment_id);
+        if (!training) throw new Error('A atribuição original não está disponível. Finalize o registro ou fale com seu profissional.');
+        if (!isExecutableTraining(training)) throw new Error('A prescrição precisa ser completada pelo profissional.');
+        setSelectedTraining({...training,execution_id:previousSession.id});setFlow('EXECUTION');
+      }
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Não foi possível consultar a sessão.'); }
+    finally { setSessionBusy(false); }
+  }
   const initialCalendarDate = new URLSearchParams(location.search).get("date") || undefined;
 
   useEffect(() => {
@@ -86,7 +132,7 @@ export default function NineFitTrain() {
   // direto no WorkoutExecution.
   useEffect(() => {
     const quick = (location.state as any)?.quickTraining;
-    if (quick) {
+    if (quick && isExecutableTraining(quick)) {
       setSelectedTraining(quick);
       setFlow("EXECUTION");
       // Limpa o state da entrada de histórico para não reabrir em back/forward
@@ -146,7 +192,7 @@ export default function NineFitTrain() {
           training_type: "structured",
           training_data: item.prescription_schema || item.protocol_schema || undefined,
         }));
-        const { data: dailyRows, error: dailyError } = await (supabase as any).from("daily_workouts").select("id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,sets,reps_range,rest_seconds,exercise_order,exercises(name,video_url,gif_url))").eq("athlete_id",aid).eq("workout_date",today).order("created_at", {ascending:false});
+        const { data: dailyRows, error: dailyError } = await (supabase as any).from("daily_workouts").select("id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))").eq("athlete_id",aid).eq("workout_date",today).order("created_at", {ascending:false});
         if (dailyError) throw dailyError;
         setPrescriptionIssue((dailyRows || []).some((d: any) => !!d.prescription_issue));
         const dailyTrainings: TrainingAssignment[] = (dailyRows || [])
@@ -154,7 +200,7 @@ export default function NineFitTrain() {
           .map((d: any) => {
             const exercises = [...d.workout_exercises]
               .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
-              .map((e: any) => ({ exercise_id: e.exercise_id, name: e.exercises?.name, sets: e.sets, reps: e.reps_range, rest_seconds: e.rest_seconds, video_url: e.exercises?.video_url, gif_url: e.exercises?.gif_url }));
+              .map((e: any) => ({ exercise_id: e.exercise_id, name: e.exercise_name || e.exercises?.name, sets: e.sets, reps: e.reps_range, rest_seconds: e.rest_seconds, tempo:e.tempo, notes:e.observations?.notes || e.notes, video_url: e.exercises?.video_url, gif_url: e.exercises?.gif_url }));
             return {
               id: d.id,
               daily_workout_id: d.id,
@@ -186,8 +232,7 @@ export default function NineFitTrain() {
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
     if (["html", "link", "periodization"].includes(training.training_type || "")) { navigate("/9fit/protocolo"); return; }
-    const exercises = training.training_data?.exercises;
-    if (training.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
+    if (!isExecutableTraining(training)) {
       toast.info("Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca.");
       navigate("/9fit/biblioteca");
       return;
@@ -197,8 +242,7 @@ export default function NineFitTrain() {
   };
 
   const handleStartExecution = () => {
-    const exercises = selectedTraining?.training_data?.exercises;
-    if (selectedTraining?.training_type === "structured" && (!Array.isArray(exercises) || exercises.length === 0)) {
+    if (!isExecutableTraining(selectedTraining)) {
       toast.info("A prescrição deste protocolo ainda está sendo preparada.");
       navigate("/9fit/biblioteca");
       return;
@@ -222,6 +266,8 @@ export default function NineFitTrain() {
     const exercises = (day?.exercises || []).map((e: any) => ({
       exercise_id: e.id,
       name: e.name,
+      notes: e.notes,
+      tempo: e.tempo,
       sets: e.sets,
       reps: e.reps_range || e.reps,
       rest_seconds: e.rest_seconds,
@@ -229,7 +275,7 @@ export default function NineFitTrain() {
       gif_url: e.gif_url,
     }));
 
-    if (exercises.length === 0) {
+    if (!isExecutableTraining({ training_data: { exercises } })) {
       toast.info("Esta sessão ainda não tem exercícios prescritos. Consulte seu profissional antes de executar.");
       return;
     }
@@ -243,7 +289,7 @@ export default function NineFitTrain() {
       training_type: "structured",
       training_data: { exercises, estimated_duration: estimateMinutes(exercises) },
     });
-    setFlow("EXECUTION");
+    setFlow("OVERVIEW");
   };
 
   const handleFinish = () => {
@@ -277,7 +323,12 @@ export default function NineFitTrain() {
   }
 
   return (
-    <div className="min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
+    <div className="fitpro-orange min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
+      {previousSession && <section className="mx-4 mt-16 rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-3">
+        <h2 className="font-bold">Retomar ou finalizar</h2>
+        <p className="text-sm">Há uma sessão de {new Date(`${previousSession.workout_date}T12:00:00`).toLocaleDateString('pt-BR')} aberta.</p>
+        <div className="flex gap-3"><button disabled={sessionBusy} className="min-h-11 rounded-xl bg-primary px-4 text-black disabled:opacity-50" onClick={()=>void handlePreviousSession(true)}>Retomar</button><button disabled={sessionBusy} className="min-h-11 rounded-xl border border-primary/50 px-4 disabled:opacity-50" onClick={()=>void handlePreviousSession(false)}>Finalizar registro</button></div>
+      </section>}
       {/* Header */}
       <div className="px-4 pt-5 pb-2.5 relative z-10">
         <div className="flex items-center justify-between">

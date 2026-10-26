@@ -4,6 +4,7 @@ import type { DailyContext } from '@/services/dailyContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseDailyContext } from '@/lib/dailyContextContract';
+import { withTimeout } from '@/lib/withTimeout';
 
 export type HubMetricStatus = "not_collected" | "available" | "stale" | "error" | "offline";
 export type HubScoreStatus = "loading" | "available" | "calibrating" | "stale" | "error" | "offline";
@@ -16,6 +17,9 @@ export interface HubMetric {
 }
 
 export interface HubSnapshot {
+  weight: HubMetric;
+  engagement: HubMetric;
+  streak: number;
   context?: DailyContext;
   version: number;
   status: string;
@@ -83,6 +87,9 @@ function mapPayload(raw: unknown): HubSnapshot | null {
 
   return {
     version: count(value.version) || 1,
+    weight: mapMetric(value.weight),
+    engagement: mapMetric(value.engagement),
+    streak: count(value.streak),
     context: value.context ? parseDailyContext(value.context) : undefined,
     status: typeof value.status === "string" ? value.status : "calibrating",
     generated_at: typeof value.generated_at === "string" ? value.generated_at : null,
@@ -149,7 +156,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
 
     setStatus("loading");
     try {
-      const { data: result, error: rpcError } = await supabase.rpc("fn_get_hub_snapshot" as any);
+      const { data: result, error: rpcError } = await withTimeout(supabase.rpc("fn_get_hub_snapshot" as any));
       if (request !== requestRef.current) return;
       if (rpcError) throw rpcError;
 
@@ -230,7 +237,7 @@ export const useAthleteScores = (athleteId: string | undefined | null) => {
 };
 
 export const getAthleteScores = async (): Promise<HubSnapshot | null> => {
-  const { data, error } = await supabase.rpc("fn_get_hub_snapshot" as any);
+  const { data, error } = await withTimeout(supabase.rpc("fn_get_hub_snapshot" as any));
   if (error) throw error;
   return mapPayload(data);
 };
