@@ -124,11 +124,28 @@ export async function activateAthlete(id: string, userId: string, markPasswordCh
   }
 }
 
+/**
+ * Estatísticas do atleta logado.
+ *
+ * FONTE ÚNICA: level, total_xp e streak vêm de `fn_get_hub_snapshot`, a mesma
+ * RPC usada por Hub e Perfil (useAthleteScores / recommendationEngine).
+ * Não recalcular streak/XP/nível localmente — foi isso que fez Stats divergir.
+ *
+ * Pendência (Fase 1b): totalWorkouts e totalCalories ainda vêm de `workout_progress`
+ * (tabela legada). Migrar para `workout_executions` via snapshot/view no servidor.
+ */
 export async function getAthleteStats(athleteId: string): Promise<ApiResponse<{
   totalWorkouts: number; totalCalories: number; currentStreak: number; level: number; totalXp: number;
 }>> {
   try {
-    const { data: athlete } = await supabase.from('athletes').select('level, total_xp').eq('id', athleteId).single();
+    const { data: snapshotRaw, error: snapshotError } = await supabase.rpc('fn_get_hub_snapshot' as any);
+    if (snapshotError) return { success: false, error: { code: 'FETCH_ERROR', message: snapshotError.message } };
+
+    const snapshot = snapshotRaw as any;
+    if (!snapshot?.athlete?.id || snapshot.athlete.id !== athleteId) {
+      return { success: false, error: { code: 'NOT_FOUND', message: 'Não foi possível confirmar a ficha do atleta.' } };
+    }
+
     const { data: progress } = await supabase
       .from('workout_progress')
       .select('*')
@@ -138,21 +155,19 @@ export async function getAthleteStats(athleteId: string): Promise<ApiResponse<{
     const totalWorkouts = progress?.length ?? 0;
     const totalCalories = progress?.reduce((sum, p) => sum + (p.calories_burned ?? 0), 0) ?? 0;
 
-    let currentStreak = 0;
-    if (progress && progress.length > 0) {
-      const today = new Date();
-      const dates = progress.map(p => new Date(p.date).toDateString());
-      for (let i = 0; i < 7; i++) {
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        if (dates.includes(checkDate.toDateString())) currentStreak++;
-        else if (i > 0) break;
-      }
-    }
+    const streakValue = Number(snapshot.streak);
+    const levelValue = Number(snapshot.athlete.level);
+    const xpValue = Number(snapshot.athlete.total_xp);
 
     return {
       success: true,
-      data: { totalWorkouts, totalCalories, currentStreak, level: athlete?.level ?? 1, totalXp: athlete?.total_xp ?? 0 },
+      data: {
+        totalWorkouts,
+        totalCalories,
+        currentStreak: Number.isFinite(streakValue) && streakValue >= 0 ? streakValue : 0,
+        level: Number.isFinite(levelValue) && levelValue >= 1 ? levelValue : 1,
+        totalXp: Number.isFinite(xpValue) && xpValue >= 0 ? xpValue : 0,
+      },
       metadata: { timestamp: new Date().toISOString(), version: 'v1' }
     };
   } catch (err: any) {
