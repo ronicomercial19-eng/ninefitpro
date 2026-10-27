@@ -9,6 +9,8 @@ export interface CoachContext {
     id: string;
     name: string;
     goal: string | null;
+    goal_source?: 'student_declared' | 'athlete_registration';
+    registered_goal?: string | null;
     restrictions: string | null;
   };
   daily_context: DailyContext;

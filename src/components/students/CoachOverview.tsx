@@ -12,6 +12,7 @@ import {
 } from "@/lib/professorOverview";
 import { exportToCSV } from "@/utils/exportUtils";
 import { Button } from "@/components/ui/button";
+import { goalLabel } from '@/lib/athleteGoal';
 export function CoachOverview({
   title = "Dashboard",
   report = false,
@@ -62,7 +63,7 @@ export function CoachOverview({
     exportToCSV(
       rows.map((r) => ({
         Aluno: r.name,
-        Objetivo: r.goal ?? "Não informado",
+        Objetivo: goalLabel(r.goal),
         Ativo: r.active ? "Sim" : "Não",
         Inicio: start,
         Fim: end,
