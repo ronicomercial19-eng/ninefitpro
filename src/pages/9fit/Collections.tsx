@@ -83,10 +83,20 @@ export default function NineFitCollections() {
           }
         }
 
-        // 2) Streak / consistência
-        const { data: act } = await supabase
-          .from("athlete_activation" as any).select("consistency_days").eq("athlete_id", athleteId).maybeSingle();
-        const streak = Number((act as any)?.consistency_days || 0);
+        // 2) Streak — FONTE ÚNICA: fn_get_hub_snapshot (mesma do Hub, Perfil e Stats).
+        // Antes lia athlete_activation.consistency_days (contador de onboarding), que
+        // divergia do streak exibido no resto do app. Se o snapshot falhar, só omite o cartão.
+        let streak = 0;
+        try {
+          const { data: snap, error: snapError } = await supabase.rpc("fn_get_hub_snapshot" as any);
+          const snapshot = snap as any;
+          if (!snapError && snapshot?.athlete?.id === athleteId) {
+            const parsed = Number(snapshot.streak);
+            streak = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+          }
+        } catch {
+          streak = 0;
+        }
         if (streak >= 3) {
           b.push({ tipo: "consistencia", dado: `${streak} dias consecutivos`, icon: Flame, template: tplByType("consistencia") });
           if (streak >= 7) b.push({ tipo: "streak_7", dado: `7 dias consecutivos · nível ELITE`, icon: Trophy, template: tplByType("streak_7") });
