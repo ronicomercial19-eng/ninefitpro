@@ -34,6 +34,17 @@
   --orange-satin-to: #b84a00;
 }
 
+/*
+ * Token primário do app alinhado ao laranja do padrão visual (#EF7A45).
+ * Antes: 18 100% 59% (~#FF6E2B), mais vivo que o resto do Hub/Início/Train.
+ * Fica fora de @layer pra vencer o :root/.dark definidos em index.css.
+ * Pra reverter: apague este bloco.
+ */
+:root,
+.dark {
+  --primary: 19 84% 60%;
+}
+
 .orange-soft {
   background: rgba(255, 165, 94, 0.12);
   border: 1px solid rgba(255, 165, 94, 0.28);
