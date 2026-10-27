@@ -3,6 +3,8 @@ import { useCoachStudentContext } from "@/hooks/useCoachStudentContext";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import { consecutiveDays } from "@/lib/studentDates";
 import { Button } from "@/components/ui/button";
+import { completionLabel, completionReason } from '@/lib/workoutCompletion';
+import { goalLabel } from '@/lib/athleteGoal';
 const labels: Record<string, string> = {
   goal: "Objetivo",
   primary_goal: "Objetivo",
@@ -23,6 +25,7 @@ const statuses: Record<string, string> = {
   cancelled: "cancelado",
   no_show: "ausência",
   pending: "pendente",
+  abandoned: "interrompido",
   routed: "encaminhado",
   blocked: "revisão necessária",
   resolved: "resolvido",
@@ -61,7 +64,7 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
       "Treinos executados · 30 dias",
       c.workouts.map(
         (r) =>
-          `${r.workout_date} · ${statuses[r.status] || r.status} · esforço ${r.avg_rpe ?? "não informado"} · ${r.duration_minutes ?? "—"} min`,
+          `${r.workout_date} · ${r.status === 'completed' ? completionLabel(r) : statuses[r.status] || r.status} · esforço ${r.avg_rpe >= 1 && r.avg_rpe <= 10 ? r.avg_rpe : "não informado"} · ${r.duration_minutes ?? "—"} min${r.status === 'completed' && completionReason(r) ? ` · ${completionReason(r)}` : ''}`,
       ),
     ],
     [
@@ -176,15 +179,23 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
         <article className="rounded-xl border bg-card p-4">
           <h2 className="font-semibold">Ficha declarada e preferências</h2>
           <p className="mt-2 text-sm">
-            Objetivo cadastrado: {c.athlete.goal || "Não informado"}
+            Objetivo atual: {goalLabel(c.athlete.goal)}
           </p>
+          <p className="text-xs text-muted-foreground">
+            {c.athlete.goal_source === 'student_declared'
+              ? 'Origem: ficha declarada pelo aluno. Tem prioridade sobre o cadastro anterior.'
+              : 'Origem: cadastro do aluno. Nenhum objetivo declarado na ficha está disponível.'}
+          </p>
+          {c.athlete.goal_source === 'student_declared' && c.athlete.registered_goal && c.athlete.registered_goal !== c.athlete.goal && (
+            <p className="text-xs text-muted-foreground">Objetivo no cadastro anterior: {goalLabel(c.athlete.registered_goal)}. Confirme com o aluno ao revisar o plano.</p>
+          )}
           <p className="text-sm">
             Restrição cadastrada: {c.athlete.restrictions || "Não informada"}
           </p>
           {Object.entries({
             ...d.profile.declared,
             ...d.profile.preferences,
-          }).map(([key, value]) => (
+          }).filter(([key]) => key !== 'goal' && key !== 'primary_goal').map(([key, value]) => (
             <p key={key} className="mt-1 text-sm">
               <b>{labels[key] || key.replace(/_/g, " ")}:</b> {text(value)}
             </p>

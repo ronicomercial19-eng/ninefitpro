@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+process.on('uncaughtException', error => { console.error('DB TEST FAILED:', error.message, error.code || '', error.where || ''); process.exit(1); });
+const require = createRequire(import.meta.url);
+const { PGlite } = require(process.env.PGLITE_MODULE || './qa-db/node_modules/@electric-sql/pglite');
+const db = new PGlite();
+const coach = '00000000-0000-4000-8000-000000000001';
+const student = '00000000-0000-4000-8000-000000000002';
+const outsider = '00000000-0000-4000-8000-000000000003';
+const athlete = '10000000-0000-4000-8000-000000000001';
+let checks = 0;
+function check(name, fn) { fn(); checks++; console.log('PASS', name); }
+await db.exec(`
+ CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+ CREATE SCHEMA auth; CREATE SCHEMA private;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$SELECT jsonb_build_object('sub',auth.uid(),'is_anonymous',coalesce(nullif(current_setting('request.jwt.claim.is_anonymous',true),'')::boolean,false))$$;
+ CREATE TABLE public.athletes(id uuid PRIMARY KEY,user_id uuid,coach_id uuid,name text,activated boolean,primary_goal text,objetivo text,is_test_account boolean,injuries_limitations text,birthdate date,age int,gender text,aluno_id uuid);
+ CREATE TABLE public.athlete_auth_link(athlete_id uuid,user_id uuid,created_at timestamptz DEFAULT now());
+ CREATE TABLE public.user_parameters(user_id uuid,goal text,injury_zones text[]);
+ CREATE TABLE public.user_context_settings(user_id uuid,preferences jsonb,declared_keys text[],pdi_completed_at timestamptz);
+ CREATE TABLE public.daily_checkins(athlete_id uuid,checkin_date date,sono int,energia int,humor int,motivacao int,dor int,dor_local text,created_at timestamptz DEFAULT now());
+ CREATE TABLE public.nutrition_logs(athlete_id uuid,date date);
+ CREATE TABLE public.hydration_logs(athlete_id uuid,log_date date,amount_ml int);
+ CREATE TABLE public.workout_executions(id uuid PRIMARY KEY,athlete_id uuid,status text,workout_date date,started_at timestamptz,completed_at timestamptz,phase_name text,total_volume_kg numeric,avg_rpe numeric,duration_minutes int,daily_workout_id uuid,completion_valid boolean,completion_validation_reason text);
+ CREATE TABLE public.workout_exercise_sets(id uuid,execution_id uuid,exercise_name text,actual_weight numeric,actual_reps int,completed boolean);
+ CREATE TABLE public.daily_workouts(athlete_id uuid,workout_date date,workout_type text);
+ CREATE TABLE public.athlete_day_reviews(athlete_id uuid,review_date date,rating int,training_choice text);
+ CREATE TABLE public.pain_reports(id uuid,athlete_id uuid,body_region text,intensity int,status text,source text,created_at timestamptz);
+ CREATE TABLE public.student_training_assignments(id uuid,student_id uuid,training_name text,start_date date,end_date date,is_active boolean,training_type text,created_at timestamptz);
+ CREATE TABLE public.avaliacoes_unificadas(id uuid,athlete_id uuid,data_avaliacao date,created_at timestamptz,origem text,peso numeric,gordura_corporal numeric,massa_muscular numeric,score_global numeric);
+ CREATE TABLE public.bio_activity_logs(id uuid,user_id uuid,recorded_at timestamptz,distance_m numeric,duration_seconds int,source text);
+ CREATE TABLE public.student_habits(id uuid,user_id uuid,title text,target_per_week int);
+ CREATE TABLE public.student_habit_days(habit_id uuid,user_id uuid,habit_date date);
+ CREATE TABLE private.student_protocol_completions(protocol_id uuid,athlete_id uuid,completion_date date);
+ CREATE TABLE public.biohacker_protocols(id uuid,name text);
+ CREATE TABLE public.appointments(id uuid,student_id uuid,title text,scheduled_at timestamptz,duration int,status text);
+ CREATE TABLE public.athlete_data_sources(athlete_id uuid,tipo text,status text,escopo_professor boolean,conectado_em timestamptz);
+ CREATE TABLE public.treinos_realizados(id uuid,athlete_id uuid,data_treino date,nome text,volume_total numeric,pse_medio numeric);
+ CREATE TABLE public.registros_carga(id uuid,athlete_id uuid,data_registro date,exercicio text,carga_max numeric,reps int);
+ CREATE TABLE public.personal_records(id uuid,athlete_id uuid,data_pr date,exercicio text,valor numeric,unidade text,tipo text);
+ CREATE TABLE public.athlete_reassessment_settings(athlete_id uuid,interval_weeks int,reminder_enabled boolean);
+ CREATE TABLE public.metas_progresso(athlete_id uuid,prazo date);
+ CREATE TABLE public.ref_faixas(idade_min int,idade_max int,sexo text);
+ CREATE FUNCTION private.fitpro_actor_role() RETURNS text LANGUAGE sql STABLE AS $$SELECT CASE WHEN auth.uid()='${coach}' THEN 'professor' ELSE 'student' END$$;
+ CREATE FUNCTION private.fitpro_can_manage_athlete(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT EXISTS(SELECT 1 FROM public.athletes WHERE id=$1 AND coach_id=auth.uid())$$;
+ CREATE FUNCTION public.fn_assessment_can_read(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT EXISTS(SELECT 1 FROM public.athletes WHERE id=$1 AND (user_id=auth.uid() OR coach_id=auth.uid()))$$;
+ CREATE FUNCTION public.fn_assessment_is_official(jsonb) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION public.fn_assessment_weight(jsonb) RETURNS numeric LANGUAGE sql AS $$SELECT 0.5$$;
+ CREATE FUNCTION public.fn_assessment_record_excluded(uuid,date,text,numeric) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION public.fn_get_ron_progresso_screen(uuid) RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;
+ INSERT INTO public.athletes(id,user_id,coach_id,name,activated,primary_goal,is_test_account) VALUES('${athlete}','${student}','${coach}','QA',true,'Saúde e Bem-estar',false);
+ INSERT INTO public.user_parameters VALUES('${student}','aesthetics','{}');
+ INSERT INTO public.user_context_settings VALUES('${student}','{}',ARRAY['goal'],now());
+ INSERT INTO public.workout_executions(id,athlete_id,status,workout_date,started_at,completed_at,duration_minutes,avg_rpe,total_volume_kg,completion_valid,completion_validation_reason)
+ SELECT gen_random_uuid(),'${athlete}','completed',(now() AT TIME ZONE 'America/Sao_Paulo')::date-days_ago,now()-interval '1 day',now(),mins,rpe,100,valid,CASE WHEN NOT valid THEN 'no_completed_set' END
+ FROM (VALUES(1,10,6,true),(2,20,8,true),(3,45,0,false),(4,5,0,false),(5,1,0,false),(40,50,9,true)) AS fixture(days_ago,mins,rpe,valid);
+ INSERT INTO public.workout_executions(id,athlete_id,status,workout_date,completion_valid) VALUES(gen_random_uuid(),'${athlete}','in_progress',(now() AT TIME ZONE 'America/Sao_Paulo')::date,false);
+ INSERT INTO public.workout_exercise_sets SELECT gen_random_uuid(),id,'QA',20,8,true FROM public.workout_executions WHERE status='completed';
+ INSERT INTO public.treinos_realizados VALUES(gen_random_uuid(),'${athlete}',current_date,'External',200,7);
+ SELECT set_config('request.jwt.claim.sub','${coach}',false);
+`);
+await db.exec(await readFile(new URL('../supabase/migrations/20261027234722_reconcile_student_professor_progress.sql', import.meta.url), 'utf8'));
+const call = async sql => (await db.query(sql)).rows[0].value;
+const ctx = await call(`SELECT public.fn_coach_student_context('${athlete}') value`);
+const overview = await call(`SELECT public.fn_coach_overview((now() AT TIME ZONE 'America/Sao_Paulo')::date-29,(now() AT TIME ZONE 'America/Sao_Paulo')::date) value`);
+const row = overview.students[0];
+check('professional context counts only the two validated sessions in the period', () => assert.equal(ctx.daily_context.profile.observed.completed_workouts_30d, 2));
+check('invalid sessions do not create active days or training-window evidence', () => {
+ assert.equal(ctx.daily_context.profile.observed.active_days_30d, 2);
+ assert.equal(ctx.daily_context.profile.observed.training_windows.reduce((n,r)=>n+r.samples,0), 2);
+});
+check('pending execution remains visible despite not being a validated completion', () => assert.equal(ctx.daily_context.today.workout_in_progress, true));
+check('overview reconciles counts, minutes and perceived effort', () => {
+ assert.equal(row.completed_workouts, 2); assert.equal(row.duration_minutes, 30); assert.equal(row.avg_rpe, 7);
+});
+check('history retains invalid records with explicit validation metadata', () => {
+ const invalid = ctx.workouts.filter(r=>r.status==='completed'&&!r.completion_valid);
+ assert.equal(invalid.length, 3); assert.ok(invalid.every(r=>r.completion_validation_reason==='no_completed_set'));
+});
+check('declared goal wins consistently without overwriting registration', () => {
+ assert.equal(ctx.athlete.goal, 'aesthetics'); assert.equal(ctx.athlete.goal_source, 'student_declared');
+ assert.equal(ctx.athlete.registered_goal, 'Saúde e Bem-estar'); assert.equal(row.goal, 'aesthetics');
+});
+const hub = await call(`SELECT public.fn_get_assessment_hub('${athlete}') value`);
+check('progress excludes invalid FitPro executions and loads, preserving external history', () => {
+ assert.equal(hub.workouts.filter(r=>r.source==='FitPro').length,3);
+ assert.equal(hub.workouts.filter(r=>r.source==='Progress Tracker').length,1);
+ assert.equal(hub.loads.filter(r=>r.source==='FitPro').length,3);
+});
+await db.exec(`UPDATE public.user_context_settings SET declared_keys='{}';`);
+const fallback=await call(`SELECT public.fn_coach_students() value`);
+check('undeclared default goal never overrides the registered goal',()=>assert.equal(fallback[0].goal,'Saúde e Bem-estar'));
+await db.exec(`UPDATE public.workout_executions SET avg_rpe=0 WHERE completion_valid;`);
+const noRpe=await call(`SELECT public.fn_coach_overview((now() AT TIME ZONE 'America/Sao_Paulo')::date-29,(now() AT TIME ZONE 'America/Sao_Paulo')::date) value`);
+check('missing legacy effort is not reported as zero effort',()=>assert.equal(noRpe.students[0].avg_rpe,null));
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${outsider}',false);`);
+await assert.rejects(()=>call(`SELECT public.fn_coach_student_context('${athlete}') value`),/athlete_access_denied|not_authorized|authentication_required/);
+checks++; console.log('PASS unrelated account cannot access professional context');
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${student}',false);`);
+await assert.rejects(()=>call(`SELECT public.fn_coach_overview(current_date-29,current_date) value`),/professional_required/);
+checks++; console.log('PASS student cannot access professional overview');
+const permissions=await db.query(`SELECT has_function_privilege('authenticated','private.fitpro_athlete_goal(uuid)','EXECUTE') allowed`);
+check('new goal helper remains inaccessible to application roles',()=>assert.equal(permissions.rows[0].allowed,false));
+console.log(JSON.stringify({checks,database:'isolated PostgreSQL/PGlite',productionWrites:0}));
+await db.close();
