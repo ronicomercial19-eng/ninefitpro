@@ -35,7 +35,7 @@ const HabitFront = () => (
         initial={{ y: 14, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: i * 0.08, type: "spring", stiffness: 200 }}
-        className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 backdrop-blur-sm border border-primary/40 flex items-center justify-center shadow-[0_8px_24px_-6px_hsla(20,100%,50%,0.5)]"
+        className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 backdrop-blur-sm border border-primary/40 flex items-center justify-center shadow-[0_8px_24px_-6px_rgba(239,122,69,0.35)]"
       >
         <Icon className="w-6 h-6 text-primary" />
       </motion.div>
@@ -45,7 +45,7 @@ const HabitFront = () => (
 
 const TribosFront = () => (
   <div className="relative w-20 h-20">
-    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 to-transparent border border-primary/40 flex items-center justify-center shadow-[0_8px_32px_-8px_hsla(20,100%,50%,0.6)]">
+    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 to-transparent border border-primary/40 flex items-center justify-center shadow-[0_8px_32px_-8px_rgba(239,122,69,0.35)]">
       <Award className="w-10 h-10 text-primary" />
     </div>
     <div className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground text-[10px] font-display">
@@ -65,7 +65,7 @@ const IntelFront = () => (
 );
 
 const PlayFront = () => (
-  <div className="relative w-28 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 to-black border border-primary/40 shadow-[0_8px_28px_-6px_hsla(20,100%,50%,0.5)]">
+  <div className="relative w-28 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 to-black border border-primary/40 shadow-[0_8px_28px_-6px_rgba(239,122,69,0.35)]">
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center">
         <Play className="w-5 h-5 text-primary-foreground fill-current ml-0.5" />
@@ -102,17 +102,17 @@ export function HubSequentialCarousel() {
   const tiltRef = useTiltCard<HTMLDivElement>({
     maxTilt: 4.5,
     scale: 1.012,
-    haloColor: "rgba(255, 102, 0, 0.28)",
+    haloColor: "rgba(239, 122, 69, 0.22)",
     haloSize: "320px",
   });
 
   const textStyle: React.CSSProperties =
     m.style === "outline-orange"
-      ? { WebkitTextStroke: "1.5px hsl(20 100% 50%)", color: "transparent" }
+      ? { WebkitTextStroke: "1.5px hsl(var(--primary))", color: "transparent" }
       : m.style === "outline-white"
       ? { WebkitTextStroke: "1.5px hsl(0 0% 96%)", color: "transparent" }
       : m.style === "solid-orange"
-      ? { color: "hsl(20 100% 50%)" }
+      ? { color: "hsl(var(--primary))" }
       : { color: "hsl(0 0% 96%)" };
 
   return (
@@ -121,7 +121,7 @@ export function HubSequentialCarousel() {
       className="hub-card-interactive relative w-full h-56 rounded-2xl overflow-hidden bg-black border border-primary/20 transition-all duration-300"
     >
       {/* gradient bg */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,hsla(20,100%,50%,0.18),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(239,122,69,0.16),transparent_60%)]" />
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -154,7 +154,7 @@ export function HubSequentialCarousel() {
             animate={{ x: 0, opacity: 1, scale: 1 }}
             exit={{ x: -60, opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.5, delay: 0.08, type: "spring", stiffness: 160, damping: 18 }}
-            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 drop-shadow-[0_12px_28px_rgba(255,107,0,0.55)] scale-75 origin-center"
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 drop-shadow-[0_12px_28px_rgba(239,122,69,0.35)] scale-75 origin-center"
             aria-label={`Abrir ${m.label}`}
           >
             <m.Front />

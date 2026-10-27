@@ -18,9 +18,8 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
-import { ShareableCard } from "@/components/9fit/ShareableCard";
+import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
 import { Info } from "lucide-react";
-import { usePushNotifications, useBluetoothRequest } from "@/hooks/useDeviceCapabilities";
 
 const hubStaggerContainer = {
   hidden: { opacity: 0 },
@@ -52,6 +51,8 @@ const hubStaggerItem = {
   },
 };
 
+const ACTIVATION_KEYS = ["missao_avaliacao", "missao_plano", "missao_primeiro_treino", "missao_3dias", "missao_7dias"] as const;
+
 export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
@@ -64,6 +65,7 @@ export default function NineFitHub() {
 
   const [protocolCount, setProtocolCount] = useState(0);
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
+  const [hubMissions, setHubMissions] = useState<HubMissions | null>(null);
   const [hubLoading, setHubLoading] = useState(true);
   const hubRequest = useRef(0);
   const [hubError, setHubError] = useState<string | null>(null);
@@ -79,24 +81,46 @@ export default function NineFitHub() {
 
   const loadHubData = async () => {
     const request = ++hubRequest.current;
-    if (!athleteId) { setHubLoading(athleteLoading); setPerformancePlanTitle(null); setProtocolCount(0); return; }
+    if (!athleteId) {
+      setHubLoading(athleteLoading);
+      setPerformancePlanTitle(null);
+      setProtocolCount(0);
+      setHubMissions(null);
+      return;
+    }
     setHubLoading(true);
     setHubError(null);
     try {
       const [hubResult, performanceResult, libraryResult] = await withTimeout(Promise.all([
-        supabase.from("vw_hub_status" as any).select("*").eq("athlete_id", athleteId).maybeSingle(),
+        supabase.from("vw_hub_status" as any).select("missao_avaliacao, missao_plano, missao_primeiro_treino, missao_3dias, missao_7dias").eq("athlete_id", athleteId).maybeSingle(),
         supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle(),
         supabase.from("student_library_assignments").select("id", { count: "exact", head: true }).eq("athlete_id", athleteId).is("completed_at", null),
       ]));
       if (request !== hubRequest.current) return;
-      if (hubResult.error || performanceResult.error || libraryResult.error) throw hubResult.error || performanceResult.error || libraryResult.error;
 
-      setPerformancePlanTitle((performanceResult.data as any)?.plan_title || null);
-      setProtocolCount(libraryResult.count || 0);
-      if (hubResult.error || performanceResult.error || libraryResult.error) {
-        setHubError("Alguns sinais estão sincronizando.");
+      if (!performanceResult.error) {
+        setPerformancePlanTitle((performanceResult.data as { plan_title?: string | null } | null)?.plan_title || null);
       }
-    } catch (e: any) {
+      if (!libraryResult.error) {
+        setProtocolCount(libraryResult.count || 0);
+      }
+      if (!hubResult.error && hubResult.data) {
+        const row = hubResult.data as unknown as Record<string, boolean | null>;
+        setHubMissions({
+          missao_avaliacao: !!row.missao_avaliacao,
+          missao_plano: !!row.missao_plano,
+          missao_primeiro_treino: !!row.missao_primeiro_treino,
+          missao_3dias: !!row.missao_3dias,
+          missao_7dias: !!row.missao_7dias,
+        });
+      } else {
+        setHubMissions(null);
+      }
+
+      const failed = [hubResult.error, performanceResult.error, libraryResult.error].filter(Boolean);
+      if (failed.length === 3) setHubError("Não foi possível carregar seus dados agora.");
+      else if (failed.length) setHubError("Alguns sinais estão sincronizando.");
+    } catch {
       if (request === hubRequest.current) setHubError("Não foi possível carregar seus dados agora.");
     } finally {
       if (request === hubRequest.current) setHubLoading(false);
@@ -145,9 +169,6 @@ export default function NineFitHub() {
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
 
-  const { permission, requestPermission } = usePushNotifications();
-  const { requestDevice } = useBluetoothRequest();
-
   return (
     <div className="min-h-screen bg-background pb-28">
       <WeeklyRecapPrompt />
@@ -161,14 +182,6 @@ export default function NineFitHub() {
           <button onClick={() => void loadHubData()} className="text-xs text-primary shrink-0">Tentar de novo</button>
         </div>
       )}
-
-      {/* Device Capabilities Prompt */}
-      <div className="px-4 md:px-6 flex gap-2 my-4">
-        {permission !== 'granted' && (
-          <button onClick={requestPermission} className="text-xs bg-primary/10 text-primary p-2 rounded">Enable Push</button>
-        )}
-        <button onClick={requestDevice} className="text-xs bg-primary/10 text-primary p-2 rounded">Conectar Bluetooth</button>
-      </div>
 
       <motion.div
         variants={hubStaggerContainer}
@@ -211,6 +224,12 @@ export default function NineFitHub() {
           <span>Sequência de calibração: {liveScores?.streak ?? 0} dias</span>
           <span>Engajamento: {liveScores?.engagement.value == null ? 'Sem leitura' : `${liveScores.engagement.value}/100`}</span>
         </div>
+
+        {hubMissions && ACTIVATION_KEYS.some((key) => hubMissions[key] === false) && (
+          <motion.div variants={hubStaggerItem}>
+            <HubMissionsCard missions={hubMissions} />
+          </motion.div>
+        )}
 
         <motion.div variants={hubStaggerItem}>
           <FitOSConsoleDock

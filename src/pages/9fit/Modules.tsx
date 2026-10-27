@@ -21,7 +21,7 @@ export default function NineFitModules() {
           </button>
 
           <p className="font-display text-lg sm:text-xl font-black tracking-tight text-white">
-            <span className="text-[#FF6600]">9</span>FIT PRO
+            <span className="text-[#EF7A45]">9</span>FIT PRO
           </p>
 
           <button
@@ -37,14 +37,14 @@ export default function NineFitModules() {
         {/* Section Header */}
         <div className="mt-6 flex items-end justify-between">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#FF6600] font-bold">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#EF7A45] font-bold">
               TODOS OS MÓDULOS · EXPERIMENTE AQUI
             </p>
             <h1 className="mt-1 font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
               Ecosystem
             </h1>
           </div>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/[0.08] bg-[#14151b] text-[#FF6600]">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/[0.08] bg-[#14151b] text-[#EF7A45]">
             <Grid2X2 className="h-4 w-4" />
           </div>
         </div>

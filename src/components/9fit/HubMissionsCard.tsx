@@ -30,35 +30,37 @@ export function HubMissionsCard({ missions }: { missions: HubMissions | null }) 
     missao_perfil: false, missao_avaliacao: false, missao_plano: false,
     missao_primeiro_treino: false, missao_3dias: false, missao_7dias: false,
   };
-  const done = ROWS.filter(r => !!m[r.key]).length;
-  const pct = Math.round((done / ROWS.length) * 100);
+  const rows = ROWS.filter((r) => m[r.key] !== undefined);
+  const done = rows.filter(r => !!m[r.key]).length;
+  if (!rows.length || done === rows.length) return null;
+  const pct = Math.round((done / rows.length) * 100);
 
   return (
-    <div className="surface-card p-4">
+    <div className="rounded-3xl border border-[#EF7A45]/25 bg-[#0B0B0C] p-4 sm:p-5">
       <div className="flex items-baseline justify-between mb-2">
-        <p className="text-label">SUA ATIVAÇÃO</p>
-        <p className="text-[11px] font-data text-primary tabular-nums">{done}/{ROWS.length} · {pct}%</p>
+        <p className="text-[11px] font-mono tracking-[0.12em] font-bold text-[#EF7A45] uppercase">Sua ativação</p>
+        <p className="text-[11px] font-mono text-white/70 tabular-nums">{done}/{rows.length} · {pct}%</p>
       </div>
-      <div className="h-1 rounded-full bg-white/5 overflow-hidden mb-3">
-        <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      <div className="h-1 rounded-full bg-white/10 overflow-hidden mb-3">
+        <div className="h-full bg-[#EF7A45] transition-all" style={{ width: `${pct}%` }} />
       </div>
       <ul className="space-y-2">
-        {ROWS.map((r) => {
-          const done = !!m[r.key];
+        {rows.map((r) => {
+          const complete = !!m[r.key];
           return (
             <li key={r.key} className="flex items-center gap-3">
-              {done ? (
-                <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+              {complete ? (
+                <CheckCircle2 className="w-5 h-5 text-[#EF7A45] shrink-0" />
               ) : (
-                <Circle className="w-5 h-5 text-muted-foreground shrink-0" />
+                <Circle className="w-5 h-5 text-white/35 shrink-0" />
               )}
-              <span className={`flex-1 text-sm ${done ? "text-foreground" : "text-muted-foreground"}`}>
+              <span className={`flex-1 text-sm ${complete ? "text-white" : "text-white/55"}`}>
                 {r.label}
               </span>
-              {!done && (
+              {!complete && (
                 <button
                   onClick={() => navigate(r.route)}
-                  className="text-[11px] font-semibold text-primary inline-flex items-center gap-1 hover:underline"
+                  className="text-[11px] font-semibold text-[#EF7A45] inline-flex items-center gap-1 hover:underline"
                 >
                   {r.cta} <ArrowRight className="w-3 h-3" />
                 </button>

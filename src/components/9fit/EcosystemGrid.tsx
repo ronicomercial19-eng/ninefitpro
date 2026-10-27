@@ -20,7 +20,6 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion, type Variants } from "framer-motion";
 import { MODULE_IMAGES } from "@/assets/modules";
 import { useTiltCard } from "@/hooks/useTiltCard";
 import { EcosystemOverlay } from "./EcosystemOverlay";
@@ -56,13 +55,13 @@ const MODULE_META: Record<
   staff: {
     icon: Users,
     category: "PERFORMANCE",
-    color: "#FF6600",
-    defaultRoute: "/9fit/native-system?app=staff",
+    color: "#EF7A45",
+    defaultRoute: "/9fit/staff",
   },
   smarttreino: {
     icon: Dumbbell,
     category: "PERFORMANCE",
-    color: "#FF6600",
+    color: "#EF7A45",
     defaultRoute: "/9fit/train",
   },
   prime_pass: {
@@ -80,25 +79,25 @@ const MODULE_META: Record<
   biblioteca: {
     icon: Library,
     category: "PERFORMANCE",
-    color: "#FF6600",
+    color: "#EF7A45",
     defaultRoute: "/9fit/biblioteca",
   },
   ron: {
     icon: Brain,
     category: "PERFORMANCE",
-    color: "#FF6600",
+    color: "#EF7A45",
     defaultRoute: "/9fit/ron",
   },
   progress: {
     icon: TrendingUp,
     category: "PERFORMANCE",
-    color: "#FF6600",
+    color: "#EF7A45",
     defaultRoute: "/9fit/progresso",
   },
   progresso: {
     icon: TrendingUp,
     category: "PERFORMANCE",
-    color: "#FF6600",
+    color: "#EF7A45",
     defaultRoute: "/9fit/progresso",
   },
   foods: {
@@ -148,7 +147,7 @@ const CANONICAL_MODULES: PhysioModule[] = [
     description: "Conectar com profissionais e agendar",
     hero_image: null,
     cta_label: "Acessar",
-    cta_route: "/9fit/native-system?app=staff",
+    cta_route: "/9fit/staff",
     category: "PERFORMANCE",
     display_order: 10,
     connector_key: "staff",
@@ -407,7 +406,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
       : "grid grid-cols-1 sm:grid-cols-2 gap-3";
 
   const fallbackRoutes: Record<string, string> = {
-    staff: "/9fit/native-system?app=staff",
+    staff: "/9fit/staff",
     smarttreino: "/9fit/train",
     prime_pass: "/9fit/primepass",
     primepass: "/9fit/primepass",
@@ -465,51 +464,67 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
       </section>
     );
 
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.06,
-        delayChildren: 0.04,
-      },
-    },
+  const destination = (m: PhysioModule) =>
+    moduleRoute(m) || fallbackRoutes[m.key] || (m.cta_route?.startsWith("/") ? m.cta_route : null);
+
+  const openModule = (m: PhysioModule) => {
+    if (onModuleSelect) {
+      onModuleSelect(m);
+      return;
+    }
+    const route = destination(m);
+    if (route) {
+      navigate(route);
+      return;
+    }
+    setPreviewModuleKey(m.key);
+    setShowOverlay(true);
   };
 
-  const floatingCardVariants: Variants = {
-    hidden: {
-      opacity: 0,
-      y: 16,
-      scale: 0.97,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 280,
-        damping: 24,
-        mass: 0.8,
-      },
-    },
+  const teaserItems = showHeader && !showAll ? items.slice(0, 2) : [];
+  const listItems = !showHeader || showAll ? visibleItems : [];
+
+  const renderCard = (m: PhysioModule, index: number, cardVariant: "grid" | "dense") => {
+    const route = destination(m);
+    const status = statusByKey[m.key];
+    const online = status === "native" || status === "configured";
+    const label =
+      status === "native" ? "Tela no app"
+      : status === "configured" ? "Destino configurado · disponibilidade externa não verificada"
+      : status === "waiting" ? "Catálogo temporariamente indisponível"
+      : "Integração não configurada";
+    return (
+      <EcosystemModuleCard
+        key={m.id}
+        m={m}
+        src={m.hero_image || MODULE_IMAGES[m.key] || null}
+        online={online}
+        label={label}
+        canOpen={Boolean(route) || online}
+        fallbackImage={MODULE_IMAGES[m.key]}
+        accessibilityLabel={m.description || label}
+        variant={cardVariant}
+        index={index}
+        onOpen={() => openModule(m)}
+      />
+    );
   };
 
   return (
     <section className="space-y-4">
       {showHeader && (
-        <header className="p-6 mb-6 bg-gradient-to-r from-primary/20 to-black rounded-3xl border border-primary/20 shadow-2xl">
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">
-            EXPLORAR ECOSSISTEMA
+        <header className="p-5 bg-gradient-to-r from-primary/20 to-black rounded-3xl border border-primary/20">
+          <h2 className="text-xl font-black uppercase tracking-tight text-white">
+            Explorar ecossistema
           </h2>
           <p className="font-mono text-[11px] text-primary mt-2">
             {activeCount} DE {items.length} DESTINOS CONFIGURADOS
           </p>
-          {items.length > 2 && !showAll && (
+          {items.length > teaserItems.length && (
             <button
-              onClick={() => { setPreviewModuleKey(null); setShowOverlay(true); }}
+              onClick={() => navigate("/9fit/modules")}
               aria-label="Abrir tela com todos os módulos"
-              className="mt-4 flex items-center gap-2 bg-primary text-black px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-colors"
+              className="mt-4 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest"
             >
               Ver todos os módulos
               <ChevronRight className="w-4 h-4" />
@@ -518,12 +533,19 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         </header>
       )}
 
+      {teaserItems.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {teaserItems.map((m, index) => renderCard(m, index, "grid"))}
+        </div>
+      )}
+
       <EcosystemOverlay open={showOverlay} initialModuleKey={previewModuleKey} onClose={() => setShowOverlay(false)} />
 
-      {(!showHeader || showAll) && <div className={gridClass}>{visibleItems.map((m, index) => {
-        const route = moduleRoute(m) || fallbackRoutes[m.key];
-        return <button key={m.id} type="button" onClick={() => { if (onModuleSelect) onModuleSelect(m); else { setPreviewModuleKey(m.key); setShowOverlay(true); } }} className="rounded-2xl border border-white/10 bg-card p-4 text-left"><strong>{m.name}</strong><p className="text-xs text-muted-foreground mt-1">{m.description}</p><span className="block text-xs text-muted-foreground">{statusByKey[m.key] === "native" ? "Tela no app" : statusByKey[m.key] === "configured" ? "Destino configurado · disponibilidade externa não verificada" : statusByKey[m.key] === "waiting" ? "Catálogo temporariamente indisponível" : "Integração não configurada"}</span><span className="text-xs text-primary">Ver módulo →</span></button>;
-      })}</div>}
+      {listItems.length > 0 && (
+        <div className={gridClass}>
+          {listItems.map((m, index) => renderCard(m, index, variant === "rail" ? "grid" : variant))}
+        </div>
+      )}
     </section>
   );
 }
@@ -556,13 +578,13 @@ function EcosystemModuleCard({
   const meta = MODULE_META[m.key] || {
     icon: Sparkles,
     category: m.category || "PERFORMANCE",
-    color: "#FF6600",
+    color: "#EF7A45",
     defaultRoute: "/9fit/hub",
   };
   const IconComponent = meta.icon;
   const isFeatured = index === 1 || m.key === "smarttreino"; // SmartTreino has top ember highlight as in IMG_0114.png
 
-  const haloColor = online ? "rgba(255, 102, 0, 0.25)" : "rgba(255, 102, 0, 0.15)";
+  const haloColor = online ? "rgba(239, 122, 69, 0.25)" : "rgba(239, 122, 69, 0.15)";
   const tiltRef = useTiltCard<HTMLButtonElement>({
     maxTilt: variant === "dense" ? 3.5 : 5,
     scale: variant === "dense" ? 1.012 : 1.02,
@@ -579,11 +601,11 @@ function EcosystemModuleCard({
         disabled={!canOpen}
         onClick={onOpen}
         aria-label={`${m.name}: ${label}. ${accessibilityLabel}`}
-        className="group w-full hub-card-interactive rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#14151b] to-[#0a0a0d] p-3 sm:p-3.5 flex items-center justify-between gap-3 text-left shadow-lg shadow-black/50 hover:border-[#FF6600]/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer relative overflow-hidden"
+        className="group w-full hub-card-interactive rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#14151b] to-[#0a0a0d] p-3 sm:p-3.5 flex items-center justify-between gap-3 text-left shadow-lg shadow-black/50 hover:border-[#EF7A45]/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer relative overflow-hidden"
       >
         {/* Top warm radial halo (semelhante ao print IMG_0114 no card SmartTreino e no hover) */}
         <div
-          className={`absolute inset-x-0 top-0 h-full pointer-events-none transition-opacity duration-300 bg-[radial-gradient(ellipse_at_top,rgba(255,102,0,0.18),transparent_70%)] ${
+          className={`absolute inset-x-0 top-0 h-full pointer-events-none transition-opacity duration-300 bg-[radial-gradient(ellipse_at_top,rgba(239,122,69,0.18),transparent_70%)] ${
             isFeatured ? "opacity-80" : "opacity-0 group-hover:opacity-100"
           }`}
         />
@@ -591,7 +613,7 @@ function EcosystemModuleCard({
         {/* Lado Esquerdo: Squircle com Ícone/Imagem + Textos */}
         <div className="flex items-center gap-3.5 min-w-0 flex-1 relative z-10">
           {/* Squircle tátil 9FIT */}
-          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-b from-[#1e1510] to-[#0f0b09] border border-[#ff6600]/30 flex items-center justify-center shrink-0 relative overflow-hidden group-hover:border-[#ff6600]/60 transition-colors shadow-inner">
+          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-b from-[#1e1510] to-[#0f0b09] border border-[#EF7A45]/30 flex items-center justify-center shrink-0 relative overflow-hidden group-hover:border-[#EF7A45]/60 transition-colors shadow-inner">
             {src ? (
               <img
                 src={src}
@@ -629,6 +651,7 @@ function EcosystemModuleCard({
             <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5 font-semibold">
               {meta.category || m.category || "PERFORMANCE"}
             </p>
+            <p className="text-[11px] text-white/45 truncate mt-0.5">{label}</p>
           </div>
         </div>
 
@@ -675,8 +698,8 @@ function EcosystemModuleCard({
             src ? "hidden" : "flex"
           }`}
         >
-          <div className="w-16 h-16 rounded-2xl bg-[#ff6600]/10 border border-[#ff6600]/30 flex items-center justify-center shadow-lg shadow-[#ff6600]/10">
-            <IconComponent className="w-8 h-8 text-[#FF6600]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#EF7A45]/10 border border-[#EF7A45]/30 flex items-center justify-center shadow-lg shadow-[#EF7A45]/10">
+            <IconComponent className="w-8 h-8 text-[#EF7A45]" />
           </div>
         </div>
 

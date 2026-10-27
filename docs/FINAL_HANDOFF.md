@@ -1,6 +1,7 @@
 # Handoff final — NineFitPro
 
 A main contém os blocos 1–6 executados.
+Última correção de consistência: [HANDOFF_FASE1_HUB.md](HANDOFF_FASE1_HUB.md) (Hub, 27/10/2026).
 
 ## Publicação Lovable
 1. Sincronizar a branch main.

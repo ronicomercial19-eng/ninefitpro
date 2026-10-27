@@ -121,9 +121,13 @@ export function FitOSConsoleDock({
             <span className="text-[11px] font-mono tracking-[0.12em] font-bold text-[#EF7A45] uppercase">
               FOCO ATUAL · FIT OS
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-[0.08em] text-[#EF7A45] bg-[#EF7A45]/15 border border-[#EF7A45]/25">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
-              CICLO EM ANDAMENTO
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-[0.08em] border ${
+              performancePlanTitle
+                ? "text-[#EF7A45] bg-[#EF7A45]/15 border-[#EF7A45]/25"
+                : "text-white/55 bg-white/5 border-white/15"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${performancePlanTitle ? "bg-[#EF7A45]" : "bg-white/35"}`} />
+              {performancePlanTitle ? "CICLO EM ANDAMENTO" : "SEM CICLO ATIVO"}
             </span>
           </div>
 
@@ -178,7 +182,7 @@ export function FitOSConsoleDock({
       </motion.div>
 
       {/* COMANDOS & SINAIS — atalhos com rota própria */}
-      <div className="space-y-2 pb-20">
+      <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <span className="text-[11px] font-mono tracking-[0.12em] text-white/45 uppercase font-bold flex items-center gap-1.5">
             <Zap strokeWidth={1.75} className="w-3.5 h-3.5 text-[#EF7A45]" />
