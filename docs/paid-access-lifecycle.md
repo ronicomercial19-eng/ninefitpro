@@ -17,18 +17,24 @@ Proteção de frequência por conta/minuto: IA 10 (equipe 60); conteúdo 60 (equ
 ## Conferência de pagamentos
 
 - Checkout e webhook continuam exigindo consulta server-to-server à InfinitePay, com valor e identidade do pedido vinculados no banco.
-- Recibos pagos são revistos a cada seis horas enquanto houver período de acesso a preservar. Trabalho limitado a 20 recibos/minuto, quatro consultas simultâneas por execução e lease contra processamento concorrente. Essa capacidade cobre 3.000 recibos/6h.
+- Recibos pagos são revistos a cada seis horas enquanto houver período de acesso a preservar. Trabalho limitado a 10 recibos/minuto mais 10 candidatos pendentes/minuto, quatro consultas simultâneas por execução e lease contra processamento concorrente. Essa capacidade cobre 3.000 recibos/6h.
 - Falha/indisponibilidade da InfinitePay registra erro e tenta mais tarde; não transforma falha de rede em inadimplência nem estende validade.
 - Resposta explícita `success=true, paid=false` suspende a assinatura correspondente. Nova confirmação restaura o mesmo período; não adiciona mês/ano novamente.
 - Pedido já pago não fica em cache para sempre: callbacks antigos são rechecados. Duplicata recente é idempotente. Um segundo pagamento genuíno distinto permanece para revisão, sem concessão em dobro.
 - Vencimento é aplicado no acesso em tempo real; não depende do cron. Cron também organiza estados/histórico e informa saúde da execução.
-- Compras ainda não confirmadas dependem de callback/retorno e novas tentativas do provedor. Uma fila durável de candidatos pendentes durante indisponibilidade inicial ainda deve ser tratada; não confundir a rechecagem de recibos pagos com recuperação de todo checkout abandonado.
+- Referências de callback/retorno de um pedido real são persistidas antes da primeira consulta ao provedor. O cron retoma até 10 candidatos/minuto sem depender de o aluno voltar à página. Referência não é prova e não libera acesso. Duplicatas preservam o backoff; lease evita trabalho duplicado; máximo de 16 referências por pedido, 60 tentativas ou 30 dias antes da revisão manual. Confirmação conclui a referência correspondente na mesma transação, evitando backlog de compras já aprovadas. Checkout abandonado sem transaction_nsu/slug recebido continua sem prova a consultar.
 - Links recorrentes antigos não foram habilitados como integração automática. A consulta `payment_check` não substitui um contrato documentado de eventos de recorrência/estorno/chargeback.
 
 ## Monitor e validação
 
 Administrador: `/app/monetizacao`, monitor paginado de contas, origem/validade, revisões manuais e última execução dos jobs. Token do cron fica somente em tabela privada. Não há dados de token no frontend.
 
-Migração aplicada: `20261028102751_automatic_paid_access_lifecycle.sql`. Há 23 verificações isoladas de banco, testes de limites/expiração/API/cron e rechecagem de recibo, além da suíte existente. Produção foi validada sob papel `authenticated`, com mudanças revertidas por `ROLLBACK`: consultoria preservada, vencimento bloqueado, writer SECURITY DEFINER bloqueado, simulação confiável da confirmação libera, resposta negativa bloqueia e rechecagem não estende o período.
+Migração aplicada: `20261028102751_automatic_paid_access_lifecycle.sql`. Há 35 verificações isoladas de banco, testes de limites/expiração/API/cron e rechecagem de recibo, além da suíte existente. Produção foi validada sob papel `authenticated`, com mudanças revertidas por `ROLLBACK`: consultoria preservada, vencimento bloqueado, writer SECURITY DEFINER bloqueado, simulação confiável da confirmação libera, resposta negativa bloqueia e rechecagem não estende o período.
 
 Os jobs já registraram execução real com zero recibos a conferir e zero erros. Testes públicos sem autenticação não invocam provedores de IA nem cobram valores.
+
+## Recuperação após indisponibilidade inicial
+
+Migrações `20261028171719_durable_payment_confirmation_queue.sql` e `20261028172029_complete_verified_payment_candidates.sql` aplicadas. Fila privada sem acesso do cliente; apenas serviço pode registrar, reservar ou concluir tentativas. Monitor administrativo mostra contagens e até 25 pedidos, priorizando casos para revisão. Banco real verificou idempotência, lease e recusa de escrita pelo aluno com ROLLBACK; nenhum candidato de teste permaneceu.
+
+Quando INFINITEPAY_API_KEY está configurada, novos links usam o objeto webhook com eventos paid/refunded e single_payment documentados na [documentação oficial](https://ajuda.infinitepay.io/pt-BR/articles/10766888-como-usar-o-checkout-integrado-da-infinitepay). Sem chave, preserva o webhook_url da integração anterior. Eventos recebidos nunca substituem a conferência server-to-server. Não há expiração artificial do link sem um fluxo correspondente de regeneração. O limite de 16 KiB do callback é aplicado durante a leitura do stream.

@@ -5,7 +5,7 @@ import { parsePaymentReturn } from '../paymentReturn';
 const owner = '10000000-0000-4000-8000-000000000001', other = '10000000-0000-4000-8000-000000000002';
 const orderId = '20000000-0000-4000-8000-000000000001', requestId = '30000000-0000-4000-8000-000000000001';
 const reference = { order_nsu: orderId, transaction_nsu: 'transaction-1', invoice_slug: 'invoice-1' };
-function fixture() {
+function fixture(apiKey?: string) {
   let order: any = { id: orderId, user_id: owner, period: 'basic', amount_cents: 9700, status: 'pending', claimed: true };
   let paid = true, amount = 9700, apiDown = false, currentUser: any = { id: owner }, saves = 0, reviews = 0;
   const calls: any[] = [];
@@ -14,6 +14,7 @@ function fixture() {
     rpc: async (name: string, args: any) => {
       calls.push({ name, args });
       if (name === 'fn_prepare_infinitepay_order') return { data: order, error: null };
+      if (name === 'fn_fitpro_stage_payment_candidate') return { data:true,error:null };
       if (name === 'fn_attach_infinitepay_link') { order.checkout_url = args.p_url; order.status = 'ready'; return { data: order, error: null }; }
       if (name === 'fn_confirm_infinitepay_order') { saves++; order.status = 'paid'; order.paid_at=new Date().toISOString(); order.verification_state='confirmed'; order.transaction_nsu = args.p_transaction_nsu; order.invoice_slug = args.p_invoice_slug; return { data: { saved: true }, error: null }; }
       if(name==='fn_fitpro_apply_payment_check'){order.verification_state=args.p_verification.paid?'confirmed':'unconfirmed';return {data:{confirmed:args.p_verification.paid,suspended:!args.p_verification.paid},error:null}}
@@ -25,7 +26,7 @@ function fixture() {
     if (apiDown) throw Error('offline');
     return new Response(JSON.stringify(String(url).endsWith('/links') ? { url: 'https://checkout.infinitepay.io/ronynapoleao/order-1' } : { success: true, paid, amount, paid_amount: amount }), { status: 200 });
   };
-  const deps = { db, fetcher: fetcher as typeof fetch, authenticate: async () => currentUser };
+  const deps = { db, fetcher: fetcher as typeof fetch, apiKey, authenticate: async () => currentUser };
   const invoke = (body: any, webhook = false, auth = true) => createPaymentHandler(deps, webhook)(new Request('https://example.test', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth ? { Authorization: 'Bearer test' } : {}) }, body: JSON.stringify(body) }));
   return { invoke, calls, order, setUser: (value: any) => { currentUser = value; }, setPaid: (value: boolean) => { paid = value; }, setAmount: (value: number) => { amount = value; }, offline: () => { apiDown = true; }, counts: () => ({ saves, reviews }) };
 }
@@ -94,6 +95,22 @@ test('provider outage preserves pending state and permits a later retry', async 
   const f = fixture(); f.offline();
   assert.equal((await f.invoke(reference,true)).status,400);
   assert.equal(f.order.status,'pending'); assert.equal(f.counts().saves,0);
+  const staging=f.calls.findIndex(c=>c.name==='fn_fitpro_stage_payment_candidate');
+  const provider=f.calls.findIndex(c=>c.url?.endsWith('/payment_check'));
+  assert.ok(staging>=0 && staging<provider, 'candidate is durably staged before provider request');
+});
+
+test('API-key checkout subscribes to documented events and limits invoice reuse', async () => {
+  const f=fixture('test-key');
+  await f.invoke({action:'create',period:'basic',request_id:requestId});
+  const provider=f.calls.find(c=>c.url?.endsWith('/links'));
+  assert.deepEqual(provider.body.webhook.events,['paid','refunded']);
+  assert.equal(provider.body.options.single_payment,true);
+});
+
+test('oversized callback is rejected before database or provider work', async () => {
+  const f=fixture(); const response=await f.invoke({...reference,padding:'x'.repeat(16000)},true);
+  assert.equal(response.status,400); assert.equal(f.calls.length,0);
 });
 test('URL flags and receipt URLs are not proof, and external checkout URLs are allowlisted', () => {
   assert.equal(parsePaymentReturn('?paid=true&success=true&receipt_url=https://evil.test'),null);

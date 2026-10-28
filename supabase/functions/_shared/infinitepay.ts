@@ -26,8 +26,20 @@ const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 type Dependencies = { db: any; authenticate: (authorization: string) => Promise<{ id: string; is_anonymous?: boolean } | null>; fetcher: typeof fetch; apiKey?: string };
 async function readBody(req: Request) {
-  const body = await req.text();
-  if (body.length > 16000) throw new Error('invalid_body');
+  if (Number(req.headers.get('content-length')) > 16000) throw new Error('invalid_body');
+  const reader = req.body?.getReader();
+  const chunks: Uint8Array[] = []; let size = 0;
+  if (reader) try {
+    while (true) {
+      const { done, value } = await reader.read(); if (done) break;
+      size += value.byteLength;
+      if (size > 16000) { await reader.cancel().catch(() => {}); throw new Error('invalid_body'); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(size); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  const body = new TextDecoder().decode(bytes);
   try { const value = JSON.parse(body); if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(); return value; } catch { throw new Error('invalid_body'); }
 }
 async function orderById(db: any, id: string) {
@@ -36,7 +48,7 @@ async function orderById(db: any, id: string) {
   if (error) throw new Error('database_unavailable');
   return data;
 }
-async function reconcile(db: any, reference: ReturnType<typeof paymentReference>, fetcher: typeof fetch, apiKey?: string, order?: any) {
+export async function reconcilePayment(db: any, reference: ReturnType<typeof paymentReference>, fetcher: typeof fetch, apiKey?: string, order?: any, stageCandidate = true) {
   const current = order || await orderById(db, reference.order_nsu);
   if (current?.status === 'paid' && current.transaction_nsu === reference.transaction_nsu && current.invoice_slug === reference.slug) {
     const last = Date.parse(current.last_verified_at || current.paid_at || '');
@@ -45,6 +57,10 @@ async function reconcile(db: any, reference: ReturnType<typeof paymentReference>
     const {data,error}=await db.rpc('fn_fitpro_apply_payment_check',{p_order_id:current.id,p_verification:proof});
     if(error)throw new Error('payment_confirmation_failed');
     return data?.confirmed ? {saved:true,already_saved:true} : {saved:false,suspended:data?.suspended===true};
+  }
+  if (current && stageCandidate) {
+    const staged = await db.rpc('fn_fitpro_stage_payment_candidate', {p_order_id:current.id,p_transaction_nsu:reference.transaction_nsu,p_invoice_slug:reference.slug});
+    if (staged.error) throw new Error('database_unavailable');
   }
   const verification = await providerRequest('/payment_check', { handle: INFINITEPAY_HANDLE, ...reference }, fetcher, apiKey);
   if (!verifiedPayment(verification, current?.amount_cents)) return { saved: false };
@@ -73,7 +89,7 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
       if (webhook) {
         // Payload fields never grant access. A server-to-server provider check is mandatory.
         const reference = paymentReference(input);
-        const result = await reconcile(deps.db, reference, deps.fetcher, deps.apiKey);
+        const result = await reconcilePayment(deps.db, reference, deps.fetcher, deps.apiKey);
         return result.saved || result.manual_review || result.suspended ? json({ received: true, ...result }) : json({ error: 'Pagamento ainda não confirmado.' }, 400);
       }
       if (input.action === 'create') {
@@ -91,7 +107,10 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
           handle: INFINITEPAY_HANDLE, order_nsu: order.id,
           items: [{ quantity: 1, price: order.amount_cents, description: input.period === 'basic' ? '9FIT PRO — 1 mês de acesso, pagamento único' : '9FIT PRO — 12 meses de acesso, pagamento único' }],
           redirect_url: APP_ORIGIN + '/9fit/pagamento/retorno',
-          webhook_url: 'https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/infinitepay-webhook',
+          ...(deps.apiKey ? {
+            webhook: {url:'https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/infinitepay-webhook',events:['paid','refunded']},
+            options: {single_payment:true},
+          } : {webhook_url:'https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/infinitepay-webhook'}),
         }, deps.fetcher, deps.apiKey);
         const { data: saved, error: saveError } = await deps.db.rpc('fn_attach_infinitepay_link', { p_order_id: order.id, p_url: checkoutUrl(generated.url) });
         if (saveError || !saved?.checkout_url) throw new Error('checkout_unavailable');
@@ -102,7 +121,7 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
         const order = await orderById(deps.db, input.order_nsu);
         if (!order || order.user_id !== user!.id) return json({ error: 'O pedido não pertence a esta conta. Entre na conta usada na compra ou fale com o suporte.' }, 403);
         if (input.action === 'verify') {
-          const result = await reconcile(deps.db, paymentReference(input), deps.fetcher, deps.apiKey, order);
+          const result = await reconcilePayment(deps.db, paymentReference(input), deps.fetcher, deps.apiKey, order);
           if (result.saved) return json({ status: 'paid', order_id: order.id, period: order.period });
           if (result.manual_review) return json({ status: 'manual_review', order_id: order.id });
           if (result.suspended) return json({status:'pending',order_id:order.id,message:'Pagamento sem confirmação atual. Consulte sua conta ou o suporte.'});
