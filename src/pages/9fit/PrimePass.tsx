@@ -42,7 +42,7 @@ export default function NineFitPrimePass() {
               </div>
               <Crown className="w-8 h-8 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground mb-4">Mesmos recursos digitais em ambos os períodos.</p>
+            <p className="text-sm text-muted-foreground mb-4">Mesmos recursos digitais em ambos os períodos. Pagamento único, sem renovação automática.</p>
             <ul className="space-y-2 mb-6">
               {OFFER_BENEFITS.map((adv, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs text-foreground/80">
@@ -52,7 +52,6 @@ export default function NineFitPrimePass() {
             </ul>
             <a
               href={commercialPlanHref(plan)}
-              target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center bg-primary text-primary-foreground font-black py-4 rounded-xl hover:opacity-90 transition-all"
             >

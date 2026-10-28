@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import AuthCallback from './pages/AuthCallback';
 import CustomerEntry from './pages/9fit/CustomerEntry';
+import PaymentReturn from './pages/9fit/PaymentReturn';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -130,7 +131,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/9fit/entrada" element={<CustomerEntry />} />
-            <Route path="/9fit/pagamento/retorno" element={<CustomerEntry />} />
+            <Route path="/9fit/pagamento/retorno" element={<PaymentReturn />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/dashboard" element={<Navigate to="/app" replace />} />
             <Route path="/9fit/onboarding-pro" element={<Navigate to="/9fit/hub" replace />} />

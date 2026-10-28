@@ -1,7 +1,7 @@
 // One product, two billing periods. A click never confirms payment.
 export const SUPPORT_EMAIL = '9fit.nine@gmail.com';
 // Enable only after a verified payment creates the correct subscription.
-export const CHECKOUT_READY = false;
+export const CHECKOUT_READY = true;
 export const OFFER_BENEFITS = [
   'Planejamento e execução dos treinos no app',
   'Registro de sessões, cargas e evolução',
@@ -10,12 +10,12 @@ export const OFFER_BENEFITS = [
   'Suporte pelo app, com resposta por e-mail em até 24 horas',
 ];
 export const COMMERCIAL_PLANS = [
-  { id: 'basic', name: '9FIT PRO · Mensal', price: 'R$ 97,00', period: '/mês', link: 'https://invoice.infinitepay.io/plans/ronynapoleao/kvfp4S0k42' },
-  { id: 'annual', name: '9FIT PRO · Anual', price: 'R$ 997,00', period: '/ano', link: 'https://invoice.infinitepay.io/plans/ronynapoleao/TatHaBMsUX' },
+  { id: 'basic', name: '9FIT PRO · Mensal', price: 'R$ 97,00', period: '/1 mês de acesso', link: 'https://checkout.infinitepay.io/ronynapoleao/2utdwtAthR' },
+  { id: 'annual', name: '9FIT PRO · Anual', price: 'R$ 997,00', period: '/12 meses de acesso', link: 'https://checkout.infinitepay.io/ronynapoleao/y7bJTioTMm' },
 ] as const;
 export const OFFER_SCOPE = 'Profissionais são contratados separadamente via Staff, conforme disponibilidade e condições de cada serviço. A assinatura não inclui consultas, acompanhamento individual humano ou atendimento de urgência.';
 
 export type CommercialPlan = typeof COMMERCIAL_PLANS[number];
 export function commercialPlanHref(plan: CommercialPlan) {
-  return CHECKOUT_READY ? plan.link : `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Interesse em ${plan.name} — ${plan.price}${plan.period}`)}`;
+  return CHECKOUT_READY ? `/9fit/checkout/${plan.id}` : `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Interesse em ${plan.name} — ${plan.price}${plan.period}`)}`;
 }

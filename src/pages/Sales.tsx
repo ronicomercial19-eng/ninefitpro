@@ -14,7 +14,7 @@ export default function Sales() {
         <ul className="list-disc pl-5 space-y-2 text-muted-foreground">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
         {!CHECKOUT_READY && <p role="status" className="text-sm text-muted-foreground">Contratação online em configuração. Confirme disponibilidade e condições com a NINE FIT antes de pagar.</p>}
         <div className="grid gap-4 sm:grid-cols-2">{COMMERCIAL_PLANS.map(plan => <article key={plan.id} className={`rounded-2xl border p-5 space-y-3 ${params.get('plan') === plan.id ? 'border-primary' : 'border-border'}`}>
-          <h3 className="font-semibold">{plan.name}</h3><p className="text-xl text-primary">{plan.price}{plan.period}</p>
+          <h3 className="font-semibold">{plan.name}</h3><p className="text-xl text-primary">{plan.price}{plan.period}</p><p className="text-sm text-muted-foreground">Pagamento único, sem renovação automática.</p>
           <a className="inline-block rounded-xl bg-primary text-primary-foreground px-4 py-3" href={commercialPlanHref(plan)}>{CHECKOUT_READY ? 'Ver condições de contratação' : 'Consultar este plano'}</a>
         </article>)}</div><p className="text-sm text-muted-foreground">{OFFER_SCOPE}</p>
       </section>

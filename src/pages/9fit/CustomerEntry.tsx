@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { loginDestination } from '@/lib/loginDestination';
 import { clearEntry, confirmedAccess, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, readEntry, rememberEntry, setupDestination } from '@/lib/customerEntry';
 import { AppSupport } from '@/components/9fit/AppSupport';
+import { pendingPayment } from '@/lib/paymentReturn';
 
 export default function CustomerEntry() {
   const { user, loading: authLoading } = useAuth();
@@ -22,6 +23,7 @@ export default function CustomerEntry() {
   }, [paymentReturn, purchase]);
   useEffect(() => {
     if (!user || authLoading) return;
+    if (pendingPayment() && readEntry(entryStorage()) === 'payment_return') { navigate(PAYMENT_RETURN, { replace: true }); return; }
     let active = true; setError(false); setState(null);
     void (async () => {
       try {

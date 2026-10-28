@@ -5,8 +5,7 @@ import { Copy } from "lucide-react";
 
 export function InfinitePayWebhookConfig() {
   const { toast } = useToast();
-  // Using the domain from the current window location for accuracy
-  const webhookUrl = `${window.location.origin}/api/webhook/infinitepay`;
+  const webhookUrl = 'https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/infinitepay-webhook';
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(webhookUrl);

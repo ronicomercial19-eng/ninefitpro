@@ -6,8 +6,8 @@ import { readFileSync } from 'node:fs';
 test('um produto, dois períodos, links existentes e suporte definido', () => {
   assert.equal(COMMERCIAL_PLANS.length, 2);
   assert.deepEqual(COMMERCIAL_PLANS.map(p => p.price), ['R$ 97,00', 'R$ 997,00']);
-  assert.deepEqual(COMMERCIAL_PLANS.map(p => p.link), ['https://invoice.infinitepay.io/plans/ronynapoleao/kvfp4S0k42', 'https://invoice.infinitepay.io/plans/ronynapoleao/TatHaBMsUX']);
-  for (const plan of COMMERCIAL_PLANS) assert.equal(new URL(plan.link).hostname, 'invoice.infinitepay.io');
+  assert.deepEqual(COMMERCIAL_PLANS.map(p => p.link), ['https://checkout.infinitepay.io/ronynapoleao/2utdwtAthR', 'https://checkout.infinitepay.io/ronynapoleao/y7bJTioTMm']);
+  for (const plan of COMMERCIAL_PLANS) assert.equal(new URL(plan.link).hostname, 'checkout.infinitepay.io');
   assert.equal(SUPPORT_EMAIL, '9fit.nine@gmail.com');
   assert.ok(OFFER_BENEFITS.some(b => b.includes('24 horas')));
   assert.match(OFFER_SCOPE, /separadamente via Staff/);
@@ -28,12 +28,10 @@ test('suporte exige autenticação e não declara e-mail enviado sem confirmaç�
   assert.match(handler, /SUPPORT_FROM_EMAIL/);
 });
 
-test('a consulta mantém o plano e seu período sem enviar à avaliação gratuita', () => {
+test('a compra inicia um pedido vinculado ao período sem enviar ao link compartilhado', () => {
   for (const plan of COMMERCIAL_PLANS) {
     const link = commercialPlanHref(plan);
-    assert.equal(new URL(link).protocol, 'mailto:');
-    assert.match(decodeURIComponent(link), new RegExp(plan.name));
-    assert.ok(decodeURIComponent(link).includes(plan.price + plan.period));
+    assert.equal(link, `/9fit/checkout/${plan.id}`);
     assert.doesNotMatch(link, /assessment/);
   }
 });
