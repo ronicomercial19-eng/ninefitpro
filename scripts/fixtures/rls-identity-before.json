@@ -1,0 +1,2992 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "activation_events",
+    "policyname": "Only permanent users can view activation_events",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(((auth.jwt() ->> 'is_anonymous'::text))::boolean IS NOT TRUE)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "activation_events",
+    "policyname": "perm_only_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "activation_events",
+    "policyname": "perm_only_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ai_chat_messages",
+    "policyname": "admin reads ai messages",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin(auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ai_training_generations",
+    "policyname": "coach gerencia proprios treinos gerados",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(coach_id = auth.uid())",
+    "with_check": "(coach_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "aluno_periodizacao",
+    "policyname": "Coaches can view compatibilities for their athletes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(aluno_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "aluno_periodizacao",
+    "policyname": "Users can create periodization",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = aluno_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "aluno_periodizacao",
+    "policyname": "Users can view periodization",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = aluno_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "aluno_score_composite",
+    "policyname": "Professor/Admin vê scores",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_professor(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "alunos",
+    "policyname": "alunos_delete_access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "alunos",
+    "policyname": "alunos_insert_access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "alunos",
+    "policyname": "alunos_select_access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "alunos",
+    "policyname": "alunos_update_access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "analises_ia_aluno",
+    "policyname": "Professores podem gerenciar análises de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "analytics_events",
+    "policyname": "ae insert own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_id = auth.uid()) OR (user_id IS NULL))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "analytics_events",
+    "policyname": "ae read admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "api_access_logs",
+    "policyname": "Admins can view api logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin(auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "api_access_logs",
+    "policyname": "Authenticated insert api logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() IS NOT NULL)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "api_connectors",
+    "policyname": "connectors readable by staff",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_trainer(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "api_connectors",
+    "policyname": "connectors writable by admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((( SELECT private.fitpro_actor_role() AS fitpro_actor_role) = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))",
+    "with_check": "((( SELECT private.fitpro_actor_role() AS fitpro_actor_role) = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "api_keys",
+    "policyname": "ak admin all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_onboarding",
+    "policyname": "onboarding_coach_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((NOT COALESCE(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool), false)) AND private.fitpro_can_manage_athlete(athlete_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "app_onboarding",
+    "policyname": "onboarding_own_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (NOT COALESCE(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool), false)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "appointment_events",
+    "policyname": "appt_events_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((teacher_id = auth.uid()) OR is_trainer(auth.uid()) OR (athlete_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE (a.user_id = auth.uid())\nUNION\n SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_activation",
+    "policyname": "Athletes can update own activation",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(athlete_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE (a.user_id = auth.uid())\nUNION\n SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_activation",
+    "policyname": "coach_view_activation",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_activation",
+    "policyname": "own_activation",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_credits",
+    "policyname": "coach_view",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_credits",
+    "policyname": "own_credits",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_day_reviews",
+    "policyname": "day_reviews_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((athlete_id = ( SELECT fn_current_athlete_id() AS fn_current_athlete_id)) AND (NOT COALESCE(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool), false)))",
+    "with_check": "((athlete_id = ( SELECT fn_current_athlete_id() AS fn_current_athlete_id)) AND (review_date = ((now() AT TIME ZONE 'America/Sao_Paulo'::text))::date) AND (NOT COALESCE(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool), false)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_pdi_history",
+    "policyname": "coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_pdi_history",
+    "policyname": "own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_planning_history",
+    "policyname": "coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_planning_history",
+    "policyname": "own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_profile_snapshots",
+    "policyname": "coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_profile_snapshots",
+    "policyname": "own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_subapp_access",
+    "policyname": "athlete_own_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "athlete_subapp_access",
+    "policyname": "coach_manage",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes",
+    "policyname": "Authorized users can manage assessments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((estudante_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.user_id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes",
+    "policyname": "Professors manage assessments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((estudante_id IN ( SELECT students.id\n   FROM students\n  WHERE (students.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes",
+    "policyname": "Users can view their own assessments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(estudante_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_fisicas",
+    "policyname": "Professores podem gerenciar avaliações de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))",
+    "with_check": "(aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_fisicas",
+    "policyname": "Professores podem ver avaliações de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Athletes FitPro inserem avaliacoes",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(((origem = ANY (ARRAY['avaliacao_guiada'::text, 'peso_avulso'::text, 'autoavaliacao'::text, 'self_checkin'::text])) AND (EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = avaliacoes_unificadas.athlete_id) AND ((a.user_id = auth.uid()) OR (EXISTS ( SELECT 1\n           FROM athlete_auth_link l\n          WHERE ((l.athlete_id = a.id) AND (l.user_id = auth.uid()))))))))) OR is_admin(auth.uid()) OR (EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = avaliacoes_unificadas.athlete_id) AND (a.coach_id = auth.uid())))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Athletes FitPro veem suas avaliacoes",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((athlete_id IN ( SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid()))) OR (aluno_id IN ( SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Athletes insert own self checkin",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((origem = 'self_checkin'::text) AND (athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Athletes view own avaliacoes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Professores gerenciam avaliacoes de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))) OR (athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))) OR (athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Professors can insert assessments for their students",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "avaliacoes_unificadas",
+    "policyname": "Professors manage athlete avaliacoes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bio_activity_logs",
+    "policyname": "act_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "biohacker_protocols",
+    "policyname": "protocols readable",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((status = 'active'::text) OR has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'trainer'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "biohacker_protocols",
+    "policyname": "protocols writable by trainer/admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'trainer'::app_role))",
+    "with_check": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'trainer'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "class_bookings",
+    "policyname": "Users can delete own bookings",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "((user_id = auth.uid()) OR (user_email = current_user_email()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "class_bookings",
+    "policyname": "Users can insert own bookings",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_id = auth.uid()) OR (user_email = current_user_email()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "class_bookings",
+    "policyname": "Users can update own bookings",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "((user_id = auth.uid()) OR (user_email = current_user_email()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "class_bookings",
+    "policyname": "Users can view own bookings",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = auth.uid()) OR (user_email = current_user_email()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "class_schedules",
+    "policyname": "Admins can manage class_schedules",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_trainer(auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "community_cheers",
+    "policyname": "cc delete own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "community_cheers",
+    "policyname": "cc insert own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "community_posts",
+    "policyname": "cp delete own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "community_posts",
+    "policyname": "cp insert own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "community_posts",
+    "policyname": "cp update own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "credit_transactions",
+    "policyname": "own_transactions",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "daily_checkins",
+    "policyname": "Athlete manages own daily checkin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))) OR (athlete_id IN ( SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid()))))",
+    "with_check": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))) OR (athlete_id IN ( SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "daily_protocol_blocks",
+    "policyname": "athlete_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "daily_protocol_blocks",
+    "policyname": "coach_view",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "daily_workouts",
+    "policyname": "fitpro_daily_workouts_coach_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND private.fitpro_can_manage_athlete(athlete_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "diet_meal_items",
+    "policyname": "athlete_reads_own_diet_meal_items",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(diet_meal_id IN ( SELECT dm.id\n   FROM ((diet_meals dm\n     JOIN student_diet_assignments sda ON ((sda.id = dm.diet_assignment_id)))\n     JOIN athletes a ON ((a.id = sda.student_id)))\n  WHERE (a.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "diet_meal_items",
+    "policyname": "creator_manages_diet_meal_items",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(diet_meal_id IN ( SELECT dm.id\n   FROM (diet_meals dm\n     JOIN student_diet_assignments sda ON ((sda.id = dm.diet_assignment_id)))\n  WHERE (sda.created_by = auth.uid())))",
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "diet_meals",
+    "policyname": "athlete_reads_own_diet_meals",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(diet_assignment_id IN ( SELECT sda.id\n   FROM (student_diet_assignments sda\n     JOIN athletes a ON ((a.id = sda.student_id)))\n  WHERE (a.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "diet_meals",
+    "policyname": "creator_manages_diet_meals",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(diet_assignment_id IN ( SELECT sda.id\n   FROM student_diet_assignments sda\n  WHERE (sda.created_by = auth.uid())))",
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ecosystem_config",
+    "policyname": "Admins can manage ecosystem config",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ecosystem_config",
+    "policyname": "Professors can read ecosystem config",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "has_role(auth.uid(), 'professor'::app_role)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "estudantes",
+    "policyname": "Staff can view students",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_trainer(auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "exercise_logs",
+    "policyname": "Owner or staff view exercise logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_trainer(auth.uid()) OR is_admin(auth.uid()) OR (EXISTS ( SELECT 1\n   FROM workout_logs wl\n  WHERE ((wl.id = exercise_logs.workout_log_id) AND (wl.student_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "exercises",
+    "policyname": "Authenticated users manage exercises",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'authenticated'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "exercises",
+    "policyname": "Only authenticated users can manage exercises",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'authenticated'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "exercises",
+    "policyname": "Staff write exercises",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_trainer(auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": "(is_trainer(auth.uid()) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "exercises_backup_pre_goal",
+    "policyname": "service_role_only",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "feed_visibility",
+    "policyname": "fv write author",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(EXISTS ( SELECT 1\n   FROM community_posts p\n  WHERE ((p.id = feed_visibility.post_id) AND (p.user_id = auth.uid()))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM community_posts p\n  WHERE ((p.id = feed_visibility.post_id) AND (p.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fitpro_connections",
+    "policyname": "Admins manage fitpro connections",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin(auth.uid())",
+    "with_check": "is_admin(auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fitpro_delivery_log",
+    "policyname": "Professor le logs de seus atletas",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((EXISTS ( SELECT 1\n   FROM alunos a\n  WHERE ((a.id = fitpro_delivery_log.athlete_id) AND (a.professor_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM athletes ath\n  WHERE ((ath.id = fitpro_delivery_log.athlete_id) AND (ath.coach_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fitpro_events",
+    "policyname": "Admins view fitpro events",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin(auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fitpro_events",
+    "policyname": "Authenticated insert fitpro events",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() IS NOT NULL)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fitpro_student_map",
+    "policyname": "Admins manage fitpro student map",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin(auth.uid())",
+    "with_check": "is_admin(auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "generated_workout_plans",
+    "policyname": "Users can create their own generated plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "generated_workout_plans",
+    "policyname": "Users can update their own generated plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "generated_workout_plans",
+    "policyname": "Users can view their own generated plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "gym_classes",
+    "policyname": "Admins podem gerenciar aulas",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'super_admin'::app_role) OR is_trainer(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "habit_logs",
+    "policyname": "logs_delete_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(athlete_id IN ( SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "habit_logs",
+    "policyname": "logs_insert_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(athlete_id IN ( SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "habit_logs",
+    "policyname": "logs_select_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "habits",
+    "policyname": "habits_insert_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(athlete_id IN ( SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "habits",
+    "policyname": "habits_select_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "habits",
+    "policyname": "habits_update_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(athlete_id IN ( SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "health_metrics",
+    "policyname": "health: insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "health_metrics",
+    "policyname": "health: select",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "health_metrics",
+    "policyname": "health: update",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "historico_avaliacoes",
+    "policyname": "Professors can insert assessment history",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((estudante_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "historico_avaliacoes",
+    "policyname": "Users can view their own assessment history",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(estudante_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "historico_treinos_realizados",
+    "policyname": "Professores podem ver histórico de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))",
+    "with_check": "(aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hydration_logs",
+    "policyname": "Athlete manages own hydration log",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))) OR (athlete_id IN ( SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid()))))",
+    "with_check": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))) OR (athlete_id IN ( SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "infinitepay_orders",
+    "policyname": "infinitepay_own_orders",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (NOT COALESCE(((auth.jwt() ->> 'is_anonymous'::text))::boolean, true)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "instructor_groups",
+    "policyname": "ig write owner",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(EXISTS ( SELECT 1\n   FROM instructor_profiles ip\n  WHERE ((ip.id = instructor_groups.instructor_id) AND (ip.user_id = auth.uid()))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM instructor_profiles ip\n  WHERE ((ip.id = instructor_groups.instructor_id) AND (ip.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "instructor_profiles",
+    "policyname": "ip delete own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "instructor_profiles",
+    "policyname": "ip insert own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "instructor_profiles",
+    "policyname": "ip update own or admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "((user_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "instructor_subscriptions",
+    "policyname": "is read own or instructor",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM instructor_profiles ip\n  WHERE ((ip.id = instructor_subscriptions.instructor_id) AND (ip.user_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "logs_sincronizacao",
+    "policyname": "Admins can insert sync logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'super_admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "logs_sincronizacao",
+    "policyname": "Apenas admins podem ver logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.user_id = auth.uid()) AND (profiles.role = 'admin'::user_role))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "metas_progresso",
+    "policyname": "metas: delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "metas_progresso",
+    "policyname": "metas: insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "metas_progresso",
+    "policyname": "metas: select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "metas_progresso",
+    "policyname": "metas: update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "modelos_de_treino",
+    "policyname": "Professors can create models for their students",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((estudante_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM alunos\n  WHERE ((alunos.id = modelos_de_treino.estudante_id) AND (alunos.professor_id = auth.uid())))) OR (auth.uid() = estudante_id) OR is_trainer(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "modelos_de_treino",
+    "policyname": "Professors can update models",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "((estudante_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM alunos\n  WHERE ((alunos.id = modelos_de_treino.estudante_id) AND (alunos.professor_id = auth.uid())))) OR (auth.uid() = estudante_id) OR is_trainer(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "modelos_de_treino",
+    "policyname": "Users can view models",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((estudante_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM alunos\n  WHERE ((alunos.id = modelos_de_treino.estudante_id) AND (alunos.professor_id = auth.uid())))) OR (auth.uid() = estudante_id) OR is_trainer(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "monetization_offers",
+    "policyname": "offers readable",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((status = 'active'::text) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "newsletter_optins",
+    "policyname": "newsletter: own insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "newsletter_optins",
+    "policyname": "newsletter: own select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "newsletter_optins",
+    "policyname": "newsletter: own update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ninefit_checkins",
+    "policyname": "Admins manage all checkins",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ninefit_checkins",
+    "policyname": "Professors manage own checkins",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ninefit_checkins",
+    "policyname": "Students view own checkins",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(aluno_id IN ( SELECT al.id\n   FROM ((athlete_auth_link aal\n     JOIN athletes a ON ((a.id = aal.athlete_id)))\n     JOIN alunos al ON (((al.email)::text = a.email)))\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ninefit_reports",
+    "policyname": "Admins manage all reports",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ninefit_reports",
+    "policyname": "Professors manage own reports",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ninefit_reports",
+    "policyname": "Students view own published reports",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((status = 'published'::text) AND (aluno_id IN ( SELECT al.id\n   FROM ((athlete_auth_link aal\n     JOIN athletes a ON ((a.id = aal.athlete_id)))\n     JOIN alunos al ON (((al.email)::text = a.email)))\n  WHERE (aal.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "onboarding_progress",
+    "policyname": "onboarding own row",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(user_id = auth.uid())",
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "pain_reports",
+    "policyname": "athlete_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "pain_reports",
+    "policyname": "coach_view",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "payments",
+    "policyname": "Professors manage student payments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((student_id = auth.uid()) OR (student_id IN ( SELECT students.profile_id\n   FROM students\n  WHERE (students.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "payments",
+    "policyname": "Students view own payments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(student_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "payments",
+    "policyname": "Users can view their own payments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(student_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodization_generation_failures",
+    "policyname": "Admins can read failures",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodization_history",
+    "policyname": "Users can insert periodization history",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((changed_by = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodization_history",
+    "policyname": "Users can view history of their saved periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(saved_periodization_id IN ( SELECT saved_periodizations.id\n   FROM saved_periodizations\n  WHERE ((saved_periodizations.user_profile_id IN ( SELECT user_profiles.id\n           FROM user_profiles\n          WHERE (user_profiles.user_id = auth.uid()))) OR (saved_periodizations.athlete_id IN ( SELECT alunos.id\n           FROM alunos\n          WHERE (alunos.professor_id = auth.uid()))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodization_plans",
+    "policyname": "Users can create own plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodization_plans",
+    "policyname": "Users can view own plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "Professors can create periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = professor_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "Professors can update periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = professor_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "Users can view their own periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (auth.uid() = professor_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "periodizations_owner_or_professor_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = auth.uid()) OR (professor_id = auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "periodizations_professor_delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "periodizations_professor_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "periodizations",
+    "policyname": "periodizations_professor_update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "personal_records",
+    "policyname": "pr: insert system",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "personal_records",
+    "policyname": "pr: select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "physical_assessments",
+    "policyname": "Professors can create assessments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = professor_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "physical_assessments",
+    "policyname": "Professors can update assessments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = professor_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "physical_assessments",
+    "policyname": "Users can view their own assessments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (auth.uid() = professor_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "physio_modules",
+    "policyname": "physio readable",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((status = 'active'::text) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "physio_modules",
+    "policyname": "physio writable by admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "planos",
+    "policyname": "Admins podem gerenciar planos",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "planos_de_treino_gerados",
+    "policyname": "Owner manage plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((professor_id = auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": "((professor_id = auth.uid()) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "planos_treino_aluno",
+    "policyname": "Professores podem gerenciar planos de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "Plans delete by coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "Plans insert by coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "Plans select by coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "Plans update by coach",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "coach_delete_plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "coach_insert_plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "coach_update_plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "plans",
+    "policyname": "plan_owner_or_coach_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = plans.athlete_id) AND (a.coach_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM periodizations p\n  WHERE ((p.id = plans.periodization_id) AND ((p.user_id = auth.uid()) OR (p.professor_id = auth.uid()))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "posts",
+    "policyname": "Authors can manage their posts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(author_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "postura_scans",
+    "policyname": "fitpro_postura_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (status = 'pending'::text) AND ((result IS NULL) OR (result = '{}'::jsonb)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND (( SELECT private.fitpro_actor_role() AS fitpro_actor_role) IS NOT NULL) AND ((athlete_id IS NULL) OR private.fitpro_can_read_student(athlete_id)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "postura_scans",
+    "policyname": "fitpro_postura_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND (( SELECT private.fitpro_actor_role() AS fitpro_actor_role) IS NOT NULL) AND\nCASE\n    WHEN (athlete_id IS NOT NULL) THEN private.fitpro_can_read_student(athlete_id)\n    ELSE ((user_id = ( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1\n       FROM athletes a\n      WHERE ((a.user_id = postura_scans.user_id) AND private.fitpro_can_manage_athlete(a.id)))))\nEND)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "professional_ai_turns",
+    "policyname": "professional_ai_history_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((coach_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND private.fitpro_can_manage_athlete(athlete_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "professional_ai_turns",
+    "policyname": "professional_ai_history_remove",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "((coach_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND private.fitpro_can_manage_athlete(athlete_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profile_periodization_matches",
+    "policyname": "Owner insert periodization matches",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = profile_periodization_matches.user_profile_id) AND (up.user_id = auth.uid())))) OR is_admin(auth.uid()) OR is_trainer(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profile_periodization_matches",
+    "policyname": "Users can view their own matches",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Admins can insert profiles",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR (auth.uid() = user_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Admins can view all profiles",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "is_admin(auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Users can update own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "Users can view own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "progresso_aluno",
+    "policyname": "Professores podem gerenciar progresso de seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(id_aluno IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))",
+    "with_check": "(id_aluno IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "protocol_feedback",
+    "policyname": "athlete_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "protocol_feedback",
+    "policyname": "coach_view",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "questionnaire_responses",
+    "policyname": "Users can create their own responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "questionnaire_responses",
+    "policyname": "Users can view their own responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "real_time_analytics",
+    "policyname": "Own analytics insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "real_time_analytics",
+    "policyname": "Users can view their own analytics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "referencias_planejamento",
+    "policyname": "authenticated_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.role() = 'authenticated'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "referencias_planejamento",
+    "policyname": "service_role_delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "referencias_planejamento",
+    "policyname": "service_role_update",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "referencias_planejamento",
+    "policyname": "service_role_write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.role() = 'service_role'::text)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga",
+    "policyname": "cargas: delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga",
+    "policyname": "cargas: insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga",
+    "policyname": "cargas: select",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga",
+    "policyname": "cargas: update",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga_deprecated",
+    "policyname": "carga: delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(aluno_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga_deprecated",
+    "policyname": "carga: insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(aluno_id, auth.uid()) OR is_aluno_student(aluno_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga_deprecated",
+    "policyname": "carga: select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(aluno_id, auth.uid()) OR is_aluno_student(aluno_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "registros_carga_deprecated",
+    "policyname": "carga: update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(aluno_id, auth.uid()) OR is_aluno_student(aluno_id, auth.uid()))",
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(aluno_id, auth.uid()) OR is_aluno_student(aluno_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "saved_periodizations",
+    "policyname": "Users can create their own saved periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid()))) OR (athlete_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "saved_periodizations",
+    "policyname": "Users can delete their own saved periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "((user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid()))) OR (athlete_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "saved_periodizations",
+    "policyname": "Users can update their own saved periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid()))) OR (athlete_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "saved_periodizations",
+    "policyname": "Users can view their own saved periodizations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((user_profile_id IN ( SELECT user_profiles.id\n   FROM user_profiles\n  WHERE (user_profiles.user_id = auth.uid()))) OR (athlete_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "skill_activations",
+    "policyname": "skill_activations_admin_manage",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((( SELECT private.fitpro_actor_role() AS fitpro_actor_role) = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))",
+    "with_check": "((( SELECT private.fitpro_actor_role() AS fitpro_actor_role) = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "skill_events",
+    "policyname": "skill_events insert own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "skill_events",
+    "policyname": "skill_events read own or staff",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'trainer'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "skills",
+    "policyname": "skills_admin_manage",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((( SELECT private.fitpro_actor_role() AS fitpro_actor_role) = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))",
+    "with_check": "((( SELECT private.fitpro_actor_role() AS fitpro_actor_role) = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "smart_treino_macro_rules",
+    "policyname": "Professors manage own macro rules",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "smart_treino_muscle_volume",
+    "policyname": "Professors manage muscle volume via macro rules",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(EXISTS ( SELECT 1\n   FROM smart_treino_macro_rules mr\n  WHERE ((mr.id = smart_treino_muscle_volume.macro_rules_id) AND (mr.professor_id = auth.uid()))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM smart_treino_macro_rules mr\n  WHERE ((mr.id = smart_treino_muscle_volume.macro_rules_id) AND (mr.professor_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "smart_treino_profiles",
+    "policyname": "Professors manage own profiles",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": "(professor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "smart_treino_protocols",
+    "policyname": "Admins can manage protocols",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "is_admin(auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "source_sync_logs",
+    "policyname": "Professor/Admin vê logs dos seus alunos",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_professor(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strava_activities",
+    "policyname": "sa read own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strava_connections",
+    "policyname": "sc read own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strength_records",
+    "policyname": "Users can insert their own strength records",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strength_records",
+    "policyname": "Users can update their own strength records",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strength_records",
+    "policyname": "Users can view their own strength records",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stripe_customers",
+    "policyname": "sc read own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stripe_subscriptions",
+    "policyname": "ss read admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stripe_subscriptions",
+    "policyname": "ss read own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_activity_history",
+    "policyname": "Professors manage athlete activity history",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR (athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR (athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_anamnesis",
+    "policyname": "Professors manage athlete anamnesis",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_credits",
+    "policyname": "credits_select_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(student_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE (a.user_id = auth.uid())\nUNION\n SELECT aal.athlete_id\n   FROM athlete_auth_link aal\n  WHERE (aal.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_diet_assignments",
+    "policyname": "Athletes can view own diets",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM athletes\n  WHERE ((athletes.id = student_diet_assignments.student_id) AND (athletes.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_diet_assignments",
+    "policyname": "Coaches can manage diet assignments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((created_by = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM athletes\n  WHERE ((athletes.id = student_diet_assignments.student_id) AND (athletes.coach_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_habit_days",
+    "policyname": "habit_days_add",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND (habit_date = ((now() AT TIME ZONE 'America/Sao_Paulo'::text))::date))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_habit_days",
+    "policyname": "habit_days_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_habit_days",
+    "policyname": "habit_days_remove",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND (habit_date = ((now() AT TIME ZONE 'America/Sao_Paulo'::text))::date))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_habits",
+    "policyname": "habits_owner",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))",
+    "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_invitations",
+    "policyname": "Professores podem criar convites",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_invitations",
+    "policyname": "Professores podem ver seus convites",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_library_assignments",
+    "policyname": "Assigned coaches manage library assignments",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = student_library_assignments.athlete_id) AND (a.coach_id = auth.uid())))) OR is_admin(auth.uid()))",
+    "with_check": "((EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = student_library_assignments.athlete_id) AND (a.coach_id = auth.uid())))) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_library_assignments",
+    "policyname": "Athlete updates own assignments",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())\nUNION\n SELECT athlete_auth_link.athlete_id\n   FROM athlete_auth_link\n  WHERE (athlete_auth_link.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_library_assignments",
+    "policyname": "Athletes and assigned coaches read library assignments",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((athlete_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE ((a.user_id = auth.uid()) OR (a.email = current_user_email())))) OR (EXISTS ( SELECT 1\n   FROM athletes a\n  WHERE ((a.id = student_library_assignments.athlete_id) AND (a.coach_id = auth.uid())))) OR is_admin(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_measurements",
+    "policyname": "Athletes view own measurements",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_measurements",
+    "policyname": "Professors manage athlete measurements",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((athlete_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_prescription_versions",
+    "policyname": "prescription_version_read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND (private.fitpro_can_manage_athlete(athlete_id) OR (athlete_id = ( SELECT fn_current_athlete_id() AS fn_current_athlete_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_profiles",
+    "policyname": "Students can view own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_profiles",
+    "policyname": "Teachers can manage their students profiles",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(teacher_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "student_workout_drafts",
+    "policyname": "workout_draft_owner",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((author_id = ( SELECT auth.uid() AS uid)) AND private.fitpro_can_manage_athlete(athlete_id) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))",
+    "with_check": "((author_id = ( SELECT auth.uid() AS uid)) AND private.fitpro_can_manage_athlete(athlete_id) AND (( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "students",
+    "policyname": "Professors can manage their students",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": "((professor_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "students",
+    "policyname": "professors_manage_students",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(professor_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "supersets",
+    "policyname": "Owner manage supersets",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((created_by = auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": "((created_by = auth.uid()) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "support_tickets",
+    "policyname": "support_tickets_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{anon,authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((requester_user_id IS NULL) OR (requester_user_id = auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "support_tickets",
+    "policyname": "support_tickets_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(requester_user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "support_tickets",
+    "policyname": "support_tickets_update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(requester_user_id = auth.uid())",
+    "with_check": "(requester_user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_events",
+    "policyname": "Admins can view all events",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "has_role(auth.uid(), 'admin'::app_role)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_events",
+    "policyname": "Professors can view their events",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((actor_id = auth.uid()) OR (target_id = auth.uid()) OR has_role(auth.uid(), 'professor'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_events",
+    "policyname": "Users can insert events",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(actor_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_health",
+    "policyname": "system_health service read",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_health",
+    "policyname": "system_health service write",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": "(auth.role() = 'service_role'::text)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "system_settings",
+    "policyname": "service_role_only",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "training_phases",
+    "policyname": "Users can view own phases",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(periodization_plan_id IN ( SELECT pp.id\n   FROM (periodization_plans pp\n     JOIN user_profiles up ON ((pp.user_profile_id = up.id)))\n  WHERE (up.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "treinos_realizados",
+    "policyname": "treinos: aluno atualiza próprio",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "treinos_realizados",
+    "policyname": "treinos: aluno deleta próprio",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "treinos_realizados",
+    "policyname": "treinos: aluno insere próprio",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "treinos_realizados",
+    "policyname": "treinos: aluno vê o próprio",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "uploads_periodizacao",
+    "policyname": "Users can create uploads",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = estudante_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "uploads_periodizacao",
+    "policyname": "Users can view uploads",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = estudante_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_achievements",
+    "policyname": "Own achievements insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_email = current_user_email()) OR is_trainer(auth.uid()) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_achievements",
+    "policyname": "Users can view their own achievements",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(user_email = (( SELECT users.email\n   FROM auth.users\n  WHERE (users.id = auth.uid())))::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_context_settings",
+    "policyname": "context_settings_own",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (NOT COALESCE(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool), false)))",
+    "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (NOT COALESCE(( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool), false)))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_credits",
+    "policyname": "Owner view credits",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_email = current_user_email()) OR is_admin(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_metrics",
+    "policyname": "Users can insert their own metrics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_metrics",
+    "policyname": "Users can update their own metrics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_metrics",
+    "policyname": "Users can view their own metrics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_plans",
+    "policyname": "Owner view plans",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_email = current_user_email()) OR is_admin(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profile_details",
+    "policyname": "Owner view profile details",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_email = current_user_email()) OR is_admin(auth.uid()) OR is_trainer(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Users can create own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Users can update own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Users can view own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles_extended",
+    "policyname": "Users can create their own extended profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles_extended",
+    "policyname": "Users can update their own extended profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles_extended",
+    "policyname": "Users can view their own extended profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_program_progress",
+    "policyname": "Users can manage their own progress",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(user_email = (( SELECT users.email\n   FROM auth.users\n  WHERE (users.id = auth.uid())))::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_roles",
+    "policyname": "Users can view own roles",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_stats_agg",
+    "policyname": "stats: select",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_admin(auth.uid()) OR is_aluno_professor(athlete_id, auth.uid()) OR is_aluno_student(athlete_id, auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_workout_logs",
+    "policyname": "Owner view user workout logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((user_email = current_user_email()) OR is_trainer(auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vacation_freeze_requests",
+    "policyname": "Users can manage their own freeze requests",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(user_email = (( SELECT users.email\n   FROM auth.users\n  WHERE (users.id = auth.uid())))::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vacation_requests",
+    "policyname": "Coaches can manage vacation requests",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(student_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vacation_requests",
+    "policyname": "Students can create vacation requests",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(student_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "vacation_requests",
+    "policyname": "Students can view their own vacation requests",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(student_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "weekly_structures",
+    "policyname": "Users can view own structures",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(training_phase_id IN ( SELECT tp.id\n   FROM ((training_phases tp\n     JOIN periodization_plans pp ON ((tp.periodization_plan_id = pp.id)))\n     JOIN user_profiles up ON ((pp.user_profile_id = up.id)))\n  WHERE (up.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_assignments_new",
+    "policyname": "Students can view their assignments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(student_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_assignments_new",
+    "policyname": "Teachers can assign workouts to their students",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(assigned_by = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_exercises",
+    "policyname": "Users can view own workout exercises",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(daily_workout_id IN ( SELECT dw.id\n   FROM ((((daily_workouts dw\n     JOIN weekly_structures ws ON ((dw.weekly_structure_id = ws.id)))\n     JOIN training_phases tp ON ((ws.training_phase_id = tp.id)))\n     JOIN periodization_plans pp ON ((tp.periodization_plan_id = pp.id)))\n     JOIN user_profiles up ON ((pp.user_profile_id = up.id)))\n  WHERE (up.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_exercises",
+    "policyname": "fitpro_workout_exercises_coach_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((( SELECT ((auth.jwt() ->> 'is_anonymous'::text))::boolean AS bool) IS FALSE) AND (EXISTS ( SELECT 1\n   FROM daily_workouts d\n  WHERE ((d.id = workout_exercises.daily_workout_id) AND private.fitpro_can_manage_athlete(d.athlete_id)))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_logs",
+    "policyname": "Owner or staff insert workout logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((student_id = auth.uid()) OR is_trainer(auth.uid()) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_logs",
+    "policyname": "Owner or staff view workout logs",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((student_id = auth.uid()) OR is_trainer(auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_models",
+    "policyname": "Authenticated users can manage workout models",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'authenticated'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_models",
+    "policyname": "Staff manage workout models",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(is_trainer(auth.uid()) OR is_admin(auth.uid()))",
+    "with_check": "(is_trainer(auth.uid()) OR is_admin(auth.uid()))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_progress",
+    "policyname": "Alunos veem seu próprio progresso",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "((aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE ((alunos.email)::text = current_user_email()))) OR (aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_progress",
+    "policyname": "Athletes can insert own progress",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(aluno_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE (a.user_id = auth.uid())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_progress",
+    "policyname": "Athletes can view own progress",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(aluno_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE (a.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_progress",
+    "policyname": "Coaches can view athlete progress",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(aluno_id IN ( SELECT a.id\n   FROM athletes a\n  WHERE (a.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_progress",
+    "policyname": "Sistema pode inserir progresso",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE ((alunos.email)::text = current_user_email()))) OR (aluno_id IN ( SELECT alunos.id\n   FROM alunos\n  WHERE (alunos.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_schedules",
+    "policyname": "Users can create their own schedules",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((auth.uid() = user_id) OR (auth.uid() = professor_id))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_schedules",
+    "policyname": "Users can update their own schedules",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((auth.uid() = user_id) OR (auth.uid() = professor_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workout_schedules",
+    "policyname": "Users can view their own schedules",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (auth.uid() = professor_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workouts",
+    "policyname": "Coach reads own students workouts",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(student_id IN ( SELECT athletes.id\n   FROM athletes\n  WHERE (athletes.coach_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workouts",
+    "policyname": "Professors can manage workouts for their students",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(student_id IN ( SELECT students.id\n   FROM students\n  WHERE (students.professor_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workouts",
+    "policyname": "Professors manage student workouts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((student_id IN ( SELECT students.id\n   FROM students\n  WHERE (students.professor_id = auth.uid()))) OR has_role(auth.uid(), 'admin'::app_role))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workouts",
+    "policyname": "Students can view their own workouts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(student_id IN ( SELECT students.id\n   FROM students\n  WHERE (students.email = (( SELECT users.email\n           FROM auth.users\n          WHERE (users.id = auth.uid())))::text)))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "workouts_new",
+    "policyname": "Teachers can manage workouts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(created_by = auth.uid())",
+    "with_check": null
+  }
+]
