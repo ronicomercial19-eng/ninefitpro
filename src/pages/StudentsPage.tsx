@@ -50,13 +50,28 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(0);
+  const [debouncedSearch,setDebouncedSearch]=useState("");
+  useEffect(()=>{const timer=setTimeout(()=>setDebouncedSearch(searchTerm),300);return()=>clearTimeout(timer);},[searchTerm]);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const athleteIds = workspace.students.map(row => row.id);
+  const rosterPage=useQuery({
+    queryKey:["professor-student-page",user?.id,page,debouncedSearch,filter],
+    enabled:!!user && !workspace.error,
+    staleTime:60_000,
+    queryFn:async({signal})=>{
+      const {data,error}=await withTimeout(supabase.rpc("fn_coach_students_page" as any,{p_offset:page*50,p_limit:50,p_search:debouncedSearch,p_filter:filter} as any).abortSignal(signal));
+      if(error)throw error;
+      const result=data as unknown as {students:{id:string}[];total:number};
+      if(!Array.isArray(result?.students)||!Number.isSafeInteger(result.total))throw Error("Lista de alunos inválida");
+      return result;
+    },
+  });
+  const pageIds = rosterPage.data?.students.map(row=>row.id) ?? [];
+  const athleteIds = [...new Set([...pageIds,...(workspace.athleteId?[workspace.athleteId]:[])])];
   const studentQueryKey = ["professor-student-details", user?.id, athleteIds];
   const studentsQuery = useQuery({
     queryKey: studentQueryKey,
-    enabled: !!user && !workspace.loading && !workspace.error,
+    enabled: !!user && rosterPage.isSuccess && !workspace.error,
     staleTime: 60_000,
     queryFn: async ({ signal }): Promise<Student[]> => {
       const athletesData = await fetchBatchedRows(athleteIds, async ids => {
@@ -74,7 +89,7 @@ export default function StudentsPage() {
         // Extract email from: 1) email column, 2) metadata.email, 3) fallback empty
         const athleteEmail =
           athlete.email ||
-          (athlete.metadata as { email?: string } | null)?.email ||
+          (typeof (athlete.metadata as { email?: unknown } | null)?.email === "string" ? (athlete.metadata as {email:string}).email : "") ||
           "";
 
         return {
@@ -96,12 +111,12 @@ export default function StudentsPage() {
         };
       });
 
-      return mappedStudents.sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
+      return mappedStudents.sort((a, b) => athleteIds.indexOf(a.id)-athleteIds.indexOf(b.id));
     },
   });
   const students = studentsQuery.data ?? [];
-  const loading = workspace.loading || studentsQuery.isLoading;
-  const hasError = workspace.error || studentsQuery.isError;
+  const loading = rosterPage.isPending || studentsQuery.isLoading || searchTerm!==debouncedSearch;
+  const hasError = workspace.error || rosterPage.isError || studentsQuery.isError;
 
   const selectedStudent = students.find(s => s.id === workspace.athleteId) ?? null;
 
@@ -114,27 +129,18 @@ export default function StudentsPage() {
       .slice(0, 2);
   };
 
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch =
-      student.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    if (filter === "all") return matchesSearch;
-    if (filter === "blocked") return matchesSearch && !student.ativo;
-    if (filter === "active") return matchesSearch && student.ativo;
-
-    return matchesSearch;
-  });
-
   useEffect(() => { setPage(0); }, [searchTerm, filter, user?.id]);
-  const pageCount = Math.max(1, Math.ceil(filteredStudents.length / 50));
+  const totalStudents=rosterPage.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalStudents / 50));
+  useEffect(()=>{if(rosterPage.data&&page>=pageCount)setPage(pageCount-1);},[rosterPage.data,page,pageCount]);
   const currentPage = Math.min(page, pageCount - 1);
-  const visibleStudents = filteredStudents.slice(currentPage * 50, (currentPage + 1) * 50);
+  const visibleStudents = students.filter(student=>pageIds.includes(student.id));
 
   const handleStudentAdded = () => {
     setShowAddForm(false);
     void queryClient.invalidateQueries({ queryKey: ["professor-students", user?.id] });
     void queryClient.invalidateQueries({ queryKey: ["professor-student-details", user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ["professor-student-page", user?.id] });
     toast.success("Aluno adicionado com sucesso!");
   };
 
@@ -154,6 +160,8 @@ export default function StudentsPage() {
   const handleStudentUpdated = (updatedStudent: Student) => {
     queryClient.setQueryData<Student[]>(studentQueryKey, previous =>
       previous?.map(student => student.id === updatedStudent.id ? updatedStudent : student));
+    void queryClient.invalidateQueries({queryKey:["professor-student-page",user?.id]});
+    void queryClient.invalidateQueries({queryKey:["professor-students",user?.id]});
   };
 
   // Show student detailed view
@@ -233,13 +241,13 @@ export default function StudentsPage() {
       {hasError && (
         <Card><CardContent className="py-6" role="alert">
           <p>Não foi possível carregar a lista completa de alunos.</p>
-          <Button variant="outline" onClick={() => { workspace.retry(); void studentsQuery.refetch(); }}>Tentar novamente</Button>
+          <Button variant="outline" onClick={() => { workspace.retry(); void rosterPage.refetch(); void studentsQuery.refetch(); }}>Tentar novamente</Button>
         </CardContent></Card>
       )}
 
-      {!loading && !hasError && filteredStudents.length > 0 && (
+      {!loading && !hasError && totalStudents > 0 && (
         <nav aria-label="Páginas de alunos" className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm text-muted-foreground">{filteredStudents.length} alunos · página {currentPage + 1} de {pageCount}</span>
+          <span className="text-sm text-muted-foreground">{totalStudents} alunos · página {currentPage + 1} de {pageCount}</span>
           <div className="flex gap-2">
             <Button variant="outline" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Anterior</Button>
             <Button variant="outline" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)}>Próxima</Button>
@@ -314,7 +322,7 @@ export default function StudentsPage() {
         </div>
       )}
 
-      {!loading && !hasError && filteredStudents.length === 0 && (
+      {!loading && !hasError && totalStudents === 0 && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
