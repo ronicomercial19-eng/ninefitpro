@@ -1,5 +1,9 @@
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { fetchBatchedRows } from "@/lib/batchedRows";
+import { withTimeout } from "@/lib/withTimeout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,45 +45,29 @@ interface Student {
 
 export default function StudentsPage() {
   const workspace = useProfessorWorkspace();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  useEffect(() => {
-    fetchStudents();
-  }, [workspace.students]);
-
-  const fetchStudents = async () => {
-    try {
-      setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        toast.error("Usuário não autenticado");
-        return;
-      }
-
-      // A view canônica resolve quais atletas pertencem ao profissional atual.
-      // Os detalhes continuam vindo de athletes para preservar o contrato visual.
-      const athleteIds = workspace.students.map((row) => row.id);
-
-      if (athleteIds.length === 0) {
-        setStudents([]);
-        return;
-      }
-
-      const { data: athletesData, error: athletesError } = await supabase
+  const athleteIds = workspace.students.map(row => row.id);
+  const studentQueryKey = ["professor-student-details", user?.id, athleteIds];
+  const studentsQuery = useQuery({
+    queryKey: studentQueryKey,
+    enabled: !!user && !workspace.loading && !workspace.error,
+    staleTime: 60_000,
+    queryFn: async ({ signal }): Promise<Student[]> => {
+      const athletesData = await fetchBatchedRows(athleteIds, async ids => {
+        const { data, error } = await withTimeout(supabase
         .from("athletes")
-        .select("*")
-        .in("id", athleteIds)
-        .order("created_at", { ascending: false });
-
-      if (athletesError) throw athletesError;
+        .select("id,name,email,metadata,phone,primary_goal,objetivo,experience_level,nivel,peso_kg,altura_cm,injuries_limitations,activated,created_at,birthdate")
+        .in("id", ids)
+        .abortSignal(signal));
+        if (error) throw error;
+        return data ?? [];
+      }, signal);
 
       // Mapear dados dos athletes para o formato de Student
       const mappedStudents: Student[] = (athletesData || []).map((athlete) => {
@@ -108,20 +96,14 @@ export default function StudentsPage() {
         };
       });
 
-      setStudents(mappedStudents);
-    } catch (error: any) {
-      console.error("Erro ao carregar alunos:", error);
-      toast.error("Erro ao carregar lista de alunos");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return mappedStudents.sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
+    },
+  });
+  const students = studentsQuery.data ?? [];
+  const loading = workspace.loading || studentsQuery.isLoading;
+  const hasError = workspace.error || studentsQuery.isError;
 
-  useEffect(() => {
-    setSelectedStudent(
-      students.find((s) => s.id === workspace.athleteId) ?? null,
-    );
-  }, [students, workspace.athleteId]);
+  const selectedStudent = students.find(s => s.id === workspace.athleteId) ?? null;
 
   const getInitials = (name: string) => {
     return name
@@ -144,33 +126,34 @@ export default function StudentsPage() {
     return matchesSearch;
   });
 
+  useEffect(() => { setPage(0); }, [searchTerm, filter, user?.id]);
+  const pageCount = Math.max(1, Math.ceil(filteredStudents.length / 50));
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleStudents = filteredStudents.slice(currentPage * 50, (currentPage + 1) * 50);
+
   const handleStudentAdded = () => {
     setShowAddForm(false);
-    fetchStudents();
+    void queryClient.invalidateQueries({ queryKey: ["professor-students", user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ["professor-student-details", user?.id] });
     toast.success("Aluno adicionado com sucesso!");
   };
 
   const handleViewStudent = (student: Student) => {
     workspace.select(student.id);
-    setSelectedStudent(student);
   };
 
   const handleEditStudent = (student: Student) => {
     // Go to detailed view for editing
     workspace.select(student.id);
-    setSelectedStudent(student);
   };
 
   const handleBackToList = () => {
     workspace.select(null);
-    setSelectedStudent(null);
   };
 
   const handleStudentUpdated = (updatedStudent: Student) => {
-    setStudents((prev) =>
-      prev.map((s) => (s.id === updatedStudent.id ? updatedStudent : s)),
-    );
-    setSelectedStudent(updatedStudent);
+    queryClient.setQueryData<Student[]>(studentQueryKey, previous =>
+      previous?.map(student => student.id === updatedStudent.id ? updatedStudent : student));
   };
 
   // Show student detailed view
@@ -247,10 +230,26 @@ export default function StudentsPage() {
         </div>
       )}
 
-      {/* Students Grid */}
-      {!loading && (
+      {hasError && (
+        <Card><CardContent className="py-6" role="alert">
+          <p>Não foi possível carregar a lista completa de alunos.</p>
+          <Button variant="outline" onClick={() => { workspace.retry(); void studentsQuery.refetch(); }}>Tentar novamente</Button>
+        </CardContent></Card>
+      )}
+
+      {!loading && !hasError && filteredStudents.length > 0 && (
+        <nav aria-label="Páginas de alunos" className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-muted-foreground">{filteredStudents.length} alunos · página {currentPage + 1} de {pageCount}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Anterior</Button>
+            <Button variant="outline" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)}>Próxima</Button>
+          </div>
+        </nav>
+      )}
+      {/* Bound mounted cards while preserving search across the whole roster. */}
+      {!loading && !hasError && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-          {filteredStudents.map((student) => (
+          {visibleStudents.map((student) => (
             <Card key={student.id} className="relative">
               <CardContent className="p-4">
                 <div className="flex flex-col items-center space-y-3">
@@ -315,7 +314,7 @@ export default function StudentsPage() {
         </div>
       )}
 
-      {!loading && filteredStudents.length === 0 && (
+      {!loading && !hasError && filteredStudents.length === 0 && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
