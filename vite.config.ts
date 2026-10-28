@@ -42,13 +42,23 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
+        importScripts: ['/push-events.js'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
         navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
-        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024, // 12MB (bundle único ~5.7MB após remover manualChunks)
-        runtimeCaching: []
+        // Cache the application shell. Editorial photos load only when viewed.
+        globPatterns: ['**/*.{css,html,ico}', 'assets/index-*.js', 'icons/*.png'],
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+        runtimeCaching: [{
+          urlPattern: /\/assets\/[^/?]+\.js$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: '9fit-route-js-v1',
+            cacheableResponse: { statuses: [200] },
+            expiration: { maxEntries: 120, maxAgeSeconds: 7 * 24 * 60 * 60 }
+          }
+        }]
       }
     }),
   ].filter(Boolean),

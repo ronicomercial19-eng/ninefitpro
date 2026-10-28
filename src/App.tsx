@@ -1,103 +1,104 @@
-import StudentCarePage from "@/pages/9fit/Acompanhamento";
-import ProfessorWorkspacePage from '@/pages/ProfessorWorkspacePage';
-import ProfessorMessagesPage from '@/pages/ProfessorMessagesPage';
+import { lazy, Suspense } from "react";
+const StudentCarePage = lazy(() => import("@/pages/9fit/Acompanhamento"));
+const ProfessorWorkspacePage = lazy(() => import("@/pages/ProfessorWorkspacePage"));
+const ProfessorMessagesPage = lazy(() => import("@/pages/ProfessorMessagesPage"));
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import AuthCallback from './pages/AuthCallback';
-import CustomerEntry from './pages/9fit/CustomerEntry';
-import PaymentReturn from './pages/9fit/PaymentReturn';
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const CustomerEntry = lazy(() => import("./pages/9fit/CustomerEntry"));
+const PaymentReturn = lazy(() => import("./pages/9fit/PaymentReturn"));
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppErrorBoundary } from "./components/system/AppErrorBoundary";
-import AgendaPage from "./pages/AgendaPage";
-import AITrainingPage from "./pages/AITrainingPage";
-import AIChatPage from "./pages/AIChatPage";
-import AIAnalysisPage from "./pages/AIAnalysisPage";
-import Assessment from "./pages/Assessment";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import TrainingAdjustmentsPage from "./pages/TrainingAdjustmentsPage";
-import ExercisesPage from "./pages/ExercisesPage";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import ReferenceSeriesPage from "./pages/ReferenceSeriesPage";
-import ReportsPage from "./pages/ReportsPage";
-import Sales from "./pages/Sales";
-import StatisticsPage from "./pages/StatisticsPage";
-import StudentsPage from "./pages/StudentsPage";
-import SuperSetsPage from "./pages/SuperSetsPage";
-import Support from "./pages/Support";
-import SmartTreinoPage from "./pages/SmartTreinoPage";
-import SmartPeriodizer from "./pages/SmartPeriodizer";
-import FitCopilotPage from "./pages/FitCopilotPage";
-import WhatsAppRedirect from "./pages/WhatsAppRedirect";
-import RoadmapPage from "./pages/RoadmapPage";
-import ForgotPassword from "./pages/ForgotPassword";
-import SettingsPage from "./pages/SettingsPage";
-import Register from "./pages/Register";
+const AgendaPage = lazy(() => import("./pages/AgendaPage"));
+const AITrainingPage = lazy(() => import("./pages/AITrainingPage"));
+const AIChatPage = lazy(() => import("./pages/AIChatPage"));
+const AIAnalysisPage = lazy(() => import("./pages/AIAnalysisPage"));
+const Assessment = lazy(() => import("./pages/Assessment"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const TrainingAdjustmentsPage = lazy(() => import("./pages/TrainingAdjustmentsPage"));
+const ExercisesPage = lazy(() => import("./pages/ExercisesPage"));
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ReferenceSeriesPage = lazy(() => import("./pages/ReferenceSeriesPage"));
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
+const Sales = lazy(() => import("./pages/Sales"));
+const StatisticsPage = lazy(() => import("./pages/StatisticsPage"));
+const StudentsPage = lazy(() => import("./pages/StudentsPage"));
+const SuperSetsPage = lazy(() => import("./pages/SuperSetsPage"));
+const Support = lazy(() => import("./pages/Support"));
+const SmartTreinoPage = lazy(() => import("./pages/SmartTreinoPage"));
+const SmartPeriodizer = lazy(() => import("./pages/SmartPeriodizer"));
+const FitCopilotPage = lazy(() => import("./pages/FitCopilotPage"));
+const WhatsAppRedirect = lazy(() => import("./pages/WhatsAppRedirect"));
+const RoadmapPage = lazy(() => import("./pages/RoadmapPage"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const Register = lazy(() => import("./pages/Register"));
 
 // 9FIT Pages
-import NineFitLogin from "./pages/9fit/Login";
-import NineFitHub from "./pages/9fit/Hub";
-import NineFitTrain from "./pages/9fit/Train";
+const NineFitLogin = lazy(() => import("./pages/9fit/Login"));
+const NineFitHub = lazy(() => import("./pages/9fit/Hub"));
+const NineFitTrain = lazy(() => import("./pages/9fit/Train"));
 // NineFitAulas removed - orphan route, replaced by AulasCreditos
-import AulasCreditos from "./pages/9fit/AulasCreditos";
+const AulasCreditos = lazy(() => import("./pages/9fit/AulasCreditos"));
 // NineFitStats removed - duplicate of /9fit/progresso (NineFitProgresso), retirada em 13/09
-import NineFitProfile from "./pages/9fit/Profile";
-import NineFitOnboarding from "./pages/9fit/Onboarding";
-import NineFitDieta from "./pages/9fit/Dieta";
-import NineFitFoods from "./pages/9fit/Foods";
-import NineFitMensagens from "./pages/9fit/Mensagens";
-import NineFitNotificacoes from "./pages/9fit/Notificacoes";
-import NineFitFirstAccess from "./pages/9fit/FirstAccess";
-import NineFitSocial from "./pages/9fit/Social";
-import NineFitCommunity from "./pages/9fit/Community";
-import NineFitStaff from "./pages/9fit/Staff";
-import NineFitOS from "./pages/9fit/OS";
-import NineFitRon from "./pages/9fit/Ron";
-import NineFitHealthFlix from "./pages/9fit/HealthFlix";
-import NineFitPrimePass from "./pages/9fit/PrimePass";
-import NineFitHabitFlow from "./pages/9fit/HabitFlow";
-import NineFitEliteBio from "./pages/9fit/EliteBioHacking";
-import NineFitKitchen from "./pages/9fit/Kitchen";
-import NineFitRecovery from "./pages/9fit/Recovery";
-import NineFitProtocolo from "./pages/9fit/Protocolo";
-import NineFitPlans from "./pages/9fit/Plans";
-import NineFitOferta from "./pages/9fit/Oferta";
-import NineFitCheckout from "./pages/9fit/Checkout";
-import NineFitCheckoutSuccess from "./pages/9fit/CheckoutSuccess";
-import NineFitAtivacao from "./pages/9fit/Ativacao";
-import NineFitPlanejamento from "./pages/9fit/Planejamento";
-import NineFitBiblioteca from "./pages/9fit/Biblioteca";
-import NineFitProgresso from "./pages/9fit/Progresso";
-import NineFitPosturaPro from "./pages/9fit/PosturaPro";
-import NineFitNativeSystem from "./pages/9fit/NativeSystem";
-import NineFitAvaliacaoGuiada from "./pages/9fit/AvaliacaoGuiada";
-import NineFitAssessmentPages from "./pages/9fit/AssessmentPages";
-import NineFitCompartilhar from "./pages/9fit/Compartilhar";
-import NineFitMove from "./pages/9fit/Move";
-import NineFitModules from "./pages/9fit/Modules";
+const NineFitProfile = lazy(() => import("./pages/9fit/Profile"));
+const NineFitOnboarding = lazy(() => import("./pages/9fit/Onboarding"));
+const NineFitDieta = lazy(() => import("./pages/9fit/Dieta"));
+const NineFitFoods = lazy(() => import("./pages/9fit/Foods"));
+const NineFitMensagens = lazy(() => import("./pages/9fit/Mensagens"));
+const NineFitNotificacoes = lazy(() => import("./pages/9fit/Notificacoes"));
+const NineFitFirstAccess = lazy(() => import("./pages/9fit/FirstAccess"));
+const NineFitSocial = lazy(() => import("./pages/9fit/Social"));
+const NineFitCommunity = lazy(() => import("./pages/9fit/Community"));
+const NineFitStaff = lazy(() => import("./pages/9fit/Staff"));
+const NineFitOS = lazy(() => import("./pages/9fit/OS"));
+const NineFitRon = lazy(() => import("./pages/9fit/Ron"));
+const NineFitHealthFlix = lazy(() => import("./pages/9fit/HealthFlix"));
+const NineFitPrimePass = lazy(() => import("./pages/9fit/PrimePass"));
+const NineFitHabitFlow = lazy(() => import("./pages/9fit/HabitFlow"));
+const NineFitEliteBio = lazy(() => import("./pages/9fit/EliteBioHacking"));
+const NineFitKitchen = lazy(() => import("./pages/9fit/Kitchen"));
+const NineFitRecovery = lazy(() => import("./pages/9fit/Recovery"));
+const NineFitProtocolo = lazy(() => import("./pages/9fit/Protocolo"));
+const NineFitPlans = lazy(() => import("./pages/9fit/Plans"));
+const NineFitOferta = lazy(() => import("./pages/9fit/Oferta"));
+const NineFitCheckout = lazy(() => import("./pages/9fit/Checkout"));
+const NineFitCheckoutSuccess = lazy(() => import("./pages/9fit/CheckoutSuccess"));
+const NineFitAtivacao = lazy(() => import("./pages/9fit/Ativacao"));
+const NineFitPlanejamento = lazy(() => import("./pages/9fit/Planejamento"));
+const NineFitBiblioteca = lazy(() => import("./pages/9fit/Biblioteca"));
+const NineFitProgresso = lazy(() => import("./pages/9fit/Progresso"));
+const NineFitPosturaPro = lazy(() => import("./pages/9fit/PosturaPro"));
+const NineFitNativeSystem = lazy(() => import("./pages/9fit/NativeSystem"));
+const NineFitAvaliacaoGuiada = lazy(() => import("./pages/9fit/AvaliacaoGuiada"));
+const NineFitAssessmentPages = lazy(() => import("./pages/9fit/AssessmentPages"));
+const NineFitCompartilhar = lazy(() => import("./pages/9fit/Compartilhar"));
+const NineFitMove = lazy(() => import("./pages/9fit/Move"));
+const NineFitModules = lazy(() => import("./pages/9fit/Modules"));
 
-import NineFitAjusteTreino from "./pages/9fit/AjusteTreino";
-import NineFitPostWorkout from "./pages/9fit/PostWorkout";
-import NineFitCollections from "./pages/9fit/Collections";
-import MonetizacaoPage from "./pages/admin/MonetizacaoPage";
-import SkillManagerPage from "./pages/admin/SkillManagerPage";
-import Protocols from "./pages/9fit/Protocols";
-import NineFitSettings from "./pages/9fit/Settings";
+const NineFitAjusteTreino = lazy(() => import("./pages/9fit/AjusteTreino"));
+const NineFitPostWorkout = lazy(() => import("./pages/9fit/PostWorkout"));
+const NineFitCollections = lazy(() => import("./pages/9fit/Collections"));
+const MonetizacaoPage = lazy(() => import("./pages/admin/MonetizacaoPage"));
+const SkillManagerPage = lazy(() => import("./pages/admin/SkillManagerPage"));
+const Protocols = lazy(() => import("./pages/9fit/Protocols"));
+const NineFitSettings = lazy(() => import("./pages/9fit/Settings"));
 import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
-import PosturaProPage from "./pages/admin/PosturaProPage";
-import CommunityAdminPage from "./pages/admin/CommunityAdminPage";
-import NexusPage from "./pages/admin/NexusPage";
-import RonProfessorPage from "./pages/admin/RonProfessorPage";
-import HealthFlixAdminPage from "./pages/admin/HealthFlixAdminPage";
+const PosturaProPage = lazy(() => import("./pages/admin/PosturaProPage"));
+const CommunityAdminPage = lazy(() => import("./pages/admin/CommunityAdminPage"));
+const NexusPage = lazy(() => import("./pages/admin/NexusPage"));
+const RonProfessorPage = lazy(() => import("./pages/admin/RonProfessorPage"));
+const HealthFlixAdminPage = lazy(() => import("./pages/admin/HealthFlixAdminPage"));
 import { StudentSubscriptionList } from "./components/admin/StudentSubscriptionList";
 import { InfinitePayWebhookConfig } from "./components/admin/InfinitePayWebhookConfig";
-import NineFitTemplateLibraryPage from "./pages/admin/NineFitTemplateLibraryPage";
+const NineFitTemplateLibraryPage = lazy(() => import("./pages/admin/NineFitTemplateLibraryPage"));
 import { NineFitLayout } from "./components/9fit/NineFitLayout";
 import { EcoEmbed } from "./components/9fit/EcoEmbed";
 import { SovereignBootstrap } from "./middleware/SovereignBootstrap";
@@ -127,7 +128,7 @@ const App = () => (
         <MissionCompleteOverlay />
         <BrowserRouter>
           <SovereignBootstrap>
-          <Routes>
+          <AppErrorBoundary><Suspense fallback={<div className="min-h-[60vh] grid place-items-center" role="status">Carregando página…</div>}><Routes>
             {/* Public Routes - Login is the main entry point */}
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
@@ -378,7 +379,7 @@ const App = () => (
             } />
 
             <Route path="*" element={<NotFound />} />
-          </Routes>
+          </Routes></Suspense></AppErrorBoundary>
           </SovereignBootstrap>
         </BrowserRouter>
       </TooltipProvider>
