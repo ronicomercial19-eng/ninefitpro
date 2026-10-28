@@ -64,7 +64,9 @@ export function CareWorkspace({
   const q = useQuery({
     queryKey: ["care-inbox", user?.id, professional, athleteId, filter, page],
     enabled: !!user,
-    refetchInterval: 20000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       let query = (supabase as any)
         .from("student_care_threads")
@@ -372,7 +374,9 @@ function CareDetail({
   }, []);
   const q = useQuery({
     queryKey: ["care-detail", user?.id, professional, athleteId, id, limit],
-    refetchInterval: 15000,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data: t, error } = await (supabase as any)
         .from("student_care_threads")
