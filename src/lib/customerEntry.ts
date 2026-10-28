@@ -22,6 +22,7 @@ export function setupDestination(state: EntryState) {
   if (state.intent === 'purchase') return '/9fit/planos';
   if (!state.athleteId) return '/9fit/hub';
   if (!state.firstAccessDone && !state.googleIdentity) return '/9fit/first-access';
+  if (state.intent === 'payment_return' && !state.profileDone) return '/9fit/ativacao';
   return state.activationDone || state.profileDone ? '/9fit/os' : '/9fit/ativacao';
 }
 export function confirmedAccess(subscription: { status?: string; expires_at?: string | null } | null, now = Date.now()) {

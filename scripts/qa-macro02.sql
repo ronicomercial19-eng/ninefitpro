@@ -12,10 +12,10 @@ begin
  v_context:=public.fn_get_daily_context();
  if v_context->>'date'<>v_day::text or v_context->>'version'<>'2' then raise exception 'context_date_contract'; end if;
  select count(*) into v_before from public.athlete_pdi_history where athlete_id=v_id;
- perform public.fn_save_pdi('{"goal":"longevity","peak_window":"night","time_horizon":10,"injury_zones":[],"dietary_restrictions":[]}',true,'{"session_minutes":30,"training_environment":"home"}');
+ perform public.fn_save_pdi('{"goal":"longevity","recovery_rate":"medium","volume_tolerance":5,"peak_window":"night","stress_sensitivity":5,"discomfort_tolerance":"moderate","time_horizon":10,"injury_zones":[],"dietary_restrictions":[]}',true,'{"session_minutes":30,"training_environment":"home"}');
  select count(*) into v_after from public.athlete_pdi_history where athlete_id=v_id;
  if v_after-v_before not between 0 and 1 then raise exception 'duplicate_pdi_history'; end if;
- perform public.fn_save_pdi('{"goal":"longevity","peak_window":"night","time_horizon":10,"injury_zones":[],"dietary_restrictions":[]}',true,'{"session_minutes":30}');
+ perform public.fn_save_pdi('{"goal":"longevity","recovery_rate":"medium","volume_tolerance":5,"peak_window":"night","stress_sensitivity":5,"discomfort_tolerance":"moderate","time_horizon":10,"injury_zones":[],"dietary_restrictions":[]}',true,'{"session_minutes":30}');
  if (select count(*) from public.athlete_pdi_history where athlete_id=v_id)<>v_after then raise exception 'timestamp_only_duplicate'; end if;
  v_context:=public.fn_get_daily_context();
  if not (v_context->'profile'->>'complete')::boolean or v_context->'profile'->'declared'->>'goal'<>'longevity' or v_context->'profile'->'preferences'->>'session_minutes'<>'30' then raise exception 'declared_profile_contract'; end if;
