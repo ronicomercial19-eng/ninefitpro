@@ -2,6 +2,8 @@
 
 Início: 28/10/2026. Meta: 3.000 contas; isso não significa 3.000 sessões simultâneas. Capacidade concorrente e latência ainda precisam de medição. Não se deve gerar carga destrutiva nem enviar mensagens/pagamentos reais como teste.
 
+Estado desta etapa: 20 itens mapeados. Itens 01–18 receberam correções aplicadas/publicadas e verificações técnicas; 19/20 continuam parciais, com runbook e ensaios preliminares, dependentes de acesso/definição do ambiente. Isso não certifica o app inteiro nem 3.000 sessões simultâneas. QA visual/dispositivo segue com o usuário.
+
 ## Vinte pendências priorizadas
 
 | # | Prioridade | Pendência e evidência | Situação |
@@ -24,7 +26,7 @@ Início: 28/10/2026. Meta: 3.000 contas; isso não significa 3.000 sessões simu
 | 16 | P1 | Advisor de desempenho aponta 24 chaves estrangeiras sem índice de cobertura, afetando relações/cascatas da conta. | Corrigida no banco: 24 índices criados, preservando prefixos existentes e índices parciais adequados. Advisor passou de 24 pendências para zero. |
 | 17 | P1 | Advisor aponta 308 políticas com reavaliação de auth por linha. Corrigir políticas quentes preservando semântica e isolamento. | Corrigida no banco: 9 políticas quentes e mais 299 políticas em 148 tabelas otimizadas. Advisor caiu de 308 para zero. Condições, papéis e operações preservados; escopos reais de aluno/admin iguais antes/depois. |
 | 18 | P2 | Índices duplicados de appointments: `idx_appointments_teacher_date` e `idx_appointments_teacher_sched` idênticos segundo advisor. | Corrigida: duplicado sem dependentes removido, índice equivalente preservado e ausência de duplicação confirmada no advisor. |
-| 19 | P1 | Não há ensaio documentado de restauração/recuperação nos scripts e docs auditados. Backup disponível/configuração do provedor ainda precisa ser conferido. | Configuração ainda não verificada: o conector não consulta backups e o painel pediu login. Acesso ao painel solicitado ao usuário; runbook e escopo de recuperação documentados em docs/scale-3000-operations.md. Parcial: restauração ainda não comprovada. |
+| 19 | P1 | Não há ensaio documentado de restauração/recuperação nos scripts e docs auditados. Backup disponível/configuração do provedor ainda precisa ser conferido. | Organização Free confirmada por API. Cópias/retenção/restauração ainda não verificadas: o conector não consulta backups e o painel pediu login. Acesso ao painel solicitado ao usuário; runbook e escopo de recuperação documentados em docs/scale-3000-operations.md. Parcial: restauração ainda não comprovada. |
 | 20 | P1 | Sem teste de carga encontrado nem orçamento de latência/capacidade. Banco real declara `max_connections=60`; isso não equivale ao limite de usuários do REST. | Parcial: ensaio isolado com 3.000 contas, 60.000 notificações, 3.000 endpoints fictícios e 100 consultas com RLS. Também houve 120 leituras HTTP reais, até três requisições simultâneas por perfil, sem falhas; não comprova SLA nem 3.000 sessões simultâneas. Plano de carga isolada documentado em docs/scale-3000-operations.md. |
 
 ## Evidências de base
@@ -104,3 +106,11 @@ Migração `20261028181332_preserve_verified_signup_athlete_identity.sql` aplica
 O provisionamento profissional passa o alvo em app_metadata e confere o vínculo produzido pelo trigger. Não faz upsert sobre a identidade existente e não apaga metadata do cadastro. O trigger serializa a tentativa, preserva vínculos existentes e pode terminar um convite após confirmação posterior. Não são concedidos papel profissional nem cortesia de assinatura por essa indicação de aluno.
 
 Quinze verificações isoladas: legado reproduzido, metadados editáveis recusados, convite de servidor aceito, confirmação posterior, dono/vínculo preservados, e-mail incompatível, duplicatas e uma conta sem segunda identidade. Em produção, inserção/confirmação sintéticas foram revertidas e não vincularam nem alteraram atletas existentes; nenhum usuário de teste permaneceu. Advisors de segurança não ganharam avisos. O endpoint profissional recusou alvo inexistente com 403 sem criar conta.
+
+## Fechamento das versões verificadas
+
+Entrega #118: bundle público `index-D9s01-kS.js` e `CoachStudentPanel-BiM5EpV8.js` confirmaram RPC de contexto com cancelamento. Entrega #119 integrada ao main (`9fdf3cc9088a7ed9a08739f33675086115932c48`), migração aplicada e create-athlete-user versão 80 conferida: app_metadata de servidor, sem upsert cego e sem sobrescrever metadata. O frontend dessa entrega não altera a versão visual anterior. Rotinas financeiras seguem com heartbeat real e zero erros; banco continua sem assinaturas ou candidatos sintéticos de teste.
+
+As verificações obrigatórias de CI das entregas #110–119 passaram antes da integração. As evidências são funcionais/técnicas e de isolamento; não houve cobrança, envio de mensagem nem notificação real como teste.
+
+Organização `Fit evolution` confirmada no plano Free. Medição atual: banco 62.647.443 bytes e arquivos 22.681.831 bytes. As franquias e o modelo de crescimento estão no runbook; a conta de 3.000 alunos precisa considerar armazenamento, invocações e tráfego, além de latência. Não houve contratação, upgrade nem criação de ambiente pago. Organização para cotação de carga e login do painel de backups foram solicitados e ainda dependem de resposta. A cota do Codex não foi declarada esgotada.
