@@ -57,6 +57,7 @@ export default function NineFitTrain() {
   const [loading, setLoading] = useState(true);
   const [prescriptionIssue, setPrescriptionIssue] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [countWarning, setCountWarning] = useState(false);
   const [weeklyCompleted, setWeeklyCompleted] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
@@ -64,8 +65,10 @@ export default function NineFitTrain() {
   const [previousSession, setPreviousSession] = useState<{ id: string; workout_date: string; daily_workout_id: string | null; assignment_id: string | null } | null>(null);
   const [sessionBusy, setSessionBusy] = useState(false);
   useEffect(() => {
-    setPreviousSession(null);
-    if (!athleteId) return;
+    if (!athleteId) {
+      setPreviousSession(null);
+      return;
+    }
     let active = true;
     void supabase.from('workout_executions').select('id,workout_date,daily_workout_id,assignment_id')
       .eq('athlete_id', athleteId).eq('status','in_progress').lt('workout_date',businessDate())
@@ -227,7 +230,8 @@ export default function NineFitTrain() {
       const activity = await loadActivitySummary(aid);
       setCompletedCount(activity.total);
       setWeeklyCompleted(activity.week);
-    } catch { setLoadError(true); toast.error("Não foi possível confirmar as sessões concluídas."); }
+      setCountWarning(false);
+    } catch { setCountWarning(true); toast.error("Não foi possível confirmar as sessões concluídas."); }
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
@@ -360,6 +364,15 @@ export default function NineFitTrain() {
       </div>
 
       {prescriptionIssue && flow === "HOME" && <div role="alert" className="px-4 mb-4"><p className="rounded-xl border border-orange-500 p-4 text-sm">O treino automático foi suspenso por uma inconsistência na prescrição. Abra a aba Protocolo para ver o que seu coach enviou.</p></div>}
+
+      {countWarning && flow === "HOME" && !loadError && (
+        <div role="status" className="px-4 mb-4">
+          <p className="rounded-xl border border-[#EF7A45]/40 bg-[#EF7A45]/10 p-4 text-sm">
+            Os contadores de sessões não foram confirmados. O treino do dia continua disponível.
+            <button type="button" className="ml-2 font-semibold text-[#EF7A45]" onClick={() => athleteId && void fetchCompletedCount(athleteId)}>Tentar de novo</button>
+          </p>
+        </div>
+      )}
 
       {/* Upsell contextual no topo de Train */}
       <div className="px-4 mb-3 relative z-10">
