@@ -38,7 +38,14 @@ async function orderById(db: any, id: string) {
 }
 async function reconcile(db: any, reference: ReturnType<typeof paymentReference>, fetcher: typeof fetch, apiKey?: string, order?: any) {
   const current = order || await orderById(db, reference.order_nsu);
-  if (current?.status === 'paid' && current.transaction_nsu === reference.transaction_nsu && current.invoice_slug === reference.slug) return { saved: true, already_saved: true };
+  if (current?.status === 'paid' && current.transaction_nsu === reference.transaction_nsu && current.invoice_slug === reference.slug) {
+    const last = Date.parse(current.last_verified_at || current.paid_at || '');
+    if(current.verification_state !== 'unconfirmed' && Number.isFinite(last) && Date.now()-last>=0 && Date.now()-last<300000) return { saved:true,already_saved:true };
+    const proof=await providerRequest('/payment_check',{handle:INFINITEPAY_HANDLE,...reference},fetcher,apiKey);
+    const {data,error}=await db.rpc('fn_fitpro_apply_payment_check',{p_order_id:current.id,p_verification:proof});
+    if(error)throw new Error('payment_confirmation_failed');
+    return data?.confirmed ? {saved:true,already_saved:true} : {saved:false,suspended:data?.suspended===true};
+  }
   const verification = await providerRequest('/payment_check', { handle: INFINITEPAY_HANDLE, ...reference }, fetcher, apiKey);
   if (!verifiedPayment(verification, current?.amount_cents)) return { saved: false };
   if (!current || current.status === 'paid') {
@@ -67,7 +74,7 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
         // Payload fields never grant access. A server-to-server provider check is mandatory.
         const reference = paymentReference(input);
         const result = await reconcile(deps.db, reference, deps.fetcher, deps.apiKey);
-        return result.saved || result.manual_review ? json({ received: true, ...result }) : json({ error: 'Pagamento ainda não confirmado.' }, 400);
+        return result.saved || result.manual_review || result.suspended ? json({ received: true, ...result }) : json({ error: 'Pagamento ainda não confirmado.' }, 400);
       }
       if (input.action === 'create') {
         if (!['basic', 'annual'].includes(input.period) || !uuid(input.request_id)) return json({ error: 'Confira o período escolhido.' }, 400);
@@ -98,8 +105,9 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
           const result = await reconcile(deps.db, paymentReference(input), deps.fetcher, deps.apiKey, order);
           if (result.saved) return json({ status: 'paid', order_id: order.id, period: order.period });
           if (result.manual_review) return json({ status: 'manual_review', order_id: order.id });
+          if (result.suspended) return json({status:'pending',order_id:order.id,message:'Pagamento sem confirmação atual. Consulte sua conta ou o suporte.'});
         }
-        return json({ status: order.status === 'paid' ? 'paid' : 'pending', order_id: order.id, period: order.period });
+        return json({ status: order.status === 'paid' && order.verification_state !== 'unconfirmed' ? 'paid' : 'pending', order_id: order.id, period: order.period });
       }
       return json({ error: 'Solicitação inválida.' }, 400);
     } catch (error) {

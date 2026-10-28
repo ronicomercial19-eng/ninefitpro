@@ -15,7 +15,8 @@ function fixture() {
       calls.push({ name, args });
       if (name === 'fn_prepare_infinitepay_order') return { data: order, error: null };
       if (name === 'fn_attach_infinitepay_link') { order.checkout_url = args.p_url; order.status = 'ready'; return { data: order, error: null }; }
-      if (name === 'fn_confirm_infinitepay_order') { saves++; order.status = 'paid'; order.transaction_nsu = args.p_transaction_nsu; order.invoice_slug = args.p_invoice_slug; return { data: { saved: true }, error: null }; }
+      if (name === 'fn_confirm_infinitepay_order') { saves++; order.status = 'paid'; order.paid_at=new Date().toISOString(); order.verification_state='confirmed'; order.transaction_nsu = args.p_transaction_nsu; order.invoice_slug = args.p_invoice_slug; return { data: { saved: true }, error: null }; }
+      if(name==='fn_fitpro_apply_payment_check'){order.verification_state=args.p_verification.paid?'confirmed':'unconfirmed';return {data:{confirmed:args.p_verification.paid,suspended:!args.p_verification.paid},error:null}}
       throw Error('unexpected RPC');
     },
   };
@@ -70,6 +71,12 @@ test('another account cannot claim the receipt or query provider status through 
   const f = fixture(); f.setUser({ id: other });
   assert.equal((await f.invoke({ action: 'verify', ...reference })).status,403);
   assert.equal(f.calls.length,0);
+});
+test('old paid receipt is rechecked; revoked confirmation never reports paid from stale order',async()=>{
+ const f=fixture();await f.invoke(reference,true);f.order.paid_at=new Date(Date.now()-600000).toISOString();f.setPaid(false);
+ const revoked=await f.invoke(reference,true);assert.equal(revoked.status,200);assert.equal((await revoked.json()).suspended,true);
+ const status=await f.invoke({action:'status',order_nsu:orderId});assert.equal((await status.json()).status,'pending');
+ f.setPaid(true);const restored=await f.invoke(reference,true);assert.equal((await restored.json()).saved,true);assert.equal(f.counts().saves,1);
 });
 test('a second genuine payment for an already paid order is queued for support, never granted twice', async () => {
   const f = fixture();

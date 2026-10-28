@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 // HealthFlix proxy — encaminha chamadas autenticadas do FitPro para as edge functions do projeto HealthFlix
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -61,7 +62,7 @@ async function callHF(
   return { status: res.status, data };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS")
     return new Response("ok", { headers: corsHeaders });
 
@@ -336,4 +337,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json(500, { error: String(e) });
   }
-});
+}, {bucket:'content'}));
