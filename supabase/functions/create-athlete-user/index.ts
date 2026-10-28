@@ -33,7 +33,7 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
     const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (claimsError || !claimsData?.claims) return apiError('INVALID_TOKEN', 'Invalid authentication token', 401);
+    if (claimsError || !claimsData?.claims || claimsData.claims.is_anonymous === true) return apiError('INVALID_TOKEN', 'Invalid authentication token', 401);
 
     const callerId = claimsData.claims.sub;
     const { data: roleCheck, error: roleError } = await authClient.from("profiles").select("role,is_active").eq("user_id", callerId).maybeSingle();
@@ -91,6 +91,7 @@ serve(async (req) => {
       email: trimmedEmail,
       password: safePassword,
       email_confirm: true,
+      app_metadata: { fitpro_role: "student", fitpro_athlete_id: athleteId },
       user_metadata: { full_name: safeName, athlete_id: athleteId, user_type: "athlete" },
     });
 
@@ -103,17 +104,19 @@ serve(async (req) => {
 
     if (!userData?.user) return apiError('CREATE_FAILED', 'Failed to create user', 500);
 
-    const { error: linkError } = await supabaseAdmin.from("athlete_auth_link").upsert({
-      athlete_id: athleteId, user_id: userData.user.id,
-    }, { onConflict: "athlete_id" });
-    if (linkError) return apiError('LINK_ERROR', 'Conta criada, mas o vínculo não foi confirmado', 500);
-
-    const { error: updateError } = await supabaseAdmin.from("athletes").update({
+    // The auth trigger claims an unbound target atomically using server-only
+    // app metadata. Never upsert over another identity after a concurrent claim.
+    const [bound, link] = await Promise.all([
+      supabaseAdmin.from("athletes").select("user_id").eq("id", athleteId).maybeSingle(),
+      supabaseAdmin.from("athlete_auth_link").select("user_id").eq("athlete_id", athleteId).maybeSingle(),
+    ]);
+    if (bound.error || link.error || bound.data?.user_id !== userData.user.id || link.data?.user_id !== userData.user.id) {
+      return apiError('LINK_REVIEW_REQUIRED', 'Conta criada; o vínculo precisa de revisão administrativa. Não crie outra conta.', 409);
+    }
+    const { data: updated, error: updateError } = await supabaseAdmin.from("athletes").update({
       password_changed: false,
-      activated: true, user_id: userData.user.id,
-      metadata: { email: trimmedEmail }
-    }).eq("id", athleteId);
-    if (updateError) return apiError('ATHLETE_UPDATE_ERROR', 'Conta criada, mas a ativação não foi confirmada', 500);
+    }).eq("id", athleteId).eq("user_id", userData.user.id).select("id").maybeSingle();
+    if (updateError || !updated) return apiError('ATHLETE_UPDATE_ERROR', 'Conta criada, mas a ativação não foi confirmada', 409);
 
     return apiResponse({ userId: userData.user.id, message: "User created successfully" });
   } catch (error: any) {
