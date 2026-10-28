@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { withTimeout } from '@/lib/withTimeout';
+import { chatPollInterval } from '@/lib/chatPolling';
 
 export type ZapMessage = {
   id: string;
@@ -38,7 +39,9 @@ export function useZapMessages(threadId?: string) {
     queryKey: ["zap", "messages", threadId],
     enabled: Boolean(threadId),
     retry: false,
-    refetchInterval: query => query.state.status === "error" ? false : 4000,
+    refetchInterval: query => query.state.status === "error" ? false : chatPollInterval(query.state.data),
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await withTimeout(invokeZap("messages.list"));
       if (error) throw error;

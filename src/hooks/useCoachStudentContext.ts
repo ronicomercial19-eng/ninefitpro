@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { DailyContext } from "@/services/dailyContextRules";
+import { withTimeout } from '@/lib/withTimeout';
 export interface CoachContext {
   version: number;
   generated_at: string;
@@ -30,12 +31,15 @@ export function useCoachStudentContext(athleteId: string | null) {
   return useQuery({
     queryKey: ["coach-student-context", user?.id, athleteId],
     enabled: !!user && !!athleteId,
-    refetchInterval: 30000,
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withTimeout(supabase.rpc(
         "fn_coach_student_context" as any,
         { p_athlete_id: athleteId },
-      );
+      ));
       if (error) throw error;
       const value = data as unknown as CoachContext;
       if (value?.version !== 1 || value.athlete?.id !== athleteId)

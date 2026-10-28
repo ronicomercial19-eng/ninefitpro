@@ -112,7 +112,9 @@ const queryClient = new QueryClient({
       retry: 2,
       refetchOnWindowFocus: false,
     },
-    mutations: { retry: 1 },
+    // A lost response does not prove a write failed. Opt in only when the
+    // individual mutation has a server-side idempotency key.
+    mutations: { retry: false },
   },
 });
 
