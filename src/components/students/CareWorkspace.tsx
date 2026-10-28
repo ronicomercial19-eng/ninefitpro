@@ -7,6 +7,7 @@ import { CARE_MODULES, careModule } from "@/data/careModules";
 import { isAthleteId, withAthlete } from "@/lib/professorWorkspace";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { OnboardingSummary } from './OnboardingSummary';
 type Thread = {
   id: string;
   athlete_id: string;
@@ -111,6 +112,7 @@ export function CareWorkspace({
           ? "Solicitações, devolutivas e confirmações vinculadas ao aluno e ao módulo. Consulte os registros antes de decidir."
           : "Conte ao seu profissional o que precisa. O texto enviado aqui será compartilhado com ele; suas conversas pessoais com RON permanecem separadas."}
       </p>
+      {professional && athleteId && <OnboardingSummary athleteId={athleteId} />}
       {professional && !athleteId && (
         <p className="text-sm">
           A fila reúne sua carteira autorizada. Selecione um aluno na barra para
@@ -469,6 +471,7 @@ function CareDetail({
     m = careModule(t.module);
   return (
     <article className="space-y-4 rounded-xl border border-primary/30 p-4">
+      {professional && !athleteId && <OnboardingSummary athleteId={t.athlete_id} />}
       <h3 className="text-lg font-semibold">{t.subject}</h3>
       <p>
         {m.title} · {statusLabel[t.status]}

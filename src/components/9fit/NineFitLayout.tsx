@@ -118,13 +118,12 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
             const finished = act?.finished_at;
             const { data: contextSettings } = await supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', session.user.id).maybeSingle();
             const profileConfirmed = hasConfirmedProfile(contextSettings);
-            setPendingActivation(!finished && !profileConfirmed);
-            if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome && !onCommercial) {
+            const { data: appOnboarding, error: onboardingError } = await supabase.from('app_onboarding' as any).select('completed_at').eq('user_id', session.user.id).maybeSingle();
+            if (onboardingError) throw onboardingError;
+            const appPending = !!appOnboarding && !(appOnboarding as unknown as { completed_at: string | null }).completed_at;
+            setPendingActivation((!finished && !profileConfirmed) || appPending);
+            if (((!finished && !profileConfirmed) || appPending) && !onAtivacao && !onOnboarding && !onHome && !onCommercial) {
               navigate('/9fit/ativacao', { replace: true });
-              return;
-            }
-            if (profileConfirmed && onAtivacao) {
-              navigate('/9fit/os', { replace: true });
               return;
             }
           }
