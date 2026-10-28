@@ -35,11 +35,11 @@ export function useCoachStudentContext(athleteId: string | null) {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
-    queryFn: async () => {
+    queryFn: async ({signal}) => {
       const { data, error } = await withTimeout(supabase.rpc(
         "fn_coach_student_context" as any,
         { p_athlete_id: athleteId },
-      ));
+      ).abortSignal(signal));
       if (error) throw error;
       const value = data as unknown as CoachContext;
       if (value?.version !== 1 || value.athlete?.id !== athleteId)

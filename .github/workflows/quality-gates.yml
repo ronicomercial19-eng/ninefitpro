@@ -38,6 +38,7 @@ jobs:
           node scripts/qa-paid-access-db.mjs
           node scripts/qa-rls-identity.mjs
           node scripts/qa-paged-workspace.mjs
+          node scripts/qa-context-history.mjs
       - run: node --import tsx --test scripts/qa-auth-first-access.ts scripts/qa-login-flow.ts scripts/qa-protocol-delivery.ts
       - run: npm run qa:fase2
       - run: npm run qa:macro02
