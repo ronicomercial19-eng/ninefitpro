@@ -78,3 +78,9 @@ verify_jwt = false
 
 [functions.food-scan]
 verify_jwt = true
+
+[functions.infinitepay-checkout]
+verify_jwt = false
+
+[functions.infinitepay-webhook]
+verify_jwt = false

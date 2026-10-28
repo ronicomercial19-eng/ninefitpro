@@ -24,6 +24,13 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
+      - run: node --import tsx --test src/config/commercialOffer.test.ts
+      - name: Payment database regression
+        env:
+          PGLITE_MODULE: ${{ runner.temp }}/ninefit-db-qa/node_modules/@electric-sql/pglite
+        run: |
+          npm install --prefix "${{ runner.temp }}/ninefit-db-qa" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.5.11
+          node scripts/qa-infinitepay-db.mjs
       - run: node --import tsx --test scripts/qa-auth-first-access.ts scripts/qa-login-flow.ts scripts/qa-protocol-delivery.ts
       - run: npm run qa:fase2
       - run: npm run qa:macro02

@@ -3,7 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { CHECKOUT_READY, SUPPORT_EMAIL } from '@/config/commercialOffer';
 import { trackMonetizationEvent } from '@/services/monetization';
+import { PurchaseCheckout } from './PurchaseCheckout';
 export default function NineFitCheckout() {
+  const { offerId } = useParams<{ offerId: string }>();
+  return offerId === 'basic' || offerId === 'annual' ? <PurchaseCheckout period={offerId} /> : <LegacyCheckout />;
+}
+function LegacyCheckout() {
   const { offerId } = useParams<{ offerId: string }>();
   const [offer, setOffer] = useState<any>(null);
   const [status, setStatus] = useState<'loading'|'ready'|'missing'|'error'>('loading');
