@@ -9,10 +9,34 @@ test('provider errors are recorded as unknown, never synthesized as unpaid',asyn
  const proofs:any[]=[];const db={rpc:async(name:string,args:any)=>{
   if(name==='fn_fitpro_check_job_token')return {data:true};
   if(name==='fn_fitpro_claim_payment_checks')return {data:[{id:'10000000-0000-4000-8000-000000000001',transaction_nsu:'txn',invoice_slug:'slug'}]};
+  if(name==='fn_fitpro_claim_payment_candidates')return {data:[]};
   if(name==='fn_fitpro_record_reconcile')return {data:null};
   proofs.push(args.p_verification);return {data:{confirmed:false,suspended:false}};
  }};
  const handler=createReconcileHandler({db,fetcher:(async()=>{throw Error('offline')}) as typeof fetch});
  const response=await handler(new Request('https://test.invalid',{method:'POST',headers:{'x-job-token':'a'.repeat(72)}}));
- assert.deepEqual(proofs,[{}]);assert.deepEqual(await response.json(),{job:'fitpro-payment-reconcile',checked:1,confirmed:0,suspended:0,errors:1});
+ assert.deepEqual(proofs,[{}]);assert.deepEqual(await response.json(),{job:'fitpro-payment-reconcile',checked:1,confirmed:0,suspended:0,errors:1,recovered:0});
+});
+
+test('a persisted candidate recovers after outage using provider proof, without restaging',async()=>{
+ const id='10000000-0000-4000-8000-000000000001';let saved=0;const finishes:any[]=[];let offline=true;
+ const db={
+  from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{id,status:'ready',amount_cents:9700}})})})}),
+  rpc:async(name:string,args:any)=>{
+   if(name==='fn_fitpro_check_job_token')return {data:true};
+   if(name==='fn_fitpro_claim_payment_checks')return {data:[]};
+   if(name==='fn_fitpro_claim_payment_candidates')return {data:[{candidate_id:12,id,transaction_nsu:'txn',invoice_slug:'slug'}]};
+   if(name==='fn_fitpro_finish_payment_candidate'){finishes.push(args);return {data:null}};
+   if(name==='fn_confirm_infinitepay_order'){assert.equal(args.p_verification.paid,true);saved++;return {data:{saved:true}}};
+   if(name==='fn_fitpro_record_reconcile')return {data:null};
+   throw Error('unexpected '+name);
+  },
+ };
+ const handler=createReconcileHandler({db,fetcher:(async()=>{if(offline)throw Error('offline');return new Response(JSON.stringify({success:true,paid:true,amount:9700,paid_amount:9700}))}) as typeof fetch});
+ const request=()=>new Request('https://test.invalid',{method:'POST',headers:{'x-job-token':'a'.repeat(72)}});
+ assert.equal((await (await handler(request())).json()).recovered,0);
+ assert.equal(saved,0);assert.equal(finishes[0].p_complete,false);assert.equal(finishes[0].p_failed,true);
+ offline=false;
+ assert.equal((await (await handler(request())).json()).recovered,1);
+ assert.equal(saved,1);assert.equal(finishes[1].p_complete,true);
 });
