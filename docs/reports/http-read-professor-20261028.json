@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-10-28T17:58:43.576Z",
+  "mode": "professor",
+  "distinctAccounts": 1,
+  "requests": 60,
+  "maxConcurrentRequests": 3,
+  "readOnly": true,
+  "realPaymentsOrAIRequests": 0,
+  "productionCapacityFor3000ConcurrentUsersProven": false,
+  "endpoints": [
+    {
+      "name": "paged_roster",
+      "samples": 20,
+      "failures": 0,
+      "p50_ms": 189.42,
+      "p95_ms": 236.82,
+      "max_ms": 306.85,
+      "maxResponseBytes": 5615,
+      "statuses": [
+        200
+      ]
+    },
+    {
+      "name": "monthly_calendar",
+      "samples": 20,
+      "failures": 0,
+      "p50_ms": 186.23,
+      "p95_ms": 214.45,
+      "max_ms": 523.4,
+      "maxResponseBytes": 18133,
+      "statuses": [
+        200
+      ]
+    },
+    {
+      "name": "student_context",
+      "samples": 20,
+      "failures": 0,
+      "p50_ms": 183.88,
+      "p95_ms": 228.76,
+      "max_ms": 590.57,
+      "maxResponseBytes": 13841,
+      "statuses": [
+        200
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-10-28T17:58:29.538Z",
+  "mode": "student",
+  "distinctAccounts": 1,
+  "requests": 60,
+  "maxConcurrentRequests": 3,
+  "readOnly": true,
+  "realPaymentsOrAIRequests": 0,
+  "productionCapacityFor3000ConcurrentUsersProven": false,
+  "endpoints": [
+    {
+      "name": "own_access",
+      "samples": 30,
+      "failures": 0,
+      "p50_ms": 54.48,
+      "p95_ms": 113.93,
+      "max_ms": 125.58,
+      "maxResponseBytes": 151,
+      "statuses": [
+        200
+      ]
+    },
+    {
+      "name": "own_notifications",
+      "samples": 30,
+      "failures": 0,
+      "p50_ms": 54.04,
+      "p95_ms": 136.2,
+      "max_ms": 167.38,
+      "maxResponseBytes": 978,
+      "statuses": [
+        200
+      ]
+    }
+  ]
+}
