@@ -42,6 +42,7 @@ jobs:
       - run: npm run qa:integration19
       - run: npm run build
         if: ${{ always() }}
+      - run: node scripts/check-delivery-budget.mjs
       - name: Lint baseline (informational until legacy debt is cleared)
         run: npm run lint
         if: ${{ always() }}

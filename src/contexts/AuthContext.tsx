@@ -8,6 +8,7 @@ import { resolveRole, isStaffRole, isAdminRole } from '@/lib/authRole';
 import { createAuthSessionGate } from '@/lib/authSessionGate';
 import { useQueryClient } from '@tanstack/react-query';
 import { mirrorEvent } from '@/services/intelligenceHub.service';
+import { releaseDevicePush } from '@/services/releaseDevicePush';
 
 interface Profile {
   id: string;
@@ -262,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryClient.clear();
     identityUserRef.current = null;
     setUser(null); setProfile(null); setStudentProfile(null); setSession(null); setUserRole(null); setRoleStatus('idle'); setLoading(false);
-    await supabase.auth.signOut();
+    await Promise.all([releaseDevicePush(), supabase.auth.signOut()]);
     try {
       localStorage.removeItem('ninefit_token');
       localStorage.removeItem('ninefit_user_id');

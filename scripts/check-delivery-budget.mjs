@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {readFile,stat} from 'node:fs/promises';
+import {gzipSync} from 'node:zlib';
+const root=new URL('../dist/',import.meta.url);
+const html=await readFile(new URL('index.html',root),'utf8');
+const entry=html.match(/<script[^>]+src="(\/assets\/index-[^"]+\.js)"/s)?.[1];
+assert.ok(entry,'Built entry module must be discoverable');
+const bytes=await readFile(new URL(entry.slice(1),root));
+assert.ok(bytes.length<1_600_000,`Entry budget exceeded: ${bytes.length}`);
+assert.ok(gzipSync(bytes).length<500_000,'Compressed entry exceeds 500 KB');
+const sw=await readFile(new URL('sw.js',root),'utf8');
+assert.ok(sw.includes('push-events.js'),'Generated worker must import notification handlers');
+const urls=[...new Set([...sw.matchAll(/\burl:"([^"]+)"/g)].map(m=>m[1]))];
+assert.ok(urls.length>0,'Precache manifest must be discoverable');
+assert.ok(urls.every(url=>!/^https?:\/\//.test(url)&&!url.includes('..')&&!/\.(jpg|jpeg|webp)$/i.test(url)),'Precache cannot contain APIs, external data or editorial photos');
+let precacheBytes=0;for(const url of urls)precacheBytes+=(await stat(new URL(url.replace(/^\//,''),root))).size;
+assert.ok(precacheBytes<2_200_000,`Precache budget exceeded: ${precacheBytes}`);
+console.log(JSON.stringify({entry,entryBytes:bytes.length,entryGzip:gzipSync(bytes).length,precacheEntries:urls.length,precacheBytes,budgetsPassed:true}));
