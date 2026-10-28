@@ -1,7 +1,8 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...cors, "Content-Type": "application/json" } });
-Deno.serve(async req => {
+Deno.serve(withPaidAccess(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
   const authorization = req.headers.get("Authorization") || "";
@@ -28,4 +29,4 @@ Deno.serve(async req => {
     if (!data.dishName || [data.calories, data.protein, data.carbs, data.fat].some(v => typeof v !== "number" || !Number.isFinite(v) || v < 0)) return json({ error: "A análise retornou valores inválidos. Tente outra foto." }, 502);
     return json({ success: true, data });
   } catch { return json({ error: "Não foi possível analisar a foto agora. Tente novamente." }, 502); }
-});
+}, {bucket:'ai',maxBodyBytes:12582912}));

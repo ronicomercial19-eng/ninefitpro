@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import {
   professionalClient,
@@ -5,7 +6,7 @@ import {
   json,
   fail,
 } from "../_shared/professorRequest.ts";
-Deno.serve(async (req) => {
+Deno.serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
     if (req.method !== "POST")
@@ -94,4 +95,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return fail(e);
   }
-});
+}, {bucket:'content'}));

@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { partnerTarget } from "../_shared/partnerTarget.ts";
@@ -13,7 +14,7 @@ const ALLOWED_PATHS = new Set([
   "/fitpro-copilot-adjust",
 ]);
 
-Deno.serve(async (req) => {
+Deno.serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "SmartTreino proxy error" }, 500);
   }
-});
+}, {bucket:'content'}));
 
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });

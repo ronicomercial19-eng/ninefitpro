@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 import {
   requestedStudent,
   validatePrescriptionExercises,
@@ -119,7 +120,7 @@ async function buildAthleteRichContext(authClient: any, athleteId: string) {
     : "Sem dados suficientes registrados para este atleta ainda.";
 }
 
-serve(async (req) => {
+serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
 
@@ -682,4 +683,4 @@ Toda ação tem type,title,payload e autoExecute:false. Sem solicitação clara,
     console.error("ai-coach error:", e?.message, e?.stack);
     return apiError("INTERNAL_ERROR", e?.message || "Erro interno", 500);
   }
-});
+}, {bucket:'ai'}));

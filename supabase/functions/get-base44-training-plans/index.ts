@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
@@ -21,7 +22,7 @@ function apiError(code: string, message: string, status = 500) {
 
 const BASE44_API_KEY = Deno.env.get('BASE44_API_KEY');
 
-serve(async (req) => {
+serve(withPaidAccess(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   const authHeader = req.headers.get('Authorization');
@@ -57,4 +58,4 @@ serve(async (req) => {
   } catch (error) {
     return apiError('FETCH_ERROR', error instanceof Error ? error.message : 'Unknown error', 500);
   }
-});
+}, {bucket:'content'}));

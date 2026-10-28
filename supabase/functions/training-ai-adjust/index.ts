@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -38,7 +39,7 @@ const fail = (code: string, message: string, status = 400) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-serve(async (req) => {
+serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -171,4 +172,4 @@ Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação 
     console.error("training-ai-adjust", e);
     return fail("UNKNOWN", (e as Error).message, 500);
   }
-});
+}, {bucket:'ai'}));

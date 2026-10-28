@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Save, Trash2, Crown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {BillingMonitor} from '@/components/admin/BillingMonitor';
 
 type Offer = {
   id?: string;
@@ -112,6 +113,7 @@ export default function MonetizacaoPage() {
 
   return (
     <div className="p-6 space-y-6">
+      <BillingMonitor />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Crown className="w-6 h-6 text-primary" />

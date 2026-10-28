@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 // Proxy para library-full do projeto biblioteca (vrbhljmsakruoejctclg)
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -12,7 +13,7 @@ const json = (s: number, b: unknown) =>
 
 const LIB_URL = "https://vrbhljmsakruoejctclg.supabase.co/functions/v1/library-full";
 
-Deno.serve(async (req) => {
+Deno.serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "GET") return json(405, { error: "method not allowed" });
 
@@ -52,4 +53,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json(500, { error: String(e) });
   }
-});
+}, {bucket:'content'}));

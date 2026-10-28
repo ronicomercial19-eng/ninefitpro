@@ -84,3 +84,6 @@ verify_jwt = false
 
 [functions.infinitepay-webhook]
 verify_jwt = false
+
+[functions.infinitepay-reconcile]
+verify_jwt = false

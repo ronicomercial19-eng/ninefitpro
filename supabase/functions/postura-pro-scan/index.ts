@@ -1,3 +1,4 @@
+import {withPaidAccess} from "../_shared/paidAccess.ts";
 // Postura Pro Scan — orquestra análise postural via API externa configurada em api_connectors.
 // Recebe scan_id, lê fotos do Storage e envia ao serviço externo, grava resultado.
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
@@ -28,7 +29,7 @@ function assessmentPath(value: unknown, ownerIds: string[]): string {
   return path;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withPaidAccess(async (req) => {
   if (req.method === "OPTIONS")
     return new Response("ok", { headers: corsHeaders });
 
@@ -183,4 +184,4 @@ Deno.serve(async (req) => {
   } catch (e: any) {
     return json({ error: e?.message ?? "internal" }, 500);
   }
-});
+}, {bucket:'ai',maxBodyBytes:12582912}));

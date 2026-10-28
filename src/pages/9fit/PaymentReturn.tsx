@@ -28,6 +28,7 @@ export default function PaymentReturn() {
         const result = await paymentOperation({ action: reference.transaction_nsu && reference.slug ? 'verify' : 'status', ...reference });
         if (!active) return;
         if (result.status === 'paid') {
+          window.dispatchEvent(new Event('9fit:access-updated'));
           if (result.period === 'basic' || result.period === 'annual') { try { sessionStorage.removeItem(`9fit:checkout-request:${user.id}:${result.period}`); } catch { /* Optional. */ } }
           clearPayment(); clearEntry(entryStorage());
           void qc.invalidateQueries({ queryKey: ['prime-snapshot', user.id] });

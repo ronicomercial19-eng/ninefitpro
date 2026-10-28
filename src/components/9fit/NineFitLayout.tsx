@@ -9,6 +9,7 @@ import { RonBubble } from "./RonBubble";
 import { BackButton } from "./BackButton";
 import { useDailyContext } from '@/hooks/useDailyContext';
 import { hasConfirmedProfile } from '@/lib/activationProfile';
+import {PaidAccessGate} from './PaidAccessGate';
 
 
 interface NineFitLayoutProps {
@@ -195,7 +196,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       </section>}
       {!isOnboardingFlow && location.pathname!=="/9fit/acompanhamento" && careModuleForPath(location.pathname) && <div className="mx-auto max-w-4xl px-4 pt-14"><button className="rounded-lg border px-3 py-2 text-sm text-primary" onClick={()=>navigate("/9fit/acompanhamento?module="+careModuleForPath(location.pathname)!.key)}>Meu acompanhamento · solicitar orientação</button></div>}
       {!isOnboardingFlow && <CareReturnBanner />}
-      {children}
+      <PaidAccessGate>{children}</PaidAccessGate>
       {!isOnboardingFlow && !['/9fit/mensagens','/9fit/acompanhamento'].includes(location.pathname) && <RonBubble />}
     </>
   );
