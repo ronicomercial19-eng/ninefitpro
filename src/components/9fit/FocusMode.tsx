@@ -123,7 +123,7 @@ export function FocusMode({
         className="fixed inset-0 z-[9990] bg-[#050608] text-white flex flex-col select-none overflow-hidden"
       >
         {/* Top Minimal Ambient Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[180px] bg-[#FF6600]/[0.08] blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[180px] bg-[#EF7A45]/[0.08] blur-[120px] pointer-events-none" />
 
         {assistance && <div className="relative z-20 px-4 py-2">{assistance}</div>}
         {/* 1. Ultra-clean Focus Mode Header */}
@@ -134,16 +134,16 @@ export function FocusMode({
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 transition-colors text-xs font-mono tracking-wider font-semibold"
             aria-label="Sair do Modo Foco"
           >
-            <Minimize2 className="w-4 h-4 text-[#FF6600]" />
+            <Minimize2 className="w-4 h-4 text-[#EF7A45]" />
             <span className="hidden sm:inline">SAIR DO FOCO</span>
             <span className="text-[10px] text-neutral-500 hidden sm:inline">[ESC]</span>
           </button>
 
           {/* Mode Indicator & Workout Clock */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-[#FF6600]/10 border border-[#FF6600]/30 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF6600] animate-pulse" />
-              <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-[#FF6600]">
+            <div className="flex items-center gap-1.5 bg-[#EF7A45]/10 border border-[#EF7A45]/30 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45] animate-pulse" />
+              <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-[#EF7A45]">
                 MODO FOCO
               </span>
             </div>
@@ -294,8 +294,8 @@ export function FocusMode({
                       onClick={() => onToggleSet(i)}
                       className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-mono font-black text-base transition-all transform active:scale-95 ${
                         done
-                          ? "bg-[#FF6600] text-white shadow-lg shadow-[#FF6600]/30 border-2 border-[#FF6600]"
-                          : "bg-white/5 border-2 border-white/15 text-neutral-400 hover:border-[#FF6600]/50 hover:text-white"
+                          ? "bg-[#EF7A45] text-white shadow-lg shadow-[#EF7A45]/30 border-2 border-[#EF7A45]"
+                          : "bg-white/5 border-2 border-white/15 text-neutral-400 hover:border-[#EF7A45]/50 hover:text-white"
                       }`}
                       aria-label={`Série ${i + 1} ${done ? "concluída" : "pendente"}`}
                     >
@@ -309,7 +309,7 @@ export function FocusMode({
             {/* Control B: Carga Atual (Weight Adjuster) */}
             <div className="flex flex-col items-center">
               <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-bold text-neutral-400 mb-1.5 flex items-center gap-1">
-                <Dumbbell className="w-3 h-3 text-[#FF6600]" /> CARGA ATUAL
+                <Dumbbell className="w-3 h-3 text-[#EF7A45]" /> CARGA ATUAL
               </span>
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1">
                 <button
@@ -336,7 +336,7 @@ export function FocusMode({
             {/* Control C: Descanso (Rest Countdown) */}
             <div className="flex flex-col items-center sm:items-end">
               <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-bold text-neutral-400 mb-1.5 flex items-center gap-1">
-                <Timer className="w-3 h-3 text-[#FF6600]" /> DESCANSO
+                <Timer className="w-3 h-3 text-[#EF7A45]" /> DESCANSO
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -350,8 +350,8 @@ export function FocusMode({
                   onClick={onToggleTimer}
                   className={`px-3 h-9 rounded-lg font-mono font-bold text-sm flex items-center gap-1.5 transition-all ${
                     timerRunning
-                      ? "bg-[#FF6600]/20 text-[#FF6600] border border-[#FF6600]/50"
-                      : "bg-[#FF6600] text-white shadow-md shadow-[#FF6600]/30 hover:bg-[#FF6600]/90"
+                      ? "bg-[#EF7A45]/20 text-[#EF7A45] border border-[#EF7A45]/50"
+                      : "bg-[#EF7A45] text-white shadow-md shadow-[#EF7A45]/30 hover:bg-[#EF7A45]/90"
                   }`}
                   aria-label={timerRunning ? "Pausar descanso" : "Iniciar descanso"}
                 >
@@ -368,7 +368,7 @@ export function FocusMode({
                     onClick={() => onSetTimerPreset(s)}
                     className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
                       timerInitial === s
-                        ? "bg-[#FF6600]/20 border-[#FF6600]/60 text-[#FF6600]"
+                        ? "bg-[#EF7A45]/20 border-[#EF7A45]/60 text-[#EF7A45]"
                         : "bg-white/5 border-white/10 text-neutral-400 hover:text-white"
                     }`}
                   >
@@ -384,7 +384,7 @@ export function FocusMode({
             {canNext ? (
               <Button
                 onClick={onNextExercise}
-                className="w-full bg-gradient-to-r from-[#FF6600] to-amber-600 hover:from-[#FF6600]/90 hover:to-amber-600/90 text-white font-display font-black uppercase py-5 text-sm tracking-wider shadow-lg shadow-[#FF6600]/20 flex items-center justify-center gap-2 rounded-xl"
+                className="w-full bg-gradient-to-r from-[#EF7A45] to-amber-600 hover:from-[#EF7A45]/90 hover:to-amber-600/90 text-white font-display font-black uppercase py-5 text-sm tracking-wider shadow-lg shadow-[#EF7A45]/20 flex items-center justify-center gap-2 rounded-xl"
               >
                 <span>Próximo Exercício ({currentIdx + 2} de {totalExercises})</span>
                 <ChevronRight className="w-4 h-4" />

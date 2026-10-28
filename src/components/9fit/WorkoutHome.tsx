@@ -232,7 +232,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
           </span>
         </div>
 
-        {supportLevel[0] === 2 && <button onClick={() => navigate("/9fit/native-system?app=staff")} className="mb-3 text-sm font-semibold text-[#EF7A45]">Solicitar apoio do treinador</button>}
+        {supportLevel[0] === 2 && <button onClick={() => navigate("/9fit/staff")} className="mb-3 text-sm font-semibold text-[#EF7A45]">Solicitar apoio do treinador</button>}
         <Slider
           value={supportLevel}
           onValueChange={setSupportLevel}

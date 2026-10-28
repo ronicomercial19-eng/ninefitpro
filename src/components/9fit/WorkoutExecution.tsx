@@ -678,7 +678,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
               variant="outline"
               size="sm"
               onClick={() => setFocusModeOpen(true)}
-              className="h-8 gap-1.5 px-2.5 rounded-lg border-[#FF6600]/40 bg-[#FF6600]/10 text-[#FF6600] hover:bg-[#FF6600]/20 font-mono text-xs font-bold"
+              className="h-8 gap-1.5 px-2.5 rounded-lg border-[#EF7A45]/40 bg-[#EF7A45]/10 text-[#EF7A45] hover:bg-[#EF7A45]/20 font-mono text-xs font-bold"
               title="Ativar Modo Foco (Maximiza exercício e oculta distrações)"
             >
               <Maximize2 className="w-3.5 h-3.5" />
