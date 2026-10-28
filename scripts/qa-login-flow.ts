@@ -40,6 +40,7 @@ test('OAuth and confirmation callbacks are registered and share the same destina
 test('home shows pending setup while other student pages retain gates', () => {
   const layout = source('src/components/9fit/NineFitLayout.tsx');
   assert.match(layout, /!firstAccessDone && !onFirstAccess && !onHome/);
-  assert.match(layout, /!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome/);
+  assert.match(layout, /\(!finished && !profileConfirmed\) \|\| appPending/);
+  assert.match(layout, /!onAtivacao && !onOnboarding && !onHome && !onCommercial/);
   assert.match(layout, /Continuar configuração/);
 });

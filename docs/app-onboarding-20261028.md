@@ -20,10 +20,11 @@ Notificações do app são opcionais, oferecidas somente na tela de conclusão p
 - O aluno lê sua ficha; professor responsável/admin autorizado consulta por RLS. Outro aluno não lê as respostas.
 - Novas entradas após pagamento precisam concluir a configuração. Contas legadas sem onboarding iniciado mantêm seu fluxo anterior; quem iniciar a configuração pode retomá-la até a revisão final.
 - Migração aplicada: `20261028090752_app_activation_onboarding.sql`.
+- Complemento aplicado: `20261028091426_harden_app_onboarding_reads.sql`, com índice por aluno, bloqueio de leitura anônima e escrita privilegiada em schema privado.
 
 ## Verificação
 
-27 verificações de PostgreSQL/PGlite cobrem persistência, dados inválidos, concorrência, conclusão, conta anônima e isolamento. Testes de decisão cobrem retomada, limitação atual, prescrição vazia e sessão futura. A suíte existente também passa.
+29 verificações de PostgreSQL/PGlite cobrem persistência, dados inválidos, concorrência, conclusão, conta anônima e isolamento. Testes de decisão cobrem retomada, limitação atual, prescrição vazia e sessão futura. A suíte existente também passa.
 
 Validação no banco de produção sob papel `authenticated`: salvar, concluir, reler as respostas e confirmar que nenhuma execução foi criada. Todas as alterações desse teste foram revertidas por `ROLLBACK`.
 

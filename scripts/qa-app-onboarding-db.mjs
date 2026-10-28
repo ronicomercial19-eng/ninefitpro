@@ -31,6 +31,7 @@ try{
  GRANT USAGE ON SCHEMA public,auth,private TO authenticated,anon;GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
  `);
  await db.exec(await readFile(new URL('../supabase/migrations/20261028090752_app_activation_onboarding.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20261028091426_harden_app_onboarding_reads.sql',import.meta.url),'utf8'));
  await db.exec(`SET ROLE authenticated;SELECT set_config('request.jwt.claim.sub','${owner}',false);`);
  const first=await save({welcome_seen:true},0);
  check('first confirmation creates only an unfinished onboarding',()=>{assert.equal(first.onboarding.revision,1);assert.equal(first.onboarding.completed_at,null)});
@@ -56,6 +57,12 @@ try{
  await db.exec(`SELECT set_config('request.jwt.claim.sub','${coach}',false);`);
  const coachRows=await value('SELECT count(*)::int value FROM public.app_onboarding');
  check('responsible coach can inspect routine for review',()=>assert.equal(coachRows,1));
+ await db.exec("SELECT set_config('qa.anonymous','true',false);");
+ const anonCoachRows=await value('SELECT count(*)::int value FROM public.app_onboarding');
+ check('anonymous sign-in cannot use the coach read policy',()=>assert.equal(anonCoachRows,0));
+ await db.exec("SELECT set_config('qa.anonymous','false',false);");
+ const publicInvoker=await value("SELECT NOT prosecdef value FROM pg_proc WHERE oid='public.fn_save_app_onboarding(jsonb,integer,boolean)'::regprocedure");
+ check('exposed writer delegates privileged work to private schema',()=>assert.equal(publicInvoker,true));
  await db.exec(`SELECT set_config('request.jwt.claim.sub','${other}',false);`);
  const others=await value('SELECT count(*)::int value FROM public.app_onboarding');
  check('another account cannot read the onboarding',()=>assert.equal(others,0));
