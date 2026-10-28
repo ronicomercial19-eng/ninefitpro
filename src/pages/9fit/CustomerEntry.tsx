@@ -6,6 +6,7 @@ import { loginDestination } from '@/lib/loginDestination';
 import { clearEntry, confirmedAccess, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, readEntry, rememberEntry, setupDestination } from '@/lib/customerEntry';
 import { AppSupport } from '@/components/9fit/AppSupport';
 import { pendingPayment } from '@/lib/paymentReturn';
+import { hasConfirmedProfile } from '@/lib/activationProfile';
 
 export default function CustomerEntry() {
   const { user, loading: authLoading } = useAuth();
@@ -32,7 +33,7 @@ export default function CustomerEntry() {
           supabase.from('user_roles').select('role').eq('user_id', user.id),
           supabase.rpc('fn_current_athlete_id'),
           supabase.from('user_subscriptions' as any).select('status,expires_at').eq('user_id', user.id).order('activated_at', { ascending: false }),
-          supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', user.id).maybeSingle(),
+          supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', user.id).maybeSingle(),
         ]);
         for (const result of [profile, roles, identity, subscription, settings]) if (result.error) throw result.error;
         const roleHome = loginDestination(profile.data?.role, roles.data?.map(r => r.role));
@@ -46,7 +47,7 @@ export default function CustomerEntry() {
           if (athlete.error) throw athlete.error;
           firstAccessDone ||= athlete.data.password_changed === true;
         }
-        const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: !!(settings.data as any)?.pdi_completed_at, intent: purchase ? 'purchase' : paymentReturn ? 'payment_return' : readEntry(entryStorage()) || 'start' });
+        const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: hasConfirmedProfile(settings.data), intent: purchase ? 'purchase' : paymentReturn ? 'payment_return' : readEntry(entryStorage()) || 'start' });
         const registeredAccess = ((subscription.data || []) as unknown as { status: string; expires_at: string | null }[]).some(row => confirmedAccess(row));
         if (active) setState({ destination, access: registeredAccess, missingProfile: !identity.data && roleHome !== '/app' });
       } catch { if (active) setError(true); }

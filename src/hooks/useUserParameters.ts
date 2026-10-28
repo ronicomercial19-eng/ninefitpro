@@ -41,24 +41,26 @@ export function useUserParameters() {
   const [loading, setLoading] = useState(true);
   const requestRef = useRef(0);
   const [exists, setExists] = useState(false);
+  const [declaredKeys, setDeclaredKeys] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const request = ++requestRef.current;
     if (!user?.id) {
-      setParams(null); setExists(false); setError(null);
+      setParams(null); setExists(false); setDeclaredKeys([]); setError(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     setParams(null); setExists(false); setError(null);
-    const { data, error: readError } = await supabase
+    const [{ data, error: readError }, { data: settings, error: settingsError }] = await Promise.all([supabase
       .from("user_parameters" as any)
       .select("*")
       .eq("user_id", user.id)
-      .maybeSingle();
+      .maybeSingle(), supabase.from('user_context_settings').select('declared_keys').eq('user_id', user.id).maybeSingle()]);
     if (request !== requestRef.current) return;
-    if (readError) { setError('Não foi possível ler sua ficha. Tente novamente.'); setLoading(false); return; }
+    if (readError || settingsError) { setError('Não foi possível ler sua ficha. Tente novamente.'); setLoading(false); return; }
+    setDeclaredKeys(settings?.declared_keys || []);
     if (data) {
       setExists(true);
       setParams({ ...DEFAULTS, ...(data as any) });
@@ -86,5 +88,5 @@ export function useUserParameters() {
     [params, user?.id]
   );
 
-  return { params: params || DEFAULTS, loading, error, exists, save, reload };
+  return { params: params || DEFAULTS, declaredKeys, loading, error, exists, save, reload };
 }

@@ -8,6 +8,7 @@ import { NineFitTopBar } from "./NineFitTopBar";
 import { RonBubble } from "./RonBubble";
 import { BackButton } from "./BackButton";
 import { useDailyContext } from '@/hooks/useDailyContext';
+import { hasConfirmedProfile } from '@/lib/activationProfile';
 
 
 interface NineFitLayoutProps {
@@ -115,14 +116,14 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
               .eq('athlete_id', (athlete as unknown as { athlete_id: string }).athlete_id)
               .maybeSingle();
             const finished = act?.finished_at;
-            const { data: contextSettings } = await supabase.from('user_context_settings' as any).select('pdi_completed_at').eq('user_id', session.user.id).maybeSingle();
-            const profileConfirmed = !!(contextSettings as { pdi_completed_at?: string } | null)?.pdi_completed_at;
+            const { data: contextSettings } = await supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', session.user.id).maybeSingle();
+            const profileConfirmed = hasConfirmedProfile(contextSettings);
             setPendingActivation(!finished && !profileConfirmed);
             if (!finished && !profileConfirmed && !onAtivacao && !onOnboarding && !onHome && !onCommercial) {
               navigate('/9fit/ativacao', { replace: true });
               return;
             }
-            if ((finished || profileConfirmed) && onAtivacao) {
+            if (profileConfirmed && onAtivacao) {
               navigate('/9fit/os', { replace: true });
               return;
             }

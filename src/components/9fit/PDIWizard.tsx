@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, Check } from "lucide-react";
 import { useUserParameters, UserParameters } from "@/hooks/useUserParameters";
@@ -35,32 +35,45 @@ const QUESTION_BANK: Step[] = [
     { v: "lactose", l: "Lactose" }, { v: "gluten", l: "Glúten" }, { v: "none", l: "Nenhuma" }] },
 ];
 
-export function PDIWizard({ open, onClose, onComplete, detailed = false }: Props) {
-  const STEPS = detailed ? QUESTION_BANK : QUESTION_BANK.filter(step => ['goal','peak_window','time_horizon','injury_zones','dietary_restrictions'].includes(step.key));
-  const { params, reload, loading, error: loadError } = useUserParameters();
+export function PDIWizard({ open, onClose, onComplete }: Props) {
+  const STEPS = QUESTION_BANK;
+  const { params, declaredKeys, reload, loading, error: loadError } = useUserParameters();
+  const initialized = useRef(false);
   const [i, setI] = useState(0);
   const [draft, setDraft] = useState<Partial<UserParameters>>({});
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) { setI(0); setDraft({}); } }, [open]);
+  useEffect(() => { initialized.current = false; setDraft({}); if (open) void reload(); }, [open, reload]);
+  useEffect(() => {
+    if (loading) { initialized.current = false; return; }
+    if (open && !loading && !loadError && !initialized.current) {
+      const missing = STEPS.findIndex(step => !declaredKeys.includes(step.key));
+      setI(missing < 0 ? 0 : missing); initialized.current = true;
+    }
+  }, [open, loading, loadError, declaredKeys]);
 
   if (!open) return null;
   const step = STEPS[i];
-  const value = draft[step.key] ?? params[step.key];
+  const value = draft[step.key] ?? (declaredKeys.includes(step.key) || step.type === 'scale' ? params[step.key] : undefined);
 
   const next = async () => {
     if (saving || loading || loadError) return;
+    if (value === undefined) { toast.error('Selecione uma resposta para continuar.'); return; }
     const confirmed = { ...draft, [step.key]: value };
     setDraft(confirmed);
-    if (i < STEPS.length - 1) { setI(i + 1); return; }
     setSaving(true);
-    const clean = { ...confirmed, injury_zones: (confirmed.injury_zones || []).filter(v => v !== 'none'), dietary_restrictions: (confirmed.dietary_restrictions || []).filter(v => v !== 'none') };
-    const { error } = await supabase.rpc('fn_save_pdi' as any, { p_patch: clean, p_complete: true });
-    setSaving(false);
-    if (error) return toast.error("Erro ao salvar PDI");
-    await reload();
-    window.dispatchEvent(new Event('9fit:profile-updated'));
-    toast.success("Sua ficha foi confirmada e continuará acompanhando sua rotina");
-    onComplete?.(); onClose();
+    try {
+      const final = i === STEPS.length - 1;
+      const patch = final ? { ...Object.fromEntries(STEPS.filter(s => declaredKeys.includes(s.key)).map(s => [s.key, params[s.key]])), ...confirmed } : { [step.key]: value };
+      const clean = Object.fromEntries(Object.entries(patch).map(([key, val]) => [key, Array.isArray(val) ? val.filter(v => v !== 'none') : val]));
+      const { data, error } = await supabase.rpc('fn_save_pdi' as any, { p_patch: clean, p_complete: final });
+      if (error || !(data as any)?.saved || (final && !(data as any)?.completed_at)) throw error || new Error('save_not_confirmed');
+      window.dispatchEvent(new Event('9fit:profile-updated'));
+      if (!final) { setI(i + 1); return; }
+      await reload();
+      toast.success("Sua ficha foi salva e confirmada");
+      onComplete?.(); onClose();
+    } catch { toast.error('Não foi possível salvar esta resposta. Tente novamente.'); }
+    finally { setSaving(false); }
   };
 
   const set = (v: UserParameters[typeof step.key]) => setDraft((d) => ({ ...d, [step.key]: v }));
@@ -97,7 +110,7 @@ export function PDIWizard({ open, onClose, onComplete, detailed = false }: Props
           {step.type === "choice" && (
             <div className="space-y-2 mb-5">
               {step.opts!.map((o) => (
-                <button key={o.v} onClick={() => set(o.v)}
+                <button disabled={saving || loading || !!loadError} key={o.v} onClick={() => set(o.v)}
                   className={`w-full rounded-xl border py-3 px-4 text-left transition ${value === o.v ? "border-primary bg-primary/10" : "border-white/10 bg-white/[0.02] hover:border-primary/60"}`}>
                   {o.l}
                 </button>
@@ -107,7 +120,7 @@ export function PDIWizard({ open, onClose, onComplete, detailed = false }: Props
 
           {step.type === "scale" && (
             <div className="mb-5">
-              <input type="range" min={1} max={step.max} value={Number(value) || 1}
+              <input disabled={saving || loading || !!loadError} type="range" min={1} max={step.max} value={Number(value) || 1}
                 onChange={(e) => set(Number(e.target.value))}
                 className="w-full accent-primary" />
               <p className="text-center font-display text-3xl text-primary mt-2">{Number(value) || 1}</p>
@@ -117,9 +130,9 @@ export function PDIWizard({ open, onClose, onComplete, detailed = false }: Props
           {step.type === "multi" && (
             <div className="grid grid-cols-2 gap-2 mb-5">
               {step.opts!.map((o) => {
-                const active = Array.isArray(value) && value.includes(o.v);
+                const active = Array.isArray(value) && (value.includes(o.v) || (o.v === 'none' && value.length === 0));
                 return (
-                  <button key={o.v} onClick={() => toggleMulti(o.v)}
+                  <button disabled={saving || loading || !!loadError} key={o.v} onClick={() => toggleMulti(o.v)}
                     className={`rounded-xl border py-2.5 px-3 text-sm transition flex items-center gap-2 ${active ? "border-primary bg-primary/10" : "border-white/10 bg-white/[0.02]"}`}>
                     {active && <Check className="w-3.5 h-3.5 text-primary" />}
                     {o.l}
@@ -132,7 +145,7 @@ export function PDIWizard({ open, onClose, onComplete, detailed = false }: Props
           {i > 0 && <button disabled={saving} onClick={() => setI(i - 1)} className="mb-3 text-xs text-muted-foreground">Voltar</button>}
           <button onClick={next} disabled={saving || loading || !!loadError}
             className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3 flex items-center justify-center gap-2 disabled:opacity-60">
-            {i < STEPS.length - 1 ? <>Confirmar e continuar <ArrowRight className="w-4 h-4" /></> : (saving ? "Salvando..." : "Confirmar minha ficha")}
+            {saving ? "Salvando..." : i < STEPS.length - 1 ? <>Confirmar e continuar <ArrowRight className="w-4 h-4" /></> : "Confirmar minha ficha"}
           </button>
         </motion.div>
         </DialogContent>
