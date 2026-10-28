@@ -20,10 +20,20 @@ Medir rampas de 10, 25, 50 e 100 sessões, depois subir conforme a concorrência
 
 ## Recuperação e backup: item ainda aberto
 
-O conector disponível não expõe listagem/configuração de backups. O painel do projeto abriu pedindo login, e o acesso foi solicitado ao usuário. Não foi comprovada frequência, retenção, sucesso recente, PITR nem restauração. A ferramenta `restore_project` do conector não deve ser tratada como restauração de backup.
+A API confirmou a organização Fit evolution no plano Free. O conector disponível não expõe listagem/configuração de backups. O painel do projeto abriu pedindo login, e o acesso foi solicitado ao usuário. Não foi comprovada frequência, retenção, sucesso recente, PITR nem restauração. A ferramenta `restore_project` do conector não deve ser tratada como restauração de backup.
 
 Com acesso ao painel, registrar plano, última cópia bem-sucedida, retenção e recursos de recuperação disponíveis. Definir RPO e RTO com o responsável; não apresentar metas como garantidas sem ensaio. Verificar separadamente objetos do Storage, código de Edge Functions, variáveis/segredos, autenticação e integrações: um backup do banco não deve ser presumido como cobertura completa de todos esses componentes. Referência: [backups do Supabase](https://supabase.com/docs/guides/platform/backups).
 
 O ensaio deve restaurar uma cópia em projeto isolado, mantendo integrações externas e jobs financeiros/mensagens desativados nesse destino. Confirmar migrações, contagens, amostras por conta, relacionamentos, arquivos, isolamento e login de teste; então verificar que um recibo repetido não duplica acesso. Registrar tempos de recuperação e divergências. Nunca restaurar por cima da produção para testar. A criação de um destino pago depende de orçamento autorizado; não foi provisionado nesta execução.
 
 Se houver incidente, preservar evidências técnicas sem credenciais, limitar novas escritas pela funcionalidade afetada, identificar o último estado íntegro e preparar a recuperação isolada. Antes da troca definitiva, comparar assinaturas/pagamentos recebidos depois da cópia com o provedor para evitar liberar prazo em dobro ou perder uma compra. Usar a conciliação atual como evidência, não como cobrança nova.
+
+## Capacidade e orçamento do plano atual
+
+Leitura de catálogo/Storage em 28/10/2026: banco 62.647.443 bytes (~62,65 MB decimais), tabelas públicas com índices 23.035.904 bytes e arquivos armazenados 22.681.831 bytes (~22,68 MB). Não usar a divisão desse volume pelo número atual de alunos como previsão: há dados legados/compartilhados e pouco histórico.
+
+A [página oficial de planos](https://supabase.com/pricing), consultada nesta data, lista no Free: 50.000 usuários ativos/mês, banco de 500 MB, 1 GB de arquivos, 5 GB de egress e 500.000 invocações de Edge Functions/mês. São franquias diferentes; 3.000 contas não significam que todos os recursos cabem automaticamente. A documentação recomenda exportação pelo CLI e cópia externa no Free; não presumir backups diários gerenciados ou restauração testada.
+
+Exemplos de planejamento, não previsão observada: duas fotos de 0,5 MB por aluno/mês × 3.000 alunos geram 3 GB novos por mês; cinco invocações Edge/aluno/dia × 3.000 × 30 dias somam 450.000 chamadas. A conciliação atual agendada por minuto acrescenta até 43.200 invocações em um mês de 30 dias, inclusive execuções ociosas. É necessário medir uso real, histórico retido e tamanho de fotos, e reservar margem antes de promover o lançamento nesse volume. Nenhum plano ou limite financeiro foi alterado.
+
+A cotação de ambiente separado aguarda a confirmação da organização exigida pelo conector. O painel de backups permanece sem autenticação, e o CLI local também não possui token de administração; não foram solicitadas senhas no chat. As próximas ações dependem dessas respostas, não do esgotamento da cota do Codex.
