@@ -28,6 +28,9 @@ interface Workspace {
   selected: CoachStudent | null;
   athleteId: string | null;
   loading: boolean;
+  total: number;
+  search: string;
+  searchStudents: (term: string) => void;
   error: boolean;
   select: (id: string | null) => void;
   retry: () => void;
@@ -51,6 +54,9 @@ export function ProfessorWorkspaceProvider({
       return null;
     }
   });
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => { const timer=setTimeout(()=>setDebouncedSearch(search),300);return ()=>clearTimeout(timer); },[search]);
   useEffect(() => {
     try {
       setRemembered(sessionStorage.getItem(key));
@@ -58,27 +64,28 @@ export function ProfessorWorkspaceProvider({
       setRemembered(null);
     }
   }, [key]);
+  const params = new URLSearchParams(location.search), explicit = params.get(ATHLETE_PARAM);
+  const candidate = explicit === null ? remembered : explicit;
   const query = useQuery({
-    queryKey: ["professor-students", user?.id],
+    queryKey: ["professor-students", user?.id, debouncedSearch, candidate],
     enabled: !!user,
     staleTime: 300_000,
     queryFn: async ({ signal }) => {
-      const { data, error } = await withTimeout(supabase.rpc("fn_coach_students" as any).abortSignal(signal));
+      const { data, error } = await withTimeout(supabase.rpc("fn_coach_students_page" as any, {p_offset:0,p_limit:100,p_search:debouncedSearch,p_selected_id:isAthleteId(candidate)?candidate:null} as any).abortSignal(signal));
       if (error) throw error;
-      if (!Array.isArray(data)) throw new Error("Lista de alunos inválida");
-      return data as unknown as CoachStudent[];
+      const value=data as unknown as {students:CoachStudent[];selected:CoachStudent|null;total:number};
+      if (!Array.isArray(value?.students) || !Number.isSafeInteger(value.total)) throw new Error("Lista de alunos inválida");
+      if(value.selected && value.selected.id!==candidate)throw new Error("Seleção de aluno inválida");
+      return value;
     },
   });
-  const params = new URLSearchParams(location.search),
-    explicit = params.get(ATHLETE_PARAM);
-  const candidate = explicit === null ? remembered : explicit;
   const selected = query.isError
     ? null
-    : (query.data?.find((s) => s.id === candidate) ?? null);
+    : (query.data?.selected ?? null);
   const athleteId = selected?.id ?? null;
   const select = (id: string | null) => {
-    if (id && (!isAthleteId(id) || !query.data?.some((s) => s.id === id)))
-      return;
+    // The server resolves the selection, including students outside this page.
+    if (id && !isAthleteId(id)) return;
     setRemembered(id);
     try {
       if (id) sessionStorage.setItem(key, id);
@@ -102,10 +109,13 @@ export function ProfessorWorkspaceProvider({
   return (
     <Context.Provider
       value={{
-        students: query.data ?? EMPTY_STUDENTS,
+        students: query.data?.students ?? EMPTY_STUDENTS,
         selected,
         athleteId,
-        loading: query.isLoading,
+        loading: query.isLoading || search!==debouncedSearch,
+        total: query.data?.total ?? 0,
+        search,
+        searchStudents:setSearch,
         error: query.isError || !!(explicit && !query.isLoading && !selected),
         select,
         retry: () => {
@@ -125,7 +135,7 @@ export function useProfessorWorkspace() {
 }
 export function ProfessorStudentBar() {
   const w = useProfessorWorkspace();
-  const [search, setSearch] = useState("");
+  const search=w.search, setSearch=w.searchStudents;
   const matches = useMemo(() => {
     const term = search.trim().toLocaleLowerCase('pt-BR');
     return term ? w.students.filter(student => student.name.toLocaleLowerCase('pt-BR').includes(term)) : w.students;
@@ -164,7 +174,7 @@ export function ProfessorStudentBar() {
             </option>
           ))}
         </select>
-        {matches.length > 100 && <span className="text-xs text-muted-foreground">Mostrando 100 de {matches.length}. Digite o nome para encontrar outro aluno.</span>}
+        {w.total > 100 && <span className="text-xs text-muted-foreground">Mostrando até 100 de {w.total}. Digite o nome para encontrar outro aluno.</span>}
         {search && matches.length === 0 && <span role="status" className="text-xs text-muted-foreground">Nenhum aluno com esse nome.</span>}
         {w.selected && (
           <span className="text-xs text-muted-foreground">

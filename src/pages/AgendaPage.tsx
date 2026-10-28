@@ -53,6 +53,7 @@ import {
   Bell,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/withTimeout";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   format,
@@ -106,6 +107,7 @@ const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 export default function AgendaPage() {
   const { user } = useAuth();
   const workspace = useProfessorWorkspace();
+  const loadController = useRef<AbortController | null>(null);
   const loadRevision = useRef(0),
     writing = useRef(false);
   const batch = useRef<{
@@ -123,6 +125,7 @@ export default function AgendaPage() {
   const [loading, setLoading] = useState(true);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
+  const [athleteSearch,setAthleteSearch]=useState("");
   const [appointmentForm, setAppointmentForm] = useState({
     athlete_id: "",
     appointment_type: "",
@@ -148,11 +151,13 @@ export default function AgendaPage() {
   const [savingCredits, setSavingCredits] = useState(false);
 
   useEffect(() => {
-    if (user && !workspace.loading) void fetchData();
+    if (user && !workspace.loading && !workspace.error) void fetchData();
+    else {setAthletes([]);setAppointments([]);setBookings([]);setLoadError(workspace.error);setLoading(workspace.loading);}
     return () => {
       loadRevision.current++;
+      loadController.current?.abort();
     };
-  }, [user?.id, currentDate, workspace.athleteId, workspace.loading]);
+  }, [user?.id, currentDate, workspace.athleteId, workspace.loading,workspace.error]);
   useEffect(() => {
     setAppointmentForm((f) => ({
       ...f,
@@ -166,66 +171,18 @@ export default function AgendaPage() {
     const request = ++loadRevision.current;
     setLoading(true);
     setLoadError(false);
+    loadController.current?.abort();
+    const controller=new AbortController();loadController.current=controller;
+    setAthletes([]);setAppointments([]);setBookings([]);
     try {
-      const monthStart = startOfMonth(currentDate);
-      const monthEnd = endOfMonth(currentDate);
-      const scope = workspace.athleteId
-        ? [workspace.athleteId]
-        : workspace.students.map((s) => s.id);
-      const ids = scope.length
-        ? scope
-        : ["00000000-0000-0000-0000-000000000000"];
-      const users = workspace.students
-        .filter((s) => scope.includes(s.id))
-        .map((s) => s.user_id)
-        .filter((id): id is string => !!id);
-      const [bookingsRes, athletesRes, appointmentsRes] = await Promise.all([
-        supabase
-          .from("class_bookings")
-          .select(
-            `id, class_id, user_email, status, booking_time, check_in_at, gym_classes (class_name, class_datetime, location, instructor_name)`,
-          )
-          .in(
-            "user_id",
-            users.length ? users : ["00000000-0000-0000-0000-000000000000"],
-          )
-          .order("booking_time", { ascending: true }),
-        supabase
-          .from("athletes")
-          .select("id, name, email")
-          .in("id", ids)
-          .order("name"),
-        supabase
-          .from("appointments")
-          .select(
-            "id, student_id, title, description, scheduled_at, status, appointment_type, duration, location",
-          )
-          .in("student_id", ids)
-          .gte(
-            "scheduled_at",
-            saoPauloInstant(format(monthStart, "yyyy-MM-dd") + "T00:00"),
-          )
-          .lte(
-            "scheduled_at",
-            saoPauloInstant(format(monthEnd, "yyyy-MM-dd") + "T23:59:59"),
-          )
-          .order("scheduled_at", { ascending: true }),
-      ]);
-      for (const result of [bookingsRes, athletesRes, appointmentsRes])
-        if (result.error) throw result.error;
-      if (request !== loadRevision.current) return;
-      if (bookingsRes.data) setBookings(bookingsRes.data as any);
-      if (athletesRes.data) setAthletes(athletesRes.data);
-      if (appointmentsRes.data) {
-        setAppointments(
-          appointmentsRes.data.map((a) => ({
-            ...a,
-            student_name:
-              athletesRes.data?.find((at) => at.id === a.student_id)?.name ||
-              "Aluno",
-          })),
-        );
-      }
+      const {data,error}=await withTimeout(supabase.rpc("fn_coach_agenda" as any,{
+        p_month:format(currentDate,"yyyy-MM-01"),p_athlete_id:workspace.athleteId,
+      } as any).abortSignal(controller.signal));
+      if(error)throw error;
+      const result=data as unknown as {bookings:ClassBooking[];athletes:Athlete[];appointments:Appointment[]};
+      if(!Array.isArray(result?.bookings)||!Array.isArray(result.athletes)||!Array.isArray(result.appointments))throw Error("Agenda não confirmada");
+      if(request!==loadRevision.current)return;
+      setBookings(result.bookings);setAthletes(result.athletes);setAppointments(result.appointments);
     } catch (error) {
       if (request === loadRevision.current) {
         setLoadError(true);
@@ -233,9 +190,16 @@ export default function AgendaPage() {
         setBookings([]);
       }
     } finally {
+      controller.abort();
       if (request === loadRevision.current) setLoading(false);
     }
   };
+
+  useEffect(()=>{setAthleteSearch("");},[showCreditDialog,showNewAppointment]);
+  const athleteOptions=athletes.filter(a=>`${a.name} ${a.email??""}`.toLocaleLowerCase('pt-BR').includes(athleteSearch.trim().toLocaleLowerCase('pt-BR'))).slice(0,100);
+  const formSelection=showCreditDialog?creditAthleteId:appointmentForm.athlete_id;
+  const chosen=athletes.find(a=>a.id===formSelection);
+  if(chosen&&!athleteOptions.some(a=>a.id===chosen.id))athleteOptions.unshift(chosen);
 
   // Fetch credits when athlete selected
   const fetchAthleteCredits = async (athleteId: string) => {
@@ -465,11 +429,11 @@ export default function AgendaPage() {
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const getBookingsForDay = (date: Date) =>
     bookings.filter((b) =>
-      b.gym_classes?.class_datetime?.startsWith(format(date, "yyyy-MM-dd")),
+      b.gym_classes?.class_datetime && businessDate(new Date(b.gym_classes.class_datetime))===format(date, "yyyy-MM-dd"),
     );
   const getAppointmentsForDay = (date: Date) =>
     appointments.filter((a) =>
-      a.scheduled_at?.startsWith(format(date, "yyyy-MM-dd")),
+      a.scheduled_at && businessDate(new Date(a.scheduled_at))===format(date, "yyyy-MM-dd"),
     );
 
   const getColor = (type: string | null) => {
@@ -666,6 +630,7 @@ export default function AgendaPage() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Selecionar Aluno</Label>
+              <Input aria-label="Buscar aluno para créditos" placeholder="Digite o nome do aluno" value={athleteSearch} onChange={e=>setAthleteSearch(e.target.value)}/>
               <Select
                 value={creditAthleteId}
                 onValueChange={(v) => {
@@ -677,7 +642,7 @@ export default function AgendaPage() {
                   <SelectValue placeholder="Buscar aluno..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {athletes.map((a) => (
+                  {athleteOptions.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.name}
                     </SelectItem>
@@ -740,6 +705,7 @@ export default function AgendaPage() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Aluno *</Label>
+              <Input aria-label="Buscar aluno para agendamento" placeholder="Digite o nome do aluno" value={athleteSearch} onChange={e=>setAthleteSearch(e.target.value)}/>
               <Select
                 value={appointmentForm.athlete_id}
                 onValueChange={(v) =>
@@ -750,7 +716,7 @@ export default function AgendaPage() {
                   <SelectValue placeholder="Selecione o aluno" />
                 </SelectTrigger>
                 <SelectContent>
-                  {athletes.map((a) => (
+                  {athleteOptions.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.name}
                     </SelectItem>
