@@ -28,14 +28,15 @@ export default function CustomerEntry() {
     let active = true; setError(false); setState(null);
     void (async () => {
       try {
-        const [profile, roles, identity, subscription, settings] = await Promise.all([
+        const [profile, roles, identity, subscription, settings, onboarding] = await Promise.all([
           supabase.from('profiles').select('role,first_access_completed').eq('user_id', user.id).maybeSingle(),
           supabase.from('user_roles').select('role').eq('user_id', user.id),
           supabase.rpc('fn_current_athlete_id'),
           supabase.from('user_subscriptions' as any).select('status,expires_at').eq('user_id', user.id).order('activated_at', { ascending: false }),
           supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', user.id).maybeSingle(),
+          supabase.from('app_onboarding' as any).select('completed_at').eq('user_id', user.id).maybeSingle(),
         ]);
-        for (const result of [profile, roles, identity, subscription, settings]) if (result.error) throw result.error;
+        for (const result of [profile, roles, identity, subscription, settings, onboarding]) if (result.error) throw result.error;
         const roleHome = loginDestination(profile.data?.role, roles.data?.map(r => r.role));
         let activationDone = false;
         let firstAccessDone = profile.data?.first_access_completed === true;
@@ -47,7 +48,9 @@ export default function CustomerEntry() {
           if (athlete.error) throw athlete.error;
           firstAccessDone ||= athlete.data.password_changed === true;
         }
-        const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: hasConfirmedProfile(settings.data), intent: purchase ? 'purchase' : paymentReturn ? 'payment_return' : readEntry(entryStorage()) || 'start' });
+        const intent = purchase ? 'purchase' : paymentReturn ? 'payment_return' : readEntry(entryStorage()) || 'start';
+        const onboardingComplete = !!(onboarding.data as unknown as { completed_at: string | null } | null)?.completed_at;
+        const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: hasConfirmedProfile(settings.data) && (intent === 'payment_return' ? onboardingComplete : !onboarding.data || onboardingComplete), intent });
         const registeredAccess = ((subscription.data || []) as unknown as { status: string; expires_at: string | null }[]).some(row => confirmedAccess(row));
         if (active) setState({ destination, access: registeredAccess, missingProfile: !identity.data && roleHome !== '/app' });
       } catch { if (active) setError(true); }
