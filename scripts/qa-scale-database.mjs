@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {performance} from 'node:perf_hooks';
+const require=createRequire(import.meta.url);
+const {PGlite}=require(process.env.PGLITE_MODULE||'./qa-db/node_modules/@electric-sql/pglite');
+const db=new PGlite();let checks=0;
+const check=(name,fn)=>{fn();checks++;console.log('PASS',name)};
+const value=async sql=>(await db.query(sql)).rows[0].value;
+try{
+ await db.exec(`
+ CREATE ROLE authenticated;CREATE SCHEMA auth;CREATE SCHEMA private;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('qa.uid',true),'')::uuid$$;
+ CREATE FUNCTION public.is_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
+ CREATE FUNCTION public.is_trainer(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
+ CREATE TYPE public.app_role AS ENUM('admin');
+ CREATE FUNCTION public.has_role(uuid,public.app_role) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
+ CREATE TABLE auth.users(id uuid PRIMARY KEY);
+ INSERT INTO auth.users SELECT('10000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid FROM generate_series(1,3000)n;
+ CREATE TABLE public.notifications(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,user_id uuid REFERENCES auth.users(id),is_read boolean DEFAULT false,created_at timestamptz DEFAULT now());
+ CREATE TABLE public.push_subscriptions(id uuid DEFAULT gen_random_uuid(),user_id uuid REFERENCES auth.users(id),endpoint text);
+ CREATE TABLE public.daily_workouts(id uuid,weekly_structure_id uuid);
+ CREATE TABLE public.appointments(id uuid,teacher_id uuid,scheduled_at timestamptz);
+ CREATE INDEX idx_appointments_teacher_date ON public.appointments(teacher_id,scheduled_at);
+ CREATE INDEX idx_appointments_teacher_sched ON public.appointments(teacher_id,scheduled_at);
+ CREATE TABLE public.partial_fk(id uuid,user_id uuid REFERENCES auth.users(id));
+ CREATE INDEX partial_fk_covered ON public.partial_fk(user_id) WHERE user_id IS NOT NULL;
+ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+ CREATE POLICY own_read ON public.notifications FOR SELECT TO authenticated USING(user_id=auth.uid());
+ CREATE POLICY own_update ON public.notifications FOR UPDATE TO authenticated USING(user_id=auth.uid()) WITH CHECK(user_id=auth.uid());
+ CREATE POLICY own_push ON public.push_subscriptions TO authenticated USING(user_id=auth.uid()) WITH CHECK(user_id=auth.uid());
+ GRANT USAGE ON SCHEMA auth,public TO authenticated;GRANT SELECT,UPDATE ON public.notifications TO authenticated;GRANT SELECT ON public.push_subscriptions TO authenticated;
+ INSERT INTO public.notifications(user_id) SELECT id FROM auth.users CROSS JOIN generate_series(1,20);
+ INSERT INTO public.push_subscriptions(user_id,endpoint)SELECT id,'https://test.invalid/'||id FROM auth.users;
+ CREATE INDEX notification_feed ON public.notifications(user_id,created_at DESC);
+ `);
+ const sql=await readFile(new URL('../supabase/migrations/20261028094531_scale_hot_indexes_rls.sql',import.meta.url),'utf8');
+ await db.exec('BEGIN;'+sql+'COMMIT;');
+ const count=await value("SELECT count(*)::int value FROM pg_indexes WHERE indexname LIKE 'scale_fk_%'");
+ check('missing FK is indexed while existing full and partial prefixes are preserved',()=>assert.equal(count,1));
+ const dupe=await value("SELECT to_regclass('public.idx_appointments_teacher_sched') IS NULL value");
+ check('identical teacher/date index is removed',()=>assert.equal(dupe,true));
+ const policies=(await db.query("SELECT qual,with_check FROM pg_policies WHERE tablename IN('notifications','push_subscriptions')")).rows;
+ check('authentication is hoisted into initplans for hot policies',()=>assert.ok(policies.every(p=>p.qual.includes('SELECT auth.uid()'))));
+ await db.exec('BEGIN;'+sql+'COMMIT;');
+ const again=await value("SELECT count(*)::int value FROM pg_indexes WHERE indexname LIKE 'scale_fk_%'");
+ check('replaying optimization does not create duplicate covering indexes',()=>assert.equal(again,count));
+ await db.exec('ANALYZE;SET ROLE authenticated;');
+ const samples=[];
+ for(let n=1;n<=100;n++){
+  const id='10000000-0000-4000-8000-'+String(n*29).padStart(12,'0');
+  await db.exec(`SELECT set_config('qa.uid','${id}',false);`);
+  const start=performance.now();
+  const result=await db.query('SELECT id,user_id FROM public.notifications ORDER BY created_at DESC,id LIMIT 20');
+  samples.push(performance.now()-start);
+  assert.equal(result.rows.length,20);assert.ok(result.rows.every(r=>r.user_id===id));
+ }
+ check('100 accounts among 3000 receive only their own feed',()=>assert.equal(samples.length,100));
+ const denied=await db.query("UPDATE public.notifications SET is_read=true WHERE user_id='10000000-0000-4000-8000-000000000001' RETURNING id");
+ check('RLS still prevents editing another account after optimization',()=>assert.equal(denied.rows.length,0));
+ const plan=(await db.query('EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) SELECT id FROM public.notifications ORDER BY created_at DESC LIMIT 20')).rows[0]['QUERY PLAN'];
+ check('representative feed uses indexed access and an authentication initplan',()=>{assert.match(JSON.stringify(plan),/Index Scan|Bitmap/);assert.match(JSON.stringify(plan),/InitPlan/)});
+ samples.sort((a,b)=>a-b);
+ const report={checks,accounts:3000,notifications:60000,pushEndpoints:3000,queries:100,sequentialLocalP95Ms:samples[94],environment:'isolated single-process PostgreSQL/PGlite; not production concurrency or SLA',realDataChanged:false};
+ if(process.env.SCALE_REPORT)await writeFile(process.env.SCALE_REPORT,JSON.stringify(report,null,2));
+ console.log(JSON.stringify(report));
+}finally{await db.close()}
