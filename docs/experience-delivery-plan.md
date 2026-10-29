@@ -39,3 +39,12 @@ Registrar problema, alteração, verificação técnica, estado da publicação 
 - Sem alteração de parâmetros de Sync, prescrição automática, carga ou regra comercial dos alunos atuais.
 - Checklist de QA: salvar sexo e nascimento; recarregar; escolher não informar; conferir resumo no professor; simular conexão indisponível e recuperar; abrir treino rápido antes de a identidade terminar de carregar; trocar aluno/conta sem reaproveitar dados anteriores.
 - Esta rodada não encerra as cinco fases nem comprova capacidade para 3.000 usuários.
+
+## Implementação consolidada das cinco frentes — 29/10/2026
+
+Detalhamento de código e configurações: [entrega das fases](experience-phases-implementation.md). QA é responsabilidade do usuário e não será usado como substituto de implementação.
+
+- Fases 1–3: base implementada nos PRs #106–#123; esta rodada acrescenta Sync compartilhada, fila de revisões no Dashboard, confirmação do perfil e bloco de capacidade escolhido pelo professor.
+- Fase 4: motor versionado, consentimento, modo persistido, aplicação/reversão, doses por tempo, contexto e aprendizado condicionado a registros reais; score canônico no banco; referências de carga confirmadas; tokens compartilhados e componentes secundários alinhados.
+- Fase 5: catálogos protegidos, propriedade sem fallback por e-mail e proxy de vídeo com segredo no servidor. Consultas paginadas, índices, limites de API e monitoramento permanecem em operação.
+- Pendências externas continuam explícitas: configuração/validação operacional de backups e Auth no provedor; recorrência legada sem integração identificada. A Sync segue a observação inicial de sete dias prevista no handoff. Não confundir implementação disponível com comprovação de capacidade/calibração.

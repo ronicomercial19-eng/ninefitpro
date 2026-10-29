@@ -105,10 +105,10 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
   }, [exercises]);
 
   const getTypeIcon = () => {
-    if (training.training_type === 'link') return <Globe className="w-5 h-5 text-green-400" />;
+    if (training.training_type === 'link') return <Globe className="w-5 h-5 text-[#5BC8E8]" />;
     if (training.training_type === 'html') {
-      if (training.training_data?.source === 'html_code_paste') return <Code2 className="w-5 h-5 text-cyan-400" />;
-      return <FileText className="w-5 h-5 text-blue-400" />;
+      if (training.training_data?.source === 'html_code_paste') return <Code2 className="w-5 h-5 text-primary" />;
+      return <FileText className="w-5 h-5 text-primary" />;
     }
     return <Dumbbell className="w-5 h-5 text-primary" />;
   };
@@ -131,7 +131,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
             <span className="text-[10px] text-muted-foreground">{ex.rest_seconds}s desc</span>
           )}
           {ex.override_locked && (
-            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-amber-500/10 text-amber-600 border-amber-500/30">
+            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-primary/10 text-primary border-primary/30">
               🔒 Prof.
             </Badge>
           )}
@@ -202,7 +202,7 @@ export function WorkoutOverview({ training, onBack, onStart }: WorkoutOverviewPr
             <p className="text-lg font-black text-foreground">{duration ? `~${duration}min` : "Não informado"}</p>
           </div>
           <div className="bg-background/50 rounded-sm p-3 text-center">
-            <Zap className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
+            <Zap className="w-4 h-4 text-primary mx-auto mb-1" />
             <p className="text-xs text-muted-foreground">XP</p>
             <p className="text-lg font-black text-foreground">{xpReward ? `Até +${xpReward}` : "Após concluir"}</p>
           </div>

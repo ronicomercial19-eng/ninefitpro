@@ -1,4 +1,7 @@
+import { StrengthReferenceHints } from './StrengthReferenceHints';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { withTimeout } from '@/lib/withTimeout';
 import { Link, useNavigate } from 'react-router-dom';
 import { AssessmentGoalCard } from './AssessmentGoalCard';
 import { AttemptVelocityChart } from './AttemptVelocityChart';
@@ -17,18 +20,9 @@ type View = 'resumo' | 'capacidades' | 'historico' | 'meta' | 'reavaliacao' | 'f
 const trustLabels: Record<Trust,string> = { CONFIRMADO:'Medido',DERIVADO:'Calculado',ESTIMADO:'Estimado',NAO_DISPONIVEL:'Não disponível' };
 // Peso da avaliação no score global (vem do banco: fn_assessment_weight). Professor/oficial = 1; autoavaliação < 1; sem score válido (ou 1RM fora do plausível) = 0.
 const weightOf=(r:AssessmentRow):number=>{const w=Number((r as unknown as {peso_score?:number|string|null}).peso_score??(r.oficial?1:0));return Number.isFinite(w)?w:0};
-const ageDays=(d:string)=>Math.max(0,(Date.now()-new Date(`${d.slice(0,10)}T12:00:00`).getTime())/86400000);
 const measuresCount=(r:AssessmentRow)=>assessmentMetrics.filter(m=>metricValue(r,m.key)!==null).length;
 // Checkpoint master = data da última avaliação do professor (peso 1). Autoavaliações anteriores a ele ficam no histórico, mas fora do score.
 const masterDateOf=(rows:AssessmentRow[])=>rows.filter(r=>weightOf(r)>=1).map(r=>r.data_avaliacao.slice(0,10)).sort().at(-1)??null;
-// Mesma fórmula de fn_assessment_weighted_score: peso do tipo × decaimento (meia-vida de 60 dias), janela de 120 dias, resetada pelo master.
-function weightedScore(rows:AssessmentRow[],days=120){
- const master=masterDateOf(rows);
- const list=rows.filter(r=>weightOf(r)>0&&ageDays(r.data_avaliacao)<=days&&Number.isFinite(Number(r.score_global))&&Number(r.score_global)>0&&(weightOf(r)>=1||!master||r.data_avaliacao.slice(0,10)>=master));
- let num=0,den=0,prof=0,self=0;
- list.forEach(r=>{const e=weightOf(r)*Math.pow(.5,ageDays(r.data_avaliacao)/60);num+=Number(r.score_global)*e;den+=e;if(weightOf(r)>=1)prof++;else self++});
- return den>0?{value:num/den,prof,self}:null;
-}
 export function TrustBadge({ trust, self = false }: { trust:Trust; self?:boolean }) { return <span className={`aw-trust aw-trust-${trust.toLowerCase()}`}>{self && trust==='CONFIRMADO'?'Informado por você':trustLabels[trust]}</span>; }
 export function DeltaChip({ value, unit = 'pts' }: { value:number|null; unit?:string }) { return value===null?<span className="aw-muted">Sem comparação</span>:<span className="aw-delta">{value>0?'+':''}{fmt(value)} {unit}</span>; }
 export function CompareToggle({ value, onChange }: { value:'primeira'|'anterior'; onChange:(v:'primeira'|'anterior')=>void }) { return <div className="aw-compare"><span>Comparar com</span>{(['primeira','anterior'] as const).map(v=><button type="button" aria-pressed={value===v} key={v} onClick={()=>onChange(v)}>{v==='primeira'?'Primeira':'Anterior'}</button>)}</div>; }
@@ -67,9 +61,13 @@ function WeightedScore({data,officialRow}:{data:{value:number;prof:number;self:n
 type CapacityProfile={master:{id:string;date:string;score:number|null}|null;pillars:Record<string,{value:number;date:string;source:string}>;weakest_pillar:{key:string;value:number;source:string}|null;rm1_refs:Record<string,{kg:number;date:string;source:string}>};
 // Perfil de capacidade: o que o sistema sabe do atleta (master + dados guiados desde o master). Vem do banco: fn_athlete_capacity_profile.
 function CapacityCard({athleteId,refreshKey}:{athleteId:string;refreshKey:number}) {
- const [profile,setProfile]=useState<CapacityProfile|null>(null);
- useEffect(()=>{let active=true;(supabase.rpc as unknown as (fn:string,args:Record<string,unknown>)=>Promise<{data:unknown;error:unknown}>)('fn_athlete_capacity_profile',{p_athlete_id:athleteId}).then(({data,error})=>{if(active)setProfile(error?null:(data as CapacityProfile))});return()=>{active=false}},[athleteId,refreshKey]);
- if(!profile)return null;
+ const query=useQuery({queryKey:['athlete-capacity',athleteId,refreshKey],enabled:!!athleteId,staleTime:30_000,retry:false,queryFn:async({signal})=>{
+  const {data,error}=await withTimeout<{data:CapacityProfile;error:unknown}>((supabase as any).rpc('fn_athlete_capacity_profile',{p_athlete_id:athleteId}).abortSignal(signal));
+  if(error)throw error;return data;
+ }});
+ if(query.isPending)return <Card><p role="status">Carregando seu perfil de capacidade...</p></Card>;
+ if(query.isError||!query.data)return <Card><p>Não foi possível consultar seu perfil de capacidade.</p><button type="button" onClick={()=>void query.refetch()}>Tentar novamente</button></Card>;
+ const profile=query.data;
  const weak=profile.weakest_pillar,weakLabel=weak?pillars.find(([k])=>k===weak.key)?.[1]??weak.key:null;
  const rmCount=Object.keys(profile.rm1_refs??{}).length;
  const sourceLabel=(s:string)=>s==='professor'?'professor':'autoavaliação';
@@ -108,12 +106,17 @@ export function AssessmentWorkspace({athleteId,initialView='resumo',basePath='/9
  const scoreRows=official.filter(r=>(!period||r.data_avaliacao>=cutoff)&&(!current||compatibleMetric(current,r,'score_global')));
  // Score ponderado: todas as avaliações com peso > 0 (professor + autoavaliação válida), na ordem cronológica.
  const weightedRows=rows.filter(r=>weightOf(r)>0&&(!period||r.data_avaliacao>=cutoff));
- const weighted=useMemo(()=>weightedScore(rows),[rows]);
- const masterDate=useMemo(()=>masterDateOf(rows),[rows]);
+ const scoreQuery=useQuery({queryKey:['assessment-weighted-score',athleteId,revision],enabled:!!athleteId,staleTime:30_000,retry:false,queryFn:async({signal})=>{
+  const {data,error}=await withTimeout<{data:any;error:any}>((supabase as any).rpc('fn_assessment_weighted_score',{p_athlete_id:athleteId,p_days:120}).abortSignal(signal));
+  if(error)throw error;return data as {score:number|null;professor_count:number;self_count:number;master_date:string|null};
+ }});
+ const weighted=scoreQuery.data?.score!=null?{value:Number(scoreQuery.data.score),prof:scoreQuery.data.professor_count,self:scoreQuery.data.self_count}:null;
+ const masterDate=scoreQuery.data?.master_date??masterDateOf(rows);
  const focus=pillars.flatMap(([key,label])=>{const v=metricValue(current,`score_${key}`);return v===null?[]:[{key,label,value:v}]}).sort((a,b)=>a.value-b.value)[0];
  const navigate=setView;
  return <div className="assessment-workspace" data-testid="assessment-workspace">
  <header className="aw-header"><div><h2>Progresso</h2><p className="aw-muted">Minhas avaliações</p></div><button className="aw-icon" type="button" onClick={refresh} aria-label="Atualizar avaliações"><RefreshCw size={18} className={loading?'animate-spin':''}/></button></header>
+ {scoreQuery.isError&&<p role="status" className="aw-note">O score ponderado não pôde ser atualizado. <button type="button" onClick={()=>void scoreQuery.refetch()}>Tentar novamente</button></p>}
  <TabBarProgresso value={view} onChange={navigate}/>
  {loading&&<p className="aw-empty" role="status">Carregando suas avaliações…</p>}
  {error&&<div className="aw-error" role="alert">{error}<button type="button" onClick={refresh}>Tentar novamente</button></div>}
@@ -123,6 +126,7 @@ export function AssessmentWorkspace({athleteId,initialView='resumo',basePath='/9
  <Card className="aw-hero"><CompareToggle value={compare} onChange={setCompare}/>{weighted?<WeightedScore data={weighted} officialRow={current}/>:<Score row={current} previous={previous}/>}{official.length===1&&<p className="aw-note">Sua primeira avaliação é a base das comparações. A evolução do score aparece a partir da segunda avaliação oficial.</p>}{!official.length&&!weighted&&<Empty><h3>Seu próximo passo é criar um ponto de partida</h3><p>Faça uma avaliação com seu professor para acompanhar o score oficial. Você já pode registrar as medidas que avaliou por conta própria.</p>{hub.can_manage && <Link className="aw-button" to={guidedPath}>Fazer avaliação guiada</Link>}</Empty>}</Card>
  {focus&&<button type="button" className="aw-focus" onClick={()=>{setView('capacidades');setOpenPillar(focus.key)}}><Activity size={20}/><span><small>Foco para conversar com seu professor</small><strong>{focus.label} · {fmt(focus.value)} pontos</strong><span>É o menor pilar avaliado neste registro. Veja os testes do ciclo.</span></span><ArrowUpRight size={20}/></button>}
  <CapacityCard athleteId={athleteId} refreshKey={revision}/>
+ <StrengthReferenceHints athleteId={athleteId} key={athleteId}/>
  <div className="aw-kpis">{['gordura_corporal','massa_muscular','rm1_empurrar_superior'].map(key=>{const m=assessmentMetrics.find(m=>m.key===key)!;const latest=[...rows].reverse().find(r=>metricValue(r,key)!==null);const first=latest?compareRow(rows.filter(r=>r.origem===latest.origem&&metricValue(r,key)!==null),latest,compare):null;const v=metricValue(latest,key),b=metricValue(first,key);return <Card key={key}><p className="aw-muted">{m.label}</p><strong className="aw-kpi-value">{v===null?'—':fmt(v)} <small>{m.unit}</small></strong>{latest&&<TrustBadge trust={trustFor(latest,m)} self={isSelf(latest)}/>}<DeltaChip value={v===null||b===null||latest?.id===first?.id||!latest||!first||!compatibleMetric(latest,first,key)||!['CONFIRMADO','DERIVADO'].includes(trustFor(latest,m))||!['CONFIRMADO','DERIVADO'].includes(trustFor(first,m))?null:v-b} unit={m.unit==='%'?'pp':m.unit}/></Card>})}</div>
  <ScoreTrend rows={weightedRows}/>
  <div className="aw-link-grid"><button type="button" onClick={()=>setView('reavaliacao')}><CalendarDays/><span>Próxima reavaliação<small>{current?fullDate(nextAssessmentDate(current,hub.settings.interval_weeks)):'Defina o ponto de partida com seu professor'}</small></span><ArrowUpRight/></button><button type="button" onClick={()=>setView('fontes')}><Fingerprint/><span>Fontes de dados<small>{hub.sources.filter(s=>s.status==='active').length} fontes ativas</small></span><ArrowUpRight/></button><button type="button" onClick={()=>setView('meta')}><Target/><span>Metas e projeções<small>{hub.goals.length} metas cadastradas</small></span><ArrowUpRight/></button></div>

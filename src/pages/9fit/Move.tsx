@@ -597,7 +597,7 @@ export default function NineFitMove() {
             <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary font-bold">
               9FIT // HIGH-PERFORMANCE OS
             </span>
-            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#5BC8E8]/15 text-[#5BC8E8] border border-[#5BC8E8]/30">
               GOOGLE MAPS GPS
             </span>
           </div>
@@ -643,7 +643,7 @@ export default function NineFitMove() {
 
         <div className="flex flex-col items-end shrink-0">
           <span className="text-[9px] font-mono text-neutral-400 uppercase">PRECISÃO</span>
-          <span className="text-xs font-mono font-bold text-emerald-400">
+          <span className="text-xs font-mono font-bold text-[#5BC8E8]">
             {isSimulationMode ? 'Simulação' : gpsError ? 'Sem sinal' : gpsAccuracy !== null ? `±${gpsAccuracy} m` : 'Aguardando sinal'}
           </span>
         </div>
@@ -678,7 +678,7 @@ export default function NineFitMove() {
         <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/75 backdrop-blur-md px-3 py-1.5 border border-white/10 text-xs shadow-md">
           <span
             className={`w-2.5 h-2.5 rounded-full ${
-              running ? "bg-emerald-400 animate-ping" : "bg-neutral-500"
+              running ? "bg-[#5BC8E8] animate-ping" : "bg-neutral-500"
             }`}
           />
           <span className="font-mono text-[11px] font-bold text-neutral-200">
@@ -770,7 +770,7 @@ export default function NineFitMove() {
 
       {/* BOTÕES DE CONTROLE DA CORRIDA */}
       <div className="mx-5 mt-4 space-y-2.5">
-        {saveFailed && <button type="button" disabled={savingActivity} onClick={()=>void stopAndSave()} className="w-full rounded-xl border border-amber-400 p-4 text-amber-300">{savingActivity?'Salvando…':'Tentar salvar atividade novamente'}</button>}
+        {saveFailed && <button type="button" disabled={savingActivity} onClick={()=>void stopAndSave()} className="w-full rounded-xl border border-primary p-4 text-primary">{savingActivity?'Salvando…':'Tentar salvar atividade novamente'}</button>}
         {!running ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button

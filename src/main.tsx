@@ -6,6 +6,7 @@ import App from './App.tsx'
 import './index.css'
 import './styles/orange-palette.css'
 import './styles/touch-feedback.css'
+import './styles/experience-theme.css'
 import { initializeCapacitor } from "./utils/capacitor";
 
 // Initialize Capacitor plugins

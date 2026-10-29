@@ -136,7 +136,7 @@ export function MetasSection() {
             <div key={m.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold flex items-center gap-1.5">
-                  {m.status === "concluida" && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                  {m.status === "concluida" && <Check className="w-3.5 h-3.5 text-[#5BC8E8]" />}
                   {m.titulo}
                 </p>
                 <span className="text-[10px] text-muted-foreground">
@@ -145,7 +145,7 @@ export function MetasSection() {
               </div>
               <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden">
                 <div
-                  className={`h-full ${m.status === "concluida" ? "bg-emerald-400" : "bg-primary"}`}
+                  className={`h-full ${m.status === "concluida" ? "bg-[#5BC8E8]" : "bg-primary"}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>

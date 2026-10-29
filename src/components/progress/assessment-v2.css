@@ -79,3 +79,6 @@
 .assessment-page .aw-empty{border-color:hsl(var(--border)/.18)}
 .assessment-page .aw-goal progress{background:hsl(var(--elevated))}
 @media print{.assessment-page{background:#fff;color:#111}.assessment-page .assessment-print{--aw-accent:#333;--aw-muted:#555;color:#111}.assessment-page .assessment-print .aw-card{background:#fff;border-color:#ddd}.assessment-page .assessment-print .aw-delta,.assessment-page .assessment-print .aw-row-score{color:#333}}
+
+.assessment-page .aw-card{border-color:rgba(239,122,69,.25);border-radius:24px}
+.assessment-page .aw-focus{border-radius:24px}

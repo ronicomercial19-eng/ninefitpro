@@ -38,6 +38,6 @@ export function DailyGoalCheckins() {
   }
   return <section className="space-y-2" aria-label="Metas diárias"><p className="text-xs text-muted-foreground">Toque para confirmar o que você já fez hoje.</p><div className="grid grid-cols-3 gap-2">{['move','nutri','treino'].map(kind=>{
     const key=kind==='nutri'?`nutri:${slot}`:kind;
-    return <button key={kind} type="button" disabled={!athleteId || !!saving || done.includes(key)} onClick={()=>void complete(kind)} className={`rounded-xl border p-3 text-xs disabled:opacity-70 ${done.includes(key)?'border-emerald-500/50 bg-emerald-500/10':'border-primary/30 bg-primary/10'}`}><strong className="block uppercase">{kind}</strong><span>{saving===key?'Salvando…':done.includes(key)?'✓ Concluído':kind==='nutri'?slot:kind==='move'?'Fiz minha meta':'Fiz o treino'}</span></button>;
+    return <button key={kind} type="button" disabled={!athleteId || !!saving || done.includes(key)} onClick={()=>void complete(kind)} className={`rounded-xl border p-3 text-xs disabled:opacity-70 ${done.includes(key)?'border-[#5BC8E8]/50 bg-[#5BC8E8]/10':'border-primary/30 bg-primary/10'}`}><strong className="block uppercase">{kind}</strong><span>{saving===key?'Salvando…':done.includes(key)?'✓ Concluído':kind==='nutri'?slot:kind==='move'?'Fiz minha meta':'Fiz o treino'}</span></button>;
   })}</div></section>;
 }

@@ -26,6 +26,7 @@ interface NineFitLayoutProps {
  */
 export function NineFitLayout({ children }: NineFitLayoutProps) {
   const context = useDailyContext();
+  useEffect(()=>{document.documentElement.dataset.ninefitSurface='student';return()=>{if(document.documentElement.dataset.ninefitSurface==='student')delete document.documentElement.dataset.ninefitSurface;};},[]);
   useEffect(() => {
     document.documentElement.dataset.reducedMotion = context.data?.profile.preferences.reduced_motion ? 'true' : 'false';
     return () => { delete document.documentElement.dataset.reducedMotion; };

@@ -1,0 +1,38 @@
+/* Shared product tokens, scoped to student/professor surfaces and portal content. */
+html[data-ninefit-surface] {
+ --primary:19 84% 60%;--ring:19 84% 60%;
+ --ninefit-accent:#EF7A45;--ninefit-status:#5BC8E8;
+ --ninefit-card-radius:24px;--ninefit-button-radius:16px;
+}
+html.dark[data-ninefit-surface] {--card:240 5% 4.5%;--background:240 5% 3%;}
+html[data-ninefit-surface] :where(button,a)[class~="bg-primary"] {
+ background-color:var(--ninefit-accent);background-image:none;
+ border-radius:var(--ninefit-button-radius);color:#fff;
+ box-shadow:0 8px 24px rgb(239 122 69 / .25);
+}
+html[data-ninefit-surface] :where(section,article)[class*="rounded-"],
+html[data-ninefit-surface] .aw-card {border-radius:var(--ninefit-card-radius);}
+html[data-ninefit-surface] .assessment-workspace {--aw-accent:var(--ninefit-accent);}
+html[data-ninefit-surface] :where(button,a,[role="button"]){-webkit-tap-highlight-color:transparent;}
+html[data-ninefit-surface] :where(button,a,[role="button"]):focus-visible {
+ outline:2px solid var(--ninefit-accent);outline-offset:3px;
+}
+@media(hover:hover) {
+ html[data-ninefit-surface] :where(button,a,[role="button"]):not(:disabled):hover {
+  box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow,0 0 #0000),inset 0 0 22px rgb(239 122 69 / .08);
+ }
+}
+html[data-ninefit-surface] :where(button,a,[role="button"]):not(:disabled):active {
+ box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow,0 0 #0000),inset 0 0 26px rgb(239 122 69 / .12);
+}
+html[data-ninefit-surface] :where(button,a)[class~="bg-primary"]:active {
+ box-shadow:0 8px 24px rgb(239 122 69 / .25),inset 0 0 18px rgb(255 255 255 / .2);
+}
+@media(prefers-reduced-motion:reduce){html[data-ninefit-surface] :where(button,a,[role="button"]){transition:none;}}
+html[data-ninefit-surface] :where(button,a)[class*="bg-gradient"],
+html[data-ninefit-surface] button[style*="linear-gradient"] {
+ background-image:none!important;background-color:var(--ninefit-accent);color:#fff;
+}
+html[data-ninefit-surface] div[class~="bg-card"][class~="border"][class*="rounded-"] {border-radius:24px;}
+html[data-ninefit-surface] :is(.orange-neon,.text-orange-neon,.animate-orange-glow,.animate-orange-blink) {animation:none;text-shadow:none;box-shadow:none;}
+@media(hover:hover){html[data-ninefit-surface] :where(button,a)[class~="bg-primary"]:hover {box-shadow:0 8px 24px rgb(239 122 69 / .25),inset 0 0 18px rgb(255 255 255 / .14);}}

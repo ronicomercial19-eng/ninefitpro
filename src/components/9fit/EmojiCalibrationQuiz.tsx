@@ -1,3 +1,5 @@
+import { ReadinessCard } from './ReadinessCard';
+import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
@@ -41,6 +43,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   const today = todayISO();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [painLocation,setPainLocation]=useState('');
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
@@ -76,6 +79,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
       return;
     }
 
+    if(next.pain<=3&&!painLocation.trim()){toast.error('Informe onde sente o desconforto antes de salvar.');return;}
     setSaving(true);
     const { error } = await supabase.from("daily_checkins").upsert(
       {
@@ -87,7 +91,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         motivacao: next.motivation,
         // escala do banco: 1 = pouca dor, 5 = muita dor (inverso do quiz)
         dor: 6 - next.pain,
-        ...(next.pain === 5 ? { dor_local: null } : {}),
+        dor_local: next.pain === 5 ? null : painLocation.trim() || null,
       },
       { onConflict: "athlete_id,checkin_date" }
     );
@@ -118,7 +122,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
 
   if (completedToday || done) {
     return (
-      <div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-3">
+      <div className="space-y-3"><div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-primary/20 grid place-items-center">
           <Check className="w-4 h-4 text-primary" />
         </div>
@@ -127,7 +131,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
           <p className="text-xs text-muted-foreground">Seus cinco sinais estão salvos. Atualize se algo mudar.</p>
           <button type="button" className="mt-2 text-xs text-primary underline" onClick={() => { setCompletedToday(false); setDone(false); setStep(0); setAnswers({}); }}>Meus sinais mudaram · atualizar</button>
         </div>
-      </div>
+      </div>{athleteId&&<ReadinessCard athleteId={athleteId}/>}</div>
     );
   }
 
@@ -139,6 +143,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Check-in diário</p>
         <p className="text-[10px] text-muted-foreground font-data">{step + 1}/{QUESTIONS.length}</p>
       </div>
+      {answers.pain<=3&&<label className="mb-3 block space-y-2 text-sm">Onde está o desconforto?<input value={painLocation} maxLength={200} onChange={e=>setPainLocation(e.target.value)} className="w-full rounded-xl border border-primary/25 bg-background p-3" placeholder="Ex.: joelho direito"/></label>}
       <AnimatePresence mode="wait">
         <motion.div key={q.key}
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}

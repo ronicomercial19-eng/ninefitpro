@@ -8,17 +8,6 @@
    external_video_id?: string;
  }
  
- interface ExternalVideoResponse {
-   id: string;
-   url: string;
-   gif_url?: string;
-   thumbnail?: string;
- }
- 
- // Configuração opcional de API externa. Sem essas variáveis, o serviço usa apenas o cache Supabase.
- const EXTERNAL_API_URL = (import.meta.env.VITE_EXERCISE_VIDEO_API_URL as string | undefined) || '';
- const EXTERNAL_API_KEY = (import.meta.env.VITE_EXERCISE_VIDEO_API_KEY as string | undefined) || ''
- 
  /**
   * Fetches exercise video from cache (Supabase) or external API
   * Strategy: Cache-first, then external API, then save to cache
@@ -42,76 +31,16 @@
        return cachedExercise;
      }
  
-     // Step 2: If no cached video and API is configured, fetch from external API
-     if (EXTERNAL_API_URL && EXTERNAL_API_KEY && cachedExercise?.external_video_id) {
-       const externalVideo = await fetchFromExternalAPI(cachedExercise.external_video_id);
-       
-       if (externalVideo) {
-         // Step 3: Save to cache for future use
-         await cacheExerciseVideo(exerciseId, externalVideo);
-         
-         return {
-           ...cachedExercise,
-           video_url: externalVideo.url,
-           gif_url: externalVideo.gif_url
-         };
-       }
+     // Provider credentials and canonical cache writes stay on the server.
+     if (cachedExercise?.external_video_id) {
+       const result = await supabase.functions.invoke('exercise-video', { body: { exercise_id: exerciseId } });
+       if (!result.error && result.data?.exercise) return result.data.exercise as ExerciseVideo;
      }
- 
+
      return cachedExercise;
    } catch (error) {
      console.error('Error in getExerciseVideo:', error);
      return null;
-   }
- }
- 
- /**
-  * Busca vídeo em API externa quando configurada por ambiente.
-  */
- async function fetchFromExternalAPI(externalVideoId: string): Promise<ExternalVideoResponse | null> {
-   if (!EXTERNAL_API_URL || !EXTERNAL_API_KEY) {
-     console.info('External video API not configured; using Supabase cache only');
-     return null;
-   }
- 
-   try {
-     const response = await fetch(`${EXTERNAL_API_URL}/videos/${externalVideoId}`, {
-       headers: {
-         'Authorization': `Bearer ${EXTERNAL_API_KEY}`,
-         'Content-Type': 'application/json'
-       }
-     });
- 
-     if (!response.ok) {
-       throw new Error(`External API error: ${response.status}`);
-     }
- 
-     return await response.json();
-   } catch (error) {
-     console.error('Error fetching from external API:', error);
-     return null;
-   }
- }
- 
- /**
-  * Saves video URL to Supabase cache
-  */
- async function cacheExerciseVideo(exerciseId: string, video: ExternalVideoResponse): Promise<void> {
-   try {
-     const { error } = await supabase
-       .from('exercises')
-       .update({
-         video_url: video.url,
-         gif_url: video.gif_url || null,
-         video_cached_at: new Date().toISOString()
-       })
-       .eq('id', exerciseId);
- 
-     if (error) {
-       console.error('Error caching exercise video:', error);
-     }
-   } catch (error) {
-     console.error('Error in cacheExerciseVideo:', error);
    }
  }
  

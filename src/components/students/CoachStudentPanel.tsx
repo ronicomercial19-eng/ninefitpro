@@ -1,3 +1,5 @@
+import { CapacityResetEditor } from './CapacityResetEditor';
+import { ReadinessCard } from '@/components/9fit/ReadinessCard';
 import { Link } from "react-router-dom";
 import { useCoachStudentContext } from "@/hooks/useCoachStudentContext";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
@@ -116,6 +118,8 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
   ] as Array<[string, string[]]>;
   return (
     <section className="space-y-5">
+      <ReadinessCard athleteId={athleteId} coach/>
+      <CapacityResetEditor athleteId={athleteId}/>
       <div className="flex flex-wrap justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">
