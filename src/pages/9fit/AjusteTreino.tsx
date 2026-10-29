@@ -103,7 +103,7 @@ export default function NineFitAjusteTreino() {
     setReloading(true);
     try {
       const { data: sessions, error: workoutError } = await supabase
-        .from("daily_workouts" as any)
+        .from("daily_workouts")
         .select("id,day_name,day_number,workout_type,focus_muscles,updated_at")
         .eq("athlete_id", athleteId)
         .eq("workout_date", selectedDate)
