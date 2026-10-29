@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
-import { getAthleteByUserId, getAthleteByEmail } from '@/services/athletes.service';
+import { currentAthleteKey, currentAthleteOptions } from '@/services/currentAthlete';
+import { withTimeout } from '@/lib/withTimeout';
 import { getUserRole } from '@/services/auth.service';
 import { AUTH_CALLBACK } from '@/lib/loginDestination';
 import { resolveRole, isStaffRole, isAdminRole } from '@/lib/authRole';
@@ -97,8 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRoleStatus('loading');
     setProfile(null); setStudentProfile(null); setUserRole(null);
     try {
-      const { data, error } = await supabase
-        .from('vw_current_identity').select('*').eq('user_id', u.id).maybeSingle();
+      const { data, error } = await withTimeout(supabase
+        .from('vw_current_identity').select('*').eq('user_id', u.id).maybeSingle());
       if (!alive()) return;
       let profileRole: string | null = null;
       let roles: string[] = [];
@@ -113,14 +114,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           full_name: identity.full_name, role: identity.profile_role, phone: null,
           avatar_url: null, is_active: identity.is_active ?? true,
         });
-        if (identity.athlete_id && identity.athlete_name) {
-          setStudentProfile({
-            id: identity.athlete_id, email: identity.athlete_email, name: identity.athlete_name,
-            activated: identity.athlete_activated, coach_id: identity.coach_id ?? undefined,
-          });
-        }
       } else {
-        const fallback = await supabase.from('profiles').select('*').eq('user_id', u.id).maybeSingle();
+        const fallback = await withTimeout(supabase.from('profiles').select('*').eq('user_id', u.id).maybeSingle());
         if (!alive()) return;
         if (fallback.error) throw fallback.error;
         if (fallback.data) {
@@ -130,14 +125,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       let role = resolveRole(profileRole, roles);
       if (!role) {
-        const r = await getUserRole(u.id);
+        const r = await withTimeout(getUserRole(u.id));
         if (!alive()) return;
         if (!r.success || !r.data) throw new Error('Não foi possível verificar seu papel');
         role = r.data;
       }
       if (!alive()) return;
       setUserRole(role);
-      await fetchStudentProfile(u.id, u.email, alive);
+      // Profile availability must not prevent staff identity from becoming ready.
+      try {
+        const athlete = await queryClient.fetchQuery(currentAthleteOptions(u.id));
+        if (alive()) setStudentProfile(athlete);
+      } catch {
+        // Student screens expose the shared query error and an explicit retry.
+        if (alive()) setStudentProfile(null);
+      }
       if (alive()) setRoleStatus('ready');
     } catch (error) {
       console.error('[Auth] falha ao carregar identidade para usuario:', u.id, error);
@@ -145,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       if (alive()) setLoading(false);
     }
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     // A fresh gate is required when React StrictMode mounts the effect again.
@@ -194,44 +196,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const retryIdentity = async () => { if (user) await loadIdentity(user); };
 
-  // Now uses athletes table via service layer instead of legacy students table
-  const fetchStudentProfile = async (userId: string, userEmail: string | undefined, alive: () => boolean = () => true) => {
-    try {
-      // Try by user_id first (includes athlete_auth_link fallback)
-      const result = await getAthleteByUserId(userId);
-      if (!alive()) return;
-      if (result.success && result.data) {
-        setStudentProfile({
-          id: result.data.id,
-          email: result.data.email,
-          name: result.data.name,
-          phone: result.data.phone,
-          activated: result.data.activated,
-          coach_id: result.data.coach_id,
-        });
-        return;
-      }
+  // A successful retry must also update consumers of AuthContext.studentProfile.
+  useEffect(() => queryClient.getQueryCache().subscribe(event => {
+    const uid = identityUserRef.current;
+    if (!uid || event.type !== 'updated') return;
+    const key = event.query.queryKey;
+    if (key[0] !== 'current-athlete' || key[1] !== uid) return;
+    if (event.query.state.status === 'success') {
+      setStudentProfile(event.query.state.data as StudentProfile | null);
+    }
+  }), [queryClient]);
 
-      // Fallback by email
-      if (userEmail) {
-        const emailResult = await getAthleteByEmail(userEmail);
-        if (!alive()) return;
-        if (emailResult.success && emailResult.data) {
-          setStudentProfile({
-            id: emailResult.data.id,
-            email: emailResult.data.email,
-            name: emailResult.data.name,
-            phone: emailResult.data.phone,
-            activated: emailResult.data.activated,
-            coach_id: emailResult.data.coach_id,
-          });
-          return;
-        }
-      }
-
-      if (alive()) setStudentProfile(null);
-    } catch (error) { console.error('Error in fetchStudentProfile:', error); }
-  };
+  // One listener refreshes every mounted student surface through the same cache.
+  useEffect(() => {
+    const refresh = () => {
+      const uid = identityUserRef.current;
+      if (!uid) return;
+      void queryClient.invalidateQueries({ queryKey: currentAthleteKey(uid), refetchType: 'none' })
+        .then(() => queryClient.fetchQuery(currentAthleteOptions(uid)))
+        .then(athlete => {
+          if (identityUserRef.current === uid) setStudentProfile(athlete);
+        }).catch(() => { /* Shared query exposes the recoverable failure. */ });
+    };
+    window.addEventListener('9fit:profile-updated', refresh);
+    return () => window.removeEventListener('9fit:profile-updated', refresh);
+  }, [queryClient]);
 
   const login = async (email: string, password: string) => {
     try {
