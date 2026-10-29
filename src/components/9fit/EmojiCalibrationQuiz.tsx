@@ -1,3 +1,4 @@
+import { TrainingAlertControl } from './TrainingAlertControl';
 import { ReadinessCard } from './ReadinessCard';
 import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState, useRef } from "react";
@@ -127,7 +128,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
 
   if (completedToday || done) {
     return (
-      <div className="space-y-3"><div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-3">
+      <div className="space-y-3">{athleteId&&<TrainingAlertControl athleteId={athleteId}/>}<div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-primary/20 grid place-items-center">
           <Check className="w-4 h-4 text-primary" />
         </div>
@@ -149,6 +150,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         <p className="text-[10px] text-muted-foreground font-data">{step + 1}/{QUESTIONS.length}</p>
       </div>
       {answers.pain<=3&&<label className="mb-3 block space-y-2 text-sm">Onde está o desconforto?<input value={painLocation} maxLength={200} onChange={e=>setPainLocation(e.target.value)} className="w-full rounded-xl border border-primary/25 bg-background p-3" placeholder="Ex.: joelho direito"/></label>}
+      {athleteId&&<div className="mb-3"><TrainingAlertControl athleteId={athleteId}/></div>}
       <AnimatePresence mode="wait">
         <motion.div key={q.key}
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}

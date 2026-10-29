@@ -52,3 +52,7 @@ Tokens compartilhados e feedback de toque independentes da cor literal de classe
 - Backups gerenciados, retenção/PITR e configurações administradas de Auth dependem de acesso ao painel/API de gestão; o conector atual não oferece essas operações. Não foi criado projeto, contratado plano ou copiado o banco pessoal para o workspace.
 - Não há comprovação nova de 3.000 sessões simultâneas; o usuário pediu para não executar ensaios. A implementação usa as consultas paginadas, índices, limites e monitoramento já entregues.
 - Core OS permanece fora deste trabalho.
+
+## Relato explícito de sinal de alerta
+
+O aluno pode registrar um sinal de alerta sem completar as cinco perguntas. O início e a retomada são bloqueados no servidor e no player; o relato aparece prioritariamente na fila do professor. A aplicação não tenta diagnosticar uma emergência a partir de texto livre. A orientação exibida segue a [Linha de Cuidado de Dor Torácica do Ministério da Saúde](https://linhasdecuidado.saude.gov.br/portal/dor-toracica/sou-paciente/). Registrar ausência de um sinal é uma declaração do usuário, não liberação médica.

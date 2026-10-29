@@ -132,6 +132,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const {level:assistanceLevel,setLevel:setAssistanceLevel}=useWorkoutAssistance(athleteId);
   const readiness=useReadiness(athleteId);
   const [safetyPaused,setSafetyPaused]=useState(false);
+  useEffect(()=>{
+    let active=true;
+    const refresh=()=>void readinessRpc('fn_get_training_guard',{p_athlete_id:athleteId}).then(guard=>{if(active&&guard?.blocked)setSafetyPaused(true);}).catch(()=>{});
+    window.addEventListener('9fit:sync_updated',refresh);window.addEventListener('focus',refresh);
+    return()=>{active=false;window.removeEventListener('9fit:sync_updated',refresh);window.removeEventListener('focus',refresh);};
+  },[athleteId]);
   const painSaving=useRef(false);
   const [actualRepsByExercise,setActualRepsByExercise]=useState<Record<number,number>>({});
   // Live training data + realtime patches from daily_workouts.changes_json
@@ -312,6 +318,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const guard=await readinessRpc('fn_get_training_guard',{p_athlete_id:athleteId});
+      if(cancelled)return;
+      if(guard?.blocked){setSafetyPaused(true);setExecutionError('Seu relato de hoje indica um sinal de alerta. Interrompa o treino e procure atendimento. Em uma emergência, acione o SAMU 192.');return;}
       if (training.daily_workout_id) {
         const adjustment=await readinessRpc('fn_apply_readiness_to_workout',{p_daily_workout_id:training.daily_workout_id});
         const {data:doses,error:doseError}=await withTimeout(supabase.from('workout_exercises').select('exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,notes,observations,exercises(name,video_url,gif_url)').eq('daily_workout_id',training.daily_workout_id).order('exercise_order'));
