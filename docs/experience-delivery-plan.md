@@ -3,8 +3,8 @@
 Atualizado em 29/10/2026. Ordem aprovada por impacto na experiência. Nenhum checkpoint é concluído somente pela existência de código.
 
 ## Fase 1 — Entrada e ativação
-- [ ] 1. Identidade e carregamento consistentes. Em andamento: identidade canônica, cache compartilhado, espera limitada e retry. Ainda falta validação integrada e publicação.
-- [ ] 2. Onboarding persistido e retomável; perfil completo, coleta de sexo e preparação da confirmação do PDI.
+- [ ] 1. Identidade e carregamento consistentes. Identidade compartilhada entregue no PR #122 e publicada. Complemento nesta rodada: view canônica, gates com espera limitada e descarte de navegação antiga. QA visual pendente.
+- [ ] 2. Onboarding persistido e retomável. Nesta rodada: sexo opcional gravado no atleta e nas respostas; leitura após recarga; confirmação visível de gravação, mensagens acionáveis e recuperação da ficha. Confirmação adicional do PDI aguarda definição de quem confirma; QA visual pendente.
 
 ## Fase 2 — Treino e acesso
 - [ ] 3. Carregar, iniciar, registrar, retomar e concluir sem perda ou duplicação; histórico coerente; treino rápido e descanso.
@@ -30,3 +30,12 @@ Segurança geral por último conforme preferência do usuário. Consentimento e 
 
 ## Critério por entrega
 Registrar problema, alteração, verificação técnica, estado da publicação e pendências do QA do usuário. Não marcar uma fase concluída parcialmente.
+
+## Rodada de ativação e carregamento — 29/10/2026
+- Migrações `20261029105218_onboarding_profile_persistence` e `20261029105935_canonical_identity_view` aplicadas e verificadas com transações revertidas no banco real.
+- Testes isolados: 37 verificações de onboarding e 10 de identidade (vínculo legado divergente, dono direto, vínculo único, ausência de atleta e ausência de sessão).
+- Treino: leituras independentes em paralelo, cancelamento ao trocar aluno/tela, aviso de falha parcial de protocolos, atribuição sem data inicial disponível e atualização por Realtime de daily_workouts (publicação verificada).
+- Professor: resumo do onboarding mostra sexo e medidas declaradas, com atualização manual e cancelamento da consulta anterior.
+- Sem alteração de parâmetros de Sync, prescrição automática, carga ou regra comercial dos alunos atuais.
+- Checklist de QA: salvar sexo e nascimento; recarregar; escolher não informar; conferir resumo no professor; simular conexão indisponível e recuperar; abrir treino rápido antes de a identidade terminar de carregar; trocar aluno/conta sem reaproveitar dados anteriores.
+- Esta rodada não encerra as cinco fases nem comprova capacidade para 3.000 usuários.

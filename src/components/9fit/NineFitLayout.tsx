@@ -9,6 +9,7 @@ import { RonBubble } from "./RonBubble";
 import { BackButton } from "./BackButton";
 import { useDailyContext } from '@/hooks/useDailyContext';
 import { hasConfirmedProfile } from '@/lib/activationProfile';
+import { withTimeout } from "@/lib/withTimeout";
 import {PaidAccessGate} from './PaidAccessGate';
 
 
@@ -39,15 +40,18 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
   const location = useLocation();
 
   useEffect(() => {
+    let active = true;
+    const go = (path: string) => { if (active) navigate(path, { replace: true }); };
     const checkAuth = async () => {
       setGateError(null);
       setIsLoading(true);
       setPendingFirstAccess(false);
       setPendingActivation(false);
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await withTimeout(supabase.auth.getSession());
+      if (!active) return;
 
       if (!session) {
-        navigate("/9fit/login", { replace: true });
+        go("/9fit/login");
         return;
       }
 
@@ -62,20 +66,20 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
 
       if (!firstAccessDone) {
         try {
-          const { data: profile } = await supabase
+          const { data: profile } = await withTimeout(supabase
             .from('vw_current_identity' as any)
             .select('first_access_completed,athlete_id')
             .eq('user_id', session.user.id)
-            .maybeSingle();
+            .maybeSingle());
 
           if ((profile as { first_access_completed?: boolean } | null)?.first_access_completed === true) {
             firstAccessDone = true;
           } else {
-            const { data: athlete } = await supabase
+            const { data: athlete } = await withTimeout(supabase
               .from('athletes')
               .select('password_changed')
               .eq('id', (profile as { athlete_id?: string } | null)?.athlete_id || '00000000-0000-0000-0000-000000000000')
-              .maybeSingle();
+              .maybeSingle());
             // Sem registro de athlete (coach/admin) → liberado
             // Athlete com senha já trocada → liberado
             firstAccessDone = !athlete || athlete.password_changed === true;
@@ -88,14 +92,15 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         }
       }
 
+      if (!active) return;
       setPendingFirstAccess(!firstAccessDone);
       const onCommercial = ['/9fit/planos', '/9fit/primepass', '/9fit/billing', '/9fit/prime', '/9fit/premium'].includes(path);
       if (!firstAccessDone && !onFirstAccess && !onHome && !onCommercial) {
-        navigate("/9fit/first-access", { replace: true });
+        go("/9fit/first-access");
         return;
       }
       if (firstAccessDone && onFirstAccess) {
-        navigate("/9fit/hub", { replace: true });
+        go("/9fit/hub");
         return;
       }
 
@@ -105,26 +110,27 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
       const onAtivacao = path.includes('/9fit/ativacao');
       if (firstAccessDone && !onFirstAccess) {
         try {
-          const { data: athlete } = await supabase
+          const { data: athlete } = await withTimeout(supabase
             .from('vw_current_identity' as any)
             .select('athlete_id')
             .eq('user_id', session.user.id)
-            .maybeSingle();
+            .maybeSingle());
           if ((athlete as { athlete_id?: string } | null)?.athlete_id) {
-            const { data: act } = await supabase
-              .from('athlete_activation')
-              .select('finished_at')
-              .eq('athlete_id', (athlete as unknown as { athlete_id: string }).athlete_id)
-              .maybeSingle();
-            const finished = act?.finished_at;
-            const { data: contextSettings } = await supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', session.user.id).maybeSingle();
-            const profileConfirmed = hasConfirmedProfile(contextSettings);
-            const { data: appOnboarding, error: onboardingError } = await supabase.from('app_onboarding' as any).select('completed_at').eq('user_id', session.user.id).maybeSingle();
-            if (onboardingError) throw onboardingError;
+            const [activation, settings, onboarding] = await withTimeout(Promise.all([
+              supabase.from('athlete_activation').select('finished_at')
+                .eq('athlete_id', (athlete as unknown as { athlete_id: string }).athlete_id).maybeSingle(),
+              supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', session.user.id).maybeSingle(),
+              supabase.from('app_onboarding' as any).select('completed_at').eq('user_id', session.user.id).maybeSingle(),
+            ]));
+            if (!active) return;
+            for (const result of [activation, settings, onboarding]) if (result.error) throw result.error;
+            const finished = activation.data?.finished_at;
+            const profileConfirmed = hasConfirmedProfile(settings.data);
+            const appOnboarding = onboarding.data;
             const appPending = !!appOnboarding && !(appOnboarding as unknown as { completed_at: string | null }).completed_at;
             setPendingActivation((!finished && !profileConfirmed) || appPending);
             if (((!finished && !profileConfirmed) || appPending) && !onAtivacao && !onOnboarding && !onHome && !onCommercial) {
-              navigate('/9fit/ativacao', { replace: true });
+              go('/9fit/ativacao');
               return;
             }
           }
@@ -134,21 +140,26 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         }
       }
 
+      if (!active) return;
       setIsAuthenticated(true);
       setIsLoading(false);
     };
 
-    checkAuth();
+    void checkAuth().catch(() => {
+      if (!active) return;
+      setGateError('Não foi possível conferir sua sessão. Tente novamente.');
+      setIsLoading(false);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
-          navigate("/9fit/login", { replace: true });
+          go("/9fit/login");
         }
       },
     );
 
-    return () => subscription.unsubscribe();
+    return () => { active = false; subscription.unsubscribe(); };
   }, [navigate, location.pathname, retryKey]);
 
   if (gateError) {

@@ -26,6 +26,7 @@ export interface ResolvedTemplateAssignment {
 export async function loadResolvedTemplateAssignments(
   athleteId: string,
   contentType?: string,
+  signal?: AbortSignal,
 ): Promise<ResolvedTemplateAssignment[]> {
   let query = (supabase as any)
     .from("vw_ninefit_assignment_with_version")
@@ -34,6 +35,7 @@ export async function loadResolvedTemplateAssignments(
 
   if (contentType) query = query.eq("content_type", contentType);
 
+  if (signal) query = query.abortSignal(signal);
   const { data, error } = await query.order("assigned_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as ResolvedTemplateAssignment[];
