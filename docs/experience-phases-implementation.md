@@ -56,3 +56,7 @@ Tokens compartilhados e feedback de toque independentes da cor literal de classe
 ## Relato explícito de sinal de alerta
 
 O aluno pode registrar um sinal de alerta sem completar as cinco perguntas. O início e a retomada são bloqueados no servidor e no player; o relato aparece prioritariamente na fila do professor. A aplicação não tenta diagnosticar uma emergência a partir de texto livre. A orientação exibida segue a [Linha de Cuidado de Dor Torácica do Ministério da Saúde](https://linhasdecuidado.saude.gov.br/portal/dor-toracica/sou-paciente/). Registrar ausência de um sinal é uma declaração do usuário, não liberação médica.
+
+## Horários independentes
+
+O relato de sinal de alerta tem horário próprio. Registrar/retirar esse relato, ou informar apenas o local da dor, não renova a idade das cinco respostas da calibração. Reconfirmar as respostas, mesmo com os mesmos valores, registra uma nova observação. A fila do professor ordena relatos de alerta pelo momento em que foram registrados.
