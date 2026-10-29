@@ -82,8 +82,8 @@ export const STATE_LABEL: Record<UserState, string> = {
 
 export const STATE_COLOR: Record<UserState, string> = {
   unknown: 'hsl(220 9% 65%)',
-  power: 'hsl(142 72% 50%)',
-  low: 'hsl(38 92% 55%)',
+  power: '#5BC8E8',
+  low: '#EF7A45',
   balanced: 'hsl(220 9% 65%)',
 };
 

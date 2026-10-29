@@ -48,6 +48,7 @@ const routeLabels: Record<string, string> = {
 };
 
 export function AppLayout({ children }: AppLayoutProps) {
+  React.useEffect(()=>{document.documentElement.dataset.ninefitSurface='professor';return()=>{if(document.documentElement.dataset.ninefitSurface==='professor')delete document.documentElement.dataset.ninefitSurface;};},[]);
   const location = useLocation();
   const {
     isTrainer,
@@ -128,7 +129,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               <div className="flex items-center gap-4">
                 <SidebarTrigger />
                 <div className="hidden md:flex items-center gap-2 mr-2">
-                  <div className="w-7 h-7 rounded bg-[#E8571A] flex items-center justify-center text-white font-display text-sm">
+                  <div className="w-7 h-7 rounded bg-[#EF7A45] flex items-center justify-center text-white font-display text-sm">
                     9
                   </div>
                   <span className="font-display text-base tracking-tight">

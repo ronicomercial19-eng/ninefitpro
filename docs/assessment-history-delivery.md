@@ -45,3 +45,7 @@ Projeto: FitPro / mfrydtrzjxscbkaiwfnw. Visual e navegação existentes preserva
 - Reteste encontrou selos legados incorretos para 1RM guiado: inferência de estimativa agora prevalece sobre esses selos. Exames vazios não exibem mais um bloco com apenas [].
 - Metas antigas com início igual ao alvo não são declaradas 100% alcançadas. A métrica/unidade cadastradas ficam explícitas para revisão; objetivos semanticamente incoerentes não são reinterpretados automaticamente.
 - A ausência de fotos e tentativas na conta testada impede validar uma imagem/sensor real nessa sessão. Assinatura privada e estados de falha estão implementados; permissões de storage foram inspecionadas sem abrir o bucket publicamente.
+
+## Atualização de 29/10/2026 — score ponderado e referências
+
+O score ponderado passa a ser lido do RPC canônico `fn_assessment_weighted_score`: professor pesa 1; autoavaliações válidas têm peso menor, com decaimento temporal e reset pelo checkpoint master. A projeção de metas e os recordes oficiais continuam usando avaliações oficiais. Confirmação de um 1RM para calcular uma referência de carga não transforma autoavaliação em avaliação oficial. Nenhum teste novo foi criado nesta rodada por solicitação do usuário.

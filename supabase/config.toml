@@ -87,3 +87,7 @@ verify_jwt = false
 
 [functions.infinitepay-reconcile]
 verify_jwt = false
+
+# Authenticated and rate-limited in withPaidAccess; supports current Auth JWTs.
+[functions.exercise-video]
+verify_jwt = false

@@ -268,11 +268,11 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
                       </span>
                     )}
                     {isDone && (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold tracking-wider uppercase border border-emerald-500/30">
+                      <span className="px-1.5 py-0.5 rounded bg-[#5BC8E8]/20 text-[#5BC8E8] text-[8px] font-mono font-bold tracking-wider uppercase border border-[#5BC8E8]/30">
                         CONCLUÍDO
                       </span>
                     )}
-                    {isSkipped && <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[8px] font-mono font-bold tracking-wider uppercase border border-amber-500/30">PULADO</span>}
+                    {isSkipped && <span className="px-1.5 py-0.5 rounded bg-primary/15 text-primary text-[8px] font-mono font-bold tracking-wider uppercase border border-primary/30">PULADO</span>}
                   </div>
 
                   {/* Headline de Alto Impacto: tipografia robusta, clean, sem serafins */}
@@ -319,7 +319,7 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
                       <Play className="w-3 h-3 fill-current" />
                       <span>{isDone ? "Concluído" : isSkipped ? "Não realizado" : !isToday ? "Dia programado" : d.status=== "in_progress" ? "Retomar treino" : "Executar Treino"}</span>
                     </button>
-                    {isToday && d.status !== "in_progress" && !isDone && !isSkipped && d.id && <button type="button" onClick={()=>setConfirmSkip(true)} className="rounded-lg border border-amber-500/30 px-3 py-2 text-[10px] font-semibold text-amber-300"><CircleSlash className="mr-1 inline h-3.5 w-3.5"/>Não vou treinar</button>}
+                    {isToday && d.status !== "in_progress" && !isDone && !isSkipped && d.id && <button type="button" onClick={()=>setConfirmSkip(true)} className="rounded-lg border border-primary/30 px-3 py-2 text-[10px] font-semibold text-primary"><CircleSlash className="mr-1 inline h-3.5 w-3.5"/>Não vou treinar</button>}
                     </div>
                   )}
                 </div>
@@ -363,10 +363,10 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
       })}
 
       {confirmSkip && days[selectedDay]?.id && (
-        <div role="alertdialog" aria-modal="true" aria-label="Confirmar treino não realizado" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+        <div role="alertdialog" aria-modal="true" aria-label="Confirmar treino não realizado" className="rounded-xl border border-primary/30 bg-primary/10 p-4">
           <p className="text-sm font-semibold">Registrar este treino como não realizado?</p>
           <p className="mt-1 text-xs text-muted-foreground">A prescrição permanece no calendário. O registro não contará como treino concluído.</p>
-          <div className="mt-3 flex gap-2"><button type="button" disabled={skipping} onClick={()=>void skipToday(days[selectedDay].id!)} className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-black disabled:opacity-50">{skipping?"Salvando…":"Confirmar"}</button><button type="button" disabled={skipping} onClick={()=>setConfirmSkip(false)} className="rounded-lg border border-white/15 px-3 py-2 text-xs">Voltar</button></div>
+          <div className="mt-3 flex gap-2"><button type="button" disabled={skipping} onClick={()=>void skipToday(days[selectedDay].id!)} className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-black disabled:opacity-50">{skipping?"Salvando…":"Confirmar"}</button><button type="button" disabled={skipping} onClick={()=>setConfirmSkip(false)} className="rounded-lg border border-white/15 px-3 py-2 text-xs">Voltar</button></div>
         </div>
       )}
 

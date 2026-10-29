@@ -1,3 +1,4 @@
+import { CoachReadinessInbox } from '@/components/students/CoachReadinessInbox';
 import { CoachOverview } from "@/components/students/CoachOverview";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 export default function Dashboard() {
@@ -5,6 +6,7 @@ export default function Dashboard() {
     <>
       <OnboardingTour />
       <CoachOverview />
+      <CoachReadinessInbox />
     </>
   );
 }

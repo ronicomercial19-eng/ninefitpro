@@ -496,17 +496,17 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
                           key={i}
                           className={`flex items-center justify-between text-xs rounded-lg px-3 py-2.5 transition-all ${
                             r.self
-                              ? 'bg-amber-400/10 border border-amber-400/30 text-amber-200 font-semibold'
+                              ? 'bg-primary/10 border border-primary/30 text-primary font-semibold'
                               : 'bg-white/[0.02] border border-white/5 text-neutral-300'
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
                             <span className={`w-5 h-5 rounded-md flex items-center justify-center font-mono font-bold text-[11px] ${
-                              i === 0 ? 'bg-amber-400 text-black' : i === 1 ? 'bg-neutral-300 text-black' : i === 2 ? 'bg-amber-700 text-white' : 'bg-white/10 text-neutral-400'
+                              i === 0 ? 'bg-primary text-black' : i === 1 ? 'bg-neutral-300 text-black' : i === 2 ? 'bg-primary text-white' : 'bg-white/10 text-neutral-400'
                             }`}>
                               #{i + 1}
                             </span>
-                            <span className="font-medium text-white">{r.name} {r.self && <span className="text-[10px] text-amber-300 font-normal">(Você)</span>}</span>
+                            <span className="font-medium text-white">{r.name} {r.self && <span className="text-[10px] text-primary font-normal">(Você)</span>}</span>
                           </div>
                           <span className="font-mono font-semibold text-neutral-200 tabular-nums">
                             {r.pts.toLocaleString('pt-BR')} <span className="text-[10px] text-neutral-400 font-normal">XP</span>

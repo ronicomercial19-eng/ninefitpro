@@ -1,3 +1,6 @@
+import { useReadiness } from '@/hooks/useReadiness';
+import { readinessRpc } from '@/services/readiness';
+import { withTimeout } from '@/lib/withTimeout';
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft, Play, Pause, RotateCcw, Plus, Minus,
@@ -20,7 +23,7 @@ import type { WorkoutExecutionStatus } from "@/types/training";
 import { useWorkoutAssistance } from '@/hooks/useWorkoutAssistance';
 import { WorkoutRonAssistance } from './WorkoutRonAssistance';
 import { businessDate } from '@/services/dailyContextRules';
-import { formatWorkoutDose } from '@/lib/workoutDose';
+import { formatWorkoutDose, estimateWorkoutMinutes } from '@/lib/workoutDose';
 
 
 interface WorkoutExercise {
@@ -127,7 +130,14 @@ const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta"
 
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
   const {level:assistanceLevel,setLevel:setAssistanceLevel}=useWorkoutAssistance(athleteId);
+  const readiness=useReadiness(athleteId);
   const [safetyPaused,setSafetyPaused]=useState(false);
+  useEffect(()=>{
+    let active=true;
+    const refresh=()=>void readinessRpc('fn_get_training_guard',{p_athlete_id:athleteId}).then(guard=>{if(active&&guard?.blocked)setSafetyPaused(true);}).catch(()=>{});
+    window.addEventListener('9fit:sync_updated',refresh);window.addEventListener('focus',refresh);
+    return()=>{active=false;window.removeEventListener('9fit:sync_updated',refresh);window.removeEventListener('focus',refresh);};
+  },[athleteId]);
   const painSaving=useRef(false);
   const [actualRepsByExercise,setActualRepsByExercise]=useState<Record<number,number>>({});
   // Live training data + realtime patches from daily_workouts.changes_json
@@ -308,7 +318,19 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const guard=await readinessRpc('fn_get_training_guard',{p_athlete_id:athleteId});
+      if(cancelled)return;
+      if(guard?.blocked){setSafetyPaused(true);setExecutionError('Seu relato de hoje indica um sinal de alerta. Interrompa o treino e procure atendimento. Em uma emergência, acione o SAMU 192.');return;}
       if (training.daily_workout_id) {
+        const adjustment=await readinessRpc('fn_apply_readiness_to_workout',{p_daily_workout_id:training.daily_workout_id});
+        const {data:doses,error:doseError}=await withTimeout(supabase.from('workout_exercises').select('exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,notes,observations,exercises(name,video_url,gif_url)').eq('daily_workout_id',training.daily_workout_id).order('exercise_order'));
+        if(cancelled)return;
+        if(doseError){setExecutionError('Não foi possível confirmar as doses do treino.');return;}
+        if(doses?.length){
+          const exercises=doses.map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name||e.exercises?.name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes||e.notes,video_url:e.exercises?.video_url,gif_url:e.exercises?.gif_url}));
+          setLiveTraining(current=>({...current,training_data:{...current.training_data,exercises,estimated_duration:estimateWorkoutMinutes(exercises,3+(adjustment?.status==='applied'?Number(adjustment.warmup_add_min)||0:0))}}));
+        }
+        window.dispatchEvent(new Event('9fit:readiness-updated'));
         const { data: prescription, error: validationError } = await (supabase as any).from('daily_workouts').select('prescription_issue').eq('id', training.daily_workout_id).eq('athlete_id', athleteId).single();
         if (cancelled) return;
         if (validationError || !prescription) { setExecutionError('Não foi possível validar esta prescrição.'); return; }
@@ -399,7 +421,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       }
       setCompletedSets(restored);
       setWeights(restoredWeights);setActualRepsByExercise(restoredReps);
-    })();
+    })().catch(()=>{if(!cancelled)setExecutionError('Não foi possível confirmar o treino. Tente novamente.');});
 
     return () => { cancelled = true; };
   }, [training.id, training.execution_id, training.daily_workout_id, athleteId, todayISO, executionAttempt]);
@@ -727,6 +749,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       )}
 
 
+      {readiness.data?.preferences?.enabled&&readiness.data.decision?.mode==='low'&&<p role="status" className="mx-4 mb-3 rounded-2xl border border-primary/25 p-3 text-sm">Hoje, priorize a técnica. {readiness.data.decision.flags.includes('no_failure_sets')?'A Sync orienta não fazer séries até a falha.':''} {readiness.data.decision.status==='applied'&&readiness.data.decision.warmup_add_min>0?`Inclua ${readiness.data.decision.warmup_add_min} minutos adicionais de aquecimento.`:''}</p>}
       {/* Content Area */}
       <div className="flex-1 overflow-auto px-4 pb-4">
         {isStructured ? (

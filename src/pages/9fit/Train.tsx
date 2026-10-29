@@ -1,3 +1,5 @@
+import { estimateWorkoutMinutes } from '@/lib/workoutDose';
+import { ReadinessCard } from '@/components/9fit/ReadinessCard';
 import { withTimeout } from "@/lib/withTimeout";
 import { activeTrainingOnDate, resolveTrainingSources } from "@/lib/trainingSources";
 import { isExecutableTraining } from '@/lib/executableTraining';
@@ -40,16 +42,8 @@ interface TrainingAssignment {
 
 type WorkoutFlow = "HOME" | "OVERVIEW" | "EXECUTION";
 
-// Estimativa de duração quando a prescrição do dia não traz: ~40 s por série + descanso + 30 s de troca por exercício + 3 min de preparo.
-function estimateMinutes(exercises: Array<{ sets?: number | string; rest_seconds?: number | null }>): number | undefined {
-  if (!exercises.length) return undefined;
-  const seconds = exercises.reduce((sum, e) => {
-    const sets = Math.max(1, Number(e.sets) || 3);
-    const rest = Number(e.rest_seconds) || 60;
-    return sum + sets * 40 + (sets - 1) * rest + 30;
-  }, 0);
-  return Math.max(5, Math.round(seconds / 60) + 3);
-}
+// Explicit time doses take precedence; repetition-based sets retain an estimate.
+const estimateMinutes=estimateWorkoutMinutes;
 
 export default function NineFitTrain() {
   const { athleteId, athleteName, loading: athleteLoading, error: athleteError, retry: retryAthlete } = useAthleteId();
@@ -386,6 +380,7 @@ export default function NineFitTrain() {
         </h1>
       </div>
 
+      {athleteId&&flow==="HOME"&&<div className="px-4 mb-4"><ReadinessCard athleteId={athleteId}/></div>}
       <div className="px-4 relative z-10">
         <TrainingAdjustmentBanner />
       </div>

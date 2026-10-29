@@ -1,3 +1,6 @@
+import { estimateWorkoutMinutes } from '@/lib/workoutDose';
+import { readinessRpc } from '@/services/readiness';
+import { withTimeout } from '@/lib/withTimeout';
 import { businessDate } from '@/services/dailyContextRules';
 import { useEffect, useRef, useState } from 'react';
 import { X, Loader2, Play } from 'lucide-react';
@@ -93,6 +96,13 @@ export function QuickTrainModal({ open, onClose }: { open: boolean; onClose: () 
       if(request!==requestRef.current)return;
       const payload=response.data as unknown as Payload;
       if(!payload?.daily_workout_id || !payload.exercises?.length) throw new Error('Nenhum treino compatível foi retornado.');
+      const adjustment=await readinessRpc('fn_apply_readiness_to_workout',{p_daily_workout_id:payload.daily_workout_id});
+      const doses=await withTimeout(supabase.from('workout_exercises').select('exercise_id,sets,reps_range,rest_seconds').eq('daily_workout_id',payload.daily_workout_id));
+      if(doses.error)throw doses.error;
+      if(request!==requestRef.current)return;
+      payload.exercises=payload.exercises.map(e=>({...e,...(doses.data?.find(d=>d.exercise_id===e.id)||{})}));
+      payload.preparation_minutes=3+(adjustment?.status==='applied'?Number(adjustment.warmup_add_min)||0:0);
+      payload.estimated_duration_min=estimateWorkoutMinutes(payload.exercises,payload.preparation_minutes)||payload.preparation_minutes;
       setResult(payload);setStage('result');setContentStatus('Consultando conteúdos relacionados…');
       void loadTrainingContent(athleteId,goal,equipment,profile?.experience_level || '').then(items=>{if(request===requestRef.current){setContent(items);setContentStatus('');}}).catch(()=>{if(request===requestRef.current)setContentStatus('Conteúdos complementares indisponíveis. Seu treino continua disponível.');});
     } catch(failure) { if(request===requestRef.current) setError(failure instanceof Error ? failure.message : (failure as {message?:string})?.message || 'Não foi possível gerar o treino.'); }

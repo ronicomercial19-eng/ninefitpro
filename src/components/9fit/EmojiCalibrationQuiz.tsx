@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import { TrainingAlertControl } from './TrainingAlertControl';
+import { ReadinessCard } from './ReadinessCard';
+import { withTimeout } from '@/lib/withTimeout';
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,14 +42,18 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const today = todayISO();
+  const savingRef=useRef(false);
+  const actor=useRef(athleteId);actor.current=athleteId;
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [painLocation,setPainLocation]=useState('');
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
 
   // Only a complete calibration counts; old mood-only rows remain pending.
   useEffect(() => {
+    savingRef.current=false;setSaving(false);setPainLocation('');
     setCompletedToday(false); setDone(false); setStep(0); setAnswers({});
     if (!athleteId) return;
     let active = true;
@@ -63,7 +70,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   }, [athleteId, today]);
 
   const handlePick = async (q: Q, v: number) => {
-    if (saving) return;
+    if (saving || savingRef.current) return;
     const next = { ...answers, [q.key]: v };
     setAnswers(next);
     if (step < QUESTIONS.length - 1) {
@@ -76,8 +83,11 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
       return;
     }
 
-    setSaving(true);
-    const { error } = await supabase.from("daily_checkins").upsert(
+    if(next.pain<=3&&!painLocation.trim()){toast.error('Informe onde sente o desconforto antes de salvar.');return;}
+    const owner=athleteId;
+    savingRef.current=true;setSaving(true);
+    try {
+      const {error}=await withTimeout(supabase.from("daily_checkins").upsert(
       {
         athlete_id: athleteId,
         checkin_date: todayISO(),
@@ -87,28 +97,28 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         motivacao: next.motivation,
         // escala do banco: 1 = pouca dor, 5 = muita dor (inverso do quiz)
         dor: 6 - next.pain,
-        ...(next.pain === 5 ? { dor_local: null } : {}),
+        dor_local: next.pain === 5 ? null : painLocation.trim() || null,
       },
       { onConflict: "athlete_id,checkin_date" }
-    );
-    setSaving(false);
-
-    if (error) {
-      console.error("[EmojiCalibrationQuiz] daily_checkins", error);
-      toast.error("Não consegui salvar seu check-in. Tente de novo.");
-      setStep(0);
-      setAnswers({});
+    ));
+      if(actor.current!==owner)return;
+      if(error)throw error;
+    } catch {
+      if(actor.current===owner){savingRef.current=false;setSaving(false);toast.error('Não foi possível confirmar o check-in. Suas respostas continuam aqui; tente salvar novamente.');}
       return;
     }
 
     let score: number | null = null;
     try {
       const context = await fetchDailyContext();
+      if(actor.current!==owner)return;
       score = context.sync.value;
       queryClient.setQueryData(['daily-context', user?.id], context);
     } catch {
       void queryClient.resetQueries({ queryKey: ['daily-context', user?.id] });
     }
+    if(actor.current!==owner)return;
+    savingRef.current=false;setSaving(false);
     try { localStorage.setItem(STORAGE_KEY, businessDate()); } catch { /* Storage is optional. */ }
     setDone(true);
     onComplete?.(score);
@@ -118,7 +128,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
 
   if (completedToday || done) {
     return (
-      <div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-3">
+      <div className="space-y-3">{athleteId&&<TrainingAlertControl athleteId={athleteId}/>}<div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-primary/20 grid place-items-center">
           <Check className="w-4 h-4 text-primary" />
         </div>
@@ -127,7 +137,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
           <p className="text-xs text-muted-foreground">Seus cinco sinais estão salvos. Atualize se algo mudar.</p>
           <button type="button" className="mt-2 text-xs text-primary underline" onClick={() => { setCompletedToday(false); setDone(false); setStep(0); setAnswers({}); }}>Meus sinais mudaram · atualizar</button>
         </div>
-      </div>
+      </div>{athleteId&&<ReadinessCard athleteId={athleteId}/>}</div>
     );
   }
 
@@ -139,6 +149,8 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Check-in diário</p>
         <p className="text-[10px] text-muted-foreground font-data">{step + 1}/{QUESTIONS.length}</p>
       </div>
+      {answers.pain<=3&&<label className="mb-3 block space-y-2 text-sm">Onde está o desconforto?<input value={painLocation} maxLength={200} onChange={e=>setPainLocation(e.target.value)} className="w-full rounded-xl border border-primary/25 bg-background p-3" placeholder="Ex.: joelho direito"/></label>}
+      {athleteId&&<div className="mb-3"><TrainingAlertControl athleteId={athleteId}/></div>}
       <AnimatePresence mode="wait">
         <motion.div key={q.key}
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}

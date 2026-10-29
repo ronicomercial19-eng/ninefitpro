@@ -16,10 +16,9 @@ interface Props {
   className?: string;
 }
 
-const VARIANT_STYLE: Record<NonNullable<Props['variant']>, { border: string; from: string; to: string; icon: string }> = {
-  primary: { border: 'hsl(var(--primary) / 0.35)', from: 'hsl(var(--primary) / 0.12)', to: 'transparent', icon: 'hsl(var(--primary))' },
-  amber:   { border: 'hsl(38 95% 55% / 0.35)',     from: 'hsl(38 95% 55% / 0.10)',     to: 'transparent', icon: 'hsl(38 95% 60%)' },
-  cyan:    { border: 'hsl(190 95% 50% / 0.35)',    from: 'hsl(190 95% 50% / 0.10)',    to: 'transparent', icon: 'hsl(190 95% 55%)' },
+const primaryStyle = { border: 'rgba(239,122,69,0.25)', from: '#EF7A451A', to: 'transparent', icon: '#EF7A45' };
+const VARIANT_STYLE: Record<NonNullable<Props['variant']>, typeof primaryStyle> = {
+ primary: primaryStyle, amber: primaryStyle, cyan: primaryStyle,
 };
 
 /**
@@ -77,7 +76,7 @@ export function UpsellBanner({
           )}
           style={{
             border: `1px solid ${style.border}`,
-            background: `linear-gradient(135deg, ${style.from} 0%, ${style.to} 100%), hsl(var(--card) / 0.4)`,
+            background: 'hsl(var(--card))',
           }}
         >
           <div
