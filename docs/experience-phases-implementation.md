@@ -33,7 +33,7 @@ Objetos: `readiness_rule_sets`, `readiness_rules`, `readiness_context_modifiers`
 
 ### Implantação da Sync
 
-O conjunto `sync-v2-2026-10` começa com **sete dias de observação**, conforme o handoff. As decisões ficam registradas, mas não alteram as doses nesse período. Depois da janela, o mesmo ponto de aplicação passa a aplicar decisões elegíveis, com consentimento e todas as travas. A UI distingue proposta de alteração realmente aplicada. Isso é a implantação operacional definida no handoff, não uma alegação de calibração concluída.
+Por orientação do responsável em 29/10/2026, a Sync passa a operar diariamente, sem a espera inicial de sete dias. Usa o check-in da data corrente em America/Sao_Paulo; sem respostas completas de hoje, solicita novo check-in. Recalcula quando as respostas são salvas e considera o ajuste ao iniciar o treino. Consentimento, limites de ajuste, bloqueios do professor e sessões iniciadas continuam preservados. A mudança de frequência não representa validação clínica das regras.
 
 ## Visual
 
@@ -60,3 +60,7 @@ O aluno pode registrar um sinal de alerta sem completar as cinco perguntas. O in
 ## Horários independentes
 
 O relato de sinal de alerta tem horário próprio. Registrar/retirar esse relato, ou informar apenas o local da dor, não renova a idade das cinco respostas da calibração. Reconfirmar as respostas, mesmo com os mesmos valores, registra uma nova observação. A fila do professor ordena relatos de alerta pelo momento em que foram registrados.
+
+## Base de conteúdo e próximo design
+
+A biblioteca Member Nine, na aba Protocolos, é a base de conteúdo definida pelo responsável para vídeos, fotos e materiais. O provedor externo opcional de vídeos não é requisito dessa biblioteca. O novo mock ainda será enviado; sincronizar o design com o FitPro preservando as ligações e o conteúdo reais quando estiver disponível.
