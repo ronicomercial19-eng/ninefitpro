@@ -1,29 +1,21 @@
-import { withTimeout } from '@/lib/withTimeout';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { currentAthleteOptions } from '@/services/currentAthlete';
 
-interface UseAthleteIdResult { athleteId:string|null; athleteName:string|null; loading:boolean; error:string|null; }
-export function useAthleteId(): UseAthleteIdResult {
-  const {user,loading:authLoading}=useAuth();
-  const [state,setState]=useState<UseAthleteIdResult>({athleteId:null,athleteName:null,loading:true,error:null});
-  const [revision,setRevision]=useState(0);
-  useEffect(()=>{ const refresh=()=>setRevision(n=>n+1); window.addEventListener('9fit:profile-updated',refresh); return ()=>window.removeEventListener('9fit:profile-updated',refresh); },[]);
-  useEffect(()=>{
-    let active=true;
-    setState({athleteId:null,athleteName:null,loading:!!user,error:null});
-    if(!user) return;
-    void (async()=>{
-      try {
-        const {data:id,error}=await withTimeout(supabase.rpc('fn_current_athlete_id'));
-        if(error) throw error;
-        if(!id) throw new Error('Perfil de atleta não encontrado');
-        const {data:athlete,error:profileError}=await withTimeout(supabase.from('athletes').select('id,name').eq('id',id).single());
-        if(profileError) throw profileError;
-        if(active) setState({athleteId:athlete.id,athleteName:athlete.name,loading:false,error:null});
-      } catch(error) { if(active) setState({athleteId:null,athleteName:null,loading:false,error:error instanceof Error ? error.message : 'Erro ao carregar perfil'}); }
-    })();
-    return ()=>{active=false;};
-  },[user?.id,revision]);
-  return {...state, loading:authLoading || state.loading};
+export function useAthleteId() {
+  const { user, loading: authLoading } = useAuth();
+  const query = useQuery({
+    ...currentAthleteOptions(user?.id),
+    enabled: !!user && !authLoading,
+  });
+  const athlete = user ? query.data : null;
+  return {
+    athleteId: athlete?.id ?? null,
+    athleteName: athlete?.name ?? null,
+    loading: authLoading || (!!user && query.isPending),
+    error: !user || authLoading ? null : query.error
+      ? 'Não foi possível carregar seu perfil. Tente novamente.'
+      : query.isSuccess && !athlete ? 'Perfil de atleta não encontrado' : null,
+    retry: () => query.refetch(),
+  };
 }

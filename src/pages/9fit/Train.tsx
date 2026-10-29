@@ -50,7 +50,7 @@ function estimateMinutes(exercises: Array<{ sets?: number | string; rest_seconds
 }
 
 export default function NineFitTrain() {
-  const { athleteId, athleteName, loading: athleteLoading, error: athleteError } = useAthleteId();
+  const { athleteId, athleteName, loading: athleteLoading, error: athleteError, retry: retryAthlete } = useAthleteId();
   const navigate = useNavigate();
   const location = useLocation();
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
@@ -435,6 +435,10 @@ export default function NineFitTrain() {
           <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
             <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
             <p className="text-sm text-neutral-300">{athleteError}</p>
+            <button type="button" onClick={() => void retryAthlete()}
+              className="mt-3 mr-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
+              Tentar novamente
+            </button>
             <button 
               type="button"
               onClick={() => navigate("/9fit/profile")} 
