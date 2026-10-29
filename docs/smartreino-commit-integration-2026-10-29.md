@@ -55,3 +55,7 @@ O lote de 26/10 está registrado com nove atletas gerados e um bloqueado, contra
 O treino rápido também passa a preservar estados started/paused/skipped, além de in_progress/completed, antes de substituir uma sessão quick ainda não iniciada.
 
 O ajuste no FitPro permite escolher a sessão quando há treino rápido e periodizado na mesma data. O player filtra overrides pelo id da sessão e normaliza exercise_name/reps_range do JSON canônico, evitando misturar doses de outra sessão.
+
+## Registro da integração no GitHub
+
+Smart Treino PR #2 integrado pelo merge normal (sem bypass de proteção), commit 6d4dab0ddbc6b1d489de4f2fa2c7dc238bbf25f8. O job verify (protocol-dose + build) passou. O workflow legado Tests and Quality reprovou no lint geral com 360 erros/31 avisos; seu job build foi pulado. Não declarar CI integralmente verde nem cobertura de 80%. Nenhum gate foi removido ou desativado. A publicação da interface Smart no Lovable não foi confirmada: o projeto citado no README retornou NOT_FOUND no conector. O backend compartilhado e o orquestrador v20 já estão aplicados.
