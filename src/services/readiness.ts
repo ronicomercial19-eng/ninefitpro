@@ -5,7 +5,7 @@ export interface ReadinessDecision {
  id:string;decision_date:string;mode:'low'|'balanced'|'power';status:string;
  volume_pct_total:number;volume_pct_applied:number;base_sets:number;applied_sets:number;
  rest_delta_s:number;warmup_add_min:number;gate_level:number;flags:string[];
- inputs:Record<string,number|string|null>;reasons:Array<{signal:string;answer:number;volume_pct:number;message?:string}>;
+ inputs:Record<string,number|string|boolean|null>;reasons:Array<{signal:string;answer:number;volume_pct:number;message?:string}>;
  applied_workout_id:string|null;rule_set_version:string;
 }
 export interface ReadinessState {
