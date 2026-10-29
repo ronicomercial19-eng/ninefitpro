@@ -1,6 +1,6 @@
 import { ReadinessCard } from './ReadinessCard';
 import { withTimeout } from '@/lib/withTimeout';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,8 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const today = todayISO();
+  const savingRef=useRef(false);
+  const actor=useRef(athleteId);actor.current=athleteId;
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [painLocation,setPainLocation]=useState('');
@@ -50,6 +52,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
 
   // Only a complete calibration counts; old mood-only rows remain pending.
   useEffect(() => {
+    savingRef.current=false;setSaving(false);setPainLocation('');
     setCompletedToday(false); setDone(false); setStep(0); setAnswers({});
     if (!athleteId) return;
     let active = true;
@@ -66,7 +69,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
   }, [athleteId, today]);
 
   const handlePick = async (q: Q, v: number) => {
-    if (saving) return;
+    if (saving || savingRef.current) return;
     const next = { ...answers, [q.key]: v };
     setAnswers(next);
     if (step < QUESTIONS.length - 1) {
@@ -80,8 +83,10 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
     }
 
     if(next.pain<=3&&!painLocation.trim()){toast.error('Informe onde sente o desconforto antes de salvar.');return;}
-    setSaving(true);
-    const { error } = await supabase.from("daily_checkins").upsert(
+    const owner=athleteId;
+    savingRef.current=true;setSaving(true);
+    try {
+      const {error}=await withTimeout(supabase.from("daily_checkins").upsert(
       {
         athlete_id: athleteId,
         checkin_date: todayISO(),
@@ -94,25 +99,25 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
         dor_local: next.pain === 5 ? null : painLocation.trim() || null,
       },
       { onConflict: "athlete_id,checkin_date" }
-    );
-    setSaving(false);
-
-    if (error) {
-      console.error("[EmojiCalibrationQuiz] daily_checkins", error);
-      toast.error("Não consegui salvar seu check-in. Tente de novo.");
-      setStep(0);
-      setAnswers({});
+    ));
+      if(actor.current!==owner)return;
+      if(error)throw error;
+    } catch {
+      if(actor.current===owner){savingRef.current=false;setSaving(false);toast.error('Não foi possível confirmar o check-in. Suas respostas continuam aqui; tente salvar novamente.');}
       return;
     }
 
     let score: number | null = null;
     try {
       const context = await fetchDailyContext();
+      if(actor.current!==owner)return;
       score = context.sync.value;
       queryClient.setQueryData(['daily-context', user?.id], context);
     } catch {
       void queryClient.resetQueries({ queryKey: ['daily-context', user?.id] });
     }
+    if(actor.current!==owner)return;
+    savingRef.current=false;setSaving(false);
     try { localStorage.setItem(STORAGE_KEY, businessDate()); } catch { /* Storage is optional. */ }
     setDone(true);
     onComplete?.(score);
