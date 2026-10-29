@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { withTimeout } from '@/lib/withTimeout';
-import { chatPollInterval } from '@/lib/chatPolling';
+import { useRef } from "react";
 
 export type ZapMessage = {
   id: string;
@@ -14,8 +14,17 @@ export type ZapMessage = {
 
 // O zap-proxy resolve thread, telefone e papel do remetente NO SERVIDOR a partir do login.
 // O navegador não envia thread_id: `threadId` aqui só serve para ligar/desligar as consultas.
-const invokeZap = (action: string, options?: Parameters<typeof supabase.functions.invoke>[1]) =>
-  supabase.functions.invoke(`zap-proxy?action=${action}`, { method: "GET", ...options });
+const invokeZap = async (action: string, options?: Parameters<typeof supabase.functions.invoke>[1]) => {
+  const result = await supabase.functions.invoke(`zap-proxy?action=${action}`, { method: "GET", ...options });
+  if (result.error) {
+    const response = (result.error as any).context;
+    if (response instanceof Response) {
+      const payload = await response.clone().json().catch(() => null);
+      if (payload?.error === 'profile_phone_required') throw new Error('profile_phone_required');
+    }
+  }
+  return result;
+};
 
 export function useZapThread(userId?: string, _subject = "Atendimento FitPro") {
   return useQuery({
@@ -39,7 +48,7 @@ export function useZapMessages(threadId?: string) {
     queryKey: ["zap", "messages", threadId],
     enabled: Boolean(threadId),
     retry: false,
-    refetchInterval: query => query.state.status === "error" ? false : chatPollInterval(query.state.data),
+    refetchInterval: query => query.state.status === "error" ? false : 2_500,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     queryFn: async () => {
@@ -52,14 +61,19 @@ export function useZapMessages(threadId?: string) {
 
 export function useSendZap(threadId?: string, userId?: string) {
   const queryClient = useQueryClient();
+  const pending = useRef<{ userId:string; body:string; externalId:string } | null>(null);
   return useMutation({
     mutationFn: async (body: string) => {
       if (!threadId || !userId) throw new Error("Conversa e usuário são obrigatórios");
-      const { data, error } = await invokeZap("messages.send", {
+      if (!pending.current || pending.current.userId !== userId || pending.current.body !== body) {
+        pending.current = { userId, body, externalId: `fitpro:msg:${crypto.randomUUID()}` };
+      }
+      const { data, error } = await withTimeout(invokeZap("messages.send", {
         method: "POST",
-        body: { body, external_id: `fitpro:msg:${crypto.randomUUID()}` },
-      });
+        body: { body, external_id: pending.current.externalId },
+      }));
       if (error) throw error;
+      pending.current = null;
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["zap", "messages", threadId] }),

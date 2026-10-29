@@ -647,8 +647,8 @@ export function RonConciergeSheet() {
                         onClick={() => { void zapThread.refetch(); if (zapThread.data) void zapMessages.refetch(); }}
                         className="block mx-auto text-[11px] text-muted-foreground underline underline-offset-2"
                       >
-                        Não foi possível conectar ao atendimento. Tentar novamente
-                      </button><details className="text-left"><summary className="cursor-pointer text-primary underline text-sm">Abrir chamado de suporte</summary><AppSupport initialMessage={teamInput} /></details></div>
+                        {zapThread.error?.message === "profile_phone_required" ? "Informe seu telefone no perfil para conectar o atendimento. Tentar novamente" : "Não foi possível conectar ao atendimento. Tentar novamente"}
+                      </button>{zapThread.error?.message === "profile_phone_required" && <button type="button" className="text-sm text-primary underline" onClick={() => { setIsOpen(false); navigate("/9fit/ativacao"); }}>Atualizar meu telefone</button>}<details className="text-left"><summary className="cursor-pointer text-primary underline text-sm">Abrir chamado de suporte</summary><AppSupport initialMessage={teamInput} /></details></div>
                     )}
                     {teamConnected && zapList.length === 0 && (
                       <p className="text-[11px] text-muted-foreground text-center">Nenhuma mensagem ainda. Escreva abaixo para falar com a equipe.</p>
