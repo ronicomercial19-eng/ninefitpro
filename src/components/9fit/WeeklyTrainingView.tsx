@@ -142,9 +142,10 @@ export function WeeklyTrainingView({ athleteId, onExecuteToday, initialDate }: W
     try {
       const {data,error}=await supabase.rpc("fn_generate_periodized_week" as any,{p_athlete_id:athleteId,p_week_start:weekStartISO,p_days_week:null});
       if(error)throw error;
-      const result=data as {success?:boolean;error?:string;generated?:number;preserved?:number}|null;
-      if(!result?.success) throw new Error(result?.error === "no_active_periodization" ? "Não há uma periodização ativa para gerar esta semana." : "Não foi possível preparar a semana.");
-      toast.success(`${result.generated ?? 0} sessões preparadas; ${result.preserved ?? 0} dias já existentes foram preservados.`);
+      const result=data as {success?:boolean;error?:string;generated?:number;preserved?:number;failed?:number;partial?:boolean}|null;
+      if(!result?.success && !result?.partial) throw new Error(result?.error === "no_active_periodization" ? "Não há uma periodização ativa para gerar esta semana." : "Não foi possível preparar a semana.");
+      if(result.partial) toast.warning(`${result.generated ?? 0} sessões preparadas; ${result.preserved ?? 0} preservadas. ${result.failed ?? 0} dias precisam de revisão do professor.`);
+      else toast.success(`${result.generated ?? 0} sessões preparadas; ${result.preserved ?? 0} dias já existentes foram preservados.`);
       window.dispatchEvent(new Event("9fit:workout-updated"));
       await loadWeek();
     } catch(error) {

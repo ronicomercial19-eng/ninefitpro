@@ -91,3 +91,6 @@ verify_jwt = false
 # Authenticated and rate-limited in withPaidAccess; supports current Auth JWTs.
 [functions.exercise-video]
 verify_jwt = false
+
+[functions.weekly-training-orchestrator]
+verify_jwt = false
