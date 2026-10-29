@@ -87,7 +87,7 @@ interface WorkoutExecutionProps {
 function flattenPrescricao(resultado: PrescricaoResult): WorkoutExercise[] {
   const t = resultado?.treino;
   if (!t) return [];
-  const blocos = ['neural', 'bloco9', 'integracao', 'reset'];
+  const blocos = ['neural', 'integracao', 'bloco9', 'reset'];
   const out: WorkoutExercise[] = [];
   for (const bloco of blocos) {
     const lista = Array.isArray(t[bloco]) ? t[bloco] : [];
@@ -129,6 +129,8 @@ function injectMobileViewport(html: string): string {
 const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
 
 export function WorkoutExecution({ training, athleteId, onFinish, onBack }: WorkoutExecutionProps) {
+  const [resolvedDailyId,setResolvedDailyId]=useState<string|undefined>();
+  const sessionWorkoutId=training.daily_workout_id||resolvedDailyId;
   const {level:assistanceLevel,setLevel:setAssistanceLevel}=useWorkoutAssistance(athleteId);
   const readiness=useReadiness(athleteId);
   const [safetyPaused,setSafetyPaused]=useState(false);
@@ -173,32 +175,27 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [resolveFailed, setResolveFailed] = useState(false);
 
   useEffect(() => {
-    setResolvedExercises(null);
-    setResolveFailed(false);
-    const hasStaticExercises = baseExercises.length > 0;
-    const canTryPrescricao = liveTraining.training_type !== 'link' && !hasStaticExercises && athleteId;
-    if (!canTryPrescricao) { setResolvingPlayer(false); return; }
-
+    let cancelled=false;const controller=new AbortController();
+    setResolvedExercises(null);setResolvedDailyId(undefined);setResolveFailed(false);
+    const hasStaticExercises=baseExercises.length>0;
+    if(liveTraining.training_type==='link'||hasStaticExercises||!athleteId){setResolvingPlayer(false);return;}
     setResolvingPlayer(true);
-
-    (async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const { data, error } = await supabase.rpc('prescrever_treino', {
-          p_aluno_id: athleteId,
-          p_data: today,
-        });
-
-        if (error) { setResolveFailed(true); return; }
-        const flat = flattenPrescricao(data as PrescricaoResult);
-        if (flat.length > 0) setResolvedExercises(flat);
-        else setResolveFailed(true);
-      } finally {
-        setResolvingPlayer(false);
-      }
+    void (async()=>{
+      try{
+        const {data,error}=await withTimeout<{data:any;error:any}>((supabase as any).rpc('prescrever_treino',{
+          p_aluno_id:athleteId,p_data:businessDate(),
+        }).abortSignal(controller.signal));
+        if(cancelled)return;
+        if(error||!data?.sucesso||!data?.daily_workout_id){setResolveFailed(true);return;}
+        const flat=flattenPrescricao(data as PrescricaoResult);
+        if(!flat.length){setResolveFailed(true);return;}
+        setResolvedExercises(flat);setResolvedDailyId(data.daily_workout_id);
+      }catch{if(!cancelled)setResolveFailed(true);}
+      finally{if(!cancelled)setResolvingPlayer(false);}
     })();
+    return()=>{cancelled=true;controller.abort();};
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveTraining.id, athleteId]);
+  },[liveTraining.id,athleteId]);
 
   const exercises = (() => {
     const source = baseList.length > 0 ? baseList : (resolvedExercises || []);
@@ -316,14 +313,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   }, [athleteId]);
 
   useEffect(() => {
+    if(resolvingPlayer && !sessionWorkoutId)return;
     let cancelled = false;
     (async () => {
       const guard=await readinessRpc('fn_get_training_guard',{p_athlete_id:athleteId});
       if(cancelled)return;
       if(guard?.blocked){setSafetyPaused(true);setExecutionError('Seu relato de hoje indica um sinal de alerta. Interrompa o treino e procure atendimento. Em uma emergência, acione o SAMU 192.');return;}
-      if (training.daily_workout_id) {
-        const adjustment=await readinessRpc('fn_apply_readiness_to_workout',{p_daily_workout_id:training.daily_workout_id});
-        const {data:doses,error:doseError}=await withTimeout(supabase.from('workout_exercises').select('exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,notes,observations,exercises(name,video_url,gif_url)').eq('daily_workout_id',training.daily_workout_id).order('exercise_order'));
+      if (sessionWorkoutId) {
+        const adjustment=await readinessRpc('fn_apply_readiness_to_workout',{p_daily_workout_id:sessionWorkoutId});
+        const {data:doses,error:doseError}=await withTimeout(supabase.from('workout_exercises').select('exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,notes,observations,exercises(name,video_url,gif_url)').eq('daily_workout_id',sessionWorkoutId).order('exercise_order'));
         if(cancelled)return;
         if(doseError){setExecutionError('Não foi possível confirmar as doses do treino.');return;}
         if(doses?.length){
@@ -331,7 +329,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           setLiveTraining(current=>({...current,training_data:{...current.training_data,exercises,estimated_duration:estimateWorkoutMinutes(exercises,3+(adjustment?.status==='applied'?Number(adjustment.warmup_add_min)||0:0))}}));
         }
         window.dispatchEvent(new Event('9fit:readiness-updated'));
-        const { data: prescription, error: validationError } = await (supabase as any).from('daily_workouts').select('prescription_issue').eq('id', training.daily_workout_id).eq('athlete_id', athleteId).single();
+        const { data: prescription, error: validationError } = await (supabase as any).from('daily_workouts').select('prescription_issue').eq('id', sessionWorkoutId).eq('athlete_id', athleteId).single();
         if (cancelled) return;
         if (validationError || !prescription) { setExecutionError('Não foi possível validar esta prescrição.'); return; }
         if (prescription.prescription_issue) { setExecutionError('Esta sessão foi suspensa por inconsistência na prescrição. Consulte o protocolo do coach.'); return; }
@@ -370,8 +368,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         .order("created_at", { ascending: false })
         .limit(1);
 
-      existingQuery = training.daily_workout_id
-        ? existingQuery.eq("daily_workout_id", training.daily_workout_id).is("assignment_id", null)
+      existingQuery = sessionWorkoutId
+        ? existingQuery.eq("daily_workout_id", sessionWorkoutId).is("assignment_id", null)
         : existingQuery.eq("assignment_id", training.id);
 
       const { data: existing, error: existingError } = await existingQuery.maybeSingle();
@@ -381,9 +379,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
       const { data, error } = existing?.id
         ? { data: existing.id, error: null }
-        : training.daily_workout_id
+        : sessionWorkoutId
           ? await supabase.rpc("fn_start_daily_workout_execution", {
-              p_daily_workout_id: training.daily_workout_id,
+              p_daily_workout_id: sessionWorkoutId,
             })
           : await supabase.rpc("fn_start_workout_execution", {
               p_assignment_id: training.id,
@@ -424,7 +422,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     })().catch(()=>{if(!cancelled)setExecutionError('Não foi possível confirmar o treino. Tente novamente.');});
 
     return () => { cancelled = true; };
-  }, [training.id, training.execution_id, training.daily_workout_id, athleteId, todayISO, executionAttempt]);
+  }, [training.id, training.execution_id, sessionWorkoutId, athleteId, todayISO, executionAttempt, resolvingPlayer]);
 
   // HTML content (for html-type trainings) — só carrega quando o player
   // guiado não conseguiu resolver exercícios de nenhuma forma (fallback final)
