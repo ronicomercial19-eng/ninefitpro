@@ -51,6 +51,8 @@ export default function NineFitAjusteTreino() {
   const redFlagSource = params.get("source");
   const painRegion = params.get("region");
   const [sessionName, setSessionName] = useState(workoutName);
+  const [preferredDailyId,setPreferredDailyId]=useState(params.get('daily_workout_id')||'');
+  const [availableSessions,setAvailableSessions]=useState<{id:string;day_name:string;workout_type:string}[]>([]);
   const { athleteId } = useAthleteId();
   const { data: scores, refresh: refreshScores } = useAthleteScores(athleteId);
   const [mode, setMode] = useState<"suggestion" | "manual">("suggestion");
@@ -100,14 +102,17 @@ export default function NineFitAjusteTreino() {
     resetAdjustment();
     setReloading(true);
     try {
-      const { data: dw, error: workoutError } = await supabase
+      const { data: sessions, error: workoutError } = await supabase
         .from("daily_workouts" as any)
         .select("id,day_name,day_number,workout_type,focus_muscles,updated_at")
         .eq("athlete_id", athleteId)
         .eq("workout_date", selectedDate)
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        .order("created_at", { ascending: false }).limit(20);
       if (token !== loadToken.current) return;
       if (workoutError) throw workoutError;
+      const available=(sessions||[]) as {id:string;day_name:string;workout_type:string;updated_at:string;day_number:number;focus_muscles:string[]}[];
+      setAvailableSessions(available);
+      const dw=available.find(d=>d.id===preferredDailyId)||available.find(d=>d.workout_type!=='quick')||available[0]||null;
       setDailyId((dw as any)?.id || null);
       setWorkoutUpdatedAt((dw as any)?.updated_at ?? null);
       setDayNumber((dw as any)?.day_number ?? null);
@@ -163,7 +168,7 @@ export default function NineFitAjusteTreino() {
     window.addEventListener("9fit:workout-updated", refresh);
     return () => window.removeEventListener("9fit:workout-updated", refresh);
     /* eslint-disable-next-line */
-  }, [athleteId, selectedDate]);
+  }, [athleteId, selectedDate, preferredDailyId]);
 
   useEffect(() => {
     void supabase.from("exercises").select("name,muscle_groups,target_muscles").order("name").limit(1000)
@@ -381,6 +386,7 @@ export default function NineFitAjusteTreino() {
           <input type="date" min={today} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}
             className="mt-2 block w-full rounded-lg border border-white/10 bg-background p-2 text-foreground" />
         </label>
+        {availableSessions.length>1&&<label className="mt-3 block text-xs text-muted-foreground">Treino desta data<select aria-label="Treino desta data" value={dailyId||''} onChange={e=>setPreferredDailyId(e.target.value)} className="mt-2 block w-full rounded-lg border border-primary/25 bg-background p-2 text-foreground">{availableSessions.map(d=><option key={d.id} value={d.id}>{d.workout_type==='quick'?'Sessão rápida · ':''}{d.day_name}</option>)}</select></label>}
         {executionStatus && (
           <div className="mt-3 space-y-2">
             <p className="text-sm text-amber-400">{executionMessage(executionStatus)}</p>

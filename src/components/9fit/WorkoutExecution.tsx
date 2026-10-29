@@ -201,7 +201,11 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     const source = baseList.length > 0 ? baseList : (resolvedExercises || []);
     if (!dailyOverride) return source;
     // Support two formats: full replacement or per-exercise patch
-    if (Array.isArray(dailyOverride.exercises)) return dailyOverride.exercises;
+    if (Array.isArray(dailyOverride.exercises)) return dailyOverride.exercises.map((item) => ({
+      ...item,
+      name: String(item.name || item.exercise_name || source.find(e=>e.exercise_id===item.exercise_id)?.name || 'Exercício'),
+      reps: String(item.reps ?? item.reps_range ?? ''),
+    }));
     if (dailyOverride.intensity_pct || dailyOverride.fatigue_adjustment) {
       const factor = (dailyOverride.intensity_pct ?? 100) / 100;
       return source.map((e) => ({
@@ -226,25 +230,17 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
   // Load initial override + subscribe to realtime changes on daily_workouts
   const refreshDaily = useCallback(async () => {
-    const { data } = await supabase
-      .from("daily_workouts")
-      .select("changes_json, override_locked, updated_at")
-      .eq("athlete_id", athleteId)
-      .eq("workout_date", todayISO)
-      .maybeSingle();
-    if (data?.changes_json) setDailyOverride(data.changes_json as DailyOverride);
-  }, [athleteId, todayISO]);
-
-  useEffect(() => { void refreshDaily(); }, [refreshDaily]);
-
+    if(!sessionWorkoutId){setDailyOverride(null);return;}
+    const {data,error}=await supabase.from('daily_workouts').select('changes_json,override_locked,updated_at')
+      .eq('id',sessionWorkoutId).eq('athlete_id',athleteId).maybeSingle();
+    if(!error)setDailyOverride(data?.changes_json as DailyOverride || null);
+  },[athleteId,sessionWorkoutId]);
+  useEffect(()=>{void refreshDaily();},[refreshDaily]);
   useRealtimeTable(
-    { table: "daily_workouts", filter: `athlete_id=eq.${athleteId}`, enabled: !!athleteId },
-    (payload: { new?: Record<string, unknown> }) => {
-      const row = payload.new;
-      if (row?.workout_date === todayISO && row?.changes_json) {
-        setDailyOverride(row.changes_json);
-        toast.info("Treino do dia foi ajustado ✨");
-      }
+    {table:'daily_workouts',filter:`athlete_id=eq.${athleteId}`,enabled:!!athleteId&&!!sessionWorkoutId},
+    (payload:{new?:Record<string,unknown>})=>{
+      const row=payload.new;
+      if(row?.id===sessionWorkoutId&&row.changes_json){setDailyOverride(row.changes_json as DailyOverride);}
     },
   );
 
@@ -735,7 +731,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         <WearableConnectBox isWorkoutActive={true} />
       </div>
 
-      {dailyOverride && (
+      {dailyOverride && Boolean(dailyOverride.exercises || dailyOverride.intensity_pct || dailyOverride.fatigue_adjustment) && (
         <div className="mx-4 mb-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 flex items-center gap-2 text-xs text-primary">
           <Sparkles className="w-3.5 h-3.5" />
           Ajuste aplicado hoje

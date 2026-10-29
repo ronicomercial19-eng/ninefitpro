@@ -53,3 +53,5 @@ O lote de 26/10 está registrado com nove atletas gerados e um bloqueado, contra
 - Compilação do FitPro e build do Smart são verificações técnicas. O typecheck do Smart com dependências emprestadas encontrou erros fora dos arquivos alterados, por isso não é declarado limpo. CI do próprio repositório é acompanhado separadamente; QA manual continua com o responsável.
 
 O treino rápido também passa a preservar estados started/paused/skipped, além de in_progress/completed, antes de substituir uma sessão quick ainda não iniciada.
+
+O ajuste no FitPro permite escolher a sessão quando há treino rápido e periodizado na mesma data. O player filtra overrides pelo id da sessão e normaliza exercise_name/reps_range do JSON canônico, evitando misturar doses de outra sessão.
