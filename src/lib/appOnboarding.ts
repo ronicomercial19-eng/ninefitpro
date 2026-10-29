@@ -3,6 +3,7 @@ export interface OnboardingAnswers {
     welcome_seen?: boolean;
     full_name?: string;
     birthdate?: string | null;
+    gender?: string | null;
     weight_kg?: number | null;
     height_cm?: number | null;
     experience?: string;
@@ -17,10 +18,12 @@ export interface AppOnboardingState {
     onboarding: {
         answers: OnboardingAnswers;
         revision: number;
+        updated_at?: string;
         completed_at: string | null;
     } | null;
     full_name: string | null;
     birthdate: string | null;
+    gender?: string | null;
     subscription: {
         name: string;
         expires_at: string | null;
@@ -64,4 +67,21 @@ export function onboardingNextAction(state: AppOnboardingState, today = new Intl
     if (state.next_workout || state.assignments?.some(isExecutableTraining))
         return { title: 'Sua ficha está pronta e há treino disponível', label: 'Conferir meu treino', href: '/9fit/train', review: false };
     return { title: 'Sua ficha está pronta; falta uma prescrição disponível', label: 'Solicitar meu primeiro treino', href: '/9fit/acompanhamento?module=training', review: false };
+}
+/** Error codes are internal; show the actionable correction to the person. */
+export function onboardingSaveError(error: unknown): string {
+    const message = (error as { message?: string })?.message || '';
+    if (message.includes('revision_conflict')) return 'Sua ficha foi atualizada em outra aba. Recarregue os dados salvos antes de continuar.';
+    if (message.includes('invalid_birthdate')) return 'Confira sua data de nascimento. Use uma data válida que não esteja no futuro.';
+    if (message.includes('invalid_measurement')) return 'Confira peso (20 a 400 kg), altura (80 a 250 cm) e duração do treino (10 a 120 minutos).';
+    if (message.includes('confirmed_pdi_required')) return 'Complete e confirme sua ficha de objetivos e restrições antes de ativar o app.';
+    return 'Não foi possível confirmar a gravação. Recarregue os dados salvos para conferir antes de tentar novamente.';
+}
+
+export function onboardingGender(value: string | null | undefined): string | null {
+    const normalized = value?.trim().toLowerCase();
+    if (['f', 'female', 'feminino'].includes(normalized || '')) return 'Feminino';
+    if (['m', 'male', 'masculino'].includes(normalized || '')) return 'Masculino';
+    if (normalized === 'prefiro não informar') return 'Prefiro não informar';
+    return null;
 }

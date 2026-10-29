@@ -16,7 +16,7 @@ try{
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$SELECT jsonb_build_object('is_anonymous',coalesce(current_setting('qa.anonymous',true),'false')::boolean)$$;
  CREATE FUNCTION public.fn_current_athlete_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT auth.uid()$$;
- CREATE TABLE public.athletes(id uuid PRIMARY KEY,user_id uuid,coach_id uuid,name text,birthdate date,experience_level text,weekly_frequency integer,sessions_per_week integer);
+ CREATE TABLE public.athletes(id uuid PRIMARY KEY,user_id uuid,coach_id uuid,name text,gender text,birthdate date,experience_level text,weekly_frequency integer,sessions_per_week integer);
  INSERT INTO public.athletes(id,user_id,coach_id,name)VALUES('${owner}','${owner}','${coach}','Aluno');
  CREATE TABLE public.profiles(user_id uuid,full_name text);INSERT INTO public.profiles VALUES('${owner}','Aluno');
  CREATE FUNCTION private.fitpro_can_manage_athlete(a uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$SELECT EXISTS(SELECT 1 FROM public.athletes WHERE id=a AND coach_id=auth.uid())$$;
@@ -32,6 +32,7 @@ try{
  `);
  await db.exec(await readFile(new URL('../supabase/migrations/20261028090752_app_activation_onboarding.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20261028091426_harden_app_onboarding_reads.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20261029105218_onboarding_profile_persistence.sql',import.meta.url),'utf8'));
  await db.exec(`SET ROLE authenticated;SELECT set_config('request.jwt.claim.sub','${owner}',false);`);
  const first=await save({welcome_seen:true},0);
  check('first confirmation creates only an unfinished onboarding',()=>{assert.equal(first.onboarding.revision,1);assert.equal(first.onboarding.completed_at,null)});
@@ -53,6 +54,16 @@ try{
  check('review completes only after both routine and nine-answer PDI',()=>{assert.ok(completed.onboarding.completed_at);assert.equal(completed.onboarding.revision,5)});
  const state=await value('SELECT public.fn_get_app_onboarding() value');
  check('completion never fabricates payment, prescription or first execution',()=>{assert.equal(state.subscription,null);assert.equal(state.next_workout,null);assert.equal(state.first_workout_completed,false);assert.equal(state.onboarding.answers.full_name,'Nome confirmado')});
+ const gender=await save({gender:'Feminino',birthdate:'1990-01-01'},5);
+ const canonicalGender=await value(`SELECT gender value FROM public.athletes WHERE id='${owner}'`);
+ check('sex and valid birthdate persist on the canonical athlete and read endpoint',()=>{assert.equal(canonicalGender,'Feminino');assert.equal(gender.onboarding.answers.birthdate,'1990-01-01')});
+ const refreshed=await value('SELECT public.fn_get_app_onboarding() value');
+ check('reload exposes the stored sex without losing completion',()=>{assert.equal(refreshed.gender,'Feminino');assert.ok(refreshed.onboarding.completed_at)});
+ for(const patch of [{gender:'invented'},{gender:2},{birthdate:'1990-02-30'},{birthdate:'2990-01-01'}]){await assert.rejects(()=>save(patch,6));checks++}
+ const withheld=await save({gender:'Prefiro não informar'},6);
+ check('declining sex declaration is saved without fabricating canonical sex',()=>assert.equal(withheld.onboarding.answers.gender,'Prefiro não informar'));
+ const hiddenGender=await value(`SELECT gender value FROM public.athletes WHERE id='${owner}'`);
+ check('declined sex clears canonical sex',()=>assert.equal(hiddenGender,null));
  await assert.rejects(()=>db.exec(`UPDATE public.app_onboarding SET completed_at=now()`),/permission denied/);checks++;
  await db.exec(`SELECT set_config('request.jwt.claim.sub','${coach}',false);`);
  const coachRows=await value('SELECT count(*)::int value FROM public.app_onboarding');

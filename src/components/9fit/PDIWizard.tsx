@@ -4,6 +4,7 @@ import { X, ArrowRight, Check } from "lucide-react";
 import { useUserParameters, UserParameters } from "@/hooks/useUserParameters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { withTimeout } from "@/lib/withTimeout";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 
@@ -65,7 +66,7 @@ export function PDIWizard({ open, onClose, onComplete }: Props) {
       const final = i === STEPS.length - 1;
       const patch = final ? { ...Object.fromEntries(STEPS.filter(s => declaredKeys.includes(s.key)).map(s => [s.key, params[s.key]])), ...confirmed } : { [step.key]: value };
       const clean = Object.fromEntries(Object.entries(patch).map(([key, val]) => [key, Array.isArray(val) ? val.filter(v => v !== 'none') : val]));
-      const { data, error } = await supabase.rpc('fn_save_pdi' as any, { p_patch: clean, p_complete: final });
+      const { data, error } = await withTimeout(supabase.rpc('fn_save_pdi' as any, { p_patch: clean, p_complete: final }));
       if (error || !(data as any)?.saved || (final && !(data as any)?.completed_at)) throw error || new Error('save_not_confirmed');
       window.dispatchEvent(new Event('9fit:profile-updated'));
       if (!final) { setI(i + 1); return; }

@@ -6,6 +6,7 @@ import { loginDestination } from '@/lib/loginDestination';
 import { clearEntry, confirmedAccess, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, readEntry, rememberEntry, setupDestination } from '@/lib/customerEntry';
 import { AppSupport } from '@/components/9fit/AppSupport';
 import { pendingPayment } from '@/lib/paymentReturn';
+import { withTimeout } from '@/lib/withTimeout';
 import { hasConfirmedProfile } from '@/lib/activationProfile';
 
 export default function CustomerEntry() {
@@ -28,23 +29,25 @@ export default function CustomerEntry() {
     let active = true; setError(false); setState(null);
     void (async () => {
       try {
-        const [profile, roles, identity, subscription, settings, onboarding] = await Promise.all([
+        const [profile, roles, identity, subscription, settings, onboarding] = await withTimeout(Promise.all([
           supabase.from('profiles').select('role,first_access_completed').eq('user_id', user.id).maybeSingle(),
           supabase.from('user_roles').select('role').eq('user_id', user.id),
           supabase.rpc('fn_current_athlete_id'),
           supabase.from('user_subscriptions' as any).select('status,expires_at').eq('user_id', user.id).order('activated_at', { ascending: false }),
           supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', user.id).maybeSingle(),
           supabase.from('app_onboarding' as any).select('completed_at').eq('user_id', user.id).maybeSingle(),
-        ]);
+        ]));
         for (const result of [profile, roles, identity, subscription, settings, onboarding]) if (result.error) throw result.error;
         const roleHome = loginDestination(profile.data?.role, roles.data?.map(r => r.role));
         let activationDone = false;
         let firstAccessDone = profile.data?.first_access_completed === true;
         if (identity.data) {
-          const activation = await supabase.from('athlete_activation').select('finished_at').eq('athlete_id', identity.data).maybeSingle();
+          const [activation, athlete] = await withTimeout(Promise.all([
+            supabase.from('athlete_activation').select('finished_at').eq('athlete_id', identity.data).maybeSingle(),
+            supabase.from('athletes').select('password_changed').eq('id', identity.data).single(),
+          ]));
           if (activation.error) throw activation.error;
           activationDone = !!activation.data?.finished_at;
-          const athlete = await supabase.from('athletes').select('password_changed').eq('id', identity.data).single();
           if (athlete.error) throw athlete.error;
           firstAccessDone ||= athlete.data.password_changed === true;
         }
@@ -62,7 +65,7 @@ export default function CustomerEntry() {
     if (provisioning) return;
     setProvisioning(true); setProvisionError('');
     try {
-      const result = await supabase.rpc('fn_ensure_ninefit_customer' as any);
+      const result = await withTimeout(supabase.rpc('fn_ensure_ninefit_customer' as any));
       if (result.error || !result.data) throw new Error('profile');
       window.dispatchEvent(new Event('9fit:profile-updated'));
       setRevision(n => n + 1);

@@ -1,7 +1,9 @@
+import { withTimeout } from "@/lib/withTimeout";
+import { activeTrainingOnDate, resolveTrainingSources } from "@/lib/trainingSources";
 import { isExecutableTraining } from '@/lib/executableTraining';
 import { loadActivitySummary } from "@/services/activitySummary";
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,6 +59,10 @@ export default function NineFitTrain() {
   const [loading, setLoading] = useState(true);
   const [prescriptionIssue, setPrescriptionIssue] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [templateWarning, setTemplateWarning] = useState(false);
+  const requests = useRef<{ training: AbortController | null; count: AbortController | null }>({ training: null, count: null });
+  const currentAthlete = useRef(athleteId);
+  currentAthlete.current = athleteId;
   const [countWarning, setCountWarning] = useState(false);
   const [weeklyCompleted, setWeeklyCompleted] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
@@ -120,12 +126,24 @@ export default function NineFitTrain() {
 
   useEffect(() => {
     if (!athleteLoading && athleteId) {
+      setLoading(true);
       fetchTrainings(athleteId);
       fetchCompletedCount(athleteId);
     } else if (!athleteLoading && !athleteId) {
       setLoading(false);
     }
+    return () => { requests.current.training?.abort(); requests.current.count?.abort(); };
   }, [athleteId, athleteLoading]);
+
+  const previousAthlete = useRef<string | null>(null);
+  useEffect(() => {
+    const changed = previousAthlete.current !== null && previousAthlete.current !== athleteId;
+    previousAthlete.current = athleteId;
+    if (!changed) return;
+    setTrainings([]); setSelectedTraining(null); setFlow("HOME");
+    setCompletedCount(0); setWeeklyCompleted(0); setPrescriptionIssue(false);
+    setTemplateWarning(false); setCountWarning(false);
+  }, [athleteId]);
 
   // FIX (bug real 4 — Treino Rápido / Ajuste não entravam no player guiado):
   // QuickTrainModal e AjusteTreino navegam para /9fit/train passando os
@@ -154,6 +172,10 @@ export default function NineFitTrain() {
     () => { if (athleteId) { fetchTrainings(athleteId); fetchCompletedCount(athleteId); } },
   );
   useRealtimeTable(
+    { table: "daily_workouts", filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
+    () => { if (athleteId) void fetchTrainings(athleteId); },
+  );
+  useRealtimeTable(
     {
       table: "workout_executions",
       filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined,
@@ -165,26 +187,27 @@ export default function NineFitTrain() {
   useEffect(() => { const refresh=()=>{ if(athleteId) { void fetchTrainings(athleteId); void fetchCompletedCount(athleteId); } }; window.addEventListener("9fit:workout-updated",refresh); return ()=>window.removeEventListener("9fit:workout-updated",refresh); }, [athleteId]);
 
   const fetchTrainings = async (aid: string) => {
+    requests.current.training?.abort();
+    const controller = new AbortController();
+    requests.current.training = controller;
+    const alive = () => !controller.signal.aborted && currentAthlete.current === aid;
     try {
       setLoadError(false);
-      const { data, error } = await supabase
-        .from("student_training_assignments")
-        .select("*")
-        .eq("student_id", aid)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        const today = businessDate();
-        const valid = data.filter((t: any) => {
-          const startValid = t.start_date <= today;
-          const endValid = !t.end_date || t.end_date >= today;
-          return startValid && endValid;
-        });
-        const assigned = await loadResolvedTemplateAssignments(aid).catch(() => []);
-        const assignedTrainings: TrainingAssignment[] = assigned
+      const today = businessDate();
+      const sources = await withTimeout(resolveTrainingSources<any, any, any>(
+        supabase.from("student_training_assignments").select("*").eq("student_id", aid)
+          .eq("is_active", true).order("created_at", { ascending: false }).abortSignal(controller.signal),
+        (supabase as any).from("daily_workouts")
+          .select("id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))")
+          .eq("athlete_id", aid).eq("workout_date", today).order("created_at", { ascending: false }).abortSignal(controller.signal),
+        withTimeout(loadResolvedTemplateAssignments(aid, undefined, controller.signal)),
+      ));
+      if (!alive()) return;
+      const valid = sources.assignments.filter(t => activeTrainingOnDate(t, today));
+      const assigned = sources.templates;
+      const dailyRows = sources.daily;
+      setTemplateWarning(sources.templatesUnavailable);
+      const assignedTrainings: TrainingAssignment[] = assigned
           .filter((item: any) => item.prescription_schema || item.protocol_schema)
           .map((item: any) => ({
           id: item.assignment_id,
@@ -195,8 +218,6 @@ export default function NineFitTrain() {
           training_type: "structured",
           training_data: item.prescription_schema || item.protocol_schema || undefined,
         }));
-        const { data: dailyRows, error: dailyError } = await (supabase as any).from("daily_workouts").select("id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))").eq("athlete_id",aid).eq("workout_date",today).order("created_at", {ascending:false});
-        if (dailyError) throw dailyError;
         setPrescriptionIssue((dailyRows || []).some((d: any) => !!d.prescription_issue));
         const dailyTrainings: TrainingAssignment[] = (dailyRows || [])
           .filter((d: any) => !d.prescription_issue && d.workout_exercises?.length)
@@ -214,24 +235,30 @@ export default function NineFitTrain() {
               training_data: { exercises, estimated_duration: estimateMinutes(exercises) },
             };
           });
-        setTrainings([...dailyTrainings, ...assignedTrainings, ...(valid as TrainingAssignment[])]);
-      }
+      setTrainings([...dailyTrainings, ...assignedTrainings, ...(valid as TrainingAssignment[])]);
     } catch (error) {
+      if (!alive()) return;
       setLoadError(true);
       console.error("[Train] Error:", error);
       toast.error("Erro ao carregar treinos");
     } finally {
-      setLoading(false);
+      if (alive()) setLoading(false);
+      controller.abort();
     }
   };
 
   const fetchCompletedCount = async (aid: string) => {
+    requests.current.count?.abort();
+    const controller = new AbortController();
+    requests.current.count = controller;
+    const alive = () => !controller.signal.aborted && currentAthlete.current === aid;
     try {
-      const activity = await loadActivitySummary(aid);
-      setCompletedCount(activity.total);
-      setWeeklyCompleted(activity.week);
-      setCountWarning(false);
-    } catch { setCountWarning(true); toast.error("Não foi possível confirmar as sessões concluídas."); }
+      const activity = await loadActivitySummary(aid, controller.signal);
+      if (!alive()) return;
+      setCompletedCount(activity.total); setWeeklyCompleted(activity.week); setCountWarning(false);
+    } catch {
+      if (alive()) setCountWarning(true);
+    } finally { controller.abort(); }
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
@@ -365,6 +392,7 @@ export default function NineFitTrain() {
 
       {prescriptionIssue && flow === "HOME" && <div role="alert" className="px-4 mb-4"><p className="rounded-xl border border-orange-500 p-4 text-sm">O treino automático foi suspenso por uma inconsistência na prescrição. Abra a aba Protocolo para ver o que seu coach enviou.</p></div>}
 
+      {templateWarning && flow === "HOME" && !loadError && <div role="status" className="px-4 mb-4 rounded-xl border border-primary/30 p-4 text-sm">Parte dos protocolos não pôde ser consultada. Os treinos carregados continuam disponíveis. <button className="underline text-primary" onClick={() => { if (athleteId) void fetchTrainings(athleteId); }}>Tentar novamente</button></div>}
       {countWarning && flow === "HOME" && !loadError && (
         <div role="status" className="px-4 mb-4">
           <p className="rounded-xl border border-[#EF7A45]/40 bg-[#EF7A45]/10 p-4 text-sm">

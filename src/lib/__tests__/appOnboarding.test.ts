@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { AppOnboardingState, onboardingStep, onboardingNextAction } from '../appOnboarding';
+import { AppOnboardingState, onboardingStep, onboardingNextAction, onboardingSaveError, onboardingGender } from '../appOnboarding';
 const state = (): AppOnboardingState => ({ onboarding: null, full_name: 'Aluno', birthdate: null, subscription: null, next_workout: null, assignments: [], first_workout_completed: false });
 test('onboarding resumes the first missing group, preserving profile and workout separation', () => {
     const s = state();
@@ -31,4 +31,17 @@ test('future prescription leads to planning rather than claiming a session for t
     const s = state();
     s.next_workout = { id: 'id', title: 'Treino', date: '2026-10-30' };
     assert.equal(onboardingNextAction(s, '2026-10-28').href, '/9fit/planejamento');
+});
+test('save errors explain correction and do not claim an ambiguous write failed', () => {
+    assert.match(onboardingSaveError({ message: 'onboarding_revision_conflict' }), /outra aba/);
+    assert.match(onboardingSaveError({ message: 'invalid_birthdate' }), /data válida/);
+    assert.match(onboardingSaveError({ message: 'confirmed_pdi_required' }), /confirme sua ficha/);
+    assert.match(onboardingSaveError(new Error('timeout')), /conferir antes/);
+});
+
+test('legacy sex labels populate the optional form without inventing missing data', () => {
+    assert.equal(onboardingGender('female'), 'Feminino');
+    assert.equal(onboardingGender('M'), 'Masculino');
+    assert.equal(onboardingGender(null), null);
+    assert.equal(onboardingGender('unknown'), null);
 });
