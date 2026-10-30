@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAthleteId } from '@/hooks/useAthleteId';
-import { useActivationFlow } from '@/hooks/useActivationFlow';
+import { GuidedAssessmentForm } from '@/components/progress/GuidedAssessmentForm';
+import { businessDate } from '@/services/dailyContextRules';
 import { BottomNavigation } from '@/components/9fit/BottomNavigation';
 import { RepCounter, TestTimer } from '@/components/9fit/TestTimer';
 import { toast } from 'sonner';
@@ -68,8 +69,12 @@ function statusText(r: Resolved, unit: string, tol: number): { text: string; ton
 }
 
 export default function NineFitAvaliacaoGuiada() {
-  const { athleteId } = useAthleteId();
-  const { advanceStep } = useActivationFlow();
+  const [params]=useSearchParams();const {athleteId,loading,error}=useAthleteId();
+  if(params.get('modo')==='completa')return <CompleteGuidedAssessment/>;
+  return <><GuidedAssessmentForm athleteId={athleteId} loading={loading} athleteError={error}/><div className="mx-auto max-w-lg p-4 pb-28 text-center"><a className="inline-flex min-h-11 items-center rounded-xl bg-card px-4 text-sm text-primary underline" href="/9fit/avaliacao-guiada?modo=completa">Medidas corporais, testes guiados e fotos</a></div><BottomNavigation/></>;
+}
+function CompleteGuidedAssessment() {
+  const { athleteId, loading: athleteLoading, error: athleteError } = useAthleteId();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
@@ -77,7 +82,6 @@ export default function NineFitAvaliacaoGuiada() {
   const [level, setLevel] = useState<Level>('iniciante');
   const [sexo, setSexo] = useState<Sexo>(null);
   const [idade, setIdade] = useState('');
-  const [goal, setGoal] = useState<string>(GOALS[0]);
   const [screen, setScreen] = useState<Record<string, boolean>>({});
   const [feelsWell, setFeelsWell] = useState(false);
   const [cond, setCond] = useState<Record<string, boolean>>({});
@@ -88,10 +92,11 @@ export default function NineFitAvaliacaoGuiada() {
   const [photos, setPhotos] = useState<Partial<Record<PhotoView, File>>>({});
   const [photoConsent, setPhotoConsent] = useState(false);
   const [sharePhotosWithCoach, setSharePhotosWithCoach] = useState(false);
-  const [updateProfile, setUpdateProfile] = useState(true);
+  const [updateProfile, setUpdateProfile] = useState(false);
+  const [assessmentDate,setAssessmentDate]=useState(businessDate());
+  const savingRef=useRef(false);
+  const actor=useRef(athleteId);actor.current=athleteId;
   const [saving, setSaving] = useState(false);
-  const [frequency, setFrequency] = useState(3);
-  const [restrictions, setRestrictions] = useState('');
 
   // idade já cadastrada no perfil
   useEffect(() => {
@@ -197,7 +202,9 @@ export default function NineFitAvaliacaoGuiada() {
   };
 
   async function save() {
-    if (!athleteId || saving) return;
+    if (!athleteId || saving || savingRef.current) return;
+    if(!assessmentDate || assessmentDate>businessDate())return toast.error("Escolha uma data até hoje.");
+    const owner=athleteId;
     const n = (k: string) => parseNum(values[k]);
     const data: Record<string, number | string | object | boolean> = {};
     data.photo_consent = photoConsent;
@@ -210,16 +217,15 @@ export default function NineFitAvaliacaoGuiada() {
       for (const t of [...RML_TESTS, ...extras]) for (const f of t.fields) if (!f.key.startsWith('rm_')) put(f.key, n(f.key));
       put('rm1_empurrar_superior', r.rm.sup); put('rm1_empurrar_perna', r.rm.agach); put('rm1_puxar_costas', r.rm.pux);
     }
-    if (Object.keys(data).filter((k) => typeof data[k] === 'number').length <= 1) return toast.error('Informe ao menos uma medida.');
+    if (Object.keys(data).filter((k) => k!=='idade' && typeof data[k] === 'number').length === 0) return toast.error('Informe ao menos uma medida.');
     data.nivel = level;
-    data.objetivo = goal;
     data.confianca = `${r.conf.label} (${r.conf.points}/${r.conf.max})`;
     data.triagem = { restrito: restricted, sentindo_bem_hoje: feelsWell, respostas_sim: SCREENING.filter((q) => screen[q.id]).map((q) => q.id) };
     const leituras: Record<string, { leituras: number[]; status: string }> = {};
     for (const f of MEASURES) if (res[f.key].status !== 'none') leituras[f.key] = { leituras: res[f.key].readings, status: res[f.key].status };
     data.condicoes = { ...cond, flexao_variacao: variation.flexao_variacao || null, leituras, cronometro_app: Object.keys(timerUsed).filter((k) => timerUsed[k]) };
 
-    setSaving(true);
+    savingRef.current=true;setSaving(true);
     try {
       // fotos: bucket privado student-photos, pasta = id do atleta
       const paths: string[] = [];
@@ -235,23 +241,17 @@ export default function NineFitAvaliacaoGuiada() {
       if (paths.length) data.fotos = paths;
 
       const { data: out, error } = await supabase.rpc('fn_salvar_avaliacao_guiada_v2' as any, {
-        p_athlete_id: athleteId, p_data: data, p_atualizar_perfil: updateProfile, p_data_avaliacao: format(new Date(), 'yyyy-MM-dd'),
+        p_athlete_id: athleteId, p_data: data, p_atualizar_perfil: updateProfile, p_data_avaliacao: assessmentDate,
       });
       if (error || !(out as any)?.success) throw error || new Error('A avaliação não foi salva');
       window.dispatchEvent(new Event('9fit:sync_updated'));
       window.dispatchEvent(new Event('9fit:profile-updated'));
-      if (params.get('returnTo') === 'progresso') {
-        toast.success('Avaliação salva no seu histórico');
-        navigate('/9fit/progresso/historico');
-        return;
-      }
-      const advanced = await advanceStep('assessment', { goal, experience_level: LEVEL_INFO[level].label, weekly_frequency: frequency, restrictions });
-      if (!advanced) { toast.error('Avaliação salva. Revise a conexão para finalizar a ficha de treino.'); return; }
-      toast.success('Avaliação salva e perfil de treino atualizado');
-      navigate('/9fit/ativacao');
+      if(actor.current!==owner)return;
+      toast.success('Avaliação registrada');
+      navigate('/9fit/progresso/historico');
     } catch (e: any) {
-      toast.error(e?.message || 'Não foi possível salvar a avaliação');
-    } finally { setSaving(false); }
+      toast.error(e?.code==='42501'||/not authorized/i.test(e?.message||'')?'Sem permissão para este perfil. Entre novamente.':e?.message || 'Não foi possível salvar a avaliação');
+    } finally { savingRef.current=false;setSaving(false); }
   }
 
   const card = 'rounded-2xl border border-border bg-card/60 p-4 space-y-3';
@@ -324,6 +324,7 @@ export default function NineFitAvaliacaoGuiada() {
     </div>
   );
 
+  if(athleteLoading || !athleteId)return <main className="p-6 pb-28"><p role="status">{athleteLoading?'Localizando seu perfil…':athleteError || 'Não encontramos um atleta vinculado à sua conta.'}</p><BottomNavigation/></main>;
   return (
     <main className="min-h-screen bg-background p-4 pb-28">
       <div className="max-w-lg mx-auto space-y-4">
@@ -335,6 +336,8 @@ export default function NineFitAvaliacaoGuiada() {
           </div>
         </header>
 
+        <p className="rounded-xl border border-primary/30 p-3 text-sm">Autoavaliação. Não substitui a avaliação oficial com seu professor.</p>
+        <label className="block text-sm">Data da avaliação<input type="date" max={businessDate()} value={assessmentDate} onChange={e=>setAssessmentDate(e.target.value)} className="mt-1 block w-full rounded-xl border border-border bg-card p-3"/></label>
         {/* 0 — MÉTODOS */}
         {step === 0 && (
           <div className="space-y-4">
@@ -367,11 +370,7 @@ export default function NineFitAvaliacaoGuiada() {
                   ))}
                 </div>
               </div>
-              <label className="block text-sm">Objetivo principal
-                <select value={goal} onChange={(e) => setGoal(e.target.value)} className="block w-full mt-1 bg-card border border-border p-3 rounded-xl">
-                  {GOALS.map((g) => <option key={g}>{g}</option>)}
-                </select>
-              </label>
+              
               <div>
                 <p className="text-sm">Seu nível de treino</p>
                 {(Object.keys(LEVEL_INFO) as Level[]).map((l) => (
@@ -532,17 +531,7 @@ export default function NineFitAvaliacaoGuiada() {
                 <span>Atualizar meu peso e altura no perfil com estes valores ({[r.peso !== null ? `${r.peso} kg` : null, r.altura !== null ? `${r.altura} cm` : null].filter(Boolean).join(', ')}). Desmarque para manter o perfil como está.</span>
               </label>
             )}
-            {params.get('returnTo') !== 'progresso' && (
-              <div className={card}>
-                <p className="font-semibold text-sm">Para montar seu treino</p>
-                <label className="block text-sm">Treinos por semana
-                  <input type="number" min={1} max={7} value={frequency} onChange={(e) => setFrequency(Number(e.target.value))} className="block w-full mt-1 bg-card border border-border p-3 rounded-xl" />
-                </label>
-                <label className="block text-sm">Restrições ou lesões
-                  <textarea value={restrictions} onChange={(e) => setRestrictions(e.target.value)} className="block w-full mt-1 bg-card border border-border p-3 rounded-xl" />
-                </label>
-              </div>
-            )}
+
           </div>
         )}
 

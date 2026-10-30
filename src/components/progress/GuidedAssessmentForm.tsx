@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,15 +11,20 @@ type Field = typeof fields[number][0];
 
 export function GuidedAssessmentForm({ athleteId, loading, athleteError, successPath = '/9fit/progresso' }: { athleteId: string | null; loading: boolean; athleteError?: string | null; successPath?: string }) {
   const navigate = useNavigate();
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const actor=useRef(athleteId);actor.current=athleteId;
+  const today = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const savingRef = useRef(false);
   const [date, setDate] = useState(today);
   const [values, setValues] = useState<Record<Field, string>>({ p_peso: '', p_gordura_corporal: '', p_massa_muscular: '', p_rm_supino: '', p_rm_agachamento: '', p_rm_puxada: '' });
   const [errors, setErrors] = useState<Partial<Record<Field | 'date' | 'form', string>>>({});
   const [saving, setSaving] = useState(false);
 
+  useEffect(()=>{setValues({p_peso:'',p_gordura_corporal:'',p_massa_muscular:'',p_rm_supino:'',p_rm_agachamento:'',p_rm_puxada:''});setErrors({});},[athleteId]);
+
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!athleteId || saving) return;
+    if (!athleteId || savingRef.current) return;
+    const owner=athleteId;
     const nextErrors: typeof errors = {};
     const measures: Partial<Record<Field, number>> = {};
     for (const [key] of fields) {
@@ -34,18 +39,21 @@ export function GuidedAssessmentForm({ athleteId, loading, athleteError, success
     if (!Object.keys(measures).length && !Object.keys(nextErrors).length) nextErrors.form = 'Informe ao menos uma medida realmente avaliada.';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
+    savingRef.current=true;
     setSaving(true);
     try {
       const { data, error } = await supabase.rpc('fn_salvar_avaliacao_guiada', { p_athlete_id: athleteId, p_data_avaliacao: date, ...measures });
       if (error || !(data as { success?: boolean } | null)?.success) throw error || new Error('A avaliação não foi salva.');
       window.dispatchEvent(new Event('9fit:sync_updated'));
       window.dispatchEvent(new Event('9fit:profile-updated'));
+      if(actor.current!==owner)return;
       toast.success('Avaliação registrada');
       navigate(successPath);
     } catch (error: unknown) {
       const failure = error as { code?: string; message?: string };
+      setErrors({form: failure.code === '42501' ? 'Sem permissão para este perfil. Entre novamente.' : failure.message || 'Não foi possível salvar a avaliação.'});
       toast.error(failure.code === '42501' || /not authorized/i.test(failure.message || '') ? 'Sem permissão para este perfil. Entre novamente.' : failure.message || 'Não foi possível salvar a avaliação.');
-    } finally { setSaving(false); }
+    } finally { savingRef.current=false; setSaving(false); }
   }
 
   const renderFields = (section: readonly (readonly [Field, string, string])[]) => section.map(([key, label, unit]) => <label key={key} className="block text-sm font-medium">{label} <span className="text-muted-foreground">({unit})</span><input aria-label={`${label} (${unit})`} aria-invalid={!!errors[key]} inputMode="decimal" value={values[key]} onChange={event => { setValues(current => ({ ...current, [key]: event.target.value })); setErrors(current => ({ ...current, [key]: undefined, form: undefined })); }} className={`mt-1 block w-full rounded-xl border bg-card p-3 outline-none focus:ring-2 focus:ring-primary/40 ${errors[key] ? 'border-destructive' : 'border-border'}`} />{errors[key] && <span className="mt-1 block text-xs text-destructive">{errors[key]}</span>}</label>);

@@ -8,6 +8,10 @@ export interface ReferenceBand { teste: string; limites: { min?: number; max?: n
 export interface HubGoal { id: string; titulo: string; exercicio: string | null; metrica: string; valor_inicial: number; valor_atual: number; valor_meta: number; unidade: string; prazo: string | null; status: string }
 export interface DataSource { tipo: string; registros: number; ultima: string; status: 'active' | 'disconnected' | 'erasure_requested'; escopo_professor: boolean; conectado_em: string | null }
 export interface AssessmentHub {
+  stats?: {total_treinos_mes:number;kg_total_mes:number|null;streak_dias:number;ultimo_treino:string|null;prs_count:number;total_treinos_geral:number};
+  weighted_score?: unknown;
+  capacity_profile?: unknown;
+  unavailable_features?: string[];
   legacy_screen?: unknown;
   contract_version: number; can_manage: boolean; assessments: AssessmentRow[]; references: ReferenceBand[];
   sources: DataSource[]; settings: { interval_weeks: number; reminder_enabled: boolean }; goals: HubGoal[];
@@ -22,15 +26,18 @@ export const permissionMessage = (error: unknown) => {
   return e.code === '42501' || /not authorized/i.test(e.message || '') ? 'Sem permissão para este perfil. Entre novamente.' : e.message || 'Não foi possível carregar as avaliações.';
 };
 const cache = new Map<string, { promise: Promise<AssessmentHub>; expires: number }>();
-supabase.auth.onAuthStateChange(() => cache.clear());
+let authGeneration=0;
+supabase.auth.onAuthStateChange(() => {authGeneration++;cache.clear();});
 export function invalidateAssessmentHub(athleteId?: string) { if (athleteId) cache.delete(athleteId); else cache.clear(); }
 if (typeof window !== 'undefined') ['9fit:sync_updated', '9fit:profile-updated', '9fit:workout-updated', 'focus'].forEach(name => window.addEventListener(name, () => invalidateAssessmentHub()));
 export function loadAssessmentHub(athleteId: string): Promise<AssessmentHub> {
   const existing = cache.get(athleteId);
   if (existing && existing.expires > Date.now()) return existing.promise;
+  const generation=authGeneration;
   const promise = (async () => {
     const { data, error } = await withTimeout(supabase.rpc('fn_get_assessment_hub', { p_athlete_id: athleteId }));
     if (error) throw new Error(permissionMessage(error));
+    if(generation!==authGeneration)throw new Error('A sessão mudou. Atualize os dados deste perfil.');
     return data as unknown as AssessmentHub;
   })().catch(error => { cache.delete(athleteId); throw error; });
   cache.set(athleteId, { promise, expires: Date.now() + 30_000 });

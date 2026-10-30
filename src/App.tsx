@@ -341,6 +341,7 @@ const App = () => (
             <Route path="/9fit/planejamento" element={<NineFitLayout><NineFitPlanejamento /></NineFitLayout>} />
             <Route path="/9fit/biblioteca" element={<NineFitLayout><NineFitBiblioteca /></NineFitLayout>} />
             <Route path="/9fit/progresso" element={<NineFitLayout><NineFitProgresso /></NineFitLayout>} />
+            <Route path="/9fit/perfil/fontes" element={<Navigate to="/9fit/progresso/fontes" replace />} />
             <Route path="/9fit/progresso/:view" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
             <Route path="/9fit/avaliacao" element={<Navigate to="/9fit/progresso/historico" replace />} />
             <Route path="/9fit/avaliacao/:id" element={<NineFitLayout><NineFitAssessmentPages /></NineFitLayout>} />
