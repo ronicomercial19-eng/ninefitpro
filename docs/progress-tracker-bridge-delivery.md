@@ -14,6 +14,8 @@ Data: 30/10/2026. Banco compartilhado: mfrydtrzjxscbkaiwfnw.
 - Seleção explícita de aluno na avaliação rápida; relatório salvo consulta scores calculados no servidor.
 - Removidas estimativas automáticas que presumiam homem de 25 anos ou tratavam massa magra como massa muscular.
 
+- Continuidade legada: leitura por aluno preservada enquanto não existir atleta; primeira gravação autorizada do professor vincula avaliações legadas ao atleta criado na mesma transação. Contagem do painel inclui atletas canônicos.
+
 ## Escopo dos quatro arquivos recebidos
 Os dois dossiês são cópias do mesmo conteúdo. A implementação preserva as telas já existentes de detalhe, capacidades, cardio, composição, metas, fontes, comparações e preparação. Os cinco pilares são os que existem no motor. Ativacao.tsx e NineFitLayout.tsx não foram alterados.
 
