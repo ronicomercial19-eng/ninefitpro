@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Scale, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,10 +24,11 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
   const [open, setOpen] = useState(false);
   const [peso, setPeso] = useState("");
   const [gordura, setGordura] = useState("");
+  const savingRef=useRef(false);
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (saving) return;
+    if (savingRef.current) return;
     const parsedPeso = Number(String(peso).replace(",", "."));
     const parsedGordura = gordura ? Number(String(gordura).replace(",", ".")) : null;
 
@@ -35,7 +36,7 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
       toast.error("Perfil do atleta ainda não carregou. Tente novamente em alguns segundos.");
       return;
     }
-    if (!Number.isFinite(parsedPeso) || parsedPeso <= 0) {
+    if (!Number.isFinite(parsedPeso) || parsedPeso <= 0 || parsedPeso > 700) {
       toast.error("Informe um peso válido para salvar o check-in.");
       return;
     }
@@ -44,16 +45,18 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
       return;
     }
 
+    savingRef.current=true;
     setSaving(true);
+    try {
 
     const { error } = await supabase.rpc("fn_registrar_peso_avulso", {
       p_athlete_id: athleteId,
       p_peso: parsedPeso,
-      p_data: format(new Date(), "yyyy-MM-dd"),
+      p_data: new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),
       p_gordura: parsedGordura,
     });
 
-    setSaving(false);
+
     if (error) {
       console.error("[CheckinCorporalCard] fn_registrar_peso_avulso", error);
       toast.error("Erro ao salvar check-in", { description: error.message || "Verifique sua conexão e tente novamente." });
@@ -61,11 +64,14 @@ export function CheckinCorporalCard({ onSaved }: { onSaved?: () => void }) {
     }
 
     window.dispatchEvent(new Event("9fit:sync_updated"));
+    window.dispatchEvent(new Event("9fit:profile-updated"));
     window.dispatchEvent(new Event("9fit:user-state-invalidated"));
     toast.success("Check-in registrado");
     setOpen(false);
     setPeso(""); setGordura("");
     onSaved?.();
+    } catch(error) {toast.error(error instanceof Error ? error.message : "Não foi possível salvar o check-in.");}
+    finally {savingRef.current=false;setSaving(false);}
   };
 
   return (
