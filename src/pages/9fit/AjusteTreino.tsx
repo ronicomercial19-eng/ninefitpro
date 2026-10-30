@@ -130,7 +130,7 @@ export default function NineFitAjusteTreino() {
       setSessionName((dw as any)?.day_name || workoutName);
       if (!(dw as any)?.id) { setExercises([]); setOriginal([]); setExecutionStatus(null); setDirty({}); return; }
       const { data: executions, error: executionError } = await supabase.from("workout_executions")
-        .select("status").eq("athlete_id", athleteId).eq("workout_date", selectedDate);
+        .select("status").eq("athlete_id", athleteId).eq("workout_date", selectedDate).eq("daily_workout_id", dw.id);
       if (token !== loadToken.current) return;
       if (executionError) throw executionError;
       setExecutionStatus((executions ?? []).find((row) => ["started", "in_progress", "paused", "completed", "skipped"].includes(row.status))?.status ?? null);
@@ -297,7 +297,7 @@ export default function NineFitAjusteTreino() {
         p_changes: arrayDeAlteracoes as any,
       });
       if (error) throw error;
-      if ((data as any)?.success === false) {
+      if ((data as any)?.success !== true) {
         throw new Error((data as any)?.error || "O ajuste não foi aplicado");
       }
       const updated = (data as any)?.exercises;
