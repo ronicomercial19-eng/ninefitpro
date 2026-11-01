@@ -13,3 +13,10 @@ test('conflicting nested or repeated identifiers cannot bypass authorization',()
   assert.throws(()=>partnerTarget('',{fitpro_student_id:['invalid']}));
   assert.throws(()=>partnerTarget('?fitpro_student_id=invalid',undefined));
 });
+
+test('SmartTreino provider identifier is authorized including nested and conflicting aliases',()=>{
+  assert.equal(partnerTarget(`?student_external_id=${a}`,undefined),a);
+  assert.equal(partnerTarget('',{student_external_id:a,fitpro_student_id:a}),a);
+  assert.throws(()=>partnerTarget(`?fitpro_student_id=${a}`,{student_external_id:b}));
+  assert.throws(()=>partnerTarget('',{data:{student_external_id:b},athlete_id:a}));
+});

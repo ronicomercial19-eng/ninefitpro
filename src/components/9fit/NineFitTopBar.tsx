@@ -1,4 +1,4 @@
-import { Bell, Menu, Coins, Crown } from "lucide-react";
+import { Bell, Menu, Coins, Crown, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,7 +39,7 @@ export function NineFitTopBar() {
   );
 
   return (
-    <div className="sticky top-0 z-30 pt-safe bg-background/70 backdrop-blur-xl border-b border-white/5">
+    <div className="sticky top-0 z-30 pt-safe bg-background border-b border-white/5">
       <div className="flex items-center justify-between px-4 h-12">
         <button
           onClick={() => navigate("/9fit/profile")}
@@ -59,6 +59,7 @@ export function NineFitTopBar() {
           {snapshot?.entitlement === "active" && <Crown className="w-3 h-3 text-primary ml-1" />}
         </button>
         <div className="flex items-center gap-1">
+          <button type="button" aria-label="Abrir RON IA" onClick={() => window.dispatchEvent(new CustomEvent('9fit:open-ron-concierge'))} className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-primary"><MessageSquare className="h-4 w-4" /></button>
           <button
             onClick={() => navigate("/9fit/checkout?pack=recharge")}
             className={`flex items-center gap-1 px-2 h-8 rounded-full border transition ${

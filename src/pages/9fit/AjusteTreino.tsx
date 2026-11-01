@@ -3,6 +3,7 @@ import { businessDate } from "@/services/dailyContextRules";
 import { ArrowLeftRight, ChevronLeft, Check, Loader2, Play, RefreshCw, RotateCcw, Send, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useAdaptiveAdjustment } from "@/hooks/useAdaptiveAdjustment";
 import { useAthleteId } from "@/hooks/useAthleteId";
@@ -84,6 +85,11 @@ export default function NineFitAjusteTreino() {
 
   const today = businessDate();
   const pending = Object.keys(dirty).length;
+  const [restrictionReviewed, setRestrictionReviewed] = useState(false);
+  const activeAlert = redFlagSource === 'workout_pain' || (scores?.context?.calibration.pain ?? 0) >= 3;
+  const needsReview = !!redFlagSource || !!scores?.context?.safety.review_required;
+  const reviewBlocked = activeAlert || (needsReview && !restrictionReviewed);
+  useEffect(() => { setRestrictionReviewed(false); }, [athleteId, selectedDate, scores?.context?.calibration.observed_at]);
 
   useEffect(() => {
     const target = scores?.sync.status === 'available' ? scores.sync.value : null;
@@ -130,10 +136,11 @@ export default function NineFitAjusteTreino() {
       setSessionName((dw as any)?.day_name || workoutName);
       if (!(dw as any)?.id) { setExercises([]); setOriginal([]); setExecutionStatus(null); setDirty({}); return; }
       const { data: executions, error: executionError } = await supabase.from("workout_executions")
-        .select("status").eq("athlete_id", athleteId).eq("workout_date", selectedDate).eq("daily_workout_id", dw.id);
+        .select("status,daily_workout_id,phase_name").eq("athlete_id", athleteId).eq("workout_date", selectedDate);
       if (token !== loadToken.current) return;
       if (executionError) throw executionError;
-      setExecutionStatus((executions ?? []).find((row) => ["started", "in_progress", "paused", "completed", "skipped"].includes(row.status))?.status ?? null);
+      setExecutionStatus((executions ?? []).find((row) => ["started", "in_progress", "paused", "completed", "skipped"].includes(row.status)
+        && (row.daily_workout_id === (dw as any).id || (!row.daily_workout_id && row.phase_name !== 'quick' && (dw as any).workout_type !== 'quick')))?.status ?? null);
       const { data: rows, error: rowsError } = await supabase
         .from("workout_exercises" as any)
         .select("*, exercises(name,video_url,muscle_groups,target_muscles)")
@@ -185,7 +192,8 @@ export default function NineFitAjusteTreino() {
     if (executionStatus) { toast.info("Esta sessão já foi iniciada. Escolha uma futura para ajustar."); return; }
     if (!exercises.length) { toast.info("Carregue um treino antes de pedir ajustes."); return; }
     const r = await generate({ workoutName: sessionName, workoutType: workoutType ?? undefined, date: selectedDate, request: customRequest, dayNumber, focusMuscles, periodization, painRegion,
-      reviewRequired: !!redFlagSource || !!scores?.context?.safety.review_required,
+      reviewRequired: reviewBlocked,
+      restrictionReviewed,
       calibration: selectedDate === today && scores?.context?.date === today ? scores.context.calibration : undefined,
       safetyReason: redFlagSource ? "pain_red_flag" : scores?.context?.safety.reason,
       sync: scores?.sync.status === "available" ? scores.sync.value : null,
@@ -195,13 +203,13 @@ export default function NineFitAjusteTreino() {
   };
 
   useEffect(() => {
-    const key = `${athleteId}:${selectedDate}:${dailyId}:${workoutUpdatedAt}:${scores?.context?.safety.review_required ?? false}:${scores?.context?.calibration.observed_at ?? ''}`;
-    if (reloading || !athleteId || !dailyId || !original.length || executionStatus || requestedKey.current === key) return;
+    const key = `${athleteId}:${selectedDate}:${dailyId}:${workoutUpdatedAt}:${reviewBlocked}:${restrictionReviewed}:${scores?.context?.calibration.observed_at ?? ''}`;
+    if (published || reloading || !athleteId || !dailyId || !original.length || executionStatus || requestedKey.current === key) return;
     requestedKey.current = key;
     void runCopilot();
     // Generate once for each saved prescription; the user can explicitly request another adjustment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [athleteId, selectedDate, dailyId, workoutUpdatedAt, original.length, executionStatus, reloading, redFlagSource, scores?.context?.generated_at]);
+  }, [athleteId, selectedDate, dailyId, workoutUpdatedAt, original.length, executionStatus, reloading, redFlagSource, scores?.context?.generated_at, reviewBlocked, restrictionReviewed, published]);
 
   const applyCopilotSuggestion = () => {
     if (!adjustment || executionStatus) return;
@@ -276,7 +284,8 @@ export default function NineFitAjusteTreino() {
 
   const onSave = async () => {
     if (!athleteId || !dailyId || saving || executionStatus) return;
-    if (redFlagSource || scores?.context?.safety.review_required || adjustment?.contextual?.kind === 'review') { toast.warning('Revisão profissional necessária. Nenhum ajuste automático será publicado.'); return; }
+    if (reviewBlocked || adjustment?.contextual?.kind === 'review') { toast.warning('Conclua a revisão da restrição antes de salvar.'); return; }
+    if (needsReview && exercises.some(ex => { const base = original.find(item => item.id === ex.id); return !base || !!ex.new_exercise_name || ex.sets > base.sets || ex.reps_range !== base.reps_range || ex.rest_seconds !== base.rest_seconds || (ex.intensidade != null && (base.intensidade == null || ex.intensidade > base.intensidade)); })) { toast.warning('Com restrição registrada, permita apenas redução de séries ou esforço, preservando os movimentos.'); return; }
     if (exercises.some(ex => !Number.isInteger(ex.sets) || ex.sets < 1 || ex.sets > 10 || !ex.reps_range.trim() || /^\d{3,}$/.test(ex.reps_range.trim()) || !Number.isInteger(ex.rest_seconds) || ex.rest_seconds < 0 || ex.rest_seconds > 600 || (ex.intensidade != null && (!Number.isInteger(ex.intensidade) || ex.intensidade < 1 || ex.intensidade > 10)))) { toast.error("Revise séries, dose com unidade, descanso e intensidade antes de publicar."); return; }
     setSaving(true);
     publishing.current = true;
@@ -342,7 +351,7 @@ export default function NineFitAjusteTreino() {
   // leva ao mesmo player guiado (WorkoutExecution via Train.tsx) já
   // posicionado no treino de hoje, mantendo o ajuste como tela separada.
   const openInGuidedPlayer = () => {
-    if (redFlagSource || scores?.context?.safety.review_required) { toast.warning("Dor ou restrição ativa: publique uma revisão ou fale com a equipe antes de abrir o player."); return; }
+    if (reviewBlocked || (needsReview && !published)) { toast.warning("Salve a proposta conservadora antes de abrir o treino."); return; }
     if (selectedDate !== today) { toast.info("O player guiado abre apenas o treino de hoje."); return; }
     if (Object.keys(dirty).length) { toast.info("Salve os ajustes antes de abrir o treino."); return; }
     const quickTraining = {
@@ -399,9 +408,11 @@ export default function NineFitAjusteTreino() {
         {scores?.context?.safety.review_required && <p className="mt-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-xs text-amber-200">Há dor ou restrição registrada. Revise qualquer troca com seu profissional antes de executar o treino.</p>}
       </details></div>
 
+      {needsReview && <section className="mx-auto mt-4 max-w-2xl px-4"><div className="rounded-2xl border border-border/20 bg-card p-4 space-y-3"><h2 className="font-semibold">RON · entender sua restrição</h2>{activeAlert ? <><p className="text-sm text-muted-foreground">Há um relato de dor importante ou dor durante a execução. A sessão precisa de revisão profissional antes de continuar.</p><button className="text-sm text-primary" onClick={() => navigate('/9fit/acompanhamento?module=training')}>Solicitar revisão da sessão</button></> : <><p className="text-sm text-muted-foreground">Uma restrição cadastrada não precisa bloquear todo o treino. Confirme como está agora para o RON analisar uma redução.</p><label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1" checked={restrictionReviewed} onChange={event => setRestrictionReviewed(event.target.checked)} />Minha restrição é conhecida e estável; estou sem dor atual, sem piora recente e sem orientação profissional para suspender o treino.</label><p className="text-xs text-muted-foreground">A proposta preserva os movimentos e só permite reduzir séries ou esforço. Se houver dor, não confirme esta opção; peça revisão.</p><button className="text-sm text-primary" onClick={() => navigate('/9fit/acompanhamento?module=training')}>Estou com dor · pedir revisão</button></>}</div></section>}
+
       {exercises.length > 0 && selectedDate === today && (
         <div className="mx-auto mt-4 max-w-2xl px-4">
-          <button onClick={openInGuidedPlayer} disabled={!!redFlagSource || !!scores?.context?.safety.review_required}
+          <button onClick={openInGuidedPlayer} disabled={reviewBlocked || (needsReview && !published)}
             className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 flex items-center justify-center gap-2 font-bold text-primary hover:bg-primary/[0.12] transition">
             <Play className="w-4 h-4" /> Abrir no player guiado
           </button>
@@ -409,12 +420,8 @@ export default function NineFitAjusteTreino() {
       )}
 
       {exercises.length > 0 && <div className="mx-auto mt-5 max-w-2xl px-4"><div className="rounded-[26px] border border-primary/25 bg-gradient-to-br from-primary/15 via-white/[0.04] to-transparent p-5 shadow-[0_20px_60px_-35px_hsl(var(--primary)/0.8)]">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Sync</p><p className="mt-1 text-xl font-bold tabular-nums text-primary">{scores?.sync.status === "available" && scores.sync.value != null ? `${animatedSync}%` : "—"}</p><p className="text-[10px] text-muted-foreground">sinal de hoje</p></div>
-          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Contexto</p><p className="mt-1 text-sm font-semibold text-primary">{selectedDate === today && scores?.context?.date === today ? 'Check-in do dia' : 'Parcial'}</p><p className="text-[10px] text-muted-foreground">declarado, não clínico</p></div>
-          <div className="rounded-xl bg-background/70 p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Dia do ciclo</p><p className="mt-1 text-sm font-semibold">{dayNumber ? `Dia ${dayNumber}` : "—"}</p><p className="text-[10px] text-muted-foreground">{periodization.phase ? `${periodization.phase}${periodization.week ? ` · sem ${periodization.week}` : ""}${periodization.rpeCap ? ` · RPE ≤ ${Math.floor(periodization.rpeCap)}` : ""}` : "sem periodização ativa"}</p></div>
-        </div>
-        <div className="mt-5 rounded-2xl border border-primary/20 bg-background/40 p-4"><div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><h2 className="font-bold">Motor contextual · ajuste para esta sessão</h2></div>
+        <p className="text-xs text-muted-foreground">{selectedDate === today ? 'Hoje' : selectedDate} · {dayNumber ? `Dia ${dayNumber} do ciclo` : 'Sessão programada'} · Sync {scores?.sync.status === 'available' ? `${animatedSync}%` : '—'}</p>
+        <div className="mt-5 rounded-2xl border border-primary/20 bg-background/40 p-4"><div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><h2 className="font-bold">RON IA · ajuste desta sessão</h2></div>
         <p className="mt-2 text-xs text-muted-foreground">Melhor hoje pode ser manter. Sua prescrição só muda após confirmar em Aplicar ajustes.</p>
         {!executionStatus && <div className="mt-3 flex flex-wrap gap-2">{['Revisar contexto', 'Mais leve hoje', 'Pouco tempo, encurtar', 'Falta equipamento'].map(option => <button key={option} type="button" disabled={loading || reloading} onClick={() => void runCopilot(option === 'Revisar contexto' ? '' : option)} className="rounded-full border border-primary/30 px-3 py-2 text-xs text-primary disabled:opacity-40">{option}</button>)}</div>}
         {loading && <p className="mt-3 text-sm text-muted-foreground">Analisando sua prescrição e os sinais disponíveis…</p>}
@@ -494,7 +501,7 @@ export default function NineFitAjusteTreino() {
       {exercises.length > 0 && (
         <div className="sticky bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] z-20 mt-6 border-t border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
           {pending > 0 || published ? (
-            <button onClick={onSave} disabled={saving || !!executionStatus || pending === 0}
+            <button onClick={onSave} disabled={saving || loading || reviewBlocked || !!executionStatus || pending === 0}
               className={`w-full rounded-full py-4 font-bold uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)] disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-2 ${published ? "bg-emerald-500" : "bg-primary"}`}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {saving ? "Aplicando..." : published ? "Treino ajustado!" : `Aplicar ${pending} ${pending === 1 ? "ajuste" : "ajustes"}`}
@@ -508,7 +515,7 @@ export default function NineFitAjusteTreino() {
         </div>
       )}
 
-      {requestSheetOpen && !executionStatus && <div className="fixed inset-0 z-50 flex items-end bg-black/60 backdrop-blur-sm" onClick={() => setRequestSheetOpen(false)}><div className="w-full rounded-t-3xl border border-white/10 bg-background p-5" onClick={event => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 font-bold"><SlidersHorizontal className="h-4 w-4 text-primary" />O que você quer mudar?</h2><button type="button" aria-label="Fechar" onClick={() => setRequestSheetOpen(false)} className="rounded-full bg-white/10 p-2"><X className="h-4 w-4" /></button></div><div className="mb-4 flex flex-wrap gap-2">{["Mais leve hoje", "Pouco tempo, encurtar", "Poupar ombro", "Mais intenso"].map(option => <button key={option} type="button" onClick={() => setRequest(option)} className={`rounded-full border px-3 py-2 text-xs ${request === option ? "border-primary/50 bg-primary/10 text-primary" : "border-white/10 text-muted-foreground"}`}>{option}</button>)}</div><div className="flex gap-2"><input autoFocus value={request} onChange={event => setRequest(event.target.value)} maxLength={300} placeholder="Ex.: trocar supino, joelho incomodando…" className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm" /><button type="button" onClick={() => { setRequestSheetOpen(false); void runCopilot(request); }} disabled={loading || !request.trim()} className="rounded-full bg-primary p-3 text-primary-foreground disabled:opacity-40"><Send className="h-4 w-4" /></button></div></div></div>}
+      <Dialog open={requestSheetOpen && !executionStatus} onOpenChange={setRequestSheetOpen}><DialogContent className="fitpro-orange max-h-[90dvh] overflow-y-auto rounded-2xl"><DialogHeader><DialogTitle>O que você quer mudar?</DialogTitle><DialogDescription>Conte ao RON. Você verá a proposta antes de salvar o ajuste.</DialogDescription></DialogHeader><div className="mb-4 flex flex-wrap gap-2">{["Mais leve hoje", "Pouco tempo, encurtar", "Poupar ombro", "Mais intenso"].map(option => <button key={option} type="button" onClick={() => setRequest(option)} className={`rounded-full border px-3 py-2 text-xs ${request === option ? "border-primary/50 bg-primary/10 text-primary" : "border-white/10 text-muted-foreground"}`}>{option}</button>)}</div><div className="flex gap-2"><input autoFocus value={request} onChange={event => setRequest(event.target.value)} maxLength={300} placeholder="Ex.: trocar supino, joelho incomodando…" className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm" /><button type="button" onClick={() => { setRequestSheetOpen(false); void runCopilot(request); }} disabled={loading || !request.trim()} className="rounded-full bg-primary p-3 text-primary-foreground disabled:opacity-40"><Send className="h-4 w-4" /><span className="sr-only">Analisar ajuste</span></button></div></DialogContent></Dialog>
 
       <BottomNavigation />
     </div>

@@ -1,3 +1,4 @@
+import { connectorSecret } from "../_shared/connectorSecret.ts";
 import {withPaidAccess} from "../_shared/paidAccess.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -63,7 +64,7 @@ Deno.serve(withPaidAccess(async (req) => {
       .maybeSingle();
     if (connector?.status !== "active") return json({ error: "SmartPeriodizer connector inactive" }, 409);
 
-    const key = connector.secret_ref ? Deno.env.get(connector.secret_ref) : null;
+    const key = await connectorSecret(admin, "smart_periodizer", connector.secret_ref);
     if (!key) return json({ error: "SmartPeriodizer secret is not configured" }, 503);
 
     const query = params.size ? `?${params.toString()}` : '';
@@ -71,6 +72,7 @@ Deno.serve(withPaidAccess(async (req) => {
     const method = requestedMethod;
     const base = (connector.endpoint ?? "").replace(/\/$/, "");
     const upstream = await fetch(`${base}${path}${query}`, {
+      signal: AbortSignal.timeout(45000),
       method,
       headers: { "Content-Type": "application/json", "x-api-key": key },
       body: payload === undefined || method === "GET" ? undefined : JSON.stringify(payload),

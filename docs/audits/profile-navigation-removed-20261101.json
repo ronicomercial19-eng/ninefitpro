@@ -1,0 +1,391 @@
+{
+  "base_commit": "5bccdd23bb6f348a4190b1f64d71855c25a4382d",
+  "count": 96,
+  "bytes": 357396,
+  "files": [
+    {
+      "path": "src/components/9fit/AdjustmentIntensityGauge.tsx",
+      "bytes": 2359
+    },
+    {
+      "path": "src/components/9fit/CollapsibleRow.tsx",
+      "bytes": 6620
+    },
+    {
+      "path": "src/components/9fit/EcosystemStatusCards.tsx",
+      "bytes": 5912
+    },
+    {
+      "path": "src/components/9fit/HUDBar.tsx",
+      "bytes": 2188
+    },
+    {
+      "path": "src/components/9fit/HistoricoCompletoModal.tsx",
+      "bytes": 6136
+    },
+    {
+      "path": "src/components/9fit/HomeFeed.tsx",
+      "bytes": 5533
+    },
+    {
+      "path": "src/components/9fit/HubPredictiveTip.tsx",
+      "bytes": 1073
+    },
+    {
+      "path": "src/components/9fit/HubWeeklyCounters.tsx",
+      "bytes": 1741
+    },
+    {
+      "path": "src/components/9fit/LiveClassCard.tsx",
+      "bytes": 1543
+    },
+    {
+      "path": "src/components/9fit/MapDiagnostics.tsx",
+      "bytes": 1622
+    },
+    {
+      "path": "src/components/9fit/MissionCard.tsx",
+      "bytes": 3815
+    },
+    {
+      "path": "src/components/9fit/ModuleGrid.tsx",
+      "bytes": 4988
+    },
+    {
+      "path": "src/components/9fit/NeonPulseIndicator.tsx",
+      "bytes": 4487
+    },
+    {
+      "path": "src/components/9fit/OnboardingStepper.tsx",
+      "bytes": 1766
+    },
+    {
+      "path": "src/components/9fit/PersonalIDCard.tsx",
+      "bytes": 3989
+    },
+    {
+      "path": "src/components/9fit/PrimePassHub.tsx",
+      "bytes": 2824
+    },
+    {
+      "path": "src/components/9fit/PushNotificationPermission.tsx",
+      "bytes": 942
+    },
+    {
+      "path": "src/components/9fit/QuickMoodInput.tsx",
+      "bytes": 338
+    },
+    {
+      "path": "src/components/9fit/RecommendationCard.tsx",
+      "bytes": 2092
+    },
+    {
+      "path": "src/components/9fit/RecordesSection.tsx",
+      "bytes": 6684
+    },
+    {
+      "path": "src/components/9fit/RecoveryMission.tsx",
+      "bytes": 4795
+    },
+    {
+      "path": "src/components/9fit/RonWaveform.tsx",
+      "bytes": 1126
+    },
+    {
+      "path": "src/components/9fit/SplashScreen.tsx",
+      "bytes": 2081
+    },
+    {
+      "path": "src/components/9fit/StreakBadge.tsx",
+      "bytes": 3142
+    },
+    {
+      "path": "src/components/9fit/TiltCard.tsx",
+      "bytes": 1937
+    },
+    {
+      "path": "src/components/9fit/TribeCard.tsx",
+      "bytes": 1160
+    },
+    {
+      "path": "src/components/9fit/UpcomingCommitments.tsx",
+      "bytes": 7188
+    },
+    {
+      "path": "src/components/9fit/WeeklyProgressChart.tsx",
+      "bytes": 6787
+    },
+    {
+      "path": "src/hooks/useAthleteActivation.ts",
+      "bytes": 4075
+    },
+    {
+      "path": "src/hooks/useDeviceCapabilities.ts",
+      "bytes": 1157
+    },
+    {
+      "path": "src/hooks/useEcosystemStatus.ts",
+      "bytes": 1818
+    },
+    {
+      "path": "src/hooks/useFirstAccess.ts",
+      "bytes": 2609
+    },
+    {
+      "path": "src/hooks/useNativeGeolocation.ts",
+      "bytes": 1164
+    },
+    {
+      "path": "src/hooks/useOnboardingProgress.ts",
+      "bytes": 1820
+    },
+    {
+      "path": "src/hooks/usePhysicalCommitments.ts",
+      "bytes": 4558
+    },
+    {
+      "path": "src/hooks/usePredictiveContext.ts",
+      "bytes": 1248
+    },
+    {
+      "path": "src/hooks/useProactiveRon.ts",
+      "bytes": 993
+    },
+    {
+      "path": "src/hooks/useTrackInteraction.ts",
+      "bytes": 815
+    },
+    {
+      "path": "src/pages/9fit/Aulas.tsx",
+      "bytes": 15559
+    },
+    {
+      "path": "src/pages/9fit/NineFitPlans.tsx",
+      "bytes": 124
+    },
+    {
+      "path": "src/pages/9fit/OnboardingPro.tsx",
+      "bytes": 2037
+    },
+    {
+      "path": "src/pages/9fit/Plans.tsx",
+      "bytes": 124
+    },
+    {
+      "path": "src/pages/9fit/Stats.tsx",
+      "bytes": 9154
+    },
+    {
+      "path": "src/components/progress/SharedHistory.tsx",
+      "bytes": 20096
+    },
+    {
+      "path": "src/services/progressHistoryService.ts",
+      "bytes": 1571
+    },
+    {
+      "path": "src/components/PrimeScreen.tsx",
+      "bytes": 1235
+    },
+    {
+      "path": "src/components/ai-training/AITrainingQuestionnaire.tsx",
+      "bytes": 18195
+    },
+    {
+      "path": "src/components/analytics/MetricsDisplay.tsx",
+      "bytes": 4246
+    },
+    {
+      "path": "src/components/assessment/AssessmentChart.tsx",
+      "bytes": 4565
+    },
+    {
+      "path": "src/components/assessment/PhysicalAssessment.tsx",
+      "bytes": 11107
+    },
+    {
+      "path": "src/components/index/LazyImage.tsx",
+      "bytes": 1429
+    },
+    {
+      "path": "src/components/onboarding/FeatureOnboarding.tsx",
+      "bytes": 4487
+    },
+    {
+      "path": "src/components/progress/AssessmentContextFields.tsx",
+      "bytes": 3666
+    },
+    {
+      "path": "src/components/reports/CheckInReport.tsx",
+      "bytes": 6370
+    },
+    {
+      "path": "src/components/reports/ReportGenerator.tsx",
+      "bytes": 408
+    },
+    {
+      "path": "src/components/sales/FeaturesGrid.tsx",
+      "bytes": 3811
+    },
+    {
+      "path": "src/components/sales/PricingSection.tsx",
+      "bytes": 706
+    },
+    {
+      "path": "src/components/sections/ProgressChart.tsx",
+      "bytes": 4082
+    },
+    {
+      "path": "src/components/students/HTMLTrainingUpload.tsx",
+      "bytes": 12555
+    },
+    {
+      "path": "src/components/students/StudentsList.tsx",
+      "bytes": 8099
+    },
+    {
+      "path": "src/components/students/StudentsManagement.tsx",
+      "bytes": 1172
+    },
+    {
+      "path": "src/components/ui/accordion.tsx",
+      "bytes": 2033
+    },
+    {
+      "path": "src/components/ui/aspect-ratio.tsx",
+      "bytes": 145
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "bytes": 1453
+    },
+    {
+      "path": "src/components/ui/carousel.tsx",
+      "bytes": 6470
+    },
+    {
+      "path": "src/components/ui/chart.tsx",
+      "bytes": 11123
+    },
+    {
+      "path": "src/components/ui/collapsible.tsx",
+      "bytes": 324
+    },
+    {
+      "path": "src/components/ui/context-menu.tsx",
+      "bytes": 7444
+    },
+    {
+      "path": "src/components/ui/drawer.tsx",
+      "bytes": 3123
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "bytes": 7493
+    },
+    {
+      "path": "src/components/ui/form.tsx",
+      "bytes": 4261
+    },
+    {
+      "path": "src/components/ui/hover-card.tsx",
+      "bytes": 1211
+    },
+    {
+      "path": "src/components/ui/input-otp.tsx",
+      "bytes": 2223
+    },
+    {
+      "path": "src/components/ui/menubar.tsx",
+      "bytes": 8208
+    },
+    {
+      "path": "src/components/ui/navigation-menu.tsx",
+      "bytes": 5174
+    },
+    {
+      "path": "src/components/ui/pagination.tsx",
+      "bytes": 2868
+    },
+    {
+      "path": "src/components/ui/resizable.tsx",
+      "bytes": 1752
+    },
+    {
+      "path": "src/components/ui/scroll-area.tsx",
+      "bytes": 1688
+    },
+    {
+      "path": "src/components/ui/toggle-group.tsx",
+      "bytes": 1798
+    },
+    {
+      "path": "src/components/ui/toggle.tsx",
+      "bytes": 1478
+    },
+    {
+      "path": "src/components/ui/use-toast.ts",
+      "bytes": 85
+    },
+    {
+      "path": "src/components/ShareButton.tsx",
+      "bytes": 3496
+    },
+    {
+      "path": "src/components/ui/alert.tsx",
+      "bytes": 1643
+    },
+    {
+      "path": "src/components/ui/calendar.tsx",
+      "bytes": 2684
+    },
+    {
+      "path": "src/components/ui/command.tsx",
+      "bytes": 5032
+    },
+    {
+      "path": "src/components/ui/progress.tsx",
+      "bytes": 805
+    },
+    {
+      "path": "src/services/apiService.ts",
+      "bytes": 6013
+    },
+    {
+      "path": "src/services/connectors/apiConnector.ts",
+      "bytes": 3759
+    },
+    {
+      "path": "src/services/engrenagem/calibrationEngine.ts",
+      "bytes": 1647
+    },
+    {
+      "path": "src/services/engrenagem/gamificationEngine.ts",
+      "bytes": 2787
+    },
+    {
+      "path": "src/services/fcm.ts",
+      "bytes": 935
+    },
+    {
+      "path": "src/services/nexus/useNexus.ts",
+      "bytes": 506
+    },
+    {
+      "path": "src/services/predictiveEngine.ts",
+      "bytes": 2618
+    },
+    {
+      "path": "src/types/workout.ts",
+      "bytes": 576
+    },
+    {
+      "path": "src/utils/cacheManager.ts",
+      "bytes": 1437
+    },
+    {
+      "path": "src/utils/migrationHelper.ts",
+      "bytes": 3181
+    }
+  ]
+}

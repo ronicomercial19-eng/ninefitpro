@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Shield, Share2, X, Pencil } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShareableCard } from '@/components/9fit/ShareableCard';
-import { CompleteProfileFlow } from '@/components/9fit/CompleteProfileFlow';
+const ShareableCard = lazy(() => import('@/components/9fit/ShareableCard').then(module => ({ default: module.ShareableCard })));
+const CompleteProfileFlow = lazy(() => import('@/components/9fit/CompleteProfileFlow').then(module => ({ default: module.CompleteProfileFlow })));
 
 interface Props {
   name: string;
@@ -147,21 +147,21 @@ export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, 
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <ShareableCard
+              <Suspense fallback={<p role="status">Preparando seu card…</p>}><ShareableCard
                 contentType="id_card_upgrade"
                 title={name}
                 subtitle={`NÍVEL ${level} · ${classTier}`}
                 stat={{ label: 'SYNC SCORE', value: syncScore == null ? "Sem leitura" : `${syncScore}%` }}
-              />
+              /></Suspense>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Lápis: reabre só a etapa 1 do wizard, fecha ao salvar */}
-      <CompleteProfileFlow open={adjusting} onClose={() => setAdjusting(false)} editOnly />
+      {adjusting && <Suspense fallback={<p role="status">Abrindo edição…</p>}><CompleteProfileFlow open onClose={() => setAdjusting(false)} editOnly /></Suspense>}
       {/* CTA embutido (sem dados ainda): fluxo completo de 5 etapas, com recompensa de streak */}
-      <CompleteProfileFlow open={completing} onClose={() => setCompleting(false)} />
+      {completing && <Suspense fallback={<p role="status">Abrindo seu perfil…</p>}><CompleteProfileFlow open onClose={() => setCompleting(false)} /></Suspense>}
     </>
   );
 }

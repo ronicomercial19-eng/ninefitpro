@@ -67,7 +67,6 @@ const NineFitEliteBio = lazy(() => import("./pages/9fit/EliteBioHacking"));
 const NineFitKitchen = lazy(() => import("./pages/9fit/Kitchen"));
 const NineFitRecovery = lazy(() => import("./pages/9fit/Recovery"));
 const NineFitProtocolo = lazy(() => import("./pages/9fit/Protocolo"));
-const NineFitPlans = lazy(() => import("./pages/9fit/Plans"));
 const NineFitOferta = lazy(() => import("./pages/9fit/Oferta"));
 const NineFitCheckout = lazy(() => import("./pages/9fit/Checkout"));
 const NineFitCheckoutSuccess = lazy(() => import("./pages/9fit/CheckoutSuccess"));
@@ -287,7 +286,7 @@ const App = () => (
               <PrivateRoute><AppLayout><TrainingAdjustmentsPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/nexus" element={
-              <PrivateRoute allowedRoles={["admin", "super_admin"]}>
+              <PrivateRoute>
                 <AppLayout>
                   <NexusPage />
                 </AppLayout>
@@ -373,7 +372,7 @@ const App = () => (
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><InfinitePayWebhookConfig /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/skills" element={
-              <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
+              <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/modelos-ninefit" element={
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>

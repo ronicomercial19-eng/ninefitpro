@@ -1,5 +1,7 @@
 import { isExecutableTraining } from '@/lib/executableTraining';
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TrainingHistory } from "./TrainingHistory";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useWorkoutAssistance, ASSISTANCE_LEVELS } from "@/hooks/useWorkoutAssistance";
@@ -39,6 +41,7 @@ interface WorkoutHomeProps {
 
 export function WorkoutHome({ trainings, athleteName, completedCount, weeklyCompleted = 0, onSelectWorkout, onStartQuick }: WorkoutHomeProps) {
   const navigate=useNavigate();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const {athleteId}=useAthleteId();
   const {level,setLevel}=useWorkoutAssistance(athleteId);
   const supportLevel=[level];
@@ -59,7 +62,7 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
          ========================================================================= */}
       <div className="relative rounded-3xl overflow-hidden border border-[#EF7A45]/25 bg-[#0B0B0C] flex flex-col group">
         {/* Bloco 1: Imagem Superior com Gradiente de Sobreposição (fundo -> topo) */}
-        <div className="relative aspect-[16/7] min-h-40 w-full overflow-hidden bg-black shrink-0">
+        <div className="relative aspect-[16/4] max-h-28 w-full overflow-hidden bg-black shrink-0">
           <img
             src={trainHeroBanner}
             alt="Treino Principal 9FIT"
@@ -275,7 +278,8 @@ export function WorkoutHome({ trainings, athleteName, completedCount, weeklyComp
         </button>
       </div>
 
-      <TrainingHistory />
+      <button type="button" onClick={() => setHistoryOpen(true)} className="flex min-h-12 w-full items-center justify-between rounded-xl border border-white/10 bg-card px-4 text-sm"><span>Treinos anteriores</span><ChevronRight className="h-4 w-4 text-primary" /></button>
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}><DialogContent className="fitpro-orange max-h-[90dvh] overflow-y-auto rounded-2xl"><DialogHeader><DialogTitle>Treinos anteriores</DialogTitle><DialogDescription>Consulte sessões realizadas e prescrições anteriores.</DialogDescription></DialogHeader>{historyOpen && <TrainingHistory />}</DialogContent></Dialog>
     </div>
   );
 }

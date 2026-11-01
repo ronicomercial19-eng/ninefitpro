@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import {
   Atom,
@@ -112,6 +113,7 @@ export default function NexusPage() {
 
   return (
     <div className="space-y-6">
+      <Button variant="outline" disabled={loading} onClick={() => void load()}>Atualizar integrações</Button>
       {loadError && (
         <p role="alert">
           Não foi possível consultar o Nexus.{" "}

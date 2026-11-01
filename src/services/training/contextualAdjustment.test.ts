@@ -33,3 +33,13 @@ test('não remove exercício único nem inventa volume em prescrição inválida
   assert.equal(decide({ prescription: [{ ...prescription[0], sets: NaN }] }).kind, 'review');
   assert.equal(decide({ prescription: [prescription[0], prescription[0]] }).kind, 'review');
 });
+
+test('restrição estável confirmada permite reduzir; alerta ativo continua prevalecendo', () => {
+  const result = decide({ prescription, restrictionReviewed: true });
+  assert.equal(result.kind, 'reduce');
+  assert.ok(result.changes.length > 0);
+  assert.ok(result.changes.every(change => change.sets! < prescription.find(ex => ex.name === change.exercise)!.sets));
+  assert.equal(decide({ prescription, restrictionReviewed: true, reviewRequired: true }).kind, 'review');
+  assert.equal(decide({ prescription, restrictionReviewed: true, sessionLocked: true }).kind, 'review');
+  assert.equal(decide({ prescription, restrictionReviewed: true, request: 'dor no joelho' }).kind, 'review');
+});

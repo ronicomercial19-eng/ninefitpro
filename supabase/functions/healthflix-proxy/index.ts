@@ -1,3 +1,4 @@
+import { connectorSecret } from "../_shared/connectorSecret.ts";
 import {withPaidAccess} from "../_shared/paidAccess.ts";
 // HealthFlix proxy — encaminha chamadas autenticadas do FitPro para as edge functions do projeto HealthFlix
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
@@ -33,14 +34,7 @@ async function callHF(
   if (configError) throw new Error("connector_config_unavailable");
   if (config?.status === "inactive")
     throw new Error("healthflix_connector_inactive");
-  let apiKey = Deno.env.get("HEALTHFLIX_API_KEY");
-  if (config?.secret_ref?.startsWith("vault:")) {
-    const { data, error } = await admin.rpc("fn_connector_vault_secret", {
-      p_key: "healthflix",
-    });
-    if (error) throw new Error("healthflix_secret_unavailable");
-    apiKey = data;
-  }
+  const apiKey = config?.secret_ref ? await connectorSecret(admin, "healthflix", config.secret_ref) : Deno.env.get("HEALTHFLIX_API_KEY");
   if (!apiKey) throw new Error("healthflix_api_key_missing");
   const res = await fetch(`${HF_BASE}${path}`, {
     ...init,

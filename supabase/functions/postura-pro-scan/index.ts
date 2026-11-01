@@ -1,3 +1,5 @@
+import { connectorSecret } from "../_shared/connectorSecret.ts";
+import { confirmedPostureResult } from "../_shared/postureResult.ts";
 import {withPaidAccess} from "../_shared/paidAccess.ts";
 // Postura Pro Scan — orquestra análise postural via API externa configurada em api_connectors.
 // Recebe scan_id, lê fotos do Storage e envia ao serviço externo, grava resultado.
@@ -129,9 +131,8 @@ Deno.serve(withPaidAccess(async (req) => {
           throw new Error("Could not access posture image");
         imageUrls[side] = signed.signedUrl;
       }
-      const secret = connector.secret_ref
-        ? Deno.env.get(connector.secret_ref)
-        : null;
+      const secret = await connectorSecret(admin, "postura_pro", connector.secret_ref);
+      if (!secret) throw new Error("Postura Pro secret is not configured");
       const r = await fetch(
         `${connector.endpoint.replace(/\/$/, "")}/analyze`,
         {
@@ -151,7 +152,7 @@ Deno.serve(withPaidAccess(async (req) => {
       );
       if (!r.ok) throw new Error(`Postura Pro provider returned ${r.status}`);
       result = await r.json();
-      if (!result || typeof result !== "object")
+      if (!confirmedPostureResult(result))
         throw new Error("Postura Pro provider returned an invalid response");
     } catch (e: any) {
       await admin
@@ -171,7 +172,7 @@ Deno.serve(withPaidAccess(async (req) => {
       );
     }
 
-    await admin
+    const { error: persistError } = await admin
       .from("postura_scans")
       .update({
         status: "done",
@@ -180,6 +181,7 @@ Deno.serve(withPaidAccess(async (req) => {
       })
       .eq("id", scan_id);
 
+    if (persistError) return json({ error: "Não foi possível salvar a análise." }, 500);
     return json({ ok: true, result });
   } catch (e: any) {
     return json({ error: e?.message ?? "internal" }, 500);
