@@ -1,3 +1,4 @@
+import { ProfessorConversation } from "@/components/students/ProfessorConversation";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import React from "react";
 import { Bot, Brain, Users, ArrowRight } from "lucide-react";
@@ -17,10 +18,11 @@ export default function FitCopilotPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">FitCopilot</h1>
           <p className="text-sm text-muted-foreground">
-            Copiloto inteligente de treino via API
+            Análise e orientação para o aluno selecionado
           </p>
         </div>
       </div>
+      <ProfessorConversation />
       <section className="grid gap-4 md:grid-cols-3">
         <button
           onClick={() => navigate("/app/ron")}

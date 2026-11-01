@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProfessorSkills } from "@/components/students/ProfessorSkills";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,6 +51,12 @@ const empty: Skill = {
 };
 
 export default function SkillManagerPage() {
+  const { isAdmin } = useAuth();
+  const [manage, setManage] = useState(false);
+  return <div className="space-y-5"><ProfessorSkills />{isAdmin && <details className="rounded-xl border p-3" onToggle={event => setManage(event.currentTarget.open)}><summary className="cursor-pointer">Administrar skills globais</summary>{manage && <AdminSkillManager />}</details>}</div>;
+}
+
+function AdminSkillManager() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [editing, setEditing] = useState<Skill | null>(null);
   const [contentText, setContentText] = useState("{}");

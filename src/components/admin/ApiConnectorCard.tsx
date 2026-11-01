@@ -363,6 +363,7 @@ function AdminApiConnectorCard(props: Props) {
 
 export function ApiConnectorCard(props: Props) {
   const { isAdmin, user } = useAuth();
+  const [showConfiguration, setShowConfiguration] = useState(false);
   const query = useQuery({
     queryKey: ["connector-summary", user?.id, props.moduleKey],
     enabled: !!user && !isAdmin,
@@ -376,7 +377,10 @@ export function ApiConnectorCard(props: Props) {
       return data;
     },
   });
-  if (isAdmin) return <AdminApiConnectorCard {...props} />;
+  if (isAdmin) return <details className="rounded-xl border bg-card p-3" onToggle={event => setShowConfiguration(event.currentTarget.open)}>
+    <summary className="cursor-pointer text-sm text-muted-foreground">Configurar conexão · {props.title}</summary>
+    {showConfiguration && <div className="mt-3"><AdminApiConnectorCard {...props} /></div>}
+  </details>;
   return (
     <Card>
       <CardContent className="p-4 space-y-2">

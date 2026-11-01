@@ -1,3 +1,4 @@
+import { connectorSecret } from "../_shared/connectorSecret.ts";
 import {withPaidAccess} from "../_shared/paidAccess.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -38,6 +39,7 @@ Deno.serve(withPaidAccess(async (req) => {
     if (profileError || !profile || profile.is_active === false) return json({ error: "Forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
+    if (body.payload != null && (typeof body.payload !== "object" || Array.isArray(body.payload))) return json({ error: "Invalid payload" }, 400);
     const path = typeof body.path === "string" ? body.path : "";
     if (!ALLOWED_PATHS.has(path)) return json({ error: "SmartTreino path not allowed" }, 400);
     let athleteId: string | null;
@@ -53,18 +55,22 @@ Deno.serve(withPaidAccess(async (req) => {
       .eq("key", "smart_treino")
       .maybeSingle();
     if (connector?.status !== "active") return json({ error: "SmartTreino connector inactive" }, 409);
-    const key = (connector.secret_ref ? Deno.env.get(connector.secret_ref) : null)
-      || Deno.env.get("FITPRO_API_KEY")
-      || Deno.env.get("SMARTREINO_KEY");
+    const key = connector.secret_ref
+      ? await connectorSecret(admin, "smart_treino", connector.secret_ref)
+      : Deno.env.get("FITPRO_API_KEY") || Deno.env.get("SMARTREINO_KEY");
     if (!key) return json({ error: "SmartTreino secret is not configured" }, 503);
 
     const params = new URLSearchParams(typeof body.query === "string" ? body.query.replace(/^\?/, "") : "");
-    const payload = body.payload ?? undefined;
-    if (payload === undefined) params.set("fitpro_student_id", athleteId);
+    const payload = body.payload == null ? undefined : { ...body.payload, student_external_id: athleteId, fitpro_student_id: athleteId };
+    if (payload === undefined) {
+      params.set("fitpro_student_id", athleteId);
+      params.set("student_external_id", athleteId);
+    }
     const query = params.size ? `?${params.toString()}` : "";
     const configuredBase = Deno.env.get("SMARTREINO_BASE_URL") ?? `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
     const base = configuredBase.replace(/\/fitpro-api\/?$/, "").replace(/\/$/, "");
     const upstream = await fetch(`${base}${path}${query}`, {
+      signal: AbortSignal.timeout(45000),
       method: payload === undefined ? "GET" : "POST",
       headers: { "Content-Type": "application/json", "x-partner-key": key },
       body: payload === undefined ? undefined : JSON.stringify(payload),

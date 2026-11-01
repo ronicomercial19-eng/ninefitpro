@@ -1,4 +1,5 @@
 import {withPaidAccess} from "../_shared/paidAccess.ts";
+import { connectorSecret } from "../_shared/connectorSecret.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -7,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
-const COMMUNITY_BASE = "https://piqqmrwinullmenoyyfr.supabase.co/functions/v1";
+const COMMUNITY_BASE = "https://piqqmrwinullmenoyyfr.supabase.co/functions/v1/public-api";
 const ROUTES: Record<string, string> = {
   feed: "/community/posts",
   posts: "/community/posts",
@@ -42,7 +43,15 @@ Deno.serve(withPaidAccess(async (req) => {
   const auth = await authenticate(req);
   if (!auth) return json(401, { error: "unauthorized" });
 
-  const apiKey = Deno.env.get("COMMUNITY_API_KEY");
+  const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: connector, error: connectorError } = await admin.from("api_connectors")
+    .select("endpoint,secret_ref,status").eq("key", "community").maybeSingle();
+  if (connectorError) return json(503, { error: "community_configuration_unavailable" });
+  if (connector && connector.status !== "active") return json(409, { error: "community_connector_inactive" });
+  let apiKey: string | null | undefined;
+  try {
+    apiKey = connector?.secret_ref ? await connectorSecret(admin, "community", connector.secret_ref) : Deno.env.get("COMMUNITY_API_KEY");
+  } catch { return json(503, { error: "community_credentials_unavailable" }); }
   if (!apiKey) return json(503, { error: "community_integration_not_configured" });
 
   const url = new URL(req.url);
@@ -53,8 +62,13 @@ Deno.serve(withPaidAccess(async (req) => {
   const params = new URLSearchParams(url.searchParams);
   params.delete("action");
   try {
+    const base = (connector?.endpoint || Deno.env.get("COMMUNITY_API_URL") || COMMUNITY_BASE).replace(/\/$/, "");
+    const baseUrl = new URL(base);
+    if (baseUrl.protocol !== "https:" || baseUrl.username || baseUrl.password) return json(503, { error: "community_endpoint_invalid" });
     const query = params.toString();
-    const upstream = await fetch(`${COMMUNITY_BASE}${route}${query ? `?${query}` : ""}`, {
+    const upstream = await fetch(`${base}${route}${query ? `?${query}` : ""}`, {
+      signal: AbortSignal.timeout(15000),
+      redirect: "error",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,

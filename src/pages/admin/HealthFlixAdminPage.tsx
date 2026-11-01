@@ -8,7 +8,9 @@ import {
   type HealthVideo,
 } from "@/services/healthFlixCatalog";
 import { toast } from "sonner";
+import { LibraryAssignDialog } from "@/components/students/LibraryAssignDialog";
 export default function HealthFlixAdminPage() {
+  const [assigning, setAssigning] = useState<HealthVideo | null>(null);
   const qc = useQueryClient(),
     [busy, setBusy] = useState(false),
     [editing, setEditing] = useState<any>(null);
@@ -73,6 +75,10 @@ export default function HealthFlixAdminPage() {
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-semibold">HealthFlix</h1>
+      <LibraryAssignDialog open={!!assigning} onOpenChange={(open) => { if (!open) setAssigning(null); }} item={assigning ? {
+        type: "videos", external_id: assigning.external_id, name: assigning.title,
+        player_url: assigning.video_url, thumbnail_url: assigning.thumbnail,
+      } : null} />
       <p>
         Este é o catálogo efetivo usado pelo aluno: conteúdo externo e
         publicações locais. Ocultar atua no FitPro; não exclui o original do
@@ -160,6 +166,7 @@ export default function HealthFlixAdminPage() {
               >
                 <h2>{v.title}</h2>
                 <p>{v.category}</p>
+                <Button disabled={!v.video_url} onClick={() => setAssigning(v)}>Atribuir ao aluno</Button>
                 <Button
                   disabled={busy}
                   variant="outline"

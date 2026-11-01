@@ -287,7 +287,7 @@ const App = () => (
               <PrivateRoute><AppLayout><TrainingAdjustmentsPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/nexus" element={
-              <PrivateRoute allowedRoles={["admin", "super_admin"]}>
+              <PrivateRoute>
                 <AppLayout>
                   <NexusPage />
                 </AppLayout>
@@ -373,7 +373,7 @@ const App = () => (
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><InfinitePayWebhookConfig /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/skills" element={
-              <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
+              <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/modelos-ninefit" element={
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>

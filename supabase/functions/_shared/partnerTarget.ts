@@ -1,4 +1,4 @@
-const TARGET_KEYS = ['fitpro_student_id','athlete_id','athleteId','student_id','aluno_id'];
+const TARGET_KEYS = ['fitpro_student_id','student_external_id','athlete_id','athleteId','student_id','aluno_id'];
 export function partnerTarget(query: string, payload: unknown): string | null {
   const ids: string[] = [];
   const params = new URLSearchParams(query.replace(/^\?/,''));

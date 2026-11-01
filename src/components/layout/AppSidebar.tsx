@@ -123,9 +123,7 @@ export function AppSidebar() {
                   (item) =>
                     isAdmin ||
                     ![
-                      "/app/skills",
                       "/app/monetizacao",
-                      "/app/nexus",
                       "/app/modelos-ninefit",
                     ].includes(item.url),
                 )
