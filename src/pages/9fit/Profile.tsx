@@ -1,28 +1,26 @@
 import { withTimeout } from '@/lib/withTimeout';
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Users, Calendar, Dumbbell, Crown, TrendingUp, CreditCard,
-  ChevronRight, ExternalLink, Flame, LogOut, Brain, Share2, ArrowLeft,
+  Users, Calendar, Dumbbell, TrendingUp, CreditCard,
+  ChevronRight, Flame, LogOut, Brain, Share2, Settings2, Bell, Shield, type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
-import { DynamicPDI } from '@/components/9fit/DynamicPDI';
-import { CompleteProfileFlow } from "@/components/9fit/CompleteProfileFlow";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+const DynamicPDI = lazy(() => import('@/components/9fit/DynamicPDI').then(module => ({ default: module.DynamicPDI })));
 import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
 import { useAthleteId } from "@/hooks/useAthleteId";
-import { useStaffDirectory } from "@/hooks/useStaffDirectory";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
 
 interface MenuItem {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   sub: string;
   route?: string;
   action?: "ficha";
-  badge?: string;
-  badgeStyle?: "neon" | "outline";
+
 }
 
 interface AthleteBio {
@@ -46,9 +44,9 @@ export default function NineFitProfile() {
   const { user, profile, logout } = useAuth();
   const { totalXp, level, syncScore, streak, weightKg, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
   const { athleteId, athleteName, loading: identityLoading, error: identityError } = useAthleteId();
-  const directory = useStaffDirectory();
-  const [fichaOpen, setFichaOpen] = useState(false);
-  const [completeOpen, setCompleteOpen] = useState(false);
+  const [search, setSearch] = useSearchParams();
+  const fichaOpen = search.get("section") === "pdi";
+  const setFichaOpen = (open: boolean) => { const next = new URLSearchParams(search); if (open) next.set("section", "pdi"); else next.delete("section"); setSearch(next, { replace: !open }); };
   const [bio, setBio] = useState<AthleteBio>({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
   const [bioError, setBioError] = useState(false);
   const [bioLoading, setBioLoading] = useState(true);
@@ -56,9 +54,9 @@ export default function NineFitProfile() {
   const [weightMeta, setWeightMeta] = useState<WeightMeta | null>(null);
 
   useEffect(() => {
-    if (!athleteId) { setBioLoading(identityLoading); setBioError(!!identityError); return; }
+    if (!athleteId) { setBioLoading(identityLoading); setBioError(!identityLoading || !!identityError); setWeightMeta(null); return; }
     let cancelled = false;
-    setBioLoading(true); setBioError(false);
+    setBioLoading(true); setBioError(false); setWeightMeta(null); setBio({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
     (async () => {
       try {
       const { data, error } = await withTimeout(supabase
@@ -67,7 +65,7 @@ export default function NineFitProfile() {
         .eq("id", athleteId)
         .maybeSingle());
       if (error || !data) throw error || new Error("Perfil indisponível");
-      if (!cancelled) setBio(data as any);
+      if (!cancelled) setBio({ avatar_url: data.avatar_url, age: data.age, height_cm: data.height_cm, weight_kg: null });
 
       const { data: hist } = await withTimeout(supabase
         .from("athlete_weight_history" as any)
@@ -82,26 +80,25 @@ export default function NineFitProfile() {
     const refresh = () => setBioReload(value => value + 1);
     window.addEventListener("9fit:profile-updated", refresh);
     return () => { cancelled = true; window.removeEventListener("9fit:profile-updated", refresh); };
-  }, [athleteId, completeOpen, fichaOpen, bioReload, identityLoading, identityError]); // recarrega ao fechar o wizard ou a ficha
+  }, [athleteId, bioReload, identityLoading, identityError]);
 
   const displayName = athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta";
 
-  // QA Fase F (16/09): "Aluno Premium" e "Próxima fatura: 12/11" eram
-  // hardcoded pra TODO usuário — não existe nenhuma coluna de plano/assinatura
-  // em athletes, e a tabela payments está zerada (zero pagamentos processados
-  // no sistema todo até hoje). Mostrar "Premium" pra quem nunca pagou nada é
-  // uma alegação falsa sobre a própria assinatura da pessoa. Enquanto não
-  // existir uma fonte real de entitlement, o item fica honesto em vez de
-  // inventar status.
-  const items: MenuItem[] = [
-    { icon: Brain, label: "PDI", sub: "Sua ficha dinâmica: o app aprende e você ajusta", action: "ficha", badge: "Auto", badgeStyle: "outline" },
-    { icon: Users, label: "Equipe", sub: "Treinadores e nutricionistas", route: "/9fit/staff", badge: directory.isPending ? "Carregando…" : directory.isError ? "Indisponível" : `${directory.data?.length ?? 0} profissionais ativos`, badgeStyle: "neon" },
-    { icon: Calendar, label: "Planejamento", sub: "Próximos treinos e refeições", route: "/9fit/planejamento" },
-    { icon: Dumbbell, label: "Ajuste de Treino", sub: "Solicitar alterações", route: "/9fit/ajuste-treino", badge: "Novo", badgeStyle: "outline" },
-    { icon: Crown, label: "Ron", sub: "Coach virtual e check-ins", route: "/9fit/ron" },
-    { icon: TrendingUp, label: "Histórico", sub: "Relatórios e evolução", route: "/9fit/progresso" },
-    { icon: Share2, label: "Compartilhar", sub: "Cards de progresso e conquistas", route: "/9fit/compartilhar" },
-    { icon: CreditCard, label: "Pagamento & Plano", sub: "Gerencie sua assinatura", route: "/9fit/primepass" },
+  const sections: { title: string; items: MenuItem[] }[] = [
+    { title: "Minha conta", items: [
+      { icon: Brain, label: "Minha ficha", sub: "Objetivos, rotina e restrições", action: "ficha" },
+      { icon: Settings2, label: "Preferências e suporte", sub: "Player, animações e ajuda", route: "/9fit/settings" },
+      { icon: CreditCard, label: "Pagamento e plano", sub: "Consulte seu acesso e as condições", route: "/9fit/primepass" },
+      { icon: Bell, label: "Notificações", sub: "Avisos e atualizações", route: "/9fit/notificacoes" },
+      { icon: Shield, label: "Meus dados", sub: "Fontes e compartilhamento", route: "/9fit/progresso/fontes" },
+    ] },
+    { title: "Treino e evolução", items: [
+      { icon: Calendar, label: "Planejamento", sub: "Sua programação", route: "/9fit/planejamento" },
+      { icon: Dumbbell, label: "Ajuste de treino", sub: "Revise e salve a sessão", route: "/9fit/ajuste-treino" },
+      { icon: TrendingUp, label: "Histórico", sub: "Suas métricas e registros", route: "/9fit/progresso" },
+      { icon: Users, label: "Equipe", sub: "Encontre seu profissional", route: "/9fit/staff" },
+      { icon: Share2, label: "Compartilhar conquistas", sub: "Cards dos seus registros", route: "/9fit/compartilhar" },
+    ] },
   ];
 
   const openItem = (it: MenuItem) => {
@@ -116,14 +113,14 @@ export default function NineFitProfile() {
         <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
           <Flame className="w-5 h-5 text-primary" />
         </div>
-        <h1 className="flex-1 text-center text-2xl font-display">Configurações</h1>
+        <h1 className="flex-1 text-center text-2xl font-display">Perfil</h1>
         <div className="w-9 h-9" />
       </header>
 
       {/* ID Card — decisão principal da tela: 1 barra de XP, dados físicos ou
           CTA de completar perfil já embutido, Sync/Streak como texto de apoio */}
       <section className="px-4 mt-5">
-        {profileLoading || bioLoading ? <p role="status">Carregando seu perfil…</p> : bioError ? <button onClick={() => { setBioReload(value => value + 1); window.dispatchEvent(new Event("9fit:profile-updated")); }}>Não foi possível confirmar os dados do perfil. Tentar novamente</button> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
+        {profileLoading || bioLoading ? <p role="status">Carregando seu perfil…</p> : bioError ? <button onClick={() => { window.dispatchEvent(new Event("9fit:profile-updated")); }}>Não foi possível confirmar os dados do perfil. Tentar novamente</button> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
           name={displayName}
           level={level}
           syncScore={syncScore}
@@ -144,7 +141,7 @@ export default function NineFitProfile() {
 
       {/* Menu */}
       <div className="px-4 mt-6 space-y-3">
-        {items.map((it) => (
+        {sections.map(section => <section key={section.title} className="space-y-2"><h2 className="pt-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{section.title}</h2>{section.items.map((it) => (
           <button key={it.label} onClick={() => openItem(it)}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center gap-4 hover:border-primary/40 transition">
             <div className="w-11 h-11 rounded-lg border border-primary/30 bg-primary/[0.06] flex items-center justify-center">
@@ -153,66 +150,30 @@ export default function NineFitProfile() {
             <div className="flex-1 text-left">
               <div className="flex items-center gap-2">
                 <p className="font-display text-lg">{it.label}</p>
-                {it.badge && (
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                    it.badgeStyle === "neon"
-                      ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
-                      : "border border-primary/60 text-primary"
-                  }`}>
-                    {it.badge}
-                  </span>
-                )}
+
               </div>
               <p className="text-xs text-muted-foreground">{it.sub}</p>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
-        ))}
+        ))}</section>)}
       </div>
 
       {/* CTAs — "Completar perfil" saiu daqui: já está embutido no ID Card acima */}
       <div className="px-4 mt-6 space-y-3">
-        <button onClick={() => navigate("/9fit/compartilhar?template=id_card")}
-          className="w-full rounded-2xl border border-primary/40 bg-primary/[0.06] py-3 font-semibold flex items-center justify-center gap-2 text-primary">
-          <Share2 className="w-4 h-4" /> Compartilhar meu ID Card
-        </button>
-        <button onClick={() => navigate("/9fit/hub")}
-          className="w-full rounded-full bg-gradient-to-r from-primary to-primary/70 text-primary-foreground py-3.5 font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]">
-          Explorar mais opções <ExternalLink className="w-4 h-4" />
-        </button>
-        <button onClick={() => navigate("/9fit/native-system")}
-          className="w-full rounded-full border border-primary/50 text-primary py-3 font-semibold flex items-center justify-center gap-2">
-          Cupons <ExternalLink className="w-4 h-4" />
-        </button>
         <button onClick={async () => { await logout(); navigate("/9fit/login"); }}
           className="w-full rounded-2xl border border-white/10 bg-white/[0.02] py-3 text-sm text-muted-foreground hover:text-destructive flex items-center justify-center gap-2">
           <LogOut className="w-4 h-4" /> Sair
         </button>
       </div>
 
-      {/* PDI em tela cheia: a ficha completa, aberta pela entrada "PDI" do menu */}
-      {fichaOpen && (
-        <div className="fixed inset-0 z-50 bg-background overflow-y-auto pb-24" role="dialog" aria-label="Minha ficha dinâmica (PDI)">
-          <header className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-background/95 backdrop-blur">
-            <button onClick={() => setFichaOpen(false)} aria-label="Voltar"
-              className="w-10 h-10 rounded-lg border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-primary/40 transition">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-primary font-bold">PDI</p>
-              <h2 className="font-display text-xl leading-tight">Minha ficha dinâmica</h2>
-            </div>
-          </header>
-          <div className="px-4 pt-4">
-            <p className="text-xs text-muted-foreground mb-3">
-              O app completa esta ficha sozinho conforme você treina e usa o app. Aqui você confere e ajusta o que quiser.
-            </p>
-            <DynamicPDI />
-          </div>
-        </div>
-      )}
+      <Dialog open={fichaOpen} onOpenChange={setFichaOpen}>
+        <DialogContent className="fitpro-orange max-h-[90dvh] overflow-y-auto rounded-2xl sm:max-w-2xl">
+          <DialogHeader className="border-b border-border/15 pb-3"><DialogTitle>Minha ficha</DialogTitle><DialogDescription>Confira seus objetivos, preferências e restrições.</DialogDescription></DialogHeader>
+          {fichaOpen && <Suspense fallback={<p role="status">Carregando sua ficha…</p>}><DynamicPDI /></Suspense>}
+        </DialogContent>
+      </Dialog>
 
-      <CompleteProfileFlow open={completeOpen} onClose={() => setCompleteOpen(false)} />
       <BottomNavigation />
     </div>
   );

@@ -1,3 +1,0 @@
-import { Link } from 'react-router-dom';
-import { COMMERCIAL_PLANS, OFFER_BENEFITS } from '@/config/commercialOffer';
-export const PricingSection = (_props: { onStartAssessment?: () => void }) => <section id="planos" className="container py-12 space-y-6"><h2 className="text-2xl font-bold">Planos 9FIT PRO</h2><div className="grid gap-4 sm:grid-cols-2">{COMMERCIAL_PLANS.map(plan => <article key={plan.id} className="rounded-2xl border p-6 space-y-4"><h3>{plan.name}</h3><p>{plan.price}{plan.period}</p><ul>{OFFER_BENEFITS.map(text => <li key={text}>{text}</li>)}</ul><Link className="text-primary underline" to={`/sales?plan=${plan.id}#planos`}>Consultar este plano</Link></article>)}</div></section>;

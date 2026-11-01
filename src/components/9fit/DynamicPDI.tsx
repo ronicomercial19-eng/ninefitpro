@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useDailyContext } from '@/hooks/useDailyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PDIWizard } from './PDIWizard';
+const PDIWizard = lazy(() => import('./PDIWizard').then(module => ({ default: module.PDIWizard })));
 
 const names: Record<string, string> = { goal: 'Objetivo', recovery_rate: 'Recuperação declarada', volume_tolerance: 'Tolerância a volume', peak_window: 'Horário preferido', stress_sensitivity: 'Sensibilidade ao estresse', discomfort_tolerance: 'Desconforto', time_horizon: 'Horizonte em semanas', injury_zones: 'Histórico de lesões', dietary_restrictions: 'Restrições alimentares' };
 const labels: Record<string, string> = { morning: 'Manhã', afternoon: 'Tarde', night: 'Noite', performance: 'Performance', aesthetics: 'Estética', longevity: 'Longevidade', recomposition: 'Recomposição', fast: 'Rápida', medium: 'Média', slow: 'Lenta', moderate: 'Moderada', conservative: 'Conservadora', aggressive: 'Alta', knee: 'Joelho', shoulder: 'Ombro', back: 'Costas', elbow: 'Cotovelo', ankle: 'Tornozelo', hip: 'Quadril', vegan: 'Vegana', vegetarian: 'Vegetariana', lactose: 'Lactose', gluten: 'Glúten' };
@@ -38,6 +38,6 @@ export function DynamicPDI() {
       <label className="block text-xs">Onde costuma treinar<select disabled={busy} value={profile.preferences.training_environment || ''} onChange={e => void savePreference({ training_environment: e.target.value })} className="mt-1 block w-full rounded-lg border border-white/10 bg-background p-2"><option value="" disabled>Escolher</option><option value="home">Casa</option><option value="gym">Academia</option><option value="outdoors">Ar livre</option></select></label>
       <p className="text-[10px] text-muted-foreground">Essas escolhas orientam as sugestões do RON. Não alteram sua prescrição atribuída.</p></div>
     </>}
-    <PDIWizard detailed open={edit} onClose={() => setEdit(false)} />
+    {edit && <Suspense fallback={<p role="status">Abrindo edição da ficha…</p>}><PDIWizard detailed open onClose={() => setEdit(false)} /></Suspense>}
   </section>;
 }

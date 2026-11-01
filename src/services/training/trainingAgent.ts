@@ -25,6 +25,7 @@ export interface AdaptiveAdjustment {
 export interface TrainingAgentContext {
   calibration?: { sleep: number | null; energy: number | null };
   reviewRequired?: boolean;
+  restrictionReviewed?: boolean;
   userId: string;
   athleteId?: string;
   workoutName?: string;
@@ -53,17 +54,10 @@ export interface TrainingAgentContext {
 export async function requestAdaptiveAdjustment(
   ctx: TrainingAgentContext,
 ): Promise<AdaptiveAdjustment | null> {
-  if (ctx.prescription) {
-    const decision = decideContextualAdjustment({
-      prescription: ctx.prescription,
-      request: ctx.request,
-      reviewRequired: ctx.reviewRequired || !!ctx.safetyReason || !!ctx.painRegion,
-      calibration: ctx.calibration,
-      rpeCap: ctx.periodization?.rpeCap ?? null,
-      periodizationLabel: ctx.periodization?.phase ?? null,
-    });
-    return { intensity: 'moderada', swaps: [], changes: decision.changes, addOns: [], rationale: decision.rationale, generatedAt: new Date().toISOString(), contextual: decision };
-  }
+  const decision = ctx.prescription ? decideContextualAdjustment({ prescription: ctx.prescription, request: ctx.request, reviewRequired: ctx.reviewRequired, restrictionReviewed: ctx.restrictionReviewed, calibration: ctx.calibration, rpeCap: ctx.periodization?.rpeCap ?? null, periodizationLabel: ctx.periodization?.phase ?? null }) : null;
+  const fallback = decision ? { intensity: 'moderada' as const, swaps: [], changes: decision.changes, addOns: [], rationale: decision.rationale, generatedAt: new Date().toISOString(), contextual: decision } : null;
+  // A medical alert or invalid prescription cannot be overridden by model output.
+  if (decision?.kind === 'review') return fallback;
   try {
     const skillCtx = await buildSkillContext(ctx.userId, "training");
     const { data, error } = await supabase.functions.invoke("training-ai-adjust", {
@@ -82,6 +76,7 @@ export async function requestAdaptiveAdjustment(
         focusMuscles: ctx.focusMuscles,
         safetyReason: ctx.safetyReason,
         painRegion: ctx.painRegion,
+        reviewRequired: ctx.reviewRequired,
         periodization: ctx.periodization,
         bio: skillCtx.bio,
         profile: skillCtx.profile,
@@ -90,11 +85,26 @@ export async function requestAdaptiveAdjustment(
     });
     if (error) throw error;
     const payload = (data as any)?.data ?? data;
-    if (!payload?.intensity) return null;
-    return { ...payload, swaps: Array.isArray(payload.swaps) ? payload.swaps : [], changes: Array.isArray(payload.changes) ? payload.changes : [], addOns: Array.isArray(payload.addOns) ? payload.addOns : [] } as AdaptiveAdjustment;
+    if (!payload?.intensity) return fallback;
+    // Accept reductions only; keep dose, rest, movement and baseline effort intact.
+    const changes = ctx.prescription ? (Array.isArray(payload.changes) ? payload.changes : []).flatMap((change: AdaptiveAdjustment['changes'][number]) => {
+      const base = ctx.prescription!.find(ex => ex.name.toLocaleLowerCase() === String(change.exercise).toLocaleLowerCase());
+      if (!base) return [];
+      const sets = Number.isInteger(change.sets) && change.sets! >= 1 && change.sets! < base.sets ? change.sets : undefined;
+      const rpe = base.rpe != null && Number.isInteger(change.rpe) && change.rpe! >= 1 && change.rpe! < base.rpe ? change.rpe : undefined;
+      return sets != null || rpe != null ? [{ exercise: base.name, sets, rpe, reason: String(change.reason || 'Redução conservadora sugerida pelo RON.') }] : [];
+    }) : [];
+    const combinedChanges = ctx.prescription?.flatMap(base => {
+      const proposals = [...(decision?.changes ?? []), ...changes].filter(change => change.exercise === base.name);
+      const sets = proposals.flatMap(change => change.sets == null ? [] : [change.sets]);
+      const rpes = proposals.flatMap(change => change.rpe == null ? [] : [change.rpe]);
+      if (!proposals.length) return [];
+      return [{ exercise: base.name, sets: sets.length ? Math.min(...sets) : undefined, rpe: rpes.length ? Math.min(...rpes) : undefined, reason: proposals.map(change => change.reason).join(' ') }];
+    }) ?? changes;
+    return { intensity: 'leve', swaps: [], changes: combinedChanges, addOns: [], rationale: String(payload.rationale || decision?.rationale || ''), generatedAt: new Date().toISOString(), contextual: decision ? { ...decision, kind: changes.length ? 'reduce' : decision.kind } : undefined };
   } catch (err) {
     console.error("[trainingAgent] adjustment failed", err);
-    return null;
+    return fallback;
   }
 }
 

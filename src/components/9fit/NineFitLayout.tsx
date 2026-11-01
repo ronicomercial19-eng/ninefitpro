@@ -1,5 +1,4 @@
 import { CareReturnBanner } from "@/components/students/CareReturnBanner";
-import { careModuleForPath } from "@/data/careModules";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,10 +205,9 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
         <p>{pendingFirstAccess ? 'Bem-vindo! Conclua seu primeiro acesso para preparar seus treinos.' : 'Bem-vindo! Confirme sua ficha para personalizar seus treinos.'}</p>
         <button className="mt-2 underline" onClick={() => navigate(pendingFirstAccess ? '/9fit/first-access' : '/9fit/ativacao')}>Continuar configuração</button>
       </section>}
-      {!isOnboardingFlow && location.pathname!=="/9fit/acompanhamento" && careModuleForPath(location.pathname) && <div className="mx-auto max-w-4xl px-4 pt-14"><button className="rounded-lg border px-3 py-2 text-sm text-primary" onClick={()=>navigate("/9fit/acompanhamento?module="+careModuleForPath(location.pathname)!.key)}>Meu acompanhamento · solicitar orientação</button></div>}
       {!isOnboardingFlow && <CareReturnBanner />}
       <PaidAccessGate>{children}</PaidAccessGate>
-      {!isOnboardingFlow && !['/9fit/mensagens','/9fit/acompanhamento'].includes(location.pathname) && <RonBubble />}
+      {!isOnboardingFlow && <RonBubble />}
     </>
   );
 }
