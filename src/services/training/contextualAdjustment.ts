@@ -2,6 +2,7 @@ export interface ContextualInput {
   prescription: Array<{ name: string; sets: number; reps: string; restSeconds: number; rpe?: number }>;
   request?: string;
   reviewRequired?: boolean;
+  restrictionReviewed?: boolean;
   sessionLocked?: boolean;
   calibration?: { sleep: number | null; energy: number | null };
   /** Teto de esforço (RPE) da fase ativa da periodização. Só é usado para REDUZIR intensidade. */
@@ -25,7 +26,7 @@ export function decideContextualAdjustment(input: ContextualInput): ContextualDe
     limitations: ['Sem histórico comparável validado: progressão automática desativada.', 'Não estima fadiga, HRV ou recuperação.'],
   };
   if (input.sessionLocked) return { ...result, kind: 'review', rationale: 'Sessão iniciada ou finalizada: a prescrição executada fica preservada.' };
-  if (input.reviewRequired || /\b(dor|doendo|lesão|lesao|incomodando|poupar)\b/.test(request)) {
+  if (input.reviewRequired || /\b(dor|doendo|piora|piorando|incomodando)\b/.test(request) || (!input.restrictionReviewed && /\b(lesão|lesao|poupar)\b/.test(request))) {
     return { ...result, kind: 'review', rationale: 'Há dor ou restrição informada. Nenhuma alteração automática: revise a sessão com seu profissional.' };
   }
   if (!input.prescription.length || input.prescription.some(ex => !Number.isInteger(ex.sets) || ex.sets < 1 || ex.sets > 10)) {
@@ -51,7 +52,7 @@ export function decideContextualAdjustment(input: ContextualInput): ContextualDe
   if (request) result.sources.push('Solicitação informada nesta sessão');
   if (/intens|pesad|progred|aument/.test(request)) return { ...result, rationale: 'Não aumentamos carga, séries ou esforço sem execuções comparáveis e limites do professor. Mantenha a prescrição ou solicite uma revisão.' };
   if (/equipamento|máquina|maquina|trocar|substitu/.test(request)) return { ...result, rationale: 'Use Trocar exercício para escolher uma alternativa. A equivalência de equipamento e carga não é inferida automaticamente.' };
-  const lighter = /leve|cansad|difícil|dificil|reduz/.test(request);
+  const lighter = input.restrictionReviewed || /leve|cansad|difícil|dificil|reduz/.test(request);
   const shorter = /tempo|encurt|rápid|rapid/.test(request);
   if (!lighter && !shorter) return result;
   // Keep the first movement and every exercise. Remove at most one set per

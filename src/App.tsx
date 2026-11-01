@@ -67,7 +67,6 @@ const NineFitEliteBio = lazy(() => import("./pages/9fit/EliteBioHacking"));
 const NineFitKitchen = lazy(() => import("./pages/9fit/Kitchen"));
 const NineFitRecovery = lazy(() => import("./pages/9fit/Recovery"));
 const NineFitProtocolo = lazy(() => import("./pages/9fit/Protocolo"));
-const NineFitPlans = lazy(() => import("./pages/9fit/Plans"));
 const NineFitOferta = lazy(() => import("./pages/9fit/Oferta"));
 const NineFitCheckout = lazy(() => import("./pages/9fit/Checkout"));
 const NineFitCheckoutSuccess = lazy(() => import("./pages/9fit/CheckoutSuccess"));

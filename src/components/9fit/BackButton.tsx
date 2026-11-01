@@ -10,7 +10,7 @@ const HIDE_ON = ["/9fit/hub", "/9fit/os", "/9fit/train", "/9fit/protocolo", "/9f
 export function BackButton() {
   const navigate = useNavigate();
   const location = useLocation();
-  if (HIDE_ON.includes(location.pathname)) return null;
+  if (HIDE_ON.includes(location.pathname) || location.pathname.startsWith('/9fit/progresso/') || location.pathname === '/9fit/ajuste-treino') return null;
 
   return (
     <button

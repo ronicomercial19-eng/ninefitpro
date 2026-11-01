@@ -60,7 +60,9 @@ const WELCOME: ChatMsg = {
   timestamp: fmtTime(),
 };
 
-export function RonConciergeSheet() {
+export interface RonOpenRequest { prompt?: string; tab?: "ron" | "team"; }
+
+export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpenRequest | null } = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState<"ron" | "team">("ron");
   const [input, setInput] = useState("");
@@ -183,6 +185,14 @@ export function RonConciergeSheet() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  // The launcher remembers the opening action while this module is loading.
+  useEffect(() => {
+    if (!initialRequest) return;
+    setIsOpen(true);
+    setTab(initialRequest.tab === 'team' ? 'team' : 'ron');
+    if (initialRequest.prompt) sendRef.current(initialRequest.prompt);
+  }, [initialRequest]);
 
   // Google Agenda
   useEffect(() => {

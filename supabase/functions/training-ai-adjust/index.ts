@@ -59,7 +59,7 @@ serve(withPaidAccess(async (req) => {
     const authedUserId = claims.claims.sub as string;
 
     const body = await req.json();
-    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE, exercises } = body ?? {};
+    const { workoutName, workoutType, bio, profile, activeSkills, recentRPE, exercises, prescription, request: adjustmentRequest, safetyReason, painRegion, reviewRequired } = body ?? {};
     const userId = authedUserId; // trust JWT, not body
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -76,7 +76,8 @@ serve(withPaidAccess(async (req) => {
       ? `PDI: goal=${pdi.goal}, recovery=${pdi.recovery_rate}, tol_vol=${pdi.volume_tolerance}/10, discomfort=${pdi.discomfort_tolerance}, injuries=${(pdi.injury_zones||[]).join("|")||"none"}. Baseline modulado: vol=${base.volume}%, int=${base.intensity}%, notes=${base.notes.join(",")}.`
       : "PDI: ainda não calibrado — use perfil conservador.";
 
-    const sys = `Você é o FitCopilot, IA de ajuste adaptativo de treino do 9FIT PRO.
+    const sys = `Você é o RON IA, assistente de ajuste conservador de treino do 9FIT PRO.
+Analise a solicitação, a prescrição e as restrições. Apenas reduza séries ou RPE conhecidos; nunca aumente esforço, invente liberação clínica ou acrescente exercícios. Preserve dose, descanso e movimentos. Lesão cadastrada não é, sozinha, uma emergência; sinais de alerta ou dor importante exigem revisão profissional. Se não houver alternativa segura, explique o motivo. Não estime fadiga, recuperação ou prontidão em percentuais.
 Responda SEMPRE chamando a tool ajustar_treino. Em português.
 ${pdiBlock}`;
     const userPrompt = `Treino: ${workoutName ?? "—"} (${workoutType ?? "geral"})
@@ -85,8 +86,11 @@ Estado fisiológico: HRV ${bio?.hrv ?? "—"} | Sono(min) ${bio?.sleep ?? "—"}
 RPE recente: ${recentRPE ?? "—"}.
 Exercícios atuais: ${Array.isArray(exercises) && exercises.length ? exercises.join(", ") : "não informado"}.
 Skills ativas: ${skills || "nenhuma"}.
+Solicitação do aluno: ${String(adjustmentRequest ?? '').slice(0, 500)}.
+Prescrição salva: ${JSON.stringify(prescription ?? [])}.
+Restrições: ${String(safetyReason ?? 'nenhuma')} · região: ${String(painRegion ?? 'não informada')} · alerta ativo: ${!!reviewRequired}.
 
-Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação curta — RESPEITE o PDI acima.`;
+Gere somente reduções conservadoras dos parâmetros conhecidos e uma recomendação curta. Preserve os exercícios, a dose e o descanso.`;
 
     const tools = [
       {
@@ -113,6 +117,7 @@ Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação 
                   required: ["from", "to", "reason"],
                 },
               },
+              changes: { type: 'array', items: { type: 'object', properties: { exercise: { type: 'string' }, sets: { type: 'integer' }, rpe: { type: 'integer' }, reason: { type: 'string' } }, required: ['exercise', 'reason'] } },
               addOns: {
                 type: "array",
                 items: {
@@ -129,7 +134,7 @@ Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação 
               rationale: { type: "string" },
               recoveryForecast: { type: "number" },
             },
-            required: ["intensity", "intensityPct", "fatigueLevel", "fatiguePct", "rationale", "recoveryForecast"],
+            required: ["intensity", "changes", "rationale"],
           },
         },
       },
@@ -165,8 +170,18 @@ Gere ajuste de intensidade, sugestões de troca de exercícios e recomendação 
     if (!call) return fail("PARSE", "Resposta sem tool call", 500);
     const args = JSON.parse(call.function.arguments || "{}");
     args.generatedAt = new Date().toISOString();
-    args.swaps = args.swaps ?? [];
-    args.addOns = args.addOns ?? [];
+    // Enforce conservative output at the API boundary as well as in the UI.
+    const prescriptionBase = Array.isArray(prescription) ? prescription : [];
+    args.changes = reviewRequired ? [] : (Array.isArray(args.changes) ? args.changes : []).flatMap((change: any) => {
+      const original = prescriptionBase.find((exercise: any) => typeof exercise.name === 'string' && exercise.name.toLocaleLowerCase() === String(change?.exercise).toLocaleLowerCase());
+      if (!original) return [];
+      const sets = Number.isInteger(change.sets) && change.sets >= 1 && change.sets < original.sets ? change.sets : undefined;
+      const rpe = original.rpe != null && Number.isInteger(change.rpe) && change.rpe >= 1 && change.rpe < original.rpe ? change.rpe : undefined;
+      return sets != null || rpe != null ? [{ exercise: original.name, sets, rpe, reason: String(change.reason || 'Redução conservadora de esforço.') }] : [];
+    });
+    args.swaps = [];
+    args.addOns = [];
+    args.intensity = 'leve';
     return ok(args);
   } catch (e) {
     console.error("training-ai-adjust", e);

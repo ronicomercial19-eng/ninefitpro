@@ -1,0 +1,149 @@
+{
+  "routes": [
+    "/9fit/entrada",
+    "/9fit/pagamento/retorno",
+    "/9fit/onboarding-pro",
+    "/9fit/stats",
+    "/9fit/aulas",
+    "/9fit",
+    "/9fit/login",
+    "/9fit/onboarding",
+    "/9fit/first-access",
+    "/9fit/hub",
+    "/9fit/embed",
+    "/9fit/home",
+    "/9fit/train",
+    "/9fit/aulas-creditos",
+    "/9fit/profile",
+    "/9fit/dieta",
+    "/9fit/foods",
+    "/9fit/acompanhamento",
+    "/9fit/mensagens",
+    "/9fit/notificacoes",
+    "/9fit/social",
+    "/9fit/community",
+    "/9fit/staff",
+    "/9fit/os",
+    "/9fit/ron",
+    "/9fit/healthflix",
+    "/9fit/primepass",
+    "/9fit/habit-flow",
+    "/9fit/habitflow",
+    "/9fit/elite-bio",
+    "/9fit/kitchen",
+    "/9fit/recovery",
+    "/9fit/protocolo",
+    "/9fit/planos",
+    "/9fit/prime",
+    "/9fit/oferta/:offerId",
+    "/9fit/checkout/:offerId",
+    "/9fit/checkout/success",
+    "/9fit/protocols",
+    "/9fit/protocols/:category",
+    "/9fit/protocols/:category/:id",
+    "/9fit/settings",
+    "/9fit/ativacao",
+    "/9fit/planejamento",
+    "/9fit/biblioteca",
+    "/9fit/progresso",
+    "/9fit/perfil/fontes",
+    "/9fit/progresso/:view",
+    "/9fit/avaliacao",
+    "/9fit/avaliacao/:id",
+    "/9fit/avaliacao/:id/:section",
+    "/9fit/postura-pro",
+    "/9fit/progresso/recordes",
+    "/9fit/premium",
+    "/9fit/billing",
+    "/9fit/store",
+    "/9fit/events",
+    "/9fit/compartilhar",
+    "/9fit/move",
+    "/9fit/modules",
+    "/9fit/avaliacao-guiada",
+    "/9fit/ajuste-treino",
+    "/9fit/pos-treino",
+    "/9fit/collections",
+    "/9fit/native-system"
+  ],
+  "destinations": {
+    "src/pages/9fit/Profile.tsx": [
+      {
+        "url": "/9fit/settings",
+        "registered": true
+      },
+      {
+        "url": "/9fit/primepass",
+        "registered": true
+      },
+      {
+        "url": "/9fit/notificacoes",
+        "registered": true
+      },
+      {
+        "url": "/9fit/progresso/fontes",
+        "registered": true
+      },
+      {
+        "url": "/9fit/planejamento",
+        "registered": true
+      },
+      {
+        "url": "/9fit/ajuste-treino",
+        "registered": true
+      },
+      {
+        "url": "/9fit/progresso",
+        "registered": true
+      },
+      {
+        "url": "/9fit/staff",
+        "registered": true
+      },
+      {
+        "url": "/9fit/compartilhar",
+        "registered": true
+      },
+      {
+        "url": "/9fit/login",
+        "registered": true
+      }
+    ],
+    "src/pages/9fit/Settings.tsx": [
+      {
+        "url": "/9fit/profile?section=pdi",
+        "registered": true
+      },
+      {
+        "url": "/9fit/profile",
+        "registered": true
+      },
+      {
+        "url": "/9fit/progresso/fontes",
+        "registered": true
+      },
+      {
+        "url": "/9fit/primepass",
+        "registered": true
+      },
+      {
+        "url": "/9fit/notificacoes",
+        "registered": true
+      }
+    ],
+    "src/components/9fit/DigitalIDCard.tsx": [],
+    "src/components/9fit/DynamicPDI.tsx": [],
+    "src/components/9fit/CompleteProfileFlow.tsx": [
+      {
+        "url": "/9fit/train",
+        "registered": true
+      },
+      {
+        "url": "/9fit/staff",
+        "registered": true
+      }
+    ],
+    "src/components/9fit/PDIWizard.tsx": []
+  },
+  "invalid": []
+}
