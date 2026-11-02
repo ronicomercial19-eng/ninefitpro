@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
+import { cycleBadge, type CycleStatus } from "@/components/9fit/cycleStatus";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 
@@ -26,6 +27,8 @@ interface Props {
   liveScoresVitals?: any;
   invalidateUserState: () => void;
   performancePlanTitle: string | null;
+  cycleStatus: CycleStatus;
+  libraryStatus: "loading" | "ready" | "unavailable";
   breakdown: {
     treino: number | null;
     nutri: number | null;
@@ -59,6 +62,8 @@ export function FitOSConsoleDock({
   weekly,
   liveScoresVitals,
   performancePlanTitle,
+  cycleStatus,
+  libraryStatus,
   breakdown,
   protocolCount,
 }: Props) {
@@ -101,6 +106,21 @@ export function FitOSConsoleDock({
   else if (lowest && (lowest[1] as number) < 60) guidance = `Maior oportunidade: ${PILLAR_LABEL[lowest[0]] || lowest[0]}. Foque nisso nos próximos dias.`;
   else guidance = "Bom ritmo. Mantenha a rotina e continue registrando sono e hidratação.";
 
+  const cycle = cycleBadge(cycleStatus);
+  const focusTitle =
+    cycleStatus === "active" ? (performancePlanTitle || "Ciclo ativo")
+    : cycleStatus === "none" ? "Defina seu objetivo"
+    : cycleStatus === "loading" ? "Lendo seu ciclo"
+    : "Ciclo ainda não confirmado";
+  const libraryLine =
+    libraryStatus === "ready" && protocolCount > 0
+      ? `${protocolCount} conteúdos atribuídos ainda não concluídos na Biblioteca. A rotina diária é acompanhada separadamente.`
+      : libraryStatus === "ready"
+        ? "Nenhuma intervenção prescrita disponível."
+        : libraryStatus === "loading"
+          ? "Lendo conteúdos atribuídos."
+          : "Não foi possível confirmar a biblioteca agora.";
+
   return (
     <div className="w-full space-y-4">
       <HubFloatingMetrics vitals={liveScoresVitals} />
@@ -122,23 +142,21 @@ export function FitOSConsoleDock({
               FOCO ATUAL · FIT OS
             </span>
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-[0.08em] border ${
-              performancePlanTitle
+              cycle.active
                 ? "text-[#EF7A45] bg-[#EF7A45]/15 border-[#EF7A45]/25"
                 : "text-white/55 bg-white/5 border-white/15"
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${performancePlanTitle ? "bg-[#EF7A45]" : "bg-white/35"}`} />
-              {performancePlanTitle ? "CICLO EM ANDAMENTO" : "SEM CICLO ATIVO"}
+              <span className={`w-1.5 h-1.5 rounded-full ${cycle.active ? "bg-[#EF7A45]" : "bg-white/35"}`} />
+              {cycle.label}
             </span>
           </div>
 
           <div>
             <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
-              {performancePlanTitle || "Defina seu objetivo"}
+              {focusTitle}
             </h3>
             <p className="text-xs text-white/65 mt-1">
-              {protocolCount > 0
-                ? `${protocolCount} conteúdos atribuídos ainda não concluídos na Biblioteca. A rotina diária é acompanhada separadamente.`
-                : "Nenhuma intervenção prescrita disponível."}
+              {libraryLine}
             </p>
           </div>
 
