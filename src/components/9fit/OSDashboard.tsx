@@ -37,6 +37,7 @@ import { EcoEmbed } from './EcoEmbed';
 import { QuickCheckIn } from './QuickCheckIn';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 import { HubCommandDeck } from './HubCommandDeck';
+import { type CycleStatus } from '@/components/9fit/cycleStatus';
 import type { HubScoreStatus } from '@/hooks/useAthleteScores';
 import communityTribeImg from '@/assets/images/community_athletes_tribe_1790011163765.jpg';
 import challengeBannerImg from '@/assets/images/challenge_season_banner_1790011176020.jpg';
@@ -50,12 +51,12 @@ interface OSDashboardProps {
   syncScore: number | null;
   scoreStatus: HubScoreStatus;
   weekly: { treinos: number; nutri: number; minutos: number };
-  hasPlan: boolean;
+  cycleStatus: CycleStatus;
 }
 
 type ModalPillarId = 'fisica' | 'nutricional' | 'psicologica' | 'comportamental' | 'biometrica' | 'ambiental' | null;
 
-export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: OSDashboardProps) {
+export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus }: OSDashboardProps) {
   const { user, profile } = useAuth();
   const { athleteName } = useAthleteId();
   const navigate = useNavigate();
@@ -105,12 +106,22 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
 
   const myRankPos = ranking.findIndex((r) => r.self) + 1;
   const hasRank = myRankPos > 0;
-  const treinoStatus = weekly.treinos > 0 ? `${weekly.treinos} treinos` : hasPlan ? 'Plano ativo' : 'Sem treino';
-  const nutriStatus = weekly.nutri > 0 ? `${weekly.nutri} refeições` : 'Sem registro';
-  const focoStatus = syncScore == null ? 'A calibrar' : `Sync ${Math.round(syncScore)}`;
-  const consistenciaStatus = weekly.treinos > 0 ? `${weekly.treinos} na semana` : 'Sem ciclo';
-  const recuperacaoStatus = syncScore == null ? 'Calibrar' : 'Com leitura';
-  const ecosystemStatus = ecosystemActiveCount == null ? 'Ver módulos' : `${ecosystemActiveCount} ativos`;
+  const cycleKnown = cycleStatus === "active" || cycleStatus === "none";
+  const treinoStatus = weekly.treinos > 0
+    ? `${weekly.treinos} treinos`
+    : cycleStatus === "active" ? "Plano ativo"
+    : cycleStatus === "none" ? "Sem treino"
+    : "A confirmar";
+  const nutriStatus = weekly.nutri > 0 ? `${weekly.nutri} refeições` : "Sem registro";
+  const focoStatus = syncScore == null ? "A calibrar" : `Sync ${Math.round(syncScore)}`;
+  const consistenciaStatus = weekly.treinos > 0
+    ? `${weekly.treinos} na semana`
+    : cycleStatus === "active" ? "Ciclo ativo"
+    : cycleStatus === "none" ? "Sem ciclo"
+    : cycleStatus === "loading" ? "Lendo ciclo"
+    : "A confirmar";
+  const recuperacaoStatus = syncScore == null ? "Calibrar" : "Com leitura";
+  const ecosystemStatus = ecosystemActiveCount == null ? "Ver módulos" : `${ecosystemActiveCount} ativos`;
 
   // Comunidade & Notícias — Apresentação 100% Visual com Imagens Cinematográficas
   const seasonEvents = [
@@ -156,7 +167,11 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     {
       id: 'fisica' as const,
       name: 'Treino & Cargas',
-      subtitle: hasRank ? `Ranking real: posição #${myRankPos}` : hasPlan ? 'Prescrição ativa no ciclo' : 'Sem prescrição ativa detectada',
+      subtitle: hasRank
+        ? `Ranking real: posição #${myRankPos}`
+        : cycleStatus === "active" ? "Prescrição ativa no ciclo"
+        : cycleStatus === "none" ? "Sem prescrição ativa detectada"
+        : "Não foi possível confirmar a prescrição agora",
       status: hasRank ? `#${myRankPos}` : treinoStatus,
       description: 'Progressão de cargas, densidade de treino e biomecânica executiva.'
     },
@@ -177,7 +192,11 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
     {
       id: 'comportamental' as const,
       name: 'Consistência',
-      subtitle: weekly.treinos > 0 ? `${weekly.treinos} treinos no microciclo` : 'Ainda sem treino registrado no microciclo',
+      subtitle: weekly.treinos > 0
+        ? `${weekly.treinos} treinos no microciclo`
+        : cycleStatus === "active" ? "Ciclo ativo, ainda sem treino registrado no microciclo"
+        : cycleKnown ? "Ainda sem treino registrado no microciclo"
+        : "Ainda não foi possível confirmar o microciclo",
       status: consistenciaStatus,
       description: 'Consistência do microciclo, disciplina de horários e rituais diários.'
     },
@@ -236,7 +255,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, hasPlan }: O
         syncScore={syncScore}
         scoreStatus={scoreStatus}
         weekly={weekly}
-        hasPlan={hasPlan}
+        hasPlan={cycleStatus === "active"}
       />
 
       {/* =========================================================================

@@ -19,6 +19,7 @@ import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
+import { type CycleStatus } from "@/components/9fit/cycleStatus";
 import { Info } from "lucide-react";
 
 const hubStaggerContainer = {
@@ -64,7 +65,9 @@ export default function NineFitHub() {
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
   const [protocolCount, setProtocolCount] = useState(0);
+  const [libraryStatus, setLibraryStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
+  const [cycleStatus, setCycleStatus] = useState<CycleStatus>("loading");
   const [hubMissions, setHubMissions] = useState<HubMissions | null>(null);
   const [hubLoading, setHubLoading] = useState(true);
   const hubRequest = useRef(0);
@@ -84,7 +87,9 @@ export default function NineFitHub() {
     if (!athleteId) {
       setHubLoading(athleteLoading);
       setPerformancePlanTitle(null);
+      setCycleStatus(athleteLoading ? "loading" : "unavailable");
       setProtocolCount(0);
+      setLibraryStatus(athleteLoading ? "loading" : "unavailable");
       setHubMissions(null);
       return;
     }
@@ -99,10 +104,19 @@ export default function NineFitHub() {
       if (request !== hubRequest.current) return;
 
       if (!performanceResult.error) {
-        setPerformancePlanTitle((performanceResult.data as { plan_title?: string | null } | null)?.plan_title || null);
+        const title = (performanceResult.data as { plan_title?: string | null } | null)?.plan_title || null;
+        setPerformancePlanTitle(title);
+        setCycleStatus(title ? "active" : "none");
+      } else {
+        setPerformancePlanTitle(null);
+        setCycleStatus("unavailable");
       }
       if (!libraryResult.error) {
         setProtocolCount(libraryResult.count || 0);
+        setLibraryStatus("ready");
+      } else {
+        setProtocolCount(0);
+        setLibraryStatus("unavailable");
       }
       if (!hubResult.error && hubResult.data) {
         const row = hubResult.data as unknown as Record<string, boolean | null>;
@@ -121,7 +135,13 @@ export default function NineFitHub() {
       if (failed.length === 3) setHubError("Não foi possível carregar seus dados agora.");
       else if (failed.length) setHubError("Alguns sinais estão sincronizando.");
     } catch {
-      if (request === hubRequest.current) setHubError("Não foi possível carregar seus dados agora.");
+      if (request === hubRequest.current) {
+        setHubError("Não foi possível carregar seus dados agora.");
+        setPerformancePlanTitle(null);
+        setCycleStatus("unavailable");
+        setProtocolCount(0);
+        setLibraryStatus("unavailable");
+      }
     } finally {
       if (request === hubRequest.current) setHubLoading(false);
     }
@@ -237,6 +257,8 @@ export default function NineFitHub() {
             liveScoresVitals={liveScores?.vitals}
             invalidateUserState={invalidate}
             performancePlanTitle={performancePlanTitle}
+            cycleStatus={cycleStatus}
+            libraryStatus={libraryStatus}
             breakdown={breakdown}
             protocolCount={protocolCount}
           />
