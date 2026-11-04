@@ -126,7 +126,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           <div className="min-w-0 flex-1 flex flex-col">
             {/* Top Header */}
-            <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4">
+            <header className="min-h-[calc(4rem+env(safe-area-inset-top))] border-b border-border bg-card flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
               <div className="flex items-center gap-4">
                 <SidebarTrigger />
                 <div className="hidden md:flex items-center gap-2 mr-2">

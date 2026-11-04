@@ -18,6 +18,11 @@ const labels: Record<string, string> = {
   training_environment: "Ambiente",
   assistance: "Assistência",
   reduced_motion: "Reduzir movimento",
+  time_horizon: "Horizonte (semanas)",
+  recovery_rate: "Velocidade de recuperação",
+  volume_tolerance: "Tolerância a volume",
+  stress_sensitivity: "Sensibilidade ao estresse",
+  discomfort_tolerance: "Tolerância a desconforto",
 };
 const statuses: Record<string, string> = {
   completed: "concluído",
@@ -32,6 +37,7 @@ const statuses: Record<string, string> = {
   blocked: "revisão necessária",
   resolved: "resolvido",
 };
+const valueLabels: Record<string, string> = { night: "Noite", gym: "Academia", fast: "Rápida", guided: "Guiada", moderate: "Moderado" };
 const text = (value: unknown) =>
   value == null
     ? "Não informado"
@@ -45,7 +51,7 @@ const text = (value: unknown) =>
           : "Não"
         : typeof value === "object"
           ? JSON.stringify(value)
-          : String(value);
+          : valueLabels[String(value)] ?? String(value);
 export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
   const q = useCoachStudentContext(athleteId),
     w = useProfessorWorkspace();
@@ -163,17 +169,17 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
           orientar a execução. O SYNC não é liberação médica.
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 rounded-xl border bg-card p-3">
         {[
           ["SYNC percebido · hoje", d.sync.value ?? "Não coletado"],
           [
             "Calibração · hoje",
-            d.calibration.complete ? "Completa" : "Incompleta",
+            d.calibration.complete ? "Completa" : Object.values(d.calibration).some(value => typeof value === "number") ? "Incompleta" : "Não coletado",
           ],
-          ["Água registrada · hoje", `${d.today.water_ml} ml`],
-          ["Refeições registradas · hoje", d.today.meals],
+          ["Água registrada · hoje", d.today.water_ml > 0 ? `${d.today.water_ml} ml` : "Sem registro"],
+          ["Refeições registradas · hoje", d.today.meals > 0 ? d.today.meals : "Sem registro"],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-xl border bg-card p-4">
+          <div key={String(label)} className="min-w-0 rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">{label}</p>
             <p className="mt-1 text-lg font-semibold">{value}</p>
           </div>
@@ -230,23 +236,18 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
           </p>
         </article>
       </div>
+      {groups.some(([, rows]) => rows.length === 0) && <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">Sem dados ainda em {groups.filter(([, rows]) => rows.length === 0).length} seções deste recorte.</p>}
       <div className="grid gap-4 md:grid-cols-2">
-        {groups.map(([title, rows]) => (
+        {groups.filter(([, rows]) => rows.length > 0).map(([title, rows]) => (
           <article key={title} className="rounded-xl border bg-card p-4">
             <h2 className="font-semibold">{title}</h2>
-            {!rows.length ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Nenhum registro disponível neste recorte.
-              </p>
-            ) : (
-              <ul className="mt-3 max-h-64 space-y-2 overflow-auto">
+            <ul className="mt-3 max-h-64 space-y-2 overflow-auto">
                 {rows.map((row, i) => (
                   <li key={i} className="border-b pb-2 text-sm">
                     {row}
                   </li>
                 ))}
-              </ul>
-            )}
+            </ul>
           </article>
         ))}
       </div>
