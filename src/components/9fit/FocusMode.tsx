@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatWorkoutDose } from '@/lib/workoutDose';
 import { Badge } from "@/components/ui/badge";
-import { ExerciseVideoPlayer, getYoutubeEmbedUrl } from "@/components/exercises/ExerciseVideoPlayer";
+import { ExerciseVideoPlayer } from "@/components/exercises/ExerciseVideoPlayer";
 
 export interface FocusModeExercise {
   exercise_id?: string;
@@ -182,41 +182,14 @@ export function FocusMode({
           {/* Main Visual & Media - Expanded and Maximized */}
           <div className="w-full relative rounded-3xl overflow-hidden border border-primary/25 bg-gradient-to-br from-[#24150f] via-[#0d0e13] to-[#120e0a] shadow-2xl shadow-black/80 flex flex-col">
             {/* Video / GIF Player */}
-            {exercise.exercise_id ? (
+            {exercise.exercise_id || exercise.video_url || exercise.gif_url ? (
               <div className="w-full aspect-video max-h-[46vh] bg-black">
                 <ExerciseVideoPlayer
                   exerciseId={exercise.exercise_id}
                   exerciseName={exercise.name}
+                  workoutVideoUrl={exercise.video_url}
+                  workoutGifUrl={exercise.gif_url}
                   className="w-full h-full"
-                  showGif={true}
-                />
-              </div>
-            ) : exercise.video_url ? (
-              <div className="w-full aspect-video max-h-[46vh] bg-black">
-                {getYoutubeEmbedUrl(exercise.video_url) ? (
-                  <iframe
-                    src={getYoutubeEmbedUrl(exercise.video_url) as string}
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title={exercise.name}
-                  />
-                ) : (
-                  <video
-                    src={exercise.video_url}
-                    controls
-                    playsInline
-                    className="w-full h-full object-cover"
-                    title={exercise.name}
-                  />
-                )}
-              </div>
-            ) : exercise.gif_url ? (
-              <div className="w-full max-h-[46vh] flex items-center justify-center bg-black/40 overflow-hidden">
-                <img
-                  src={exercise.gif_url}
-                  alt={exercise.name}
-                  className="w-full h-64 sm:h-72 object-contain"
                 />
               </div>
             ) : (

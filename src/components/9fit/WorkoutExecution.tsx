@@ -14,7 +14,7 @@ import { PostWorkoutModal } from "./PostWorkoutModal";
 import { TrainingAdjustmentBanner } from "./TrainingAdjustmentBanner";
 import { FocusMode } from "./FocusMode";
 import { triggerPersonalRecordToast } from "./PersonalRecordToast";
-import { ExerciseVideoPlayer, getYoutubeEmbedUrl } from "@/components/exercises/ExerciseVideoPlayer";
+import { ExerciseVideoPlayer } from "@/components/exercises/ExerciseVideoPlayer";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -797,35 +797,14 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             {currentExercise && (
               <div className="bg-gradient-to-br from-[#24150f] via-card to-[#100d0a] border border-primary/25 rounded-3xl overflow-hidden shadow-xl">
                 {/* Video/GIF player — usa o player real (loading, fallback, toggle gif/video) */}
-                {currentExercise.exercise_id ? (
+                {currentExercise.exercise_id || currentExercise.video_url || currentExercise.gif_url ? (
                   <ExerciseVideoPlayer
                     exerciseId={currentExercise.exercise_id}
                     exerciseName={currentExercise.name}
+                    workoutVideoUrl={currentExercise.video_url}
+                    workoutGifUrl={currentExercise.gif_url}
                     className="w-full aspect-video"
-                    showGif={true}
                   />
-                ) : currentExercise.video_url ? (
-                  <div className="aspect-video bg-black">
-                    {getYoutubeEmbedUrl(currentExercise.video_url) ? (
-                      <iframe
-                        src={getYoutubeEmbedUrl(currentExercise.video_url) as string}
-                        className="w-full h-full border-0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        title={currentExercise.name}
-                      />
-                    ) : (
-                      <video
-                        src={currentExercise.video_url}
-                        controls
-                        playsInline
-                        className="w-full h-full object-cover"
-                        title={currentExercise.name}
-                      />
-                    )}
-                  </div>
-                ) : currentExercise.gif_url ? (
-                  <img src={currentExercise.gif_url} alt="" className="w-full h-48 object-cover" />
                 ) : null}
 
                 <div className="p-4 space-y-3">
