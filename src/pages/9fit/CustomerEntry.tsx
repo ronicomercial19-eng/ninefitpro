@@ -72,11 +72,18 @@ export default function CustomerEntry() {
     } catch { setProvisionError('Não foi possível criar ou vincular sua ficha. Confirme seu e-mail e solicite revisão ao suporte; não crie outra conta.'); }
     finally { setProvisioning(false); }
   }
+  const automaticDestination = state?.access && !state.missingProfile
+    && (paymentReturn || (!purchase && state.destination === '/9fit/os'))
+    ? state.destination
+    : null;
   useEffect(() => {
-    if (!paymentReturn || !state?.access || state.missingProfile) return;
+    if (!automaticDestination) return;
     clearEntry(entryStorage());
-    navigate(state.destination, { replace: true });
-  }, [paymentReturn, state, navigate]);
+    navigate(automaticDestination, { replace: true });
+  }, [automaticDestination, navigate]);
+  if (automaticDestination) {
+    return <main className="min-h-screen bg-background text-foreground p-4"><p role="status">Abrindo o 9FIT PRO…</p></main>;
+  }
   return <main className="min-h-screen bg-background text-foreground px-4 py-10"><section className="mx-auto max-w-lg space-y-5">
     <p className="text-xs tracking-widest text-primary">9FIT PRO · BOAS-VINDAS</p>
     <h1 className="text-3xl font-bold">{paymentReturn ? 'Vamos continuar no app' : 'Entre do seu jeito. Continue de onde parou.'}</h1>
