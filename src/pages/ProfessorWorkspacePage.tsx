@@ -1,6 +1,6 @@
 import { CareWorkspace } from "@/components/students/CareWorkspace";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
-import { CoachStudentPanel } from "@/components/students/CoachStudentPanel";
+import {SelectedStudentFile} from '@/components/students/SelectedStudentFile';
 import { PendingAccessPanel } from '@/components/students/PendingAccessPanel';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -21,7 +21,7 @@ export default function ProfessorWorkspacePage() {
       {accessOpen && <div id="professor-access-panel"><PendingAccessPanel /></div>}
       <CareWorkspace professional athleteId={w.athleteId} />
       {w.athleteId ? (
-        <CoachStudentPanel key={w.athleteId} athleteId={w.athleteId} />
+        <SelectedStudentFile key={w.athleteId} athleteId={w.athleteId} />
       ) : (
         <p>Selecione o aluno para acompanhar os registros do aplicativo.</p>
       )}

@@ -1,3 +1,4 @@
+import {ProfessorQuickActions} from '@/components/students/ProfessorQuickActions';
 import { CareReturnBanner } from "@/components/students/CareReturnBanner";
 import {
   ProfessorWorkspaceProvider,
@@ -182,6 +183,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             {/* Main Content */}
             <main className="min-w-0 flex-1 p-3 sm:p-6 bg-muted/20">
               <ProfessorStudentBar />
+              <ProfessorQuickActions />
             <CareReturnBanner professional />
               <ProfessorScope>{children}</ProfessorScope>
             </main>

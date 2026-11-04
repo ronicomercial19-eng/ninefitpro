@@ -10,7 +10,7 @@ export function StudentPayments({
   student: { id: string; nome: string };
   onStudentUpdate: (value: any) => void;
 }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isTrainer } = useAuth();
   const q = useQuery({
     queryKey: ["coach-subscription", user?.id, student.id],
     queryFn: async () => {
@@ -66,9 +66,9 @@ export function StudentPayments({
         acompanhamento profissional não altera pagamentos nem confirma
         recebimento financeiro.
       </p>
-      {isAdmin && (
-        <Link className="text-primary underline" to="/app/alunos-assinaturas">
-          Abrir gestão administrativa de assinaturas
+      {isTrainer && (
+        <Link className="text-primary underline" to={`/app/acompanhamento?athlete=${student.id}&access=1`}>
+          Liberar acesso por cortesia
         </Link>
       )}
     </section>

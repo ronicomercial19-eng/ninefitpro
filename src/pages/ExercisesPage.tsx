@@ -1,3 +1,4 @@
+import {ExerciseExamples} from '@/components/students/ExerciseExamples';
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -313,6 +314,7 @@ export default function ExercisesPage() {
 
   return (
     <div className="space-y-6">
+      <ExerciseExamples />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-3xl font-display uppercase tracking-tight text-foreground">
           Biblioteca 9FIT

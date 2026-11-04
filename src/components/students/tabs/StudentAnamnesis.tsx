@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,19 @@ interface StudentAnamnesisProps {
 export function StudentAnamnesis({ studentId }: StudentAnamnesisProps) {
   const [anamneses, setAnamneses] = useState<Anamnesis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [form,setForm]=useState<{id?:string;category:string;title:string;questions:{question:string;answer:string}[]}|null>(null);
+  const [saving,setSaving]=useState(false);const writing=useRef(false);
+  async function saveAnswers(){
+    if(!form||writing.current)return;
+    if(form.questions.some(row=>!row.answer.trim())) {toast.error('Responda todas as perguntas antes de concluir.');return;}
+    writing.current=true;setSaving(true);
+    try{
+      const payload={athlete_id:studentId,category:form.category,title:form.title,questions_answers:form.questions,completed_at:new Date().toISOString()};
+      const result=form.id?await supabase.from('student_anamnesis').update(payload).eq('id',form.id).eq('athlete_id',studentId).select('id').single():await supabase.from('student_anamnesis').insert(payload).select('id').single();
+      if(result.error)throw result.error;
+      setForm(null);await fetchAnamneses();window.dispatchEvent(new Event('9fit:profile-updated'));toast.success('Anamnese salva na ficha deste aluno.');
+    }catch{toast.error('Não foi possível salvar a anamnese. Suas respostas foram preservadas.');}finally{writing.current=false;setSaving(false);}
+  }
 
   useEffect(() => {
     fetchAnamneses();
@@ -149,6 +162,7 @@ export function StudentAnamnesis({ studentId }: StudentAnamnesisProps) {
         </div>
       </div>
 
+      {form&&<section className="rounded-xl border bg-card p-4 space-y-4" aria-label="Preencher anamnese"><h3 className="font-semibold">{form.title}</h3><p className="text-xs text-muted-foreground">Registre as respostas informadas pelo aluno. A ficha PDI original é preservada.</p>{form.questions.map((row,index)=><label key={index} className="block text-sm">{row.question}<textarea value={row.answer} maxLength={2000} disabled={saving} onChange={event=>setForm(current=>current?{...current,questions:current.questions.map((q,i)=>i===index?{...q,answer:event.target.value}:q)}:null)} className="mt-2 w-full min-h-20 rounded-lg border bg-background p-3" /></label>)}<div className="flex gap-2"><Button disabled={saving} onClick={()=>void saveAnswers()}>{saving?'Salvando…':'Salvar anamnese'}</Button><Button disabled={saving} variant="outline" onClick={()=>setForm(null)}>Cancelar</Button></div></section>}
       {/* Questionários Disponíveis */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Questionários</h3>
@@ -192,6 +206,7 @@ export function StudentAnamnesis({ studentId }: StudentAnamnesisProps) {
                     size="sm" 
                     className="w-full"
                     variant={hasCompleted ? "outline" : "default"}
+                    onClick={()=>{const existing=anamneses.find(row=>row.category===questionnaire.category);setForm({id:existing?.id,category:questionnaire.category,title:questionnaire.title,questions:Array.isArray(existing?.questions_answers)?existing.questions_answers:questionnaire.questions.map(row=>({...row}))});}}
                   >
                     {hasCompleted ? 'Ver Respostas' : 'Preencher'}
                   </Button>

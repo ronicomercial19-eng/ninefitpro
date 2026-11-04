@@ -359,6 +359,7 @@ export function StudentTraining({
                           {training.training_name}
                         </h3>
                         {getTrainingTypeBadge(training)}
+                        {training.training_data?.model_delivery_id && <details className="w-full text-xs text-muted-foreground"><summary className="cursor-pointer">Origem do modelo e atribuição</summary><p>Modelo: {training.training_data.template_name}</p><p>Aluno: {training.training_data.athlete_name}</p><p>Versão do modelo: {training.training_data.template_updated_at}</p><p className="break-all">Atribuição: {training.training_data.model_delivery_id}</p></details>}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                         <Calendar className="w-4 h-4 flex-shrink-0" />

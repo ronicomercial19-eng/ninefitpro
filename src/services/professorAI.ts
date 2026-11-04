@@ -5,10 +5,12 @@ export async function professorAI(
   mode: string,
   message?: string,
   history: Array<{ role: string; content: string }> = [],
+  skillId?: string,
 ) {
   const { data, error } = await supabase.functions.invoke("ai-coach", {
     body: {
       audience: "professional",
+      skill_id: skillId,
       athlete_id: athleteId,
       mode,
       message,
@@ -26,6 +28,7 @@ export async function professorAI(
     throw new Error(functionErrorMessage(data, "Resposta da IA não confirmada."));
   return data.data as {
     content: string;
+    skills_applied?: {id:string;slug:string;version:number}[];
     recommendations?: any[];
     draft?: { title: string; exercises: any[] };
   };

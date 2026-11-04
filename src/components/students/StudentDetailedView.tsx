@@ -1,5 +1,5 @@
 import { CoachStudentPanel } from "./CoachStudentPanel";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { withAthlete } from "@/lib/professorWorkspace";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +92,9 @@ export function StudentDetailedView({
   onStudentDeleted,
 }: StudentDetailedViewProps) {
   const navigate = useNavigate();
+  const [tabParams,setTabParams]=useSearchParams();
+  const allowedTabs=['dados-pessoais','treino','dieta','historico','medidas','anamneses','fotos','mensalidade'];
+  const selectedTab=allowedTabs.includes(tabParams.get('tab')||'')?tabParams.get('tab')!:'dados-pessoais';
   const [currentStudent, setCurrentStudent] = useState<Student>(student);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -373,20 +376,20 @@ Bons treinos! 🎯`;
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-2">
+                <div className="min-h-11 shrink-0 flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-400" />
                   <span>{currentStudent.email}</span>
                 </div>
 
                 {currentStudent.telefone && (
-                  <div className="flex items-center gap-2">
+                  <div className="min-h-11 shrink-0 flex items-center gap-2">
                     <Phone className="w-4 h-4 text-gray-400" />
                     <span>{currentStudent.telefone}</span>
                   </div>
                 )}
 
                 {currentStudent.data_nascimento && (
-                  <div className="flex items-center gap-2">
+                  <div className="min-h-11 shrink-0 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <span>
                       {calculateAge(currentStudent.data_nascimento)} anos
@@ -395,20 +398,20 @@ Bons treinos! 🎯`;
                 )}
 
                 {currentStudent.profissao && (
-                  <div className="flex items-center gap-2">
+                  <div className="min-h-11 shrink-0 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-gray-400" />
                     <span>{currentStudent.profissao}</span>
                   </div>
                 )}
 
                 {currentStudent.endereco_completo && (
-                  <div className="flex items-center gap-2">
+                  <div className="min-h-11 shrink-0 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-gray-400" />
                     <span>{currentStudent.endereco_completo}</span>
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
+                <div className="min-h-11 shrink-0 flex items-center gap-2">
                   <Dumbbell className="w-4 h-4 text-gray-400" />
                   <span>{currentStudent.objetivo}</span>
                 </div>
@@ -571,43 +574,43 @@ Bons treinos! 🎯`;
         athleteId={currentStudent.id}
       />
       {/* Abas principais */}
-      <Tabs defaultValue="dados-pessoais" className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+      <Tabs value={selectedTab} onValueChange={tab=>{const next=new URLSearchParams(tabParams);next.set("tab",tab);setTabParams(next,{replace:true});}} className="w-full">
+        <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1">
           <TabsTrigger
             id="student-personal-tab"
             value="dados-pessoais"
-            className="flex items-center gap-2"
+            className="min-h-11 shrink-0 flex items-center gap-2"
           >
             <User className="w-4 h-4" />
-            <span className="hidden lg:inline">Dados</span>
+            <span className="inline">Dados</span>
           </TabsTrigger>
-          <TabsTrigger value="treino" className="flex items-center gap-2">
+          <TabsTrigger value="treino" className="min-h-11 shrink-0 flex items-center gap-2">
             <Dumbbell className="w-4 h-4" />
-            <span className="hidden lg:inline">Treino</span>
+            <span className="inline">Treino</span>
           </TabsTrigger>
-          <TabsTrigger value="dieta" className="flex items-center gap-2">
+          <TabsTrigger value="dieta" className="min-h-11 shrink-0 flex items-center gap-2">
             <Utensils className="w-4 h-4" />
-            <span className="hidden lg:inline">Dieta</span>
+            <span className="inline">Dieta</span>
           </TabsTrigger>
-          <TabsTrigger value="historico" className="flex items-center gap-2">
+          <TabsTrigger value="historico" className="min-h-11 shrink-0 flex items-center gap-2">
             <Activity className="w-4 h-4" />
-            <span className="hidden lg:inline">Histórico</span>
+            <span className="inline">Histórico</span>
           </TabsTrigger>
-          <TabsTrigger value="medidas" className="flex items-center gap-2">
+          <TabsTrigger value="medidas" className="min-h-11 shrink-0 flex items-center gap-2">
             <Ruler className="w-4 h-4" />
-            <span className="hidden lg:inline">Medidas</span>
+            <span className="inline">Medidas</span>
           </TabsTrigger>
-          <TabsTrigger value="anamneses" className="flex items-center gap-2">
+          <TabsTrigger value="anamneses" className="min-h-11 shrink-0 flex items-center gap-2">
             <ClipboardList className="w-4 h-4" />
-            <span className="hidden lg:inline">Anamneses</span>
+            <span className="inline">Anamneses</span>
           </TabsTrigger>
-          <TabsTrigger value="fotos" className="flex items-center gap-2">
+          <TabsTrigger value="fotos" className="min-h-11 shrink-0 flex items-center gap-2">
             <Camera className="w-4 h-4" />
-            <span className="hidden lg:inline">Fotos</span>
+            <span className="inline">Fotos</span>
           </TabsTrigger>
-          <TabsTrigger value="mensalidade" className="flex items-center gap-2">
+          <TabsTrigger value="mensalidade" className="min-h-11 shrink-0 flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
-            <span className="hidden lg:inline">Mensalidade</span>
+            <span className="inline">Mensalidade</span>
           </TabsTrigger>
         </TabsList>
 

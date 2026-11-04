@@ -90,7 +90,7 @@ export default function NineFitTrain() {
         await fetchCompletedCount(athleteId);
       } else if (previousSession.daily_workout_id) {
         const { data, error } = await (supabase as any).from('daily_workouts')
-          .select('id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes)')
+          .select('id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes)')
           .eq('id',previousSession.daily_workout_id).eq('athlete_id',athleteId).single();
         if (error) throw error;
         if (data.prescription_issue) throw new Error('A prescrição precisa de revisão do profissional antes da retomada.');
@@ -192,12 +192,12 @@ export default function NineFitTrain() {
         supabase.from("student_training_assignments").select("*").eq("student_id", aid)
           .eq("is_active", true).order("created_at", { ascending: false }).abortSignal(controller.signal),
         (supabase as any).from("daily_workouts")
-          .select("id,day_name,workout_date,prescription_issue,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))")
+          .select("id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))")
           .eq("athlete_id", aid).eq("workout_date", today).order("created_at", { ascending: false }).abortSignal(controller.signal),
         withTimeout(loadResolvedTemplateAssignments(aid, undefined, controller.signal)),
       ));
       if (!alive()) return;
-      const valid = sources.assignments.filter(t => activeTrainingOnDate(t, today));
+      const valid = sources.assignments.filter(t => activeTrainingOnDate(t, today) && !t.training_data?.model_delivery_id);
       const assigned = sources.templates;
       const dailyRows = sources.daily;
       setTemplateWarning(sources.templatesUnavailable);
@@ -223,6 +223,7 @@ export default function NineFitTrain() {
               id: d.id,
               daily_workout_id: d.id,
               training_name: d.day_name,
+              training_description: d.changes_json?.template_name ? `Modelo: ${d.changes_json.template_name}` : undefined,
               start_date: d.workout_date,
               is_active: true,
               training_type: "structured",

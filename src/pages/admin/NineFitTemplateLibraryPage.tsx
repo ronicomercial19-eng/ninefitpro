@@ -1,3 +1,5 @@
+import {useAuth} from '@/contexts/AuthContext';
+import {ModelAssignment} from '@/components/students/ModelAssignment';
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +25,7 @@ type Template = {
   required_variables: string[] | null;
   metadata: Record<string, unknown> | null;
   updated_at: string;
+  prescription_schema?: any;
 };
 
 const statusLabels: Record<string, string> = {
@@ -32,6 +35,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function NineFitTemplateLibraryPage() {
+  const {isAdmin}=useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState<Template | null>(null);
@@ -43,7 +47,7 @@ export default function NineFitTemplateLibraryPage() {
     const { data, error } = await supabase
       .from("ninefit_template_library" as never)
       .select(
-        "id,slug,name,template_type,status,source_url,source_html,required_variables,metadata,updated_at",
+        "id,slug,name,template_type,status,source_url,source_html,required_variables,metadata,updated_at,prescription_schema",
       )
       .order("updated_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -90,8 +94,7 @@ export default function NineFitTemplateLibraryPage() {
       <div>
         <h1 className="text-2xl font-semibold">Biblioteca de modelos 9FIT</h1>
         <p className="text-muted-foreground">
-          Revise e aprove modelos de design, prescrição e protocolos antes de
-          aplicar a alunos.
+          Selecione um modelo, escolha o aluno e confirme a revisão para atribuir o treino do dia.
         </p>
       </div>
       <div className="flex items-center gap-3">
@@ -174,11 +177,12 @@ export default function NineFitTemplateLibraryPage() {
                       Abrir fonte
                     </a>
                   )}
-                  <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap">
+                  <details><summary className="cursor-pointer text-sm text-muted-foreground">Consultar HTML de origem</summary><pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap">
                     {selected.source_html?.slice(0, 6000) ||
                       "Sem HTML de origem."}
-                  </pre>
-                  <div className="flex flex-wrap gap-2">
+                  </pre></details>
+                  <ModelAssignment key={selected.id} model={selected} />
+                  {isAdmin && <div className="flex flex-wrap gap-2">
                     <Button
                       disabled={saving || selected.status === "approved"}
                       onClick={() => void review("approved")}
@@ -199,11 +203,8 @@ export default function NineFitTemplateLibraryPage() {
                     >
                       Voltar para rascunho
                     </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    A autorização final é validada no RPC do Supabase conforme o
-                    papel do usuário.
-                  </p>
+                  </div>}
+
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">

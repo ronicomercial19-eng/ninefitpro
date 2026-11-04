@@ -1,5 +1,5 @@
 import { isAthleteId } from "@/lib/professorWorkspace";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,13 +30,20 @@ export function ProfessorPrescription() {
 function Editor({ athleteId, name }: { athleteId: string; name: string }) {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const today = businessDate();
   const queryDate = new URLSearchParams(location.search).get("date");
   const recParam = new URLSearchParams(location.search).get("recommendation");
   const recommendationId = isAthleteId(recParam) ? recParam : null;
+  const review = useQuery({queryKey:['recommendation-scope',athleteId,recommendationId],enabled:!!recommendationId,queryFn:async()=>{
+    const {data,error}=await supabase.from('training_adjustment_recommendations').select('athlete_id,week_start,status').eq('id',recommendationId!).eq('athlete_id',athleteId).single();
+    if(error) throw error; return data;
+  }});
+  const initialExercise = new URLSearchParams(location.search).get('exercise');
   const templateId = new URLSearchParams(location.search).get("template");
   const templateKind = new URLSearchParams(location.search).get("templateKind");
   const [date, setDate] = useState(
-      queryDate && /^\d{4}-\d{2}-\d{2}$/.test(queryDate)
+      queryDate && /^\d{4}-\d{2}-\d{2}$/.test(queryDate) && queryDate >= today
         ? queryDate
         : businessDate(),
     ),
@@ -49,7 +56,7 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
     [expected, setExpected] = useState<string | null>(null),
     [reload, setReload] = useState(0),
     [reviewed, setReviewed] = useState(false),
-    [prompt, setPrompt] = useState("");
+    [prompt, setPrompt] = useState(()=>(location.state as any)?.athleteId===athleteId?String((location.state as any)?.skillAnalysis||'').slice(0,2000):'');
   const requestId = useRef(crypto.randomUUID()),
     revision = useRef(0),
     writing = useRef(false),
@@ -269,8 +276,23 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
       if (alive.current) setBusy(false);
     }
   }
+  const exerciseImported=useRef('');
+  useEffect(()=>{if(loading||loadError||rows.length||!isAthleteId(initialExercise)||exerciseImported.current===`${athleteId}:${date}:${initialExercise}`)return;
+    const key=`${athleteId}:${date}:${initialExercise}`;exerciseImported.current=key;let active=true;
+    void supabase.from('exercises').select('id,name').eq('id',initialExercise).single().then(({data,error})=>{if(!active)return;if(error){toast.error('Exercício indisponível.');return;}setRows([{exercise_id:data.id,name:data.name,sets:3,reps_range:data.name.toLowerCase().includes('prancha')?'20 s':'8-12',rest_seconds:60,notes:'Dose de referência: revisar conforme ficha do aluno.'}]);changed();});
+    return()=>{active=false;};
+  },[loading,loadError,athleteId,date,initialExercise]);
+  const importedTemplate=useRef('');
+  useEffect(()=>{const key=`${athleteId}:${date}:${templateId}:${templateKind}`;if(!loading&&!loadError&&!rows.length&&isAthleteId(templateId)&&['super_sets','reference_series'].includes(templateKind||'')&&importedTemplate.current!==key){importedTemplate.current=key;void importTemplate();}},[loading,loadError,athleteId,date,templateId,templateKind]);
   async function publish() {
     if (writing.current || !reviewed) return;
+    if(date < today) {toast.error('Escolha hoje ou uma data futura para publicar.');return;}
+    if(recommendationId && (review.isPending || review.isError || !review.data)) {toast.error('Não foi possível confirmar a recomendação deste aluno. Atualize a revisão.');return;}
+    if(recommendationId && review.data) {
+      const end=new Date(`${review.data.week_start}T12:00:00`);end.setDate(end.getDate()+6);
+      const endDate=`${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`;
+      if(date<review.data.week_start || date>endDate){toast.error('Esta recomendação pertence a outra semana. Use “Nova prescrição de hoje” para revisar e publicar uma nova sessão.');return;}
+    }
     let exercises: PrescriptionExercise[];
     try {
       exercises = validatePrescriptionExercises(rows);
@@ -310,7 +332,7 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
       if (alive.current && request === revision.current)
         toast.error(
           "Não foi possível publicar. " +
-            ((e as any)?.message || "Tente novamente."),
+            ((e as any)?.message?.includes('adjustment_date_outside_review_week') ? 'A data está fora da semana revisada. Inicie uma nova prescrição de hoje.' : (e as any)?.message?.includes('workout_already_started') ? 'Esta sessão já foi iniciada. Escolha outra data para preservar a execução.' : (e as any)?.message || 'Tente novamente.'),
         );
     } finally {
       writing.current = false;
@@ -326,6 +348,10 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
         <p className="text-sm text-primary">
           Revisão manual de recomendação: a publicação também registrará a
           aplicação desta revisão.
+          <Button type="button" variant="outline" className="ml-3" onClick={()=>{
+            const next=new URLSearchParams(location.search);next.delete('recommendation');next.set('date',today);
+            navigate({pathname:location.pathname,search:next.toString()},{replace:true});setDate(today);changed();
+          }}>Nova prescrição de hoje</Button>
         </p>
       )}
       <p className="text-sm text-muted-foreground">
@@ -338,6 +364,7 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
           <input
             aria-label="Data do treino"
             type="date"
+            min={today}
             value={date}
             disabled={busy}
             onChange={(e) => {

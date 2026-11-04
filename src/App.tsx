@@ -375,7 +375,7 @@ const App = () => (
               <PrivateRoute><AppLayout><SkillManagerPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/modelos-ninefit" element={
-              <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>
+              <PrivateRoute><AppLayout><NineFitTemplateLibraryPage /></AppLayout></PrivateRoute>
             } />
 
             <Route path="*" element={<NotFound />} />
