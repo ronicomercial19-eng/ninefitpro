@@ -12,5 +12,6 @@ export function AITrainingWorkspace() {
 
 export default function AITrainingPage() {
   const location = useLocation();
-  return <Navigate replace to={{ pathname: "/app/assistente-ia", search: location.search, hash: location.hash }} />;
+  return <Navigate replace state={location.state} to={{ pathname: "/app/assistente-ia", search: location.search, hash: location.hash }} />;
 }
+
