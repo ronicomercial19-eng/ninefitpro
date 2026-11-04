@@ -19,7 +19,7 @@ export function TrainingSetupInbox(){
   <div className="flex justify-between gap-3"><h2 className="font-semibold">Automação de treino pendente · {q.data.total}</h2><button className="text-sm text-primary underline" onClick={()=>void q.refetch()}>Atualizar</button></div>
   <p className="text-sm text-muted-foreground">Estes alunos não têm regra automática ativa. A atribuição manual pode continuar disponível; confira o planejamento antes de ativar a automação.</p>
   {q.data.items.map(a=><Link key={a.id} to={withAthlete("/app/acompanhamento",a.id)} className="block rounded-2xl border border-border p-3 text-sm">
-   <span className="font-medium">{a.name}</span><span className="block text-muted-foreground">{a.has_manual_assignment?"Com atribuição manual vigente":"Sem atribuição manual vigente"} · {a.has_periodization?"Com periodização ativa":"Sem periodização ativa"}</span>
+   <span className="font-medium">{a.name}</span> {q.data.items.some(other => other.id !== a.id && other.name === a.name) && <span className="text-xs text-muted-foreground">#{a.id.slice(0, 6)}</span>} {!a.has_periodization && <span className="ml-2 rounded-full border px-2 py-1 text-xs">Sem periodização</span>}
   </Link>)}
   <div className="flex justify-between items-center text-sm"><button className="text-primary disabled:opacity-40" disabled={page===0} onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page+1} de {Math.max(1,Math.ceil(q.data.total/20))}</span><button className="text-primary disabled:opacity-40" disabled={(page+1)*20>=q.data.total} onClick={()=>setPage(p=>p+1)}>Próxima</button></div>
  </section>;

@@ -1,12 +1,16 @@
 import { CapacityResetEditor } from './CapacityResetEditor';
 import { ReadinessCard } from '@/components/9fit/ReadinessCard';
-import { Link } from "react-router-dom";
+import { lazy, Suspense, useState } from "react";
+import { ProfessorPrescription } from "./ProfessorPrescription";
+import { ProfessionalMessages } from "./ProfessionalMessages";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useCoachStudentContext } from "@/hooks/useCoachStudentContext";
-import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import { consecutiveDays } from "@/lib/studentDates";
 import { Button } from "@/components/ui/button";
 import { completionLabel, completionReason } from '@/lib/workoutCompletion';
 import { goalLabel } from '@/lib/athleteGoal';
+const AgendaPage = lazy(() => import("@/pages/AgendaPage"));
+const RonProfessorPage = lazy(() => import("@/pages/admin/RonProfessorPage"));
 const labels: Record<string, string> = {
   goal: "Objetivo",
   primary_goal: "Objetivo",
@@ -53,8 +57,8 @@ const text = (value: unknown) =>
           ? JSON.stringify(value)
           : valueLabels[String(value)] ?? String(value);
 export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
-  const q = useCoachStudentContext(athleteId),
-    w = useProfessorWorkspace();
+  const q = useCoachStudentContext(athleteId);
+  const [panel, setPanel] = useState<string | null>(null);
   if (q.isLoading) return <p>Carregando contexto compartilhado…</p>;
   if (q.isError || !q.data)
     return (
@@ -125,7 +129,6 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
   return (
     <section className="space-y-5">
       <ReadinessCard athleteId={athleteId} coach/>
-      <CapacityResetEditor athleteId={athleteId}/>
       <div className="flex flex-wrap justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">
@@ -143,23 +146,24 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
           Atualizar registros
         </Button>
       </div>
-      <div className="flex flex-wrap gap-3 text-sm">
-        {[
-          ["Revisar treino", "/app/treino-ia"],
-          ["Periodização", "/app/smart-periodizer"],
-          ["Consultar RON", "/app/ron"],
-          ["Agenda", "/app/agenda"],
-          ["Conversa", "/app/mensagens"],
-        ].map(([label, path]) => (
-          <Link
-            key={path}
-            to={w.link(path)}
-            className="rounded-lg border border-primary/30 px-3 py-2 text-primary"
-          >
-            {label}
-          </Link>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        {["Ajustar treino de hoje", "Perguntar ao RON", "Agendar", "Chamar aluno", "Confirmar ficha"].map(title =>
+          <Button key={title} className="min-h-11" variant="outline" onClick={() => setPanel(title)}>{title}</Button>)}
+        {c.prescriptions.some(plan => plan.is_active && (!plan.start_date || plan.start_date <= d.date) && (!plan.end_date || plan.end_date >= d.date)) &&
+          <span className="rounded-full border px-3 py-1 text-xs">Plano ativo</span>}
       </div>
+      <Dialog open={!!panel} onOpenChange={open => { if (!open) setPanel(null); }}>
+        <DialogContent className="max-h-[85dvh] max-w-4xl overflow-y-auto">
+          <DialogTitle>{panel} · {c.athlete.name}</DialogTitle>
+          <Suspense fallback={<p>Carregando…</p>}>
+            {panel === "Ajustar treino de hoje" ? <ProfessorPrescription embedded initialDate={d.date} />
+              : panel === "Perguntar ao RON" ? <RonProfessorPage />
+              : panel === "Agendar" ? <AgendaPage />
+              : panel === "Chamar aluno" ? <ProfessionalMessages athleteId={athleteId} name={c.athlete.name} professional />
+              : panel === "Confirmar ficha" && <CapacityResetEditor athleteId={athleteId} />}
+          </Suspense>
+        </DialogContent>
+      </Dialog>
       {d.safety.review_required && (
         <div
           role="status"

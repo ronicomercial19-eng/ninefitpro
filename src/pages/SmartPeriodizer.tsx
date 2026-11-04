@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import { ProfessorCycleBuilder } from "@/components/students/ProfessorCycleBuilder";
 import { ProfessorPrescription } from "@/components/students/ProfessorPrescription";
-import { ProfessorConversation } from "@/components/students/ProfessorConversation";
+import RonProfessorPage from "./admin/RonProfessorPage";
 import { StudentTrainingCycles } from "@/components/students/StudentTrainingCycles";
 import { SelectedStudentFile } from "@/components/students/SelectedStudentFile";
 import { PeriodizationAssignDialog } from "@/components/students/PeriodizationAssignDialog";
@@ -52,7 +52,7 @@ export default function SmartPeriodizer() {
     <Dialog open={!!panel} onOpenChange={open => { if (!open) setPanel(null); }}>
       <DialogContent className="max-h-[85dvh] max-w-4xl overflow-y-auto">
         <DialogTitle>{panel?.title} · {selected.name}</DialogTitle>
-        {panel?.title === "RON" ? <ProfessorConversation />
+        {panel?.title === "RON" ? <RonProfessorPage />
           : panel?.title === "Agenda" ? <AgendaPage />
           : panel?.title === "Conversa" ? <ProfessorMessagesPage />
           : panel?.title === "Ficha" ? <SelectedStudentFile athleteId={selected.id} />

@@ -1,70 +1,38 @@
+import { useState } from "react";
 import { ProfessorConversation } from "@/components/students/ProfessorConversation";
+import { ProfessorPrescription } from "@/components/students/ProfessorPrescription";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
-import React from "react";
-import { Bot, Brain, Users, ArrowRight } from "lucide-react";
-import { ApiConnectorCard } from "@/components/admin/ApiConnectorCard";
-import { useNavigate } from "react-router-dom";
+import { useCoachStudentContext } from "@/hooks/useCoachStudentContext";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import RonProfessorPage from "./admin/RonProfessorPage";
+import TrainingAdjustmentsPage from "./TrainingAdjustmentsPage";
 
 export default function FitCopilotPage() {
-  const routerNavigate = useNavigate();
-  const workspace = useProfessorWorkspace();
-  const navigate = (path: string) => routerNavigate(workspace.link(path));
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-          <Bot className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">FitCopilot</h1>
-          <p className="text-sm text-muted-foreground">
-            Análise e orientação para o aluno selecionado
-          </p>
-        </div>
-      </div>
-      <ProfessorConversation />
-      <section className="grid gap-4 md:grid-cols-3">
-        <button
-          onClick={() => navigate("/app/ron")}
-          className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition"
-        >
-          <Bot className="w-5 h-5 text-primary mb-3" />
-          <p className="font-semibold">Abrir cockpit RON</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Analise progresso e receba recomendações contextuais.
-          </p>
-          <ArrowRight className="w-4 h-4 text-primary mt-4" />
-        </button>
-        <button
-          onClick={() => navigate("/app/ajustes-treino")}
-          className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition"
-        >
-          <Brain className="w-5 h-5 text-primary mb-3" />
-          <p className="font-semibold">Revisar ajustes de treino</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Veja e aplique ajustes inteligentes pendentes.
-          </p>
-          <ArrowRight className="w-4 h-4 text-primary mt-4" />
-        </button>
-        <button
-          onClick={() => navigate("/app/alunos")}
-          className="rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60 transition"
-        >
-          <Users className="w-5 h-5 text-primary mb-3" />
-          <p className="font-semibold">Escolher aluno</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Abra o perfil para consultar histórico e prescrição.
-          </p>
-          <ArrowRight className="w-4 h-4 text-primary mt-4" />
-        </button>
-      </section>
-      <ApiConnectorCard
-        moduleKey="fit_copilot"
-        title="FitCopilot API"
-        description="Monitoramento em tempo real, ajustes de carga e detecção de padrões."
-        icon={Bot}
-        endpointPlaceholder="https://api.fitcopilot.example.com/v1"
-      />
-    </div>
-  );
+  const { selected } = useProfessorWorkspace();
+  const context = useCoachStudentContext(selected?.id ?? null);
+  const [panel, setPanel] = useState<"ron" | "adjust" | null>(null);
+  const [review, setReview] = useState<{ date: string; recommendation: string } | null>(null);
+  const today = context.data?.daily_context;
+  return <section className="min-w-0 space-y-4">
+    <header><h1 className="text-2xl font-bold">FitCopilot</h1><p className="text-sm text-muted-foreground">Analise o histórico e os sinais de {selected?.name ?? "um aluno"}.</p></header>
+    {context.isError && <Button variant="outline" onClick={() => void context.refetch()}>Tentar carregar sinais novamente</Button>}
+    {today && <dl className="grid grid-cols-2 gap-3 rounded-xl border bg-card p-4">
+      <div><dt>SYNC de hoje</dt><dd className="font-semibold">{today.sync.value ?? "Não coletado"}</dd></div>
+      <div><dt>Calibração</dt><dd className="font-semibold">{today.calibration.complete ? "Completa" : "Sem calibração completa"}</dd></div>
+    </dl>}
+    <ProfessorConversation analysisOnly />
+    {selected && <div className="flex flex-wrap gap-2">
+      <Button variant="outline" onClick={() => setPanel("adjust")}>Revisar ajustes</Button>
+      <Button variant="outline" onClick={() => setPanel("ron")}>Abrir RON</Button>
+    </div>}
+    <Dialog open={!!panel} onOpenChange={open => { if (!open) { setPanel(null); setReview(null); } }}>
+      <DialogContent className="max-h-[85dvh] max-w-4xl overflow-y-auto">
+        <DialogTitle>{panel === "ron" ? "RON" : "Ajustes de treino"}</DialogTitle>
+        {panel === "ron" ? <RonProfessorPage /> : review
+          ? <><Button variant="ghost" onClick={() => setReview(null)}>Voltar aos ajustes</Button><ProfessorPrescription embedded initialDate={review.date} initialRecommendation={review.recommendation} /></>
+          : <TrainingAdjustmentsPage embedded onReview={(date, recommendation) => setReview({ date, recommendation })} />}
+      </DialogContent>
+    </Dialog>
+  </section>;
 }

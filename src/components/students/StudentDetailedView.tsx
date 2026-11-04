@@ -1,6 +1,9 @@
 import { CoachStudentPanel } from "./CoachStudentPanel";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { withAthlete } from "@/lib/professorWorkspace";
+import { PeriodizationAssignDialog } from "./PeriodizationAssignDialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import AgendaPage from "@/pages/AgendaPage";
+import PosturaProPage from "@/pages/admin/PosturaProPage";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,9 +96,11 @@ export function StudentDetailedView({
 }: StudentDetailedViewProps) {
   const navigate = useNavigate();
   const [tabParams,setTabParams]=useSearchParams();
-  const allowedTabs=['dados-pessoais','treino','dieta','historico','medidas','anamneses','fotos','mensalidade'];
+  const allowedTabs=['dados-pessoais','treino','dieta','historico','medidas','anamneses','fotos','postura-pro','mensalidade'];
   const selectedTab=allowedTabs.includes(tabParams.get('tab')||'')?tabParams.get('tab')!:'dados-pessoais';
   const [currentStudent, setCurrentStudent] = useState<Student>(student);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [agendaOpen, setAgendaOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -345,7 +350,7 @@ Bons treinos! 🎯`;
       {/* Card de perfil do aluno */}
       <Card>
         <CardHeader>
-          <div className="flex items-start gap-6">
+          <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start">
             {/* Avatar */}
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
               {currentStudent.foto_url ? (
@@ -361,8 +366,8 @@ Bons treinos! 🎯`;
 
             {/* Informações principais */}
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">{currentStudent.nome}</h1>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <h1 className="w-full break-words text-2xl font-bold">{currentStudent.nome}</h1>
                 <Badge
                   className={
                     currentStudent.ativo
@@ -378,7 +383,7 @@ Bons treinos! 🎯`;
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="min-h-11 shrink-0 flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-400" />
-                  <span>{currentStudent.email}</span>
+                  <span className="min-w-0 break-all">{currentStudent.email}</span>
                 </div>
 
                 {currentStudent.telefone && (
@@ -419,24 +424,17 @@ Bons treinos! 🎯`;
             </div>
 
             {/* Quick actions */}
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Button className="min-h-11" onClick={() => setAssignOpen(true)}>Periodizar</Button>
+              <Button className="min-h-11" variant="outline" onClick={handleSendNewTrainingNotification}><Bell className="mr-2 h-4 w-4" />Notificar treino</Button>
+              <details className="rounded-lg border p-2"><summary className="cursor-pointer p-2 text-sm">Mais ações</summary><div className="grid gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSendWhatsAppRegistration}
-                className="bg-green-500 hover:bg-green-600 text-white border-green-500"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Enviar Cadastro
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleSendNewTrainingNotification}
-                className="bg-neon-400 hover:bg-neon-400/90 text-black border-neon-400"
-              >
-                <Bell className="w-4 h-4 mr-2" />
-                Notificar Treino
               </Button>
               <Button
                 size="sm"
@@ -450,9 +448,7 @@ Bons treinos! 🎯`;
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() =>
-                  navigate(withAthlete("/app/agenda", currentStudent.id))
-                }
+                onClick={() => setAgendaOpen(true)}
               >
                 Agendar Aula
               </Button>
@@ -463,7 +459,6 @@ Bons treinos! 🎯`;
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
                   >
                     <KeyRound className="w-4 h-4 mr-2" />
                     Recuperar acesso
@@ -491,7 +486,8 @@ Bons treinos! 🎯`;
                 </AlertDialogContent>
               </AlertDialog>
 
-              {/* Toggle Active/Inactive */}
+              </div></details>
+              <details className="rounded-lg border p-2"><summary className="cursor-pointer p-2 text-sm">Gerenciar acesso e exclusão</summary><div className="grid gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -503,6 +499,7 @@ Bons treinos! 🎯`;
                 onClick={async () => {
                   try {
                     const newStatus = !currentStudent.ativo;
+                    if (!window.confirm(`${newStatus ? "Ativar" : "Desativar"} ${currentStudent.nome}?`)) return;
                     const { error } = await supabase
                       .from("athletes")
                       .update({ activated: newStatus } as any)
@@ -556,19 +553,14 @@ Bons treinos! 🎯`;
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              </div></details>
             </div>
           </div>
         </CardHeader>
       </Card>
 
-      <Button
-        variant="outline"
-        onClick={() =>
-          navigate(withAthlete("/app/mensagens", currentStudent.id))
-        }
-      >
-        Abrir conversa com o aluno
-      </Button>
+      <PeriodizationAssignDialog open={assignOpen} onOpenChange={setAssignOpen} studentId={currentStudent.id} studentName={currentStudent.nome} onSuccess={() => window.dispatchEvent(new Event("9fit:workout-updated"))} />
+      <Dialog open={agendaOpen} onOpenChange={setAgendaOpen}><DialogContent className="max-h-[85dvh] max-w-4xl overflow-y-auto"><DialogTitle>Agendar · {currentStudent.nome}</DialogTitle><AgendaPage /></DialogContent></Dialog>
       <CoachStudentPanel
         key={currentStudent.id}
         athleteId={currentStudent.id}
@@ -612,6 +604,7 @@ Bons treinos! 🎯`;
             <CreditCard className="w-4 h-4" />
             <span className="inline">Mensalidade</span>
           </TabsTrigger>
+          <TabsTrigger className="min-h-11 shrink-0" value="postura-pro">Postura Pro</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados-pessoais">
@@ -644,6 +637,7 @@ Bons treinos! 🎯`;
           <StudentAnamnesis studentId={currentStudent.id} />
         </TabsContent>
 
+        <TabsContent value="postura-pro"><PosturaProPage studentId={currentStudent.id} /></TabsContent>
         <TabsContent value="fotos">
           <StudentPhotos studentId={currentStudent.id} />
         </TabsContent>

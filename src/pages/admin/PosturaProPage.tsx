@@ -31,9 +31,10 @@ interface Scan {
 const SIDES = ["front", "back", "left", "right"] as const;
 type Side = (typeof SIDES)[number];
 
-export default function PosturaProPage() {
+export default function PosturaProPage({ studentId }: { studentId?: string } = {}) {
   const { user } = useAuth();
   const workspace = useProfessorWorkspace();
+  const athleteId = studentId ?? workspace.athleteId;
   const revision = useRef(0);
   const writing = useRef(false);
   const [loadError, setLoadError] = useState(false);
@@ -47,12 +48,12 @@ export default function PosturaProPage() {
     const request = ++revision.current;
     setScans([]);
     setLoadError(false);
-    if (!workspace.athleteId) return;
+    if (!athleteId) return;
     setLoading(true);
     const { data, error } = await supabase
       .from("postura_scans")
       .select("*")
-      .eq("athlete_id", workspace.athleteId)
+      .eq("athlete_id", athleteId)
       .order("created_at", { ascending: false })
       .limit(20);
     if (error) {
@@ -81,7 +82,7 @@ export default function PosturaProPage() {
     return () => {
       revision.current++;
     };
-  }, [workspace.athleteId]);
+  }, [athleteId]);
   async function runScan(id: string) {
     const { data, error } = await supabase.functions.invoke(
       "postura-pro-scan",
@@ -116,7 +117,7 @@ export default function PosturaProPage() {
   }
 
   async function uploadAndScan() {
-    if (!user || !workspace.athleteId)
+    if (!user || !athleteId)
       return toast.error("Selecione o aluno antes de enviar fotos.");
     if (writing.current) return;
     const missing = SIDES.filter((s) => !files[s]);
@@ -134,7 +135,7 @@ export default function PosturaProPage() {
           f.size > 10 * 1024 * 1024
         )
           throw new Error("Use JPEG, PNG ou WebP de até 10 MB.");
-        const path = `${workspace.athleteId}/${crypto.randomUUID()}_${side}`;
+        const path = `${athleteId}/${crypto.randomUUID()}_${side}`;
         const { error } = await supabase.storage
           .from("assessments")
           .upload(path, f, { upsert: true });
@@ -145,7 +146,7 @@ export default function PosturaProPage() {
         .from("postura_scans" as any)
         .insert({
           user_id: user.id,
-          athlete_id: workspace.athleteId,
+          athlete_id: athleteId,
           ...urls,
           status: "pending",
         })
@@ -180,14 +181,14 @@ export default function PosturaProPage() {
         </p>
       </div>
 
-      <ApiConnectorCard
+      {!studentId && <ApiConnectorCard
         moduleKey="postura_pro"
         title="Postura Pro Analyzer API"
         description="Conecte o serviço externo de análise postural para laudos completos."
         icon={ScanLine}
         endpointPlaceholder="https://api.posturapro.example.com/v1"
         healthPath="/health"
-      />
+      />}
 
       <Card className="border-primary/30">
         <CardContent className="p-6 space-y-4">
@@ -215,19 +216,25 @@ export default function PosturaProPage() {
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
-                  onChange={(e) =>
-                    e.target.files?.[0] &&
-                    setFiles({ ...files, [side]: e.target.files[0] })
-                  }
+                  onChange={event => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+                      event.target.value = "";
+                      toast.error("Use JPEG, PNG ou WebP de até 10 MB.");
+                      return;
+                    }
+                    setFiles(current => ({ ...current, [side]: file }));
+                  }}
                 />
               </label>
             ))}
           </div>
           <Button
             onClick={uploadAndScan}
-            disabled={uploading || !workspace.athleteId || !!running}
+            disabled={uploading || !athleteId || !!running || SIDES.some(side => !files[side])}
             className="w-full"
           >
             {uploading ? (

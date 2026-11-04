@@ -1,3 +1,4 @@
+import {lazy,Suspense} from "react";
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {useSearchParams} from 'react-router-dom';
 import {useAuth} from '@/contexts/AuthContext';
@@ -14,7 +15,8 @@ import {StudentPayments} from './tabs/StudentPayments';
 import {CoachStudentPanel} from './CoachStudentPanel';
 import {useCoachStudentContext} from '@/hooks/useCoachStudentContext';
 import {Button} from '@/components/ui/button';
-const sections=[['dados-pessoais','Dados'],['treino','Treino'],['dieta','Dieta'],['historico','Histórico'],['medidas','Medidas'],['anamneses','Anamneses'],['fotos','Fotos'],['mensalidade','Mensalidade']];
+const PosturaPro = lazy(() => import("@/pages/admin/PosturaProPage"));
+const sections=[['dados-pessoais','Dados'],['treino','Treino'],['dieta','Dieta'],['historico','Histórico'],['medidas','Medidas'],['anamneses','Anamneses'],['fotos','Fotos'],['postura-pro','Postura Pro'],['mensalidade','Mensalidade']];
 export function SelectedStudentFile({athleteId}:{athleteId:string}){
  const {user}=useAuth(),qc=useQueryClient(),[params,setParams]=useSearchParams();
  const context=useCoachStudentContext(athleteId);
@@ -32,6 +34,7 @@ export function SelectedStudentFile({athleteId}:{athleteId:string}){
  <TabsContent value="historico"><div className="space-y-5"><StudentHistory studentId={athleteId}/><CoachStudentPanel athleteId={athleteId}/></div></TabsContent>
  <TabsContent value="medidas"><StudentMeasurements studentId={athleteId}/></TabsContent>
  <TabsContent value="anamneses"><div className="space-y-4">{context.data&&<section className="rounded-xl border bg-card p-4"><h3 className="font-semibold">PDI informado pelo aluno</h3><dl className="mt-3 grid gap-2 sm:grid-cols-2">{Object.entries(context.data.daily_context.profile.declared).map(([key,value])=><div key={key}><dt className="text-xs text-muted-foreground">{key}</dt><dd className="text-sm">{Array.isArray(value)?value.join(', '):String(value??'Não informado')}</dd></div>)}</dl></section>}<StudentAnamnesis studentId={athleteId}/></div></TabsContent>
+ <TabsContent value="postura-pro"><Suspense fallback={<p>Carregando Postura Pro…</p>}><PosturaPro studentId={athleteId} /></Suspense></TabsContent>
  <TabsContent value="fotos"><StudentPhotos studentId={athleteId}/></TabsContent>
  <TabsContent value="mensalidade"><StudentPayments student={student} onStudentUpdate={updated}/></TabsContent>
  </Tabs></section>;
