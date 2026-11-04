@@ -70,12 +70,17 @@ export default function NineFitTrain() {
       return;
     }
     let active = true;
-    void supabase.from('workout_executions').select('id,workout_date,daily_workout_id,assignment_id')
-      .eq('athlete_id', athleteId).eq('status','in_progress').lt('workout_date',businessDate())
+    const refreshOpenSession = () => supabase.from('workout_executions').select('id,workout_date,daily_workout_id,assignment_id')
+      .eq('athlete_id', athleteId).eq('status','in_progress').lte('workout_date',businessDate())
       .order('created_at',{ascending:false}).limit(1).maybeSingle().then(({data,error}) => {
         if (active && !error) setPreviousSession(data);
       });
-    return () => { active = false; };
+    void refreshOpenSession();
+    window.addEventListener('9fit:open-workout-conflict', refreshOpenSession);
+    return () => {
+      active = false;
+      window.removeEventListener('9fit:open-workout-conflict', refreshOpenSession);
+    };
   }, [athleteId, completedCount]);
 
   async function handlePreviousSession(resume: boolean) {
@@ -83,6 +88,7 @@ export default function NineFitTrain() {
     setSessionBusy(true);
     try {
       if (!resume) {
+        if (!window.confirm('Encerrar a sessão aberta com as séries que já foram registradas?')) return;
         const { data, error } = await supabase.rpc('fn_complete_workout_execution',{p_execution_id:previousSession.id,p_duration_seconds:0});
         if (error || !(data as any)?.ok) throw error || new Error('Não foi possível finalizar.');
         toast.info((data as any).completion_valid ? 'Treino finalizado.' : 'Sessão salva sem entrar nos contadores.');
@@ -90,17 +96,23 @@ export default function NineFitTrain() {
         await fetchCompletedCount(athleteId);
       } else if (previousSession.daily_workout_id) {
         const { data, error } = await (supabase as any).from('daily_workouts')
-          .select('id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes)')
+          .select('id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes,exercises(name,video_url,gif_url))')
           .eq('id',previousSession.daily_workout_id).eq('athlete_id',athleteId).single();
         if (error) throw error;
         if (data.prescription_issue) throw new Error('A prescrição precisa de revisão do profissional antes da retomada.');
         const resumedTraining = { id:data.id,daily_workout_id:data.id,execution_id:previousSession.id,training_name:data.day_name,
-          start_date:data.workout_date,is_active:true,training_type:'structured',training_data:{exercises:data.workout_exercises.sort((a:any,b:any)=>a.exercise_order-b.exercise_order).map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes || e.notes}))} };
+          start_date:data.workout_date,is_active:true,training_type:'structured',training_data:{exercises:data.workout_exercises.sort((a:any,b:any)=>a.exercise_order-b.exercise_order).map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name||e.exercises?.name,video_url:e.exercises?.video_url,gif_url:e.exercises?.gif_url,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes || e.notes}))} };
         if (!isExecutableTraining(resumedTraining)) throw new Error("A sessão original precisa de exercícios, séries e doses confirmados.");
         setSelectedTraining(resumedTraining);
         setFlow('EXECUTION');
       } else {
-        const training = trainings.find(item=>item.id===previousSession.assignment_id);
+        let training = trainings.find(item=>item.id===previousSession.assignment_id);
+        if (!training && previousSession.assignment_id) {
+          const { data, error } = await supabase.from('student_training_assignments').select('*')
+            .eq('id', previousSession.assignment_id).eq('student_id', athleteId).maybeSingle();
+          if (error) throw error;
+          training = (data ?? undefined) as TrainingAssignment | undefined;
+        }
         if (!training) throw new Error('A atribuição original não está disponível. Finalize o registro ou fale com seu profissional.');
         if (!isExecutableTraining(training)) throw new Error('A prescrição precisa ser completada pelo profissional.');
         setSelectedTraining({...training,execution_id:previousSession.id});setFlow('EXECUTION');
@@ -351,9 +363,9 @@ export default function NineFitTrain() {
   return (
     <div className="fitpro-orange min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
       {previousSession && <section className="mx-4 mt-16 rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-3">
-        <h2 className="font-bold">Retomar ou finalizar</h2>
+        <h2 className="font-bold">Você tem um treino em andamento</h2>
         <p className="text-sm">Há uma sessão de {new Date(`${previousSession.workout_date}T12:00:00`).toLocaleDateString('pt-BR')} aberta.</p>
-        <div className="flex gap-3"><button disabled={sessionBusy} className="min-h-11 rounded-xl bg-primary px-4 text-black disabled:opacity-50" onClick={()=>void handlePreviousSession(true)}>Retomar</button><button disabled={sessionBusy} className="min-h-11 rounded-xl border border-primary/50 px-4 disabled:opacity-50" onClick={()=>void handlePreviousSession(false)}>Finalizar registro</button></div>
+        <div className="flex gap-3"><button disabled={sessionBusy} className="min-h-11 rounded-xl bg-primary px-4 text-black disabled:opacity-50" onClick={()=>void handlePreviousSession(true)}>Retomar</button><button disabled={sessionBusy} className="min-h-11 rounded-xl border border-primary/50 px-4 disabled:opacity-50" onClick={()=>void handlePreviousSession(false)}>Encerrar sessão</button></div>
       </section>}
       {/* Header */}
       <div className="px-4 pt-5 pb-2.5 relative z-10">

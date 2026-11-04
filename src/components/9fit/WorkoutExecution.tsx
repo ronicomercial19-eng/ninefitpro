@@ -387,7 +387,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             });
       if (cancelled) return;
       if (error || !data) {
-        setExecutionError("Não foi possível iniciar uma execução persistente.");
+        if (error?.message.includes("Retome ou finalize sua sessão em andamento primeiro")) {
+          window.dispatchEvent(new Event("9fit:open-workout-conflict"));
+          setExecutionError("Já existe um treino em andamento. Volte para retomar ou encerrar a sessão aberta.");
+        } else {
+          setExecutionError("Não foi possível iniciar uma execução persistente.");
+        }
         return;
       }
 
