@@ -291,7 +291,7 @@ export function FocusMode({
                   return (
                     <button
                       key={i}
-                      onClick={() => onToggleSet(i)}
+                      disabled={persisting} aria-pressed={done} onClick={() => onToggleSet(i)}
                       className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-mono font-black text-base transition-all transform active:scale-95 ${
                         done
                           ? "bg-[#EF7A45] text-white shadow-lg shadow-[#EF7A45]/30 border-2 border-[#EF7A45]"

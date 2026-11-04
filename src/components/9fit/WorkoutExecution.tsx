@@ -264,6 +264,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerInitial, setTimerInitial] = useState(60);
+  const saveLock = useRef(false);
+  const timerDeadline = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Workout timer
@@ -335,7 +337,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         if(cancelled)return;
         if(ownedError||!owned||owned.status!=="in_progress"){setExecutionError("Esta execução não está disponível para retomada.");return;}
         setSafetyPaused(!!owned.notes?.includes("[pain_review_pending]"));
-        setExecutionId(training.execution_id);
+
         setExecutionStatus('in_progress');
         const { data: savedSets, error: setsError } = await supabase.from("workout_exercise_sets")
           .select("exercise_order, set_number, completed, actual_weight, actual_reps")
@@ -351,7 +353,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           if (row.actual_weight !== null) restoredWeights[exerciseOrder] = Number(row.actual_weight);
           if(row.actual_reps!==null)restoredReps[exerciseOrder]=Number(row.actual_reps);
         }
-        setCompletedSets(restored); setWeights(restoredWeights);setActualRepsByExercise(restoredReps); return;
+        setCompletedSets(restored);
+        setCurrentIdx(Math.max(0,exercises.findIndex((exercise,idx)=>Array.from({length:exercise.sets||3},(_,i)=>restored[String(idx)]?.[i]===true).some(done=>!done)))); setWeights(restoredWeights);setActualRepsByExercise(restoredReps);setExecutionId(training.execution_id); return;
       }
       // Reidrata uma execução aberta após reload antes de criar outra.
       // Para a entrada Semana/diária, a chave é atleta + data; para atribuição,
@@ -370,7 +373,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
       const { data: existing, error: existingError } = await existingQuery.maybeSingle();
       if (existingError) {
-        console.warn("[WorkoutExecution] falha ao recuperar execução aberta:", existingError);
+        setExecutionError("Não foi possível recuperar a sessão em andamento. Tente novamente.");return;
       }
 
       const { data, error } = existing?.id
@@ -392,7 +395,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       const {data:executionInfo,error:infoError}=await supabase.from("workout_executions").select("notes").eq("id",id).eq("athlete_id",athleteId).single();
       if(cancelled)return;if(infoError){setExecutionError("Não foi possível recuperar o estado da execução.");return;}
       setSafetyPaused(!!executionInfo?.notes?.includes("[pain_review_pending]"));
-      setExecutionId(id);
+
       setExecutionStatus('in_progress');
       const { data: savedSets, error: setsError } = await supabase
         .from("workout_exercise_sets")
@@ -414,7 +417,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           if(row.actual_reps!==null)restoredReps[exerciseOrder]=Number(row.actual_reps);
       }
       setCompletedSets(restored);
-      setWeights(restoredWeights);setActualRepsByExercise(restoredReps);
+      setCurrentIdx(Math.max(0,exercises.findIndex((exercise,idx)=>Array.from({length:exercise.sets||3},(_,i)=>restored[String(idx)]?.[i]===true).some(done=>!done))));
+      setWeights(restoredWeights);setActualRepsByExercise(restoredReps);setExecutionId(id);
     })().catch(()=>{if(!cancelled)setExecutionError('Não foi possível confirmar o treino. Tente novamente.');});
 
     return () => { cancelled = true; };
@@ -431,29 +435,31 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   // Video modal
   const [showVideo, setShowVideo] = useState(false);
 
-  // Start workout timer
+  // Wall-clock elapsed time remains accurate while the browser is backgrounded.
   useEffect(() => {
-    if (!executionId || safetyPaused) return;
-    workoutTimerRef.current = setInterval(() => setWorkoutSeconds(s => s + 1), 1000);
-    return () => { if (workoutTimerRef.current) clearInterval(workoutTimerRef.current); };
-  }, [executionId,safetyPaused]);
+    if (!executionId || safetyPaused || executionStatus==='completed') return;
+    const key='9fit:execution-clock:'+athleteId+':'+executionId;
+    let previous={seconds:workoutSeconds,at:Date.now()};
+    try {const saved=JSON.parse(sessionStorage.getItem(key)||'null');if(saved&&Number.isFinite(saved.seconds)&&Number.isFinite(saved.at))previous=saved;}catch{}
+    const base=Math.max(workoutSeconds,previous.seconds),anchor=Date.now();
+    const tick=()=>{const seconds=base+Math.max(0,Math.floor((Date.now()-anchor)/1000));setWorkoutSeconds(seconds);try{sessionStorage.setItem(key,JSON.stringify({seconds,at:Date.now()}));}catch{}};
+    tick();workoutTimerRef.current=setInterval(tick,1000);document.addEventListener('visibilitychange',tick);
+    return()=>{tick();if(workoutTimerRef.current)clearInterval(workoutTimerRef.current);document.removeEventListener('visibilitychange',tick);};
+  },[executionId,safetyPaused,executionStatus,athleteId]);
 
-  // Rest timer
+  // Use a deadline so background throttling does not lengthen the rest.
   useEffect(() => {
-    if (timerRunning && timerSeconds > 0) {
-      timerRef.current = setInterval(() => {
-        setTimerSeconds(s => {
-          if (s <= 1) { setTimerRunning(false); return 0; }
-          return s - 1;
-        });
-      }, 1000);
-    }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [timerRunning, timerSeconds]);
+    if (!timerRunning || safetyPaused) { timerDeadline.current=null; return; }
+    timerDeadline.current=Date.now()+timerSeconds*1000;
+    const tick=()=>{const left=Math.max(0,Math.ceil(((timerDeadline.current||Date.now())-Date.now())/1000));setTimerSeconds(left);if(left===0){setTimerRunning(false);toast.success('Descanso concluído. Prepare a próxima série.');}};
+    timerRef.current=setInterval(tick,250);document.addEventListener('visibilitychange',tick);
+    return()=>{if(timerRef.current)clearInterval(timerRef.current);document.removeEventListener('visibilitychange',tick);};
+  },[timerRunning,safetyPaused]);
 
   // Set rest timer from exercise prescription
   useEffect(() => {
-    if (isStructured && currentExercise?.rest_seconds) {
+    setTimerRunning(false);
+    if (isStructured && currentExercise?.rest_seconds !== undefined) {
       setTimerInitial(currentExercise.rest_seconds);
       setTimerSeconds(currentExercise.rest_seconds);
     }
@@ -485,12 +491,15 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const totalSets=exercises.reduce((n,e)=>n+(e.sets||3),0);
+  const doneSets=exercises.reduce((n,e,idx)=>n+Array.from({length:e.sets||3},(_,i)=>completedSets[String(idx)]?.[i]===true).filter(Boolean).length,0);
+  const nextSet=Array.from({length:currentExercise?.sets||3},(_,i)=>i).find(i=>!completedSets[String(currentIdx)]?.[i]);
   const currentWeight = weights[currentIdx] ?? 0;
   const setWeight = (v: number) => setWeights(prev => ({ ...prev, [currentIdx]: v }));
 
   const toggleSet = async (exerciseIdx: number, setIdx: number) => {
     if (safetyPaused) { toast.error("Revise o treino antes de registrar novas séries."); return; }
-    if (!executionId || persisting) {
+    if (!executionId || saveLock.current || persisting) {
       toast.error(executionError ?? "Aguarde o treino terminar de carregar.");
       return;
     }
@@ -500,14 +509,16 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     const next = [...previous];
     next[setIdx] = !next[setIdx];
     setCompletedSets(current => ({ ...current, [key]: next }));
+    saveLock.current=true;
     setPersisting(true);
 
     const exercise = exercises[exerciseIdx] ?? {};
     const exerciseWithRange = exercise as typeof exercise & { reps_range?: string | number | null };
     const plannedReps = exerciseWithRange.reps ?? exerciseWithRange.reps_range ?? "";
     const actualReps=actualRepsByExercise[exerciseIdx];
-    if(actualReps!==undefined && (!Number.isInteger(actualReps)||actualReps<1||actualReps>1000)){setCompletedSets(current=>({...current,[key]:previous}));setPersisting(false);toast.error("Revise as repetições realizadas.");return;}
-    const { error } = await supabase.rpc("fn_save_workout_set", {
+    if(actualReps!==undefined && (!Number.isInteger(actualReps)||actualReps<1||actualReps>1000)){setCompletedSets(current=>({...current,[key]:previous}));setPersisting(false);saveLock.current=false;toast.error("Revise as repetições realizadas.");return;}
+    if(!Number.isFinite(weights[exerciseIdx]??0)||(weights[exerciseIdx]??0)<0){setCompletedSets(current=>({...current,[key]:previous}));setPersisting(false);saveLock.current=false;toast.error("Revise a carga informada.");return;}
+    const { error } = await Promise.resolve(supabase.rpc("fn_save_workout_set", {
       p_execution_id: executionId,
       p_exercise_name: String(exercise.name ?? "Exercício"),
       p_exercise_order: exerciseIdx,
@@ -518,13 +529,13 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       p_planned_reps: String(plannedReps),
       p_rest_seconds: exercise.rest_seconds ?? null,
       p_tempo: exercise.tempo ?? null,
-    });
+    })).catch(error=>({error}));
+    saveLock.current=false;
     setPersisting(false);
 
     if (error) {
       setCompletedSets(current => ({ ...current, [key]: previous }));
-      setExecutionError(error.message);
-      toast.error("Não foi possível salvar esta série. Tente novamente.");
+      toast.error("Não foi possível salvar esta série. O registro foi desfeito; tente novamente.");
     } else {
       setExecutionError(null);
       if(next[setIdx] && exercise.rest_seconds){setTimerInitial(exercise.rest_seconds);setTimerSeconds(exercise.rest_seconds);setTimerRunning(true);}
@@ -583,6 +594,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       return;
     }
 
+    if(doneSets===0){toast.error('Registre ao menos uma série antes de concluir.');return;}
+    if(doneSets<totalSets&&!window.confirm(`Você registrou ${doneSets} de ${totalSets} séries. Encerrar com as séries realizadas?`))return;
+    saveLock.current=true;
     setPersisting(true);
     try {
       const { data, error } = await supabase.rpc("fn_complete_workout_execution", {
@@ -593,7 +607,6 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       if (error) {
         const message = error.message?.toLowerCase() ?? "";
         const sessionLost = message.includes("access_denied") || message.includes("jwt") || message.includes("auth");
-        setExecutionError(error.message);
         toast.error(sessionLost
           ? "Sua sessão do treino expirou. Reabra o treino e tente concluir novamente."
           : `Não foi possível concluir: ${error.message}`);
@@ -617,19 +630,21 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         onBack();
         return;
       }
-      await mirrorEvent("workout_completed", {
+      setTimerRunning(false);
+      void mirrorEvent("workout_completed", {
         execution_id: executionId,
         training_id: training.id,
         training_name: liveTraining.training_name,
         duration_seconds: workoutSeconds,
         completed_sets: (data && typeof data === "object" && "completed_sets" in data ? data.completed_sets : 0),
-      });
+      }).catch(()=>{});
+      setFocusModeOpen(false);
       setShowPSE(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : "erro inesperado";
-      setExecutionError(message);
       toast.error(`Não foi possível concluir: ${message}`);
     } finally {
+      saveLock.current=false;
       setPersisting(false);
     }
   };
@@ -674,11 +689,10 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       setSafetyPaused(pending);toast.success(pending?'Pausa registrada para revisão':'Registro retomado após sua confirmação de revisão');
     }catch{toast.error(pending?'Pausa ativa nesta tela; não foi possível salvar o relato. Tente novamente.':'Não foi possível retomar. Tente novamente.');}finally{painSaving.current=false;}
   }
-  const assistance=currentExercise ? <div className="space-y-2"><label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Informe antes de marcar a série" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label><WorkoutRonAssistance level={assistanceLevel} onLevelChange={setAssistanceLevel} trainingName={liveTraining.training_name} exercise={currentExercise} completedSets={completedSets[String(currentIdx)] || []} weight={weights[currentIdx] ?? null} actualReps={actualRepsByExercise[currentIdx] ?? null} executionId={executionId} paused={safetyPaused} onPain={()=>void setPainReview(true)} onReviewed={()=>void setPainReview(false)}/></div> : null;
+  const assistance=currentExercise ? <div className="space-y-2"><WorkoutRonAssistance level={assistanceLevel} onLevelChange={setAssistanceLevel} trainingName={liveTraining.training_name} exercise={currentExercise} completedSets={completedSets[String(currentIdx)] || []} weight={weights[currentIdx] ?? null} actualReps={actualRepsByExercise[currentIdx] ?? null} executionId={executionId} paused={safetyPaused} onPain={()=>void setPainReview(true)} onReviewed={()=>void setPainReview(false)}/></div> : null;
 
   return (
     <div className="fitpro-orange min-h-screen bg-background flex flex-col">
-      {!focusModeOpen && assistance && <div className="px-4 py-3">{assistance}</div>}
       {/* Top Bar */}
       <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-card border-b border-primary/20 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar à visão geral" className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -727,9 +741,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
       )}
 
       {/* Wearable */}
-      <div className="px-4 py-2 flex-shrink-0">
-        <WearableConnectBox isWorkoutActive={true} />
-      </div>
+      <details className="mx-4 my-2 rounded-xl border p-3 text-sm"><summary className="cursor-pointer text-muted-foreground">Conectar relógio ou sensor</summary><WearableConnectBox isWorkoutActive={executionStatus!=='completed'} /></details>
 
       {dailyOverride && Boolean(dailyOverride.exercises || dailyOverride.intensity_pct || dailyOverride.fatigue_adjustment) && (
         <div className="mx-4 mb-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 flex items-center gap-2 text-xs text-primary">
@@ -744,6 +756,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
 
 
       {readiness.data?.preferences?.enabled&&readiness.data.decision?.mode==='low'&&<p role="status" className="mx-4 mb-3 rounded-2xl border border-primary/25 p-3 text-sm">Hoje, priorize a técnica. {readiness.data.decision.flags.includes('no_failure_sets')?'A Sync orienta não fazer séries até a falha.':''} {readiness.data.decision.status==='applied'&&readiness.data.decision.warmup_add_min>0?`Inclua ${readiness.data.decision.warmup_add_min} minutos adicionais de aquecimento.`:''}</p>}
+      <section className="mx-4 mb-4 rounded-2xl border border-primary/25 bg-card p-4 space-y-3" aria-label="Progresso do treino">
+        <div className="flex justify-between text-sm"><strong>{doneSets} de {totalSets} séries</strong><span role="status">{persisting?'Salvando série…':'Registros salvos'}</span></div>
+        <progress className="h-2 w-full accent-orange-500" value={doneSets} max={totalSets||1} aria-label="Séries concluídas"/>
+        {currentExercise && <Button className="h-auto min-h-12 w-full whitespace-normal py-3" disabled={persisting||safetyPaused||timerRunning||executionStatus==='completed'} onClick={()=>nextSet!==undefined?void toggleSet(currentIdx,nextSet):currentIdx<exercises.length-1?setCurrentIdx(currentIdx+1):void handleFinishWorkout()}>{timerRunning?'Descanse antes da próxima série':nextSet!==undefined?`Registrar série ${nextSet+1} · ${currentExercise.name}`:currentIdx<exercises.length-1?'Próximo exercício':'Revisar e concluir treino'}</Button>}
+        {timerRunning && <Button variant="outline" className="min-h-11 w-full" onClick={()=>{setTimerRunning(false);setTimerSeconds(0);}}>Encerrar descanso</Button>}
+      </section>
       {/* Content Area */}
       <div className="flex-1 overflow-auto px-4 pb-4">
         {isStructured ? (
@@ -752,9 +770,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             {/* Exercise Navigation */}
             <div className="flex items-center justify-between">
               <button
-                onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
+                aria-label="Exercício anterior" onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
                 disabled={currentIdx === 0}
-                className="w-8 h-8 bg-muted rounded flex items-center justify-center disabled:opacity-30"
+                className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center disabled:opacity-30"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -762,7 +780,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                 Exercício {currentIdx + 1} de {exercises.length}
               </p>
               <button
-                onClick={() => setCurrentIdx(i => Math.min(exercises.length - 1, i + 1))}
+                aria-label="Próximo exercício" onClick={() => setCurrentIdx(i => Math.min(exercises.length - 1, i + 1))}
                 disabled={currentIdx === exercises.length - 1}
                 className="w-8 h-8 bg-muted rounded flex items-center justify-center disabled:opacity-30"
               >
@@ -842,15 +860,18 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-3"><label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Ex.: 10" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label><label className="block text-xs text-muted-foreground">Carga em kg<input aria-label="Carga em kg" type="number" min="0" max="2000" step="0.5" value={currentWeight} disabled={persisting} onChange={e=>setWeight(Number(e.target.value))} className="mt-1 block min-h-11 w-full rounded-lg border bg-card p-2 text-sm"/></label></div>
+                  {!focusModeOpen && assistance && <details className="rounded-xl border p-3"><summary className="cursor-pointer text-sm font-semibold">Orientação e ajuda durante a série</summary><div className="pt-3">{assistance}</div></details>}
                   {/* Set Tracking */}
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Séries completadas</p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {Array.from({ length: currentExercise.sets || 3 }).map((_, i) => {
                         const done = completedSets[`${currentIdx}`]?.[i] || false;
                         return (
                           <button
                             key={i}
+                            aria-label={`Série ${i+1}: ${done?"concluída":"pendente"}`} aria-pressed={done} disabled={persisting||safetyPaused||executionStatus==='completed'}
                             onClick={() => toggleSet(currentIdx, i)}
                             className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center font-bold text-sm transition-all ${
                               done
@@ -878,8 +899,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
             <div className="space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Todos os exercícios</p>
               {exercises.map((ex, idx: number) => {
-                const allDone = (completedSets[`${idx}`] || []).length > 0 &&
-                  (completedSets[`${idx}`] || []).every(Boolean);
+                const allDone = Array.from({length:ex.sets||3},(_,i)=>completedSets[String(idx)]?.[i]===true).every(Boolean);
                 return (
                   <button
                     key={idx}
@@ -959,31 +979,9 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           </div>
         </div>
 
-        {/* Weight Control */}
-        <div className="px-4 py-3 border-b border-border">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Dumbbell className="w-4 h-4" /> Carga Atual
-            </span>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setWeight(Math.max(0, currentWeight - 2.5))}
-                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
-                <Minus className="w-4 h-4 text-foreground" />
-              </button>
-              <span className="text-2xl font-black text-foreground w-20 text-center">
-                {currentWeight}<span className="text-sm text-muted-foreground ml-1">kg</span>
-              </span>
-              <button onClick={() => setWeight(currentWeight + 2.5)}
-                className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
-                <Plus className="w-4 h-4 text-foreground" />
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Finish */}
         <div className="px-4 py-3">
-          <Button onClick={handleFinishWorkout} disabled={!executionId || persisting || safetyPaused || executionStatus === 'completed'}
+          <Button onClick={()=>void handleFinishWorkout()} disabled={!executionId || persisting || safetyPaused || executionStatus === 'completed'}
             className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">
             {persisting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
             {persisting ? "Salvando..." : "Concluir Treino"}
@@ -1023,7 +1021,7 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
           workoutSeconds={workoutSeconds}
           onFinishWorkout={handleFinishWorkout}
           persisting={persisting || safetyPaused}
-          assistance={assistance}
+          assistance={<div className="space-y-3"><label className="block text-xs text-muted-foreground">Repetições realizadas nesta série (se aplicável)<input type="number" min="1" max="1000" step="1" value={actualRepsByExercise[currentIdx] ?? ""} onChange={e=>{const value=e.target.value;setActualRepsByExercise(previous=>{const next={...previous};if(value==="")delete next[currentIdx];else next[currentIdx]=Number(value);return next;});}} placeholder="Ex.: 10" className="mt-1 block w-full rounded-lg border border-border bg-card p-2 text-sm"/></label>{assistance}</div>}
         />
       )}
 
