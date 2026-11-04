@@ -13,13 +13,15 @@ import {
 } from "../../../supabase/functions/_shared/professorContract";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-export function ProfessorPrescription() {
+type EditorOptions = { initialDate?: string; initialRecommendation?: string; embedded?: boolean };
+export function ProfessorPrescription(options: EditorOptions = {}) {
   const w = useProfessorWorkspace();
   return w.selected ? (
     <Editor
       key={w.selected.id}
       athleteId={w.selected.id}
       name={w.selected.name}
+      {...options}
     />
   ) : (
     <p className="rounded-xl border p-6">
@@ -27,13 +29,14 @@ export function ProfessorPrescription() {
     </p>
   );
 }
-function Editor({ athleteId, name }: { athleteId: string; name: string }) {
+function Editor({ athleteId, name, initialDate, initialRecommendation, embedded }: { athleteId: string; name: string } & EditorOptions) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const today = businessDate();
-  const queryDate = new URLSearchParams(location.search).get("date");
-  const recParam = new URLSearchParams(location.search).get("recommendation");
+  const queryDate = initialDate ?? (embedded ? null : new URLSearchParams(location.search).get("date"));
+  const [inlineRecommendation, setInlineRecommendation] = useState(initialRecommendation);
+  const recParam = embedded ? inlineRecommendation ?? null : new URLSearchParams(location.search).get("recommendation");
   const recommendationId = isAthleteId(recParam) ? recParam : null;
   const review = useQuery({queryKey:['recommendation-scope',athleteId,recommendationId],enabled:!!recommendationId,queryFn:async()=>{
     const {data,error}=await supabase.from('training_adjustment_recommendations').select('athlete_id,week_start,status').eq('id',recommendationId!).eq('athlete_id',athleteId).single();
@@ -181,6 +184,7 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
         .select("id")
         .single();
       if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["cycle-week-drafts"] });
       if (alive.current) toast.success("Rascunho salvo. Ainda não publicado.");
     } catch (e) {
       if (alive.current)
@@ -350,7 +354,9 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
           aplicação desta revisão.
           <Button type="button" variant="outline" className="ml-3" onClick={()=>{
             const next=new URLSearchParams(location.search);next.delete('recommendation');next.set('date',today);
-            navigate({pathname:location.pathname,search:next.toString()},{replace:true});setDate(today);changed();
+            if (embedded) setInlineRecommendation(undefined);
+            else navigate({pathname:location.pathname,search:next.toString()},{replace:true});
+            setDate(today);changed();
           }}>Nova prescrição de hoje</Button>
         </p>
       )}
@@ -496,7 +502,7 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
                     Remover
                   </button>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-3">
+                <div className="mt-2 grid grid-cols-3 gap-2">
                   {[
                     ["Séries", "sets", "number"],
                     ["Repetições", "reps_range", "text"],
@@ -517,20 +523,21 @@ function Editor({ athleteId, name }: { athleteId: string; name: string }) {
                                 : e.target.value,
                           })
                         }
-                        className="mt-1 block w-28 rounded border bg-background p-2"
+                        className="mt-1 block min-h-11 w-full min-w-0 rounded border bg-background p-2"
                       />
                     </label>
                   ))}
                 </div>
-                <input
+                <details><summary className="mt-2 cursor-pointer text-sm">Orientação técnica</summary>
+                <textarea
                   aria-label={`Orientação de ${r.name}`}
                   placeholder="Orientação técnica"
                   value={r.notes || ""}
                   maxLength={1000}
                   disabled={busy}
                   onChange={(e) => update(index, { notes: e.target.value })}
-                  className="mt-3 w-full rounded border bg-background p-2 text-sm"
-                />
+                  className="mt-2 w-full rounded border bg-background p-2 text-sm"
+                /></details>
               </li>
             ))}
           </ol>

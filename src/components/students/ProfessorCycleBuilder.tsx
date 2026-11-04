@@ -7,19 +7,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-export function ProfessorCycleBuilder() {
+export function ProfessorCycleBuilder({ onEditDay }: { onEditDay?: (date: string) => void } = {}) {
   const w = useProfessorWorkspace();
   return w.selected ? (
     <Builder
       key={w.selected.id}
       athleteId={w.selected.id}
       name={w.selected.name}
+      onEditDay={onEditDay}
     />
   ) : (
     <p>Selecione o aluno para publicar um ciclo.</p>
   );
 }
-function Builder({ athleteId, name }: { athleteId: string; name: string }) {
+function Builder({ athleteId, name, onEditDay }: { athleteId: string; name: string; onEditDay?: (date: string) => void }) {
   const { user } = useAuth();
   const [start, setStart] = useState(businessDate()),
     [weeks, setWeeks] = useState(4),
@@ -134,7 +135,7 @@ function Builder({ athleteId, name }: { athleteId: string; name: string }) {
                 setReviewed(false);
               }
             }}
-            className="block rounded border bg-background p-2"
+            className="block w-full min-w-0 rounded border bg-background p-2"
           />
         </label>
         <label className="text-sm">
@@ -152,7 +153,7 @@ function Builder({ athleteId, name }: { athleteId: string; name: string }) {
             className="block w-20 rounded border bg-background p-2"
           />
         </label>
-        <label className="flex-1 text-sm">
+        <label className="w-full min-w-0 text-sm sm:flex-1">
           Nome
           <input
             value={title}
@@ -198,12 +199,12 @@ function Builder({ athleteId, name }: { athleteId: string; name: string }) {
                     ))}
                   </details>
                 )}
-                <Link
+                {onEditDay ? <Button variant="outline" className="mt-2 min-h-11" onClick={() => onEditDay(day.date)}>Editar treino</Button> : <Link
                   className="text-sm text-primary underline"
                   to={`/app/treino-ia?athlete=${athleteId}&date=${day.date}`}
                 >
                   Montar / revisar rascunho
-                </Link>
+                </Link>}
               </article>
             );
           })}

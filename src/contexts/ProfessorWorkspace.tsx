@@ -144,7 +144,7 @@ export function ProfessorStudentBar() {
   if (w.selected && !options.some(student => student.id === w.selected?.id)) options.unshift(w.selected);
   return (
     <section
-      className="mb-5 rounded-xl border border-primary/25 bg-card p-3"
+      className="sticky top-[env(safe-area-inset-top)] z-20 mb-5 rounded-xl border border-primary/25 bg-card p-3"
       aria-label="Contexto do aluno"
     >
       <div className="flex flex-wrap items-center gap-3">

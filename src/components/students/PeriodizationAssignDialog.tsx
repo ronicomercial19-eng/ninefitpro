@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Props {
+  inline?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   studentId: string;
@@ -32,6 +33,7 @@ interface PeriodizationModel {
 }
 
 export function PeriodizationAssignDialog({
+  inline = false,
   open,
   onOpenChange,
   studentId,
@@ -203,13 +205,8 @@ export function PeriodizationAssignDialog({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Atribuir Periodização — {studentName}</DialogTitle>
-        </DialogHeader>
-
+  const form = (
+    <>
         <div className="space-y-3 mb-4">
           <div>
             <Label>Nome da Periodização *</Label>
@@ -229,7 +226,7 @@ export function PeriodizationAssignDialog({
           </div>
         </div>
 
-        <Tabs defaultValue="pdf">
+        <Tabs defaultValue={inline ? "model" : "pdf"}>
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="pdf">
               <Upload className="w-4 h-4 mr-2" />
@@ -336,7 +333,13 @@ export function PeriodizationAssignDialog({
             </Button>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+    </>
   );
+  if (inline) return <section className="rounded-xl border bg-card p-4">{form}</section>;
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
+      <DialogHeader><DialogTitle>Atribuir periodização · {studentName}</DialogTitle></DialogHeader>
+      {form}
+    </DialogContent>
+  </Dialog>;
 }

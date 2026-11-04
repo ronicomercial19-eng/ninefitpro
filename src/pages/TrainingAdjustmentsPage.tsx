@@ -21,8 +21,10 @@ const statusLabels: Record<string, string> = {
 };
 export default function TrainingAdjustmentsPage({
   embedded = false,
+  onReview,
 }: {
   embedded?: boolean;
+  onReview?: (date: string, recommendation: string) => void;
 }) {
   const w = useProfessorWorkspace(),
     { user } = useAuth(),
@@ -166,12 +168,12 @@ export default function TrainingAdjustmentsPage({
                     Conferir alterações propostas
                   </Button>
                 )}
-                <Link
+                {onReview ? <Button variant="outline" onClick={() => onReview(r.week_start, r.id)}>Revisar no editor</Button> : <Link
                   to={`/app/treino-ia?athlete=${r.athlete_id}&date=${r.week_start}&recommendation=${r.id}`}
                   className="rounded-lg border px-3 py-2 text-sm"
                 >
                   Revisar no editor
-                </Link>
+                </Link>}
               </div>
               {preview?.recommendation_id === r.id && (
                 <div className="rounded-lg bg-muted p-3 space-y-2">
