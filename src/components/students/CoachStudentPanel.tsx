@@ -1,11 +1,13 @@
 import { CapacityResetEditor } from './CapacityResetEditor';
 import { ReadinessCard } from '@/components/9fit/ReadinessCard';
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { ProfessorPrescription } from "./ProfessorPrescription";
 import { ProfessionalMessages } from "./ProfessionalMessages";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useCoachStudentContext } from "@/hooks/useCoachStudentContext";
 import { consecutiveDays } from "@/lib/studentDates";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { completionLabel, completionReason } from '@/lib/workoutCompletion';
 import { goalLabel } from '@/lib/athleteGoal';
@@ -59,6 +61,10 @@ const text = (value: unknown) =>
 export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
   const q = useCoachStudentContext(athleteId);
   const [panel, setPanel] = useState<string | null>(null);
+  const [requestingCheckin, setRequestingCheckin] = useState(false);
+  const [requestedCheckin, setRequestedCheckin] = useState("");
+  const checkinRequest = useRef<{ scope: string; id: string } | null>(null);
+  const checkinLock = useRef(false);
   if (q.isLoading) return <p>Carregando contexto compartilhado…</p>;
   if (q.isError || !q.data)
     return (
@@ -71,6 +77,31 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
     );
   const c = q.data,
     d = c.daily_context;
+  const checkinScope = athleteId + ":" + d.date;
+  async function requestCheckin() {
+    if (checkinLock.current || requestedCheckin === checkinScope || d.calibration.complete) return;
+    checkinLock.current = true;
+    setRequestingCheckin(true);
+    if (checkinRequest.current?.scope !== checkinScope) {
+      checkinRequest.current = { scope: checkinScope, id: crypto.randomUUID() };
+    }
+    try {
+      const { data, error } = await supabase.rpc("fn_send_student_message" as never, {
+        p_athlete_id: athleteId,
+        p_body: "Pode preencher o check-in de hoje no app? Isso ajuda a ajustar seu treino.",
+        p_request_id: checkinRequest.current.id,
+      } as never);
+      if (error || !(data as { saved?: boolean } | null)?.saved) throw error ?? new Error("Envio não confirmado");
+      setRequestedCheckin(checkinScope);
+      toast.success("Pedido de check-in enviado na conversa do aluno.");
+    } catch {
+      toast.error("Não foi possível confirmar o pedido. Tente novamente.");
+    } finally {
+      checkinLock.current = false;
+      setRequestingCheckin(false);
+    }
+  }
+
   const groups = [
     [
       "Treinos executados · 30 dias",
@@ -147,6 +178,7 @@ export function CoachStudentPanel({ athleteId }: { athleteId: string }) {
         </Button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        {!d.calibration.complete && <Button className="min-h-11" disabled={requestingCheckin || requestedCheckin === checkinScope} onClick={() => void requestCheckin()}>{requestedCheckin === checkinScope ? "Check-in solicitado" : requestingCheckin ? "Enviando pedido…" : "Pedir check-in"}</Button>}
         {["Ajustar treino de hoje", "Perguntar ao RON", "Agendar", "Chamar aluno", "Confirmar ficha"].map(title =>
           <Button key={title} className="min-h-11" variant="outline" onClick={() => setPanel(title)}>{title}</Button>)}
         {c.prescriptions.some(plan => plan.is_active && (!plan.start_date || plan.start_date <= d.date) && (!plan.end_date || plan.end_date >= d.date)) &&
