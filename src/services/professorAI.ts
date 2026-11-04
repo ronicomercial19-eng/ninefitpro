@@ -6,11 +6,13 @@ export async function professorAI(
   message?: string,
   history: Array<{ role: string; content: string }> = [],
   skillId?: string,
+  annualDraft?: { planId: string; phaseIndex: number; date: string; revision: string },
 ) {
   const { data, error } = await supabase.functions.invoke("ai-coach", {
     body: {
       audience: "professional",
       skill_id: skillId,
+      annual_draft: annualDraft,
       athlete_id: athleteId,
       mode,
       message,
@@ -30,6 +32,8 @@ export async function professorAI(
     content: string;
     skills_applied?: {id:string;slug:string;version:number}[];
     recommendations?: any[];
+    annual_source?: { planId: string; phaseIndex: number; date: string; revision: string };
     draft?: { title: string; exercises: any[] };
   };
 }
+

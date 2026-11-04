@@ -72,6 +72,27 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
       revision.current++;
     };
   }, []);
+  const [phaseIndex, setPhaseIndex] = useState("");
+  const [annualSource, setAnnualSource] = useState("");
+  const annual = useQuery({
+    queryKey: ["annual-draft-plan", user?.id, athleteId],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("periodization_annual_plans")
+        .select("id,annual_goal,mesocycles,updated_at").eq("athlete_id", athleteId).eq("status", "active")
+        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const phases = Array.isArray(annual.data?.mesocycles) ? annual.data.mesocycles : [];
+  const annualPhaseLabel = (index: number) => {
+    const phase = phases[index];
+    if (!phase || typeof phase !== "object" || Array.isArray(phase)) return null;
+    return String(phase.name || phase.phase || phase.type || ("Fase " + (index + 1)));
+  };
+  useEffect(() => { setPhaseIndex(""); }, [annual.data?.id, annual.data?.updated_at]);
+  useEffect(() => { setAnnualSource(""); }, [date]);
   const catalog = useQuery({
     queryKey: ["exercise-catalog", search],
     queryFn: async () => {
@@ -137,8 +158,12 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
       list.map((r, i) => (i === index ? { ...r, ...value } : r)),
     );
   }
-  async function generate() {
+  async function generate(fromAnnual = false) {
     if (writing.current) return;
+    const plan = annual.data;
+    const phase = phaseIndex === "" ? null : annualPhaseLabel(Number(phaseIndex));
+    if (fromAnnual && (!plan || !plan.updated_at || !phase)) return;
+    if (fromAnnual && rows.length && !window.confirm("Substituir os exercícios atuais no editor pelo novo rascunho?")) return;
     writing.current = true;
     setBusy(true);
     const request = revision.current;
@@ -147,11 +172,20 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
         athleteId,
         "draft_training",
         prompt || undefined,
+        [],
+        undefined,
+        fromAnnual && plan?.updated_at ? { planId: plan.id, phaseIndex: Number(phaseIndex), date, revision: plan.updated_at } : undefined,
       );
       if (!alive.current || request !== revision.current) return;
       if (!result.draft) throw new Error("Rascunho ausente");
+      if (fromAnnual && (!result.annual_source || result.annual_source.planId !== plan?.id
+        || result.annual_source.phaseIndex !== Number(phaseIndex) || result.annual_source.date !== date
+        || result.annual_source.revision !== plan?.updated_at)) {
+        throw new Error("O serviço não confirmou o plano e a fase usados. O editor foi preservado.");
+      }
       setRows(result.draft.exercises);
       setTitle(result.draft.title);
+      setAnnualSource(fromAnnual && phase ? phase : "");
       changed();
       toast.info("Rascunho pronto para revisão. Ainda não foi publicado.");
     } catch (e) {
@@ -432,6 +466,22 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
               Gerar rascunho para revisar
             </Button>
           </details>
+          <section className="space-y-2 rounded-lg border p-3" aria-label="Rascunho do plano anual">
+            <h3 className="text-sm font-semibold">Rascunho do plano anual</h3>
+            {annual.isPending ? <p className="text-sm">Consultando plano…</p>
+              : annual.isError ? <Button variant="outline" onClick={() => void annual.refetch()}>Tentar consultar plano novamente</Button>
+              : !phases.some((_, index) => annualPhaseLabel(index)) ? <p className="text-sm text-muted-foreground">Nenhuma fase disponível em um plano anual ativo.</p>
+              : <div className="flex flex-wrap items-end gap-2">
+                <label className="min-w-0 flex-1 text-sm">Fase do plano
+                  <select className="block min-h-11 w-full rounded border bg-background p-2" value={phaseIndex} disabled={busy} onChange={event => setPhaseIndex(event.target.value)}>
+                    <option value="">Escolher fase</option>
+                    {phases.map((_, index) => { const label = annualPhaseLabel(index); return label && <option key={index} value={index}>{index + 1} · {label}</option>; })}
+                  </select>
+                </label>
+                <Button variant="outline" disabled={busy || annual.isFetching || phaseIndex === ""} onClick={() => void generate(true)}>Gerar do plano anual</Button>
+              </div>}
+            {annualSource && <p className="text-sm text-muted-foreground">Rascunho gerado com a fase {annualSource}. Revise antes de publicar.</p>}
+          </section>
           <label className="block text-sm">
             Buscar exercício do acervo
             <input
@@ -584,3 +634,4 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
     </section>
   );
 }
+
