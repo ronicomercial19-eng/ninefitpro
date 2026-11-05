@@ -37,6 +37,7 @@ import { EcoEmbed } from './EcoEmbed';
 import { QuickCheckIn } from './QuickCheckIn';
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 import { HubCommandDeck } from './HubCommandDeck';
+import { describeHubWeek, weekRead, type WeeklyCounts } from '@/components/9fit/hubWeeklyBrief';
 import { type CycleStatus } from '@/components/9fit/cycleStatus';
 import type { HubScoreStatus } from '@/hooks/useAthleteScores';
 import communityTribeImg from '@/assets/images/community_athletes_tribe_1790011163765.jpg';
@@ -50,7 +51,7 @@ interface OSDashboardProps {
   name: string;
   syncScore: number | null;
   scoreStatus: HubScoreStatus;
-  weekly: { treinos: number; nutri: number; minutos: number };
+  weekly: WeeklyCounts | null;
   cycleStatus: CycleStatus;
 }
 
@@ -104,18 +105,22 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
     return () => { cancelled = true; };
   }, []);
 
+  const weekReadState = weekRead(weekly != null, scoreStatus);
+  const week = describeHubWeek(weekly, weekReadState);
   const myRankPos = ranking.findIndex((r) => r.self) + 1;
   const hasRank = myRankPos > 0;
   const cycleKnown = cycleStatus === "active" || cycleStatus === "none";
-  const treinoStatus = weekly.treinos > 0
+  const treinoStatus = weekly && weekly.treinos > 0
     ? `${weekly.treinos} treinos`
+    : weekReadState !== "ready" ? week.trainBadge
     : cycleStatus === "active" ? "Plano ativo"
     : cycleStatus === "none" ? "Sem treino"
     : "A confirmar";
-  const nutriStatus = weekly.nutri > 0 ? `${weekly.nutri} refeições` : "Sem registro";
+  const nutriStatus = week.nutriBadge;
   const focoStatus = syncScore == null ? "A calibrar" : `Sync ${Math.round(syncScore)}`;
-  const consistenciaStatus = weekly.treinos > 0
+  const consistenciaStatus = weekly && weekly.treinos > 0
     ? `${weekly.treinos} na semana`
+    : weekReadState !== "ready" ? week.trainBadge
     : cycleStatus === "active" ? "Ciclo ativo"
     : cycleStatus === "none" ? "Sem ciclo"
     : cycleStatus === "loading" ? "Lendo ciclo"
@@ -178,7 +183,9 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
     {
       id: 'nutricional' as const,
       name: 'Nutrição & Dieta',
-      subtitle: weekly.nutri > 0 ? `${weekly.nutri} refeições registradas na semana` : 'Nenhuma refeição registrada nesta semana',
+      subtitle: weekReadState !== "ready"
+        ? week.nutriSubtitle
+        : weekly && weekly.nutri > 0 ? `${weekly.nutri} refeições registradas na semana` : 'Nenhuma refeição registrada nesta semana',
       status: nutriStatus,
       description: 'Janela anabólica, síntese de aminoácidos e equilíbrio de macronutrientes.'
     },
@@ -192,11 +199,13 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
     {
       id: 'comportamental' as const,
       name: 'Consistência',
-      subtitle: weekly.treinos > 0
+      subtitle: weekly && weekly.treinos > 0
         ? `${weekly.treinos} treinos no microciclo`
-        : cycleStatus === "active" ? "Ciclo ativo, ainda sem treino registrado no microciclo"
-        : cycleKnown ? "Ainda sem treino registrado no microciclo"
-        : "Ainda não foi possível confirmar o microciclo",
+        : weekReadState !== "ready"
+          ? (weekReadState === "loading" ? "Lendo treinos do microciclo" : "Treinos do microciclo ainda não confirmados")
+          : cycleStatus === "active" ? "Ciclo ativo, ainda sem treino registrado no microciclo"
+          : cycleKnown ? "Ainda sem treino registrado no microciclo"
+          : "Ainda não foi possível confirmar o microciclo",
       status: consistenciaStatus,
       description: 'Consistência do microciclo, disciplina de horários e rituais diários.'
     },
@@ -254,7 +263,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
         name={name}
         syncScore={syncScore}
         scoreStatus={scoreStatus}
-        weekly={weekly}
+        weekly={weekly ?? { treinos: 0, nutri: 0, minutos: 0 }}
+        weeklyKnown={weekReadState === "ready"}
         hasPlan={cycleStatus === "active"}
       />
 

@@ -18,12 +18,15 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
+import { describeHubWeek, weekRead, type WeeklyCounts } from "@/components/9fit/hubWeeklyBrief";
 import { cycleBadge, type CycleStatus } from "@/components/9fit/cycleStatus";
+import type { HubScoreStatus } from "@/hooks/useAthleteScores";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
 import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
 
 interface Props {
-  weekly: { treinos: number; nutri: number; minutos: number };
+  weekly: WeeklyCounts | null;
+  scoreStatus: HubScoreStatus;
   liveScoresVitals?: any;
   invalidateUserState: () => void;
   performancePlanTitle: string | null;
@@ -60,6 +63,7 @@ const PILLAR_LABEL: Record<string, string> = {
 
 export function FitOSConsoleDock({
   weekly,
+  scoreStatus,
   liveScoresVitals,
   performancePlanTitle,
   cycleStatus,
@@ -86,25 +90,24 @@ export function FitOSConsoleDock({
   };
 
   // ---------- Brief do Foco atual (só dados reais da semana; sem números inventados) ----------
-  const trainStatus =
-    weekly.treinos === 0 ? "Sem treino registrado esta semana"
-    : weekly.treinos >= 5 ? "Meta semanal atingida"
-    : weekly.treinos >= 3 ? "Bom ritmo"
-    : "Ritmo inicial";
-  const dietStatus =
-    weekly.nutri === 0 ? "Sem refeições registradas esta semana"
-    : `${weekly.nutri} refeiç${weekly.nutri === 1 ? "ão registrada" : "ões registradas"} na semana`;
+  const week = describeHubWeek(weekly, weekRead(weekly != null, scoreStatus));
+  const trainStatus = week.trainStatus;
+  const dietStatus = week.dietStatus;
 
   const lowest = (Object.entries(breakdown) as [string, number | null][])
     .filter(([, v]) => v != null)
     .sort((a, b) => (a[1] as number) - (b[1] as number))[0];
 
-  let guidance: string;
-  if (weekly.treinos === 0) guidance = "Comece com uma sessão curta hoje e registre. Consistência vem antes de intensidade.";
-  else if (weekly.nutri === 0) guidance = "Seus treinos estão andando, mas a alimentação está sem registro. Registre a próxima refeição para fechar o quadro.";
-  else if (weekly.treinos < 3) guidance = `Faltam ${5 - weekly.treinos} sessões para a meta da semana. Agende a próxima agora.`;
-  else if (lowest && (lowest[1] as number) < 60) guidance = `Maior oportunidade: ${PILLAR_LABEL[lowest[0]] || lowest[0]}. Foque nisso nos próximos dias.`;
-  else guidance = "Bom ritmo. Mantenha a rotina e continue registrando sono e hidratação.";
+  let guidance = week.guidance;
+  if (weekly && guidance == null) {
+    if (lowest && (lowest[1] as number) < 60) guidance = `Maior oportunidade: ${PILLAR_LABEL[lowest[0]] || lowest[0]}. Foque nisso nos próximos dias.`;
+    else guidance = "Bom ritmo. Mantenha a rotina e continue registrando sono e hidratação.";
+  }
+  if (!guidance) {
+    guidance = weekRead(weekly != null, scoreStatus) === "loading"
+      ? "O brief espera a leitura da semana. Ausência de resposta não é zero treino."
+      : "Não vou orientar a semana enquanto a leitura não voltar.";
+  }
 
   const cycle = cycleBadge(cycleStatus);
   const focusTitle =
@@ -167,7 +170,7 @@ export function FitOSConsoleDock({
             </p>
             <div className="flex items-start gap-2.5 text-[12px] text-white/65">
               <Dumbbell strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
-              <span><b className="font-semibold text-white">Treino:</b> {trainStatus} · {weekly.treinos}/5 sessões</span>
+              <span><b className="font-semibold text-white">Treino:</b> {trainStatus}{weekly ? ` · ${weekly.treinos}/5 sessões` : ""}</span>
             </div>
             <div className="flex items-start gap-2.5 text-[12px] text-white/65">
               <Utensils strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
@@ -191,10 +194,10 @@ export function FitOSConsoleDock({
             <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden mx-2">
               <div
                 className="h-full bg-[#EF7A45] rounded-full transition-all duration-1000"
-                style={{ width: `${Math.min(100, Math.max(0, (weekly.treinos / 5) * 100))}%` }}
+                style={{ width: `${week.barPercent ?? 0}%` }}
               />
             </div>
-            <span className="text-white font-bold shrink-0">{weekly.treinos}/5 sessões</span>
+            <span className="text-white font-bold shrink-0">{week.sessionsLabel}{week.barPercent == null ? "" : " sessões"}</span>
           </div>
         </div>
       </motion.div>

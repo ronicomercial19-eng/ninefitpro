@@ -18,10 +18,11 @@ interface Props {
   syncScore: number | null;
   scoreStatus: HubScoreStatus;
   weekly: { treinos: number; nutri: number; minutos: number };
+  weeklyKnown?: boolean;
   hasPlan: boolean;
 }
 
-export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) {
+export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKnown = true }: Props) {
   const navigate = useNavigate();
   const context = useDailyContext();
   const { athleteId } = useAthleteId();
@@ -102,7 +103,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly }: Props) 
           {!context.online && <p role="status" className="mt-2 text-xs text-amber-400">Sem conexão. Seus últimos registros ficam visíveis; reconecte para continuar.</p>}
 
           {/* Métricas Semanais */}
-          {!context.isError && scoreStatus !== "loading" && scoreStatus !== "error" && <div className="mt-2.5 grid grid-cols-3 gap-2">
+          {!context.isError && weeklyKnown && <div className="mt-2.5 grid grid-cols-3 gap-2">
             <CommandMetric label="Treinos" value={weekly.treinos} suffix="sem" progress={consistency} />
             <CommandMetric label="Minutos" value={weekly.minutos} suffix="min" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
             <CommandMetric label="Nutrição" value={weekly.nutri} suffix="reg" progress={Math.min(100, weekly.nutri * 20)} />

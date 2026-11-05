@@ -20,6 +20,7 @@ import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
 import { type CycleStatus } from "@/components/9fit/cycleStatus";
+import { hubFactLabel } from "@/components/9fit/hubWeeklyBrief";
 import { Info } from "lucide-react";
 
 const hubStaggerContainer = {
@@ -80,7 +81,8 @@ export default function NineFitHub() {
     mob: liveScores?.dimensions.mob.value ?? null,
     hidr: liveScores?.dimensions.hidr.value ?? null,
   };
-  const weekly = liveScores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 };
+  const weekly = liveScores?.weekly ?? null;
+  const scoresKnown = liveScores != null;
 
   const loadHubData = async () => {
     const request = ++hubRequest.current;
@@ -188,6 +190,24 @@ export default function NineFitHub() {
   }, [invalidate, refreshScores]);
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
+  const weightLabel = hubFactLabel(
+    scoresKnown,
+    athleteLoading ? "loading" : scoreStatus,
+    liveScores?.weight.value == null ? null : `${liveScores.weight.value} kg`,
+    "Não registrado",
+  );
+  const streakLabel = hubFactLabel(
+    scoresKnown,
+    athleteLoading ? "loading" : scoreStatus,
+    scoresKnown ? `${liveScores?.streak ?? 0} dias` : null,
+    "0 dias",
+  );
+  const engagementLabel = hubFactLabel(
+    scoresKnown,
+    athleteLoading ? "loading" : scoreStatus,
+    liveScores?.engagement.value == null ? null : `${liveScores.engagement.value}/100`,
+    "Sem leitura",
+  );
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -240,9 +260,9 @@ export default function NineFitHub() {
           <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
         </motion.div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-primary/20 p-3 text-xs text-muted-foreground" aria-label="Resumo do perfil e da rotina">
-          <span>Peso: {liveScores?.weight.value == null ? 'Não registrado' : `${liveScores.weight.value} kg`}</span>
-          <span>Sequência de calibração: {liveScores?.streak ?? 0} dias</span>
-          <span>Engajamento: {liveScores?.engagement.value == null ? 'Sem leitura' : `${liveScores.engagement.value}/100`}</span>
+          <span>Peso: {weightLabel}</span>
+          <span>Sequência de calibração: {streakLabel}</span>
+          <span>Engajamento: {engagementLabel}</span>
         </div>
 
         {hubMissions && ACTIVATION_KEYS.some((key) => hubMissions[key] === false) && (
@@ -254,6 +274,7 @@ export default function NineFitHub() {
         <motion.div variants={hubStaggerItem}>
           <FitOSConsoleDock
             weekly={weekly}
+            scoreStatus={athleteLoading ? "loading" : scoreStatus}
             liveScoresVitals={liveScores?.vitals}
             invalidateUserState={invalidate}
             performancePlanTitle={performancePlanTitle}

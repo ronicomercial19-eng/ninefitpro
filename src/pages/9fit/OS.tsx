@@ -52,8 +52,8 @@ export default function NineFitOS() {
       <OSDashboard
         name={name}
         syncScore={scores?.sync.value ?? null}
-        scoreStatus={status}
-        weekly={scores?.weekly ?? { treinos: 0, nutri: 0, minutos: 0 }}
+        scoreStatus={athleteLoading ? "loading" : status}
+        weekly={scores?.weekly ?? null}
         cycleStatus={cycleStatus}
       />
       <QuickTrainModal open={showQuickTrain} onClose={() => setShowQuickTrain(false)} />
