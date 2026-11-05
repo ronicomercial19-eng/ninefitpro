@@ -26,7 +26,13 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				elevated: 'hsl(var(--elevated))',
-				// 9FIT Neon Colors
+				// Nine: paleta de marca (valores em src/styles/nine-art-direction.css)
+				acao: 'hsl(var(--acao))',
+				fogo: 'hsl(var(--fogo))',
+				ativo: 'hsl(var(--ativo))',
+				ia: 'hsl(var(--ia))',
+				prime: 'hsl(var(--prime))',
+				// 9FIT Neon Colors (legado, aponta para a paleta Nine)
 				neon: {
 					300: 'hsl(var(--neon-300))',
 					400: 'hsl(var(--neon-400))',
@@ -85,14 +91,21 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			// Nine: cantos cortados, nunca arredondados. "full" fica de fora de propósito
+			// (switch, radio, barra de progresso e spinner precisam do círculo).
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				none: '0px',
+				sm: '0px',
+				DEFAULT: '0px',
+				md: '0px',
+				lg: '0px',
+				xl: '0px',
+				'2xl': '0px',
+				'3xl': '0px'
 			},
 			fontFamily: {
 				sans: ['Inter', 'SF Pro Display', 'system-ui', '-apple-system', 'sans-serif'],
-				display: ['Syne', 'Inter', 'system-ui', 'sans-serif'],
+				display: ['"Bricolage Grotesque"', 'Inter', 'system-ui', 'sans-serif'],
 				mono: ['"DM Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
 				data: ['"DM Mono"', 'ui-monospace', 'monospace'],
 			},
@@ -145,9 +158,10 @@ export default {
 					'0%': { backgroundPosition: '-200% 0' },
 					'100%': { backgroundPosition: '200% 0' }
 				},
+				// Nine: sem brilho. O nome fica para não quebrar quem usa animate-glow-pulse.
 				'glow-pulse': {
-					'0%, 100%': { boxShadow: '0 0 15px hsla(20, 100%, 50%, 0.5)' },
-					'50%': { boxShadow: '0 0 30px hsla(20, 100%, 50%, 0.8)' }
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.7' }
 				}
 			},
 			animation: {
