@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LibraryPayload {
   id?: string;
@@ -63,6 +64,7 @@ interface Props {
 export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
   const { user, isAdmin, isSuperAdmin } = useAuth();
   const workspace = useProfessorWorkspace();
+  const queryClient = useQueryClient();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteId, setAthleteId] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -134,7 +136,9 @@ export function LibraryAssignDialog({ open, onOpenChange, item }: Props) {
         });
       if (error) throw error;
       workspace.select(athleteId);
-      toast.success(`${item.name} atribuído!`);
+      void queryClient.invalidateQueries({ queryKey: ["coach-library-progress", athleteId] });
+      const recipient = athletes.find(athlete => athlete.id === athleteId)?.name;
+      toast.success(recipient ? `${item.name} enviado para ${recipient}.` : `${item.name} atribuído ao aluno selecionado.`);
       onOpenChange(false);
       setAthleteId("");
       setNotes("");

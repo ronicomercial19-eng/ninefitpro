@@ -34,7 +34,8 @@ async function callHF(
   if (configError) throw new Error("connector_config_unavailable");
   if (config?.status === "inactive")
     throw new Error("healthflix_connector_inactive");
-  const apiKey = config?.secret_ref ? await connectorSecret(admin, "healthflix", config.secret_ref) : Deno.env.get("HEALTHFLIX_API_KEY");
+  const apiKey = await connectorSecret(admin, "healthflix", config?.secret_ref)
+    || Deno.env.get("HEALTHFLIX_API_KEY");
   if (!apiKey) throw new Error("healthflix_api_key_missing");
   const res = await fetch(`${HF_BASE}${path}`, {
     ...init,

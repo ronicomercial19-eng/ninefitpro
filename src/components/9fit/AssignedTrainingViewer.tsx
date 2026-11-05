@@ -87,8 +87,9 @@ export function AssignedTrainingViewer({
       <Button variant="ghost" onClick={onBack}>
         Voltar aos protocolos
       </Button>
-      <div className="surface-card p-4">
-        <h2 className="text-xl font-bold">{training.training_name}</h2>
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="text-label mb-2">Prescrição do professor</p>
+        <h2 className="text-display text-2xl">{training.training_name}</h2>
         {training.training_description && (
           <p className="mt-2 text-sm text-muted-foreground">
             {training.training_description}
@@ -144,12 +145,19 @@ export function AssignedTrainingViewer({
           )}
           {data.goal && <p>Objetivo: {data.goal}</p>}
           {data.duration && <p>Duração: {data.duration}</p>}
-          {Array.isArray(data.exercises) &&
-            data.exercises.map((ex: any, i: number) => (
-              <p key={i}>
-                {ex.name || "Exercício"} — {ex.sets} × {ex.reps}
-              </p>
-            ))}
+          {Array.isArray(data.exercises) && data.exercises.length > 0 && (
+            <ol className="divide-y divide-border" aria-label="Exercícios da prescrição">
+              {data.exercises.map((ex: any, i: number) => (
+                <li key={i} className="grid grid-cols-[auto_1fr] gap-3 py-3">
+                  <span className="text-sm font-semibold tabular-nums text-primary" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                  <div className="min-w-0">
+                    <p className="font-semibold">{ex.name || "Exercício"}</p>
+                    <p className="text-sm tabular-nums text-muted-foreground">{ex.sets} séries · {ex.reps ?? ex.reps_range} repetições</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
           {!data.exercises?.length && (
             <p className="text-sm text-muted-foreground">
               Modelo atribuído pelo coach. A prescrição de exercícios deve ser

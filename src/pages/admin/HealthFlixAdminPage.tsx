@@ -162,11 +162,16 @@ export default function HealthFlixAdminPage() {
         <p>Carregando…</p>
       ) : (
         <>
-          <p>
+          <p role="status">
             {q.data?.externalAvailable
-              ? "Catálogo externo carregado."
-              : "Provedor externo indisponível. Exibindo publicações locais."}
+              ? `${q.data.items.length} conteúdos disponíveis · ${q.data.hiddenItems.length} ocultos`
+              : `Catálogo externo indisponível · ${q.data?.items.length ?? 0} conteúdos locais disponíveis`}
           </p>
+          {q.data && !q.data.externalAvailable && (
+            <Button variant="outline" disabled={q.isFetching} onClick={() => void q.refetch()}>
+              Tentar reconectar catálogo
+            </Button>
+          )}
           {q.data?.items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum vídeo disponível no catálogo.</p>}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {q.data?.items.map((v) => (
@@ -177,7 +182,7 @@ export default function HealthFlixAdminPage() {
                 <h2 className="text-lg font-semibold">{v.title}</h2>
                 <p className="text-sm text-muted-foreground">{v.category}</p>
                 {securePreviewUrl(v.video_url) && <Button variant="outline" asChild><a href={securePreviewUrl(v.video_url)!} target="_blank" rel="noopener noreferrer">Prévia do vídeo <span className="sr-only">(nova aba)</span></a></Button>}
-                <Button disabled={!v.video_url} onClick={() => setAssigning(v)}>Atribuir ao aluno</Button>
+                <Button disabled={!securePreviewUrl(v.video_url)} onClick={() => setAssigning(v)}>Atribuir ao aluno</Button>
                 <Button
                   disabled={busy}
                   variant="outline"

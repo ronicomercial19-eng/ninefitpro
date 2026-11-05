@@ -29,22 +29,24 @@ export function mergeHealthCatalog(remote: any[], local: any[]): HealthVideo[] {
       String(a.updated_at || "").localeCompare(String(b.updated_at || "")),
   );
   for (const r of ordered) {
-    const key = String(r.external_id);
+    const key = String(r.external_id || r.id || r.slug || "");
+    if (!key) continue;
     if (r.payload?.fitpro_hidden === true) {
       items.delete(key);
       continue;
     }
+    const previous = items.get(key);
     items.set(key, {
-      ...(items.get(key) || {}),
+      ...previous,
       id: String(r.id),
       external_id: key,
-      title: r.name,
-      category: r.category,
-      thumbnail: r.thumbnail_url,
-      video_url: r.player_url,
-      slug: r.slug,
+      title: r.name || previous?.title || "Sem título",
+      category: r.category || previous?.category,
+      thumbnail: r.thumbnail_url || previous?.thumbnail,
+      video_url: r.player_url || previous?.video_url,
+      slug: r.slug || previous?.slug,
       local_id: r.id,
-      payload: r.payload,
+      payload: { ...previous?.payload, ...r.payload },
     });
   }
   return [...items.values()];

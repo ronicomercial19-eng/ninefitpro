@@ -57,3 +57,17 @@ test("catalog reconciliation preserves the original input records", () => {
   assert.deepEqual(remote, [{ id: "a", title: "Externo" }]);
   assert.equal(local[0].name, "Local");
 });
+
+test("partial local publication preserves remote playback and independent local rows", () => {
+  const result = mergeHealthCatalog(
+    [{ id: "remote", title: "Aula", video_url: "https://example.com/video", thumbnail: "https://example.com/cover" }],
+    [
+      { id: "local", external_id: "remote", name: "Aula editada", player_url: null, thumbnail_url: null },
+      { id: "legacy-a", name: "Primeira publicação" },
+      { id: "legacy-b", name: "Segunda publicação" },
+    ],
+  );
+  assert.equal(result.length, 3);
+  assert.equal(result[0].video_url, "https://example.com/video");
+  assert.equal(result[0].thumbnail, "https://example.com/cover");
+});

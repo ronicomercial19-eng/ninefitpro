@@ -15,8 +15,9 @@ import {StudentPayments} from './tabs/StudentPayments';
 import {CoachStudentPanel} from './CoachStudentPanel';
 import {useCoachStudentContext} from '@/hooks/useCoachStudentContext';
 import {Button} from '@/components/ui/button';
+import {useRealtimeTable} from '@/hooks/useRealtimeTable';
 const PosturaPro = lazy(() => import("@/pages/admin/PosturaProPage"));
-const sections=[['dados-pessoais','Dados'],['treino','Treino'],['dieta','Dieta'],['historico','Histórico'],['medidas','Medidas'],['anamneses','Anamneses'],['fotos','Fotos'],['postura-pro','Postura Pro'],['mensalidade','Mensalidade']];
+const sections=[['dados-pessoais','Dados'],['treino','Treino'],['conteudos','Conteúdos'],['dieta','Dieta'],['historico','Histórico'],['medidas','Medidas'],['anamneses','Anamneses'],['fotos','Fotos'],['postura-pro','Postura Pro'],['mensalidade','Mensalidade']];
 export function SelectedStudentFile({athleteId}:{athleteId:string}){
  const {user}=useAuth(),qc=useQueryClient(),[params,setParams]=useSearchParams();
  const context=useCoachStudentContext(athleteId);
@@ -30,6 +31,7 @@ export function SelectedStudentFile({athleteId}:{athleteId:string}){
  <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1">{sections.map(([key,label])=><TabsTrigger key={key} value={key} className="min-h-11 shrink-0">{label}</TabsTrigger>)}</TabsList>
  <TabsContent value="dados-pessoais"><StudentPersonalData student={student} onStudentUpdate={updated}/></TabsContent>
  <TabsContent value="treino"><StudentTraining student={student} onStudentUpdate={updated}/></TabsContent>
+ <TabsContent value="conteudos"><StudentContentProgress athleteId={athleteId}/></TabsContent>
  <TabsContent value="dieta"><StudentDiet student={student}/></TabsContent>
  <TabsContent value="historico"><div className="space-y-5"><StudentHistory studentId={athleteId}/><CoachStudentPanel athleteId={athleteId}/></div></TabsContent>
  <TabsContent value="medidas"><StudentMeasurements studentId={athleteId}/></TabsContent>
@@ -38,4 +40,45 @@ export function SelectedStudentFile({athleteId}:{athleteId:string}){
  <TabsContent value="fotos"><StudentPhotos studentId={athleteId}/></TabsContent>
  <TabsContent value="mensalidade"><StudentPayments student={student} onStudentUpdate={updated}/></TabsContent>
  </Tabs></section>;
+}
+
+function StudentContentProgress({ athleteId }: { athleteId: string }) {
+  const { user } = useAuth();
+  const query = useQuery({
+    queryKey: ["coach-library-progress", athleteId, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("student_library_assignments")
+        .select("id,content_title,content_type,status,progress_pct,completed_at")
+        .eq("athlete_id", athleteId)
+        .order("assigned_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).filter(item => item.status !== "cancelled");
+    },
+  });
+  useRealtimeTable({ table: "student_library_assignments", filter: `athlete_id=eq.${athleteId}`, enabled: !!user },
+    () => void query.refetch());
+
+  if (query.isPending) return <p role="status">Carregando conteúdos atribuídos…</p>;
+  if (query.isError) return <div role="alert">
+    <p>Não foi possível consultar os conteúdos deste aluno.</p>
+    <Button variant="outline" onClick={() => void query.refetch()}>Tentar novamente</Button>
+  </div>;
+
+  return <section className="space-y-3 rounded-xl border bg-card p-4">
+    <h3 className="font-semibold">Conteúdos atribuídos</h3>
+    {!query.data?.length ? <p className="text-sm text-muted-foreground">Nenhum conteúdo atribuído.</p> :
+      <ul className="divide-y divide-border">
+        {query.data.map(item => {
+          const progress = Math.max(0, Math.min(100, Number(item.progress_pct) || 0));
+          const kind = /^(videos?|streaming|aula)$/.test(item.content_type) ? "Aula gravada"
+            : /^(exercises?|exercícios?)$/.test(item.content_type) ? "Exercício"
+            : /^(protocols?|protocolos?|training)$/.test(item.content_type) ? "Protocolo de treino" : item.content_type;
+          return <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+            <div><p className="font-medium">{item.content_title}</p><p className="text-xs text-muted-foreground">{kind}</p></div>
+            <span className="text-sm tabular-nums">{item.completed_at ? "Concluído" : progress > 0 ? `${Math.round(progress)}% assistido` : "Atribuído"}</span>
+          </li>;
+        })}
+      </ul>}
+  </section>;
 }

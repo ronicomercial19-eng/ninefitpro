@@ -5,7 +5,7 @@ export async function loadHealthFlixCatalog() {
   const [upstream, local] = await Promise.all([
     supabase.functions.invoke("healthflix-proxy?action=content", {
       method: "GET" as any,
-    }),
+    }).catch(() => null),
     (async () => {
       const rows: any[] = [];
       for (let offset = 0; ; offset += 500) {
@@ -25,7 +25,7 @@ export async function loadHealthFlixCatalog() {
     })(),
   ]);
   const valid =
-    !upstream.error &&
+    !!upstream && !upstream.error &&
     Array.isArray(upstream.data?.items) &&
     upstream.data?.success !== false;
   if (!valid && !local.length)

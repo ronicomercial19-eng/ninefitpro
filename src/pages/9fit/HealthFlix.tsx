@@ -1,6 +1,6 @@
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { Play, Film, Loader2, X, ExternalLink } from "lucide-react";
@@ -80,6 +80,8 @@ export default function NineFitHealthFlix() {
   };
   const [filters, setFilters] = useState<CatalogFilters>(emptyFilters);
   const [visibleCount, setVisibleCount] = useState(24);
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
+  const [externalAvailable, setExternalAvailable] = useState(true);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [savedProgress, setSavedProgress] = useState<
     Record<string, Partial<CatalogItem>>
@@ -101,8 +103,11 @@ export default function NineFitHealthFlix() {
       setLoading(true);
       setLoadError(false);
       try {
-        const { items } = await loadHealthFlixCatalog();
-        if (active) setItems(items);
+        const catalog = await loadHealthFlixCatalog();
+        if (active) {
+          setItems(catalog.items);
+          setExternalAvailable(catalog.externalAvailable);
+        }
       } catch (error) {
         console.error("[HealthFlix] catálogo", error);
         if (active) {
@@ -116,7 +121,7 @@ export default function NineFitHealthFlix() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [catalogAttempt]);
 
   useEffect(() => {
     setSavedProgress({});
@@ -354,12 +359,18 @@ export default function NineFitHealthFlix() {
               Não foi possível carregar o catálogo.
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => setCatalogAttempt(attempt => attempt + 1)}
               className="mt-3 text-xs text-primary underline"
             >
               Tentar novamente
             </button>
           </div>
+        )}
+        {!loading && (loadError || !externalAvailable) && (
+          <Link to="/9fit/protocolo" className="col-span-2 flex min-h-11 items-center justify-between rounded-xl border bg-card px-4 text-sm">
+            <span>Ver conteúdos enviados pelo professor</span>
+            <span aria-hidden="true" className="text-primary">↗</span>
+          </Link>
         )}
         {!loading && !loadError && filtered.length === 0 && (
           <div className="col-span-2 glass-mission rounded-xl p-6 flex flex-col items-center text-center">

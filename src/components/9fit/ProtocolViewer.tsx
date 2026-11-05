@@ -231,6 +231,7 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   };
 
   const saveWatch = async (position: number, duration: number, completed = false) => {
+    if (assignment.completed_at || videoCompleted) return;
     if (!Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0) return;
     const now = Date.now();
     if (!completed && now - lastSavedAt.current < 30000) return;
@@ -252,10 +253,11 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
           watched_seconds: Math.max(Number(previous.watched_seconds) || 0, lastPosition),
           updated_at: new Date().toISOString(),
         } },
-      }).eq("id", assignment.id);
+      }).eq("id", assignment.id).is("completed_at", null);
       if (error) throw error;
       if (completed) { setVideoCompleted(true); toast.success("Conteúdo concluído e progresso salvo."); onComplete(); }
     } catch (error) {
+      if (lastSavedAt.current === now) lastSavedAt.current = 0;
       toast.error(error instanceof Error ? `Não foi possível salvar o progresso: ${error.message}` : "Não foi possível salvar o progresso.");
     }
   };
