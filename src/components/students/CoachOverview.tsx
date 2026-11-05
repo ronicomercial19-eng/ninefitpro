@@ -14,7 +14,7 @@ import { exportToCSV } from "@/utils/exportUtils";
 import { Button } from "@/components/ui/button";
 import { goalLabel } from '@/lib/athleteGoal';
 export function CoachOverview({
-  title = "Dashboard",
+  title = "Visão geral",
   report = false,
 }: {
   title?: string;
@@ -23,6 +23,8 @@ export function CoachOverview({
   const { user } = useAuth(),
     w = useProfessorWorkspace();
   const [period, setPeriod] = useState(30);
+  const [includeTraining, setIncludeTraining] = useState(true);
+  const [includeProfile, setIncludeProfile] = useState(true);
   const end = businessDate();
   let start = end;
   for (let i = 1; i < period; i++) start = previousDate(start);
@@ -59,27 +61,29 @@ export function CoachOverview({
       ? q.data.students.filter((r) => r.id === w.athleteId)
       : q.data.students,
     summary = summarizeOverview(rows, end);
+  const exportRows = report ? rows.map((row) => ({
+    Aluno: row.name,
+    ...(includeProfile ? { Objetivo: goalLabel(row.goal), Ativo: row.active ? "Sim" : "Não" } : {}),
+    Inicio: start,
+    Fim: end,
+    ...(includeTraining ? {
+      Treinos_concluidos: row.completed_workouts,
+      Sessoes_prescritas: row.prescribed_sessions,
+      RPE_medio: row.avg_rpe ?? "Não informado",
+      Minutos_registrados: row.duration_minutes,
+    } : {}),
+  })) : [];
+  const exportColumns = exportRows.length ? Object.keys(exportRows[0]) : [];
+
   function download() {
-    exportToCSV(
-      rows.map((r) => ({
-        Aluno: r.name,
-        Objetivo: goalLabel(r.goal),
-        Ativo: r.active ? "Sim" : "Não",
-        Inicio: start,
-        Fim: end,
-        Treinos_concluidos: r.completed_workouts,
-        Sessoes_prescritas: r.prescribed_sessions,
-        RPE_medio: r.avg_rpe ?? "Não informado",
-        Minutos_registrados: r.duration_minutes,
-      })),
-      `acompanhamento-${start}-${end}`,
-    );
+    exportToCSV(exportRows, `acompanhamento-${start}-${end}`);
   }
+
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <h1 className="nine-core-title text-2xl font-bold">{title}</h1>
           <p className="text-sm text-muted-foreground">
             {w.selected ? w.selected.name : "Alunos autorizados"} · {start} a{" "}
             {end} · calendário de São Paulo.
@@ -106,7 +110,26 @@ export function CoachOverview({
           )}
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {!report && (
+        <div className="nine-core-overview">
+          <div>
+            <p className="nine-core-kicker">Carteira de alunos</p>
+            <p key={summary.active} className="nine-core-metric nine-core-metric-change">{summary.active}</p>
+            <p className="text-sm text-muted-foreground">Alunos ativos</p>
+          </div>
+          <div>
+            <p className="nine-core-kicker">Treinos no período</p>
+            <p key={summary.completed} className="nine-core-metric nine-core-metric-change">{summary.completed}</p>
+            <p className="text-sm text-muted-foreground">Execuções concluídas</p>
+          </div>
+          <div>
+            <p className="nine-core-kicker">Prescrição</p>
+            <p key={summary.withoutTraining} className="nine-core-metric nine-core-metric-change">{summary.withoutTraining}</p>
+            <p className="text-sm text-muted-foreground">Alunos sem atribuição de treino</p>
+          </div>
+        </div>
+      )}
+      <div className="nine-core-overview-secondary">
         {[
           ["Alunos únicos", summary.students],
           ["Alunos ativos", summary.active],
@@ -115,8 +138,8 @@ export function CoachOverview({
           ["Sem atribuição de treino", summary.withoutTraining],
           ["Atribuição sem vencimento", summary.withoutEndDate],
           ["Atribuição vencida", summary.expired],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-xl border bg-card p-4">
+        ].filter(([label]) => report || !["Alunos ativos", "Execuções concluídas", "Sem atribuição de treino"].includes(String(label))).map(([label, value]) => (
+          <div key={String(label)} className="nine-core-overview-secondary-item">
             <p className="text-xs text-muted-foreground">{label}</p>
             <p className="mt-2 text-2xl font-bold">{value}</p>
           </div>
@@ -127,7 +150,44 @@ export function CoachOverview({
         execução. Atribuições são classificadas por pessoa, com vigência na data
         atual. RPE é esforço percebido e não SYNC ou avaliação clínica.
       </p>
-      <div className="overflow-auto rounded-xl border">
+      {report && <div className="border-t pt-4"><h2 className="text-lg font-semibold">Prévia dos registros</h2><p className="text-sm text-muted-foreground">{rows.length} {rows.length === 1 ? "aluno no arquivo" : "alunos no arquivo"} · {period} dias · CSV</p></div>}
+      {report && (
+        <details className="rounded-md border bg-card px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium">Seções do CSV</summary>
+          <fieldset className="mt-3 flex flex-wrap gap-4 text-sm">
+            <legend className="sr-only">Seções opcionais do relatório</legend>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={includeProfile} onChange={(event) => setIncludeProfile(event.target.checked)} />
+              Perfil do aluno
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={includeTraining} onChange={(event) => setIncludeTraining(event.target.checked)} />
+              Indicadores de treino
+            </label>
+          </fieldset>
+        </details>
+      )}
+      {report && exportRows.length > 0 && (
+        <div className="overflow-auto rounded-md border" tabIndex={0} role="region" aria-label="Prévia do CSV">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/40">
+              <tr>{exportColumns.map((column) => (
+                <th key={column} scope="col" className="whitespace-nowrap p-3">{column}</th>
+              ))}</tr>
+            </thead>
+            <tbody>{exportRows.map((row, index) => (
+              <tr key={rows[index].id} className="border-t">
+                {Object.entries(row).map(([column, value]) => (
+                  <td key={column} className="whitespace-nowrap p-3">{value}</td>
+                ))}
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+      {report && exportRows.length === 0 && <p className="text-sm text-muted-foreground">Nenhum aluno neste escopo.</p>}
+      {!report && (
+        <div className="overflow-auto rounded-md border">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
@@ -150,6 +210,7 @@ export function CoachOverview({
                 <td className="p-3">
                   <Link
                     to={`/app/acompanhamento?athlete=${r.id}`}
+                    data-nine-core-transition="student"
                     className="text-primary underline"
                   >
                     {r.name}
@@ -170,7 +231,8 @@ export function CoachOverview({
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
       <div className="flex flex-wrap gap-3 text-sm">
         {[
           ["Acompanhamento", "/app/acompanhamento"],

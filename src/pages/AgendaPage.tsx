@@ -40,7 +40,6 @@ import {
   Plus,
   Clock,
   Activity,
-  Users,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -532,7 +531,7 @@ export default function AgendaPage() {
         </div>
       )}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
+        <h1 className="nine-core-title text-3xl font-bold text-foreground">Agenda</h1>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
@@ -890,73 +889,19 @@ export default function AgendaPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-purple-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <Activity className="w-6 h-6 text-purple-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Agendamentos</p>
-                <p className="text-2xl font-bold text-purple-400">
-                  {totalAppointments}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-blue-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Aulas confirmadas
-                </p>
-                <p className="text-2xl font-bold text-blue-400">
-                  {confirmedBookings}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-green-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="w-6 h-6 text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Concluídos</p>
-                <p className="text-2xl font-bold text-green-400">
-                  {completedAppointments}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-amber-500/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <Bell className="w-6 h-6 text-amber-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Pendentes WhatsApp
-                </p>
-                <p className="text-2xl font-bold text-amber-400">
-                  {pendingRequests.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <dl className="nine-core-agenda-summary">
+        {[
+          ["Agendamentos", totalAppointments],
+          ["Aulas confirmadas", confirmedBookings],
+          ["Concluídos", completedAppointments],
+          ["Pendentes WhatsApp", pendingRequests.length],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <dt className="nine-core-kicker">{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 text-xs">
@@ -975,7 +920,7 @@ export default function AgendaPage() {
       </div>
 
       {/* Calendar */}
-      <Card>
+      <Card className="nine-core-calendar">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">

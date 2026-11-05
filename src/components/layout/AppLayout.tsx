@@ -4,14 +4,16 @@ import {
   ProfessorWorkspaceProvider,
   ProfessorStudentBar,
   ProfessorScope,
+  useProfessorWorkspace,
 } from "@/contexts/ProfessorWorkspace";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { Settings } from "lucide-react";
+import "./nine-core.css";
+import { runNineCoreTransition } from "./nineCoreTransition";
 import { NotificationBell } from "@/components/9fit/NotificationBell";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,14 +30,14 @@ interface AppLayoutProps {
 }
 
 const routeLabels: Record<string, string> = {
-  "/app": "Dashboard",
+  "/app": "Visão geral",
   "/app/mensagens": "Mensagens",
   "/app/acompanhamento": "Acompanhamento",
   "/app/ron": "RON",
-  "/app/assistente-ia": "Assistente IA",
+  "/app/assistente-ia": "Prescrever treino",
   "/app/analise-ia": "Análise IA",
   "/app/smart-periodizer": "Periodização",
-  "/app/smart-treino": "SmartTreino",
+  "/app/smart-treino": "Ajustes de treino",
   "/app/fit-copilot": "FitCopilot",
   "/app/configuracoes": "Configurações",
   "/app/alunos": "Alunos",
@@ -49,8 +51,28 @@ const routeLabels: Record<string, string> = {
 };
 
 export function AppLayout({ children }: AppLayoutProps) {
-  React.useEffect(()=>{document.documentElement.dataset.ninefitSurface='professor';return()=>{if(document.documentElement.dataset.ninefitSurface==='professor')delete document.documentElement.dataset.ninefitSurface;};},[]);
+  React.useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.ninefitSurface = "professor";
+    const clock = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "numeric",
+      hourCycle: "h23",
+    });
+    const updateAtmosphere = () => {
+      const hour = Number(clock.format(new Date()));
+      root.dataset.nineCoreShift = hour >= 20 || hour < 5 ? "night" : hour < 10 ? "morning" : "day";
+    };
+    updateAtmosphere();
+    const interval = window.setInterval(updateAtmosphere, 60_000);
+    return () => {
+      window.clearInterval(interval);
+      delete root.dataset.nineCoreShift;
+      if (root.dataset.ninefitSurface === "professor") delete root.dataset.ninefitSurface;
+    };
+  }, []);
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     isTrainer,
     loading,
@@ -118,25 +140,32 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const breadcrumbs = getBreadcrumbs();
 
+  function animateNavigation(event: React.MouseEvent<HTMLDivElement>) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!document.startViewTransition || !matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
+    const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[data-nine-core-transition]") : null;
+    if (!link || link.target || link.hasAttribute("download")) return;
+    const destination = new URL(link.href, window.location.href);
+    if (destination.origin !== window.location.origin || destination.pathname === location.pathname) return;
+
+    event.preventDefault();
+    runNineCoreTransition(link.dataset.nineCoreTransition === "student" ? "student" : "module", () => {
+      navigate(destination.pathname + destination.search + destination.hash);
+    });
+  }
+
+
   return (
     <ProfessorWorkspaceProvider key={user?.id}>
       <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen flex w-full bg-background">
+        <div className="nine-core min-h-screen flex w-full bg-background" onClickCapture={animateNavigation}>
           <AppSidebar />
 
           <div className="min-w-0 flex-1 flex flex-col">
             {/* Top Header */}
-            <header className="min-h-[calc(4rem+env(safe-area-inset-top))] border-b border-border bg-card flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
+            <header className="nine-core-header min-h-[calc(4rem+env(safe-area-inset-top))] border-b border-border bg-card flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
               <div className="flex items-center gap-4">
                 <SidebarTrigger />
-                <div className="hidden md:flex items-center gap-2 mr-2">
-                  <div className="w-7 h-7 rounded bg-[#EF7A45] flex items-center justify-center text-white font-display text-sm">
-                    9
-                  </div>
-                  <span className="font-display text-base tracking-tight">
-                    9FIT · 9FIT PRO
-                  </span>
-                </div>
                 <Breadcrumb>
                   <BreadcrumbList>
                     {breadcrumbs.map((crumb, index) => (
@@ -159,11 +188,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
               <div className="flex items-center gap-2">
                 <NotificationBell />
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/app/configuracoes" aria-label="Configurações">
-                    <Settings className="w-5 h-5" />
-                  </Link>
-                </Button>
                 <Link to="/suporte" className="text-sm text-muted-foreground">
                   Ajuda
                 </Link>
@@ -181,15 +205,48 @@ export function AppLayout({ children }: AppLayoutProps) {
             </header>
 
             {/* Main Content */}
-            <main className="min-w-0 flex-1 p-3 sm:p-6 bg-muted/20">
-              <ProfessorStudentBar />
-              <ProfessorQuickActions />
-            <CareReturnBanner professional />
-              <ProfessorScope>{children}</ProfessorScope>
+            <main className="nine-core-main min-w-0 flex-1 p-4 sm:p-6 xl:p-8">
+              <div className="nine-core-workspace">
+                <ProfessorStudentBar />
+                <ProfessorQuickActions />
+              </div>
+              <CareReturnBanner professional />
+              <NexusDock />
+              <div className="nine-core-route"><ProfessorScope>{children}</ProfessorScope></div>
             </main>
           </div>
         </div>
       </SidebarProvider>
     </ProfessorWorkspaceProvider>
+  );
+}
+
+const nexusDestinations = [
+  { path: "/app/nexus", label: "NEXUS" },
+  { path: "/app", label: "Operacional" },
+  { path: "/app/healthflix", label: "Conteúdo" },
+  { path: "/app/monetizacao", label: "Financeiro", adminOnly: true },
+];
+
+function NexusDock() {
+  const { pathname } = useLocation();
+  const { isAdmin } = useAuth();
+  const workspace = useProfessorWorkspace();
+  const destinations = nexusDestinations.filter(({ adminOnly }) => !adminOnly || isAdmin);
+  if (!destinations.some(({ path }) => path === pathname)) return null;
+
+  return (
+    <nav className="nine-core-nexus-dock" aria-label="Áreas do NEXUS">
+      {destinations.map(({ path, label }) => (
+        <NavLink key={path} end to={workspace.link(path)} data-nine-core-transition="module">
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="nine-core-nexus-light" aria-hidden="true" />}
+              <span className="relative">{label}</span>
+            </>
+          )}
+        </NavLink>
+      ))}
+    </nav>
   );
 }

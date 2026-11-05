@@ -31,6 +31,89 @@ interface Scan {
 const SIDES = ["front", "back", "left", "right"] as const;
 type Side = (typeof SIDES)[number];
 
+const SIDE_LABELS: Record<Side, string> = {
+  front: "Frente",
+  back: "Costas",
+  left: "Lado esquerdo",
+  right: "Lado direito",
+};
+
+function ComparisonPhoto({ scan, side, label }: { scan: Scan; side: Side; label: string }) {
+  const path = scan[`${side}_url`];
+  const [url, setUrl] = useState<string | null>(side === "front" ? path ?? null : null);
+  const [loading, setLoading] = useState(Boolean(path && side !== "front"));
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!path || side === "front") return;
+    let active = true;
+    void signedAssessmentUrl(path)
+      .then((value) => { if (active) setUrl(value); })
+      .catch(() => { if (active) setUrl(null); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [path, side]);
+
+  return (
+    <figure className="nine-core-posture-photo">
+      <figcaption>
+        <span className="nine-core-kicker">{label}</span>
+        <time dateTime={scan.created_at}>
+          {new Date(scan.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+        </time>
+      </figcaption>
+      <div className="nine-core-posture-frame">
+        {url && !failed ? (
+          <img src={url} alt={`${SIDE_LABELS[side]} · ${label}`} onError={() => setFailed(true)} />
+        ) : (
+          <p role="status">{loading ? "Carregando foto…" : "Foto indisponível neste ângulo."}</p>
+        )}
+      </div>
+    </figure>
+  );
+}
+
+function PostureComparison({ scans }: { scans: Scan[] }) {
+  const [side, setSide] = useState<Side>("front");
+  const [referenceId, setReferenceId] = useState("");
+  const current = scans[0];
+  const references = scans.slice(1);
+  const reference = references.find((scan) => scan.id === referenceId) ?? references[0];
+  if (!current) return null;
+
+  return (
+    <section className="nine-core-posture" aria-labelledby="posture-comparison-title">
+      <header>
+        <div>
+          <p className="nine-core-kicker">Histórico visual</p>
+          <h2 id="posture-comparison-title">Compare o mesmo ângulo</h2>
+        </div>
+        {reference && (
+          <label className="text-sm">
+            Avaliação de referência
+            <select className="ml-2 rounded border bg-background p-2" value={reference.id} onChange={(event) => setReferenceId(event.target.value)}>
+              {references.map((scan) => <option key={scan.id} value={scan.id}>{new Date(scan.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</option>)}
+            </select>
+          </label>
+        )}
+      </header>
+      <div className="nine-core-posture-angles" role="group" aria-label="Ângulo da comparação">
+        {SIDES.map((value) => (
+          <Button key={value} type="button" size="sm" variant="outline" aria-pressed={side === value} onClick={() => setSide(value)}>
+            {SIDE_LABELS[value]}
+          </Button>
+        ))}
+      </div>
+      <div className="nine-core-posture-pair">
+        {reference && <ComparisonPhoto key={`${reference.id}:${side}`} scan={reference} side={side} label="Referência" />}
+        <ComparisonPhoto key={`${current.id}:${side}`} scan={current} side={side} label="Mais recente" />
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {reference ? "Compare fotos feitas com enquadramento e distância semelhantes." : "Adicione outra avaliação para comparar as duas datas."}
+      </p>
+    </section>
+  );
+}
 export default function PosturaProPage({ studentId }: { studentId?: string } = {}) {
   const { user } = useAuth();
   const workspace = useProfessorWorkspace();
@@ -41,14 +124,15 @@ export default function PosturaProPage({ studentId }: { studentId?: string } = {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<Partial<Record<Side, File>>>({});
   const [uploading, setUploading] = useState(false);
-  const [scans, setScans] = useState<Scan[]>([]);
+  const [scanHistory, setScanHistory] = useState<{ athleteId: string; scans: Scan[] } | null>(null);
+  const scans = scanHistory?.athleteId === athleteId ? scanHistory?.scans ?? [] : [];
   const [running, setRunning] = useState<string | null>(null);
 
   async function load() {
     const request = ++revision.current;
-    setScans([]);
+    setScanHistory(null);
     setLoadError(false);
-    if (!athleteId) return;
+    if (!athleteId) { setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from("postura_scans")
@@ -72,7 +156,7 @@ export default function PosturaProPage({ studentId }: { studentId?: string } = {
       })),
     );
     if (request === revision.current) {
-      setScans(rows as Scan[]);
+      setScanHistory({ athleteId, scans: rows as Scan[] });
       setLoading(false);
     }
   }
@@ -246,6 +330,8 @@ export default function PosturaProPage({ studentId }: { studentId?: string } = {
           </Button>
         </CardContent>
       </Card>
+
+      <PostureComparison key={athleteId} scans={scans.filter((scan) => scan.status === "done")} />
 
       <div className="space-y-3">
         <h3 className="text-sm uppercase tracking-widest text-primary font-bold">

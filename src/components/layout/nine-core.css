@@ -1,0 +1,413 @@
+/* Professor workspace. The scope is set by AppLayout and also covers its portals. */
+html:root[data-ninefit-surface="professor"] {
+  --background: 210 9% 4%;
+  --foreground: 0 0% 100%;
+  --card: 210 8% 8%;
+  --card-foreground: 0 0% 100%;
+  --popover: 210 8% 8%;
+  --popover-foreground: 0 0% 100%;
+  --muted: 210 7% 12%;
+  --muted-foreground: 210 6% 69%;
+  --accent: 210 7% 14%;
+  --accent-foreground: 0 0% 100%;
+  --primary: 16 100% 56%;
+  --primary-foreground: 210 9% 4%;
+  --border: 210 6% 21%;
+  --input: 210 6% 25%;
+  --ring: 16 100% 56%;
+  --ninefit-accent: #ff5a1f;
+  --ninefit-card-radius: .5rem;
+  --ninefit-button-radius: .375rem;
+  --sidebar-background: 210 8% 6%;
+  --sidebar-foreground: 0 0% 96%;
+  --sidebar-accent: 210 7% 12%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 210 6% 21%;
+  --sidebar-ring: 16 100% 56%;
+}
+
+html:root[data-ninefit-surface="professor"] :where(button, a).bg-primary:not(:disabled) {
+  color: hsl(var(--primary-foreground));
+  box-shadow: none;
+}
+
+.nine-core-header { background: hsl(var(--background)); }
+.nine-core-main { width: 100%; max-width: 100rem; margin-inline: auto; }
+.nine-core-brand h2 { font-family: var(--font-display); letter-spacing: -.025em; }
+.nine-core-mark {
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  flex: none;
+  border-radius: .25rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font: 800 1.25rem var(--font-display);
+}
+html[data-ninefit-surface="professor"] .nine-core-nav-link { border-inline-start: 2px solid transparent; border-radius: 0; }
+html[data-ninefit-surface="professor"] .nine-core-nav-link[aria-current="page"] {
+  border-inline-start-color: hsl(var(--primary));
+  background: hsl(var(--sidebar-accent));
+  color: hsl(var(--sidebar-accent-foreground));
+  font-weight: 650;
+}
+.nine-core-context {
+  border-radius: .375rem;
+  border-inline-start: 2px solid hsl(var(--primary));
+}
+.nine-core .nine-core-title { font: 750 clamp(1.75rem, 3vw, 3rem)/1.05 var(--font-display); letter-spacing: -.045em; }
+.nine-core-overview { display: grid; border: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+.nine-core-overview > div { min-width: 0; padding: clamp(1rem, 2vw, 1.75rem); }
+.nine-core-overview > div + div { border-block-start: 1px solid hsl(var(--border)); }
+.nine-core-kicker { color: hsl(var(--muted-foreground)); font-size: .7rem; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
+.nine-core-metric { margin-block: .45rem; font: 750 clamp(2.4rem, 4vw, 4.25rem)/1 var(--font-display); letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.nine-core-overview > div:last-child .nine-core-metric { color: hsl(var(--primary)); }
+@media (min-width: 48rem) {
+  .nine-core-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .nine-core-overview > div + div { border-block-start: 0; border-inline-start: 1px solid hsl(var(--border)); }
+}
+
+.nine-core-agenda-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+.nine-core-agenda-summary > div { padding: .9rem 1rem; }
+.nine-core-agenda-summary dd { margin-block-start: .3rem; font: 700 1.6rem var(--font-display); font-variant-numeric: tabular-nums; }
+.nine-core-calendar { border-radius: .375rem; }
+@media (min-width: 64rem) {
+  .nine-core-agenda-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .nine-core-agenda-summary > div + div { border-inline-start: 1px solid hsl(var(--border)); }
+}
+
+/* Keep shared navigation quiet. Contextual actions appear when an athlete is selected. */
+.nine-core-main { padding-top: clamp(1rem, 2.2vw, 2rem); }
+.nine-core-workspace { margin-block-end: clamp(1.4rem, 2.7vw, 2.5rem); }
+.nine-core-context { background: transparent; border-inline-start: 1px solid hsl(var(--border)); }
+.nine-core-student-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem 1.25rem;
+  margin-block-start: .35rem;
+  padding-inline: .75rem;
+}
+.nine-core-student-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding-inline: .15rem;
+  border-block-end: 1px solid transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: .8125rem;
+}
+.nine-core-student-actions a:hover,
+.nine-core-student-actions a[aria-current="page"] {
+  color: hsl(var(--foreground));
+  border-block-end-color: hsl(var(--primary));
+}
+html[data-ninefit-surface="professor"] .nine-core-nav-group {
+  font-weight: 550;
+  color: hsl(var(--muted-foreground));
+}
+html[data-ninefit-surface="professor"] .nine-core-nav-group[aria-expanded="true"] {
+  color: hsl(var(--foreground));
+}
+.nine-core-nav-nested {
+  margin-inline-start: .75rem;
+  border-inline-start: 1px solid hsl(var(--border));
+  padding-inline-start: .35rem;
+}
+.nine-core-overview-secondary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .75rem 1.25rem;
+  border-block-end: 1px solid hsl(var(--border));
+  padding-block-end: .875rem;
+}
+.nine-core-overview-secondary-item p:last-child {
+  margin-block-start: .25rem;
+  font-size: 1.125rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.nine-core-section-tabs { background: transparent; border-bottom: 1px solid hsl(var(--border)); border-radius: 0; }
+.nine-core-section-tabs [role="tab"] { border-bottom: 2px solid transparent; border-radius: 0; }
+.nine-core-section-tabs [role="tab"][data-state="active"] {
+  background: transparent;
+  border-bottom-color: hsl(var(--primary));
+  box-shadow: none;
+}
+
+.nine-core-main h1 {
+  font-family: var(--font-display);
+  letter-spacing: -.035em;
+  text-transform: none;
+}
+.nine-core-main :where(th, td, input[type="number"], time) { font-variant-numeric: tabular-nums; }
+.nine-core-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+.nine-core-editor-status {
+  border: 1px solid hsl(var(--border));
+  border-radius: .25rem;
+  color: hsl(var(--muted-foreground));
+  padding: .25rem .5rem;
+  font-size: .75rem;
+}
+.nine-core-prescription { border-radius: .5rem; }
+.nine-core-publish { border-top: 1px solid hsl(var(--border)); padding-block-start: 1rem; }
+
+/* Optical depth and motion are scoped to the professional workspace. */
+html:root[data-ninefit-surface="professor"] {
+  --nine-core-snap: cubic-bezier(.16, 1, .3, 1);
+  --nine-core-motion: 200ms;
+  --nine-core-reflection: inset 0 1px rgb(255 255 255 / .10), inset 1px 0 rgb(255 255 255 / .06);
+}
+.nine-core :is(.nine-core-overview, .nine-core-prescription, .nine-core-calendar),
+html[data-ninefit-surface="professor"] [role="dialog"] {
+  box-shadow: var(--nine-core-reflection);
+}
+html[data-ninefit-surface="professor"] [role="dialog"] {
+  background-color: hsl(var(--card));
+}
+@supports (backdrop-filter: blur(20px)) {
+  html[data-ninefit-surface="professor"] [role="dialog"] {
+    background-color: hsl(var(--card) / .90);
+    backdrop-filter: blur(20px);
+  }
+}
+html:root[data-ninefit-surface="professor"] .nine-core :is(.nine-core-prescription, .nine-core-calendar) {
+  border-radius: var(--ninefit-card-radius);
+}
+html:root[data-ninefit-surface="professor"] .nine-core :is(.nine-core-publish, .nine-core-main) button.bg-primary:focus-visible:not(:disabled) {
+  box-shadow: 0 0 16px hsl(var(--primary) / .22);
+}
+.nine-core .nine-core-nav-link[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-block: .65rem;
+  inset-inline-start: -2px;
+  width: 2px;
+  border-radius: 2px;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 8px hsl(var(--primary) / .34);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nine-core :is(.nine-core-nav-link, .nine-core-nav-group, .nine-core-student-actions a) {
+    transition: background-color var(--nine-core-motion) var(--nine-core-snap),
+      border-color var(--nine-core-motion) var(--nine-core-snap),
+      color var(--nine-core-motion) var(--nine-core-snap);
+  }
+  .nine-core-nav-group svg {
+    transition: transform var(--nine-core-motion) var(--nine-core-snap);
+  }
+  .nine-core-exercise-list > li:nth-child(-n+5) {
+    animation: nine-core-row-in var(--nine-core-motion) var(--nine-core-snap) backwards;
+  }
+  .nine-core-exercise-list > li:nth-child(2) { animation-delay: 50ms; }
+  .nine-core-exercise-list > li:nth-child(3) { animation-delay: 100ms; }
+  .nine-core-exercise-list > li:nth-child(4) { animation-delay: 150ms; }
+  .nine-core-exercise-list > li:nth-child(5) { animation-delay: 200ms; }
+}
+@keyframes nine-core-row-in {
+  from { opacity: .55; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.nine-core-posture { border: 1px solid hsl(var(--border)); border-radius: .5rem; background: hsl(var(--card)); padding: clamp(1rem, 3vw, 1.5rem); }
+.nine-core-posture header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .75rem; }
+.nine-core-posture h2 { font: 700 1.5rem var(--font-display); }
+.nine-core-posture-angles { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
+.nine-core-posture-angles button[aria-pressed="true"] { border-color: hsl(var(--primary)); }
+.nine-core-posture-pair { display: grid; gap: .75rem; margin-block-end: .75rem; }
+.nine-core-posture-photo { min-width: 0; margin: 0; }
+.nine-core-posture-photo figcaption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem; padding: .6rem; font-size: .75rem; }
+.nine-core-posture-frame { display: grid; place-items: center; aspect-ratio: 4 / 5; max-height: 29rem; overflow: hidden; background: hsl(var(--background)); border: 1px solid hsl(var(--border)); }
+.nine-core-posture-frame img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.nine-core-posture-frame p { padding: 1rem; color: hsl(var(--muted-foreground)); text-align: center; }
+@media (min-width: 38rem) { .nine-core-posture-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Atmosphere, applied only to the professional surface. */
+html:root[data-ninefit-surface="professor"][data-nine-core-shift="morning"] { --background: 218 15% 5%; }
+html:root[data-ninefit-surface="professor"][data-nine-core-shift="night"] { --background: 12 12% 5%; }
+.nine-core-main {
+  background-image:
+    linear-gradient(90deg, hsl(var(--background)) 0, transparent 2.5rem, transparent calc(100% - 2.5rem), hsl(var(--background)) 100%),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / .018) 0 .5px, transparent .5px 32px),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / .018) 0 .5px, transparent .5px 32px);
+}
+html[data-ninefit-surface="professor"] [data-dialog-overlay] {
+  background: radial-gradient(ellipse at center, rgb(0 0 0 / .42), rgb(0 0 0 / .85));
+  backdrop-filter: grayscale(1) blur(6px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:root[data-ninefit-surface="professor"] .nine-core :where(button, a).bg-primary:not(:disabled) {
+    transition: scale var(--nine-core-motion) var(--nine-core-snap), box-shadow var(--nine-core-motion) var(--nine-core-snap);
+  }
+  html:root[data-ninefit-surface="professor"] .nine-core :where(button, a).bg-primary:not(:disabled):active {
+    scale: .96;
+    animation: nine-core-press var(--nine-core-motion) var(--nine-core-snap);
+  }
+  .nine-core-student-actions a span {
+    transform: translate(var(--nine-core-magnet-x, 0px), var(--nine-core-magnet-y, 0px));
+    transition: transform var(--nine-core-motion) var(--nine-core-snap);
+  }
+  .nine-core-metric-change { animation: nine-core-metric-in 120ms var(--nine-core-snap); }
+}
+@keyframes nine-core-press {
+  from { box-shadow: 0 0 0 0 hsl(var(--primary) / .27); }
+  to { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+}
+@keyframes nine-core-metric-in {
+  from { opacity: .65; filter: blur(2px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+/* Navigation movement keeps the shell and focusable controls in their normal flow. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-nine-core-transition] .nine-core-route { view-transition-name: nine-core-route; }
+  html[data-nine-core-transition] .nine-core-nav-link[aria-current="page"]::before {
+    view-transition-name: nine-core-dock-light;
+  }
+  html[data-nine-core-transition]::view-transition-old(root),
+  html[data-nine-core-transition]::view-transition-new(root) { animation: none; }
+  html[data-nine-core-transition]::view-transition-group(nine-core-route) {
+    animation-duration: 240ms;
+    animation-timing-function: cubic-bezier(.05, .7, .1, 1);
+  }
+  html[data-nine-core-transition="module"]::view-transition-old(nine-core-route) {
+    animation: nine-core-hyperdrive-out 145ms cubic-bezier(.05, .7, .1, 1) both;
+  }
+  html[data-nine-core-transition="module"]::view-transition-new(nine-core-route) {
+    animation: nine-core-hyperdrive-in 240ms cubic-bezier(.05, .7, .1, 1) both;
+  }
+  html[data-nine-core-transition="student"]::view-transition-old(nine-core-route) {
+    animation: nine-core-portal-out 160ms var(--nine-core-snap) both;
+  }
+  html[data-nine-core-transition="student"]::view-transition-new(nine-core-route) {
+    animation: nine-core-portal-in 240ms var(--nine-core-snap) both;
+  }
+  html[data-nine-core-transition]::view-transition-group(nine-core-dock-light) {
+    animation-duration: 240ms;
+    animation-timing-function: var(--nine-core-snap);
+  }
+  html[data-nine-core-transition]::view-transition-new(nine-core-dock-light) {
+    animation: nine-core-dock-stretch 240ms var(--nine-core-snap) both;
+  }
+  #nine-core-nav-tools:not([hidden]) { animation: nine-core-drawer-in 200ms var(--nine-core-snap) both; }
+  @media (min-width: 64rem) {
+    .nine-core:has([data-nine-core-drawer][aria-expanded="true"]) .nine-core-route {
+      animation: nine-core-drawer-parallax 300ms var(--nine-core-snap) both;
+      transform-origin: right center;
+    }
+  }
+}
+.nine-core-nav-link[aria-current="page"]::before {
+  background: linear-gradient(180deg, #ff956b, hsl(var(--primary)) 52%, #a62900);
+}
+@media (pointer: coarse) and (max-width: 64rem) and (prefers-reduced-motion: no-preference) {
+  .nine-core .nine-core-kinetic-week {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: min(80%, 23rem);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    padding: .25rem .25rem .65rem;
+  }
+  .nine-core-kinetic-week > article { scroll-snap-align: start; }
+  .nine-core-kinetic-week > article:focus-within {
+    border-color: hsl(var(--primary) / .65);
+    box-shadow: inset 0 0 12px hsl(var(--primary) / .10);
+  }
+}
+@keyframes nine-core-hyperdrive-out {
+  from { opacity: 1; transform: scale(1); filter: blur(0); }
+  to { opacity: 0; transform: scale(.8); filter: blur(40px); }
+}
+@keyframes nine-core-hyperdrive-in {
+  from { opacity: 0; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes nine-core-portal-out {
+  to { opacity: 0; transform: scale(1.045) rotate(2deg); filter: blur(16px); }
+}
+@keyframes nine-core-portal-in {
+  from { opacity: 0; transform: scale(.96); filter: blur(5px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes nine-core-drawer-in {
+  from { opacity: 0; transform: translateY(-7px); clip-path: inset(0 0 100%); }
+  to { opacity: 1; transform: translateY(0); clip-path: inset(0); }
+}
+@keyframes nine-core-drawer-parallax {
+  0% { transform: perspective(950px) translateX(0) rotateY(0); }
+  38% { transform: perspective(950px) translateX(6px) rotateY(-5deg); }
+  100% { transform: perspective(950px) translateX(0) rotateY(0); }
+}
+@keyframes nine-core-dock-stretch {
+  0% { transform: scaleY(.8); }
+  45% { transform: scaleY(1.65); }
+  100% { transform: scaleY(1); }
+}
+
+.nine-core-nexus-dock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin-block-end: 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.nine-core-nexus-dock a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: .5rem .9rem;
+  color: hsl(var(--muted-foreground));
+}
+.nine-core-nexus-dock a[aria-current="page"] { color: hsl(var(--foreground)); }
+.nine-core-nexus-light {
+  position: absolute;
+  inset: auto .5rem 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a62900, hsl(var(--primary)), #ff956b);
+  box-shadow: 0 0 9px hsl(var(--primary) / .38);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-nine-core-transition] .nine-core-nexus-light { view-transition-name: nine-core-nexus-light; }
+  html[data-nine-core-transition]::view-transition-group(nine-core-nexus-light) {
+    animation-duration: 240ms;
+    animation-timing-function: var(--nine-core-snap);
+  }
+  html[data-nine-core-transition]::view-transition-new(nine-core-nexus-light) {
+    animation: nine-core-nexus-stretch 240ms var(--nine-core-snap) both;
+  }
+  .nine-core-kinetic-week > article[data-landed="true"] {
+    animation: nine-core-cycle-land 320ms var(--nine-core-snap);
+  }
+}
+@keyframes nine-core-nexus-stretch {
+  0% { transform: scaleX(.85); }
+  45% { transform: scaleX(1.22); }
+  100% { transform: scaleX(1); }
+}
+@keyframes nine-core-cycle-land {
+  from { box-shadow: inset 0 0 14px hsl(var(--primary) / .28); border-color: hsl(var(--primary) / .65); }
+  to { box-shadow: inset 0 0 0 hsl(var(--primary) / 0); border-color: hsl(var(--border)); }
+}
+
+.nine-core-tool-sheet { border-color: hsl(var(--border)); }
+@media (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
+  body:has(.nine-core-tool-sheet[data-state="open"]) .nine-core-route {
+    animation: nine-core-drawer-parallax 300ms var(--nine-core-snap) both;
+    transform-origin: right center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nine-core-tool-sheet { animation: none; transition: none; }
+}

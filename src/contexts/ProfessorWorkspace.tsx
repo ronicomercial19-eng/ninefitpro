@@ -144,12 +144,12 @@ export function ProfessorStudentBar() {
   if (w.selected && !options.some(student => student.id === w.selected?.id)) options.unshift(w.selected);
   return (
     <section
-      className="sticky top-[env(safe-area-inset-top)] z-20 mb-5 rounded-xl border border-primary/25 bg-card p-3"
+      className="nine-core-context border bg-card p-3"
       aria-label="Contexto do aluno"
     >
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="professor-student" className="text-sm font-medium">
-          Aluno em acompanhamento
+          Aluno
         </label>
         <input
           aria-label="Buscar aluno em acompanhamento"
@@ -166,7 +166,7 @@ export function ProfessorStudentBar() {
           disabled={w.loading || w.error}
           onChange={(e) => w.select(e.target.value || null)}
         >
-          <option value="">Visão geral · selecionar aluno</option>
+          <option value="">Visão geral da carteira</option>
           {options.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -176,11 +176,6 @@ export function ProfessorStudentBar() {
         </select>
         {w.total > 100 && <span className="text-xs text-muted-foreground">Mostrando até 100 de {w.total}. Digite o nome para encontrar outro aluno.</span>}
         {search && matches.length === 0 && <span role="status" className="text-xs text-muted-foreground">Nenhum aluno com esse nome.</span>}
-        {w.selected && (
-          <span className="text-xs text-muted-foreground">
-            As ferramentas usam o contexto de {w.selected.name}.
-          </span>
-        )}
         {w.loading && <span className="text-xs">Carregando vínculo…</span>}
         {w.error && (
           <div role="alert" className="text-sm text-destructive">

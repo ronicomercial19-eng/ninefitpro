@@ -13,18 +13,21 @@ export default function ProfessorWorkspacePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Acompanhamento</h1>
-        <Button className="min-h-12 gap-2 px-6 text-base font-bold" aria-expanded={accessOpen} aria-controls="professor-access-panel" onClick={() => setAccessOpen(true)}>
+        <div>
+          <p className="nine-core-kicker">Acompanhamento</p>
+          <h1 className="nine-core-title">{w.selected?.name ?? "Carteira de alunos"}</h1>
+        </div>
+        <Button variant="outline" className="min-h-11 gap-2" aria-expanded={accessOpen} aria-controls="professor-access-panel" onClick={() => setAccessOpen((open) => !open)}>
           <UserPlus className="h-5 w-5" /> Liberar acesso
         </Button>
       </div>
       {accessOpen && <div id="professor-access-panel"><PendingAccessPanel /></div>}
-      <CareWorkspace professional athleteId={w.athleteId} />
       {w.athleteId ? (
         <SelectedStudentFile key={w.athleteId} athleteId={w.athleteId} />
       ) : (
         <p>Selecione o aluno para acompanhar os registros do aplicativo.</p>
       )}
+      <CareWorkspace professional athleteId={w.athleteId} />
     </div>
   );
 }

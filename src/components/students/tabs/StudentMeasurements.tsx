@@ -18,6 +18,7 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  Filler,
   Title,
   Tooltip,
   Legend,
@@ -28,6 +29,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  Filler,
   Title,
   Tooltip,
   Legend
@@ -131,8 +133,19 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
         {
           label: getMetricLabel(selectedMetric),
           data,
-          borderColor: 'rgb(249, 115, 22)',
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          borderColor: '#ff5a1f',
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: true,
+          backgroundColor: ({ chart }: { chart: ChartJS }) => {
+            const area = chart.chartArea;
+            if (!area) return "rgba(255, 90, 31, .14)";
+            const gradient = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+            gradient.addColorStop(0, "rgba(255, 90, 31, .23)");
+            gradient.addColorStop(1, "rgba(255, 90, 31, 0)");
+            return gradient;
+          },
           tension: 0.1,
         },
       ],
@@ -276,6 +289,7 @@ export function StudentMeasurements({ studentId }: StudentMeasurementsProps) {
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
+                  animation: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? false : { duration: 200 },
                   plugins: {
                     legend: {
                       position: 'top' as const,

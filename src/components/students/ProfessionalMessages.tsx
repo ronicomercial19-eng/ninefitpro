@@ -14,6 +14,7 @@ export function ProfessionalMessages({
   name?: string;
 }) {
   const { user } = useAuth();
+  const [sendFailed, setSendFailed] = useState(false);
   const [text, setText] = useState(""),
     [busy, setBusy] = useState(false);
   const pending = useRef<{ id: string; body: string } | null>(null),
@@ -67,6 +68,7 @@ export function ProfessionalMessages({
     if (writing.current || !text.trim()) return;
     writing.current = true;
     setBusy(true);
+    setSendFailed(false);
     const body = text.trim();
     if (pending.current?.body !== body)
       pending.current = { id: crypto.randomUUID(), body };
@@ -90,7 +92,8 @@ export function ProfessionalMessages({
         pending.current = null;
       }
     } catch {
-      if (alive.current)
+      if (alive.current && professional) setSendFailed(true);
+      if (alive.current && !professional)
         toast.error(
           "Não foi possível confirmar o envio. Seu texto foi preservado para tentar novamente.",
           { id: `professional-message-failure:${athleteId}` },
@@ -101,7 +104,7 @@ export function ProfessionalMessages({
     }
   }
   return (
-    <section className="space-y-4 rounded-xl border bg-card p-4">
+    <section className={professional ? "nine-core-conversation space-y-4 rounded-md border bg-card p-4 sm:p-6" : "space-y-4 rounded-xl border bg-card p-4"}>
       <h2 className="text-xl font-semibold">
         {professional
           ? "Conversa com " + (name || "aluno")
@@ -185,8 +188,9 @@ export function ProfessionalMessages({
           className="w-full rounded-lg border bg-background p-3"
           placeholder="Escreva sua mensagem"
         />
+        {sendFailed && <p role="alert" className="text-sm text-destructive">Envio sem confirmação. Seu texto foi preservado.</p>}
         <Button disabled={busy || !text.trim()}>
-          {busy ? "Confirmando envio…" : "Enviar mensagem"}
+          {busy ? "Confirmando envio…" : sendFailed ? "Tentar enviar novamente" : "Enviar mensagem"}
         </Button>
       </form>
     </section>

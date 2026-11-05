@@ -378,10 +378,16 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
     }
   }
   return (
-    <section className="space-y-4 rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">
-        Revisar e entregar treino · {name}
-      </h2>
+    <section className="nine-core-prescription space-y-4 border bg-card p-5">
+      <header className="nine-core-editor-head">
+        <div>
+          <p className="nine-core-kicker">Sessão de treino</p>
+          <h2 className="text-xl font-semibold">{name}</h2>
+        </div>
+        <span className="nine-core-editor-status">
+          {reviewed ? "Revisão confirmada" : "Revisão pendente"}
+        </span>
+      </header>
       {recommendationId && (
         <p className="text-sm text-primary">
           Revisão manual de recomendação: a publicação também registrará a
@@ -534,7 +540,7 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
               Adicione exercícios ou gere um rascunho para revisão.
             </p>
           )}
-          <ol className="space-y-3">
+          <ol className="nine-core-exercise-list space-y-3">
             {rows.map((r, index) => (
               <li key={index} className="rounded-lg border p-3">
                 <div className="flex justify-between gap-3">
@@ -607,31 +613,32 @@ function Editor({ athleteId, name, initialDate, initialRecommendation, embedded 
               Recuperar rascunho desta data
             </Button>
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={reviewed}
+          <footer className="nine-core-publish space-y-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={reviewed}
+                disabled={busy}
+                onChange={(e) => setReviewed(e.target.checked)}
+              />
+              Revisei aluno, data, restrições e parâmetros antes da publicação.
+            </label>
+            <Button
+              disabled={busy || !reviewed || !rows.length || !title.trim()}
+              onClick={() => void publish()}
+            >
+              {busy ? "Aguarde…" : "Publicar no app de " + name}
+            </Button>
+            <Button
+              variant="ghost"
               disabled={busy}
-              onChange={(e) => setReviewed(e.target.checked)}
-            />
-            Revisei aluno, data, restrições e parâmetros antes da publicação.
-          </label>
-          <Button
-            disabled={busy || !reviewed || !rows.length || !title.trim()}
-            onClick={() => void publish()}
-          >
-            {busy ? "Aguarde…" : "Publicar no app de " + name}
-          </Button>
-          <Button
-            variant="ghost"
-            disabled={busy}
-            onClick={() => setReload((v) => v + 1)}
-          >
-            Recarregar sessão
-          </Button>
+              onClick={() => setReload((v) => v + 1)}
+            >
+              Recarregar sessão
+            </Button>
+          </footer>
         </>
       )}
     </section>
   );
 }
-

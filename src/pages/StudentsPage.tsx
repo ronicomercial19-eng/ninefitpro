@@ -1,3 +1,4 @@
+import { runNineCoreTransition } from "@/components/layout/nineCoreTransition";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -145,7 +146,7 @@ export default function StudentsPage() {
   };
 
   const handleViewStudent = (student: Student) => {
-    workspace.select(student.id);
+    runNineCoreTransition("student", () => workspace.select(student.id));
   };
 
   const handleEditStudent = (student: Student) => {

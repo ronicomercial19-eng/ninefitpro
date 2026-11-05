@@ -9,6 +9,15 @@ import {
 } from "@/services/healthFlixCatalog";
 import { toast } from "sonner";
 import { LibraryAssignDialog } from "@/components/students/LibraryAssignDialog";
+function securePreviewUrl(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
+}
 export default function HealthFlixAdminPage() {
   const [assigning, setAssigning] = useState<HealthVideo | null>(null);
   const qc = useQueryClient(),
@@ -74,7 +83,7 @@ export default function HealthFlixAdminPage() {
   }
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">HealthFlix</h1>
+      <header><p className="nine-core-kicker">Biblioteca de vídeos</p><h1 className="nine-core-title">HealthFlix</h1></header>
       <LibraryAssignDialog open={!!assigning} onOpenChange={(open) => { if (!open) setAssigning(null); }} item={assigning ? {
         type: "videos", external_id: assigning.external_id, name: assigning.title,
         player_url: assigning.video_url, thumbnail_url: assigning.thumbnail,
@@ -113,7 +122,7 @@ export default function HealthFlixAdminPage() {
         </Button>
       </div>
       {editing && (
-        <section className="rounded border p-4 space-y-3">
+        <section className="rounded-md border bg-card p-4 space-y-3">
           {[
             ["Nome", "name"],
             ["URL HTTPS do vídeo", "player_url"],
@@ -158,14 +167,16 @@ export default function HealthFlixAdminPage() {
               ? "Catálogo externo carregado."
               : "Provedor externo indisponível. Exibindo publicações locais."}
           </p>
-          <div className="grid gap-3 md:grid-cols-3">
+          {q.data?.items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum vídeo disponível no catálogo.</p>}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {q.data?.items.map((v) => (
               <article
                 key={v.external_id}
-                className="rounded border p-4 space-y-3"
+                className="rounded-md border bg-card p-4 space-y-3"
               >
-                <h2>{v.title}</h2>
-                <p>{v.category}</p>
+                <h2 className="text-lg font-semibold">{v.title}</h2>
+                <p className="text-sm text-muted-foreground">{v.category}</p>
+                {securePreviewUrl(v.video_url) && <Button variant="outline" asChild><a href={securePreviewUrl(v.video_url)!} target="_blank" rel="noopener noreferrer">Prévia do vídeo <span className="sr-only">(nova aba)</span></a></Button>}
                 <Button disabled={!v.video_url} onClick={() => setAssigning(v)}>Atribuir ao aluno</Button>
                 <Button
                   disabled={busy}

@@ -1,3 +1,4 @@
+import { NineCoreTools } from "./NineCoreTools";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -12,7 +13,6 @@ import {
   BarChart3,
   FileText,
   ChevronDown,
-  BookOpen,
   MessageSquare,
   Layers,
   ListOrdered,
@@ -34,7 +34,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroupLabel,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -46,7 +45,7 @@ import {
 import { Settings } from "lucide-react";
 
 const menuItems = [
-  { title: "Dashboard", url: "/app", icon: LayoutDashboard },
+  { title: "Visão geral", url: "/app", icon: LayoutDashboard },
   { title: "Agenda", url: "/app/agenda", icon: Calendar },
   { title: "Acompanhamento", url: "/app/acompanhamento", icon: Activity },
   { title: "Mensagens", url: "/app/mensagens", icon: MessageSquare },
@@ -58,14 +57,14 @@ const menuItems = [
     url: "/app/series-referencia",
     icon: ListOrdered,
   },
-  { title: "SmartTreino", url: "/app/smart-treino", icon: Zap },
+  { title: "Ajustes de treino", url: "/app/smart-treino", icon: Zap },
   {
-    title: "SmartPeriodizer",
+    title: "Periodização",
     url: "/app/smart-periodizer",
     icon: CalendarClock,
   },
   { title: "FitCopilot", url: "/app/fit-copilot", icon: Cpu },
-  { title: "Assistente IA", url: "/app/assistente-ia", icon: Sparkles },
+  { title: "Prescrever treino", url: "/app/assistente-ia", icon: Sparkles },
   { title: "HealthFlix", url: "/app/healthflix", icon: Film },
   { title: "Comunidade", url: "/app/community", icon: Globe },
   { title: "Postura Pro", url: "/app/postura-pro", icon: ScanLine },
@@ -80,15 +79,14 @@ const menuItems = [
   { title: "Configurações", url: "/app/configuracoes", icon: Settings },
 ];
 
+const dailyPaths = ["/app", "/app/alunos", "/app/agenda", "/app/acompanhamento", "/app/mensagens"];
+const libraryPaths = ["/app/exercicios", "/app/super-series", "/app/series-referencia", "/app/modelos-ninefit"];
 const groups = [
-  { label: "Dia a dia", paths: ["/app", "/app/agenda", "/app/acompanhamento", "/app/alunos", "/app/mensagens"] },
-  { label: "Prescrição", paths: ["/app/smart-periodizer", "/app/smart-treino"], library: true },
-  { label: "Assistentes de IA", paths: ["/app/ron", "/app/fit-copilot", "/app/assistente-ia"] },
-  { label: "Análise", paths: ["/app/estatisticas", "/app/relatorios"] },
-  { label: "Crescimento", paths: ["/app/community", "/app/healthflix", "/app/monetizacao"] },
-  { label: "Avançado", paths: ["/app/postura-pro", "/app/skills", "/app/nexus", "/app/roadmap", "/app/modelos-ninefit"] },
+  { id: "training", label: "Treinamento", paths: ["/app/smart-periodizer", "/app/assistente-ia", "/app/smart-treino", ...libraryPaths] },
+  { id: "analysis", label: "Avaliação e análise", paths: ["/app/postura-pro", "/app/estatisticas", "/app/relatorios"] },
+  { id: "content", label: "Conteúdo", paths: ["/app/healthflix", "/app/community", "/app/monetizacao"] },
+  { id: "tools", label: "Ferramentas", paths: ["/app/ron", "/app/fit-copilot", "/app/skills", "/app/nexus", "/app/roadmap"] },
 ];
-const libraryPaths = ["/app/exercicios", "/app/super-series", "/app/series-referencia"];
 
 export function AppSidebar() {
   const { state, setOpenMobile } = useSidebar();
@@ -106,12 +104,12 @@ export function AppSidebar() {
     .slice(0, 2)
     .toUpperCase();
 
-  const [libraryOpen, setLibraryOpen] = useState(() => localStorage.getItem("9fit:professor-library-open") !== "false");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const renderItem = (path: string) => {
     const item = menuItems.find(candidate => candidate.url === path);
     if (!item || (!isAdmin && path === "/app/monetizacao")) return null;
     return <SidebarMenuItem key={path}><SidebarMenuButton asChild>
-      <NavLink end to={workspace.link(path)} onClick={() => setOpenMobile(false)} aria-label={item.title} className={cn("min-h-11 rounded-lg", currentPath === path && "bg-primary/15 text-primary font-semibold")}>
+      <NavLink end to={workspace.link(path)} onClick={() => setOpenMobile(false)} aria-label={item.title} title={item.title} data-nine-core-transition="module" className="nine-core-nav-link min-h-10">
         <item.icon aria-hidden="true" />{!collapsed && <span>{item.title}</span>}
       </NavLink>
     </SidebarMenuButton></SidebarMenuItem>;
@@ -126,42 +124,58 @@ export function AppSidebar() {
     >
       <SidebarContent className="bg-card pt-[env(safe-area-inset-top)]">
         {/* Header */}
-        <div className="p-4 border-b border-border">
+        <div className="nine-core-brand p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-primary-foreground" />
+            <div className="nine-core-mark" aria-hidden="true">
+              9
             </div>
             {!collapsed && (
               <div>
-                <h2 className="text-lg font-bold text-foreground">9FIT PRO</h2>
+                <h2 className="text-lg font-bold text-foreground">NINE CORE</h2>
                 <p className="text-xs text-muted-foreground">
-                  Painel do Professor
+                  Nine Pro · Professor
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {groups.map(group => <SidebarGroup key={group.label}>
-          {!collapsed && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {group.paths.map(renderItem)}
-              {group.library && <>
-                {!collapsed && <SidebarMenuItem>
-                  <SidebarMenuButton className="min-h-11" aria-expanded={libraryOpen} onClick={() => {
-                    localStorage.setItem("9fit:professor-library-open", String(!libraryOpen));
-                    setLibraryOpen(!libraryOpen);
-                  }}>
-                    <BookOpen aria-hidden="true" /> <span>Biblioteca</span>
-                    <ChevronDown className={cn("ml-auto", libraryOpen && "rotate-180")} />
-                  </SidebarMenuButton>
-                </SidebarMenuItem>}
-                {(libraryOpen || collapsed || libraryPaths.includes(currentPath)) && libraryPaths.map(renderItem)}
-              </>}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>)}
+        <SidebarGroup>
+          <SidebarMenu>{dailyPaths.map(renderItem)}</SidebarMenu>
+        </SidebarGroup>
+
+        {groups.map((group) => {
+          const active = group.paths.includes(currentPath) ||
+            (group.id === "training" && currentPath === "/app/treino-ia");
+          const open = openGroups[group.id] ?? active;
+          return (
+            <SidebarGroup key={group.id}>
+              <SidebarGroupContent>
+                {collapsed ? (
+                  <SidebarMenu>{group.paths.map(renderItem)}{group.id === "tools" && <NineCoreTools collapsed />}</SidebarMenu>
+                ) : (
+                  <>
+                    <SidebarMenuButton
+                      type="button"
+                      className="nine-core-nav-group min-h-10"
+                      data-nine-core-drawer={group.id === "tools" ? "" : undefined}
+                      aria-expanded={open}
+                      aria-controls={`nine-core-nav-${group.id}`}
+                      onClick={() => setOpenGroups((previous) => ({ ...previous, [group.id]: !open }))}
+                    >
+                      <span>{group.label}</span>
+                      <ChevronDown aria-hidden="true" className={cn("ml-auto", open && "rotate-180")} />
+                    </SidebarMenuButton>
+                    <SidebarMenu id={`nine-core-nav-${group.id}`} hidden={!open} className={open ? "nine-core-nav-nested" : "hidden"}>
+                      {group.paths.map(renderItem)}
+                      {group.id === "tools" && <NineCoreTools collapsed={false} />}
+                    </SidebarMenu>
+                  </>
+                )}
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
       <SidebarFooter className="border-t border-border bg-card pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <SidebarMenu>{renderItem("/app/configuracoes")}</SidebarMenu>

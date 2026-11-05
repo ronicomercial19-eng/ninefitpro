@@ -27,6 +27,25 @@ function Builder({ athleteId, name, onEditDay }: { athleteId: string; name: stri
     [title, setTitle] = useState("Ciclo de acompanhamento"),
     [reviewed, setReviewed] = useState(false),
     [busy, setBusy] = useState(false);
+  const [landedDay, setLandedDay] = useState<string | null>(null);
+  const scrollTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(scrollTimer.current), []);
+
+  function highlightSettledDay(container: HTMLDivElement) {
+    if (!window.matchMedia("(pointer: coarse) and (max-width: 64rem) and (prefers-reduced-motion: no-preference)").matches) return;
+    window.clearTimeout(scrollTimer.current);
+    scrollTimer.current = window.setTimeout(() => {
+      const left = container.getBoundingClientRect().left;
+      const cards = Array.from(container.querySelectorAll<HTMLElement>("[data-cycle-day]"));
+      const nearest = cards.reduce<HTMLElement | undefined>((best, card) => {
+        if (!best) return card;
+        const distance = Math.abs(card.getBoundingClientRect().left - left);
+        return distance < Math.abs(best.getBoundingClientRect().left - left) ? card : best;
+      }, undefined);
+      setLandedDay(nearest?.dataset.cycleDay ?? null);
+    }, 130);
+  }
+
   const receipt = useRef<{ fingerprint: string; id: string } | null>(null),
     writing = useRef(false),
     alive = useRef(true);
@@ -175,11 +194,11 @@ function Builder({ athleteId, name, onEditDay }: { athleteId: string; name: stri
       ) : q.isLoading ? (
         <p>Carregando semana…</p>
       ) : (
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="nine-core-kinetic-week grid gap-2 md:grid-cols-2" aria-label="Sessões da semana" onScroll={(event) => highlightSettledDay(event.currentTarget)}>
           {days.map((day) => {
             const draft = q.data?.find((d) => d.workout_date === day.date);
             return (
-              <article key={day.date} className="rounded-lg border p-3">
+              <article key={day.date} data-cycle-day={day.date} data-landed={landedDay === day.date || undefined} className="rounded-lg border p-3">
                 <h3 className="text-sm font-semibold">
                   {day.label} · {day.date}
                 </h3>
