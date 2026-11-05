@@ -232,15 +232,15 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
 
   const saveWatch = async (position: number, duration: number, completed = false) => {
     if (assignment.completed_at || videoCompleted) return;
-    if (!Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0) return;
+    if (!Number.isFinite(position) || !Number.isFinite(duration) || duration < 1) return;
     const now = Date.now();
     if (!completed && now - lastSavedAt.current < 30000) return;
     lastSavedAt.current = now;
     const previous = p.fitpro_watch ?? {};
-    const lastPosition = Math.max(0, Math.floor(position));
-    const durationSeconds = Math.max(0, Math.floor(duration));
+    const durationSeconds = Math.floor(duration);
+    const lastPosition = Math.min(durationSeconds, Math.max(0, Math.floor(position)));
     try {
-      const { error } = await supabase.from("student_library_assignments").update({
+      const { data: saved, error } = await supabase.from("student_library_assignments").update({
         progress_pct: completed ? 100 : Math.min(99, Math.round((lastPosition / durationSeconds) * 100)),
         status: completed ? "completed" : "in_progress",
         last_position_sec: completed ? durationSeconds : lastPosition,
@@ -253,8 +253,10 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
           watched_seconds: Math.max(Number(previous.watched_seconds) || 0, lastPosition),
           updated_at: new Date().toISOString(),
         } },
-      }).eq("id", assignment.id).is("completed_at", null);
+      }).eq("id", assignment.id).is("completed_at", null)
+        .select("id,completed_at").maybeSingle();
       if (error) throw error;
+      if (!saved || (completed && !saved.completed_at)) throw new Error("O registro não confirmou a atualização.");
       if (completed) { setVideoCompleted(true); toast.success("Conteúdo concluído e progresso salvo."); onComplete(); }
     } catch (error) {
       if (lastSavedAt.current === now) lastSavedAt.current = 0;
