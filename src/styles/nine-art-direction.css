@@ -1,0 +1,271 @@
+/*
+ * Nine — direção de arte aplicada ao software.
+ * Paleta: Preto #0A0B0C, Ação #FF8A00, Fogo #FF4D2E, Magenta #C21E6B (conteúdo de IA),
+ * PRIME #8B2FC9 (só o tier PRIME), Ativo #3DDC84.
+ * Forma: cantos cortados, nunca arredondados. Cor chapada, sem brilho.
+ * Carregado por último em main.tsx. Para reverter: apague este arquivo e o import.
+ * Seletores com :root:root vencem experience-theme.css, orange-palette.css e nine-core.css
+ * independentemente da ordem de carregamento.
+ */
+
+/* 1. Tokens */
+:root:root,
+html:root:root[data-ninefit-surface] {
+  --acao: 32.4 100% 50%;
+  --fogo: 9 100% 59%;
+  --ativo: 145 68% 54%;
+  --ia: 332 73% 44%;
+  --prime: 276 62% 49%;
+
+  --background: 210 9% 4%;
+  --foreground: 60 6% 94%;
+  --card: 210 8% 8%;
+  --elevated: 220 10% 11%;
+  --muted-foreground: 240 4% 64%;
+  --border: 225 8% 16%;
+  --input: 225 8% 20%;
+
+  --primary: 32.4 100% 50%;
+  --primary-foreground: 210 9% 4%;
+  --ring: 32.4 100% 50%;
+  --destructive: 9 100% 59%;
+  --destructive-foreground: 0 0% 100%;
+  --radius: 0px;
+
+  --sidebar-primary: 32.4 100% 50%;
+  --sidebar-ring: 32.4 100% 50%;
+  --sidebar-border: 225 8% 16%;
+
+  /* aliases legados apontando para a paleta Nine */
+  --neon-300: 32.4 100% 58%;
+  --neon-400: 32.4 100% 50%;
+  --neon-500: 32.4 100% 44%;
+  --neon-orange: 32.4 100% 50%;
+  --neon-green: 145 68% 54%;
+  --nine-pro-orange: 32.4 100% 50%;
+  --nine-pro-red: 9 100% 59%;
+  --ninefit-accent: #ff8a00;
+  --ninefit-card-radius: 0px;
+  --ninefit-button-radius: 0px;
+
+  /* movimento */
+  --motion-fast: 160ms;
+  --motion-sheet: 240ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* 2. Primitiva: canto cortado (10px). .cut-sm = 6px */
+.cut {
+  --cut-c: 10px;
+  clip-path: polygon(0 0, calc(100% - var(--cut-c)) 0, 100% var(--cut-c), 100% 100%, var(--cut-c) 100%, 0 calc(100% - var(--cut-c)));
+}
+.cut-sm { --cut-c: 6px; }
+.cut:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px hsl(var(--background)), inset 0 0 0 4px hsl(var(--ring));
+}
+
+/* Canto cortado COM borda (a borda acompanha a diagonal). Usa --cut-line e --cut-fill. */
+.cut-b {
+  --cut-c: 10px;
+  --cut-line: hsl(var(--border));
+  --cut-fill: hsl(var(--card));
+  position: relative;
+  isolation: isolate;
+}
+.cut-b::before,
+.cut-b::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+.cut-b::before {
+  inset: 0;
+  background: var(--cut-line);
+  clip-path: polygon(0 0, calc(100% - var(--cut-c)) 0, 100% var(--cut-c), 100% 100%, var(--cut-c) 100%, 0 calc(100% - var(--cut-c)));
+}
+.cut-b::after {
+  inset: 1px;
+  background: var(--cut-fill);
+  clip-path: polygon(0 0, calc(100% - var(--cut-c) + .6px) 0, 100% calc(var(--cut-c) - .6px), 100% 100%, calc(var(--cut-c) - .6px) 100%, 0 calc(100% - var(--cut-c) + .6px));
+}
+.cut-b:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* 3. Bordas: linha real #26282D, sem branco sólido */
+*,
+::before,
+::after { border-color: hsl(var(--border)); }
+[class^="border-border/"],
+[class*=" border-border/"] { border-color: hsl(var(--border)); }
+hr,
+[role="separator"],
+[data-sidebar="header"],
+[data-sidebar="footer"],
+header { border-color: hsl(var(--border)); }
+[data-sidebar="separator"] { background-color: hsl(var(--border)); }
+
+/* 4. Escopos legados */
+.fitpro-orange {
+  --primary: 32.4 100% 50%;
+  --ring: 32.4 100% 50%;
+  --border: 225 8% 16%;
+  --radius: 0px;
+}
+.fitpro-orange .rounded-sm { border-radius: 0; }
+.fitpro-orange .border-border { border-color: hsl(var(--border)); }
+
+/* 5. Tipografia */
+h1, h2 {
+  font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+.text-hero {
+  font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+.text-data,
+.font-data {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.text-label { font-size: 11px; }
+.label-section {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+}
+
+/* 6. Botões e cards legados: cor chapada, chanfro único, sem brilho */
+.btn-neon,
+.nine-pro-gradient,
+.action-primary {
+  background: hsl(var(--primary));
+  background-image: none;
+  color: hsl(var(--primary-foreground));
+  border-radius: 0;
+}
+.btn-neon,
+.btn-neon-outline,
+.action-primary,
+.nine-pro-clip,
+.fit-os-panel {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+.journey-card,
+.neural-node,
+.podium-card,
+.glass-surface { border-radius: 0; box-shadow: none; }
+.journey-card::after,
+.halo-primary::before,
+.hub-card-interactive::before,
+.squircle-interactive::before { display: none; }
+.podium-card { background: hsl(var(--card)); }
+.hub-card-interactive,
+.squircle-interactive {
+  transition: transform var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out);
+}
+.hub-card-interactive:hover,
+.hub-card-interactive:focus-within,
+.hub-card-interactive:focus-visible,
+.squircle-interactive:hover,
+.squircle-interactive:focus-visible,
+.podium-card:hover,
+.neural-node:hover {
+  transform: translateY(-1px);
+  box-shadow: none;
+  border-color: hsl(var(--primary) / .4) !important;
+  outline: none;
+}
+.hub-card-interactive:active,
+.squircle-interactive:active {
+  transform: scale(.99);
+  box-shadow: none;
+}
+.animate-glow-breathe { animation: none; filter: none; }
+
+/* 7. Superfície com data-ninefit-surface (experience-theme.css): remove pílula, brilho e branco */
+html:root:root[data-ninefit-surface] :where(button, a)[class~="bg-primary"] {
+  background-color: hsl(var(--primary));
+  background-image: none;
+  border-radius: 0;
+  color: hsl(var(--primary-foreground));
+  box-shadow: none;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+html:root:root[data-ninefit-surface] :where(button, a)[class*="bg-gradient"],
+html:root:root[data-ninefit-surface] button[style*="linear-gradient"] {
+  background-image: none !important;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+html:root:root[data-ninefit-surface] :where(button, a, [role="button"]):not(:disabled):hover,
+html:root:root[data-ninefit-surface] :where(button, a, [role="button"]):not(:disabled):active,
+html:root:root[data-ninefit-surface] :where(button, a)[class~="bg-primary"]:hover,
+html:root:root[data-ninefit-surface] :where(button, a)[class~="bg-primary"]:active {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000);
+}
+html:root:root[data-ninefit-surface] :where(button, a, [role="button"]):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+html:root:root[data-ninefit-surface] :where(button, a)[class~="bg-primary"]:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px hsl(var(--background)), inset 0 0 0 4px hsl(var(--ring));
+}
+html:root:root[data-ninefit-surface] :where(section, article)[class*="rounded-"],
+html:root:root[data-ninefit-surface] .aw-card,
+html:root:root[data-ninefit-surface] div[class~="bg-card"][class~="border"][class*="rounded-"] {
+  border-radius: 0;
+}
+/* botões e links em pílula viram quadrados; switch, radio e checkbox mantêm a forma */
+html:root:root[data-ninefit-surface] :where(button, a)[class*="rounded-full"]:not([role="switch"]):not([role="radio"]):not([role="checkbox"]) {
+  border-radius: 0;
+}
+
+/* 8. Safe-area: nada de conteúdo rolando sob o relógio do iOS */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: env(safe-area-inset-top, 0px);
+  background: hsl(var(--background) / .94);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* 9. Utilitários */
+.fade-x {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+}
+.snap-x-chips {
+  display: flex;
+  gap: .5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.snap-x-chips::-webkit-scrollbar { display: none; }
+.snap-x-chips > * { scroll-snap-align: start; flex: none; }
+.grid-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cut-b::before,
+  .cut-b::after { transition: none; }
+}

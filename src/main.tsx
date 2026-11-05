@@ -7,6 +7,7 @@ import './index.css'
 import './styles/orange-palette.css'
 import './styles/touch-feedback.css'
 import './styles/experience-theme.css'
+import './styles/nine-art-direction.css'
 import { initializeCapacitor } from "./utils/capacitor";
 
 // Initialize Capacitor plugins

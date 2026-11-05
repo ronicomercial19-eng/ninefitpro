@@ -3,18 +3,27 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/*
+ * Nine: chip com canto cortado de 6px.
+ * Semântica de cor: ativo = online/conectado/ok, ia = conteúdo gerado por IA,
+ * fogo = alerta ou indisponível, prime = só o tier PRIME.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "cut cut-sm inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "text-foreground",
+        ativo: "border-transparent bg-ativo/15 text-ativo",
+        ia: "border-transparent bg-ia/25 text-[hsl(332_73%_66%)]",
+        fogo: "border-fogo/40 bg-fogo/10 text-fogo",
+        prime: "border-transparent bg-prime/20 text-[hsl(276_62%_72%)]",
       },
     },
     defaultVariants: {
