@@ -1,26 +1,118 @@
-import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL, commercialPlanHref } from '@/config/commercialOffer';
+import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL, commercialPlanHref } from "@/config/commercialOffer";
+
+const demoHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Demonstração Nine Pro")}`;
+const steps = [
+  { title: "Planeje o ciclo", detail: "Organize o ano em fases e semanas, com objetivos e parâmetros de treino." },
+  { title: "Revise a semana", detail: "Parta das sessões geradas ou monte a prescrição com os seus exercícios e modelos." },
+  { title: "Oriente na sessão", detail: "Seu aluno faz o check-in do SYNC, abre o treino e registra séries, cargas e repetições." },
+  { title: "Decida a próxima dose", detail: "Consulte o histórico de execução antes de ajustar a sessão seguinte." },
+];
+const expansions = [
+  ["Conteúdo sob sua marca", "Aulas gravadas, protocolos e área de estudos para entregar seu método entre as sessões."],
+  ["Venda de programas", "Uma vitrine para comercializar seus programas e produtos."],
+  ["Equipe de atendimento", "Estrutura para selecionar profissionais e organizar a operação da sua equipe."],
+];
+const cta = "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#ff5a1f] px-5 py-3 font-semibold text-[#0a0b0c] transition-colors hover:bg-[#ff7848] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ff7848]";
 
 export default function Sales() {
   const [params] = useSearchParams();
-  return <main className="min-h-screen bg-background text-foreground px-6 py-12">
-    <Helmet><title>Conheça o 9FIT PRO</title><meta name="description" content="Treino, planejamento e acompanhamento no 9FIT PRO." /></Helmet>
-    <div className="mx-auto max-w-3xl space-y-10">
-      <nav className="flex justify-between"><Link to="/" className="font-bold text-xl">9FIT <span className="text-primary">PRO</span></Link><Link to="/login" className="underline">Entrar</Link></nav>
-      <section className="space-y-5"><p className="text-primary text-sm">SEU TREINO. SUA EVOLUÇÃO.</p><h1 className="text-4xl font-bold">Treino e acompanhamento em um só lugar.</h1><p className="text-muted-foreground">Organize sua rotina de treino, consulte seu planejamento e acompanhe avaliações e registros de evolução no FitPro.</p><Link to="/login" className="inline-block rounded-xl bg-primary text-primary-foreground px-5 py-3 font-semibold">Acessar FitPro</Link><a href="#como-funciona" className="ml-4 inline-block underline">Conhecer metodologia</a></section>
-      <section id="como-funciona" className="scroll-mt-6 space-y-4"><h2 className="text-2xl font-semibold">Como funciona</h2><ol className="list-decimal pl-5 space-y-3 text-muted-foreground"><li>Entre com sua conta para consultar os recursos disponíveis.</li><li>Acompanhe treinos e planejamento conforme a prescrição vinculada à sua conta.</li><li>Registre sua evolução e consulte o histórico de avaliações.</li></ol></section>
-      <section id="planos" className="space-y-4"><h2 className="text-2xl font-semibold">Escolha seu período no 9FIT PRO</h2>
-        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
-        {!CHECKOUT_READY && <p role="status" className="text-sm text-muted-foreground">Contratação online em configuração. Confirme disponibilidade e condições com a NINE FIT antes de pagar.</p>}
-        <div className="grid gap-4 sm:grid-cols-2">{COMMERCIAL_PLANS.map(plan => <article key={plan.id} className={`rounded-2xl border p-5 space-y-3 ${params.get('plan') === plan.id ? 'border-primary' : 'border-border'}`}>
-          <h3 className="font-semibold">{plan.name}</h3><p className="text-xl text-primary">{plan.price}{plan.period}</p><p className="text-sm text-muted-foreground">Pagamento único, sem renovação automática.</p>
-          <a className="inline-block rounded-xl bg-primary text-primary-foreground px-4 py-3" href={commercialPlanHref(plan)}>{CHECKOUT_READY ? 'Ver condições de contratação' : 'Consultar este plano'}</a>
-        </article>)}</div><p className="text-sm text-muted-foreground">{OFFER_SCOPE}</p>
-      </section>
-      <section className="rounded-2xl border border-border/10 bg-card p-6 space-y-3"><h2 className="text-xl font-semibold">Conheça a 9FIT Store</h2><p className="text-sm text-muted-foreground">Consulte o catálogo e as condições de cada oferta na loja. Confira o que está incluído antes de comprar; esta página não garante liberação de recursos no FitPro.</p><a href="https://ninefit.lovable.app" target="_blank" rel="noopener noreferrer" className="inline-flex text-primary underline">Abrir 9FIT Store ↗</a></section>
-      <p className="text-sm text-muted-foreground">O acesso é confirmado após o registro da contratação. A disponibilidade de recursos depende do acesso da sua conta.</p>
-      <footer className="text-xs text-muted-foreground">9FIT PRO · <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a></footer>
-    </div>
-  </main>;
+
+  return (
+    <main className="min-h-screen bg-[#0a0b0c] text-[#f4f2ee]">
+      <Helmet>
+        <title>Nine Pro | Plataforma de treinamento para personal trainers</title>
+        <meta name="description" content="Planeje, prescreva e acompanhe no Nine Core. Seu aluno recebe a orientação e registra o treino no app FitPro." />
+      </Helmet>
+
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <nav aria-label="Navegação comercial" className="flex min-h-20 flex-wrap items-center justify-between gap-4 border-b border-white/10 py-4">
+          <Link to="/" className="text-xl font-black tracking-tight">NINE <span className="text-[#ff5a1f]">PRO</span></Link>
+          <div className="flex items-center gap-5 text-sm">
+            <a href="#planos" className="text-white/70 hover:text-white">Planos do app</a>
+            <Link to="/login" className="rounded-lg border border-white/20 px-3 py-2 hover:bg-white/10">Entrar</Link>
+          </div>
+        </nav>
+
+        <section className="grid items-center gap-12 py-14 md:py-24 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="space-y-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff7848]">Plataforma para personal trainers</p>
+            <h1 className="text-[clamp(2.6rem,6vw,5rem)] font-black leading-[0.98] tracking-[-0.055em]">Seu método, do plano à execução.</h1>
+            <p className="max-w-xl text-lg leading-relaxed text-white/70">No Nine Core, você planeja o ano, revisa a semana e publica o treino. No app FitPro, seu aluno recebe a orientação e registra o que executou.</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <a href={demoHref} className={cta}>Solicitar demonstração <ArrowUpRight aria-hidden="true" size={18} /></a>
+              <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
+            </div>
+          </div>
+          <figure className="min-w-0">
+            <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)] items-end gap-2 sm:gap-4">
+              <img src="/nine-pro/prescricao.png" alt="Proposta visual do painel Nine Core com prescrição e última execução" width="1440" height="1000" className="h-auto w-full rounded-xl border border-white/15" />
+              <img src="/nine-pro/aluno.png" alt="Hub FitPro do aluno com o indicador SYNC Score" className="aspect-[1/1.65] w-full rounded-xl border border-white/15 object-cover object-[center_13%]" />
+            </div>
+            <figcaption className="mt-3 text-xs text-white/65">Nine Core · proposta visual do painel / FitPro · Hub do aluno</figcaption>
+          </figure>
+        </section>
+
+        <section id="como-funciona" className="scroll-mt-6 border-y border-white/10 py-14 sm:py-20">
+          <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">O treino vai do seu plano ao app do aluno</h2>
+          <ol className="mt-10 grid gap-x-7 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map(({ title, detail }, index) => (
+              <li key={title} className="border-t border-white/20 pt-5">
+                <span className="text-sm font-semibold tabular-nums text-[#ff7848]">{String(index + 1).padStart(2, "0")}</span>
+                <h3 className="mt-3 text-xl font-bold">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">{detail}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="grid gap-7 py-14 sm:py-20 md:grid-cols-[1fr_1fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">SYNC Score</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Como seu aluno chega para treinar?</h2>
+          </div>
+          <p className="self-end text-lg leading-relaxed text-white/70">Antes da sessão, o aluno registra sono, energia, dor, humor e motivação. O SYNC resume o check-in, e você pode consultar a leitura junto ao histórico para decidir se mantém ou revê a próxima sessão.</p>
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-[#151719] p-6 sm:p-10">
+          <h2 className="text-3xl font-bold tracking-tight">Uma plataforma para o seu método</h2>
+          <p className="mt-3 max-w-2xl text-white/70">O painel e o app formam a base. Conforme o projeto, a NINE pode ampliar a entrega sob a sua marca.</p>
+          <dl className="mt-7 grid gap-6 md:grid-cols-3">
+            {expansions.map(([title, detail]) => <div key={title}><dt className="font-semibold">{title}</dt><dd className="mt-2 text-sm leading-relaxed text-white/70">{detail}</dd></div>)}
+          </dl>
+          <p className="mt-7 border-t border-white/10 pt-5 text-sm text-white/70">Operações com faturamento acima de R$ 500 mil por ano podem incluir o Gym Manager para ampliar a gestão.</p>
+        </section>
+
+        <section className="py-16 sm:py-20">
+          <h2 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">Veja o treino que você planejou chegar ao aluno</h2>
+          <p className="my-5 max-w-2xl text-white/70">Na demonstração, abrimos uma semana no Nine Core, revisamos uma sessão e mostramos como ela chega ao app do aluno.</p>
+          <a href={demoHref} className={cta}>Solicitar demonstração <ArrowUpRight aria-hidden="true" size={18} /></a>
+        </section>
+
+        <section id="planos" className="scroll-mt-6 border-t border-white/10 py-10">
+          <h2 className="text-2xl font-bold">Planos de acesso ao app FitPro</h2>
+          <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
+          {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {COMMERCIAL_PLANS.map(plan => (
+              <article key={plan.id} className={`space-y-3 rounded-xl border p-5 ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
+                <h3 className="font-semibold">{plan.name}</h3>
+                <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
+                <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
+                <a className="inline-flex min-h-11 items-center rounded-lg border border-white/20 px-3 text-sm hover:bg-white/10" href={commercialPlanHref(plan)}>
+                  {CHECKOUT_READY ? "Ver condições de contratação" : "Consultar este plano"}
+                </a>
+              </article>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-white/70">{OFFER_SCOPE}</p>
+        </section>
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-6 text-sm text-white/70">
+          <span>NINE PRO</span><a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-4">{SUPPORT_EMAIL}</a>
+        </footer>
+      </div>
+    </main>
+  );
 }
