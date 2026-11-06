@@ -92,6 +92,7 @@ const NineFitSettings = lazy(() => import("./pages/9fit/Settings"));
 import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
 const PosturaProPage = lazy(() => import("./pages/admin/PosturaProPage"));
 const CommunityAdminPage = lazy(() => import("./pages/admin/CommunityAdminPage"));
+const AcademyPage = lazy(() => import("./pages/admin/AcademyPage"));
 const NexusPage = lazy(() => import("./pages/admin/NexusPage"));
 const RonProfessorPage = lazy(() => import("./pages/admin/RonProfessorPage"));
 const HealthFlixAdminPage = lazy(() => import("./pages/admin/HealthFlixAdminPage"));
@@ -365,6 +366,7 @@ const App = () => (
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><MonetizacaoPage /></AppLayout></PrivateRoute>
             } />
             <Route path="/app/community" element={<PrivateRoute><AppLayout><CommunityAdminPage /></AppLayout></PrivateRoute>} />
+            <Route path="/app/academy" element={<PrivateRoute><AppLayout><AcademyPage /></AppLayout></PrivateRoute>} />
             <Route path="/app/alunos-assinaturas" element={
               <PrivateRoute allowedRoles={["admin", "super_admin"]}><AppLayout><StudentSubscriptionList /></AppLayout></PrivateRoute>
             } />
