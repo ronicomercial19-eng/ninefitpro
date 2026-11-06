@@ -54,7 +54,7 @@ export default function Sales() {
             <p className="max-w-xl text-lg leading-relaxed text-white/70">Planeje o ciclo no NINE CORE. Seu aluno recebe o treino no NINE PRO, e você acompanha o que ele realmente executou.</p>
             <div className="flex flex-wrap items-center gap-4">
               <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
-              <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
+              <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver o fluxo de uma semana <ArrowDown aria-hidden="true" size={15} /></a>
             </div>
           </div>
           <figure aria-label="Galeria do NINE CORE" className="min-w-0 overflow-hidden rounded-2xl border border-white/15 bg-[#151719] shadow-2xl shadow-black/50">
@@ -80,8 +80,8 @@ export default function Sales() {
 
         <section className="mx-auto max-w-3xl py-14 text-center sm:py-20">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">A rotina do personal</p>
-          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">Atenda mais alunos sem refazer o planejamento toda semana.</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/70">No NINE CORE, o plano anual orienta a prescrição da semana. Você pode partir das sessões geradas, revisar o que cada aluno precisa e acompanhar no histórico o que ele executou no NINE PRO.</p>
+          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">Abra a semana com os treinos prontos para revisar.</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/70">Imagine abrir a segunda-feira com as sessões organizadas a partir do seu planejamento. Você confere a carga, ajusta o que mudou e envia o treino ao aluno. Na próxima revisão, o histórico mostra o que ele executou.</p>
         </section>
 
         <section id="como-funciona" className="scroll-mt-6 border-t border-white/10 py-14 text-center sm:py-20">
@@ -100,9 +100,9 @@ export default function Sales() {
         <section className="grid gap-7 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12 md:grid-cols-[1fr_1fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">SYNC Score</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">O treino estava pronto. O dia mudou.</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">O treino estava pronto. Seu aluno dormiu mal.</h2>
           </div>
-          <p className="self-end text-lg leading-relaxed text-white/70">Seu aluno dormiu mal e chegou com pouca energia. Antes de treinar, ele registra como está no SYNC Score. Você consulta esse check-in junto à sessão prescrita e ao histórico para decidir se mantém ou ajusta o treino.</p>
+          <p className="self-end text-lg leading-relaxed text-white/70">Antes da sessão, o aluno registra como está no SYNC Score. Ao revisar o treino, você tem o check-in e a última execução em mãos para decidir se mantém a carga ou ajusta a sessão.</p>
         </section>
 
         <section className="mt-12 rounded-3xl border border-white/10 bg-[#151719] p-6 sm:p-10">
@@ -128,7 +128,7 @@ export default function Sales() {
 
         <section id="planos" className="scroll-mt-6 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
           <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Escolha seu plano do NINE PRO</h2>
-          <p className="mt-4 max-w-xl text-white/70">Compare os períodos de acesso ao app e siga para o pagamento. Após a confirmação, o app orienta você na ativação.</p>
+          <p className="mt-4 max-w-xl text-white/70">Escolha o período de acesso ao app. Você paga uma vez e, após a confirmação do pagamento, o NINE PRO guia seu primeiro acesso.</p>
           <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
           {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -138,7 +138,7 @@ export default function Sales() {
                 <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
                 <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
                 <a className={cta} href={commercialPlanHref(plan)}>
-                  {CHECKOUT_READY ? (plan.id === "basic" ? "Assinar mensal" : "Assinar anual") : "Consultar este plano"}
+                  {CHECKOUT_READY ? (plan.id === "basic" ? "Escolher 1 mês" : "Escolher 12 meses") : "Consultar este plano"}
                 </a>
               </article>
             ))}
