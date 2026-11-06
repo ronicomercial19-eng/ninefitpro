@@ -64,7 +64,21 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
     url: "https://healthflixnine.lovable.app",
     allow: "autoplay; encrypted-media; fullscreen",
   },
-  "9zap": {
+  academy: {
+    key: "academy",
+    label: "Academy",
+    url: "https://ninetyfit-academy-forge.lovable.app",
+    description: "Formações e cursos do professor",
+    allow: "clipboard-write; fullscreen",
+  },
+  community: {
+    key: "community",
+    label: "Comunidade",
+    url: "https://ninefit-community-flow.lovable.app",
+    description: "Feed e tribos do aluno",
+    allow: "clipboard-write; fullscreen",
+  },
+    "9zap": {
     key: "9zap",
     label: "9Zap",
     // Página de "em integração" com fallback WhatsApp — sem URL externa válida ainda
