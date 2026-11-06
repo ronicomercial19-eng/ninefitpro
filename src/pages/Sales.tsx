@@ -22,8 +22,8 @@ export default function Sales() {
   return (
     <main className="min-h-screen bg-[#0a0b0c] text-[#f4f2ee]">
       <Helmet>
-        <title>Nine Pro | Plataforma de treinamento para personal trainers</title>
-        <meta name="description" content="Planeje, prescreva e acompanhe no Nine Core. Seu aluno recebe a orientação e registra o treino no app FitPro." />
+        <title>NINE CORE e NINE PRO | Plataforma para personal trainers</title>
+        <meta name="description" content="Planeje, prescreva e acompanhe no NINE CORE. Seu aluno recebe a orientação e registra o treino no app NINE PRO." />
       </Helmet>
 
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
@@ -39,19 +39,19 @@ export default function Sales() {
           <div className="space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff7848]">Plataforma para personal trainers</p>
             <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.055em]">Seu método, do plano à execução.</h1>
-            <p className="max-w-xl text-lg leading-relaxed text-white/70">No Nine Core, você planeja o ano, revisa a semana e publica o treino. No app FitPro, seu aluno recebe a orientação e registra o que executou.</p>
+            <p className="max-w-xl text-lg leading-relaxed text-white/70">No NINE CORE, você planeja o ano, revisa a semana e publica o treino. No app NINE PRO, seu aluno recebe a orientação e registra o que executou.</p>
             <div className="flex flex-wrap items-center gap-4">
               <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
               <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
             </div>
           </div>
           <figure className="min-w-0 rounded-2xl border border-white/10 bg-[#151719] p-3 sm:p-5">
-            <div aria-hidden="true" className="mb-4 flex items-center justify-between border-b border-white/10 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65"><span>Nine Core</span><span>FitPro ↗</span></div>
+            <div aria-hidden="true" className="mb-4 flex items-center justify-between border-b border-white/10 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65"><span>NINE CORE</span><span>NINE PRO ↗</span></div>
             <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)] items-end gap-2 sm:gap-4">
-              <img src="/nine-pro/prescricao.png" alt="Proposta visual do painel Nine Core com prescrição e última execução" width="1440" height="1000" className="h-auto w-full rounded-xl border border-white/15" />
-              <img src="/nine-pro/aluno.png" alt="Hub FitPro do aluno com o indicador SYNC Score" className="aspect-[1/1.65] w-full rounded-xl border border-white/15 object-cover object-[center_13%]" />
+              <img src="/nine-pro/prescricao.png" alt="Proposta visual do painel NINE CORE com prescrição e última execução" width="1440" height="1000" className="h-auto w-full rounded-xl border border-white/15" />
+              <img src="/nine-pro/aluno.png" alt="Hub NINE PRO do aluno com o indicador SYNC Score" className="aspect-[1/1.65] w-full rounded-xl border border-white/15 object-cover object-[center_13%]" />
             </div>
-            <figcaption className="mt-3 text-xs text-white/65">Nine Core · proposta visual do painel / FitPro · Hub do aluno</figcaption>
+            <figcaption className="mt-3 text-xs text-white/65">NINE CORE · proposta visual do painel / NINE PRO · Hub do aluno</figcaption>
           </figure>
         </section>
 
@@ -92,7 +92,7 @@ export default function Sales() {
         </section>
 
         <section id="planos" className="scroll-mt-6 border-t border-white/10 py-10">
-          <h2 className="text-2xl font-bold">Planos de acesso ao app FitPro</h2>
+          <h2 className="text-2xl font-bold">Planos de acesso ao app NINE PRO</h2>
           <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
           {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
           <div className="grid gap-4 sm:grid-cols-2">
