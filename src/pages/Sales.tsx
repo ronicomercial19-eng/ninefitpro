@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL, commercialPlanHref } from "@/config/commercialOffer";
 
-const demoHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Demonstração Nine Pro")}`;
 const steps = [
   { title: "Planeje o ciclo", detail: "Organize o ano em fases e semanas, com objetivos e parâmetros de treino." },
   { title: "Revise a semana", detail: "Parta das sessões geradas ou monte a prescrição com os seus exercícios e modelos." },
@@ -39,14 +38,15 @@ export default function Sales() {
         <section className="grid items-center gap-12 py-14 md:py-24 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff7848]">Plataforma para personal trainers</p>
-            <h1 className="text-[clamp(2.6rem,6vw,5rem)] font-black leading-[0.98] tracking-[-0.055em]">Seu método, do plano à execução.</h1>
+            <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.055em]">Seu método, do plano à execução.</h1>
             <p className="max-w-xl text-lg leading-relaxed text-white/70">No Nine Core, você planeja o ano, revisa a semana e publica o treino. No app FitPro, seu aluno recebe a orientação e registra o que executou.</p>
             <div className="flex flex-wrap items-center gap-4">
-              <a href={demoHref} className={cta}>Solicitar demonstração <ArrowUpRight aria-hidden="true" size={18} /></a>
+              <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
               <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
             </div>
           </div>
-          <figure className="min-w-0">
+          <figure className="min-w-0 rounded-2xl border border-white/10 bg-[#151719] p-3 sm:p-5">
+            <div aria-hidden="true" className="mb-4 flex items-center justify-between border-b border-white/10 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65"><span>Nine Core</span><span>FitPro ↗</span></div>
             <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)] items-end gap-2 sm:gap-4">
               <img src="/nine-pro/prescricao.png" alt="Proposta visual do painel Nine Core com prescrição e última execução" width="1440" height="1000" className="h-auto w-full rounded-xl border border-white/15" />
               <img src="/nine-pro/aluno.png" alt="Hub FitPro do aluno com o indicador SYNC Score" className="aspect-[1/1.65] w-full rounded-xl border border-white/15 object-cover object-[center_13%]" />
@@ -86,9 +86,9 @@ export default function Sales() {
         </section>
 
         <section className="py-16 sm:py-20">
-          <h2 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">Veja o treino que você planejou chegar ao aluno</h2>
-          <p className="my-5 max-w-2xl text-white/70">Na demonstração, abrimos uma semana no Nine Core, revisamos uma sessão e mostramos como ela chega ao app do aluno.</p>
-          <a href={demoHref} className={cta}>Solicitar demonstração <ArrowUpRight aria-hidden="true" size={18} /></a>
+          <h2 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">Leve seu planejamento para o app</h2>
+          <p className="my-5 max-w-2xl text-white/70">Escolha seu período de acesso. Depois que o pagamento for confirmado, siga para a ativação do app.</p>
+          <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
         </section>
 
         <section id="planos" className="scroll-mt-6 border-t border-white/10 py-10">
@@ -101,8 +101,8 @@ export default function Sales() {
                 <h3 className="font-semibold">{plan.name}</h3>
                 <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
                 <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
-                <a className="inline-flex min-h-11 items-center rounded-lg border border-white/20 px-3 text-sm hover:bg-white/10" href={commercialPlanHref(plan)}>
-                  {CHECKOUT_READY ? "Ver condições de contratação" : "Consultar este plano"}
+                <a className={cta} href={commercialPlanHref(plan)}>
+                  {CHECKOUT_READY ? "Ir para o checkout" : "Consultar este plano"}
                 </a>
               </article>
             ))}
