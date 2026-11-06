@@ -1,7 +1,15 @@
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowDown, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL, commercialPlanHref } from "@/config/commercialOffer";
+
+const coreScreens = [
+  { label: "Prescrição", file: "prescricao.png" },
+  { label: "Dashboard", file: "dashboard.png" },
+  { label: "Agenda", file: "agenda.png" },
+  { label: "HealthFlix", file: "healthflix.png" },
+];
 
 const steps = [
   { title: "Planeje o ciclo", detail: "Organize o ano em fases e semanas, com objetivos e parâmetros de treino." },
@@ -18,6 +26,10 @@ const cta = "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl b
 
 export default function Sales() {
   const [params] = useSearchParams();
+  const [screenIndex, setScreenIndex] = useState(0);
+  const screen = coreScreens[screenIndex];
+  const moveScreen = (offset: number) =>
+    setScreenIndex(current => (current + offset + coreScreens.length) % coreScreens.length);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,#302016_0%,#0a0b0c_45rem)] text-[#f4f2ee]">
@@ -38,20 +50,31 @@ export default function Sales() {
         <section className="grid items-center gap-10 border-b border-[#ff5a1f]/25 py-14 md:py-24 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-6">
             <p className="inline-flex rounded-full border border-[#ff5a1f]/35 bg-[#ff5a1f]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ff9c76]">Plataforma para personal trainers</p>
-            <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.05em]">Seu método, <span className="text-[#ff7848]">do plano à execução.</span></h1>
+            <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.05em]">Do improviso <span className="text-[#ff7848]">ao controle.</span></h1>
             <p className="max-w-xl text-lg leading-relaxed text-white/70">No NINE CORE, você planeja o ano, revisa a semana e publica o treino. No app NINE PRO, seu aluno recebe a orientação e registra o que executou.</p>
             <div className="flex flex-wrap items-center gap-4">
               <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
               <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
             </div>
           </div>
-          <figure className="min-w-0 rounded-2xl border border-white/10 bg-[#151719] p-3 shadow-2xl shadow-black/50 sm:p-5">
-            <div aria-hidden="true" className="mb-4 flex items-center justify-between border-b border-white/10 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65"><span>NINE CORE</span><span>NINE PRO ↗</span></div>
-            <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)] items-end gap-2 sm:gap-4">
-              <img src="/nine-pro/prescricao.png" alt="Proposta visual do painel NINE CORE com prescrição e última execução" width="1440" height="1000" className="h-auto w-full rounded-xl border border-white/15" />
-              <img src="/nine-pro/aluno.png" alt="Hub NINE PRO do aluno com o indicador SYNC Score" className="aspect-[1/1.65] w-full rounded-xl border border-white/15 object-cover object-[center_13%]" />
+          <figure aria-label="Galeria do NINE CORE" className="min-w-0 overflow-hidden rounded-2xl border border-white/15 bg-[#151719] shadow-2xl shadow-black/50">
+            <div className="relative isolate flex flex-wrap items-center justify-between gap-3 overflow-hidden border-b border-white/10 bg-gradient-to-b from-white/10 to-transparent px-4 py-3">
+              <style>{'@keyframes nine-gallery-gloss { from { transform: translateX(-130%) skewX(-24deg); } to { transform: translateX(360%) skewX(-24deg); } }'}</style>
+              <span key={screen.file} aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-1/3 -translate-x-[130%] bg-gradient-to-r from-transparent via-white/15 to-transparent motion-safe:animate-[nine-gallery-gloss_550ms_ease-out_both]" />
+              <div>
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65">NINE CORE · Painel do professor</span>
+                <span aria-live="polite" aria-atomic="true" className="mt-1 block text-sm font-semibold">{screen.label} · {screenIndex + 1}/{coreScreens.length}</span>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" aria-label="Tela anterior" onClick={() => moveScreen(-1)} className="grid size-11 place-items-center rounded-lg border border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:outline-[#ff7848]"><ChevronLeft aria-hidden="true" size={20} /></button>
+                <button type="button" aria-label="Próxima tela" onClick={() => moveScreen(1)} className="grid size-11 place-items-center rounded-lg border border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:outline-[#ff7848]"><ChevronRight aria-hidden="true" size={20} /></button>
+              </div>
             </div>
-            <figcaption className="mt-3 text-xs text-white/65">NINE CORE · proposta visual do painel / NINE PRO · Hub do aluno</figcaption>
+            <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,1fr)] items-end gap-2 p-3 sm:gap-4 sm:p-4">
+              <img src={'/nine-pro/' + screen.file} alt={'Proposta visual do NINE CORE — ' + screen.label} width="1440" height="1000" className="h-auto w-full rounded-lg border border-white/15" />
+              <img src="/nine-pro/aluno.png" alt="Hub NINE PRO do aluno com o indicador SYNC Score" className="aspect-[1/1.65] w-full rounded-lg border border-white/15 object-cover object-[center_13%]" />
+            </div>
+            <figcaption className="px-4 pb-4 text-xs text-white/65">NINE CORE · propostas visuais / NINE PRO · app do aluno</figcaption>
           </figure>
         </section>
 
