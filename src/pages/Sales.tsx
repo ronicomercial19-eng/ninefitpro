@@ -51,7 +51,7 @@ export default function Sales() {
           <div className="space-y-6">
             <p className="inline-flex rounded-full border border-[#ff5a1f]/35 bg-[#ff5a1f]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ff9c76]">Plataforma para personal trainers</p>
             <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.05em]">Do improviso <span className="text-[#ff7848]">ao controle.</span></h1>
-            <p className="max-w-xl text-lg leading-relaxed text-white/70">No NINE CORE, você planeja o ano, revisa a semana e publica o treino. No app NINE PRO, seu aluno recebe a orientação e registra o que executou.</p>
+            <p className="max-w-xl text-lg leading-relaxed text-white/70">Planeje o ciclo no NINE CORE. Seu aluno recebe o treino no NINE PRO, e você acompanha o que ele realmente executou.</p>
             <div className="flex flex-wrap items-center gap-4">
               <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
               <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
@@ -78,8 +78,14 @@ export default function Sales() {
           </figure>
         </section>
 
-        <section id="como-funciona" className="scroll-mt-6 py-14 text-center sm:py-20">
-          <h2 className="mx-auto max-w-3xl font-display text-3xl font-extrabold uppercase tracking-tight sm:text-5xl">O treino vai do seu plano ao app do aluno</h2>
+        <section className="mx-auto max-w-3xl py-14 text-center sm:py-20">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">A rotina do personal</p>
+          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">Quando o aluno pede um ajuste, você sabe o que ele fez no último treino?</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/70">Com o plano na planilha, a ficha no WhatsApp e a carga anterior na conversa, cada ajuste começa com uma busca. Na NINE, você pode consultar o plano, o treino da semana e o registro da sessão para decidir o próximo passo.</p>
+        </section>
+
+        <section id="como-funciona" className="scroll-mt-6 border-t border-white/10 py-14 text-center sm:py-20">
+          <h2 className="mx-auto max-w-3xl font-display text-3xl font-extrabold uppercase tracking-tight sm:text-5xl">Do planejamento anual à próxima decisão</h2>
           <ol className="mt-10 grid gap-x-7 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map(({ title, detail }, index) => (
               <li key={title} className="rounded-xl border border-white/10 bg-[#151719] p-5 text-left">
@@ -94,44 +100,20 @@ export default function Sales() {
         <section className="grid gap-7 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12 md:grid-cols-[1fr_1fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">SYNC Score</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Como seu aluno chega para treinar?</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">O treino estava pronto. O dia mudou.</h2>
           </div>
-          <p className="self-end text-lg leading-relaxed text-white/70">Antes da sessão, o aluno registra sono, energia, dor, humor e motivação. O SYNC resume o check-in, e você pode consultar a leitura junto ao histórico para decidir se mantém ou revê a próxima sessão.</p>
+          <p className="self-end text-lg leading-relaxed text-white/70">Seu aluno dormiu mal e chegou com pouca energia. Antes de treinar, ele registra como está no SYNC Score. Você consulta esse check-in junto à sessão prescrita e ao histórico para decidir se mantém ou ajusta o treino.</p>
         </section>
 
         <section className="mt-12 rounded-3xl border border-white/10 bg-[#151719] p-6 sm:p-10">
-          <h2 className="text-3xl font-bold tracking-tight">Uma plataforma para o seu método</h2>
-          <p className="mt-3 max-w-2xl text-white/70">O painel e o app formam a base. Conforme o projeto, a NINE pode ampliar a entrega sob a sua marca.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Quando sua operação crescer</h2>
+          <p className="mt-3 max-w-2xl text-white/70">Conforme o projeto, a NINE pode ampliar a entrega sob a sua marca.</p>
           <dl className="mt-7 grid gap-6 md:grid-cols-3">
             {expansions.map(([title, detail]) => <div key={title}><dt className="font-semibold">{title}</dt><dd className="mt-2 text-sm leading-relaxed text-white/70">{detail}</dd></div>)}
           </dl>
           <p className="mt-7 border-t border-white/10 pt-5 text-sm text-white/70">Operações com faturamento acima de R$ 500 mil por ano podem incluir o Gym Manager para ampliar a gestão.</p>
         </section>
 
-        <section className="py-16 sm:py-20">
-          <h2 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">Leve seu planejamento para o app</h2>
-          <p className="my-5 max-w-2xl text-white/70">Escolha seu período de acesso. Depois que o pagamento for confirmado, siga para a ativação do app.</p>
-          <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
-        </section>
-
-        <section id="planos" className="scroll-mt-6 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
-          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Planos de acesso ao app NINE PRO</h2>
-          <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
-          {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {COMMERCIAL_PLANS.map(plan => (
-              <article key={plan.id} className={`space-y-3 rounded-xl border bg-[#0a0b0c] p-5 ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
-                <h3 className="font-semibold">{plan.name}</h3>
-                <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
-                <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
-                <a className={cta} href={commercialPlanHref(plan)}>
-                  {CHECKOUT_READY ? "Ir para o checkout" : "Consultar este plano"}
-                </a>
-              </article>
-            ))}
-          </div>
-          <p className="mt-4 text-sm text-white/70">{OFFER_SCOPE}</p>
-        </section>
         <section className="mx-auto max-w-3xl py-14 sm:py-20">
           <h2 className="mb-7 text-center font-display text-3xl font-extrabold uppercase sm:text-5xl">Dúvidas frequentes</h2>
           <details className="border-t border-white/15 py-4">
@@ -143,6 +125,27 @@ export default function Sales() {
             <p className="mt-3 text-white/70">Escolha o plano mensal ou anual e pague pelo checkout. O app verifica o pagamento e orienta você no primeiro acesso.</p>
           </details>
         </section>
+
+        <section id="planos" className="scroll-mt-6 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
+          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Escolha seu plano do NINE PRO</h2>
+          <p className="mt-4 max-w-xl text-white/70">Compare os períodos de acesso ao app e siga para o pagamento. Após a confirmação, o app orienta você na ativação.</p>
+          <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
+          {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {COMMERCIAL_PLANS.map(plan => (
+              <article key={plan.id} className={`space-y-3 rounded-xl border bg-[#0a0b0c] p-5 ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
+                <h3 className="font-semibold">{plan.name}</h3>
+                <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
+                <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
+                <a className={cta} href={commercialPlanHref(plan)}>
+                  {CHECKOUT_READY ? (plan.id === "basic" ? "Assinar mensal" : "Assinar anual") : "Consultar este plano"}
+                </a>
+              </article>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-white/70">{OFFER_SCOPE}</p>
+        </section>
+
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-6 text-sm text-white/70">
           <span>NINE PRO</span><a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-4">{SUPPORT_EMAIL}</a>
         </footer>
