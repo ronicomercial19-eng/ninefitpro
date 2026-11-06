@@ -80,8 +80,8 @@ export default function Sales() {
 
         <section className="mx-auto max-w-3xl py-14 text-center sm:py-20">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">A rotina do personal</p>
-          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">Quando o aluno pede um ajuste, você sabe o que ele fez no último treino?</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/70">Com o plano na planilha, a ficha no WhatsApp e a carga anterior na conversa, cada ajuste começa com uma busca. Na NINE, você pode consultar o plano, o treino da semana e o registro da sessão para decidir o próximo passo.</p>
+          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">Atenda mais alunos sem refazer o planejamento toda semana.</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/70">No NINE CORE, o plano anual orienta a prescrição da semana. Você pode partir das sessões geradas, revisar o que cada aluno precisa e acompanhar no histórico o que ele executou no NINE PRO.</p>
         </section>
 
         <section id="como-funciona" className="scroll-mt-6 border-t border-white/10 py-14 text-center sm:py-20">
