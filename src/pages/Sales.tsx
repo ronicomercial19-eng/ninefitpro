@@ -20,7 +20,7 @@ export default function Sales() {
   const [params] = useSearchParams();
 
   return (
-    <main className="min-h-screen bg-[#0a0b0c] text-[#f4f2ee]">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,#302016_0%,#0a0b0c_45rem)] text-[#f4f2ee]">
       <Helmet>
         <title>NINE CORE e NINE PRO | Plataforma para personal trainers</title>
         <meta name="description" content="Planeje, prescreva e acompanhe no NINE CORE. Seu aluno recebe a orientação e registra o treino no app NINE PRO." />
@@ -35,17 +35,17 @@ export default function Sales() {
           </div>
         </nav>
 
-        <section className="grid items-center gap-12 py-14 md:py-24 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="grid items-center gap-10 border-b border-[#ff5a1f]/25 py-14 md:py-24 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff7848]">Plataforma para personal trainers</p>
-            <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.055em]">Seu método, do plano à execução.</h1>
+            <p className="inline-flex rounded-full border border-[#ff5a1f]/35 bg-[#ff5a1f]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ff9c76]">Plataforma para personal trainers</p>
+            <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.05em]">Seu método, <span className="text-[#ff7848]">do plano à execução.</span></h1>
             <p className="max-w-xl text-lg leading-relaxed text-white/70">No NINE CORE, você planeja o ano, revisa a semana e publica o treino. No app NINE PRO, seu aluno recebe a orientação e registra o que executou.</p>
             <div className="flex flex-wrap items-center gap-4">
               <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
               <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver como funciona <ArrowDown aria-hidden="true" size={15} /></a>
             </div>
           </div>
-          <figure className="min-w-0 rounded-2xl border border-white/10 bg-[#151719] p-3 sm:p-5">
+          <figure className="min-w-0 rounded-2xl border border-white/10 bg-[#151719] p-3 shadow-2xl shadow-black/50 sm:p-5">
             <div aria-hidden="true" className="mb-4 flex items-center justify-between border-b border-white/10 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65"><span>NINE CORE</span><span>NINE PRO ↗</span></div>
             <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)] items-end gap-2 sm:gap-4">
               <img src="/nine-pro/prescricao.png" alt="Proposta visual do painel NINE CORE com prescrição e última execução" width="1440" height="1000" className="h-auto w-full rounded-xl border border-white/15" />
@@ -55,11 +55,11 @@ export default function Sales() {
           </figure>
         </section>
 
-        <section id="como-funciona" className="scroll-mt-6 border-y border-white/10 py-14 sm:py-20">
-          <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">O treino vai do seu plano ao app do aluno</h2>
+        <section id="como-funciona" className="scroll-mt-6 py-14 text-center sm:py-20">
+          <h2 className="mx-auto max-w-3xl font-display text-3xl font-extrabold uppercase tracking-tight sm:text-5xl">O treino vai do seu plano ao app do aluno</h2>
           <ol className="mt-10 grid gap-x-7 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map(({ title, detail }, index) => (
-              <li key={title} className="border-t border-white/20 pt-5">
+              <li key={title} className="rounded-xl border border-white/10 bg-[#151719] p-5 text-left">
                 <span className="text-sm font-semibold tabular-nums text-[#ff7848]">{String(index + 1).padStart(2, "0")}</span>
                 <h3 className="mt-3 text-xl font-bold">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/70">{detail}</p>
@@ -68,7 +68,7 @@ export default function Sales() {
           </ol>
         </section>
 
-        <section className="grid gap-7 py-14 sm:py-20 md:grid-cols-[1fr_1fr]">
+        <section className="grid gap-7 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12 md:grid-cols-[1fr_1fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7848]">SYNC Score</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Como seu aluno chega para treinar?</h2>
@@ -76,7 +76,7 @@ export default function Sales() {
           <p className="self-end text-lg leading-relaxed text-white/70">Antes da sessão, o aluno registra sono, energia, dor, humor e motivação. O SYNC resume o check-in, e você pode consultar a leitura junto ao histórico para decidir se mantém ou revê a próxima sessão.</p>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-[#151719] p-6 sm:p-10">
+        <section className="mt-12 rounded-3xl border border-white/10 bg-[#151719] p-6 sm:p-10">
           <h2 className="text-3xl font-bold tracking-tight">Uma plataforma para o seu método</h2>
           <p className="mt-3 max-w-2xl text-white/70">O painel e o app formam a base. Conforme o projeto, a NINE pode ampliar a entrega sob a sua marca.</p>
           <dl className="mt-7 grid gap-6 md:grid-cols-3">
@@ -91,13 +91,13 @@ export default function Sales() {
           <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
         </section>
 
-        <section id="planos" className="scroll-mt-6 border-t border-white/10 py-10">
-          <h2 className="text-2xl font-bold">Planos de acesso ao app NINE PRO</h2>
+        <section id="planos" className="scroll-mt-6 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
+          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Planos de acesso ao app NINE PRO</h2>
           <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
           {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {COMMERCIAL_PLANS.map(plan => (
-              <article key={plan.id} className={`space-y-3 rounded-xl border p-5 ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
+              <article key={plan.id} className={`space-y-3 rounded-xl border bg-[#0a0b0c] p-5 ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
                 <h3 className="font-semibold">{plan.name}</h3>
                 <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
                 <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
@@ -108,6 +108,17 @@ export default function Sales() {
             ))}
           </div>
           <p className="mt-4 text-sm text-white/70">{OFFER_SCOPE}</p>
+        </section>
+        <section className="mx-auto max-w-3xl py-14 sm:py-20">
+          <h2 className="mb-7 text-center font-display text-3xl font-extrabold uppercase sm:text-5xl">Dúvidas frequentes</h2>
+          <details className="border-t border-white/15 py-4">
+            <summary className="cursor-pointer font-semibold">Qual é a diferença entre NINE CORE e NINE PRO?</summary>
+            <p className="mt-3 text-white/70">O NINE CORE é o painel de trabalho do professor. O NINE PRO é o app onde o aluno recebe e registra seus treinos.</p>
+          </details>
+          <details className="border-y border-white/15 py-4">
+            <summary className="cursor-pointer font-semibold">Como ativo meu acesso?</summary>
+            <p className="mt-3 text-white/70">Escolha o plano mensal ou anual e pague pelo checkout. O app verifica o pagamento e orienta você no primeiro acesso.</p>
+          </details>
         </section>
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-6 text-sm text-white/70">
           <span>NINE PRO</span><a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-4">{SUPPORT_EMAIL}</a>
