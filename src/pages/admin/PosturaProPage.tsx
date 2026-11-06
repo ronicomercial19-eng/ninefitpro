@@ -10,6 +10,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { ApiConnectorCard } from "@/components/admin/ApiConnectorCard";
+import { PosturaResult } from "@/components/postura/PosturaResult";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -387,6 +388,9 @@ export default function PosturaProPage({ studentId }: { studentId?: string } = {
                         Tentar analisar novamente
                       </Button>
                     </div>
+                  )}
+                  {s.status === "done" && (
+                    <PosturaResult result={s.result} variant="professor" />
                   )}
                   {s.status === "done" && s.result?.summary && (
                     <p className="text-sm text-foreground/80">
