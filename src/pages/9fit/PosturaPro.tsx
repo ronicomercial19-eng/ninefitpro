@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Activity, Loader2, Upload, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
+import { PosturaResult, isPosturaResult } from "@/components/postura/PosturaResult";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -174,11 +175,15 @@ export default function NineFitPosturaPro() {
               </div>
               {scan.status === "done" && scan.result && (
                 <div className="mt-4 space-y-3">
-                  <p className="text-sm">
-                    {typeof scan.result.summary === "string"
-                      ? scan.result.summary
-                      : "Resultado da análise postural"}
-                  </p>
+                  {isPosturaResult(scan.result) ? (
+                    <PosturaResult result={scan.result} variant="aluno" />
+                  ) : (
+                    <p className="text-sm">
+                      {typeof scan.result.summary === "string"
+                        ? scan.result.summary
+                        : "Resultado da análise postural"}
+                    </p>
+                  )}
                   {Array.isArray(scan.result.findings) && (
                     <div>
                       <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -225,9 +230,11 @@ export default function NineFitPosturaPro() {
                       </ul>
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Leitura educativa, não substitui avaliação profissional.
-                  </p>
+                  {!isPosturaResult(scan.result) && (
+                    <p className="text-xs text-muted-foreground">
+                      Leitura educativa, não substitui avaliação profissional.
+                    </p>
+                  )}
                 </div>
               )}
               {(scan.status === "error" || scan.status === "unavailable") && (
