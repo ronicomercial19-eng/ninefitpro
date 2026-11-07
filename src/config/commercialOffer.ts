@@ -19,3 +19,28 @@ export type CommercialPlan = typeof COMMERCIAL_PLANS[number];
 export function commercialPlanHref(plan: CommercialPlan) {
   return CHECKOUT_READY ? `/9fit/checkout/${plan.id}` : `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Interesse em ${plan.name} — ${plan.price}${plan.period}`)}`;
 }
+
+// Paywall visual: 3 benefícios curtos. A lista completa continua em OFFER_BENEFITS
+// e aparece em "Ver tudo que está incluído".
+export const PAYWALL_BENEFITS = [
+  'Treinos planejados e executados no app',
+  'Registro de cargas, sessões e evolução',
+  'Avaliação guiada com histórico de medidas',
+] as const;
+
+const PLAN_MONTHS: Record<CommercialPlan['id'], number> = { basic: 1, annual: 12 };
+const priceValue = (plan: CommercialPlan) => Number(plan.price.replace(/[^\d,]/g, '').replace(',', '.'));
+const brl = (value: number) => `R$ ${Math.round(value).toLocaleString('pt-BR')}`;
+
+/** Rótulos derivados do preço do plano: nada de valor duplicado à mão. */
+export function planInsights(plan: CommercialPlan) {
+  const months = PLAN_MONTHS[plan.id];
+  const base = COMMERCIAL_PLANS.find(p => p.id === 'basic')!;
+  const savings = priceValue(base) * months - priceValue(plan);
+  return {
+    shortName: months === 1 ? 'Mensal' : 'Anual',
+    periodLabel: plan.period.replace(/^\//, ''),
+    perMonth: months > 1 ? `${brl(priceValue(plan) / months)}/mês` : null,
+    savings: savings > 0 ? `Economize ${brl(savings)}` : null,
+  };
+}
