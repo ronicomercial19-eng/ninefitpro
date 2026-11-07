@@ -20,6 +20,8 @@ const AIChatPage = lazy(() => import("./pages/AIChatPage"));
 const AIAnalysisPage = lazy(() => import("./pages/AIAnalysisPage"));
 const Assessment = lazy(() => import("./pages/Assessment"));
 const Auth = lazy(() => import("./pages/Auth"));
+const Home = lazy(() => import("./pages/Home"));
+const Treinar = lazy(() => import("./pages/Treinar"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const TrainingAdjustmentsPage = lazy(() => import("./pages/TrainingAdjustmentsPage"));
 const ExercisesPage = lazy(() => import("./pages/ExercisesPage"));
@@ -129,8 +131,9 @@ const App = () => (
         <BrowserRouter>
           <SovereignBootstrap>
           <AppErrorBoundary><Suspense fallback={<div className="min-h-[60vh] grid place-items-center" role="status">Carregando página…</div>}><Routes>
-            {/* Public Routes - Login is the main entry point */}
-            <Route path="/" element={<Auth />} />
+            {/* Public Routes - "/" é a homepage (dois caminhos); o formulário de login fica em /auth e /login */}
+            <Route path="/" element={<Home />} />
+            <Route path="/treinar" element={<Treinar />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/9fit/entrada" element={<CustomerEntry />} />
