@@ -5,6 +5,7 @@ import { COMMERCIAL_PLANS } from '@/config/commercialOffer';
 import { paymentOperation } from '@/services/infinitepayCheckout';
 import { rememberPayment } from '@/lib/paymentReturn';
 import { AppSupport } from '@/components/9fit/AppSupport';
+import { PlansGlow } from '@/components/9fit/PlansHero';
 import { checkoutUrl } from '@/lib/infinitepayUrl';
 
 export function PurchaseCheckout({ period }: { period: 'basic'|'annual' }) {
@@ -33,9 +34,13 @@ export function PurchaseCheckout({ period }: { period: 'basic'|'annual' }) {
     } catch (e) { if (revision === generation.current) setError((e as Error).message); }
     finally { if (revision === generation.current) setBusy(false); }
   }
-  return <main className="min-h-screen bg-background p-6 text-foreground"><section className="mx-auto max-w-lg space-y-5 py-8">
-    <h1 className="text-3xl font-bold">{plan.name}</h1>
-    <p className="text-xl text-primary">{plan.price} · {period === 'basic' ? '1 mês de acesso' : '12 meses de acesso'}</p>
+  return <main className="relative isolate min-h-screen overflow-hidden bg-background p-6 text-foreground"><PlansGlow /><section className="mx-auto max-w-lg space-y-5 py-8">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md">
+      <p className="text-xs uppercase tracking-widest text-muted-foreground">Resumo do pedido</p>
+      <h1 className="mt-1 text-2xl font-bold">{plan.name}</h1>
+      <p className="mt-3 text-3xl font-black text-primary">{plan.price}</p>
+      <p className="text-sm text-muted-foreground">{period === 'basic' ? '1 mês de acesso' : '12 meses de acesso'}</p>
+    </div>
     <p>Pagamento único, sem renovação automática. O acesso é liberado após a confirmação do pagamento. Compras adicionais somam o período ao acesso válido já registrado.</p>
     {loading ? <p role="status">Carregando sua conta…</p> : !user ? <>
       <p>Entre ou crie sua conta antes de pagar para vincular o acesso corretamente.</p>
