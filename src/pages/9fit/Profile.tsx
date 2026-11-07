@@ -11,6 +11,7 @@ import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 const DynamicPDI = lazy(() => import('@/components/9fit/DynamicPDI').then(module => ({ default: module.DynamicPDI })));
 import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
+import { ATHLETE_MISSING, IDENTITY_COPY, identityNotice } from "@/components/9fit/identityNotice";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
 
@@ -43,7 +44,7 @@ export default function NineFitProfile() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
   const { totalXp, level, syncScore, streak, weightKg, loading: profileLoading, error: profileError, refresh: refreshProfile } = useEngrenagem();
-  const { athleteId, athleteName, loading: identityLoading, error: identityError } = useAthleteId();
+  const { athleteId, athleteName, loading: identityLoading, error: identityError, retry: retryIdentity } = useAthleteId();
   const [search, setSearch] = useSearchParams();
   const fichaOpen = search.get("section") === "pdi";
   const setFichaOpen = (open: boolean) => { const next = new URLSearchParams(search); if (open) next.set("section", "pdi"); else next.delete("section"); setSearch(next, { replace: !open }); };
@@ -54,7 +55,12 @@ export default function NineFitProfile() {
   const [weightMeta, setWeightMeta] = useState<WeightMeta | null>(null);
 
   useEffect(() => {
-    if (!athleteId) { setBioLoading(identityLoading); setBioError(!identityLoading || !!identityError); setWeightMeta(null); return; }
+    if (!athleteId) {
+      setBioLoading(identityLoading);
+      setBioError(!identityLoading && !!identityError && identityError !== ATHLETE_MISSING);
+      setWeightMeta(null);
+      return;
+    }
     let cancelled = false;
     setBioLoading(true); setBioError(false); setWeightMeta(null); setBio({ avatar_url: null, age: null, height_cm: null, weight_kg: null });
     (async () => {
@@ -83,6 +89,7 @@ export default function NineFitProfile() {
   }, [athleteId, bioReload, identityLoading, identityError]);
 
   const displayName = athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta";
+  const fichaNotice = identityNotice(identityLoading, athleteId, identityError);
 
   const sections: { title: string; items: MenuItem[] }[] = [
     { title: "Minha conta", items: [
@@ -120,7 +127,13 @@ export default function NineFitProfile() {
       {/* ID Card — decisão principal da tela: 1 barra de XP, dados físicos ou
           CTA de completar perfil já embutido, Sync/Streak como texto de apoio */}
       <section className="px-4 mt-5">
-        {profileLoading || bioLoading ? <p role="status">Carregando seu perfil…</p> : bioError ? <button onClick={() => { window.dispatchEvent(new Event("9fit:profile-updated")); }}>Não foi possível confirmar os dados do perfil. Tentar novamente</button> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
+        {fichaNotice === "unlinked" && <p className="rounded-xl border border-border p-4 text-sm">{IDENTITY_COPY.unlinked}</p>}
+        {fichaNotice === "unread" && (
+          <button onClick={() => void retryIdentity()} className="w-full rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-left text-sm">
+            {IDENTITY_COPY.unread} Tentar novamente
+          </button>
+        )}
+        {fichaNotice === "ready" && (profileLoading || bioLoading ? <p role="status">Carregando seu perfil…</p> : bioError ? <button onClick={() => { window.dispatchEvent(new Event("9fit:profile-updated")); }}>Não foi possível confirmar os dados do perfil. Tentar novamente</button> : profileError ? <button onClick={() => void refreshProfile()}>Não foi possível confirmar seus pontos e nível. Tentar novamente</button> : <DigitalIDCard
           name={displayName}
           level={level}
           syncScore={syncScore}
@@ -130,7 +143,7 @@ export default function NineFitProfile() {
           age={bio.age}
           heightCm={bio.height_cm}
           weightKg={weightKg}
-        />}
+        />)}
         {weightKg != null && weightMeta && (
           <p className="mt-2 px-1 text-[11px] text-muted-foreground">
             Peso {weightKg} kg · {WEIGHT_SOURCE_LABEL[weightMeta.source] || weightMeta.source}

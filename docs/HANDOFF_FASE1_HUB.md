@@ -1,7 +1,7 @@
 # Handoff — Fase 1 · Hub
 
 Data: 2026-10-27
-Revisão: 2026-11-05
+Revisão: 2026-11-07
 Repositório: ronicomercial19-eng/ninefitpro
 Branch: main
 
@@ -17,6 +17,7 @@ Branch: main
 - Explorar ecossistema no Hub só mostrava o título. O card desenhado (`EcosystemModuleCard`) não era usado. "Ver todos" abria um preview em vez da lista.
 - Staff do ecossistema ia para a página fina `/9fit/native-system?app=staff`. O atalho Staff dos comandos ia para `/9fit/staff`. Os dois agora abrem a equipe.
 - Laranja dos destaques e dos módulos ainda era `#FF6600`. O token do Hub é `#EF7A45`.
+- O aviso do topo dizia que o professor ainda não vinculou a ficha sempre que não havia `athleteId`. Uma falha de `fn_current_athlete_id` parecia ausência de ficha.
 
 ## O que foi feito
 
@@ -31,6 +32,7 @@ Branch: main
 - Toque no módulo com rota interna abre a tela. Sem rota, continua o preview.
 - Atalho de teste de push/bluetooth saiu do Hub. Nada de notificação real foi removido.
 - Página fina do Staff continua existindo; o card do ecossistema não aponta mais para ela.
+- O aviso "Seu acesso está pronto…" só aparece quando a consulta confirma que não há ficha. Se a leitura falha, o Hub diz que a ficha não foi confirmada e oferece tentar de novo. O selo continua "CICLO NÃO CONFIRMADO" nos dois casos. O texto compartilhado está em `src/components/9fit/identityNotice.ts`. O Perfil usa a mesma frase, descrito em [HANDOFF_FASE4_PERFIL.md](HANDOFF_FASE4_PERFIL.md).
 
 ## O que não foi mexido
 

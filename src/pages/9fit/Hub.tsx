@@ -21,6 +21,7 @@ import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
 import { type CycleStatus } from "@/components/9fit/cycleStatus";
 import { hubFactLabel } from "@/components/9fit/hubWeeklyBrief";
+import { IDENTITY_COPY, identityNotice } from "@/components/9fit/identityNotice";
 import { Info } from "lucide-react";
 
 const hubStaggerContainer = {
@@ -57,7 +58,7 @@ const ACTIVATION_KEYS = ["missao_avaliacao", "missao_plano", "missao_primeiro_tr
 
 export default function NineFitHub() {
   const { user, profile } = useAuth();
-  const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
+  const { athleteId, athleteName, loading: athleteLoading, error: identityError, retry: retryIdentity } = useAthleteId();
   const navigate = useNavigate();
   const { invalidate } = useUserState();
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -190,6 +191,7 @@ export default function NineFitHub() {
   }, [invalidate, refreshScores]);
 
   const name = (athleteName || profile?.full_name || user?.email?.split("@")[0] || "Atleta").split(" ")[0];
+  const fichaNotice = identityNotice(athleteLoading, athleteId, identityError);
   const weightLabel = hubFactLabel(
     scoresKnown,
     athleteLoading ? "loading" : scoreStatus,
@@ -212,7 +214,13 @@ export default function NineFitHub() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <WeeklyRecapPrompt />
-      {!athleteLoading && !athleteId && <p className="mx-4 mt-3 rounded-xl border border-border p-4 text-sm">Seu acesso está pronto. Seus treinos aparecerão quando seu professor vincular sua ficha.</p>}
+      {fichaNotice === "unlinked" && <p className="mx-4 mt-3 rounded-xl border border-border p-4 text-sm">{IDENTITY_COPY.unlinked}</p>}
+      {fichaNotice === "unread" && (
+        <div className="mx-4 mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-destructive">{IDENTITY_COPY.unread}</p>
+          <button onClick={() => void retryIdentity()} className="text-xs text-primary shrink-0">Tentar de novo</button>
+        </div>
+      )}
       {hubLoading && (
         <p className="px-4 pt-3 text-[11px] text-muted-foreground">Carregando seus dados…</p>
       )}
