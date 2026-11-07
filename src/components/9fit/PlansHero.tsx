@@ -2,6 +2,8 @@ import { Activity, Dumbbell, HeartPulse, Ruler, Target, Timer } from 'lucide-rea
 
 const ICONS = [Dumbbell, Activity, HeartPulse, Timer, Ruler, Target, Dumbbell, HeartPulse];
 const FADE = 'linear-gradient(to bottom, #000 35%, transparent 100%)';
+const GRADIENT =
+  'radial-gradient(60% 50% at 0% 10%, #1a9fd6 0%, transparent 70%), radial-gradient(60% 50% at 100% 15%, #e8914a 0%, transparent 70%)';
 const GRAIN = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`;
 
 /**
@@ -17,14 +19,7 @@ export function PlansHeroBackdrop({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
       className={`pointer-events-none absolute inset-x-0 top-0 overflow-hidden ${size === 'lg' ? 'h-[380px]' : 'h-[220px]'}`}
       style={{ WebkitMaskImage: FADE, maskImage: FADE }}
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(60% 50% at 0% 10%, #1a9fd6 0%, transparent 70%), radial-gradient(60% 50% at 100% 15%, #e8914a 0%, transparent 70%)',
-          opacity: 0.9,
-        }}
-      />
+      <div className="absolute inset-0" style={{ background: GRADIENT, opacity: 0.9 }} />
       <div className="absolute inset-x-[-24px] top-6 grid grid-cols-4 gap-3">
         {tiles.map((Icon, i) => (
           <div
@@ -35,6 +30,23 @@ export function PlansHeroBackdrop({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
           </div>
         ))}
       </div>
+      <div className="absolute inset-0 opacity-[0.08] mix-blend-overlay" style={{ backgroundImage: GRAIN }} />
+    </div>
+  );
+}
+
+/**
+ * Só o brilho (gradiente + grain), sem tiles. Para páginas e seções maiores.
+ * O pai precisa ser `relative isolate` para o brilho ficar acima do fundo dele.
+ */
+export function PlansGlow({ className = '' }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden ${className}`}
+      style={{ WebkitMaskImage: FADE, maskImage: FADE }}
+    >
+      <div className="absolute inset-0" style={{ background: GRADIENT, opacity: 0.55 }} />
       <div className="absolute inset-0 opacity-[0.08] mix-blend-overlay" style={{ backgroundImage: GRAIN }} />
     </div>
   );
