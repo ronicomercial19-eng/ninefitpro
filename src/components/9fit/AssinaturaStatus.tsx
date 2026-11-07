@@ -5,7 +5,7 @@ import {usePaidAccess} from '@/hooks/usePaidAccess';
 export function AssinaturaStatus() {
   const query = usePrimeState();
   const access=usePaidAccess();
-  if(access.allowed&&['legacy_consultoria','manual','professional'].includes(access.access?.source||''))return <section className="rounded-2xl border border-white/10 p-6 space-y-3"><h2 className="font-semibold">{access.access?.source==='professional'?'Acesso profissional':'Acesso concedido pela equipe'}</h2><p className="text-sm">Este acesso não representa uma assinatura paga do app.</p>{access.access?.expires_at&&<p>Validade: {new Date(access.access.expires_at).toLocaleDateString('pt-BR')}</p>}</section>;
+  if(access.allowed&&['legacy_consultoria','manual','professional'].includes(access.access?.source||''))return <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-white/10 px-4 py-3"><Crown className="h-4 w-4 shrink-0 text-primary" /><h2 className="text-sm font-semibold">{access.access?.source==='professional'?'Acesso profissional':'Acesso concedido pela equipe'}</h2><p className="text-xs text-muted-foreground">Este acesso não representa uma assinatura paga do app.</p>{access.access?.expires_at&&<p className="text-xs text-muted-foreground">Validade: {new Date(access.access.expires_at).toLocaleDateString('pt-BR')}</p>}</section>;
   if (query.isPending) return <p className="p-4 text-sm">Verificando assinatura…</p>;
   if (query.isError) return <div role="alert" className="p-4"><p>Não foi possível confirmar sua assinatura.</p><button onClick={() => void query.refetch()} className="text-primary">Tentar novamente</button></div>;
   const prime = query.data;
