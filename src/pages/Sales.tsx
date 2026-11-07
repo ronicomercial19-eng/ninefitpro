@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL, commercialPlanHref } from "@/config/commercialOffer";
+import { PlansGlow } from "@/components/9fit/PlansHero";
 
 const coreScreens = [
   { label: "Prescrição", file: "prescricao.png" },
@@ -47,7 +48,8 @@ export default function Sales() {
           </div>
         </nav>
 
-        <section className="grid items-center gap-10 border-b border-[#ff5a1f]/25 py-14 md:py-24 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="relative isolate grid items-center gap-10 border-b border-[#ff5a1f]/25 py-14 md:py-24 lg:grid-cols-[0.95fr_1.05fr]">
+          <PlansGlow />
           <div className="space-y-6">
             <p className="inline-flex rounded-full border border-[#ff5a1f]/35 bg-[#ff5a1f]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ff9c76]">Plataforma para personal trainers</p>
             <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.05em]">Do improviso <span className="text-[#ff7848]">ao controle.</span></h1>
@@ -126,14 +128,15 @@ export default function Sales() {
           </details>
         </section>
 
-        <section id="planos" className="scroll-mt-6 rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
+        <section id="planos" className="relative isolate scroll-mt-6 overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
+          <PlansGlow className="opacity-70" />
           <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Escolha seu plano do NINE PRO</h2>
           <p className="mt-4 max-w-xl text-white/70">Escolha o período de acesso ao app. Você paga uma vez e, após a confirmação do pagamento, o NINE PRO guia seu primeiro acesso.</p>
           <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
           {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {COMMERCIAL_PLANS.map(plan => (
-              <article key={plan.id} className={`space-y-3 rounded-xl border bg-[#0a0b0c] p-5 ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
+              <article key={plan.id} className={`space-y-3 rounded-xl border bg-white/[0.04] p-5 backdrop-blur-md ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
                 <h3 className="font-semibold">{plan.name}</h3>
                 <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
                 <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
