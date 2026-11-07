@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { COMMERCIAL_PLANS } from '@/config/commercialOffer';
 import { paymentOperation } from '@/services/infinitepayCheckout';
 import { rememberPayment } from '@/lib/paymentReturn';
+import { entryStorage, rememberPlan } from '@/lib/customerEntry';
 import { AppSupport } from '@/components/9fit/AppSupport';
 import { PlansGlow } from '@/components/9fit/PlansHero';
 import { checkoutUrl } from '@/lib/infinitepayUrl';
@@ -44,7 +45,7 @@ export function PurchaseCheckout({ period }: { period: 'basic'|'annual' }) {
     <p>Pagamento único, sem renovação automática. O acesso é liberado após a confirmação do pagamento. Compras adicionais somam o período ao acesso válido já registrado.</p>
     {loading ? <p role="status">Carregando sua conta…</p> : !user ? <>
       <p>Entre ou crie sua conta antes de pagar para vincular o acesso corretamente.</p>
-      <Link className="block rounded-xl bg-primary p-4 text-center text-primary-foreground" to="/9fit/entrada?intent=purchase">Entrar ou criar conta</Link>
+      <Link onClick={() => rememberPlan(entryStorage(), period)} className="block rounded-xl bg-primary p-4 text-center text-primary-foreground" to="/9fit/entrada?intent=purchase">Entrar ou criar conta</Link>
     </> : <>
       <p className="text-sm">O acesso será vinculado à conta <strong>{user.email}</strong>. Confira se esta é a conta que você pretende usar.</p>
       <button disabled={busy} onClick={() => void start()} className="w-full rounded-xl bg-primary p-4 text-primary-foreground disabled:opacity-50">{busy ? 'Preparando pagamento…' : 'Continuar para a InfinitePay'}</button>
