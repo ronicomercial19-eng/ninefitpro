@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { loginDestination } from '@/lib/loginDestination';
-import { clearEntry, confirmedAccess, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, readEntry, rememberEntry, setupDestination } from '@/lib/customerEntry';
+import { clearEntry, clearPlan, confirmedAccess, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, planDestination, readEntry, readPlan, rememberEntry, setupDestination } from '@/lib/customerEntry';
 import { AppSupport } from '@/components/9fit/AppSupport';
 import { pendingPayment } from '@/lib/paymentReturn';
 import { withTimeout } from '@/lib/withTimeout';
@@ -60,7 +60,8 @@ export default function CustomerEntry() {
     })();
     return () => { active = false; };
   }, [user?.id, authLoading, revision, paymentReturn, purchase]);
-  const proceed = () => { if (!state) return; clearEntry(entryStorage()); navigate(state.destination, { replace: true }); };
+  // O plano escolhido antes do login só pré-seleciona o card em /9fit/planos; não confirma acesso nem pagamento.
+  const proceed = () => { if (!state) return; const target = planDestination(state.destination, readPlan(entryStorage())); clearEntry(entryStorage()); clearPlan(entryStorage()); navigate(target, { replace: true }); };
   async function createTeamProfile() {
     if (provisioning) return;
     setProvisioning(true); setProvisionError('');
