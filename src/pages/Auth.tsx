@@ -12,13 +12,10 @@ import {
   Zap, 
   Phone, 
   Activity, 
-  Bot, 
   CheckCircle2, 
-  Flame, 
-  Sparkles, 
-  ShieldCheck,
-  ArrowRight,
-  TrendingUp
+  ClipboardList, 
+  Ruler,
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,7 +122,11 @@ const Auth = () => {
     }
   };
 
-
+  const highlights = [
+    { Icon: ClipboardList, title: 'Treino no app', text: 'Planejamento e execução' },
+    { Icon: Activity, title: 'Registro de cargas', text: 'Histórico de evolução' },
+    { Icon: Ruler, title: 'Avaliação guiada', text: 'Medidas ao longo do tempo' },
+  ];
 
   return (
     <div className="min-h-screen bg-[#070708] text-foreground flex flex-col justify-between relative overflow-hidden selection:bg-primary/30 selection:text-white">
@@ -152,7 +153,7 @@ const Auth = () => {
 
       {/* Top Bar Header */}
       <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3" aria-label="Voltar para a página inicial">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-lg shadow-primary/25 transform rotate-2">
             <Dumbbell className="w-5 h-5 text-white" />
           </div>
@@ -162,7 +163,7 @@ const Auth = () => {
               <span className="text-xs font-semibold text-neutral-400 ml-1.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 uppercase tracking-wider">PRO</span>
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Quick External Link */}
         <div className="flex items-center gap-3">
@@ -182,34 +183,22 @@ const Auth = () => {
       <main className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 my-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* LEFT COLUMN: Visual Showcase & Cards Presentation (Desktop / Tablet) */}
+          {/* LEFT COLUMN: mensagem da marca e caminhos (Desktop / Tablet) */}
           <div className="hidden lg:flex lg:col-span-7 flex-col space-y-6">
             
-            {/* Status Tag */}
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/10 w-fit">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-medium text-neutral-300 tracking-wide uppercase font-mono">
-                9FIT ECOSYSTEM // PLATAFORMA INTELIGENTE
-              </span>
-            </div>
-
             {/* Hero Heading */}
             <div className="space-y-3 max-w-xl">
               <h1 className="font-display text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-[1.08]">
-                Treinamento de elite e biometria com precisão cirúrgica.
+                Seu treino organizado. Sua evolução registrada.
               </h1>
               <p className="text-base text-neutral-400 leading-relaxed">
-                Gestão completa para personal trainers, periodização adaptativa com IA, 
-                execução guiada em tempo real e ecossistema integrado para seus atletas.
+                Entre para treinar, registrar suas cargas e acompanhar a evolução. 
+                Profissionais acessam o painel para planejar, prescrever e acompanhar alunos.
               </p>
             </div>
 
-            {/* Visual Cinematic Card with Floating Interactive Badges */}
+            {/* Visual Card */}
             <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-neutral-900/60 shadow-2xl group">
-              {/* Background Athletic Image */}
               <div className="relative aspect-[16/10] w-full overflow-hidden">
                 <img 
                   src="/images/treino-focado.png" 
@@ -217,77 +206,22 @@ const Auth = () => {
                   className="w-full h-full object-cover object-center filter brightness-[0.72] contrast-[1.1] transition-transform duration-700 group-hover:scale-105"
                   loading="eager"
                 />
-                
-                {/* Dark Vignette & Gradient Overlays */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#070708] via-transparent to-black/50 pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent pointer-events-none" />
-              </div>
-
-              {/* Floating Card 1: Ron Neural Coach Status (Top Left) */}
-              <div className="absolute top-4 left-4 max-w-[280px] p-3.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 shadow-xl animate-fade-in">
-                <div className="flex items-center gap-2.5 mb-1.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-primary font-bold">RON NEURAL COACH</div>
-                    <div className="text-[10px] text-neutral-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      Prontidão de Carga: 94%
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-neutral-200 leading-snug">
-                  "Sua recuperação está ótima hoje. O volume de pernas foi calibrado para progressão de carga."
-                </p>
-              </div>
-
-              {/* Floating Card 2: Live Sync Score Indicator (Bottom Right) */}
-              <div className="absolute bottom-4 right-4 p-3 rounded-xl bg-black/80 backdrop-blur-md border border-white/15 shadow-xl flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full border-2 border-primary/80 bg-primary/10 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Sync Score Diário</div>
-                  <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <span>98.5% Sincronizado</span>
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Subtle Bottom Bar on the Image */}
-              <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 text-[10px] font-mono text-neutral-300 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                  Criptografia e RLS Soberano
-                </span>
               </div>
             </div>
 
             {/* Feature Highlights Grid */}
             <div className="grid grid-cols-3 gap-3 pt-1">
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2.5">
-                <Flame className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-xs">
-                  <div className="font-semibold text-white">SmartTreino</div>
-                  <div className="text-[11px] text-neutral-400">Execução guiada</div>
+              {highlights.map(({ Icon, title, text }) => (
+                <div key={title} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2.5">
+                  <Icon className="w-4 h-4 text-primary shrink-0" />
+                  <div className="text-xs">
+                    <div className="font-semibold text-white">{title}</div>
+                    <div className="text-[11px] text-neutral-400">{text}</div>
+                  </div>
                 </div>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-xs">
-                  <div className="font-semibold text-white">FitCopilot IA</div>
-                  <div className="text-[11px] text-neutral-400">Periodização ativa</div>
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2.5">
-                <Zap className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-xs">
-                  <div className="font-semibold text-white">9Foods & Hub</div>
-                  <div className="text-[11px] text-neutral-400">Nutrição integrada</div>
-                </div>
-              </div>
+              ))}
             </div>
 
           </div>
@@ -309,7 +243,7 @@ const Auth = () => {
               </h1>
               <p className="text-xs text-neutral-400 mt-1 flex items-center justify-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-primary" />
-                Sistema de Treinamento Inteligente
+                Seu treino organizado. Sua evolução registrada.
               </p>
             </div>
 
@@ -400,12 +334,12 @@ const Auth = () => {
                       {loading ? (
                         <div className="flex items-center justify-center gap-2">
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Acessando...</span>
+                          <span>Entrando...</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-2">
                           <Zap className="w-4 h-4 fill-white/20" />
-                          <span>Entrar no Sistema</span>
+                          <span>Entrar</span>
                         </div>
                       )}
                     </Button>
@@ -534,7 +468,7 @@ const Auth = () => {
                       ) : (
                         <div className="flex items-center justify-center gap-2">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>Criar Minha Conta</span>
+                          <span>Criar minha conta</span>
                         </div>
                       )}
                     </Button>
@@ -574,6 +508,14 @@ const Auth = () => {
               </Tabs>
             </div>
 
+            {/* Caminhos para quem ainda não decidiu (mobile e desktop) */}
+            <p className="mt-5 text-center text-xs text-neutral-400">
+              Novo por aqui?{' '}
+              <Link to="/treinar" className="font-medium text-primary hover:underline">Quero treinar</Link>
+              <span className="mx-2">·</span>
+              <Link to="/sales" className="font-medium text-primary hover:underline">Sou profissional</Link>
+            </p>
+
             {/* Mobile quick link to unified portal */}
             <div className="mt-4 text-center lg:hidden">
               <a
@@ -592,16 +534,13 @@ const Auth = () => {
         </div>
       </main>
 
-      {/* Modern Compact Footer */}
+      {/* Footer */}
       <footer className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-neutral-500 border-t border-white/5 gap-2">
-        <p>© 2026 9FIT PRO — Sistema de Treinamento Inteligente.</p>
+        <p>© {new Date().getFullYear()} 9FIT PRO</p>
         <div className="flex items-center gap-4 text-[11px]">
-          <span className="flex items-center gap-1 text-emerald-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Sistemas Operacionais Online
-          </span>
-          <a href="/sales" className="hover:text-neutral-300 transition-colors">Planos & Preços</a>
-          <a href="/suporte" className="hover:text-neutral-300 transition-colors">Suporte</a>
+          <Link to="/treinar" className="hover:text-neutral-300 transition-colors">Planos & Preços</Link>
+          <Link to="/sales" className="hover:text-neutral-300 transition-colors">Para profissionais</Link>
+          <Link to="/suporte" className="hover:text-neutral-300 transition-colors">Suporte</Link>
         </div>
       </footer>
     </div>
@@ -609,4 +548,3 @@ const Auth = () => {
 };
 
 export default Auth;
-
