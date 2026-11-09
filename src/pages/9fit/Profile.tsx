@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, TrendingUp, CreditCard,
-  ChevronRight, Flame, LogOut, Brain, Share2, Settings2, Bell, Shield, type LucideIcon,
+  ChevronRight, LogOut, Brain, Share2, Settings2, Bell, Shield, type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ import { DigitalIDCard } from "@/components/9fit/DigitalIDCard";
 import { ATHLETE_MISSING, IDENTITY_COPY, identityNotice } from "@/components/9fit/identityNotice";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 interface MenuItem {
   icon: LucideIcon;
@@ -115,14 +116,7 @@ export default function NineFitProfile() {
 
   return (
     <div className="fitpro-orange min-h-screen bg-background pb-32 text-foreground">
-      {/* Top bar */}
-      <header className="px-4 pt-6 flex items-center gap-2 border-b border-primary/30 pb-3">
-        <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
-          <Flame className="w-5 h-5 text-primary" />
-        </div>
-        <h1 className="flex-1 text-center text-2xl font-display">Perfil</h1>
-        <div className="w-9 h-9" />
-      </header>
+      <StudentSectionHeader kicker="9FIT // PERFIL" title="Seu perfil" description="Identidade, evolução e preferências" />
 
       {/* ID Card — decisão principal da tela: 1 barra de XP, dados físicos ou
           CTA de completar perfil já embutido, Sync/Streak como texto de apoio */}

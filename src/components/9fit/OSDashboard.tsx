@@ -6,8 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Settings,
-  Menu,
   Dumbbell,
   Share2,
   Users,
@@ -40,6 +38,7 @@ import { HubCommandDeck } from './HubCommandDeck';
 import { describeHubWeek, weekRead, type WeeklyCounts } from '@/components/9fit/hubWeeklyBrief';
 import { type CycleStatus } from '@/components/9fit/cycleStatus';
 import type { HubScoreStatus } from '@/hooks/useAthleteScores';
+import { StudentSectionHeader } from '@/components/9fit/StudentSectionHeader';
 import communityTribeImg from '@/assets/images/community_athletes_tribe_1790011163765.jpg';
 import challengeBannerImg from '@/assets/images/challenge_season_banner_1790011176020.jpg';
 import victoryMuralImg from '@/assets/images/victory_mural_record_1790011189778.jpg';
@@ -227,36 +226,12 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
 
   return (
     <div className="px-3.5 sm:px-4 pt-1 space-y-3 sm:space-y-3.5 pb-12 max-w-2xl mx-auto">
-      {/* Header Superior estilo High-Ticket (Whoop / Oura Studio) */}
-      <header className="flex items-center justify-between py-1.5 border-b border-white/[0.05]">
-        <button
-          onClick={() => navigate('/9fit/profile')}
-          aria-label="Menu do Atleta"
-          className="w-8 h-8 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] flex items-center justify-center transition-colors text-neutral-300"
-        >
-          <Menu className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
-            <span className="font-display font-bold text-xs sm:text-sm tracking-[0.24em] text-white uppercase">
-              9FIT <span className="text-[#EF7A45] font-normal">OS</span>
-            </span>
-          </div>
-          <span className="text-[8.5px] font-mono tracking-[0.2em] text-white/45 uppercase mt-0.5 font-medium">
-            High Performance Architecture
-          </span>
-        </div>
-
-        <button
-          onClick={() => navigate('/9fit/settings')}
-          aria-label="Configurações do Sistema"
-          className="w-8 h-8 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] flex items-center justify-center transition-colors text-neutral-300"
-        >
-          <Settings className="w-3.5 h-3.5" />
-        </button>
-      </header>
+      <StudentSectionHeader
+        kicker="9FIT // FIT OS"
+        title="Seu sistema"
+        description="Sinais de prontidão, treino e consistência em um só lugar"
+        actions={<div className="flex items-center gap-2"><button type="button" onClick={() => navigate('/9fit/profile')} className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary">Perfil</button><button type="button" onClick={() => navigate('/9fit/settings')} className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary">Ajustes</button></div>}
+      />
 
       {/* Comando do dia — Telemetria de Estado do Atleta */}
       <HubCommandDeck

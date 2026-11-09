@@ -24,6 +24,7 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
 import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar, ArrowUpRight, Dumbbell } from "lucide-react";
 import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBanner";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 import { businessDate } from "@/services/dailyContextRules";
 
 interface TrainingAssignment {
@@ -367,31 +368,12 @@ export default function NineFitTrain() {
         <p className="text-sm">Há uma sessão de {new Date(`${previousSession.workout_date}T12:00:00`).toLocaleDateString('pt-BR')} aberta.</p>
         <div className="flex gap-3"><button disabled={sessionBusy} className="min-h-11 rounded-xl bg-primary px-4 text-black disabled:opacity-50" onClick={()=>void handlePreviousSession(true)}>Retomar</button><button disabled={sessionBusy} className="min-h-11 rounded-xl border border-primary/50 px-4 disabled:opacity-50" onClick={()=>void handlePreviousSession(false)}>Encerrar sessão</button></div>
       </section>}
-      {/* Header */}
-      <div className="px-4 pt-5 pb-2.5 relative z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#EF7A45]" />
-            <p className="text-[11px] font-mono tracking-[0.12em] text-[#EF7A45] font-bold uppercase">
-              9FIT // TREINO
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => navigate('/9fit/move')}
-              className="px-2.5 py-1 bg-[#EF7A45]/15 border border-[#EF7A45]/25 text-[#EF7A45] text-[10px] font-bold uppercase tracking-[0.08em] rounded-lg hover:bg-[#EF7A45]/25 transition-colors"
-            >
-              Move GPS
-            </button>
-            <span className="text-[10px] font-mono text-white/45 uppercase tracking-[0.08em]">
-              {athleteName || "ATLETA 9FIT"}
-            </span>
-          </div>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-white mt-1">
-          {flow === "HOME" ? "Seu treino" : "Visão Geral da Sessão"}
-        </h1>
-      </div>
+      <StudentSectionHeader
+        kicker="9FIT // TREINO"
+        title={flow === "HOME" ? "Seu treino" : "Visão geral da sessão"}
+        description={athleteName || "ATLETA 9FIT"}
+        actions={<button type="button" onClick={() => navigate('/9fit/move')} className="rounded-lg border border-primary/25 bg-primary/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary/25">Move GPS</button>}
+      />
 
       {athleteId&&flow==="HOME"&&<div className="px-4 mb-4"><ReadinessCard athleteId={athleteId}/></div>}
       <div className="px-4 relative z-10">
