@@ -98,4 +98,3 @@ test("failed durable inbox write aborts and releases worker lock",async()=>{
   assert.equal(db.calls.some(c=>c.name==="fn_core_worker_unlock"),true);
   assert.equal(db.writes.some(w=>w.value.after_at),false);
 });
-

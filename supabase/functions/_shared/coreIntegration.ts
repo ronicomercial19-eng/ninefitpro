@@ -163,4 +163,3 @@ export function createCoreIntegration({ db, env, fetcher = fetch, currentUser }:
     }
   };
 }
-

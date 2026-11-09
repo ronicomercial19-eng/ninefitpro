@@ -57,4 +57,3 @@ export function CoreRequests({ athleteId }: { athleteId?: string | null }) {
       </li>)}</ul>}
   </section>;
 }
-

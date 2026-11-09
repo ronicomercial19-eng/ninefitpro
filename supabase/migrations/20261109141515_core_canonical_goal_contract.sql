@@ -80,5 +80,3 @@ begin
  perform set_config('request.jwt.claim.sub',coalesce(v_old_sub,''),true);
  return jsonb_build_object('state',v_state,'result',v_result);
 end $$;
-
-

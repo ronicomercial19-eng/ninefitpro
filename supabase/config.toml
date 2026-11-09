@@ -97,4 +97,3 @@ verify_jwt = false
 
 [functions.core-os-dispatch]
 verify_jwt = false
-

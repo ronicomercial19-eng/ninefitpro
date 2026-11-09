@@ -30,4 +30,3 @@ export default function CoreIntegrationHealth() {
     </>}
   </main>;
 }
-

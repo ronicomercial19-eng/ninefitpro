@@ -105,5 +105,3 @@ end $$;
 revoke all on function public.fn_core_profile_changed() from public,anon,authenticated;
 create trigger core_profile_integration_retry after update of phone,user_id on public.athletes
  for each row execute function public.fn_core_profile_changed();
-
-

@@ -86,4 +86,3 @@ export function useSendZap(threadId?: string, userId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["zap", "messages", threadId] }),
   });
 }
-

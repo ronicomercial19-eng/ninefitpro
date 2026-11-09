@@ -86,4 +86,3 @@ Vertex. Este teste não promoveu os 100 agentes para live.
 WhatsApp oficial não foi ativado; sender_provider continua log com entrega
 no chat do app. O motor e o cadastro dos squads são distintos dos workflows
 legados de um banco gerenciado do Lovable.
-

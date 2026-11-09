@@ -220,5 +220,3 @@ $job$);
 -- Weekly trigger is installed but inactive until the signed health check and pilot pass.
 select cron.schedule('fitpro-core-weekly-checkin','0 12 * * 1',$job$select public.fn_core_weekly_checkins();$job$);
 select cron.alter_job((select jobid from cron.job where jobname='fitpro-core-weekly-checkin'),active:=false);
-
-

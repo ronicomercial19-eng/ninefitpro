@@ -437,4 +437,3 @@ app.post('/api/webhook/infinitepay', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on http://0.0.0.0:${PORT}`);
 });
-

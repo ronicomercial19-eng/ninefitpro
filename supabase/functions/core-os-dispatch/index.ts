@@ -8,4 +8,3 @@ Deno.serve(createCoreIntegration({ db, env: name => Deno.env.get(name), currentU
   const r = await client.auth.getUser();
   return !r.error && !r.data.user?.is_anonymous ? r.data.user?.id ?? null : null;
 } }));
-
