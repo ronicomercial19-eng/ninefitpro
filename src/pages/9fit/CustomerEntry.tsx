@@ -8,6 +8,7 @@ import { AppSupport } from '@/components/9fit/AppSupport';
 import { pendingPayment } from '@/lib/paymentReturn';
 import { withTimeout } from '@/lib/withTimeout';
 import { hasConfirmedProfile } from '@/lib/activationProfile';
+import { JourneyCard, JourneyShell } from '@/components/9fit/JourneyShell';
 
 export default function CustomerEntry() {
   const { user, loading: authLoading } = useAuth();
@@ -78,21 +79,23 @@ export default function CustomerEntry() {
     clearEntry(entryStorage());
     navigate(state.destination, { replace: true });
   }, [paymentReturn, state, navigate]);
-  return <main className="min-h-screen bg-background text-foreground px-4 py-10"><section className="mx-auto max-w-lg space-y-5">
-    <p className="text-xs tracking-widest text-primary">9FIT PRO · BOAS-VINDAS</p>
-    <h1 className="text-3xl font-bold">{paymentReturn ? 'Vamos continuar no app' : 'Entre do seu jeito. Continue de onde parou.'}</h1>
-    <p className="text-sm text-muted-foreground">Cadastro, configuração inicial e assinatura são etapas diferentes. Entrar ou voltar do checkout não confirma pagamento.</p>
-    {authLoading ? <p role="status">Carregando sua conta…</p> : !user ? <>
-      <p>Já tem conta? Entre nela. Se pagou com outro e-mail, não crie uma segunda conta para tentar liberar o plano: fale com o suporte.</p>
-      <Link className="block rounded-xl bg-primary text-primary-foreground p-4 text-center font-bold" to={`/auth?entry=${paymentReturn ? 'payment_return' : purchase ? 'purchase' : 'start'}`}>Entrar ou criar conta · e-mail ou Google</Link>
-      <p className="text-xs text-muted-foreground">Após confirmar seu e-mail ou entrar com Google, retomaremos esta etapa. Acesso concedido pela equipe não exige uma nova compra.</p>
-    </> : error ? <div role="alert"><p>Não foi possível conferir sua conta. Nenhuma cobrança ou alteração de acesso foi feita.</p><button className="underline mt-3" onClick={() => setRevision(n => n + 1)}>Tentar novamente</button></div> : !state ? <p role="status">Conferindo seu acesso e sua configuração…</p> : <>
-      <p role="status" className="rounded-xl border border-border p-4">{state.access ? 'Seu acesso está confirmado no app. Não é necessário pagar novamente.' : paymentReturn ? 'Retorno recebido. Ainda não há acesso ativo confirmado nesta conta. Não pague novamente enquanto conferimos.' : 'Você pode começar a configuração sem confirmar uma nova compra. Recursos pagos dependem do acesso registrado.'}</p>
-      {state.missingProfile && <div className="space-y-3"><p className="text-sm">Sua conta existe, mas ainda não há ficha de atleta vinculada. Ao criar sua ficha, ela ficará sob responsabilidade da equipe NINE FIT (Rony). Isso não inclui consulta ou acompanhamento individual contratado, nem confirma assinatura.</p><button disabled={provisioning} onClick={() => void createTeamProfile()} className="w-full rounded-xl border border-primary p-4 disabled:opacity-50">{provisioning ? 'Preparando sua ficha…' : 'Criar minha ficha com a equipe NINE FIT'}</button><p role="alert" className="text-sm">{provisionError}</p></div>}
-      <button onClick={proceed} className="w-full rounded-xl bg-primary text-primary-foreground p-4 font-bold">{state.destination === '/9fit/planos' ? 'Ver planos e condições' : state.missingProfile ? 'Abrir início' : 'Continuar minha configuração'}</button>
-      <button className="underline text-sm" onClick={() => setRevision(n => n + 1)}>Conferir confirmação novamente</button>
+  return <JourneyShell title={paymentReturn ? 'Vamos continuar no app' : 'Continue de onde parou'} eyebrow="9FIT · ENTRADA" backTo="/9fit/login" backLabel="Voltar ao login" steps={['Entrada', 'Acesso', 'Configuração']} activeStep={user ? state ? 2 : 1 : 0}>
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-muted-foreground">Cadastro, configuração inicial e assinatura são etapas diferentes. Entrar ou voltar do checkout não confirma pagamento.</p>
+      <JourneyCard className="space-y-4">
+      {authLoading ? <p role="status" className="text-sm text-muted-foreground">Carregando sua conta…</p> : !user ? <>
+        <div><h2 className="font-display text-xl">Entre para continuar</h2><p className="mt-1 text-sm text-muted-foreground">Já tem conta? Entre nela. Se pagou com outro e-mail, não crie uma segunda conta para tentar liberar o plano.</p></div>
+        <Link className="block rounded-xl bg-primary p-4 text-center font-semibold text-primary-foreground" to={`/auth?entry=${paymentReturn ? 'payment_return' : purchase ? 'purchase' : 'start'}`}>Entrar ou criar conta <span aria-hidden>→</span></Link>
+        <p className="text-xs leading-relaxed text-muted-foreground">Após confirmar seu e-mail ou entrar com Google, retomaremos esta etapa. Acesso concedido pela equipe não exige uma nova compra.</p>
+      </> : error ? <div role="alert" className="space-y-3"><p className="text-sm">Não foi possível conferir sua conta. Nenhuma cobrança ou alteração de acesso foi feita.</p><button className="text-sm text-primary underline" onClick={() => setRevision(n => n + 1)}>Tentar novamente</button></div> : !state ? <p role="status" className="text-sm text-muted-foreground">Conferindo seu acesso e sua configuração…</p> : <>
+        <p role="status" className="rounded-xl border border-primary/20 bg-primary/[0.06] p-4 text-sm leading-relaxed">{state.access ? 'Seu acesso está confirmado no app. Não é necessário pagar novamente.' : paymentReturn ? 'Retorno recebido. Ainda não há acesso ativo confirmado nesta conta. Não pague novamente enquanto conferimos.' : 'Você pode começar a configuração sem confirmar uma nova compra. Recursos pagos dependem do acesso registrado.'}</p>
+        {state.missingProfile && <div className="space-y-3"><p className="text-sm leading-relaxed text-muted-foreground">Sua conta existe, mas ainda não há ficha de atleta vinculada. Ao criar sua ficha, ela ficará sob responsabilidade da equipe NINE FIT (Rony).</p><button disabled={provisioning} onClick={() => void createTeamProfile()} className="w-full rounded-xl border border-primary/40 p-4 text-sm font-semibold text-primary disabled:opacity-50">{provisioning ? 'Preparando sua ficha…' : 'Criar minha ficha com a equipe NINE FIT'}</button><p role="alert" className="text-sm text-destructive">{provisionError}</p></div>}
+        <button onClick={proceed} className="w-full rounded-xl bg-primary p-4 font-semibold text-primary-foreground">{state.destination === '/9fit/planos' ? 'Ver planos e condições' : state.missingProfile ? 'Abrir início' : 'Continuar minha configuração'} <span aria-hidden>→</span></button>
+        <button className="text-sm text-muted-foreground underline" onClick={() => setRevision(n => n + 1)}>Conferir confirmação novamente</button>
+      </>}
+      </JourneyCard>
       <AppSupport />
-    </>}
-    <Link to={CUSTOMER_ENTRY} className="block text-sm text-muted-foreground">Entrada do 9FIT PRO</Link>
-  </section></main>;
+      <Link to={CUSTOMER_ENTRY} className="block text-center text-sm text-muted-foreground">Entrada do 9FIT PRO</Link>
+    </div>
+  </JourneyShell>;
 }

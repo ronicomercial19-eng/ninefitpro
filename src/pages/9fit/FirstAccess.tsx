@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { finalizeFirstAccess } from "@/lib/firstAccess";
-import { 
+import {
   Lock, 
   Eye, 
   EyeOff, 
@@ -16,6 +16,7 @@ import {
   User,
   Sparkles
 } from "lucide-react";
+import { JourneyCard, JourneyShell } from '@/components/9fit/JourneyShell';
 
 type Step = 'welcome' | 'password' | 'tour-training' | 'tour-diet' | 'tour-classes' | 'tour-profile' | 'complete';
 
@@ -351,17 +352,13 @@ export default function FirstAccess() {
     }
   };
 
+  const stepIndex = step === 'welcome' || step === 'password' ? 0 : step === 'complete' ? 2 : 1;
+  const title = step === 'welcome' ? 'Seu primeiro acesso' : step === 'password' ? 'Proteja sua conta' : step === 'complete' ? 'Tudo pronto para começar' : 'Conheça seu 9FIT PRO';
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      {/* Ambient Effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-primary/3 rounded-full blur-[80px]" />
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
+    <JourneyShell title={title} eyebrow="9FIT · PRIMEIRO ACESSO" backTo="/9fit/login" backLabel="Voltar ao login" steps={['Segurança', 'Tour', 'Início']} activeStep={stepIndex}>
+      <JourneyCard className="mx-auto max-w-md">
         {renderStep()}
-      </div>
-    </div>
+      </JourneyCard>
+    </JourneyShell>
   );
 }

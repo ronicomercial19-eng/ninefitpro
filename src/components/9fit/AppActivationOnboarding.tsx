@@ -11,6 +11,7 @@ import { AppOnboardingState, OnboardingAnswers, DAYS, EQUIPMENT, EXPERIENCE, ENV
 import { PDIWizard } from './PDIWizard';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { JourneyCard, JourneyShell } from './JourneyShell';
 const sections = ['Boas-vindas', 'Seu perfil', 'Sua rotina', 'Limitações', 'Sua ficha', 'Revisão', 'Tudo pronto'];
 const field = 'w-full rounded-xl border border-border bg-background p-3';
 const labels: Record<string, string> = { goal: 'Objetivo', recovery_rate: 'Recuperação', volume_tolerance: 'Tolerância a volume', peak_window: 'Melhor horário', stress_sensitivity: 'Sensibilidade ao estresse', discomfort_tolerance: 'Tolerância a esforço', time_horizon: 'Prazo em semanas', injury_zones: 'Histórico de lesões', dietary_restrictions: 'Restrições alimentares' };
@@ -130,8 +131,9 @@ export function AppActivationOnboarding() {
             if (activeUser.current === owner) setBusy(false);
         }
     };
-    return <main className="mx-auto max-w-2xl px-5 pt-16 pb-28 space-y-6">
-  <header className="space-y-2"><Rocket className="text-primary"/><p className="text-xs uppercase tracking-widest text-primary">Ativação do app</p><h1 className="font-display text-2xl">{sections[step]}</h1><p className="text-sm text-muted-foreground">{step < 6 ? `Etapa ${step + 1} de 6 · suas confirmações ficam salvas na conta` : 'Perfil completo e primeiro treino são etapas diferentes.'}</p></header>
+    return <JourneyShell title={sections[step]} eyebrow="9FIT · ATIVAÇÃO" backTo="/9fit/hub" backLabel="Voltar ao Hub" steps={sections} activeStep={step}>
+  <JourneyCard className="space-y-6">
+  <header className="space-y-2"><Rocket className="text-primary"/><p className="text-sm text-muted-foreground">{step < 6 ? `Etapa ${step + 1} de 6 · suas confirmações ficam salvas na conta` : 'Perfil completo e primeiro treino são etapas diferentes.'}</p></header>
   {step === 0 && <p className="text-sm text-muted-foreground">Seu professor vinculado poderá consultar sua rotina e as limitações informadas para orientar seu acompanhamento.</p>}
   {step < 6 && <div className="h-1 rounded bg-muted" aria-label={`Progresso: etapa ${step + 1} de 6`}><div className="h-full rounded bg-primary" style={{ width: `${((step + 1) / 6) * 100}%` }}/></div>}
   {saveError && <section role="alert" className="rounded-xl border border-destructive/40 p-4 space-y-3"><p>{saveError}</p><Button variant="outline" disabled={busy} onClick={retry}>Conferir dados salvos</Button></section>}
@@ -148,5 +150,6 @@ export function AppActivationOnboarding() {
    {step < 6 && step !== 4 && <div className="flex flex-wrap gap-3">{step > 0 && <Button variant="outline" onClick={() => edit(step - 1)}>Voltar</Button>}<Button onClick={next}>{busy ? 'Salvando…' : step === 5 ? 'Confirmar e ativar meu app' : step === 0 ? 'Começar minha ativação' : 'Salvar e continuar'}</Button></div>}
   </fieldset>
   {step < 6 && <button disabled={busy} onClick={retry} className="text-xs text-muted-foreground underline">Recarregar dados salvos</button>}
- </main>;
+ </JourneyCard>
+ </JourneyShell>;
 }
