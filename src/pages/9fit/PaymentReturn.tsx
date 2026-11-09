@@ -6,6 +6,7 @@ import { AppSupport } from '@/components/9fit/AppSupport';
 import { clearEntry, entryStorage, rememberEntry } from '@/lib/customerEntry';
 import { clearPayment, parsePaymentReturn, pendingPayment, rememberPayment } from '@/lib/paymentReturn';
 import { paymentOperation } from '@/services/infinitepayCheckout';
+import { BillingCard, BillingShell } from '@/components/9fit/BillingShell';
 
 export default function PaymentReturn() {
   const { user, loading } = useAuth();
@@ -45,21 +46,21 @@ export default function PaymentReturn() {
     const timer = setTimeout(() => setAttempt(n => n+1), 4000);
     return () => clearTimeout(timer);
   }, [state, attempt]);
-  return <main className="min-h-screen bg-background p-6 text-foreground"><section className="mx-auto max-w-lg space-y-5 py-10">
-    <h1 className="text-3xl font-bold">{state === 'paid' ? 'Pagamento confirmado. Seu acesso está ativo.' : 'Vamos conferir seu pagamento'}</h1>
+  return <BillingShell step="confirmation" title={state === 'paid' ? 'Pagamento confirmado' : 'Vamos conferir seu pagamento'} backTo="/9fit/planos" backLabel="Voltar para planos">
+    <div className="space-y-4">
+    <BillingCard className="space-y-4">
     {loading ? <p role="status">Carregando sua conta…</p> : !user ? <>
-      <p>Entre na mesma conta usada para iniciar a compra. Não faça outro pagamento.</p>
-      <Link className="block rounded-xl bg-primary p-4 text-center text-primary-foreground" to="/auth?entry=payment_return">Entrar para conferir meu acesso</Link>
+      <p className="text-sm leading-relaxed text-muted-foreground">Entre na mesma conta usada para iniciar a compra. Não faça outro pagamento enquanto conferimos.</p>
+      <Link className="block rounded-xl bg-primary p-4 text-center font-semibold text-primary-foreground" to="/auth?entry=payment_return">Entrar para conferir meu acesso <span aria-hidden>→</span></Link>
     </> : state === 'paid' ? <>
-      <p>Sua compra foi registrada. O período de acesso está disponível em Pagamento &amp; Plano.</p>
-      <Link className="block rounded-xl bg-primary p-4 text-center text-primary-foreground" to="/9fit/entrada">Continuar para o app</Link>
+      <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-4"><p className="font-display text-xl">Seu acesso está ativo.</p><p className="mt-1 text-sm text-muted-foreground">Sua compra foi registrada e o período está disponível em Pagamento &amp; Plano.</p></div>
+      <Link className="block rounded-xl bg-primary p-4 text-center font-semibold text-primary-foreground" to="/9fit/entrada">Continuar para o app <span aria-hidden>→</span></Link>
     </> : <>
-      <p role="status">{state === 'checking' ? 'Conferindo a confirmação com o provedor…' : state === 'manual_review' ? 'Não encontramos um pedido vinculado a esta conta. Fale com o suporte para conferir a compra.' : state === 'error' ? error : 'Ainda aguardamos a confirmação. Você pode conferir novamente em alguns instantes.'}</p>
-      <p className="text-sm text-muted-foreground">O retorno desta página não comprova pagamento. Não pague novamente enquanto conferimos.</p>
-      <button disabled={state === 'checking'} className="rounded-xl border p-3" onClick={() => setAttempt(n => n+1)}>Conferir novamente</button>
-      {reference && <p className="break-all text-xs text-muted-foreground">Código do pedido: {reference.order_nsu}</p>}
-      <Link className="block text-primary underline" to="/9fit/entrada" onClick={() => { clearPayment(); clearEntry(entryStorage()); }}>Voltar à minha conta</Link>
+      <p role="status" className="text-sm leading-relaxed">{state === 'checking' ? 'Conferindo a confirmação com o provedor…' : state === 'manual_review' ? 'Não encontramos um pedido vinculado a esta conta. Fale com o suporte para conferir a compra.' : state === 'error' ? error : 'Ainda aguardamos a confirmação. Você pode conferir novamente em alguns instantes.'}</p>
+      <p className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-3 text-xs leading-relaxed text-muted-foreground">O retorno desta página não comprova pagamento. Não pague novamente enquanto conferimos.</p>
+      <div className="flex flex-col gap-3 sm:flex-row"><button disabled={state === 'checking'} className="rounded-xl border border-primary/30 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10 disabled:opacity-50" onClick={() => setAttempt(n => n+1)}>Conferir novamente</button><Link className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm text-muted-foreground" to="/9fit/entrada" onClick={() => { clearPayment(); clearEntry(entryStorage()); }}>Voltar à minha conta</Link></div>
+      {reference && <p className="break-all text-[10px] font-data text-muted-foreground">Código do pedido: {reference.order_nsu}</p>}
     </>}
-    <AppSupport />
-  </section></main>;
+    </BillingCard><AppSupport /></div>
+  </BillingShell>;
 }

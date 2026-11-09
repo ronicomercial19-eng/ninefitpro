@@ -8,6 +8,7 @@ import { PaywallPlans } from "@/components/9fit/PaywallPlans";
 import { COMMERCIAL_PLANS, OFFER_SCOPE, CHECKOUT_READY, commercialPlanHref } from "@/config/commercialOffer";
 import { AppSupport } from "@/components/9fit/AppSupport";
 import { useAuth } from "@/contexts/AuthContext";
+import { BillingCard } from '@/components/9fit/BillingShell';
 
 const PLANS = COMMERCIAL_PLANS;
 
@@ -42,14 +43,14 @@ export default function NineFitPrimePass() {
       </header>
 
       <div className="px-4 space-y-6">
-        {!CHECKOUT_READY && <p role="status" className="rounded-xl border border-primary/30 p-4 text-sm">Contratação online em configuração. Não faça pagamentos para liberar acesso sem confirmação da equipe. Os valores abaixo são a proposta comercial; fale com a NINE FIT para confirmar disponibilidade e condições.</p>}
+        {!CHECKOUT_READY && <p role="status" className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 text-sm text-muted-foreground"><span className="font-semibold text-primary">Atenção · </span>Contratação online em configuração. Não faça pagamentos para liberar acesso sem confirmação da equipe.</p>}
 
         <PaywallPlans plans={PLANS} initialPlanId={selectedPlan} hrefFor={commercialPlanHref} stickyCta />
 
-        <p className="text-sm text-muted-foreground">{prime?.entitlement === "active" || prime?.entitlement === "trial" ? "Você já tem acesso. Consulte as condições de alteração antes de contratar outro plano." : "Ofertas disponíveis. O acesso só é confirmado após o registro da contratação."} Valores, renovação e cobrança são confirmados pelo provedor de pagamento; o aplicativo não informa uma próxima cobrança sem esse registro.</p>
+        <p className="border-l-2 border-primary/60 pl-3 text-sm leading-relaxed text-muted-foreground">{prime?.entitlement === "active" || prime?.entitlement === "trial" ? "Você já tem acesso. Consulte as condições de alteração antes de contratar outro plano." : "Ofertas disponíveis. O acesso só é confirmado após o registro da contratação."} Valores, renovação e cobrança são confirmados pelo provedor de pagamento.</p>
 
         <AssinaturaStatus />
-        <section className="rounded-xl border border-white/10 p-4 space-y-2"><h2 className="font-bold">Sua performance</h2>{isLoading ? <p>Carregando…</p> : error ? <button onClick={()=>void refetch()}>Não foi possível atualizar. Tentar novamente</button> : <><p>SYNC: {prime?.syncScore == null ? "Sem medição" : `${prime.syncScore}%`}</p><p>Protocolo: {prime?.activeProtocol || "Sem protocolo ativo"}</p><p>Próximo treino: {prime?.nextWorkout ? friendlyDates(prime.nextWorkout) : "Sem prescrição futura"}</p><p>Recuperação: {prime?.recovery == null ? "Sem leitura recente" : `${prime.recovery}%`}</p></>}</section>
+        <BillingCard><div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-label text-primary">Leitura do sistema</p><h2 className="mt-1 font-display text-xl">Sua performance</h2></div><span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_hsl(var(--primary))]" /></div>{isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> : error ? <button className="text-sm text-primary underline" onClick={()=>void refetch()}>Não foi possível atualizar. Tentar novamente</button> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[['SYNC', prime?.syncScore == null ? '—' : `${prime.syncScore}%`], ['PROTOCOLO', prime?.activeProtocol || 'Sem protocolo'], ['PRÓXIMO', prime?.nextWorkout ? friendlyDates(prime.nextWorkout) : 'Sem prescrição'], ['RECUPERAÇÃO', prime?.recovery == null ? '—' : `${prime.recovery}%`]].map(([label, value]) => <div key={label} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-3"><p className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground">{label}</p><p className="mt-2 truncate font-data text-sm font-semibold text-foreground">{value}</p></div>)}</div>}</BillingCard>
       </div>
 
       <section className="m-4 rounded-xl border border-border p-4 space-y-3"><h2 className="font-bold">O que está incluído — e o que é contratado à parte</h2><p className="text-sm text-muted-foreground">{OFFER_SCOPE}</p><p className="text-sm text-muted-foreground">Autoavaliações e estimativas são identificadas. Não prometemos resultados físicos nem substituímos acompanhamento profissional.</p><Link to="/9fit/staff" className="text-primary underline">Conhecer profissionais via Staff</Link></section>
