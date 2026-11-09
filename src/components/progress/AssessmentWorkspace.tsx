@@ -100,9 +100,14 @@ function useHub(athleteId:string) {
  useEffect(()=>{let active=true;setLoading(true);setError(null);setHub(null);loadAssessmentHub(athleteId).then(data=>{if(active)setHub(data)}).catch(e=>{if(active)setError(permissionMessage(e))}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[athleteId,revision]);
  return {hub,error,loading,revision,refresh:()=>{invalidateAssessmentHub(athleteId);setRevision(r=>r+1)}};
 }
-export function AssessmentWorkspace({athleteId,initialView='resumo',basePath='/9fit/progresso',assessmentPath='/9fit/avaliacao',guidedPath='/9fit/avaliacao-guiada?returnTo=progresso'}:{athleteId:string;initialView?:View;basePath?:string;assessmentPath?:string;guidedPath?:string}) {
+// mode='professional': professor vê o aluno selecionado. Ações de autoatendimento (check-in corporal, metas, preferências, autoavaliação)
+// operam sobre o usuário logado ou pertencem ao aluno, então ficam ocultas; o registro segue pelo fluxo profissional (registerPath).
+export function AssessmentWorkspace({athleteId,initialView='resumo',basePath='/9fit/progresso',assessmentPath='/9fit/avaliacao',guidedPath='/9fit/avaliacao-guiada?returnTo=progresso',mode='self',registerPath,athleteName}:{athleteId:string;initialView?:View;basePath?:string;assessmentPath?:string;guidedPath?:string;mode?:'self'|'professional';registerPath?:string;athleteName?:string}) {
+ const professional=mode==='professional';
  const routerNavigate=useNavigate();
- const {hub,error,loading,revision,refresh}=useHub(athleteId);const [view,setViewState]=useState<View>(initialView),[period,setPeriod]=useState(0),[compare,setCompare]=useState<'primeira'|'anterior'>('primeira'),[filter,setFilter]=useState('todas'),[openPillar,setOpenPillar]=useState<string|null>('forca');
+ const {hub:rawHub,error,loading,revision,refresh}=useHub(athleteId);
+ const hub=useMemo(()=>rawHub&&professional?{...rawHub,can_manage:false}:rawHub,[rawHub,professional]);
+ const registerLink=professional&&registerPath?<Link className="aw-button" to={registerPath}>Registrar avaliação profissional</Link>:null;const [view,setViewState]=useState<View>(initialView),[period,setPeriod]=useState(0),[compare,setCompare]=useState<'primeira'|'anterior'>('primeira'),[filter,setFilter]=useState('todas'),[openPillar,setOpenPillar]=useState<string|null>('forca');
  useEffect(()=>setViewState(initialView),[initialView]);
  const setView=(next:View)=>{setViewState(next);routerNavigate(next==='resumo'?basePath:`${basePath}/${next}`)};
  const rows=hub?.assessments??[],official=officialRows(rows),current=official.at(-1)??null,previous=current?compareRow(official,current,compare):null;
@@ -117,24 +122,24 @@ export function AssessmentWorkspace({athleteId,initialView='resumo',basePath='/9
  const focus=pillars.flatMap(([key,label])=>{const v=metricValue(current,`score_${key}`);return v===null?[]:[{key,label,value:v}]}).sort((a,b)=>a.value-b.value)[0];
  const navigate=setView;
  if (view === 'resumo' || view === 'historico') return <div className="assessment-workspace" data-testid="assessment-workspace">
-   <header className="aw-header"><div><h2>Minha evolução</h2><p className="aw-muted">Suas métricas, em um só lugar</p></div><button className="aw-icon" type="button" onClick={refresh} aria-label="Atualizar métricas"><RefreshCw size={18} className={loading ? 'animate-spin' : ''}/></button></header>
-   {loading && <p className="aw-empty" role="status">Carregando suas métricas…</p>}
+   <header className="aw-header"><div><h2>{professional?`Avaliação física${athleteName?` · ${athleteName}`:''}`:'Minha evolução'}</h2><p className="aw-muted">{professional?'Histórico, métricas e detalhes do aluno':'Suas métricas, em um só lugar'}</p></div><button className="aw-icon" type="button" onClick={refresh} aria-label="Atualizar métricas"><RefreshCw size={18} className={loading ? 'animate-spin' : ''}/></button></header>
+   {loading && <p className="aw-empty" role="status">{professional?'Carregando métricas do aluno…':'Carregando suas métricas…'}</p>}
    {error && <div className="aw-error" role="alert">{error}<button type="button" onClick={refresh}>Tentar novamente</button></div>}
-   {!loading && !error && hub && <><MetricHistory hub={hub} assessmentPath={assessmentPath}/>{hub.can_manage && <CheckinCorporalCard onSaved={refresh}/>}{hub.can_manage && <Link className="aw-button" to={guidedPath}>Registrar avaliação</Link>}<footer className="aw-module-footer"><Link to={`${basePath}/meta`}>Metas</Link><Link to={`${basePath}/capacidades`}>Capacidades</Link><Link to={`${basePath}/reavaliacao`}>Reavaliação</Link><Link to={`${basePath}/fontes`}>Fontes e privacidade</Link></footer></>}
+   {!loading && !error && hub && <><MetricHistory hub={hub} assessmentPath={assessmentPath}/>{hub.can_manage && <CheckinCorporalCard onSaved={refresh}/>}{hub.can_manage && <Link className="aw-button" to={guidedPath}>Registrar avaliação</Link>}{registerLink}<footer className="aw-module-footer"><Link to={`${basePath}/meta`}>Metas</Link><Link to={`${basePath}/capacidades`}>Capacidades</Link><Link to={`${basePath}/reavaliacao`}>Reavaliação</Link>{!professional&&<Link to={`${basePath}/fontes`}>Fontes e privacidade</Link>}</footer></>}
  </div>;
  return <div className="assessment-workspace" data-testid="assessment-workspace">
- <header className="aw-header"><div><h2>Progresso</h2><p className="aw-muted">Minhas avaliações</p></div><button className="aw-icon" type="button" onClick={refresh} aria-label="Atualizar avaliações"><RefreshCw size={18} className={loading?'animate-spin':''}/></button></header>
+ <header className="aw-header"><div><h2>{professional?'Avaliação física':'Progresso'}</h2><p className="aw-muted">{professional?athleteName??'Avaliações do aluno':'Minhas avaliações'}</p></div><button className="aw-icon" type="button" onClick={refresh} aria-label="Atualizar avaliações"><RefreshCw size={18} className={loading?'animate-spin':''}/></button></header>
  {hub?.unavailable_features?.length ? <p role="status" className="aw-note">Alguns indicadores estão temporariamente indisponíveis. <button type="button" onClick={refresh}>Tentar novamente</button></p> : null}
  <TabBarProgresso value={view} onChange={navigate}/>
- {loading&&<p className="aw-empty" role="status">Carregando suas avaliações…</p>}
+ {loading&&<p className="aw-empty" role="status">{professional?'Carregando avaliações do aluno…':'Carregando suas avaliações…'}</p>}
  {error&&<div className="aw-error" role="alert">{error}<button type="button" onClick={refresh}>Tentar novamente</button></div>}
  {!loading&&!error&&hub&&<>
- {view==='capacidades'&&<><header><h3>Minhas capacidades</h3><p className="aw-muted">Medidas dos seus testes, com data e evolução. Avaliações guiadas e profissionais aparecem juntas.</p></header><MetricHistory hub={hub} assessmentPath={assessmentPath} capacityOnly/>{hub.can_manage && <Link className="aw-button" to={guidedPath}>Registrar avaliação</Link>}</>}
+ {view==='capacidades'&&<><header><h3>{professional?'Capacidades do aluno':'Minhas capacidades'}</h3><p className="aw-muted">Medidas dos seus testes, com data e evolução. Avaliações guiadas e profissionais aparecem juntas.</p></header><MetricHistory hub={hub} assessmentPath={assessmentPath} capacityOnly/>{hub.can_manage && <Link className="aw-button" to={guidedPath}>Registrar avaliação</Link>}</>}
  {view==='meta'&&<><Back onClick={()=>navigate('resumo')}/><h3>Metas e projeções</h3>{!hub.goals.length&&<Empty>Cadastre sua primeira meta para acompanhar o caminho até ela.</Empty>}{hub.goals.map(goal=><AssessmentGoalCard key={goal.id} goal={goal} rows={rows} onReassessment={()=>navigate('reavaliacao')}/>)}{hub.can_manage&&<details open className="aw-card"><summary>Gerenciar minhas metas</summary><MetasSection/></details>}</>}
  {view==='reavaliacao'&&<><Back onClick={()=>setView('resumo')}/><Reassessment hub={hub} athleteId={athleteId} current={current}/></>}
- {view==='fontes'&&<><Back onClick={()=>setView('resumo')}/><Sources hub={hub} athleteId={athleteId}/></>}
+ {view==='fontes'&&!professional&&<><Back onClick={()=>setView('resumo')}/><Sources hub={hub} athleteId={athleteId}/></>}
 
- <footer className="aw-module-footer"><Link to={`${basePath}/meta`}>Metas e projeções</Link><Link to={`${basePath}/historico`}>Abrir histórico</Link><Link to={`${basePath}/capacidades`}>Ver capacidades</Link><Link to={`${basePath}/fontes`}>Fontes e privacidade</Link></footer>
+ <footer className="aw-module-footer"><Link to={`${basePath}/meta`}>Metas e projeções</Link><Link to={`${basePath}/historico`}>Abrir histórico</Link><Link to={`${basePath}/capacidades`}>Ver capacidades</Link>{!professional&&<Link to={`${basePath}/fontes`}>Fontes e privacidade</Link>}</footer>
  </>}
  </div>;
 }
