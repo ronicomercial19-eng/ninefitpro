@@ -28,6 +28,7 @@ import { useSendZap, useZapMessages, useZapThread } from "@/hooks/use-ninezap-ch
 import { detectPain } from "@/services/pain/detectPain";
 import { STATE_LABEL, STATE_COLOR, STATE_INSIGHT } from "@/services/adaptiveState";
 import { executeRonAction, RonAction } from "@/services/ronOperationalCore";
+import { RON_HISTORY_UNREAD, ronCoachReply, type RonHistoryStatus } from "@/components/9fit/ronConversation";
 import { toast } from "sonner";
 import { RonCalendarModal } from "./RonCalendarModal";
 import ReactMarkdown from "react-markdown";
@@ -73,7 +74,9 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
   const [googleToken, setGoogleToken] = useState<string | null>(getAccessToken());
   const [historyLoaded, setHistoryLoaded] = useState(false);
-  const [messages, setMessages] = useState<ChatMsg[]>([WELCOME]);
+  const [historyStatus, setHistoryStatus] = useState<RonHistoryStatus>("loading");
+  const [historyRetry, setHistoryRetry] = useState(0);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
 
   const { user, profile } = useAuth();
   const { athleteId } = useAthleteId();
@@ -92,6 +95,7 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
   const recognitionRef = useRef<any>(null);
   const sendRef = useRef<(t?: string) => void>(() => {});
   const introDoneRef = useRef(false);
+  const historyUserRef = useRef<string | null | undefined>(undefined);
 
   // Suporte humano (9ZAP) — só consulta quando a aba Equipe está visível
   const teamActive = visible && tab === "team";
@@ -105,29 +109,50 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
 
   // ---------- Histórico persistido ----------
   useEffect(() => {
-    setMessages([WELCOME]);
-    setHistoryLoaded(false);
+    const userId = user?.id ?? null;
+    const userChanged = historyUserRef.current !== userId;
+    historyUserRef.current = userId;
     introDoneRef.current = false;
-    if (!user?.id) return;
+    if (!userId) {
+      setMessages([WELCOME]);
+      setHistoryStatus("empty");
+      setHistoryLoaded(false);
+      return;
+    }
     let cancelled = false;
+    setHistoryStatus("loading");
+    setHistoryLoaded(false);
+    if (userChanged) setMessages([]);
     (async () => {
       const { data, error } = await supabase
         .from("ai_chat_messages" as any)
         .select("id, role, content, created_at")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(60);
       if (cancelled) return;
-      if (error) console.warn("[RON] histórico indisponível", error);
+      if (error) {
+        console.warn("[RON] histórico indisponível", error);
+        setMessages((prev) => prev.filter((m) => m.id !== "welcome"));
+        setHistoryStatus("unread");
+        setHistoryLoaded(true);
+        return;
+      }
       const hist = ((data as any[]) || [])
         .reverse()
         .filter((r) => r.role === "user" || r.role === "assistant")
         .map((r) => ({ id: String(r.id), role: r.role, content: r.content, timestamp: fmtTime(r.created_at) })) as ChatMsg[];
-      if (hist.length > 0) setMessages(hist);
+      if (hist.length > 0) {
+        setMessages(hist);
+        setHistoryStatus("ready");
+      } else {
+        setMessages([WELCOME]);
+        setHistoryStatus("empty");
+      }
       setHistoryLoaded(true);
     })();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, historyRetry]);
 
   const persist = async (role: "user" | "assistant", content: string) => {
     if (!user?.id) return;
@@ -144,7 +169,7 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
   }, [isRonRoute, params]);
 
   useEffect(() => {
-    if (!isRonRoute || !historyLoaded || introDoneRef.current) return;
+    if (!isRonRoute || !historyLoaded || historyStatus === "loading" || historyStatus === "unread" || introDoneRef.current) return;
     if (params.get("auto") !== "1") return;
     introDoneRef.current = true;
     const ctx = params.get("context");
@@ -161,7 +186,7 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
           : "Você abriu seu planejamento. Quer que eu explique alguma fase ou ajuste o treino de amanhã?"
         : "Estou aqui com o motor Gemini ativo. O que precisa agora?";
     setMessages((p) => [...p, { id: `intro_${Date.now()}`, role: "assistant", content: intro, timestamp: fmtTime() }]);
-  }, [isRonRoute, historyLoaded, params, state]);
+  }, [isRonRoute, historyLoaded, historyStatus, params, state]);
 
   // ---------- Eventos globais ----------
   useEffect(() => {
@@ -314,7 +339,7 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
         return;
       }
 
-      let botReply = data.content || "Entendido! Processando diretrizes.";
+      let botReply = ronCoachReply(data.content);
       const actions: RonAction[] = [...(data.actions || [])];
       const asksToReduceVolume =
         /\b(reduz|reduza|diminu|diminua|menos séries|menos series|corta uma série|corte uma série)\b/i.test(message) &&
@@ -540,6 +565,20 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
 
                   {/* Mensagens */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {historyStatus === "loading" && (
+                      <p role="status" className="text-[11px] text-center text-muted-foreground">Lendo a conversa…</p>
+                    )}
+                    {historyStatus === "unread" && (
+                      <p role="alert" className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setHistoryRetry((n) => n + 1)}
+                          className="text-[11px] text-muted-foreground underline underline-offset-2"
+                        >
+                          {RON_HISTORY_UNREAD} Tentar novamente
+                        </button>
+                      </p>
+                    )}
                     {messages.map((msg) => (
                       <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
                         <div
