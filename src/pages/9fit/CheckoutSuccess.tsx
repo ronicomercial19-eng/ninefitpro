@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock3, Crown, Loader2, RefreshCw, TriangleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ShareableCard } from "@/components/9fit/ShareableCard";
 
 import { confirmedAccess } from "@/lib/customerEntry";
+import { BillingCard, BillingShell } from '@/components/9fit/BillingShell';
 
 type VerificationStatus = "checking" | "active" | "pending" | "error";
 
@@ -48,20 +48,16 @@ export default function NineFitCheckoutSuccess() {
   useEffect(() => { void verifyEntitlement(); }, [verifyEntitlement]);
 
   const active = status === "active";
-  return <div className="min-h-screen bg-background grid place-items-center p-6">
-    <div className="max-w-md w-full text-center space-y-6">
-      <div className="w-20 h-20 rounded-full bg-primary/15 grid place-items-center mx-auto">
+  return <BillingShell step="confirmation" title={status === "checking" ? "Verificando pagamento" : active ? "Acesso liberado" : status === "pending" ? "Pagamento em processamento" : "Não foi possível verificar"} backTo="/9fit/planos" backLabel="Voltar aos planos">
+    <div className="space-y-4">
+      <BillingCard className="space-y-5 text-center">
+      <div className={`mx-auto grid h-20 w-20 place-items-center rounded-3xl border ${active ? 'border-primary/30 bg-primary/15' : status === 'pending' ? 'border-amber-400/30 bg-amber-400/10' : 'border-white/10 bg-white/[0.04]'}`}>
         {status === "checking" ? <Loader2 className="w-10 h-10 text-primary animate-spin" /> :
          active ? <CheckCircle2 className="w-10 h-10 text-primary" /> :
          status === "pending" ? <Clock3 className="w-10 h-10 text-amber-400" /> :
          <TriangleAlert className="w-10 h-10 text-destructive" />}
       </div>
-      <h1 className="text-3xl font-display italic">
-        {status === "checking" ? "Verificando pagamento…" :
-         active ? "Acesso liberado!" :
-         status === "pending" ? "Pagamento em processamento" : "Não foi possível verificar"}
-      </h1>
-      <p className="text-muted-foreground">
+      <p className="text-sm leading-relaxed text-muted-foreground">
         {active
           ? "Sua assinatura foi confirmada pelo servidor."
           : "O acesso será liberado somente após a confirmação segura do provedor. Nenhuma tela ou URL ativa o plano."}
@@ -71,14 +67,15 @@ export default function NineFitCheckoutSuccess() {
         subtitle="Assinatura confirmada · acesso ao ecossistema"
         stat={{ label: "Status", value: "ATIVO" }} />}
 
-      <div className="flex flex-col gap-2">
-        {active ? <Button asChild size="lg"><Link to="/9fit/prime"><Crown className="w-4 h-4 mr-2" /> Ir para Prime</Link></Button> :
-          <Button size="lg" onClick={() => void verifyEntitlement()} disabled={status === "checking"}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Verificar novamente
-          </Button>}
-        <Button asChild variant="ghost"><Link to="/9fit/hub">Voltar ao Hub</Link></Button>
+      <div className="flex flex-col gap-3">
+        {active ? <Link className="inline-flex items-center justify-center rounded-xl bg-primary p-4 font-semibold text-primary-foreground" to="/9fit/prime"><Crown className="mr-2 h-4 w-4" /> Ir para Prime <span className="ml-2" aria-hidden>→</span></Link> :
+          <button className="inline-flex items-center justify-center rounded-xl bg-primary p-4 font-semibold text-primary-foreground disabled:opacity-50" onClick={() => void verifyEntitlement()} disabled={status === "checking"}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Verificar novamente
+          </button>}
+        <Link className="rounded-xl border border-white/10 p-3 text-sm text-muted-foreground" to="/9fit/hub">Voltar ao Hub</Link>
       </div>
       {offerId && <p className="text-[10px] font-mono text-muted-foreground">ref: {offerId}</p>}
+      </BillingCard>
     </div>
-  </div>;
+  </BillingShell>;
 }
