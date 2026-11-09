@@ -1,3 +1,4 @@
+import { CoreRequests } from "@/components/students/CoreRequests";
 import { CareWorkspace } from "@/components/students/CareWorkspace";
 import { useProfessorWorkspace } from "@/contexts/ProfessorWorkspace";
 import {SelectedStudentFile} from '@/components/students/SelectedStudentFile';
@@ -27,7 +28,9 @@ export default function ProfessorWorkspacePage() {
       ) : (
         <p>Selecione o aluno para acompanhar os registros do aplicativo.</p>
       )}
+      <CoreRequests athleteId={w.athleteId} />
       <CareWorkspace professional athleteId={w.athleteId} />
     </div>
   );
 }
+

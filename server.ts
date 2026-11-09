@@ -53,6 +53,20 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 // Health check endpoint
+app.get('/api/zap/health', async (req, res, next) => {
+  const authorization = req.headers.authorization;
+  // Browser navigation loads the admin-only SPA view; API requests use Bearer.
+  if (!authorization?.startsWith('Bearer ')) return req.accepts('html') ? next() : res.status(401).json({ status: 401 });
+  try {
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    if (url !== 'https://mfrydtrzjxscbkaiwfnw.supabase.co') return res.status(503).json({ status: 503 });
+    const upstream = await fetch(url + '/functions/v1/core-os-dispatch?action=health', {
+      headers: { Authorization: authorization }, redirect: 'error', signal: AbortSignal.timeout(30_000),
+    });
+    const data = await upstream.json();
+    return res.status(upstream.status).json({ status: data.status ?? upstream.status, ...(typeof data.event_count === 'number' ? { event_count: data.event_count } : {}) });
+  } catch { return res.status(503).json({ status: 503 }); }
+});
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -423,3 +437,4 @@ app.post('/api/webhook/infinitepay', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on http://0.0.0.0:${PORT}`);
 });
+
