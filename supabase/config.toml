@@ -94,3 +94,6 @@ verify_jwt = false
 
 [functions.weekly-training-orchestrator]
 verify_jwt = false
+
+[functions.core-os-dispatch]
+verify_jwt = false

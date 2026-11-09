@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+const CoreIntegrationHealth = lazy(() => import("./pages/CoreIntegrationHealth"));
 const StudentCarePage = lazy(() => import("@/pages/9fit/Acompanhamento"));
 const ProfessorWorkspacePage = lazy(() => import("@/pages/ProfessorWorkspacePage"));
 const ProfessorMessagesPage = lazy(() => import("@/pages/ProfessorMessagesPage"));
@@ -303,6 +304,7 @@ const App = () => (
             <Route path="/9fit/onboarding" element={<NineFitOnboarding />} />
             <Route path="/9fit/first-access" element={<NineFitFirstAccess />} />
             
+            <Route path="/api/zap/health" element={<PrivateRoute allowedRoles={["admin"]}><CoreIntegrationHealth /></PrivateRoute>} />
             {/* 9FIT Routes - Protected */}
             <Route path="/9fit/hub" element={<NineFitLayout><NineFitHub /></NineFitLayout>} />
             <Route path="/9fit/embed" element={<NineFitLayout><EcoEmbed title={new URLSearchParams(window.location.search).get("title") || "Ecossistema"} url={new URLSearchParams(window.location.search).get("url") || "/9fit/hub"} /></NineFitLayout>} />

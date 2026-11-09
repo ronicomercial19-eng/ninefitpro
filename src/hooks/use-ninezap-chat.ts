@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { withTimeout } from '@/lib/withTimeout';
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type ZapMessage = {
   id: string;
@@ -26,10 +26,10 @@ const invokeZap = async (action: string, options?: Parameters<typeof supabase.fu
   return result;
 };
 
-export function useZapThread(userId?: string, _subject = "Atendimento FitPro") {
+export function useZapThread(userId?: string, _subject = "Atendimento FitPro", active = true) {
   return useQuery({
     queryKey: ["zap", "thread", userId],
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && active,
     staleTime: Infinity,
     retry: false,
     retryDelay: 1200,
@@ -43,18 +43,25 @@ export function useZapThread(userId?: string, _subject = "Atendimento FitPro") {
   });
 }
 
-export function useZapMessages(threadId?: string) {
+export function useZapMessages(threadId?: string, active = true) {
+  const [visible, setVisible] = useState(() => document.visibilityState === "visible");
+  useEffect(() => {
+    const update = () => setVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
   return useQuery({
     queryKey: ["zap", "messages", threadId],
     enabled: Boolean(threadId),
     retry: false,
-    refetchInterval: query => query.state.status === "error" ? false : 2_500,
-    refetchIntervalInBackground: false,
+    refetchInterval: query => query.state.status === "error" ? false : active && visible ? 4_000 : 60_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await withTimeout(invokeZap("messages.list"));
       if (error) throw error;
-      return ((data as { messages?: ZapMessage[] })?.messages ?? []);
+      const messages = (data as { messages?: ZapMessage[] })?.messages ?? [];
+      return Array.from(new Map(messages.map(message => [message.id, message])).values());
     },
   });
 }

@@ -97,13 +97,14 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
   const introDoneRef = useRef(false);
   const historyUserRef = useRef<string | null | undefined>(undefined);
 
-  // Suporte humano (9ZAP) — só consulta quando a aba Equipe está visível
+  // Abre a conversa ao entrar em Equipe e mantém polling lento quando fechada.
   const teamActive = visible && tab === "team";
   const zapThread = useZapThread(
-    teamActive ? user?.id : undefined,
+    user?.id,
     `Atendimento — ${profile?.full_name || "Aluno"}`,
+    teamActive,
   );
-  const zapMessages = useZapMessages(teamActive ? zapThread.data : undefined);
+  const zapMessages = useZapMessages(zapThread.data, teamActive);
   const sendZap = useSendZap(zapThread.data, user?.id);
   const teamConnected = !!zapThread.data && !zapThread.isError && !zapMessages.isPending && !zapMessages.isError;
 

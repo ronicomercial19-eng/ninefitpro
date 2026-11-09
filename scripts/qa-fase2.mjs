@@ -10,7 +10,8 @@ const required = [
   "src/components/9fit/WorkoutExecution.tsx",
   "src/pages/9fit/Progresso.tsx",
   "src/components/9fit/PostWorkoutModal.tsx",
-  "src/components/ShareButton.tsx",
+  "src/hooks/useShareEvent.ts",
+  "src/services/share.service.ts",
 ];
 
 const missing = required.filter((file) => !existsSync(resolve(root, file)));
@@ -26,7 +27,8 @@ const assessmentWorkspace = readFileSync(resolve(root, "src/components/progress/
 const assessmentService = readFileSync(resolve(root, "src/services/assessmentHubService.ts"), "utf8");
 const workout = readFileSync(resolve(root, "src/components/9fit/WorkoutExecution.tsx"), "utf8");
 const postWorkout = readFileSync(resolve(root, "src/components/9fit/PostWorkoutModal.tsx"), "utf8");
-const share = readFileSync(resolve(root, "src/components/ShareButton.tsx"), "utf8");
+const share = readFileSync(resolve(root, "src/hooks/useShareEvent.ts"), "utf8");
+const shareStore = readFileSync(resolve(root, "src/services/share.service.ts"), "utf8");
 
 const checks = [
   ["Error Boundary global", app.includes("AppErrorBoundary")],
@@ -39,7 +41,7 @@ const checks = [
   ["Progresso via RPC real", progresso.includes("AssessmentPages") && assessmentPage.includes("AssessmentWorkspace") && assessmentWorkspace.includes("loadAssessmentHub") && assessmentService.includes("fn_get_assessment_hub") && assessmentService.includes("p_athlete_id: athleteId")],
   ["Retry do progresso", assessmentWorkspace.includes("Tentar novamente") && assessmentWorkspace.includes("onClick={refresh}")],
   ["Feedback pós-treino", postWorkout.includes("fn_submit_workout_feedback") && postWorkout.includes("p_execution_id:executionId") && postWorkout.includes("!result?.saved")],
-  ["Compartilhamento", share.includes("share_events") && share.includes("navigator.share")],
+  ["Compartilhamento", share.includes("recordShareEvent") && share.includes("await navAny.share(") && shareStore.includes("from('share_events')")],
 ];
 
 const failed = checks.filter(([, ok]) => !ok);

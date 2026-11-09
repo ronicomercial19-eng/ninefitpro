@@ -24,6 +24,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:core-integration
       - run: node --import tsx --test src/config/commercialOffer.test.ts
       - name: Payment database regression
         env:
