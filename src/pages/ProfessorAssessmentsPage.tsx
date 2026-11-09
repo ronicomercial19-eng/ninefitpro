@@ -28,7 +28,7 @@ function State({ icon: Icon, title, children, role = "status" }: { icon: typeof 
 export default function ProfessorAssessmentsPage() {
   const { id, section } = useParams();
   const { pathname } = useLocation();
-  const { userRole, roleStatus } = useAuth() as ReturnType<typeof useAuth> & { roleStatus?: string };
+  const { userRole, roleStatus } = useAuth();
   const w = useProfessorWorkspace();
 
   if (roleStatus === "ready" && !isStaffRole(userRole)) {

@@ -94,6 +94,7 @@ const Protocols = lazy(() => import("./pages/9fit/Protocols"));
 const NineFitSettings = lazy(() => import("./pages/9fit/Settings"));
 import { MissionCompleteOverlay } from "./components/9fit/MissionCompleteOverlay";
 const PosturaProPage = lazy(() => import("./pages/admin/PosturaProPage"));
+const ProfessorAssessmentsPage = lazy(() => import("./pages/ProfessorAssessmentsPage"));
 const CommunityAdminPage = lazy(() => import("./pages/admin/CommunityAdminPage"));
 const AcademyPage = lazy(() => import("./pages/admin/AcademyPage"));
 const NexusPage = lazy(() => import("./pages/admin/NexusPage"));
@@ -271,6 +272,9 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
+            {["/app/avaliacoes", "/app/avaliacoes/:view", "/app/avaliacoes/detalhe/:id", "/app/avaliacoes/detalhe/:id/:section"].map(path => (
+              <Route key={path} path={path} element={<PrivateRoute><AppLayout><ProfessorAssessmentsPage /></AppLayout></PrivateRoute>} />
+            ))}
             <Route path="/app/postura-pro" element={
               <PrivateRoute>
                 <AppLayout>

@@ -17,6 +17,7 @@ import {
   Layers,
   ListOrdered,
   ScanLine,
+  ClipboardCheck,
   Globe,
   CreditCard,
   FolderOpen,
@@ -67,6 +68,7 @@ const menuItems = [
   { title: "Prescrever treino", url: "/app/assistente-ia", icon: Sparkles },
   { title: "HealthFlix", url: "/app/healthflix", icon: Film },
   { title: "Comunidade", url: "/app/community", icon: Globe },
+  { title: "Avaliação física", url: "/app/avaliacoes", icon: ClipboardCheck },
   { title: "Postura Pro", url: "/app/postura-pro", icon: ScanLine },
   { title: "RON", url: "/app/ron", icon: Bot },
   { title: "NEXUS", url: "/app/nexus", icon: Atom },
@@ -83,7 +85,7 @@ const dailyPaths = ["/app", "/app/alunos", "/app/agenda", "/app/acompanhamento",
 const libraryPaths = ["/app/exercicios", "/app/super-series", "/app/series-referencia", "/app/modelos-ninefit"];
 const groups = [
   { id: "training", label: "Treinamento", paths: ["/app/smart-periodizer", "/app/assistente-ia", "/app/smart-treino", ...libraryPaths] },
-  { id: "analysis", label: "Avaliação e análise", paths: ["/app/postura-pro", "/app/estatisticas", "/app/relatorios"] },
+  { id: "analysis", label: "Avaliação e análise", paths: ["/app/avaliacoes", "/app/postura-pro", "/app/estatisticas", "/app/relatorios"] },
   { id: "content", label: "Conteúdo", paths: ["/app/healthflix", "/app/community", "/app/monetizacao"] },
   { id: "tools", label: "Ferramentas", paths: ["/app/ron", "/app/fit-copilot", "/app/skills", "/app/nexus", "/app/roadmap"] },
 ];
@@ -109,7 +111,7 @@ export function AppSidebar() {
     const item = menuItems.find(candidate => candidate.url === path);
     if (!item || (!isAdmin && path === "/app/monetizacao")) return null;
     return <SidebarMenuItem key={path}><SidebarMenuButton asChild>
-      <NavLink end to={workspace.link(path)} onClick={() => setOpenMobile(false)} aria-label={item.title} title={item.title} data-nine-core-transition="module" className="nine-core-nav-link min-h-10">
+      <NavLink end={path !== "/app/avaliacoes"} to={workspace.link(path)} onClick={() => setOpenMobile(false)} aria-label={item.title} title={item.title} data-nine-core-transition="module" className="nine-core-nav-link min-h-10">
         <item.icon aria-hidden="true" />{!collapsed && <span>{item.title}</span>}
       </NavLink>
     </SidebarMenuButton></SidebarMenuItem>;
@@ -146,7 +148,8 @@ export function AppSidebar() {
 
         {groups.map((group) => {
           const active = group.paths.includes(currentPath) ||
-            (group.id === "training" && currentPath === "/app/treino-ia");
+            (group.id === "training" && currentPath === "/app/treino-ia") ||
+            (group.id === "analysis" && currentPath.startsWith("/app/avaliacoes/"));
           const open = openGroups[group.id] ?? active;
           return (
             <SidebarGroup key={group.id}>
