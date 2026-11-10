@@ -76,7 +76,7 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-background border-border rounded-sm max-w-md">
+      <DialogContent className="nine-brand bg-background border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Utensils className="w-5 h-5 text-primary" />
@@ -84,20 +84,20 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
           </DialogTitle>
         </DialogHeader>
 
-        {/* Scanner de Alimentos IA */}
+        {/* Scanner de Alimentos IA — fundo e texto explícitos: o texto nunca pode ficar da mesma cor do fundo */}
         <button
           type="button"
           onClick={() => {
             onClose();
             window.dispatchEvent(new CustomEvent("9fit:open-food-scanner"));
           }}
-          className="w-full flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/40 hover:bg-primary/25 text-xs font-bold text-white transition-all cursor-pointer shadow-sm"
+          className="flex w-full min-h-12 items-center justify-between gap-3 rounded-xl border border-primary/40 bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors active:bg-primary/15"
         >
-          <span className="flex items-center gap-1.5 text-primary">
-            <Camera className="w-4 h-4" />
-            Escanear prato ou rótulo com Câmera IA
+          <span className="flex items-center gap-2 text-primary">
+            <Camera className="h-4 w-4 shrink-0" />
+            Escanear prato ou rótulo com a câmera
           </span>
-          <span className="text-[10px] text-primary">Abrir Scanner →</span>
+          <span className="shrink-0 text-[10px] text-muted-foreground">Abrir →</span>
         </button>
 
         {/* Assistente RON Concierge */}
@@ -111,13 +111,13 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
               })
             );
           }}
-          className="w-full flex items-center justify-between p-2.5 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/20 text-xs font-semibold text-primary transition-all cursor-pointer"
+          className="flex w-full min-h-12 items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors active:bg-primary/15"
         >
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
+          <span className="flex items-center gap-2 text-primary">
+            <Sparkles className="h-3.5 w-3.5 shrink-0" />
             Ditar por voz ou pedir sugestão ao RON IA
           </span>
-          <span className="text-[10px] text-muted-foreground">Abrir →</span>
+          <span className="shrink-0 text-[10px] text-muted-foreground">Abrir →</span>
         </button>
 
         <p className="text-xs text-muted-foreground">Os atalhos preenchem estimativas. Revise as quantidades e os nutrientes antes de salvar.</p>
@@ -126,8 +126,9 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
           {QUICK_MEALS.map((meal) => (
             <button
               key={meal.name}
+              type="button"
               onClick={() => handleQuickFill(meal)}
-              className="text-[10px] px-3 py-1.5 bg-card border border-border rounded-full hover:border-primary/50 transition-colors text-muted-foreground hover:text-foreground"
+              className={`nine-cut border px-3 py-2 text-[11px] transition-colors ${mealName === meal.name ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
             >
               {meal.name}
             </button>
@@ -143,19 +144,19 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wider">Calorias (kcal)</Label>
-              <Input type="number" value={calories} onChange={(e) => setCalories(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
+              <Input type="number" inputMode="numeric" value={calories} onChange={(e) => setCalories(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider">Proteína (g)</Label>
-              <Input type="number" value={protein} onChange={(e) => setProtein(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
+              <Input type="number" inputMode="numeric" value={protein} onChange={(e) => setProtein(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider">Carboidrato (g)</Label>
-              <Input type="number" value={carbs} onChange={(e) => setCarbs(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
+              <Input type="number" inputMode="numeric" value={carbs} onChange={(e) => setCarbs(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider">Gordura (g)</Label>
-              <Input type="number" value={fat} onChange={(e) => setFat(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
+              <Input type="number" inputMode="numeric" value={fat} onChange={(e) => setFat(Number(e.target.value))} className="bg-card border-border mt-1" min={0} />
             </div>
           </div>
 
@@ -176,4 +177,3 @@ export function NutritionLogForm({ open, onClose, athleteId, onSaved, meal, date
     </Dialog>
   );
 }
-
