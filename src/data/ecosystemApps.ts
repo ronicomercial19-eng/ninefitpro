@@ -1,4 +1,4 @@
-import { COMMUNITY_URL } from "@/lib/communityUrl";
+import { COMMUNITY_URL } from "../lib/communityUrl";
 // Mapeamento canônico de apps externos integrados de forma nativa (iframe embed)
 // usado por /9fit/native-system?app=<key>
 
