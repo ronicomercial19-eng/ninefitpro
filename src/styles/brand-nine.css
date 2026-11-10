@@ -1,0 +1,41 @@
+/* ============================================================
+   Padrão visual Nine Pro (brandbook): cantos cortados, nunca
+   arredondados. Bordas em branco translúcido, nunca branco puro.
+   Paleta: preto #0A0B0C, ação (laranja), fogo #FF4D2E, PRIME roxo
+   sempre igual. Sem azul/ciano fora da paleta.
+   Este arquivo é só aditivo: não remove nem renomeia nada.
+   ============================================================ */
+
+/* 1) Bug de borda branca: --border é branco (usado sempre com /opacidade).
+      `border-border` puro virava linha branca a 100%. */
+.border-border { border-color: hsl(var(--border) / 0.12); }
+.bg-border { background-color: hsl(var(--border) / 0.12); }
+.divide-border > :not([hidden]) ~ :not([hidden]) { border-color: hsl(var(--border) / 0.12); }
+.border-t-border { border-top-color: hsl(var(--border) / 0.12); }
+.border-b-border { border-bottom-color: hsl(var(--border) / 0.12); }
+
+/* 2) Utilitários de canto cortado (aplicáveis em qualquer elemento). */
+.nine-cut,
+.nine-cut-lg {
+  --cut: 8px;
+  border-radius: 0;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+.nine-cut-lg { --cut: 14px; }
+
+/* 3) Telas do app e novas telas de venda/entrada: tudo que era arredondado
+      vira canto cortado. Escopo por classe raiz (fitpro-orange já existe nas
+      telas de Treino, Perfil, Staff, Ajuste e Avaliação; nine-brand é novo). */
+:is(.fitpro-orange, .nine-brand) :is(.rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\[28px\]) {
+  --cut: 10px;
+  border-radius: 0;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+:is(.fitpro-orange, .nine-brand) .rounded-xl { --cut: 6px; }
+:is(.fitpro-orange, .nine-brand) .rounded-3xl { --cut: 14px; }
+
+/* Controles nativos na cor da marca (checkbox/radio/range). */
+:is(.fitpro-orange, .nine-brand) input[type="checkbox"],
+:is(.fitpro-orange, .nine-brand) input[type="radio"],
+:is(.fitpro-orange, .nine-brand) input[type="range"] { accent-color: hsl(var(--primary)); }
+:is(.fitpro-orange, .nine-brand) input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
