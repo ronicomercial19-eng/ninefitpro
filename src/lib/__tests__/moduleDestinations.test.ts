@@ -1,21 +1,18 @@
-import { describe, it, expect } from "vitest";
+import test from "node:test";
+import assert from "node:assert/strict";
 import { moduleRoute } from "../moduleRoute";
 import { safeExternalAppUrl } from "../externalApps";
 import { EVENTS_URL, ACADEMY_URL, COMMUNITY_URL } from "../moduleUrls";
 
-describe("destinos de módulos", () => {
-  it("events vai à página de saída de Eventos, não à Comunidade", () => expect(moduleRoute({ key: "events" })).toBe("/9fit/events"));
-  it("academia/academy não levam aluno ao painel do professor", () => {
-    expect(moduleRoute({ key: "academy" })).toBe("/9fit/academy");
-    expect(moduleRoute({ key: "academia" })).toBe("/9fit/academy");
-  });
-  it("destinos oficiais são aceitos", () => {
-    expect(safeExternalAppUrl(EVENTS_URL)).toBe("https://eventosnine.lovable.app/");
-    expect(safeExternalAppUrl(ACADEMY_URL)).toBe("https://ninetyfit-academy-forge.lovable.app/");
-    expect(safeExternalAppUrl(COMMUNITY_URL)).toBe("https://ninecomunidade.lovable.app/");
-  });
-  it("tokens são removidos e hosts parecidos recusados", () => {
-    expect(safeExternalAppUrl(EVENTS_URL + "/?access_token=x")).toBe("https://eventosnine.lovable.app/");
-    expect(safeExternalAppUrl("https://eventosnine.lovable.app.evil.com")).toBeNull();
-  });
+test("Eventos e Academy usam rotas do aluno", () => {
+  assert.equal(moduleRoute({ key: "events" }), "/9fit/events");
+  assert.equal(moduleRoute({ key: "eventos" }), "/9fit/events");
+  for (const key of ["academy", "academia"]) assert.equal(moduleRoute({ key }), "/9fit/academy");
+});
+test("Destinos oficiais são aceitos sem credenciais", () => {
+  for (const url of [EVENTS_URL, ACADEMY_URL, COMMUNITY_URL]) {
+    assert.equal(safeExternalAppUrl(url), url + "/");
+    assert.equal(safeExternalAppUrl(url + "/?access_token=x#secret"), url + "/");
+  }
+  assert.equal(safeExternalAppUrl("https://eventosnine.lovable.app.evil.com"), null);
 });
