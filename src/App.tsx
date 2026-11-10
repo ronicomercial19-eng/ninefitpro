@@ -60,6 +60,7 @@ const NineFitNotificacoes = lazy(() => import("./pages/9fit/Notificacoes"));
 const NineFitFirstAccess = lazy(() => import("./pages/9fit/FirstAccess"));
 const NineFitSocial = lazy(() => import("./pages/9fit/Social"));
 const NineFitCommunity = lazy(() => import("./pages/9fit/Community"));
+const ExternalModuleExit = lazy(() => import("./pages/9fit/ExternalModuleExit"));
 const NineFitStaff = lazy(() => import("./pages/9fit/Staff"));
 const NineFitOS = lazy(() => import("./pages/9fit/OS"));
 const NineFitRon = lazy(() => import("./pages/9fit/Ron"));
@@ -360,7 +361,8 @@ const App = () => (
             <Route path="/9fit/premium" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/billing" element={<NineFitLayout><NineFitPrimePass /></NineFitLayout>} />
             <Route path="/9fit/store" element={<Navigate to="/9fit/native-system?app=store" replace />} />
-            <Route path="/9fit/events" element={<NineFitLayout><NineFitCommunity /></NineFitLayout>} />
+            <Route path="/9fit/events" element={<NineFitLayout><ExternalModuleExit moduleKey="events" /></NineFitLayout>} />
+            <Route path="/9fit/academy" element={<NineFitLayout><ExternalModuleExit moduleKey="academy" /></NineFitLayout>} />
             <Route path="/9fit/compartilhar" element={<NineFitLayout><NineFitCompartilhar /></NineFitLayout>} />
             <Route path="/9fit/move" element={<NineFitLayout><NineFitMove /></NineFitLayout>} />
             <Route path="/9fit/modules" element={<NineFitLayout><NineFitModules /></NineFitLayout>} />

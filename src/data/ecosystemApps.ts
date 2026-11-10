@@ -68,8 +68,15 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
   academy: {
     key: "academy",
     label: "Academy",
-    url: "https://ninetyfit-academy-forge.lovable.app",
+    url: ACADEMY_URL,
     description: "Formações e cursos do professor",
+    allow: "clipboard-write; fullscreen",
+  },
+  events: {
+    key: "events",
+    label: "Eventos Nine",
+    url: EVENTS_URL,
+    description: "Eventos, desafios e encontros",
     allow: "clipboard-write; fullscreen",
   },
   community: {
