@@ -1,3 +1,4 @@
+import { COMMUNITY_URL } from "@/lib/communityUrl";
 import { NutritionTodaySummary } from "./NutritionTodaySummary";
 import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { BehavioralHistory } from "./BehavioralHistory";
@@ -639,7 +640,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
       {showCommunity && (
         <EcoEmbed 
           title="COMUNIDADE 9FIT" 
-          url="https://fit-community.9fit.com" 
+          url={COMMUNITY_URL} 
           backTo="/9fit/hub" 
         />
       )}

@@ -1,3 +1,4 @@
+import { COMMUNITY_URL } from "@/lib/communityUrl";
 // Mapeamento canônico de apps externos integrados de forma nativa (iframe embed)
 // usado por /9fit/native-system?app=<key>
 
@@ -74,7 +75,7 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
   community: {
     key: "community",
     label: "Comunidade",
-    url: "https://ninefit-community-flow.lovable.app",
+    url: COMMUNITY_URL,
     description: "Feed e tribos do aluno",
     allow: "clipboard-write; fullscreen",
   },
