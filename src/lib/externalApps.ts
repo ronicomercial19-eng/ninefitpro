@@ -1,10 +1,11 @@
 import { EMBEDDED_APPS } from '../data/ecosystemApps';
 import { COMMUNITY_URL } from './communityUrl';
+import { EVENTS_URL, ACADEMY_URL } from './moduleUrls';
 
 const approvedHosts = new Set([
   ...Object.values(EMBEDDED_APPS).filter(app => app.url).map(app => new URL(app.url).hostname),
   'ninefoodss.lovable.app', '9foods.lovable.app', '9recovery.lovable.app',
-  new URL(COMMUNITY_URL).hostname,
+  new URL(COMMUNITY_URL).hostname, new URL(EVENTS_URL).hostname, new URL(ACADEMY_URL).hostname,
 ]);
 
 export function safeExternalAppUrl(raw: string): string | null {

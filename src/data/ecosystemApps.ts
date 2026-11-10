@@ -1,4 +1,5 @@
 import { COMMUNITY_URL } from "../lib/communityUrl";
+import { EVENTS_URL, ACADEMY_URL } from "../lib/moduleUrls";
 // Mapeamento canônico de apps externos integrados de forma nativa (iframe embed)
 // usado por /9fit/native-system?app=<key>
 
@@ -68,8 +69,15 @@ export const EMBEDDED_APPS: Record<string, EmbeddedApp> = {
   academy: {
     key: "academy",
     label: "Academy",
-    url: "https://ninetyfit-academy-forge.lovable.app",
+    url: ACADEMY_URL,
     description: "Formações e cursos do professor",
+    allow: "clipboard-write; fullscreen",
+  },
+  events: {
+    key: "events",
+    label: "Eventos Nine",
+    url: EVENTS_URL,
+    description: "Eventos, desafios e encontros",
     allow: "clipboard-write; fullscreen",
   },
   community: {
