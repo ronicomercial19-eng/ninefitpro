@@ -28,5 +28,7 @@ test('RON requires explicit valid values, strips identity, and cannot auto-execu
 test('external apps use known HTTPS destinations and never forward URL credentials',()=>{
  assert.equal(safeExternalAppUrl('https://ninefoodss.lovable.app/?token=secret&view=home#access_token=secret'),'https://ninefoodss.lovable.app/?view=home');
  for(const value of ['javascript:alert(1)','https://attacker.lovable.app','https://ninefoodss.lovable.app.attacker.test','https://user:password@ninefoodss.lovable.app'])assert.equal(safeExternalAppUrl(value),null);
- assert.equal(safeExternalAppUrl('https://fit-community.9fit.com/'),'https://fit-community.9fit.com/');
+ assert.equal(safeExternalAppUrl('https://ninecomunidade.lovable.app/'),'https://ninecomunidade.lovable.app/');
+ assert.equal(safeExternalAppUrl('https://ninecomunidade.lovable.app/feed?access_token=x'),'https://ninecomunidade.lovable.app/feed');
+ for(const old of ['https://ninefit-community-flow.lovable.app/','https://fit-community.9fit.com/'])assert.equal(safeExternalAppUrl(old),null);
 });

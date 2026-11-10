@@ -4,7 +4,7 @@ import { ExternalLink, Users, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-const COMMUNITY_URL = "https://ninefit-community-flow.lovable.app";
+import { COMMUNITY_URL } from "@/lib/communityUrl";
 
 export default function Community() {
   const feed = useQuery({

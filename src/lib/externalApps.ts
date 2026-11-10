@@ -1,9 +1,10 @@
 import { EMBEDDED_APPS } from '../data/ecosystemApps';
+import { COMMUNITY_URL } from './communityUrl';
 
 const approvedHosts = new Set([
   ...Object.values(EMBEDDED_APPS).filter(app => app.url).map(app => new URL(app.url).hostname),
   'ninefoodss.lovable.app', '9foods.lovable.app', '9recovery.lovable.app',
-  'ninefit-community-flow.lovable.app', 'fit-community.9fit.com',
+  new URL(COMMUNITY_URL).hostname,
 ]);
 
 export function safeExternalAppUrl(raw: string): string | null {

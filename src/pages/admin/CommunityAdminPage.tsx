@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { functionErrorMessage } from "@/lib/functionError";
 import { ExternalLink, Users } from "lucide-react";
 import { ApiConnectorCard } from "@/components/admin/ApiConnectorCard";
-const COMMUNITY_URL = "https://ninefit-community-flow.lovable.app";
+import { COMMUNITY_URL } from "@/lib/communityUrl";
 export default function CommunityAdminPage() {
   const feed = useQuery({
     queryKey: ["professor-community-feed"],
