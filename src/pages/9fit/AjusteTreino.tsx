@@ -9,6 +9,7 @@ import { useAdaptiveAdjustment } from "@/hooks/useAdaptiveAdjustment";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { supabase } from "@/integrations/supabase/client";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 type Ex = {
   id: string;
@@ -376,18 +377,7 @@ export default function NineFitAjusteTreino() {
 
   return (
     <div className="fitpro-orange min-h-screen bg-background pb-48 text-foreground">
-      <div className="mx-auto max-w-2xl px-4 pt-6 flex items-center gap-2">
-        <button onClick={() => navigate(-1)} aria-label="Voltar" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1">
-          <p className="text-[10px] font-data tracking-[0.3em] text-primary/80">AJUSTE DE TREINO · {selectedDate === today ? "HOJE" : selectedDate}</p>
-          <h1 className="text-2xl font-display tracking-tight text-white">{sessionName}</h1>
-        </div>
-        <button onClick={loadToday} aria-label="Atualizar treino" disabled={reloading} className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center disabled:opacity-40">
-          <RefreshCw className={`w-4 h-4 ${reloading ? "animate-spin" : ""}`} />
-        </button>
-      </div>
+      <StudentSectionHeader kicker={`9FIT // AJUSTE · ${selectedDate === today ? "HOJE" : selectedDate}`} title={sessionName} description="Revise a sessão com segurança antes de publicar qualquer alteração." actions={<div className="flex items-center gap-2"><button type="button" onClick={() => navigate(-1)} aria-label="Voltar" className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"><ChevronLeft className="h-4 w-4" /></button><button type="button" onClick={loadToday} aria-label="Atualizar treino" disabled={reloading} className="rounded-lg border border-primary/25 bg-primary/10 p-2 text-primary transition hover:bg-primary/20 disabled:opacity-40"><RefreshCw className={`h-4 w-4 ${reloading ? "animate-spin" : ""}`} /></button></div>} />
 
       <div className="mx-auto max-w-2xl px-4"><details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4" open={!!executionStatus || !!redFlagSource || !!scores?.context?.safety.review_required}>
         <summary className="cursor-pointer text-xs text-muted-foreground">Sessão · {selectedDate === today ? "Hoje" : selectedDate}</summary>

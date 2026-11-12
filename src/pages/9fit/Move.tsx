@@ -15,7 +15,6 @@ import {
   Flame,
   Award,
   ChevronRight,
-  Activity,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -33,6 +32,7 @@ import {
 } from "@/services/googleMapsLoader";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProgressGraph } from "@/components/9fit/ProgressGraph";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 type LatLng = { lat: number; lng: number };
 
@@ -590,34 +590,7 @@ export default function NineFitMove() {
 
   return (
     <div className="min-h-screen bg-[#07080b] pb-28 text-foreground selection:bg-primary/30">
-      {/* Top Header */}
-      <div className="px-5 pt-8 pb-3 flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary font-bold">
-              9FIT // HIGH-PERFORMANCE OS
-            </span>
-            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#5BC8E8]/15 text-[#5BC8E8] border border-[#5BC8E8]/30">
-              GOOGLE MAPS GPS
-            </span>
-          </div>
-          <h1 className="text-display text-3xl font-extrabold tracking-tight mt-1 text-white flex items-center gap-2">
-            MOVE <Activity className="w-6 h-6 text-primary animate-pulse" />
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Rastreamento de corrida e caminhada em tempo real com Google Maps.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setVoiceAudio(!voiceAudio)}
-          className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-muted-foreground hover:text-white transition-colors"
-          title={voiceAudio ? "Áudio Ativo" : "Áudio Silenciado"}
-        >
-          {voiceAudio ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4" />}
-        </button>
-      </div>
+      <StudentSectionHeader kicker="9FIT // MOVE · GPS" title="Move" description="Rastreamento de corrida e caminhada em tempo real com Google Maps." actions={<div className="flex items-center gap-2"><span className="hidden rounded-md border border-[#5BC8E8]/30 bg-[#5BC8E8]/15 px-2 py-1 text-[9px] font-data uppercase tracking-wider text-[#5BC8E8] sm:inline">Google Maps</span><button type="button" onClick={() => setVoiceAudio(!voiceAudio)} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary" title={voiceAudio ? "Áudio ativo" : "Áudio silenciado"}>{voiceAudio ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</button></div>} />
 
       {!running && <section className="mx-5 mb-4 rounded-2xl border border-primary/25 bg-primary/[0.06] p-4" aria-label="Sugestão da próxima corrida">
         <p className="text-[10px] font-mono uppercase tracking-widest text-primary">SUA PRÓXIMA SESSÃO</p>

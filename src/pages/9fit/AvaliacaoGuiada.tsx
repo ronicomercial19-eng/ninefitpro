@@ -17,6 +17,7 @@ import { computeConfidence, isReliable, resolveMeasure, tolerance, type Resolved
 import {
   BALANCE_TEST, GOALS, METHOD_CARDS, PHOTO_PROTOCOL, PHOTO_VIEWS, REACH_TEST, RML_TESTS, STEP_TEST_FIELD, type PhotoView,
 } from '@/lib/guidedMethods';
+import { StudentSectionHeader } from '@/components/9fit/StudentSectionHeader';
 
 const STEPS = ['Métodos', 'Dados', 'Resistência', 'Corpo', 'Ir além', 'Resultado'] as const;
 
@@ -326,11 +327,12 @@ function CompleteGuidedAssessment() {
 
   if(athleteLoading || !athleteId)return <main className="p-6 pb-28"><p role="status">{athleteLoading?'Localizando seu perfil…':athleteError || 'Não encontramos um atleta vinculado à sua conta.'}</p><BottomNavigation/></main>;
   return (
-    <main className="min-h-screen bg-background p-4 pb-28">
-      <div className="max-w-lg mx-auto space-y-4">
-        <header>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Avaliação guiada · passo {step + 1} de {STEPS.length}</p>
-          <h1 className="text-2xl font-bold">{STEPS[step]}</h1>
+    <main className="min-h-screen bg-background pb-28">
+      <StudentSectionHeader kicker="9FIT // AVALIAÇÃO GUIADA" title="Sua avaliação" description="Medições e testes para acompanhar sua evolução com mais contexto." />
+      <div className="mx-auto max-w-lg space-y-4 px-4 pt-5">
+        <header className="rounded-2xl border border-white/10 bg-card/70 p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Etapa {step + 1} de {STEPS.length}</p>
+          <h2 className="mt-1 text-xl font-display">{STEPS[step]}</h2>
           <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
             <div className="h-full orange-satin transition-all" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
           </div>
