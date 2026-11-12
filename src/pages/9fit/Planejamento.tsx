@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
 import { planningTopic } from "@/services/planningModel";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 /**
  * Planejamento (aluno).
@@ -201,34 +202,12 @@ export default function NineFitPlanejamento() {
 
   return (
     <div className="min-h-screen bg-background pb-32 text-foreground">
-      <div className="px-4 pt-6 flex items-center gap-2">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Voltar"
-          className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1">
-          <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">
-            9FIT PRO // PLANEJAMENTO
-          </p>
-          <h1 className="text-3xl font-display tracking-tight">Planejamento</h1>
-        </div>
-        <button
-          onClick={syncNow}
-          disabled={syncing}
-          aria-label="Sincronizar periodização"
-          title="Sincronizar"
-          className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center disabled:opacity-50"
-        >
-          {syncing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-        </button>
-      </div>
+      <StudentSectionHeader
+        kicker="9FIT // PLANEJAMENTO"
+        title="Seu planejamento"
+        description="Ciclos, sessões e progressão organizados para sua rotina"
+        actions={<div className="flex items-center gap-2"><button type="button" onClick={() => navigate(-1)} aria-label="Voltar" className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"><ChevronLeft className="h-4 w-4" /></button><button type="button" onClick={syncNow} disabled={syncing} aria-label="Sincronizar periodização" title="Sincronizar" className="rounded-lg border border-primary/25 bg-primary/10 p-2 text-primary transition hover:bg-primary/20 disabled:opacity-50">{syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button></div>}
+      />
 
       <PdiRoadmapView />
       {athleteLoading && (

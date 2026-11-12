@@ -7,6 +7,7 @@ import { useStaffDirectory } from "@/hooks/useStaffDirectory";
 import { AppSupport } from "@/components/9fit/AppSupport";
 import { useStaffProfessionals } from '@/hooks/useStaffProfessionals';
 import { StaffBookingStatus } from '@/components/9fit/StaffBookingStatus';
+import { StudentSectionHeader } from '@/components/9fit/StudentSectionHeader';
 
 // Fluxo Staff (profissionais externos / eventos). Trocar pela rota final do fluxo quando a equipe definir.
 const STAFF_FLOW_ROUTE = "/9fit/aulas-creditos?tab=schedule";
@@ -79,12 +80,7 @@ export default function NineFitStaff() {
 
   return (
     <div className="fitpro-orange min-h-screen gradient-mission pb-28">
-      {/* pt-16: espaço para o botão VOLTAR fixo (BackButton) não cobrir o título */}
-      <div className="px-4 pt-16 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // EQUIPE</p>
-        <h1 className="text-massive text-3xl text-foreground mt-1">{dietReview?"REVISÃO NUTRICIONAL":"SUPORTE EQUIPE"}</h1>
-        <p className="text-xs font-data text-muted-foreground uppercase tracking-widest mt-1">Equipe · Serviços · Agendamento</p>
-      </div>
+      <StudentSectionHeader kicker="9FIT // EQUIPE" title={dietReview ? "Revisão nutricional" : "Suporte e equipe"} description="Equipe, serviços e agendamento em um só lugar." />
 
       <div className="px-4 mb-4">
         <section className="mb-4 rounded-2xl border border-primary/25 bg-primary/[0.04] p-4 space-y-3">

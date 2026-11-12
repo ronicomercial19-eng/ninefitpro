@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 
 import { toast } from "sonner";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 interface NotificationRow {
   id: string;
@@ -115,20 +116,7 @@ export default function NineFitNotificacoes() {
 
   return (
     <div className="nine-brand min-h-screen gradient-mission pb-28">
-      <div className="px-4 pt-16 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // ALERTAS</p>
-        <h1 className="text-massive text-3xl text-foreground mt-1">NOTIFICAÇÕES</h1>
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-xs font-data text-muted-foreground uppercase tracking-widest">
-            {unread > 0 ? `${unread} não lida(s)` : "Tudo em dia"}
-          </p>
-          {unread > 0 && (
-            <button onClick={markAll} className="flex items-center gap-1 text-[10px] text-primary uppercase tracking-widest">
-              <CheckCheck className="w-3.5 h-3.5" /> Marcar todas
-            </button>
-          )}
-        </div>
-      </div>
+      <StudentSectionHeader kicker="9FIT // ALERTAS" title="Notificações" description={unread > 0 ? `${unread} não lida(s)` : "Tudo em dia"} actions={unread > 0 ? <button type="button" onClick={markAll} className="flex items-center gap-1 rounded-lg border border-primary/25 bg-primary/10 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wider text-primary"><CheckCheck className="h-3.5 w-3.5" /> Marcar todas</button> : undefined} />
 
       <div className="px-4 space-y-2">
         {loading && <p className="text-[10px] text-muted-foreground">Carregando notificações...</p>}

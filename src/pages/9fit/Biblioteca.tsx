@@ -6,6 +6,7 @@ import { BookOpen, Loader2, ExternalLink, Lock, Play, CheckCircle2 } from "lucid
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 interface LibItem {
   id?: string;
@@ -63,11 +64,7 @@ export default function NineFitBiblioteca() {
 
   return (
     <div className="min-h-screen gradient-mission pb-28">
-      <div className="px-4 pt-6 pb-3">
-        <p className="text-[10px] font-data tracking-[0.4em] text-primary/80">9FIT // BIBLIOTECA</p>
-        <h1 className="text-massive text-4xl text-foreground mt-1">BIBLIOTECA 9FIT</h1>
-        <p className="text-xs text-muted-foreground mt-1">Acervo nativo{loading ? " · consultando acesso…" : error ? " · acesso não confirmado" : tier ? ` · acesso ao acervo ${tier}` : ""}</p>
-      </div>
+      <StudentSectionHeader kicker="9FIT // BIBLIOTECA" title="Biblioteca 9FIT" description={`Acervo nativo${loading ? " · consultando acesso…" : error ? " · acesso não confirmado" : tier ? ` · acesso ao acervo ${tier}` : ""}`} />
 
       <div className="px-4 mb-5 flex gap-2 overflow-x-auto scrollbar-hide">{sections.map((section) => <button key={section} type="button" onClick={() => setActiveSection(section)} className={`shrink-0 rounded-full border px-3 py-2 text-[10px] font-semibold uppercase tracking-wider ${activeSection === section ? "border-primary bg-primary text-primary-foreground" : "border-white/10 text-muted-foreground"}`}>{labels[section]}</button>)}</div>
 

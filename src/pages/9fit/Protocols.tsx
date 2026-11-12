@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Beaker, Clock, ArrowLeft, Play, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 
 const CAT_LABELS: Record<string, string> = {
   sleep: "Sono", recovery: "Recuperação", energy: "Energia", performance: "Performance",
@@ -55,8 +56,9 @@ export default function NineFitProtocols() {
   if (current) {
     const steps: any[] = Array.isArray(current.steps) ? current.steps : [];
     return (
-      <div className="min-h-screen bg-background p-6 max-w-2xl mx-auto space-y-5">
-        <button onClick={() => navigate(-1)} className="text-xs text-muted-foreground flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> Voltar</button>
+      <div className="min-h-screen bg-background pb-28">
+        <StudentSectionHeader kicker="9FIT // PROTOCOLO" title={current.name} description={current.description} actions={<button type="button" onClick={() => navigate(-1)} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary" aria-label="Voltar"><ArrowLeft className="h-4 w-4" /></button>} />
+        <main className="mx-auto max-w-2xl space-y-5 px-4 pt-5">
         {current.hero_image && <img src={current.hero_image} alt={current.name} className="rounded-xl w-full border border-border" />}
         <div className="flex items-center gap-2">
           <Badge>{CAT_LABELS[current.category]}</Badge>
@@ -74,17 +76,16 @@ export default function NineFitProtocols() {
           ))}
         </ol>
         <Button size="lg" className="w-full" onClick={complete} disabled={completing}><CheckCircle2 className="w-4 h-4 mr-2" /> Marcar concluído</Button>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 max-w-3xl mx-auto space-y-5">
-      <div className="flex items-center gap-3">
-        <Beaker className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-display italic">Protocolos {category ? CAT_LABELS[category] : "Biohacker"}</h1>
-      </div>
-      <div className="grid md:grid-cols-2 gap-3">
+    <div className="min-h-screen bg-background pb-28">
+      <StudentSectionHeader kicker="9FIT // PROTOCOLOS" title={`Protocolos ${category ? CAT_LABELS[category] : "Biohacker"}`} description="Rituais guiados para sono, recuperação, energia e performance." />
+      <main className="mx-auto max-w-3xl space-y-5 px-4 pt-5">
+      <div className="grid gap-3 md:grid-cols-2">
         {items.map((p) => (
           <Card key={p.id} className="hover:border-primary/40 transition-colors">
             <CardContent className="p-4 space-y-3">
@@ -104,6 +105,7 @@ export default function NineFitProtocols() {
         ))}
         {!items.length && <p className="text-sm text-muted-foreground col-span-2">Sem protocolos nesta categoria.</p>}
       </div>
+      </main>
     </div>
   );
 }
