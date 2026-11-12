@@ -15,6 +15,9 @@ import { Upload, Code2, BookOpen, Loader2 } from "lucide-react";
 import { mirrorEvent } from "@/services/intelligenceHub.service";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PeriodizationPreviewDialog, {
+  type PeriodizationModelPreview,
+} from "./PeriodizationPreviewDialog";
 
 interface Props {
   inline?: boolean;
@@ -23,13 +26,6 @@ interface Props {
   studentId: string;
   studentName: string;
   onSuccess: () => void;
-}
-
-interface PeriodizationModel {
-  id: string;
-  title: string;
-  goal?: string;
-  duration?: string;
 }
 
 export function PeriodizationAssignDialog({
@@ -51,16 +47,20 @@ export function PeriodizationAssignDialog({
   const [htmlContent, setHtmlContent] = useState("");
 
   // Models
-  const [models, setModels] = useState<PeriodizationModel[]>([]);
+  const [models, setModels] = useState<PeriodizationModelPreview[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [loadingModels, setLoadingModels] = useState(false);
+
+  // Splash de visualização macro — mostrado ANTES de atribuir de verdade.
+  const [previewModel, setPreviewModel] = useState<PeriodizationModelPreview | null>(null);
+  const [confirmingAssign, setConfirmingAssign] = useState(false);
 
   useEffect(() => {
     if (open) {
       setLoadingModels(true);
       supabase
         .from("periodization_models")
-        .select("id, title, goal, duration")
+        .select("id, title, goal, duration, description, recommended_for, macrocycle, detailed_mesocycles")
         .limit(100)
         .then(({ data }) => {
           setModels((data as any) || []);
@@ -161,47 +161,76 @@ export function PeriodizationAssignDialog({
     }
   };
 
-  const handleModelAssign = async () => {
+  // Abre o splash de preview em vez de atribuir direto. A atribuição de
+  // verdade só acontece em confirmModelAssign, depois do "De acordo".
+  const handleModelAssign = () => {
     if (!selectedModel) return toast.error("Selecione um modelo");
-    setSaving(true);
+    const model = models.find((m) => m.id === selectedModel);
+    if (!model) return toast.error("Modelo não encontrado");
+    setPreviewModel(model);
+  };
+
+  // Mantém o insert histórico em student_training_assignments (inalterado) E
+  // agora também materializa de verdade em athlete_periodizations +
+  // periodization_annual_plans via a mesma RPC já usada e testada no
+  // SmartPeriodizer individual — fechando a conexão real de entrega.
+  const confirmModelAssign = async (model: PeriodizationModelPreview) => {
+    setConfirmingAssign(true);
     try {
-      const model = models.find((m) => m.id === selectedModel);
       const { data: session } = await supabase.auth.getSession();
       const coachId = session.session?.user?.id || "";
-      const { error } = await supabase
+
+      const { error: histError } = await supabase
         .from("student_training_assignments")
         .insert(
           baseInsert({
             created_by: coachId,
-            training_name: name.trim() || model?.title || "Periodização",
+            training_name: name.trim() || model.title || "Periodização",
             content_type: "model",
             training_data: {
               source: "periodization_model",
-              model_id: selectedModel,
-              model_title: model?.title,
-              goal: model?.goal,
-              duration: model?.duration,
+              model_id: model.id,
+              model_title: model.title,
+              goal: model.goal,
+              duration: model.duration,
             },
           }) as any,
         );
-      if (error) throw error;
-      toast.success("Periodização atribuída a partir de modelo!");
+      if (histError) throw histError;
+
+      const { error: rpcError } = await supabase.rpc(
+        "fn_generate_plan_from_bank_model" as any,
+        {
+          p_athlete_id: studentId,
+          p_model_id: model.id,
+          p_coach_id: coachId || null,
+        },
+      );
+      if (rpcError) {
+        throw new Error(
+          "A periodização foi registrada, mas não foi possível ativá-la de verdade para o aluno: " +
+            rpcError.message,
+        );
+      }
+
+      toast.success("Periodização atribuída e ativa para o aluno!");
       mirrorEvent(
         "periodization_assigned",
         {
           athlete_id: studentId,
           content_type: "model",
-          model_id: selectedModel,
+          model_id: model.id,
         },
         studentId,
       );
       reset();
+      setPreviewModel(null);
       onSuccess();
       onOpenChange(false);
     } catch (e: any) {
       toast.error("Erro: " + e.message);
     } finally {
-      setSaving(false);
+      setConfirmingAssign(false);
     }
   };
 
@@ -329,17 +358,31 @@ export function PeriodizationAssignDialog({
               ) : (
                 <BookOpen className="w-4 h-4 mr-2" />
               )}
-              Atribuir Modelo
+              Ver periodização e atribuir
             </Button>
           </TabsContent>
         </Tabs>
     </>
   );
-  if (inline) return <section className="rounded-xl border bg-card p-4">{form}</section>;
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
-      <DialogHeader><DialogTitle>Atribuir periodização · {studentName}</DialogTitle></DialogHeader>
-      {form}
-    </DialogContent>
-  </Dialog>;
+  return (
+    <>
+      {inline ? (
+        <section className="rounded-xl border bg-card p-4">{form}</section>
+      ) : (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Atribuir periodização · {studentName}</DialogTitle></DialogHeader>
+            {form}
+          </DialogContent>
+        </Dialog>
+      )}
+      <PeriodizationPreviewDialog
+        model={previewModel}
+        open={!!previewModel}
+        onOpenChange={(o) => { if (!o) setPreviewModel(null); }}
+        onConfirm={confirmModelAssign}
+        confirming={confirmingAssign}
+      />
+    </>
+  );
 }
