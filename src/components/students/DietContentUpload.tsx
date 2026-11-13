@@ -37,6 +37,7 @@ export function DietContentUpload({
   
   // Common fields
   const [dietName, setDietName] = useState('');
+  const [mealSchedule, setMealSchedule] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState('');
@@ -178,6 +179,15 @@ export function DietContentUpload({
         throw new Error('Usuário não autenticado');
       }
 
+      const meals = mealSchedule.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+        const match = /^((?:[01]\d|2[0-3]):[0-5]\d)\s+(.+)$/.exec(line);
+        if (!match) throw new Error('Informe cada refeição no formato HH:mm Nome.');
+        return { time: match[1], name: match[2] };
+      });
+      if (new Set(meals.map(meal => meal.name.toLocaleLowerCase('pt-BR'))).size !== meals.length) {
+        throw new Error('Use um nome diferente para cada refeição.');
+      }
+
       let htmlUrl = '';
       let htmlPath = '';
       let dietType = '';
@@ -259,7 +269,7 @@ export function DietContentUpload({
           student_id: studentId,
           created_by: user.id,
           diet_name: dietName.trim(),
-          diet_data: dietData,
+          diet_data: meals.length ? { ...dietData, meals } : dietData,
           start_date: startDate,
           end_date: endDate || null,
           is_active: isActive,
@@ -483,6 +493,17 @@ export function DietContentUpload({
             placeholder="Ex: Plano Alimentar - Semana 1"
           />
         </div>
+          <label className="block space-y-1 text-sm">
+            Horários para registro rápido no Hub
+            <textarea
+              className="block w-full rounded-md border border-border bg-background p-2"
+              value={mealSchedule}
+              onChange={event => setMealSchedule(event.target.value)}
+              placeholder={'07:30 Café da manhã\n12:30 Almoço'}
+              rows={3}
+            />
+            <span className="block text-xs text-muted-foreground">Opcional. Informe uma refeição por linha, com horário e nome.</span>
+          </label>
 
         <div className="space-y-2">
           <Label htmlFor="description">Descrição (opcional)</Label>

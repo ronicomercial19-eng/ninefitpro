@@ -200,7 +200,7 @@ export function NineFitLayout({ children }: NineFitLayoutProps) {
   return (
     <>
       {!isOnboardingFlow && <NineFitTopBar />}
-      {!isOnboardingFlow && <BackButton />}
+      {!isOnboardingFlow && location.pathname !== "/9fit/modules" && <BackButton />}
       {location.pathname === '/9fit/hub' && (pendingFirstAccess || pendingActivation) && <section className="mx-auto max-w-3xl p-4" role="status">
         <p>{pendingFirstAccess ? 'Bem-vindo! Conclua seu primeiro acesso para preparar seus treinos.' : 'Bem-vindo! Confirme sua ficha para personalizar seus treinos.'}</p>
         <button className="mt-2 underline" onClick={() => navigate(pendingFirstAccess ? '/9fit/first-access' : '/9fit/ativacao')}>Continuar configuração</button>

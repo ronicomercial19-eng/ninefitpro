@@ -16,7 +16,8 @@ test('professional roles preserve their dashboard; canonical profile wins', () =
   assert.equal(loginDestination(null, ['trainer', 'student']), '/app');
 });
 test('all entry points use the shared resolver and replace history', () => {
-  for (const path of ['src/pages/Auth.tsx', 'src/pages/9fit/Login.tsx', 'src/pages/AuthCallback.tsx']) {
+  assert.match(source('src/pages/9fit/Login.tsx'), /export \{ default \} from '@\/pages\/Auth'/);
+  for (const path of ['src/pages/Auth.tsx', 'src/pages/AuthCallback.tsx']) {
     const text = source(path);
     assert.match(text, /resolveLoginDestination/);
     assert.match(text, /replace: true/);
@@ -33,7 +34,7 @@ test('signup without session requests email confirmation rather than entering pr
 test('OAuth and confirmation callbacks are registered and share the same destination', () => {
   assert.equal(AUTH_CALLBACK, '/auth/callback');
   assert.match(source('src/App.tsx'), /path="\/auth\/callback" element=\{<AuthCallback/);
-  for (const path of ['src/pages/Auth.tsx', 'src/pages/9fit/Login.tsx', 'src/contexts/AuthContext.tsx']) {
+  for (const path of ['src/pages/Auth.tsx', 'src/contexts/AuthContext.tsx']) {
     assert.match(source(path), /window.location.origin\}\$\{AUTH_CALLBACK/);
   }
 });
