@@ -8,11 +8,12 @@ interface SyncScoreDiagnosisProps {
   open: boolean;
   onClose: () => void;
   score: number | null;
+  routine?: { base: number | null; recordPoints: number };
   status: HubScoreStatus;
   breakdown: { treino: number | null; nutri: number | null; sono: number | null; mob: number | null; hidr: number | null };
 }
 
-export function SyncScoreDiagnosisModal({ open, onClose, score, status, breakdown, context }: SyncScoreDiagnosisProps) {
+export function SyncScoreDiagnosisModal({ open, onClose, score, status, breakdown, context, routine }: SyncScoreDiagnosisProps) {
   const labels = { treino: "Treino ou descanso registrado", nutri: "Nutrição", sono: "Sono registrado ou declarado", mob: "Mobilidade", hidr: "Hidratação" };
   const statusLabel: Record<HubScoreStatus, string> = {
     available: "Leitura disponível", stale: "Leitura anterior", loading: "Atualizando dados",
@@ -30,7 +31,7 @@ export function SyncScoreDiagnosisModal({ open, onClose, score, status, breakdow
           <DialogDescription>{statusLabel[status]}. Percepção do dia e cobertura dos registros, separadas de XP.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          {context && <div className="space-y-2 text-sm"><p>Percepção diária: {context.sync.readiness ?? 'Não coletada'}/100</p><p>Cobertura de registros: {context.sync.record_coverage}/100</p><p className="text-xs text-muted-foreground">{context.sync.formula}. Ausência de registro não comprova ausência de atividade. A cobertura não mede adequação nutricional nem cumprimento da prescrição.</p><p>Calibração na semana: {context.sync.coverage_dimensions.calibracao}/100 · Balanços: {context.sync.coverage_dimensions.balanco}/100</p><p>Humor: {context.calibration.mood ?? '—'}/5 · Energia: {context.calibration.energy ?? '—'}/5 · Motivação: {context.calibration.motivation ?? '—'}/5</p></div>}
+          {context && <div className="space-y-2 text-sm"><p>Percepção diária: {context.sync.readiness ?? 'Não coletada'}/100</p>{routine && <p>Base da calibração: {routine.base ?? "Pendente"} · Registros do dia: +{routine.recordPoints}</p>}<p>Cobertura de registros: {context.sync.record_coverage}/100</p><p className="text-xs text-muted-foreground">{routine ? "Até 80 pontos pelos cinco emojis e até 20 pelos registros confirmados do dia (5 por categoria)." : context.sync.formula} Ausência de registro não comprova ausência de atividade. A cobertura não mede adequação nutricional nem cumprimento da prescrição.</p><p>Calibração na semana: {context.sync.coverage_dimensions.calibracao}/100 · Balanços: {context.sync.coverage_dimensions.balanco}/100</p><p>Humor: {context.calibration.mood ?? '—'}/5 · Energia: {context.calibration.energy ?? '—'}/5 · Motivação: {context.calibration.motivation ?? '—'}/5</p></div>}
           <ul className="space-y-2">
             {Object.entries(labels).map(([key, label]) => (
               <li key={key} className="flex items-center gap-2 text-sm">

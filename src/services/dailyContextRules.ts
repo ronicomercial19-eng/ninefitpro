@@ -35,3 +35,20 @@ export function dayProgress(context: DailyContext) {
   const completed = [context.calibration.complete, context.profile.complete, context.today.workout_completed || context.today.rest_day, context.today.meals > 0, context.today.water_ml > 0, context.today.review !== null].filter(Boolean).length;
   return { completed, total: 6 };
 }
+
+/** Daily routine index. Confirmed records add bounded credit once per category. */
+export function dailySync(context: DailyContext | null | undefined, date = businessDate(), records?: readonly string[]) {
+  const today = context?.date === date ? context.today : undefined;
+  const markers = [
+    { label: "Água", done: records?.includes("Água") ?? !!today?.water_ml },
+    { label: "Nutrição", done: records?.includes("Nutrição") ?? !!today?.meals },
+    { label: "Treino", done: records?.includes("Treino") ?? !!today?.workout_completed },
+    { label: "Mente", done: records?.includes("Mente") ?? false },
+  ];
+  const readiness = context?.sync.readiness;
+  const base = today && context?.calibration.complete && typeof readiness === "number" && Number.isFinite(readiness)
+    ? Math.round(Math.max(0, Math.min(100, readiness)) * 0.8)
+    : null;
+  const recordPoints = markers.filter(marker => marker.done).length * 5;
+  return { value: base == null ? null : base + recordPoints, markers, base, recordPoints };
+}

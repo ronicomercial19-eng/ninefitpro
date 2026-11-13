@@ -9,9 +9,11 @@ interface Props {
   breakdown: { treino: number | null; nutri: number | null; sono: number | null; mob: number | null; hidr: number | null };
   lastUpdate?: string;
   onRefresh?: () => void;
+  onDiagnosis?: () => void;
+  routinePillars?: boolean;
 }
 
-export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate, onRefresh }: Props) {
+export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate, onRefresh, onDiagnosis, routinePillars }: Props) {
   const measured = typeof syncScore === "number" && (scoreStatus === "available" || scoreStatus === "stale");
   const headline =
     scoreStatus === "offline" ? "Você está sem conexão. O último estado não será recalculado." :
@@ -52,8 +54,9 @@ export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", 
           </h1>
         </div>
 
-        <p className="text-xs text-muted-foreground mb-2">SYNC é a prontidão percebida de hoje: sono, energia, humor, motivação e dor. A cobertura dos registros e o Engajamento são apresentados separadamente.</p>
-      <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} />
+        <p className="text-xs text-muted-foreground mb-2">O SYNC do dia começa com os cinco emojis e acompanha seus registros confirmados de água, nutrição, treino e mente.</p>
+      <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} hidePillars={routinePillars} />
+        {onDiagnosis && <button type="button" onClick={onDiagnosis} className="mr-4 min-h-11 text-sm font-semibold text-primary">Entender meu SYNC</button>}
         {onRefresh && <button type="button" onClick={onRefresh} disabled={scoreStatus === "loading"} className="text-xs text-primary disabled:opacity-50 min-h-10">
           {scoreStatus === "loading" ? "Atualizando…" : "Atualizar meus dados"}
         </button>}

@@ -9,18 +9,21 @@ import { completionLabel, completionReason } from '@/lib/workoutCompletion';
 
 export function TrainingHistory(){
   const {athleteId}=useAthleteId();const request=useRef(0);
+  const [selfReports,setSelfReports]=useState<{id:string; date:string}[]>([]);
   const [previous,setPrevious]=useState<Tables<'student_training_assignments'>[]>([]),[sessions,setSessions]=useState<Tables<'workout_executions'>[]>([]);
   const [limit,setLimit]=useState(20),[hasMore,setHasMore]=useState(false),[loading,setLoading]=useState(true),[failed,setFailed]=useState(false);
   const [selected,setSelected]=useState<Tables<'workout_executions'>|null>(null),[sets,setSets]=useState<Tables<'workout_exercise_sets'>[]>([]),[detailsLoading,setDetailsLoading]=useState(false),[detailsError,setDetailsError]=useState(false);
   const [prescription,setPrescription]=useState<Tables<'student_training_assignments'>|null>(null);
-  useEffect(()=>{setSelected(null);setPrescription(null);setSets([]);setPrevious([]);setSessions([]);setLimit(20);},[athleteId]);
+  useEffect(()=>{setSelected(null);setPrescription(null);setSets([]);setPrevious([]);setSessions([]);setSelfReports([]);setLimit(20);},[athleteId]);
   const refresh=useCallback(async()=>{
     const version=++request.current;if(!athleteId){setLoading(false);return;}
-    const [p,e]=await Promise.all([
+    const [p,e,reports]=await Promise.all([
       supabase.from('student_training_assignments').select('*').eq('student_id',athleteId).order('start_date',{ascending:false}),
       supabase.from('workout_executions').select('*').eq('athlete_id',athleteId).eq('status','completed').order('workout_date',{ascending:false}).order('started_at',{ascending:false}).limit(limit+1),
+      supabase.from('master_registry').select('id,payload').eq('source','fitpro_hub_quick').eq('payload->>athlete_id',athleteId).eq('payload->>category','Treino').order('created_at',{ascending:false}).limit(limit),
     ]);
-    if(version!==request.current)return;setLoading(false);setFailed(!!(p.error||e.error));if(p.error||e.error)return;
+    if(version!==request.current)return;setLoading(false);setFailed(!!(p.error||e.error||reports.error));if(p.error||e.error||reports.error)return;
+    setSelfReports((reports.data ?? []).flatMap(row => { const value = row.payload as {date?: string} | null; return value?.date ? [{id:row.id,date:value.date}] : []; }));
     setPrevious((p.data??[]).filter(row=>isPreviousPrescription(row,format(new Date(),'yyyy-MM-dd'))));setHasMore((e.data??[]).length>limit);setSessions((e.data??[]).slice(0,limit));
   },[athleteId,limit]);
   useEffect(()=>{setLoading(true);void refresh();window.addEventListener('9fit:workout-updated',refresh);const ch=athleteId?supabase.channel(`history-${athleteId}`).on('postgres_changes',{event:'*',schema:'public',table:'workout_executions',filter:`athlete_id=eq.${athleteId}`},refresh).on('postgres_changes',{event:'*',schema:'public',table:'student_training_assignments',filter:`student_id=eq.${athleteId}`},refresh).subscribe():null;return()=>{request.current++;window.removeEventListener('9fit:workout-updated',refresh);if(ch)void supabase.removeChannel(ch);};},[refresh,athleteId]);
@@ -43,6 +46,10 @@ export function TrainingHistory(){
       ))}
       {hasMore && <button className="text-sm text-primary" onClick={() => setLimit(n => n+20)}>Carregar mais sessões</button>}
     </section>
+    {!!selfReports.length && <section className="space-y-2">
+      <h3 className="text-xs font-semibold uppercase tracking-widest">Treinos autorrelatados</h3>
+      {selfReports.map(report => <p key={report.id} className="rounded-xl border border-white/10 p-3 text-sm">{report.date.split('-').reverse().join('/')} · Treinei hoje</p>)}
+    </section>}
     <Dialog open={!!selected} onOpenChange={open => {if(!open)setSelected(null);}}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Sessão registrada · {selected?.workout_date.split('-').reverse().join('/')}</DialogTitle></DialogHeader>

@@ -1,6 +1,5 @@
 import { NutritionCompactCard } from "./NutritionCompactCard";
 import { useState } from "react";
-import { DailyGoalCheckins } from "./DailyGoalCheckins";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -17,7 +16,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { HubFloatingMetrics } from "@/components/9fit/HubFloatingMetrics";
 import { describeHubWeek, weekRead, type WeeklyCounts } from "@/components/9fit/hubWeeklyBrief";
 import { cycleBadge, type CycleStatus } from "@/components/9fit/cycleStatus";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
@@ -126,8 +124,6 @@ export function FitOSConsoleDock({
 
   return (
     <div className="w-full space-y-4">
-      <HubFloatingMetrics vitals={liveScoresVitals} />
-      <DailyGoalCheckins />
 
       {/* Cabeçalho "Sua alimentação hoje" — abre splash com o conteúdo completo */}
       <NutritionCompactCard />

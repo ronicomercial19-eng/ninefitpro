@@ -7,6 +7,7 @@ import { useTiltCard } from "@/hooks/useTiltCard";
 import { EmojiCalibrationQuiz } from './EmojiCalibrationQuiz';
 
 interface Props {
+  hidePillars?: boolean;
   score: number | null;
   status: HubScoreStatus;
   breakdown?: {
@@ -71,7 +72,7 @@ function getStatusTheme(score: number | null, status: HubScoreStatus) {
   };
 }
 
-export function SyncScoreRing({ score, status, breakdown }: Props) {
+export function SyncScoreRing({ score, status, breakdown, hidePillars }: Props) {
   const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const measured = typeof score === "number" && Number.isFinite(score);
@@ -231,7 +232,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
         </div>
       </div>
 
-      {/* Sinais Vitais & Telemetria em Tempo Real (Inspirado no mockup) */}
+      {!hidePillars && <>
       <div className="relative z-10 grid grid-cols-3 gap-2 pt-2 border-t border-white/[0.06] text-center">
         <div className="p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] group-hover:border-[#FF6600]/30 transition-all">
           <div className="flex items-center justify-center gap-1 text-[#FF6600] mb-0.5">
@@ -290,7 +291,7 @@ export function SyncScoreRing({ score, status, breakdown }: Props) {
             <BreakdownRow label="Hidratação Celular" value={breakdown.hidr} color="#3B82F6" />
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence></>}
     </div>
   );
 }

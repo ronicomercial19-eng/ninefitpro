@@ -1,3 +1,5 @@
+import { HubQuickRecords } from "@/components/9fit/HubQuickRecords";
+import { businessDate, dailySync } from "@/services/dailyContextRules";
 import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
@@ -9,11 +11,10 @@ import { SyncScoreDiagnosisModal } from "@/components/9fit/SyncScoreDiagnosisMod
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
-import { ContextualPaywall } from "@/components/9fit/ContextualPaywall";
 import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { FitOSConsoleDock } from "@/components/9fit/FitOSConsoleDock";
 import { useUserState } from "@/hooks/useUserState";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
@@ -22,7 +23,6 @@ import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissions
 import { type CycleStatus } from "@/components/9fit/cycleStatus";
 import { hubFactLabel } from "@/components/9fit/hubWeeklyBrief";
 import { IDENTITY_COPY, identityNotice } from "@/components/9fit/identityNotice";
-import { Info } from "lucide-react";
 
 const hubStaggerContainer = {
   hidden: { opacity: 0 },
@@ -61,9 +61,10 @@ export default function NineFitHub() {
   const { athleteId, athleteName, loading: athleteLoading, error: identityError, retry: retryIdentity } = useAthleteId();
   const navigate = useNavigate();
   const { invalidate } = useUserState();
-  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [quick, setQuick] = useState<{ athleteId: string; date: string; records: string[] }>();
   const [showDiagnosis, setShowDiagnosis] = useState(false);
   const { data: liveScores, status: scoreStatus, refresh: refreshScores } = useAthleteScores(athleteId);
+  const routine = dailySync(liveScores?.context, undefined, quick?.athleteId === athleteId && quick?.date === businessDate() ? quick.records : undefined);
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
   const [protocolCount, setProtocolCount] = useState(0);
@@ -162,21 +163,6 @@ export default function NineFitHub() {
   );
 
   useEffect(() => {
-    if (!user?.id) return;
-    const createdAt = new Date(user.created_at || Date.now()).getTime();
-    const daysIn = (Date.now() - createdAt) / 86_400_000;
-    const lastShown = Number(localStorage.getItem('9fit_paywall_hub_last') || 0);
-    const cooldownOk = Date.now() - lastShown > 3 * 86_400_000;
-    if (daysIn >= 7 && cooldownOk) {
-      const t = setTimeout(() => {
-        setPaywallOpen(true);
-        localStorage.setItem('9fit_paywall_hub_last', String(Date.now()));
-      }, 4000);
-      return () => clearTimeout(t);
-    }
-  }, [user?.id, user?.created_at]);
-
-  useEffect(() => {
     const onComplete = () => {
       invalidate();
       void refreshScores();
@@ -237,29 +223,27 @@ export default function NineFitHub() {
         animate="visible"
         className="w-full space-y-6 px-4 md:px-6"
       >
+        <header className="flex items-center justify-between pt-4"><h1 className="text-2xl font-bold">Hub</h1><Link to="/9fit/modules" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-primary-foreground">Ver módulos</Link></header>
         <motion.div variants={hubStaggerItem} className="relative">
           <HeroSyncSection
             name={name}
-            syncScore={liveScores?.sync.value ?? null}
+            syncScore={routine.value}
             scoreStatus={scoreStatus}
             breakdown={breakdown}
+            routinePillars
+            onDiagnosis={() => setShowDiagnosis(true)}
             lastUpdate={liveScores?.sync.observed_at ?? undefined}
             onRefresh={() => void refreshScores()}
           />
-          <button
-            onClick={() => setShowDiagnosis(true)}
-            className="absolute top-4 right-4 p-2 bg-background/50 rounded-full backdrop-blur"
-            title="Diagnóstico de Sincronia"
-          >
-             <Info className="w-4 h-4 text-primary" />
-          </button>
         </motion.div>
 
+        {athleteId && user?.id && <HubQuickRecords key={athleteId} athleteId={athleteId} userId={user.id} onToday={setQuick} />}
         <SyncScoreDiagnosisModal
            context={liveScores?.context}
            open={showDiagnosis}
            onClose={() => setShowDiagnosis(false)}
-           score={liveScores?.sync.value ?? null}
+           score={routine.value}
+           routine={routine}
            status={scoreStatus}
            breakdown={breakdown}
         />
@@ -305,13 +289,6 @@ export default function NineFitHub() {
 
       <BottomNavigation />
 
-      <ContextualPaywall
-        open={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
-        context="hub_upsell"
-        headline={`${name}, seu sistema está pronto para o próximo nível.`}
-        subline="Treinos, registros e evolução no 9FIT PRO"
-      />
     </div>
   );
 }

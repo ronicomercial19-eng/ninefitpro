@@ -298,6 +298,14 @@ const CANONICAL_MODULES: PhysioModule[] = [
  * card grande com hero_image faz sentido pra 2 destaques, não pra uma lista
  * inteira. Reserva a intensidade visual pros 2 cards de teaser na Home/Hub.
  */
+const moduleActions: Record<string, string> = {
+  staff: "Encontrar profissional", smarttreino: "Abrir meu treino",
+  prime_pass: "Ver plano e acesso", biblioteca: "Ver materiais",
+  ron: "Perguntar ao RON", progress: "Ver evolução", foods: "Abrir 9Foods",
+  store: "Ver produtos", healthflix: "Buscar aula", habitflow: "Ver hábitos",
+  zap: "Abrir mensagens", events: "Abrir comunidade",
+};
+
 export function EcosystemGrid({ category, variant = "grid", showHeader = true, showAll = false, onModuleSelect }: Props) {
   const [showOverlay, setShowOverlay] = useState(false);
   const [previewModuleKey, setPreviewModuleKey] = useState<string | null>(null);
@@ -489,20 +497,20 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     const status = statusByKey[m.key];
     const online = status === "native" || status === "configured";
     const label =
-      status === "native" ? "Tela no app"
+      ["staff", "store", "foods", "events"].includes(m.key) ? "Serviço externo" : status === "native" ? "Tela no app"
       : status === "configured" ? "Destino configurado · disponibilidade externa não verificada"
       : status === "waiting" ? "Catálogo temporariamente indisponível"
       : "Integração não configurada";
     return (
       <EcosystemModuleCard
         key={m.id}
-        m={m}
+        m={{ ...m, name: m.key === "events" ? "Comunidade" : m.key === "progress" ? "Minha evolução" : m.name }}
         src={m.hero_image || MODULE_IMAGES[m.key] || null}
         online={online}
         label={label}
         canOpen={Boolean(route) || online}
         fallbackImage={MODULE_IMAGES[m.key]}
-        accessibilityLabel={m.description || label}
+        accessibilityLabel={moduleActions[m.key] || m.description || label}
         variant={cardVariant}
         index={index}
         onOpen={() => openModule(m)}
@@ -526,7 +534,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
               aria-label="Abrir tela com todos os módulos"
               className="mt-4 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest"
             >
-              Ver todos os módulos
+              Ver módulos
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
@@ -648,6 +656,7 @@ function EcosystemModuleCard({
             <p className="font-display font-black text-sm sm:text-base text-white group-hover:text-primary transition-colors tracking-tight truncate">
               {m.name}
             </p>
+              <span className="block text-xs font-semibold text-primary">{canOpen ? accessibilityLabel : "Indisponível"}</span>
             <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5 font-semibold">
               {meta.category || m.category || "PERFORMANCE"}
             </p>
@@ -711,6 +720,7 @@ function EcosystemModuleCard({
           <p className="font-display font-black text-sm leading-tight text-white group-hover:text-primary transition-colors truncate">
             {m.name}
           </p>
+            <span className="block text-xs font-semibold text-primary">{canOpen ? accessibilityLabel : "Indisponível"}</span>
           <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-400 truncate mt-0.5 font-semibold">
             {meta.category || m.category}
           </p>
