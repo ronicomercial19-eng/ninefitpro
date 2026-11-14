@@ -21433,6 +21433,36 @@ export type Database = {
           },
         ]
       }
+      training_generation_failures: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          detail: string | null
+          id: string
+          origin: string
+          sqlstate_code: string | null
+          workout_date: string | null
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          origin: string
+          sqlstate_code?: string | null
+          workout_date?: string | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          origin?: string
+          sqlstate_code?: string | null
+          workout_date?: string | null
+        }
+        Relationships: []
+      }
       training_html_deliveries: {
         Row: {
           athlete_id: string
@@ -28668,6 +28698,10 @@ export type Database = {
         Args: { p_athlete_id: string }
         Returns: Json
       }
+      fn_ativar_periodizacao_basica: {
+        Args: { p_athlete_id: string }
+        Returns: string
+      }
       fn_attach_infinitepay_link: {
         Args: { p_order_id: string; p_url: string }
         Returns: Json
@@ -28932,6 +28966,24 @@ export type Database = {
         Args: { p_student_id: string }
         Returns: string
       }
+      fn_falhas_geracao_treino: {
+        Args: { p_athlete_id: string; p_limit?: number }
+        Returns: {
+          athlete_id: string
+          created_at: string
+          detail: string | null
+          id: string
+          origin: string
+          sqlstate_code: string | null
+          workout_date: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "training_generation_failures"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       fn_fitpro_access_status: { Args: never; Returns: Json }
       fn_fitpro_apply_payment_check: {
         Args: { p_order_id: string; p_verification: Json }
@@ -29189,6 +29241,7 @@ export type Database = {
               p_cadence: string
               p_descricao: string
               p_grupos_musculares: string[]
+              p_modality?: string
               p_qtd_alvo: number
               p_reps: string
               p_rest: string
@@ -29197,6 +29250,10 @@ export type Database = {
             }
             Returns: Json
           }
+      fn_periodizacao_prescricao_atual: {
+        Args: { p_aluno_id: string }
+        Returns: Json
+      }
       fn_prepare_infinitepay_order: {
         Args: { p_period: string; p_request_id: string; p_user_id: string }
         Returns: Json
@@ -29350,6 +29407,16 @@ export type Database = {
       fn_refresh_daily_readiness: {
         Args: { p_athlete_id?: string }
         Returns: Json
+      }
+      fn_registrar_falha_geracao: {
+        Args: {
+          p_athlete_id: string
+          p_date: string
+          p_detail: string
+          p_origin: string
+          p_sqlstate: string
+        }
+        Returns: undefined
       }
       fn_registrar_peso_avulso: {
         Args: {
