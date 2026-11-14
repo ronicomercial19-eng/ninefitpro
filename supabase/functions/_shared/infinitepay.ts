@@ -1,4 +1,5 @@
 import { checkoutUrl } from './infinitepayUrl.ts';
+import { checkoutProduct } from './checkoutProducts.ts';
 export { checkoutUrl };
 export const INFINITEPAY_HANDLE = 'ronynapoleao';
 export const INFINITEPAY_API = 'https://api.checkout.infinitepay.io';
@@ -93,20 +94,23 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
         return result.saved || result.manual_review || result.suspended ? json({ received: true, ...result }) : json({ error: 'Pagamento ainda não confirmado.' }, 400);
       }
       if (input.action === 'create') {
-        if (!['basic', 'annual'].includes(input.period) || !uuid(input.request_id)) return json({ error: 'Confira o período escolhido.' }, 400);
-        const { data: order, error } = await deps.db.rpc('fn_prepare_infinitepay_order', { p_user_id: user!.id, p_period: input.period, p_request_id: input.request_id });
+        const product = checkoutProduct(input.period);
+        if (!product || !uuid(input.request_id) || !user) return json({ error: 'Confira o período escolhido.' }, 400);
+        const { data: order, error } = await deps.db.rpc('fn_prepare_infinitepay_order', { p_user_id: user.id, p_period: input.period, p_request_id: input.request_id });
         if (error) {
+          if (error.message?.includes('professional_account_required')) return json({ error: 'Sua conta precisa de autorização profissional antes de contratar o NINE CORE. Fale com a equipe.' }, 403);
           if (error.message?.includes('access_already_confirmed')) return json({ error: 'Sua conta já possui acesso sem vencimento. Não é necessário pagar novamente.' }, 409);
           if (error.message?.includes('checkout_rate_limit')) return json({ error: 'Aguarde antes de gerar outra cobrança.' }, 429);
           throw new Error('checkout_unavailable');
         }
+        if (!order || order.period !== input.period || order.amount_cents !== product.amountCents) throw new Error('checkout_unavailable');
         if (order.status === 'paid') return json({ status: 'paid', order_id: order.id, period: order.period });
         if (order.checkout_url) return json({ status: 'ready', order_id: order.id, url: checkoutUrl(order.checkout_url) });
         if (!order.claimed) return json({ error: 'Seu checkout está sendo preparado. Aguarde alguns segundos e tente novamente.' }, 409);
         const generated = await providerRequest('/links', {
           handle: INFINITEPAY_HANDLE, order_nsu: order.id,
-          items: [{ quantity: 1, price: order.amount_cents, description: input.period === 'basic' ? '9FIT PRO — 1 mês de acesso, pagamento único' : '9FIT PRO — 12 meses de acesso, pagamento único' }],
-          redirect_url: APP_ORIGIN + '/9fit/pagamento/retorno',
+          items: [{ quantity: 1, price: order.amount_cents, description: `${product.name} — ${product.months} ${product.months === 1 ? 'mês' : 'meses'} de acesso, pagamento único` }],
+          redirect_url: APP_ORIGIN + product.returnPath,
           ...(deps.apiKey ? {
             webhook: {url:'https://mfrydtrzjxscbkaiwfnw.supabase.co/functions/v1/infinitepay-webhook',events:['paid','refunded']},
             options: {single_payment:true},
@@ -119,7 +123,7 @@ export function createPaymentHandler(deps: Dependencies, webhook = false) {
       if (input.action === 'status' || input.action === 'verify') {
         if (!uuid(input.order_nsu)) return json({ status: 'manual_review', message: 'Este pagamento não está vinculado a um pedido do app. Fale com o suporte e não pague novamente.' });
         const order = await orderById(deps.db, input.order_nsu);
-        if (!order || order.user_id !== user!.id) return json({ error: 'O pedido não pertence a esta conta. Entre na conta usada na compra ou fale com o suporte.' }, 403);
+        if (!user || !order || order.user_id !== user.id) return json({ error: 'O pedido não pertence a esta conta. Entre na conta usada na compra ou fale com o suporte.' }, 403);
         if (input.action === 'verify') {
           const result = await reconcilePayment(deps.db, paymentReference(input), deps.fetcher, deps.apiKey, order);
           if (result.saved) return json({ status: 'paid', order_id: order.id, period: order.period });

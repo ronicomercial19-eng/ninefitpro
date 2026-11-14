@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { withTimeout } from '@/lib/withTimeout';
+import type { CheckoutPeriod } from '@/lib/checkoutProducts';
 export async function paymentOperation(input: Record<string, unknown>) {
   const { data, error } = await withTimeout(supabase.functions.invoke('infinitepay-checkout', { body: input }), 20000);
   if (error) {
@@ -8,5 +9,5 @@ export async function paymentOperation(input: Record<string, unknown>) {
     throw new Error(message);
   }
   if (!data || data.error) throw new Error(data?.error || 'Resposta de pagamento indisponível.');
-  return data as { status: 'ready'|'paid'|'pending'|'manual_review'; order_id?: string; period?: 'basic'|'annual'; url?: string; message?: string };
+  return data as { status: 'ready'|'paid'|'pending'|'manual_review'; order_id?: string; period?: CheckoutPeriod; url?: string; message?: string };
 }
