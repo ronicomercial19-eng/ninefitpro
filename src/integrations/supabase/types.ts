@@ -28740,6 +28740,7 @@ export type Database = {
           new_total_xp: number
         }[]
       }
+      fn_billing_subscription_list: { Args: never; Returns: Json }
       fn_calcular_score_avaliacao: {
         Args: { p_avaliacao_id: string }
         Returns: {
