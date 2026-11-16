@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, TrendingUp, CreditCard,
-  ChevronRight, LogOut, Brain, Share2, Settings2, Bell, Shield, type LucideIcon,
+  ChevronRight, LogOut, Brain, Share2, Settings2, Bell, Shield, PlayCircle, Zap, type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,6 +106,10 @@ export default function NineFitProfile() {
       { icon: TrendingUp, label: "Histórico", sub: "Suas métricas e registros", route: "/9fit/progresso" },
       { icon: Users, label: "Equipe", sub: "Encontre seu profissional", route: "/9fit/staff" },
       { icon: Share2, label: "Compartilhar conquistas", sub: "Cards dos seus registros", route: "/9fit/compartilhar" },
+    ] },
+    { title: "Meu app", items: [
+      { icon: PlayCircle, label: "Onboarding", sub: "Aprenda a usar o app com vídeos guiados", route: "/9fit/ativacao?view=onboarding" },
+      { icon: Zap, label: "Ativações", sub: "Ative o ciclo de coleta de dados e uso do app", route: "/9fit/ativacao" },
     ] },
   ];
 
