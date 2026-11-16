@@ -14,21 +14,25 @@ const empty: CreditState = { total: 0, used: 0, remaining: 0, plan_type: "base_2
 export function useCredits(athleteId?: string | null) {
   const [state, setState] = useState<CreditState>(empty);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!athleteId) { setLoading(false); return; }
-    const { data } = await supabase
+    if (!athleteId) { setState(empty); setError(false); setLoading(false); return; }
+    setLoading(true);
+    const { data, error: readError } = await supabase
       .from("athlete_credits" as any)
       .select("credits_total, credits_used, credits_remaining, plan_type")
       .eq("athlete_id", athleteId)
       .maybeSingle();
     const row: any = data;
+    setError(!!readError);
     if (row) setState({
       total: row.credits_total ?? 0,
       used: row.credits_used ?? 0,
       remaining: row.credits_remaining ?? 0,
       plan_type: row.plan_type ?? "base_2990",
     });
+    else setState(empty);
     setLoading(false);
   }, [athleteId]);
 
@@ -66,5 +70,5 @@ export function useCredits(athleteId?: string | null) {
     }
   }, [athleteId]);
 
-  return { ...state, loading, refresh, withCredit };
+  return { ...state, loading, error, refresh, withCredit };
 }

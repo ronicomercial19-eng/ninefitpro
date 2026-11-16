@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { goBackOrHome } from "@/lib/ninefitNavigation";
 import { ArrowLeft, ExternalLink, MessageCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { safeExternalAppUrl } from "@/lib/externalApps";
@@ -20,7 +21,7 @@ export default function NineFitNativeSystem() {
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-primary/30 bg-black/80">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg border border-white/10 grid place-items-center">
+        <button onClick={() => goBackOrHome(navigate)} className="w-9 h-9 rounded-lg border border-white/10 grid place-items-center">
           <ArrowLeft className="w-4 h-4 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">

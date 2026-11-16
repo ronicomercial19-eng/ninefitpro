@@ -42,7 +42,7 @@ interface WorkoutExercise {
   [key: string]: unknown;
 }
 
-interface TrainingData { exercises?: WorkoutExercise[]; }
+interface TrainingData { exercises?: WorkoutExercise[]; segments?: Array<{ label?: string; distance_m?: number; duration_seconds?: number; heart_rate_zone?: string; target_pace_seconds_per_km?: number; target_speed_kmh?: number }> }
 interface PrescricaoExercise {
   id?: string;
   nome?: string;
@@ -142,6 +142,8 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
   },[athleteId]);
   const painSaving=useRef(false);
   const [actualRepsByExercise,setActualRepsByExercise]=useState<Record<number,number>>({});
+  const [cardioMinutes,setCardioMinutes]=useState("");
+  const [cardioMeters,setCardioMeters]=useState("");
   // Live training data + realtime patches from daily_workouts.changes_json
   const [liveTraining, setLiveTraining] = useState<TrainingAssignment>(training);
   const [dailyOverride, setDailyOverride] = useState<DailyOverride | null>(null);
@@ -604,6 +606,18 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
     saveLock.current=true;
     setPersisting(true);
     try {
+      if (liveTraining.training_data?.segments?.length) {
+        const minutes = Number(cardioMinutes.replace(",", "."));
+        const meters = Number(cardioMeters.replace(",", "."));
+        if (!Number.isFinite(minutes) || minutes <= 0 || !Number.isFinite(meters) || meters < 0) {
+          toast.error("Informe tempo e distância realizados no bloco de cardio."); return;
+        }
+        const { data: progress, error: progressError } = await (supabase as any).rpc("fn_save_endurance_progress", {
+          p_execution_id: executionId, p_duration_seconds: Math.round(minutes * 60),
+          p_distance_m: meters, p_actual_segments: [],
+        });
+        if (progressError || !progress?.ok) { toast.error(progressError?.message || "Não foi possível salvar o bloco de cardio."); return; }
+      }
       const { data, error } = await supabase.rpc("fn_complete_workout_execution", {
         p_execution_id: executionId,
         p_duration_seconds: workoutSeconds,
@@ -985,6 +999,12 @@ export function WorkoutExecution({ training, athleteId, onFinish, onBack }: Work
         </div>
 
         {/* Finish */}
+        {!!liveTraining.training_data?.segments?.length && <div className="px-4 py-3 space-y-3 border-t border-border">
+          <p className="text-sm font-semibold">Bloco de resistência do plano</p>
+          {liveTraining.training_data.segments.map((segment, index) => <p key={index} className="text-xs text-muted-foreground">{segment.label || `Trecho ${index + 1}`} · {segment.distance_m ? `${segment.distance_m} m` : segment.duration_seconds ? `${Math.round(segment.duration_seconds / 60)} min` : ""}{segment.heart_rate_zone ? ` · ${segment.heart_rate_zone}` : ""}{segment.target_pace_seconds_per_km ? ` · ${Math.floor(segment.target_pace_seconds_per_km / 60)}:${String(segment.target_pace_seconds_per_km % 60).padStart(2, '0')}/km` : ""}{segment.target_speed_kmh ? ` · ${segment.target_speed_kmh} km/h` : ""}</p>)}
+          <label className="block text-xs">Tempo realizado (min)<input className="mt-1 block w-full rounded border border-border bg-card p-2" inputMode="decimal" value={cardioMinutes} onChange={e=>setCardioMinutes(e.target.value)} /></label>
+          <label className="block text-xs">Distância realizada (m; 0 se não se aplica)<input className="mt-1 block w-full rounded border border-border bg-card p-2" inputMode="decimal" value={cardioMeters} onChange={e=>setCardioMeters(e.target.value)} /></label>
+        </div>}
         <div className="px-4 py-3">
           <Button onClick={()=>void handleFinishWorkout()} disabled={!executionId || persisting || safetyPaused || executionStatus === 'completed'}
             className="w-full bg-primary text-primary-foreground font-black italic uppercase py-6 text-base">

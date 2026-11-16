@@ -1,17 +1,18 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(async ({ mode, command }) => ({
   server: {
     host: "0.0.0.0",
     port: 3000,
   },
   plugins: [
-    react(),
+    // SWC provides fast refresh in development. Production TSX is transformed
+    // by Vite/esbuild, avoiding a native SWC dependency in the release build.
+    command === 'serve' && (await import("@vitejs/plugin-react-swc")).default(),
     mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
