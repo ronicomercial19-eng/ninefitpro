@@ -129,13 +129,13 @@ const Auth = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#070708] text-foreground flex flex-col justify-between relative overflow-hidden selection:bg-primary/30 selection:text-white">
+    <div className="min-h-screen bg-[#090909] text-foreground flex flex-col justify-between relative overflow-hidden selection:bg-primary/30 selection:text-white">
       {/* Dynamic Background Atmosphere */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Glow Spheres */}
         <div className="absolute top-1/4 -left-32 w-[550px] h-[550px] bg-primary/15 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute bottom-10 right-0 w-[450px] h-[450px] bg-primary/10 rounded-full blur-[130px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/3 w-[350px] h-[350px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/3 w-[350px] h-[350px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Tactical Matrix Grid */}
         <div 
@@ -154,7 +154,7 @@ const Auth = () => {
       {/* Top Bar Header */}
       <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3" aria-label="Voltar para a página inicial">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-lg shadow-primary/25 transform rotate-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 transform rotate-2">
             <Dumbbell className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -198,7 +198,7 @@ const Auth = () => {
             </div>
 
             {/* Visual Card */}
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-neutral-900/60 shadow-2xl group">
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#141414]/60 shadow-2xl group">
               <div className="relative aspect-[16/10] w-full overflow-hidden">
                 <img 
                   src="/images/treino-focado.png" 
@@ -233,7 +233,7 @@ const Auth = () => {
             <div className="lg:hidden text-center mb-6">
               <div className="relative inline-block mb-3">
                 <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full scale-125" />
-                <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-orange-600 rounded-2xl flex items-center justify-center transform rotate-2 shadow-xl shadow-primary/30 mx-auto">
+                <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center transform rotate-2 shadow-xl shadow-primary/30 mx-auto">
                   <Dumbbell className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -248,13 +248,13 @@ const Auth = () => {
             </div>
 
             {/* Main Auth Container Card */}
-            <div className="bg-[#0f0f11]/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/80 relative">
+            <div className="bg-[#141414]/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/80 relative">
               
               {/* Subtle top card accent line */}
               <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-neutral-900/90 border border-white/5 p-1 rounded-xl mb-6">
+                <TabsList className="grid w-full grid-cols-2 bg-[#0b0b0b]/90 border border-white/5 p-1 rounded-xl mb-6">
                   <TabsTrigger 
                     value="login" 
                     id="tab-login"
@@ -284,7 +284,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="seu@email.com"
-                        className="bg-neutral-900/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl"
+                        className="bg-[#141414]/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl"
                         required
                         autoComplete="email"
                       />
@@ -309,7 +309,7 @@ const Auth = () => {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="bg-neutral-900/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl pr-12"
+                          className="bg-[#141414]/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl pr-12"
                           required
                           autoComplete="current-password"
                         />
@@ -328,7 +328,7 @@ const Auth = () => {
                     <Button
                       type="submit"
                       id="submit-login-btn"
-                      className="w-full h-12 bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-500 text-white font-bold text-base shadow-lg shadow-primary/20 transition-all rounded-xl mt-2 active:scale-[0.99]"
+                      className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-bold text-base shadow-lg shadow-primary/20 transition-all rounded-xl mt-2 active:scale-[0.99]"
                       disabled={loading}
                     >
                       {loading ? (
@@ -350,7 +350,7 @@ const Auth = () => {
                         <span className="w-full border-t border-white/10" />
                       </div>
                       <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-                        <span className="bg-[#0f0f11] px-3 text-neutral-500 font-mono">ou acesse com</span>
+                        <span className="bg-[#141414] px-3 text-neutral-500 font-mono">ou acesse com</span>
                       </div>
                     </div>
 
@@ -359,7 +359,7 @@ const Auth = () => {
                       type="button"
                       id="google-login-btn"
                       variant="outline"
-                      className="w-full h-12 border-white/10 bg-neutral-900/60 hover:bg-neutral-800/80 text-neutral-200 hover:text-white transition-all rounded-xl"
+                      className="w-full h-12 border-white/10 bg-[#141414]/60 hover:bg-white/10 text-neutral-200 hover:text-white transition-all rounded-xl"
                       onClick={handleGoogleLogin}
                     >
                       <svg className="w-4 h-4 mr-2.5 shrink-0" viewBox="0 0 24 24">
@@ -386,7 +386,7 @@ const Auth = () => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ex: Carlos Silva"
-                        className="bg-neutral-900/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl"
+                        className="bg-[#141414]/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl"
                         required
                         autoComplete="name"
                       />
@@ -402,7 +402,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="seu@email.com"
-                        className="bg-neutral-900/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl"
+                        className="bg-[#141414]/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl"
                         required
                         autoComplete="email"
                       />
@@ -420,7 +420,7 @@ const Auth = () => {
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="(11) 99999-9999"
-                          className="bg-neutral-900/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl pl-11"
+                          className="bg-[#141414]/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl pl-11"
                           autoComplete="tel"
                         />
                       </div>
@@ -437,7 +437,7 @@ const Auth = () => {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="bg-neutral-900/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl pr-12"
+                          className="bg-[#141414]/70 border-white/10 text-white placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary h-12 rounded-xl pr-12"
                           required
                           minLength={6}
                           autoComplete="new-password"
@@ -457,7 +457,7 @@ const Auth = () => {
                     <Button
                       type="submit"
                       id="submit-register-btn"
-                      className="w-full h-12 bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-500 text-white font-bold text-base shadow-lg shadow-primary/20 transition-all rounded-xl mt-2 active:scale-[0.99]"
+                      className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-bold text-base shadow-lg shadow-primary/20 transition-all rounded-xl mt-2 active:scale-[0.99]"
                       disabled={loading}
                     >
                       {loading ? (
@@ -479,7 +479,7 @@ const Auth = () => {
                         <span className="w-full border-t border-white/10" />
                       </div>
                       <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-                        <span className="bg-[#0f0f11] px-3 text-neutral-500 font-mono">ou cadastre com</span>
+                        <span className="bg-[#141414] px-3 text-neutral-500 font-mono">ou cadastre com</span>
                       </div>
                     </div>
 
@@ -488,7 +488,7 @@ const Auth = () => {
                       type="button"
                       id="google-register-btn"
                       variant="outline"
-                      className="w-full h-12 border-white/10 bg-neutral-900/60 hover:bg-neutral-800/80 text-neutral-200 hover:text-white transition-all rounded-xl"
+                      className="w-full h-12 border-white/10 bg-[#141414]/60 hover:bg-white/10 text-neutral-200 hover:text-white transition-all rounded-xl"
                       onClick={handleGoogleLogin}
                     >
                       <svg className="w-4 h-4 mr-2.5 shrink-0" viewBox="0 0 24 24">

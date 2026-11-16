@@ -1,3 +1,5 @@
+**Registro histórico (09/10/2026).** A sequência de publicação abaixo não é válida para a main atual. As migrações 20261008085903 e 20261008085904 foram preservadas em sql-snapshots e não devem ser aplicadas. Revalidar o banco e a ordem das migrações restantes antes de qualquer publicação.
+
 # Revisão da integração antes de publicar
 
 Atualizado em 10 de outubro de 2026. Os três checkouts apontam para o mesmo projeto Supabase. Este pacote é local; nenhuma migração, Edge Function ou interface foi publicada.

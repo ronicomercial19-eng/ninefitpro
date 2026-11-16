@@ -16,7 +16,7 @@ export default function NineFitNativeSystem() {
   // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
   const externalUrl = safeExternalAppUrl(app.url);
   const showFallback = !externalUrl;
-  if (appKey === 'staff') return <main className="min-h-screen bg-background p-4 pt-16 space-y-4"><h1 className="text-2xl font-bold">9FIT Staff</h1><StaffBookingStatus /><Link className="block min-h-11 text-primary" to="/9fit/staff">Escolher profissional</Link><Link className="block min-h-11 text-primary" to="/9fit/aulas-creditos?tab=schedule">Abrir agenda</Link><button className="min-h-11" onClick={()=>navigate(-1)}>Voltar</button></main>;
+  if (appKey === 'staff') return <main className="min-h-screen bg-background p-4 pt-16 space-y-4"><h1 className="text-2xl font-bold">9FIT Staff</h1><StaffBookingStatus /><Link className="block min-h-11 text-primary" to="/9fit/staff">Escolher profissional</Link><Link className="block min-h-11 text-primary" to="/9fit/aulas-creditos?tab=schedule">Abrir agenda</Link><button className="min-h-11" onClick={()=>goBackOrHome(navigate)}>Voltar</button></main>;
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
