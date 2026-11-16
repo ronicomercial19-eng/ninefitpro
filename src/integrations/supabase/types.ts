@@ -29251,6 +29251,15 @@ export type Database = {
             }
             Returns: Json
           }
+      fn_montar_sessao_cardio: {
+        Args: {
+          p_block_9_template: Json
+          p_protocol_axis: string
+          p_seed: string
+          p_variation_focus: string
+        }
+        Returns: Json
+      }
       fn_periodizacao_prescricao_atual: {
         Args: { p_aluno_id: string }
         Returns: Json
