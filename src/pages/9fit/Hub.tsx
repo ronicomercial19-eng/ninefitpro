@@ -3,6 +3,7 @@ import { businessDate, dailySync } from "@/services/dailyContextRules";
 import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,6 @@ import { SyncScoreDiagnosisModal } from "@/components/9fit/SyncScoreDiagnosisMod
 import { HeroSyncSection } from "@/components/9fit/HeroSyncSection";
 import { HubRonCard } from "@/components/9fit/HubRonCard";
 import { HubSequentialCarousel } from "@/components/9fit/HubSequentialCarousel";
-import { EcosystemGrid } from "@/components/9fit/EcosystemGrid";
 import { FitOSConsoleDock } from "@/components/9fit/FitOSConsoleDock";
 import { useUserState } from "@/hooks/useUserState";
 import { Link, useNavigate } from "react-router-dom";
@@ -19,7 +19,6 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
-import { HubMissionsCard, type HubMissions } from "@/components/9fit/HubMissionsCard";
 import { type CycleStatus } from "@/components/9fit/cycleStatus";
 import { hubFactLabel } from "@/components/9fit/hubWeeklyBrief";
 import { IDENTITY_COPY, identityNotice } from "@/components/9fit/identityNotice";
@@ -54,8 +53,6 @@ const hubStaggerItem = {
   },
 };
 
-const ACTIVATION_KEYS = ["missao_avaliacao", "missao_plano", "missao_primeiro_treino", "missao_3dias", "missao_7dias"] as const;
-
 export default function NineFitHub() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName, loading: athleteLoading, error: identityError, retry: retryIdentity } = useAthleteId();
@@ -71,7 +68,6 @@ export default function NineFitHub() {
   const [libraryStatus, setLibraryStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [performancePlanTitle, setPerformancePlanTitle] = useState<string | null>(null);
   const [cycleStatus, setCycleStatus] = useState<CycleStatus>("loading");
-  const [hubMissions, setHubMissions] = useState<HubMissions | null>(null);
   const [hubLoading, setHubLoading] = useState(true);
   const hubRequest = useRef(0);
   const [hubError, setHubError] = useState<string | null>(null);
@@ -86,6 +82,8 @@ export default function NineFitHub() {
   const weekly = liveScores?.weekly ?? null;
   const scoresKnown = liveScores != null;
 
+  // A checklist de ativação saiu do Hub: agora vive em Perfil > Meu app > Ativações
+  // (src/pages/9fit/Ativacao.tsx), que carrega vw_hub_status por conta própria.
   const loadHubData = async () => {
     const request = ++hubRequest.current;
     if (!athleteId) {
@@ -94,14 +92,12 @@ export default function NineFitHub() {
       setCycleStatus(athleteLoading ? "loading" : "unavailable");
       setProtocolCount(0);
       setLibraryStatus(athleteLoading ? "loading" : "unavailable");
-      setHubMissions(null);
       return;
     }
     setHubLoading(true);
     setHubError(null);
     try {
-      const [hubResult, performanceResult, libraryResult] = await withTimeout(Promise.all([
-        supabase.from("vw_hub_status" as any).select("missao_avaliacao, missao_plano, missao_primeiro_treino, missao_3dias, missao_7dias").eq("athlete_id", athleteId).maybeSingle(),
+      const [performanceResult, libraryResult] = await withTimeout(Promise.all([
         supabase.from("vw_fitpro_performance_overview" as any).select("plan_title").eq("athlete_id", athleteId).maybeSingle(),
         supabase.from("student_library_assignments").select("id", { count: "exact", head: true }).eq("athlete_id", athleteId).is("completed_at", null),
       ]));
@@ -122,21 +118,9 @@ export default function NineFitHub() {
         setProtocolCount(0);
         setLibraryStatus("unavailable");
       }
-      if (!hubResult.error && hubResult.data) {
-        const row = hubResult.data as unknown as Record<string, boolean | null>;
-        setHubMissions({
-          missao_avaliacao: !!row.missao_avaliacao,
-          missao_plano: !!row.missao_plano,
-          missao_primeiro_treino: !!row.missao_primeiro_treino,
-          missao_3dias: !!row.missao_3dias,
-          missao_7dias: !!row.missao_7dias,
-        });
-      } else {
-        setHubMissions(null);
-      }
 
-      const failed = [hubResult.error, performanceResult.error, libraryResult.error].filter(Boolean);
-      if (failed.length === 3) setHubError("Não foi possível carregar seus dados agora.");
+      const failed = [performanceResult.error, libraryResult.error].filter(Boolean);
+      if (failed.length === 2) setHubError("Não foi possível carregar seus dados agora.");
       else if (failed.length) setHubError("Alguns sinais estão sincronizando.");
     } catch {
       if (request === hubRequest.current) {
@@ -257,12 +241,6 @@ export default function NineFitHub() {
           <span>Engajamento: {engagementLabel}</span>
         </div>
 
-        {hubMissions && ACTIVATION_KEYS.some((key) => hubMissions[key] === false) && (
-          <motion.div variants={hubStaggerItem}>
-            <HubMissionsCard missions={hubMissions} />
-          </motion.div>
-        )}
-
         <motion.div variants={hubStaggerItem}>
           <FitOSConsoleDock
             weekly={weekly}
@@ -277,8 +255,21 @@ export default function NineFitHub() {
           />
         </motion.div>
 
+        {/* Explorar ecossistema: os 2 cards de destaque (Staff e SmartTreino) saíram do grid.
+            Fica só a entrada para a tela de módulos. */}
         <motion.div variants={hubStaggerItem} id="ecosystem-grid">
-          <EcosystemGrid />
+          <button
+            type="button"
+            onClick={() => navigate("/9fit/modules")}
+            aria-label="Abrir tela com todos os módulos"
+            className="w-full rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/20 to-black p-5 text-left flex items-center justify-between gap-3"
+          >
+            <div>
+              <h2 className="text-xl font-black uppercase tracking-tight text-white">Explorar ecossistema</h2>
+              <p className="font-mono text-[11px] text-primary mt-2">VER TODOS OS MÓDULOS</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+          </button>
         </motion.div>
 
         <motion.div variants={hubStaggerItem}>
