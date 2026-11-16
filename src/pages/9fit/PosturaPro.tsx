@@ -6,6 +6,7 @@ import { PosturaResult, isPosturaResult } from "@/components/postura/PosturaResu
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { goBackOrHome } from "@/lib/ninefitNavigation";
 
 const SIDES = ["front", "back", "left", "right"] as const;
 type Side = (typeof SIDES)[number];
@@ -87,7 +88,9 @@ export default function NineFitPosturaPro() {
     <div className="min-h-screen bg-background pb-32 text-foreground">
       <div className="px-4 pt-6 flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          type="button"
+          aria-label="Voltar"
+          onClick={() => goBackOrHome(navigate)}
           className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5" />

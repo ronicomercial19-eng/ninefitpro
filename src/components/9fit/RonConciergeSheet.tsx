@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAthleteScores } from "@/hooks/useAthleteScores";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useCredits } from "@/hooks/useCredits";
+import { goBackOrHome } from "@/lib/ninefitNavigation";
 import { useUserState } from "@/hooks/useUserState";
 import { useSendZap, useZapMessages, useZapThread } from "@/hooks/use-ninezap-chat";
 import { detectPain } from "@/services/pain/detectPain";
@@ -390,10 +391,7 @@ export function RonConciergeSheet({ initialRequest }: { initialRequest?: RonOpen
 
   const closeChat = () => {
     setIsOpen(false);
-    if (isRonRoute) {
-      if (window.history.length > 1) navigate(-1);
-      else navigate("/9fit/hub");
-    }
+    if (isRonRoute) goBackOrHome(navigate);
   };
 
   const sendTeam = async () => {

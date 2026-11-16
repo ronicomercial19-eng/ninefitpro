@@ -181,8 +181,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                           {index === breadcrumbs.length - 1 ? (
                             <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                           ) : (
-                            <BreadcrumbLink href={crumb.path}>
-                              {crumb.label}
+                            <BreadcrumbLink asChild>
+                              <Link to={crumb.path}>{crumb.label}</Link>
                             </BreadcrumbLink>
                           )}
                         </BreadcrumbItem>

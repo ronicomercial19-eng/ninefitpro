@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
 import { planningTopic } from "@/services/planningModel";
 import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
+import { goBackOrHome } from "@/lib/ninefitNavigation";
 
 /**
  * Planejamento (aluno).
@@ -206,7 +207,7 @@ export default function NineFitPlanejamento() {
         kicker="9FIT // PLANEJAMENTO"
         title="Seu planejamento"
         description="Ciclos, sessões e progressão organizados para sua rotina"
-        actions={<div className="flex items-center gap-2"><button type="button" onClick={() => navigate(-1)} aria-label="Voltar" className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"><ChevronLeft className="h-4 w-4" /></button><button type="button" onClick={syncNow} disabled={syncing} aria-label="Sincronizar periodização" title="Sincronizar" className="rounded-lg border border-primary/25 bg-primary/10 p-2 text-primary transition hover:bg-primary/20 disabled:opacity-50">{syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button></div>}
+        actions={<div className="flex items-center gap-2"><button type="button" onClick={() => goBackOrHome(navigate)} aria-label="Voltar" className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"><ChevronLeft className="h-4 w-4" /></button><button type="button" onClick={syncNow} disabled={syncing} aria-label="Sincronizar periodização" title="Sincronizar" className="rounded-lg border border-primary/25 bg-primary/10 p-2 text-primary transition hover:bg-primary/20 disabled:opacity-50">{syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</button></div>}
       />
 
       <PdiRoadmapView />

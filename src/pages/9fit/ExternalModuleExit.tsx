@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EXTERNAL_MODULES, type ExternalModuleKey } from "@/lib/moduleUrls";
 import { safeExternalAppUrl } from "@/lib/externalApps";
+import { goBackOrHome } from "@/lib/ninefitNavigation";
 
 /** Página de saída para módulos externos: abre o destino oficial em nova aba, sem encaminhar tokens. */
 export default function ExternalModuleExit({ moduleKey }: { moduleKey: ExternalModuleKey }) {
@@ -23,7 +24,7 @@ export default function ExternalModuleExit({ moduleKey }: { moduleKey: ExternalM
           ) : (
             <p className="text-sm text-destructive">Destino indisponível no momento.</p>
           )}
-          <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/9fit/hub"))} className="nine-btn-outline">
+          <button type="button" onClick={() => goBackOrHome(navigate)} className="nine-btn-outline">
             Voltar
           </button>
         </div>
