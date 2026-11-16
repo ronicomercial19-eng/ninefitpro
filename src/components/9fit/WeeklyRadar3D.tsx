@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
@@ -17,6 +17,20 @@ function getPoints(values: number[], radius = 2): THREE.Vector3[] {
     const r = (Math.max(0, Math.min(100, v)) / 100) * radius;
     return new THREE.Vector3(Math.cos(angle) * r, Math.sin(angle) * r, 0);
   });
+}
+
+/** Captura erros de render do Canvas (WebGL/three) e aciona o fallback 2D em vez da tela de erro global. */
+class RadarBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {
+    this.props.onError();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }
 
 function RadarLine({
@@ -191,29 +205,37 @@ export function WeeklyRadar3D({ current, previous }: Props) {
         <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground">3D · INTERATIVO</p>
       </div>
       <div className="w-full h-64 rounded-xl bg-black/40 overflow-hidden">
-        <Suspense fallback={<div className="w-full h-full animate-pulse bg-white/5" />}>
-          <Canvas
-            camera={{ position: [0, 0, 6], fov: 45 }}
-            onCreated={({ gl }) => {
-              try {
-                gl.setClearColor("#000000", 0);
-              } catch {
-                setError(true);
-              }
-            }}
-          >
-          {completeCurrent && <Scene values={values} prev={prevValues && rawPrevious?.every((value): value is number => value !== null) ? prevValues : undefined} />}
-          {!completeCurrent && <FallbackAxes />}
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              autoRotate
-              autoRotateSpeed={0.4}
-              maxPolarAngle={Math.PI / 1.5}
-              minPolarAngle={Math.PI / 3}
-            />
-          </Canvas>
-        </Suspense>
+        {completeCurrent ? (
+          <RadarBoundary onError={() => setError(true)}>
+            <Suspense fallback={<div className="w-full h-full animate-pulse bg-white/5" />}>
+              <Canvas
+                camera={{ position: [0, 0, 6], fov: 45 }}
+                onCreated={({ gl }) => {
+                  try {
+                    gl.setClearColor("#000000", 0);
+                  } catch {
+                    setError(true);
+                  }
+                }}
+              >
+                <Scene
+                  values={values}
+                  prev={prevValues && rawPrevious?.every((value): value is number => value !== null) ? prevValues : undefined}
+                />
+                <OrbitControls
+                  enableZoom={false}
+                  enablePan={false}
+                  autoRotate
+                  autoRotateSpeed={0.4}
+                  maxPolarAngle={Math.PI / 1.5}
+                  minPolarAngle={Math.PI / 3}
+                />
+              </Canvas>
+            </Suspense>
+          </RadarBoundary>
+        ) : (
+          <FallbackAxes />
+        )}
       </div>
       {!completeCurrent && <p className="mt-2 text-center text-[11px] text-muted-foreground">O radar 3D aparece quando todos os eixos tiverem registros; eixos sem dados não são tratados como zero.</p>}
       <div className="grid grid-cols-5 gap-1 mt-3">
@@ -228,6 +250,11 @@ export function WeeklyRadar3D({ current, previous }: Props) {
   );
 }
 
+/** Estado vazio em DOM puro. Fica FORA do <Canvas> (div dentro do R3F derruba a tela). */
 function FallbackAxes() {
-  return <div className="h-64 grid grid-cols-2 place-content-center gap-2 rounded-xl bg-black/40 text-center text-xs text-muted-foreground">Registre seus dados para formar o radar 3D.</div>;
+  return (
+    <div className="h-full w-full flex items-center justify-center px-6 text-center text-xs text-muted-foreground">
+      Registre seus dados para formar o radar 3D.
+    </div>
+  );
 }
