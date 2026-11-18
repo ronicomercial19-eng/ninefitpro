@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { describeHubWeek, hubFactLabel, weekRead } from "../../components/9fit/hubWeeklyBrief";
+import { describeHubWeek, hubFactLabel, weekRead, weekSessionSuffix } from "../../components/9fit/hubWeeklyBrief";
 
 describe("brief semanal do Hub", () => {
   it("não transforma leitura pendente em zero treinos ou zero refeições", () => {
@@ -56,5 +56,16 @@ describe("brief semanal do Hub", () => {
     assert.equal(hubFactLabel(true, "available", null, "Não registrado"), "Não registrado");
     assert.equal(hubFactLabel(true, "available", "72 kg", "Não registrado"), "72 kg");
     assert.equal(hubFactLabel(true, "stale", "0 dias", "Sem leitura"), "0 dias");
+  });
+
+  it("não acrescenta N/5 nem pede barra preenchida antes do snapshot", () => {
+    const pending = describeHubWeek(null, "loading");
+    const failed = describeHubWeek(null, "unavailable");
+    const zero = describeHubWeek({ treinos: 0, nutri: 0, minutos: 0 }, "ready");
+    assert.equal(weekSessionSuffix(null, pending.barPercent), "");
+    assert.equal(weekSessionSuffix({ treinos: 0, nutri: 0, minutos: 0 }, failed.barPercent), "");
+    assert.equal(weekSessionSuffix({ treinos: 0, nutri: 0, minutos: 0 }, zero.barPercent), " · 0/5 sessões");
+    assert.equal(pending.barPercent, null);
+    assert.equal(zero.barPercent, 0);
   });
 });

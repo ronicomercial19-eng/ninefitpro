@@ -83,3 +83,9 @@ export function describeHubWeek(weekly: WeeklyCounts | null, read: WeekRead): Hu
     trainBadge: weekly.treinos > 0 ? `${weekly.treinos} na semana` : "Semana lida",
   };
 }
+
+/** Sufixo "· N/5 sessões" só com a semana confirmada. Sem snapshot, não desenha 0/5. */
+export function weekSessionSuffix(weekly: WeeklyCounts | null, barPercent: number | null): string {
+  if (weekly == null || barPercent == null) return "";
+  return ` · ${weekly.treinos}/5 sessões`;
+}

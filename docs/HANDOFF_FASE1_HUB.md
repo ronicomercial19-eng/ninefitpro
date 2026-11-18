@@ -1,7 +1,7 @@
 # Handoff — Fase 1 · Hub
 
 Data: 2026-10-27
-Revisão: 2026-11-07
+Revisão: 2026-11-18
 Repositório: ronicomercial19-eng/ninefitpro
 Branch: main
 
@@ -18,29 +18,41 @@ Branch: main
 - Staff do ecossistema ia para a página fina `/9fit/native-system?app=staff`. O atalho Staff dos comandos ia para `/9fit/staff`. Os dois agora abrem a equipe.
 - Laranja dos destaques e dos módulos ainda era `#FF6600`. O token do Hub é `#EF7A45`.
 - O aviso do topo dizia que o professor ainda não vinculou a ficha sempre que não havia `athleteId`. Uma falha de `fn_current_athlete_id` parecia ausência de ficha.
+- Em 16/11/2026 a checklist de ativação saiu do Hub (foi para Perfil > Meu app > Ativações) e os dois cards de destaque do grid (Staff e SmartTreino) saíram. A entrada "Explorar ecossistema" e o botão "Ver módulos" continuam abrindo `/9fit/modules`.
+- O console do Hub (`FitOSConsoleDock`) ainda pintava a barra de consistência em 0% quando `barPercent` era nulo, e ainda colava `· 0/5 sessões` no brief sempre que o objeto da semana existia. O texto dizia "lendo", a barra parecia zero.
+- O registro rápido, antes da primeira leitura, mostrava "0 de 7 dias com registro" e a barra cheia em zero. Falha ao ler o plano alimentar esvaziava as refeições e o botão oferecia "Escolher refeição", como se não houvesse plano.
 
 ## O que foi feito
 
-- Missões reais (avaliação, plano, primeiro treino, 3 dias, 7 dias) voltam ao Hub só quando ainda há pendência. Perfil não entra: a view não tem esse campo, então não marcamos tarefa falsa.
+- Missões reais (avaliação, plano, primeiro treino, 3 dias, 7 dias) não ficam mais no Hub. Vivem em Perfil > Meu app > Ativações (`src/pages/9fit/Ativacao.tsx`), que lê `vw_hub_status` por conta própria. Perfil não entra na missão: a view não tem esse campo.
 - Falha de uma leitura não apaga as outras.
 - Selo do foco: "CICLO EM ANDAMENTO" só com plano confirmado. Sem plano confirmado: "SEM CICLO ATIVO". Leitura em curso: "LENDO CICLO". Falha ou atleta ainda sem ficha: "CICLO NÃO CONFIRMADO". O título deixa de pedir um objetivo novo nesses dois casos.
 - A linha da biblioteca só diz que não há intervenção quando a contagem voltou vazia. Em carga ou erro, o texto diz que a biblioteca ainda não foi confirmada.
-- Sem snapshot, o brief diz "Lendo treinos da semana" ou "Treinos da semana não confirmados". A barra não desenha 0/5. Peso, sequência e engajamento dizem "Lendo" ou "Não confirmado".
-- Com snapshot, zero continua zero. "Sem treino registrado esta semana" só depois da leitura. Um refresh não apaga a semana já confirmada.
+- Sem snapshot, o brief diz "Lendo treinos da semana" ou "Treinos da semana não confirmados". A barra não desenha preenchimento. O sufixo `· N/5 sessões` só entra com a semana confirmada (`weekSessionSuffix`). Peso, sequência e engajamento dizem "Lendo" ou "Não confirmado".
+- Com snapshot, zero continua zero. "Sem treino registrado esta semana" e `0/5` só depois da leitura. Um refresh não apaga a semana já confirmada.
 - O Início usa a mesma regra nos pilares de treino, nutrição e consistência, e no comando do dia. O detalhe está em [HANDOFF_FASE3_INICIO.md](HANDOFF_FASE3_INICIO.md).
-- Hub mostra 2 módulos em card e "Ver todos" abre `/9fit/modules`, já com a lista densa e o mesmo laranja.
-- Toque no módulo com rota interna abre a tela. Sem rota, continua o preview.
+- Hub não mostra mais os dois cards de módulo. "Ver módulos" e "Explorar ecossistema" abrem `/9fit/modules`.
 - Atalho de teste de push/bluetooth saiu do Hub. Nada de notificação real foi removido.
-- Página fina do Staff continua existindo; o card do ecossistema não aponta mais para ela.
+- Página fina do Staff continua existindo; o card do ecossistema não aponta mais para ela. O atalho Staff do console abre `/9fit/staff`.
 - O aviso "Seu acesso está pronto…" só aparece quando a consulta confirma que não há ficha. Se a leitura falha, o Hub diz que a ficha não foi confirmada e oferece tentar de novo. O selo continua "CICLO NÃO CONFIRMADO" nos dois casos. O texto compartilhado está em `src/components/9fit/identityNotice.ts`. O Perfil usa a mesma frase, descrito em [HANDOFF_FASE4_PERFIL.md](HANDOFF_FASE4_PERFIL.md).
+- Registro rápido: enquanto a leitura não volta, o rótulo é "Lendo os últimos 7 dias" e a barra não recebe valor. Se a primeira leitura falha, "Últimos 7 dias não confirmados". Uma leitura já confirmada não é apagada por um refresh que falha. Zero real continua "0 de 7 dias com registro".
+- Falha da view de dieta não zera o plano já lido e o botão de nutrição diz "Plano não confirmado" em vez de pedir para escolher uma refeição que não foi lida.
 
 ## O que não foi mexido
 
 - Train, Perfil, RON, painel do professor e APIs externas. O selo de ciclo do Início permanece como na Fase 3.
 - Checkout, prescrição, GPS, créditos e migrações.
-- Atalhos de apoio no player que ainda usam `/9fit/native-system?app=staff`.
-- Cor semântica do anel de sync (`#FF6600` no estado estável). Não é o laranja de destaque dos cards.
-- Textos do comando do dia, calibração e ranking. Só a faixa numérica da semana deixou de aparecer antes do snapshot e de sumir num refresh.
+- Atalhos de apoio no player e o atalho Store do console, que ainda usam `/9fit/native-system`.
+- Cor semântica do anel de sync (`#FF6600` no estado estável). Não é o laranja de destaque dos cards (`#EF7A45`).
+- Textos do comando do dia, calibração e ranking. A faixa numérica da semana no Início continua escondida enquanto o snapshot não chega (`weeklyKnown`).
+- Bloqueio manual de acesso e splash de marca, entregues em 18/11/2026, ficaram como estão.
+
+## Como conferir
+
+- Sem snapshot: brief sem "Sem treino", sem `0/5`, barra sem preenchimento laranja.
+- Com snapshot vazio: "Sem treino registrado esta semana" e `· 0/5 sessões`.
+- Registro rápido, antes da resposta: "Lendo os últimos 7 dias", não "0 de 7".
+- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts` e `src/lib/__tests__/hubQuickCoverage.test.ts`.
 
 ## Próximo passo
 

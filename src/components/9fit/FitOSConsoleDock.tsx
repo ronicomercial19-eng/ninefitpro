@@ -16,7 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { describeHubWeek, weekRead, type WeeklyCounts } from "@/components/9fit/hubWeeklyBrief";
+import { describeHubWeek, weekRead, weekSessionSuffix, type WeeklyCounts } from "@/components/9fit/hubWeeklyBrief";
 import { cycleBadge, type CycleStatus } from "@/components/9fit/cycleStatus";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
 import { DailyProtocol } from "@/components/9fit/DailyProtocol";
@@ -166,7 +166,7 @@ export function FitOSConsoleDock({
             </p>
             <div className="flex items-start gap-2.5 text-[12px] text-white/65">
               <Dumbbell strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
-              <span><b className="font-semibold text-white">Treino:</b> {trainStatus}{weekly ? ` · ${weekly.treinos}/5 sessões` : ""}</span>
+              <span><b className="font-semibold text-white">Treino:</b> {trainStatus}{weekSessionSuffix(weekly, week.barPercent)}</span>
             </div>
             <div className="flex items-start gap-2.5 text-[12px] text-white/65">
               <Utensils strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
@@ -187,11 +187,13 @@ export function FitOSConsoleDock({
 
           <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between gap-3 text-[11px] font-mono text-white/65">
             <span className="shrink-0">Consistência do ciclo:</span>
-            <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden mx-2">
-              <div
-                className="h-full bg-[#EF7A45] rounded-full transition-all duration-1000"
-                style={{ width: `${week.barPercent ?? 0}%` }}
-              />
+            <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden mx-2" aria-hidden="true">
+              {week.barPercent != null && (
+                <div
+                  className="h-full bg-[#EF7A45] rounded-full transition-all duration-1000"
+                  style={{ width: `${week.barPercent}%` }}
+                />
+              )}
             </div>
             <span className="text-white font-bold shrink-0">{week.sessionsLabel}{week.barPercent == null ? "" : " sessões"}</span>
           </div>

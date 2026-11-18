@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
+import { coverageFill, coverageLabel, type CoverageRead } from "@/components/9fit/hubQuickCoverage";
 
 const categories = ["Água", "Nutrição", "Treino", "Mente"] as const;
 type Category = typeof categories[number];
@@ -25,6 +26,7 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
   const [busy, setBusy] = useState<Category>();
   const [failure, setFailure] = useState<Category>();
   const [loadError, setLoadError] = useState(false);
+  const [planUnread, setPlanUnread] = useState(false);
   const pending = useRef<{ key: string; id: string } | null>(null);
   const locked = useRef(false);
   const request = useRef(0);
@@ -52,10 +54,13 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
       if (value?.category && categories.includes(value.category) && value.date && value.label) records.push({ ...value as Entry, quickId: row.id });
     }
     const plan = diet.data;
-    setPlanId(plan?.diet_assignment_id ?? undefined);
-    const data = plan?.diet_data as { meals?: Meal[] } | null;
-    setMeals(plan?.is_active && (!plan.start_date || plan.start_date <= date) && (!plan.end_date || plan.end_date >= date) && Array.isArray(data?.meals)
-      ? data.meals.filter(meal => typeof meal?.name === "string" && meal.name.trim()) : []);
+    setPlanUnread(!!diet.error);
+    if (!diet.error) {
+      setPlanId(plan?.diet_assignment_id ?? undefined);
+      const data = plan?.diet_data as { meals?: Meal[] } | null;
+      setMeals(plan?.is_active && (!plan.start_date || plan.start_date <= date) && (!plan.end_date || plan.end_date >= date) && Array.isArray(data?.meals)
+        ? data.meals.filter(meal => typeof meal?.name === "string" && meal.name.trim()) : []);
+    }
     setEntries(records);
     setReadyDate(date);
     onToday({ athleteId, date, records: categories.filter(category => records.some(row => row.date === date && row.category === category)) });
@@ -133,15 +138,18 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
     { category: "Mente" as const, action: "Fiz uma pausa", label: "Pausa mental" },
   ];
 
+  const coverageRead: CoverageRead = readyDate === date ? "ready" : loadError ? "unavailable" : "loading";
+
   return <section className="space-y-4">
     <div className="grid grid-cols-2 gap-2">
       {categories.map(category => {
         const rows = entries.filter(row => row.category === category);
         const days = new Set(rows.map(row => row.date)).size;
+        const fill = coverageFill(coverageRead, days);
         return <details key={category} className="min-w-0 rounded-xl border border-border p-3 text-sm">
-          <summary className="min-h-11 cursor-pointer font-semibold">{category}<span className="block text-xs text-muted-foreground">{days} de 7 dias com registro</span></summary>
-          <progress className="w-full accent-primary" aria-label={category + " nos últimos sete dias"} max={7} value={days} />
-          <ul className="space-y-1 text-xs">{rows.map((row, index) => <li key={row.quickId ?? index}>{row.date.split("-").reverse().join("/")} · {row.label}{row.quickId && <button type="button" disabled={!!busy} className="block min-h-11 text-primary" onClick={() => void remove(row)}>Excluir {row.label}</button>}</li>)}</ul>
+          <summary className="min-h-11 cursor-pointer font-semibold">{category}<span className="block text-xs text-muted-foreground">{coverageLabel(coverageRead, days)}</span></summary>
+          <progress className="w-full accent-primary" aria-label={category + " nos últimos sete dias"} max={7} value={fill} />
+          {coverageRead === "ready" && <ul className="space-y-1 text-xs">{rows.map((row, index) => <li key={row.quickId ?? index}>{row.date.split("-").reverse().join("/")} · {row.label}{row.quickId && <button type="button" disabled={!!busy} className="block min-h-11 text-primary" onClick={() => void remove(row)}>Excluir {row.label}</button>}</li>)}</ul>}
         </details>;
       })}
     </div>
@@ -151,16 +159,17 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
       {buttons.map(({ category, action, label }) => {
         const rows = today.filter(row => row.category === category);
         const done = category === "Nutrição" ? rows.some(row => row.label === label) : category !== "Água" && rows.length > 0;
-        return <button key={category} type="button" disabled={!!busy || done || loadError || readyDate !== date}
+        const nutritionBlocked = category === "Nutrição" && planUnread;
+        return <button key={category} type="button" disabled={!!busy || done || loadError || readyDate !== date || nutritionBlocked}
           className="min-h-20 rounded-xl border border-border bg-card p-3 text-left text-sm disabled:opacity-75"
           onClick={() => label ? void save(category, label) : setChoice(value => !value)}>
           <span className="block text-xs text-muted-foreground">{category}</span>
-          <strong className="text-primary">{busy === category ? "Salvando…" : failure === category ? "Tentar novamente" : done ? "Registrado" : action}</strong>
+          <strong className="text-primary">{busy === category ? "Salvando…" : failure === category ? "Tentar novamente" : nutritionBlocked ? "Plano não confirmado" : done ? "Registrado" : action}</strong>
           {!!rows.length && <span className="block text-xs text-emerald-400">{category === "Água" ? rows.reduce((total, row) => total + parseInt(row.label, 10), 0) + " ml hoje" : rows.at(-1)?.label}</span>}
         </button>;
       })}
     </div>
-    {choice && <div className="flex flex-wrap gap-2" aria-label="Escolher refeição">
+    {choice && !planUnread && <div className="flex flex-wrap gap-2" aria-label="Escolher refeição">
       {meals.map((meal, index) => <button key={index} type="button" className="min-h-11 rounded-lg border border-border px-3 text-sm" disabled={!!busy || today.some(row => row.category === "Nutrição" && row.label === meal.name)} onClick={() => void save("Nutrição", meal.name)}>{meal.name}</button>)}
       {!meals.length && <a className="text-sm text-primary" href="/9fit/dieta?action=log">Registrar refeição no diário</a>}
     </div>}
