@@ -12,17 +12,21 @@ export function useNutritionToday(athleteId: string | null, selectedDate?: strin
   const request=useRef(0);
   const refresh=useCallback(async()=>{
     const id=++request.current;
-    if(!athleteId){setLoading(false);setMeals([]);setWater([]);setDiet(null);setUpdatedAt(null);return;}
+    if(!athleteId){setLoading(false);setError(false);setMeals([]);setWater([]);setDiet(null);setUpdatedAt(null);return;}
     const today=selectedDate || businessDate();
-    const [m,w,d]=await Promise.all([
-      supabase.from('nutrition_logs').select('*').eq('athlete_id',athleteId).eq('date',today).order('created_at'),
-      supabase.from('hydration_logs').select('*').eq('athlete_id',athleteId).eq('log_date',today).order('created_at'),
-      supabase.from('student_diet_assignments').select('*').eq('student_id',athleteId).eq('is_active',true).lte('start_date',today).or(`end_date.is.null,end_date.gte.${today}`).order('created_at',{ascending:false}).limit(1).maybeSingle(),
-    ]);
-    if(id!==request.current)return;
-    setError(!!(m.error || w.error || d.error));setLoading(false);
-    if(m.error || w.error || d.error)return;
-    setMeals(m.data ?? []);setWater(w.data ?? []);setDiet(d.data);setUpdatedAt(new Date());
+    try {
+      const [m,w,d]=await Promise.all([
+        supabase.from('nutrition_logs').select('*').eq('athlete_id',athleteId).eq('date',today).order('created_at'),
+        supabase.from('hydration_logs').select('*').eq('athlete_id',athleteId).eq('log_date',today).order('created_at'),
+        supabase.from('student_diet_assignments').select('*').eq('student_id',athleteId).eq('is_active',true).lte('start_date',today).or(`end_date.is.null,end_date.gte.${today}`).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+      ]);
+      if(id!==request.current)return;
+      if(m.error || w.error || d.error){setError(true);setLoading(false);return;}
+      setMeals(m.data ?? []);setWater(w.data ?? []);setDiet(d.data);setUpdatedAt(new Date());setError(false);setLoading(false);
+    } catch {
+      if(id!==request.current)return;
+      setError(true);setLoading(false);
+    }
   },[athleteId, selectedDate]);
   useEffect(()=>{
     setLoading(true);setError(false);setMeals([]);setWater([]);setDiet(null);setUpdatedAt(null);void refresh();

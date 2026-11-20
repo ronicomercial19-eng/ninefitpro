@@ -5,6 +5,7 @@ import { ChevronRight, Utensils, X } from "lucide-react";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useNutritionToday } from "@/hooks/useNutritionToday";
 import { NutritionTodaySummary } from "./NutritionTodaySummary";
+import { nutritionGoalLine, nutritionHeadline, nutritionKcalText, nutritionRead } from "./nutritionTodayCopy";
 
 /**
  * Cabeçalho compacto "Sua alimentação hoje".
@@ -24,13 +25,9 @@ export function NutritionCompactCard() {
 
   if (!athleteId) return null;
 
-  const subtitle = data.loading
-    ? "Carregando…"
-    : data.error
-    ? "Leitura indisponível · toque para tentar de novo"
-    : data.diet?.diet_name || "Sem plano alimentar ativo";
-  const kcal = Math.round(data.totals.calories);
-  const goalText = data.goals.calories ? `de ${data.goals.calories} kcal` : "sem meta prescrita";
+  const read = nutritionRead(data.loading, data.error, data.updatedAt != null);
+  const subtitle = nutritionHeadline(read, data.diet?.diet_name);
+  const goalText = nutritionGoalLine(read, data.goals.calories);
 
   return (
     <>
@@ -52,11 +49,11 @@ export function NutritionCompactCard() {
             <h3 className="text-base font-bold text-white font-display leading-tight">Sua alimentação hoje</h3>
             <p className="text-[11px] text-neutral-400 truncate">
               {subtitle}
-              {data.updatedAt && !data.error && !data.loading ? ` · atualizado às ${format(data.updatedAt, "HH:mm")}` : ""}
+              {read === "ready" && data.updatedAt ? ` · atualizado às ${format(data.updatedAt, "HH:mm")}` : ""}
             </p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-sm font-bold text-white tabular-nums">{data.loading || data.error ? "—" : `${kcal} kcal`}</p>
+            <p className="text-sm font-bold text-white tabular-nums">{nutritionKcalText(read, data.totals.calories)}</p>
             <p className="text-[9px] font-mono text-neutral-400 uppercase">{goalText}</p>
           </div>
           <ChevronRight className="w-4 h-4 text-[var(--orange-400)] shrink-0 group-hover:translate-x-0.5 transition-transform" />

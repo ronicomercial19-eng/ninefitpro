@@ -1,7 +1,7 @@
 # Handoff — Fase 1 · Hub
 
 Data: 2026-10-27
-Revisão: 2026-11-18
+Revisão: 2026-11-20
 Repositório: ronicomercial19-eng/ninefitpro
 Branch: main
 
@@ -21,6 +21,7 @@ Branch: main
 - Em 16/11/2026 a checklist de ativação saiu do Hub (foi para Perfil > Meu app > Ativações) e os dois cards de destaque do grid (Staff e SmartTreino) saíram. A entrada "Explorar ecossistema" e o botão "Ver módulos" continuam abrindo `/9fit/modules`.
 - O console do Hub (`FitOSConsoleDock`) ainda pintava a barra de consistência em 0% quando `barPercent` era nulo, e ainda colava `· 0/5 sessões` no brief sempre que o objeto da semana existia. O texto dizia "lendo", a barra parecia zero.
 - O registro rápido, antes da primeira leitura, mostrava "0 de 7 dias com registro" e a barra cheia em zero. Falha ao ler o plano alimentar esvaziava as refeições e o botão oferecia "Escolher refeição", como se não houvesse plano.
+- O card "Sua alimentação hoje" dizia "sem meta prescrita" enquanto a leitura ainda não tinha voltado, ao lado de kcal em traço. Se um refresh falhava depois de um dia já lido, o card escondia kcal e plano e o resumo deixava de mostrar os números. O pedido ao RON ainda narrava "nenhum" plano e zero refeições.
 
 ## O que foi feito
 
@@ -37,6 +38,7 @@ Branch: main
 - O aviso "Seu acesso está pronto…" só aparece quando a consulta confirma que não há ficha. Se a leitura falha, o Hub diz que a ficha não foi confirmada e oferece tentar de novo. O selo continua "CICLO NÃO CONFIRMADO" nos dois casos. O texto compartilhado está em `src/components/9fit/identityNotice.ts`. O Perfil usa a mesma frase, descrito em [HANDOFF_FASE4_PERFIL.md](HANDOFF_FASE4_PERFIL.md).
 - Registro rápido: enquanto a leitura não volta, o rótulo é "Lendo os últimos 7 dias" e a barra não recebe valor. Se a primeira leitura falha, "Últimos 7 dias não confirmados". Uma leitura já confirmada não é apagada por um refresh que falha. Zero real continua "0 de 7 dias com registro".
 - Falha da view de dieta não zera o plano já lido e o botão de nutrição diz "Plano não confirmado" em vez de pedir para escolher uma refeição que não foi lida.
+- Alimentação de hoje: antes da primeira leitura, o card diz "Lendo a alimentação de hoje" e "Lendo a meta". Kcal fica em traço. Falha sem leitura anterior diz "Alimentação de hoje não confirmada" e "Meta não confirmada", não "sem meta prescrita". Se já havia leitura, um refresh que falha mantém plano, kcal e meta e avisa "atualização não confirmada". O texto enviado ao RON e ao Staff, sem leitura confirmada, não inventa plano nem zero refeições. Uma exceção na consulta também vira falha, em vez de deixar o card em "Carregando" para sempre.
 
 ## O que não foi mexido
 
@@ -52,7 +54,8 @@ Branch: main
 - Sem snapshot: brief sem "Sem treino", sem `0/5`, barra sem preenchimento laranja.
 - Com snapshot vazio: "Sem treino registrado esta semana" e `· 0/5 sessões`.
 - Registro rápido, antes da resposta: "Lendo os últimos 7 dias", não "0 de 7".
-- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts` e `src/lib/__tests__/hubQuickCoverage.test.ts`.
+- Alimentação de hoje, antes da resposta: "Lendo a meta", não "sem meta prescrita". Com dia já lido e refresh falho: kcal e nome do plano continuam, com "atualização não confirmada".
+- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts`, `src/lib/__tests__/hubQuickCoverage.test.ts` e `src/lib/__tests__/nutritionTodayCopy.test.ts`.
 
 ## Próximo passo
 
