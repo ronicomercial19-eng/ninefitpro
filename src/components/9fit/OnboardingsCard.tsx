@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Circle } from 'lucide-react';
 import { useOnboardings } from '@/hooks/useOnboardings';
 import { QuickActivation } from './QuickActivation';
@@ -12,14 +12,26 @@ const SUB: Record<string, string> = {
 const CTA: Record<string, { label: string; route?: string }> = {
   ativacao_rapida: { label: 'Fazer ativação rápida' },
   conhecer_app: { label: 'Conhecer o app', route: '/9fit/ativacao?view=onboarding' },
-  usar_app: { label: 'Continuar', route: '/9fit/ativacao' },
+  usar_app: { label: 'Continuar', route: '/9fit/ativacao?full=1' },
 };
 
 /** Perfil > Onboardings: 1) ativação rápida, 2) conhecer o app, 3) usar o app. */
 export function OnboardingsCard() {
   const navigate = useNavigate();
+  const [search, setSearch] = useSearchParams();
   const query = useOnboardings();
   const [quickOpen, setQuickOpen] = useState(false);
+  const wantsQuick = search.get('onboarding') === '1';
+
+  useEffect(() => {
+    if (wantsQuick && query.data?.current === 'ativacao_rapida') setQuickOpen(true);
+  }, [wantsQuick, query.data?.current]);
+
+  const closeQuick = () => {
+    setQuickOpen(false);
+    if (wantsQuick) { const next = new URLSearchParams(search); next.delete('onboarding'); setSearch(next, { replace: true }); }
+  };
+
   if (query.isPending) return null;
   if (query.isError || !query.data) {
     return <section className="px-4 mt-5"><button className="w-full rounded-2xl border border-border p-4 text-left text-sm" onClick={() => void query.refetch()}>Não foi possível carregar seus onboardings. Tentar novamente</button></section>;
@@ -60,9 +72,9 @@ export function OnboardingsCard() {
       })}
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 pt-1 text-xs">
         <Link className="text-primary underline" to="/9fit/profile?section=pdi">Minha ficha completa (opcional)</Link>
-        <Link className="text-primary underline" to="/9fit/ativacao">{allDone ? 'Ver minhas missões' : 'Missões e ativações'}</Link>
+        <Link className="text-primary underline" to="/9fit/ativacao?full=1">{allDone ? 'Ver minhas missões' : 'Missões e ativações'}</Link>
       </div>
-      <QuickActivation open={quickOpen} onClose={() => setQuickOpen(false)} onDone={() => setQuickOpen(false)} />
+      <QuickActivation open={quickOpen} onClose={closeQuick} onDone={closeQuick} />
     </section>
   );
 }
