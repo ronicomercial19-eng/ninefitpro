@@ -30,7 +30,7 @@ export function QuickActivation({ open, onClose, onDone }: { open: boolean; onCl
     try {
       const pdi = await withTimeout(supabase.rpc('fn_save_pdi' as never, { p_patch: { goal, injury_zones: zones }, p_complete: false, p_preferences: {} } as never));
       if (pdi.error) throw pdi.error;
-      const state = await withTimeout(supabase.rpc('fn_get_app_onboarding' as never));
+      const state: { data: unknown; error: unknown } = await withTimeout(supabase.rpc('fn_get_app_onboarding' as never));
       if (state.error || !state.data) throw state.error || new Error('onboarding_unavailable');
       const revision = (state.data as { onboarding?: { revision?: number } }).onboarding?.revision || 0;
       const saved = await withTimeout(supabase.rpc('fn_save_app_onboarding' as never, { p_patch: { training_days: days }, p_revision: revision, p_complete: false } as never));
