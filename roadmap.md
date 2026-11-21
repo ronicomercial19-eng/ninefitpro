@@ -3,4 +3,4 @@
 - [ ] Checkout e retorno profissional; confirmação pelo provedor e idempotência.
 - [ ] Gestão de assinaturas com dados canônicos na área administrativa.
 - [ ] Testes focados e verificação das telas; documentar limites sem publicar frontend.- [ ] Conectar Google Ads (aguardando usuário)
-- [ ] Configurar Google Search Console
+- [x] Configurar Google Search Console
