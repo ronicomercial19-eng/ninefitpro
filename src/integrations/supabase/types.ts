@@ -28793,6 +28793,15 @@ export type Database = {
         Args: { p_athlete_id?: string; p_month: string }
         Returns: Json
       }
+      fn_coach_block_athlete: {
+        Args: {
+          p_athlete_id: string
+          p_payment_url?: string
+          p_reason_code: string
+          p_reason_text?: string
+        }
+        Returns: Json
+      }
       fn_coach_grant_access: {
         Args: {
           p_days: number
@@ -28812,6 +28821,10 @@ export type Database = {
       }
       fn_coach_readiness_alerts: {
         Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      fn_coach_release_athlete: {
+        Args: { p_athlete_id: string }
         Returns: Json
       }
       fn_coach_student_context: {
@@ -29260,6 +29273,7 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_my_onboardings: { Args: never; Returns: Json }
       fn_periodizacao_prescricao_atual: {
         Args: { p_aluno_id: string }
         Returns: Json
@@ -29297,6 +29311,15 @@ export type Database = {
           p_request_id: string
           p_schedule: Json
           p_template_id: string
+        }
+        Returns: Json
+      }
+      fn_professor_block_access: {
+        Args: {
+          p_payment_url?: string
+          p_reason_code: string
+          p_reason_text?: string
+          p_user_id: string
         }
         Returns: Json
       }
@@ -29359,6 +29382,10 @@ export type Database = {
           p_request_id: string
           p_title: string
         }
+        Returns: Json
+      }
+      fn_professor_release_access: {
+        Args: { p_user_id: string }
         Returns: Json
       }
       fn_professor_review_adjustment: {
@@ -29461,6 +29488,10 @@ export type Database = {
       }
       fn_resolve_progress_athlete: {
         Args: { p_identifier?: string }
+        Returns: string
+      }
+      fn_resolver_macro_ausente: {
+        Args: { p_athlete_id: string }
         Returns: string
       }
       fn_revert_readiness_workout: {
@@ -29621,6 +29652,9 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: string
       }
+      fn_student_access_state: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_student_curriculum: { Args: { p_athlete_id: string }; Returns: Json }
+      fn_student_onboardings: { Args: { p_athlete_id: string }; Returns: Json }
       fn_student_professional: { Args: never; Returns: Json }
       fn_submit_workout_feedback: {
         Args: {
