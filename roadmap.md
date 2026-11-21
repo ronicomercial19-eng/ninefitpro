@@ -2,4 +2,5 @@
 - [ ] Separar os quatro produtos no pedido e na assinatura canônica.
 - [ ] Checkout e retorno profissional; confirmação pelo provedor e idempotência.
 - [ ] Gestão de assinaturas com dados canônicos na área administrativa.
-- [ ] Testes focados e verificação das telas; documentar limites sem publicar frontend.
+- [ ] Testes focados e verificação das telas; documentar limites sem publicar frontend.- [ ] Conectar Google Ads (aguardando usuário)
+- [ ] Configurar Google Search Console
