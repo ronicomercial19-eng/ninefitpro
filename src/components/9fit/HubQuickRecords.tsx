@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
-import { coverageFill, coverageLabel, type CoverageRead } from "@/components/9fit/hubQuickCoverage";
+import { type CoverageRead } from "@/components/9fit/hubQuickCoverage";
+import { Button } from "@/components/ui/button";
+import { HubRhythmCharts } from "./HubRhythmCharts";
+import { rhythmCategories, rhythmRows, rhythmWeek, type RhythmEntry } from "./hubRhythm";
 
-const categories = ["Água", "Nutrição", "Treino", "Mente"] as const;
+const categories = rhythmCategories;
 type Category = typeof categories[number];
-type Entry = { quickId?: string; category: Category; date: string; label: string };
+type Entry = RhythmEntry;
 type Meal = { name: string; time?: string };
 const source = "fitpro_hub_quick";
 
@@ -31,6 +34,10 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
   const locked = useRef(false);
   const request = useRef(0);
   const [readyDate, setReadyDate] = useState<string>();
+  const [selected, setSelected] = useState(date);
+  const [entireWeek, setEntireWeek] = useState(false);
+  const dates = rhythmWeek(date);
+  const selectedDate = dates.includes(selected) ? selected : date;
 
   async function refresh() {
     const sequence = ++request.current;
@@ -45,7 +52,7 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
     if ([water, nutrition, workouts, quick].some(result => result.error)) { setLoadError(true); return; }
     setLoadError(false);
     const records: Entry[] = [
-      ...(water.data ?? []).map(row => ({ category: "Água" as const, date: row.log_date, label: row.amount_ml + " ml" })),
+      ...(water.data ?? []).map(row => ({ category: "Água" as const, date: row.log_date, label: row.amount_ml + " ml", amountMl: Number(row.amount_ml) })),
       ...(nutrition.data ?? []).map(row => ({ category: "Nutrição" as const, date: row.date, label: row.meal_name })),
       ...(workouts.data ?? []).map(row => ({ category: "Treino" as const, date: row.workout_date, label: "Sessão concluída" })),
     ];
@@ -138,39 +145,46 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
     { category: "Mente" as const, action: "Fiz uma pausa", label: "Pausa mental" },
   ];
 
-  const coverageRead: CoverageRead = readyDate === date ? "ready" : loadError ? "unavailable" : "loading";
+  const coverageRead: CoverageRead = loadError ? "unavailable" : readyDate === date ? "ready" : "loading";
+  const explored = rhythmRows(entries, dates, selectedDate, entireWeek);
 
-  return <section className="space-y-4">
-    <div className="grid grid-cols-2 gap-2">
-      {categories.map(category => {
-        const rows = entries.filter(row => row.category === category);
-        const days = new Set(rows.map(row => row.date)).size;
-        const fill = coverageFill(coverageRead, days);
-        return <details key={category} className="min-w-0 rounded-xl border border-border p-3 text-sm">
-          <summary className="min-h-11 cursor-pointer font-semibold">{category}<span className="block text-xs text-muted-foreground">{coverageLabel(coverageRead, days)}</span></summary>
-          <progress className="w-full accent-primary" aria-label={category + " nos últimos sete dias"} max={7} value={fill} />
-          {coverageRead === "ready" && <ul className="space-y-1 text-xs">{rows.map((row, index) => <li key={row.quickId ?? index}>{row.date.split("-").reverse().join("/")} · {row.label}{row.quickId && <button type="button" disabled={!!busy} className="block min-h-11 text-primary" onClick={() => void remove(row)}>Excluir {row.label}</button>}</li>)}</ul>}
-        </details>;
-      })}
-    </div>
+  return <section className="hub-rhythm space-y-4" aria-label="Seu ritmo">
+    <header className="space-y-2">
+      <p className="text-sm text-muted-foreground">Seu ritmo / 7 dias</p>
+      <h2 className="font-display text-2xl font-bold italic">Pequenos registros. Uma rotina em movimento.</h2>
+    </header>
+    <HubRhythmCharts entries={entries} endDate={date} selectedDate={selectedDate} onSelectDate={setSelected} read={coverageRead} />
+    <details className="rounded-xl border border-border/10 p-3">
+      <summary className="hub-rhythm-summary min-h-11 cursor-pointer text-sm font-semibold">Explorar registros</summary>
+      <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Filtrar registros">
+        <Button variant="outline" aria-pressed={!entireWeek} onClick={() => setEntireWeek(false)}>Dia selecionado</Button>
+        <Button variant="outline" aria-pressed={entireWeek} onClick={() => setEntireWeek(true)}>Semana inteira</Button>
+      </div>
+      {coverageRead !== "ready" ? <p className="py-3 text-sm text-muted-foreground">{coverageRead === "loading" ? "Carregando registros…" : "Registros indisponíveis. Tente atualizar."}</p> : !explored.length ? <p className="py-3 text-sm text-muted-foreground">Sem registro {entireWeek ? "nesta semana" : "neste dia"}.</p> : <ul className="mt-3 space-y-2 text-sm">
+        {explored.map((row, index) => <li className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2" key={row.quickId ?? index}>
+          <span className="min-w-0 break-words">{row.date.split("-").reverse().join("/")} · {row.category} · {row.label}</span>
+          {row.quickId && <Button variant="ghost" disabled={!!busy} onClick={() => void remove(row)}>Excluir {row.label}</Button>}
+        </li>)}
+      </ul>}
+    </details>
     <h2 className="font-semibold">Registro rápido</h2>{deleteError && <p role="alert">Não foi possível excluir o registro. Tente novamente.</p>}
-    {loadError && <button className="min-h-11 text-sm text-primary" onClick={() => void refresh()}>Não foi possível atualizar. Tentar novamente</button>}
+    {loadError && <Button variant="link" className="h-auto min-h-11 whitespace-normal" onClick={() => void refresh()}>Não foi possível atualizar. Tentar novamente</Button>}
     <div className="grid grid-cols-2 gap-2">
       {buttons.map(({ category, action, label }) => {
         const rows = today.filter(row => row.category === category);
         const done = category === "Nutrição" ? rows.some(row => row.label === label) : category !== "Água" && rows.length > 0;
         const nutritionBlocked = category === "Nutrição" && planUnread;
-        return <button key={category} type="button" disabled={!!busy || done || loadError || readyDate !== date || nutritionBlocked}
-          className="min-h-20 rounded-xl border border-border bg-card p-3 text-left text-sm disabled:opacity-75"
+        return <Button variant="outline" key={category} type="button" disabled={!!busy || done || loadError || readyDate !== date || nutritionBlocked}
+          className="h-auto min-h-20 min-w-0 flex-col items-start gap-1 whitespace-normal rounded-xl border border-border/10 bg-card p-3 text-left text-sm disabled:opacity-75"
           onClick={() => label ? void save(category, label) : setChoice(value => !value)}>
           <span className="block text-xs text-muted-foreground">{category}</span>
           <strong className="text-primary">{busy === category ? "Salvando…" : failure === category ? "Tentar novamente" : nutritionBlocked ? "Plano não confirmado" : done ? "Registrado" : action}</strong>
-          {!!rows.length && <span className="block text-xs text-emerald-400">{category === "Água" ? rows.reduce((total, row) => total + parseInt(row.label, 10), 0) + " ml hoje" : rows.at(-1)?.label}</span>}
-        </button>;
+          {!!rows.length && <span className="block text-xs text-muted-foreground">{category === "Água" ? rows.reduce((total, row) => total + (row.amountMl ?? 0), 0) + " ml hoje" : rows.at(-1)?.label}</span>}
+        </Button>;
       })}
     </div>
     {choice && !planUnread && <div className="flex flex-wrap gap-2" aria-label="Escolher refeição">
-      {meals.map((meal, index) => <button key={index} type="button" className="min-h-11 rounded-lg border border-border px-3 text-sm" disabled={!!busy || today.some(row => row.category === "Nutrição" && row.label === meal.name)} onClick={() => void save("Nutrição", meal.name)}>{meal.name}</button>)}
+      {meals.map((meal, index) => <Button variant="outline" key={index} type="button" className="h-auto min-h-11 whitespace-normal rounded-lg" disabled={!!busy || today.some(row => row.category === "Nutrição" && row.label === meal.name)} onClick={() => void save("Nutrição", meal.name)}>{meal.name}</Button>)}
       {!meals.length && <a className="text-sm text-primary" href="/9fit/dieta?action=log">Registrar refeição no diário</a>}
     </div>}
   </section>;
