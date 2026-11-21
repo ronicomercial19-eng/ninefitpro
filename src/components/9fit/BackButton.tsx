@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { goBackOrHome } from "@/lib/ninefitNavigation";
 
-const HIDE_ON = ["/9fit/hub", "/9fit/os", "/9fit/train", "/9fit/protocolo", "/9fit/healthflix", "/9fit/primepass", "/9fit/prime", "/9fit/progresso", "/9fit/profile", "/9fit/login", "/9fit/onboarding", "/9fit/first-access", "/9fit/planejamento", "/9fit/postura-pro", "/9fit/events", "/9fit/academy"];
+const HIDE_ON = ["/9fit/hub", "/9fit/os", "/9fit/train", "/9fit/protocolo", "/9fit/staff/fluxo", "/9fit/healthflix", "/9fit/primepass", "/9fit/prime", "/9fit/progresso", "/9fit/profile", "/9fit/login", "/9fit/onboarding", "/9fit/first-access", "/9fit/planejamento", "/9fit/postura-pro", "/9fit/events", "/9fit/academy"];
 
 /**
  * Botão fixo de voltar — aparece em todas as telas /9fit/* exceto Hub e fluxos isolados.

@@ -1,4 +1,5 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { goBackOrHome } from "@/lib/ninefitNavigation";
 import { ArrowLeft, ExternalLink, MessageCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ export default function NineFitNativeSystem() {
   const [params] = useSearchParams();
   const appKey = params.get("app") ?? "fitness-place";
   const app = getEmbeddedApp(appKey);
+  if (appKey === "staff") return <Navigate to={STAFF_FLOW_ROUTE} replace />;
   if (!app) return <div className="p-6"><p>Módulo não encontrado.</p><Link to="/9fit/hub">Voltar ao início</Link></div>;
 
   // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
@@ -34,7 +36,6 @@ export default function NineFitNativeSystem() {
         )}
       </header>
 
-      {appKey === 'staff' && <div className="flex flex-wrap items-center gap-4 border-b border-primary/20 px-4 py-3 text-xs"><span className="text-muted-foreground">Seleção e agendamento no fluxo oficial Staff.</span><Link className="min-h-11 inline-flex items-center text-primary underline" to="/9fit/staff">Minha equipe e agendamentos</Link><Link className="min-h-11 inline-flex items-center text-primary underline" to="/9fit/aulas-creditos?tab=schedule">Agenda FitPro</Link></div>}
       {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
 
       <p className="px-4 py-2 text-xs text-muted-foreground">Aplicativo externo. Pode solicitar acesso próprio; seus registros aqui não comprovam sincronização com o 9FIT.</p>

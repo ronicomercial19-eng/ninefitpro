@@ -81,6 +81,7 @@ const NineFitPlanejamento = lazy(() => import("./pages/9fit/Planejamento"));
 const NineFitBiblioteca = lazy(() => import("./pages/9fit/Biblioteca"));
 const NineFitProgresso = lazy(() => import("./pages/9fit/Progresso"));
 const NineFitPosturaPro = lazy(() => import("./pages/9fit/PosturaPro"));
+const NineFitStaffFlow = lazy(() => import("./pages/9fit/StaffFlow"));
 const NineFitNativeSystem = lazy(() => import("./pages/9fit/NativeSystem"));
 const NineFitAvaliacaoGuiada = lazy(() => import("./pages/9fit/AvaliacaoGuiada"));
 const NineFitAssessmentPages = lazy(() => import("./pages/9fit/AssessmentPages"));
@@ -375,6 +376,7 @@ const App = () => (
             <Route path="/9fit/ajuste-treino" element={<NineFitLayout><NineFitAjusteTreino /></NineFitLayout>} />
             <Route path="/9fit/pos-treino" element={<NineFitLayout><NineFitPostWorkout /></NineFitLayout>} />
             <Route path="/9fit/collections" element={<NineFitLayout><NineFitCollections /></NineFitLayout>} />
+            <Route path="/9fit/staff/fluxo" element={<NineFitLayout><NineFitStaffFlow /></NineFitLayout>} />
             <Route path="/9fit/native-system" element={<NineFitLayout><NineFitNativeSystem /></NineFitLayout>} />
 
             <Route path="/app/monetizacao" element={
