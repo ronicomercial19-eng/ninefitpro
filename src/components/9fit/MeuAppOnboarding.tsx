@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Onboarding guiado do app (Perfil > Meu app > Onboarding).
+ * Onboarding guiado do app (Perfil > Onboardings > Conhecer o app).
  * Para publicar um vídeo: preencha `videoUrl` do módulo com a URL do arquivo (mp4/webm).
  * Enquanto estiver null, o módulo mostra "Vídeo em breve".
+ * O "visto" é salvo na conta (activation_events, chave tour_<id>) e espelhado no
+ * localStorage; o professor enxerga o progresso em fn_student_onboardings.
  */
 type OnboardingModule = {
   id: string;
@@ -24,6 +29,7 @@ const MODULES: OnboardingModule[] = [
 ];
 
 const STORAGE_KEY = "9fit:meu-app-onboarding";
+const eventKey = (id: string) => `tour_${id.replace(/-/g, "_")}`;
 
 function readDone(): string[] {
   try {
@@ -36,12 +42,45 @@ function readDone(): string[] {
 }
 
 export function MeuAppOnboarding() {
+  const { user } = useAuth();
+  const client = useQueryClient();
   const [done, setDone] = useState<string[]>([]);
   const [openId, setOpenId] = useState<string | null>(MODULES[0].id);
 
-  useEffect(() => setDone(readDone()), []);
+  useEffect(() => {
+    setDone(readDone());
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.from("activation_events" as any).select("event_key").eq("user_id", user.id).like("event_key", "tour_%");
+        if (cancelled || !data) return;
+        const keys = new Set((data as unknown as { event_key: string }[]).map((r) => r.event_key));
+        const fromAccount = MODULES.filter((m) => keys.has(eventKey(m.id))).map((m) => m.id);
+        setDone((prev) => Array.from(new Set([...prev, ...fromAccount])));
+      } catch {
+        /* sem conta: segue com o armazenamento local */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const persist = async (id: string, nowDone: boolean) => {
+    if (!user) return;
+    try {
+      if (nowDone) {
+        await supabase.from("activation_events" as any).upsert({ user_id: user.id, event_key: eventKey(id), completed_at: new Date().toISOString() } as any, { onConflict: "user_id,event_key" });
+      } else {
+        await supabase.from("activation_events" as any).delete().eq("user_id", user.id).eq("event_key", eventKey(id));
+      }
+      void client.invalidateQueries({ queryKey: ["my-onboardings"] });
+    } catch {
+      /* o espelho local continua valendo; sincroniza na próxima marcação */
+    }
+  };
 
   const toggleDone = (id: string) => {
+    const nowDone = !done.includes(id);
     setDone((prev) => {
       const next = prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id];
       try {
@@ -51,6 +90,7 @@ export function MeuAppOnboarding() {
       }
       return next;
     });
+    void persist(id, nowDone);
   };
 
   const pct = Math.round((done.length / MODULES.length) * 100);

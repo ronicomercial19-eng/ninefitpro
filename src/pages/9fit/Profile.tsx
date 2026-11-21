@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users, Calendar, Dumbbell, TrendingUp, CreditCard,
-  ChevronRight, LogOut, Brain, Share2, Settings2, Bell, Shield, PlayCircle, Zap, type LucideIcon,
+  ChevronRight, LogOut, Brain, Share2, Settings2, Bell, Shield, type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { ATHLETE_MISSING, IDENTITY_COPY, identityNotice } from "@/components/9fi
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useEngrenagem } from "@/hooks/useEngrenagem";
 import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
+import { OnboardingsCard } from "@/components/9fit/OnboardingsCard";
 
 interface MenuItem {
   icon: LucideIcon;
@@ -107,10 +108,6 @@ export default function NineFitProfile() {
       { icon: Users, label: "Equipe", sub: "Encontre seu profissional", route: "/9fit/staff" },
       { icon: Share2, label: "Compartilhar conquistas", sub: "Cards dos seus registros", route: "/9fit/compartilhar" },
     ] },
-    { title: "Meu app", items: [
-      { icon: PlayCircle, label: "Onboarding", sub: "Aprenda a usar o app com vídeos guiados", route: "/9fit/ativacao?view=onboarding" },
-      { icon: Zap, label: "Ativações", sub: "Ative o ciclo de coleta de dados e uso do app", route: "/9fit/ativacao" },
-    ] },
   ];
 
   const openItem = (it: MenuItem) => {
@@ -149,6 +146,9 @@ export default function NineFitProfile() {
           </p>
         )}
       </section>
+
+      {/* Onboardings: 1) ativação rápida, 2) conhecer o app, 3) usar o app */}
+      {fichaNotice === "ready" && <OnboardingsCard />}
 
       {/* Menu */}
       <div className="px-4 mt-6 space-y-3">
