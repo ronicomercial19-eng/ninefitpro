@@ -13,11 +13,12 @@ import {StudentAnamnesis} from './tabs/StudentAnamnesis';
 import {StudentPhotos} from './tabs/StudentPhotos';
 import {StudentPayments} from './tabs/StudentPayments';
 import {CoachStudentPanel} from './CoachStudentPanel';
+import {StudentOnboardingsPanel} from './StudentOnboardingsPanel';
 import {useCoachStudentContext} from '@/hooks/useCoachStudentContext';
 import {Button} from '@/components/ui/button';
 import {useRealtimeTable} from '@/hooks/useRealtimeTable';
 const PosturaPro = lazy(() => import("@/pages/admin/PosturaProPage"));
-const sections=[['dados-pessoais','Dados'],['treino','Treino'],['conteudos','Conteúdos'],['dieta','Dieta'],['historico','Histórico'],['medidas','Medidas'],['anamneses','Anamneses'],['fotos','Fotos'],['postura-pro','Postura Pro'],['mensalidade','Mensalidade']];
+const sections=[['dados-pessoais','Dados'],['onboardings','Onboardings'],['treino','Treino'],['conteudos','Conteúdos'],['dieta','Dieta'],['historico','Histórico'],['medidas','Medidas'],['anamneses','Anamneses'],['fotos','Fotos'],['postura-pro','Postura Pro'],['mensalidade','Mensalidade']];
 export function SelectedStudentFile({athleteId}:{athleteId:string}){
  const {user}=useAuth(),qc=useQueryClient(),[params,setParams]=useSearchParams();
  const context=useCoachStudentContext(athleteId);
@@ -30,6 +31,7 @@ export function SelectedStudentFile({athleteId}:{athleteId:string}){
  return <section className="space-y-4" aria-label={`Ficha de ${a.name}`}><h2 className="text-xl font-semibold">Ficha de {a.name}</h2><Tabs value={selected} onValueChange={tab=>{const next=new URLSearchParams(params);next.set('tab',tab);setParams(next,{replace:true});}}>
  <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1">{sections.map(([key,label])=><TabsTrigger key={key} value={key} className="min-h-11 shrink-0">{label}</TabsTrigger>)}</TabsList>
  <TabsContent value="dados-pessoais"><StudentPersonalData student={student} onStudentUpdate={updated}/></TabsContent>
+ <TabsContent value="onboardings"><StudentOnboardingsPanel athleteId={athleteId}/></TabsContent>
  <TabsContent value="treino"><StudentTraining student={student} onStudentUpdate={updated}/></TabsContent>
  <TabsContent value="conteudos"><StudentContentProgress athleteId={athleteId}/></TabsContent>
  <TabsContent value="dieta"><StudentDiet student={student}/></TabsContent>
@@ -72,7 +74,7 @@ function StudentContentProgress({ athleteId }: { athleteId: string }) {
         {query.data.map(item => {
           const progress = Math.max(0, Math.min(100, Number(item.progress_pct) || 0));
           const kind = /^(videos?|streaming|aula)$/.test(item.content_type) ? "Aula gravada"
-            : /^(exercises?|exercícios?)$/.test(item.content_type) ? "Exercício"
+            : /^(exercises?|exercises?|exercícios?)$/.test(item.content_type) ? "Exercício"
             : /^(protocols?|protocolos?|training)$/.test(item.content_type) ? "Protocolo de treino" : item.content_type;
           return <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
             <div><p className="font-medium">{item.content_title}</p><p className="text-xs text-muted-foreground">{kind}</p></div>
