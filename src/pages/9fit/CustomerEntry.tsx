@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { loginDestination } from '@/lib/loginDestination';
-import { clearEntry, clearPlan, confirmedAccess, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, planDestination, readEntry, readPlan, rememberEntry, setupDestination } from '@/lib/customerEntry';
+import { clearEntry, clearPlan, CUSTOMER_ENTRY, entryStorage, PAYMENT_RETURN, planDestination, readEntry, readPlan, rememberEntry, setupDestination } from '@/lib/customerEntry';
+import { paidAccessAvailable, parsePaidAccess } from '@/lib/paidAccess';
 import { AppSupport } from '@/components/9fit/AppSupport';
 import { pendingPayment } from '@/lib/paymentReturn';
 import { withTimeout } from '@/lib/withTimeout';
@@ -30,15 +31,15 @@ export default function CustomerEntry() {
     let active = true; setError(false); setState(null);
     void (async () => {
       try {
-        const [profile, roles, identity, subscription, settings, onboarding] = await withTimeout(Promise.all([
+        const [profile, roles, identity, accessStatus, settings, onboarding] = await withTimeout(Promise.all([
           supabase.from('profiles').select('role,first_access_completed').eq('user_id', user.id).maybeSingle(),
           supabase.from('user_roles').select('role').eq('user_id', user.id),
           supabase.rpc('fn_current_athlete_id'),
-          supabase.from('user_subscriptions' as any).select('status,expires_at').eq('user_id', user.id).order('activated_at', { ascending: false }),
+          supabase.rpc('fn_fitpro_access_status' as never),
           supabase.from('user_context_settings').select('pdi_completed_at,declared_keys').eq('user_id', user.id).maybeSingle(),
           supabase.from('app_onboarding' as any).select('completed_at').eq('user_id', user.id).maybeSingle(),
         ]));
-        for (const result of [profile, roles, identity, subscription, settings, onboarding]) if (result.error) throw result.error;
+        for (const result of [profile, roles, identity, accessStatus, settings, onboarding]) if (result.error) throw result.error;
         const roleHome = loginDestination(profile.data?.role, roles.data?.map(r => r.role));
         let activationDone = false;
         let firstAccessDone = profile.data?.first_access_completed === true;
@@ -54,8 +55,9 @@ export default function CustomerEntry() {
         }
         const intent = purchase ? 'purchase' : paymentReturn ? 'payment_return' : readEntry(entryStorage()) || 'start';
         const onboardingComplete = !!(onboarding.data as unknown as { completed_at: string | null } | null)?.completed_at;
-        const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: hasConfirmedProfile(settings.data) && (intent === 'payment_return' ? onboardingComplete : !onboarding.data || onboardingComplete), intent });
-        const registeredAccess = ((subscription.data || []) as unknown as { status: string; expires_at: string | null }[]).some(row => confirmedAccess(row));
+        const access = parsePaidAccess(accessStatus.data);
+        const registeredAccess = paidAccessAvailable(access, Date.parse(access.server_now));
+        const destination = setupDestination({ roleHome, athleteId: identity.data, firstAccessDone, googleIdentity: !!user.identities?.some(i => i.provider === 'google'), activationDone, profileDone: hasConfirmedProfile(settings.data) && (intent === 'payment_return' ? onboardingComplete : !onboarding.data || onboardingComplete), intent, access: registeredAccess });
         if (active) setState({ destination, access: registeredAccess, missingProfile: !identity.data && roleHome !== '/app' });
       } catch { if (active) setError(true); }
     })();
@@ -90,7 +92,7 @@ export default function CustomerEntry() {
       </> : error ? <div role="alert" className="space-y-3"><p className="text-sm">Não foi possível conferir sua conta. Nenhuma cobrança ou alteração de acesso foi feita.</p><button className="text-sm text-primary underline" onClick={() => setRevision(n => n + 1)}>Tentar novamente</button></div> : !state ? <p role="status" className="text-sm text-muted-foreground">Conferindo seu acesso e sua configuração…</p> : <>
         <p role="status" className="rounded-xl border border-primary/20 bg-primary/[0.06] p-4 text-sm leading-relaxed">{state.access ? 'Seu acesso está confirmado no app. Não é necessário pagar novamente.' : paymentReturn ? 'Retorno recebido. Ainda não há acesso ativo confirmado nesta conta. Não pague novamente enquanto conferimos.' : 'Você pode começar a configuração sem confirmar uma nova compra. Recursos pagos dependem do acesso registrado.'}</p>
         {state.missingProfile && <div className="space-y-3"><p className="text-sm leading-relaxed text-muted-foreground">Sua conta existe, mas ainda não há ficha de atleta vinculada. Ao criar sua ficha, ela ficará sob responsabilidade da equipe NINE FIT (Rony).</p><button disabled={provisioning} onClick={() => void createTeamProfile()} className="w-full rounded-xl border border-primary/40 p-4 text-sm font-semibold text-primary disabled:opacity-50">{provisioning ? 'Preparando sua ficha…' : 'Criar minha ficha com a equipe NINE FIT'}</button><p role="alert" className="text-sm text-destructive">{provisionError}</p></div>}
-        <button onClick={proceed} className="w-full rounded-xl bg-primary p-4 font-semibold text-primary-foreground">{state.destination === '/9fit/planos' ? 'Ver planos e condições' : state.missingProfile ? 'Abrir início' : 'Continuar minha configuração'} <span aria-hidden>→</span></button>
+        <button onClick={proceed} className="w-full rounded-xl bg-primary p-4 font-semibold text-primary-foreground">{state.destination === '/9fit/planos' ? 'Ver planos e condições' : state.missingProfile ? 'Abrir início' : state.access ? 'Continuar para o app' : 'Continuar minha configuração'} <span aria-hidden>→</span></button>
         <button className="text-sm text-muted-foreground underline" onClick={() => setRevision(n => n + 1)}>Conferir confirmação novamente</button>
       </>}
       </JourneyCard>

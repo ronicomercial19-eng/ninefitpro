@@ -79,6 +79,7 @@ const menuItems = [
   { title: "Relatórios", url: "/app/relatorios", icon: FileText },
   { title: "Roadmap", url: "/app/roadmap", icon: Map },
   { title: "Configurações", url: "/app/configuracoes", icon: Settings },
+  { title: "Assinatura", url: "/app/assinatura", icon: CreditCard },
 ];
 
 const dailyPaths = ["/app", "/app/alunos", "/app/agenda", "/app/acompanhamento", "/app/mensagens"];
@@ -181,7 +182,7 @@ export function AppSidebar() {
         })}
       </SidebarContent>
       <SidebarFooter className="border-t border-border bg-card pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <SidebarMenu>{renderItem("/app/configuracoes")}</SidebarMenu>
+        <SidebarMenu>{renderItem("/app/assinatura")}{renderItem("/app/configuracoes")}</SidebarMenu>
         {/* User info at bottom */}
         <div className="mt-auto p-4 border-t border-border">
           <div className="flex items-center gap-2">

@@ -35,11 +35,11 @@ export function planDestination(destination: string, plan: PurchasePlan | null) 
   return destination === '/9fit/planos' && plan ? `/9fit/planos?plan=${plan}#plano-${plan}` : destination;
 }
 
-export interface EntryState { roleHome: string; firstAccessDone: boolean; googleIdentity: boolean; athleteId: string | null; activationDone: boolean; profileDone: boolean; intent: EntryIntent; }
+export interface EntryState { roleHome: string; firstAccessDone: boolean; googleIdentity: boolean; athleteId: string | null; activationDone: boolean; profileDone: boolean; intent: EntryIntent; access?: boolean; }
 // Routing only: payment status/query params never confer entitlement.
 export function setupDestination(state: EntryState) {
   if (state.roleHome === '/app') return '/app';
-  if (state.intent === 'purchase') return '/9fit/planos';
+  if (state.intent === 'purchase' && !state.access) return '/9fit/planos';
   if (!state.athleteId) return '/9fit/hub';
   if (!state.firstAccessDone && !state.googleIdentity) return '/9fit/first-access';
   if (state.intent === 'payment_return' && !state.profileDone) return '/9fit/ativacao';

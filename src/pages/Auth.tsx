@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { resolveLoginDestination } from '@/services/loginDestination.service';
 import { AUTH_CALLBACK } from '@/lib/loginDestination';
 import { entryStorage, rememberEntry } from '@/lib/customerEntry';
+import { postLoginDestination } from '@/lib/professionalReturn';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const googleMark = (
@@ -40,7 +41,7 @@ export default function Auth() {
   useEffect(() => {
     if (!user) return;
     void resolveLoginDestination(user.id)
-      .then((destination) => navigate(destination, { replace: true }))
+      .then((destination) => navigate(postLoginDestination(destination), { replace: true }))
       .catch(() => toast.error('Não foi possível carregar seu perfil. Tente entrar novamente.'));
   }, [user, navigate]);
 
@@ -50,8 +51,7 @@ export default function Auth() {
     try {
       const { error } = await login(email, password);
       if (error) { toast.error(error); return; }
-      const { data: { user: loggedUser } } = await supabase.auth.getUser();
-      if (loggedUser) navigate(await resolveLoginDestination(loggedUser.id), { replace: true });
+      // AuthContext publishes the signed-in user; the effect above resolves one destination.
     } catch (error) {
       console.error('Erro no login:', error);
       toast.error('Erro ao fazer login');

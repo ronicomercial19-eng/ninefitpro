@@ -9,6 +9,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const CustomerEntry = lazy(() => import("./pages/9fit/CustomerEntry"));
 const PaymentReturn = lazy(() => import("./pages/9fit/PaymentReturn"));
+const ProfessorBillingPage = lazy(() => import("./pages/ProfessorBillingPage"));
+const ProfessorPaymentReturn = lazy(() => import("./pages/ProfessorPaymentReturn"));
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -151,6 +153,7 @@ const App = () => (
             <Route path="/suporte" element={<Support />} />
             <Route path="/whatsapp-redirect" element={<WhatsAppRedirect />} />
             <Route path="/sales" element={<Sales />} />
+            <Route path="/app/pagamento/retorno" element={<ProfessorPaymentReturn />} />
             <Route path="/assessment" element={<Assessment />} />
 
             {/* App Routes - All under /app */}
@@ -161,6 +164,7 @@ const App = () => (
                 </AppLayout>
               </PrivateRoute>
             } />
+            <Route path="/app/assinatura" element={<PrivateRoute allowedRoles={["professor", "trainer", "admin", "super_admin"]}><AppLayout><ProfessorBillingPage /></AppLayout></PrivateRoute>} />
             <Route path="/app/alunos" element={
               <PrivateRoute>
                 <AppLayout>

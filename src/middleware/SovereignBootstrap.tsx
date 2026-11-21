@@ -3,8 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { resolveLoginDestination } from '@/services/loginDestination.service';
 import { cleanAuthUrl, readIncomingAuth, tokenMatchesProject } from '@/lib/authTokens';
 import { CUSTOMER_ENTRY, PAYMENT_RETURN, entryStorage, readEntry, rememberEntry } from '@/lib/customerEntry';
+import { isPublicEntryRoute } from '@/lib/publicEntryRoutes';
 
-const PUBLIC_ROUTES = ['/', '/auth', '/auth/callback', '/login', '/register', '/forgot-password', '/9fit/login', '/9fit', '/9fit/onboarding', '/9fit/first-access', '/sales', '/suporte', '/whatsapp-redirect', '/assessment'];
 type Outcome = 'ready' | 'error';
 // StrictMode/remounts must not consume the same refresh token twice.
 let bootstrap: Promise<Outcome> | undefined;
@@ -28,7 +28,7 @@ async function establishSession(): Promise<Outcome> {
   try {
     const { data, error } = await supabase.auth.getSession();
     if (error) return 'error';
-    if (data.session || PUBLIC_ROUTES.includes(window.location.pathname) || [CUSTOMER_ENTRY, PAYMENT_RETURN].includes(window.location.pathname)) return 'ready';
+    if (data.session || isPublicEntryRoute(window.location.pathname)) return 'ready';
     // The direct login remains available if the central portal is unavailable.
     window.location.replace('/9fit/login');
     return 'ready';

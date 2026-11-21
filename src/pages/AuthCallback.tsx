@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveLoginDestination } from '@/services/loginDestination.service';
+import { postLoginDestination } from '@/lib/professionalReturn';
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState(false);
@@ -14,7 +15,7 @@ export default function AuthCallback() {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data.user) { if (active) navigate('/9fit/login', { replace: true }); return; }
         const destination = await resolveLoginDestination(data.user.id);
-        if (active) navigate(destination, { replace: true });
+        if (active) navigate(postLoginDestination(destination), { replace: true });
       } catch { if (active) setError(true); }
     })();
     return () => { active = false; };

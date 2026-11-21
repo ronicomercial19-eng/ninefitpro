@@ -43,7 +43,7 @@ export default function Sales() {
         <nav aria-label="Navegação comercial" className="flex min-h-20 flex-wrap items-center justify-between gap-4 border-b border-white/10 py-4">
           <Link to="/" className="text-xl font-black tracking-tight">NINE <span className="text-[#ff5a1f]">PRO</span></Link>
           <div className="flex items-center gap-5 text-sm">
-            <a href="#planos" className="text-white/70 hover:text-white">Planos do app</a>
+            <a href="#profissional" className="text-white/70 hover:text-white">Acesso profissional</a>
             <Link to="/login" className="rounded-lg border border-white/20 px-3 py-2 hover:bg-white/10">Entrar</Link>
           </div>
         </nav>
@@ -55,7 +55,7 @@ export default function Sales() {
             <h1 className="font-display text-[clamp(2.6rem,6vw,5rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.05em]">Do improviso <span className="text-[#ff7848]">ao controle.</span></h1>
             <p className="max-w-xl text-lg leading-relaxed text-white/70">Planeje o ciclo no NINE CORE. Seu aluno recebe o treino no NINE PRO, e você acompanha o que ele realmente executou.</p>
             <div className="flex flex-wrap items-center gap-4">
-              <a href="#planos" className={cta}>Escolher meu plano <ArrowUpRight aria-hidden="true" size={18} /></a>
+              <a href="#profissional" className={cta}>Acessar NINE CORE <ArrowUpRight aria-hidden="true" size={18} /></a>
               <a href="#como-funciona" className="inline-flex min-h-12 items-center gap-2 text-sm underline underline-offset-4">Ver o fluxo de uma semana <ArrowDown aria-hidden="true" size={15} /></a>
             </div>
           </div>
@@ -124,13 +124,24 @@ export default function Sales() {
           </details>
           <details className="border-y border-white/15 py-4">
             <summary className="cursor-pointer font-semibold">Como ativo meu acesso?</summary>
-            <p className="mt-3 text-white/70">Escolha o plano mensal ou anual e pague pelo checkout. O app verifica o pagamento e orienta você no primeiro acesso.</p>
+            <p className="mt-3 text-white/70">Se você já tem uma conta profissional autorizada, entre no painel para consultar a assinatura NINE CORE. Para criar seu acesso profissional, fale com a equipe.</p>
           </details>
         </section>
 
-        <section id="planos" className="relative isolate scroll-mt-6 overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
+        <section id="profissional" className="relative isolate scroll-mt-6 overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-[#1b1512] p-6 sm:p-12">
           <PlansGlow className="opacity-70" />
-          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Escolha seu plano do NINE PRO</h2>
+          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Seu espaço profissional</h2>
+          <p className="mt-4 max-w-2xl text-white/70">O NINE CORE é o painel do professor. A contratação profissional exige uma conta autorizada para prescrever e acompanhar alunos.</p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link className={cta} to="/login">Já sou profissional · entrar no painel <ArrowUpRight aria-hidden="true" size={18} /></Link>
+            <a className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 px-5 py-3 font-semibold hover:bg-white/10" href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Quero acesso profissional ao NINE CORE')}`}>Solicitar acesso profissional</a>
+          </div>
+        </section>
+
+        <section id="planos" className="relative isolate mt-10 scroll-mt-6 overflow-hidden rounded-2xl border border-white/15 bg-[#151719] p-6 sm:p-12">
+          <PlansGlow className="opacity-70" />
+          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#ff7848]">Para quem vai treinar</p>
+          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Planos do aluno · NINE PRO</h2>
           <p className="mt-4 max-w-xl text-white/70">Escolha o período de acesso ao app. Você paga uma vez e, após a confirmação do pagamento, o NINE PRO guia seu primeiro acesso.</p>
           <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
           {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}

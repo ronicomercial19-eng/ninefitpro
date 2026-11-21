@@ -13,6 +13,8 @@ test('pagamento não reinicia configuração concluída nem muda papéis', () =>
 });
 test('comprar antes de configurar e conta sem atleta não ficam em loop', () => {
   assert.equal(setupDestination({ ...base, intent: 'purchase' }), '/9fit/planos');
+  assert.equal(setupDestination({ ...base, intent: 'purchase', access: true }), '/9fit/first-access');
+  assert.equal(setupDestination({ ...base, intent: 'purchase', access: true, firstAccessDone: true, profileDone: true }), '/9fit/os');
   assert.equal(setupDestination({ ...base, athleteId: null }), '/9fit/hub');
 });
 test('retorno não é confirmação; vencidos, inválidos e pendentes não dão acesso', () => {

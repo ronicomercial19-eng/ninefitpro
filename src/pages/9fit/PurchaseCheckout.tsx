@@ -7,10 +7,12 @@ import { rememberPayment } from '@/lib/paymentReturn';
 import { entryStorage, rememberPlan } from '@/lib/customerEntry';
 import { AppSupport } from '@/components/9fit/AppSupport';
 import { checkoutUrl } from '@/lib/infinitepayUrl';
+import { usePaidAccess } from '@/hooks/usePaidAccess';
 import { BillingCard, BillingShell } from '@/components/9fit/BillingShell';
 
 export function PurchaseCheckout({ period }: { period: 'basic'|'annual' }) {
   const { user, loading } = useAuth(), navigate = useNavigate();
+  const access = usePaidAccess();
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const request = useRef(''), generation = useRef(0);
   useEffect(() => {
@@ -20,7 +22,7 @@ export function PurchaseCheckout({ period }: { period: 'basic'|'annual' }) {
   }, [user?.id, period]);
   const plan = COMMERCIAL_PLANS.find(p => p.id === period)!;
   async function start() {
-    if (!user || busy) return;
+    if (!user || busy || access.isPending || access.isError || access.allowed) return;
     const revision = generation.current;
     setBusy(true); setError('');
     try {
@@ -48,7 +50,7 @@ export function PurchaseCheckout({ period }: { period: 'basic'|'annual' }) {
         {loading ? <p role="status" className="text-sm text-muted-foreground">Carregando sua conta…</p> : !user ? <>
           <div><h2 className="font-display text-xl">Vincule o pagamento à sua conta</h2><p className="mt-1 text-sm text-muted-foreground">Entre ou crie sua conta antes de pagar para manter seu acesso e histórico no mesmo lugar.</p></div>
           <Link onClick={() => rememberPlan(entryStorage(), period)} className="block rounded-xl bg-primary p-4 text-center font-semibold text-primary-foreground transition hover:brightness-110" to="/9fit/entrada?intent=purchase">Entrar ou criar conta <span aria-hidden>→</span></Link>
-        </> : <>
+        </> : access.isPending ? <p role="status" className="text-sm text-muted-foreground">Conferindo se sua conta já tem acesso…</p> : access.isError ? <div role="alert" className="space-y-2"><p>Não foi possível conferir seu acesso. Nenhum pagamento foi iniciado.</p><button className="text-primary underline" onClick={() => void access.refetch()}>Tentar novamente</button></div> : access.allowed ? <div role="status" className="space-y-3"><h2 className="font-display text-xl">Seu acesso já está ativo</h2><p>Não é necessário comprar outro plano para continuar.</p><Link className="block rounded-xl bg-primary p-4 text-center font-semibold text-primary-foreground" to="/9fit/entrada">Continuar para o app</Link></div> : <>
           <div><h2 className="font-display text-xl">Tudo certo para continuar?</h2><p className="mt-1 text-sm text-muted-foreground">O acesso será vinculado à conta <strong className="text-foreground">{user.email}</strong>.</p></div>
           <button disabled={busy} onClick={() => void start()} className="w-full rounded-xl bg-primary p-4 font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50">{busy ? 'Preparando pagamento…' : 'Continuar para a InfinitePay'} <span aria-hidden>→</span></button>
           {error && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-red-200">{error}</p>}
