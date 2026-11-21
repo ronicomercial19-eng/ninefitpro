@@ -17,7 +17,7 @@ const VALUES: Record<string, string> = {
   fast: 'Rápida', medium: 'Média', slow: 'Lenta', morning: 'Manhã', afternoon: 'Tarde', night: 'Noite',
   aggressive: 'Alta', moderate: 'Moderada', conservative: 'Conservadora',
   knee: 'Joelho', shoulder: 'Ombro', back: 'Costas', elbow: 'Cotovelo', ankle: 'Tornozelo', hip: 'Quadril',
-  vegan: 'Vegano', vegetarian: 'Vegetariano', lactose: 'Lactose', gluten: 'Glútem',
+  vegan: 'Vegano', vegetarian: 'Vegetariano', lactose: 'Lactose', gluten: 'Glúten',
 };
 const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const REASONS: Record<string, string> = { payment_overdue: 'Falta de pagamento', inactivity: 'Inatividade', contract_ended: 'Fim do contrato', other: 'Outro' };
@@ -76,7 +76,7 @@ export function StudentOnboardingsPanel({ athleteId }: { athleteId: string }) {
     <div className="space-y-4">
       {curriculum.data?.alerts?.length ? (
         <section className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 space-y-1" role="status">
-          <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Atenção—o que o aluno informou</h3>
+          <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Atenção: o que o aluno informou</h3>
           <ul className="text-sm list-disc pl-5">{curriculum.data.alerts.map((a, i) => <li key={i}>{a.text}</li>)}</ul>
         </section>
       ) : null}
