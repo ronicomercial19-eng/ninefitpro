@@ -1,3 +1,4 @@
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { usePrimeState } from "@/hooks/usePrimeState";
@@ -53,7 +54,7 @@ export default function NineFitPrimePass() {
         <BillingCard><div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-label text-primary">Leitura do sistema</p><h2 className="mt-1 font-display text-xl">Sua performance</h2></div><span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_hsl(var(--primary))]" /></div>{isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> : error ? <button className="text-sm text-primary underline" onClick={()=>void refetch()}>Não foi possível atualizar. Tentar novamente</button> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[['SYNC', prime?.syncScore == null ? '—' : `${prime.syncScore}%`], ['PROTOCOLO', prime?.activeProtocol || 'Sem protocolo'], ['PRÓXIMO', prime?.nextWorkout ? friendlyDates(prime.nextWorkout) : 'Sem prescrição'], ['RECUPERAÇÃO', prime?.recovery == null ? '—' : `${prime.recovery}%`]].map(([label, value]) => <div key={label} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-3"><p className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground">{label}</p><p className="mt-2 truncate font-data text-sm font-semibold text-foreground">{value}</p></div>)}</div>}</BillingCard>
       </div>
 
-      <section className="m-4 rounded-xl border border-border p-4 space-y-3"><h2 className="font-bold">O que está incluído — e o que é contratado à parte</h2><p className="text-sm text-muted-foreground">{OFFER_SCOPE}</p><p className="text-sm text-muted-foreground">Autoavaliações e estimativas são identificadas. Não prometemos resultados físicos nem substituímos acompanhamento profissional.</p><Link to="/9fit/staff" className="text-primary underline">Conhecer profissionais via Staff</Link></section>
+      <section className="m-4 rounded-xl border border-border p-4 space-y-3"><h2 className="font-bold">O que está incluído — e o que é contratado à parte</h2><p className="text-sm text-muted-foreground">{OFFER_SCOPE}</p><p className="text-sm text-muted-foreground">Autoavaliações e estimativas são identificadas. Não prometemos resultados físicos nem substituímos acompanhamento profissional.</p><Link to={STAFF_FLOW_ROUTE} className="text-primary underline">Conhecer profissionais via Staff</Link></section>
       <div className="px-4"><AppSupport /></div>
       <BottomNavigation />
     </div>

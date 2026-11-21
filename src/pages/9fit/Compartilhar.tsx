@@ -1,3 +1,4 @@
+import { useSyncScore } from "@/hooks/useSyncScore";
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +14,7 @@ import { Loader2, Activity, Trophy, Dumbbell, Calendar, ClipboardCheck, Share2, 
 export default function NineFitCompartilhar() {
   const { athleteId, athleteName, loading: athleteLoading, error: athleteError } = useAthleteId();
   const scores = useAthleteScores(athleteId);
+  const sync=useSyncScore(athleteId);
   const activity = useActivitySummary();
   const client = useQueryClient();
   const progress = useQuery({ queryKey: ['progress-screen', athleteId], queryFn: () => loadProgressScreen(athleteId!), enabled: !!athleteId });

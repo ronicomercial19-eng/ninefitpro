@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import { privatePlanPath, signedPlanUrl } from "@/lib/privateMedia";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -84,7 +85,8 @@ export function AssignedTrainingViewer({
   const data = training.training_data || {};
   return (
     <div className="space-y-4">
-      <Button variant="ghost" onClick={onBack}>
+      <Button variant="outline" className="min-h-11 gap-2" onClick={onBack}>
+        <ArrowLeft size={18} aria-hidden="true"/>
         Voltar aos protocolos
       </Button>
       <div className="rounded-2xl border bg-card p-5">

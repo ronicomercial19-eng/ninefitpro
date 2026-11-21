@@ -63,12 +63,12 @@ export default function NineFitCheckoutSuccess() {
           : "O acesso será liberado somente após a confirmação segura do provedor. Nenhuma tela ou URL ativa o plano."}
       </p>
 
-      {active && <ShareableCard contentType="id_card_upgrade" title="Eu sou 9FIT PRIME"
+      {active && <ShareableCard contentType="id_card_upgrade" title="Eu sou 9FIT PRO"
         subtitle="Assinatura confirmada · acesso ao ecossistema"
         stat={{ label: "Status", value: "ATIVO" }} />}
 
       <div className="flex flex-col gap-3">
-        {active ? <Link className="inline-flex items-center justify-center rounded-xl bg-primary p-4 font-semibold text-primary-foreground" to="/9fit/prime"><Crown className="mr-2 h-4 w-4" /> Ir para Prime <span className="ml-2" aria-hidden>→</span></Link> :
+        {active ? <Link className="inline-flex items-center justify-center rounded-xl bg-primary p-4 font-semibold text-primary-foreground" to="/9fit/entrada"><Crown className="mr-2 h-4 w-4" /> Continuar para o app <span className="ml-2" aria-hidden>→</span></Link> :
           <button className="inline-flex items-center justify-center rounded-xl bg-primary p-4 font-semibold text-primary-foreground disabled:opacity-50" onClick={() => void verifyEntitlement()} disabled={status === "checking"}>
             <RefreshCw className="mr-2 h-4 w-4" /> Verificar novamente
           </button>}

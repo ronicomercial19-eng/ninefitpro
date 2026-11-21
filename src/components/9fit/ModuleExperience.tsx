@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { requestRonChat } from '@/services/ronChat';
@@ -95,6 +97,7 @@ function PrimeExplorer() {
 
 export function ModuleExperience({ moduleKey, name }: Props) {
   const key = moduleKey.toLowerCase().replace(/[-_\s]/g, '');
+  if (key === 'staff') return <section className="space-y-3 rounded-2xl border border-white/10 p-4"><p className="text-sm text-muted-foreground">Escolha o serviço, encontre seu profissional e continue pelo fluxo Staff.</p><Link to={STAFF_FLOW_ROUTE} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">Abrir fluxo Staff completo →</Link></section>;
   let content;
   if (['train', 'smarttreino', 'smartreino', 'ajustetreino'].includes(key)) content = <TrainingWorkbench adjustment={key === 'ajustetreino'} />;
   else if (['planejamento', 'smartperiodizer', 'periodizer'].includes(key)) content = <WeekPlanner />;
@@ -103,7 +106,7 @@ export function ModuleExperience({ moduleKey, name }: Props) {
   else if (['progress', 'progresso', 'hub'].includes(key)) content = <BehavioralHistory />;
   else if (key === 'ron') content = <RonPreview />;
   else if (['biblioteca', 'healthflix'].includes(key)) content = <CatalogPreview video={key === 'healthflix'} />;
-  else if (['staff', 'events'].includes(key)) content = <AppointmentDraft events={key === 'events'} />;
+  else if (key === 'events') content = <AppointmentDraft events />;
   else if (['zap', '9zap'].includes(key)) content = <MessageDraft />;
   else if (key === 'primepass') content = <PrimeExplorer />;
   else if (key === 'store') content = <DraftList title="Monte sua lista de interesse" placeholder="Produto que deseja procurar" />;

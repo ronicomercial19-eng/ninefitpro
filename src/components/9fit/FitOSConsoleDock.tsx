@@ -1,3 +1,4 @@
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 import { NutritionCompactCard } from "./NutritionCompactCard";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -74,12 +75,12 @@ export function FitOSConsoleDock({
 
   // Comandos & Sinais: Staff / Store / Metas  ·  Compromissos / Radar 3D / Prime Pass
   const shortcuts: Shortcut[] = [
-    { key: "staff", title: "Staff", status: "EQUIPE", icon: Users, route: "/9fit/staff" },
+    { key: "staff", title: "Staff", status: "PROFISSIONAIS", icon: Users, route: STAFF_FLOW_ROUTE },
     { key: "store", title: "Store", status: "LOJA", icon: ShoppingBag, route: "/9fit/native-system?app=store" },
     { key: "metas", title: "Metas", status: "EVOLUÇÃO", icon: Target, route: "/9fit/progresso" },
     { key: "compromissos", title: "Compromissos", status: "AGENDA", icon: CalendarCheck, route: "/9fit/aulas-creditos?tab=schedule" },
     { key: "radar", title: "Radar 3D", status: "SEMANA", icon: Compass },
-    { key: "prime", title: "Prime Pass", status: "BENEFÍCIOS", icon: Crown, route: "/9fit/primepass" },
+    { key: "prime", title: "Plano do app", status: "ASSINATURA", icon: Crown, route: "/9fit/planos" },
   ];
 
   const onShortcut = (s: Shortcut) => {

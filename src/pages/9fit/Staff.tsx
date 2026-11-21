@@ -1,3 +1,4 @@
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 import { useState } from "react";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { Users, Calendar, MessageSquare, ChevronRight, Briefcase, Stethoscope, Apple, RefreshCw } from "lucide-react";
@@ -206,7 +207,7 @@ export default function NineFitStaff() {
 
               <button
                 type="button"
-                onClick={() => navigate("/9fit/native-system?app=staff")}
+                onClick={() => navigate(STAFF_FLOW_ROUTE)}
                 className="w-full min-h-11 rounded-xl border border-primary/30 text-[11px] font-display uppercase tracking-widest text-primary flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                 aria-label="Abrir fluxo 9FIT Staff: Cliente ou Staff / Prof"
               >

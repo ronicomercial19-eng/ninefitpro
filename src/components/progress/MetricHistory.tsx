@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ArrowUpRight, Activity, Layers3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { assessmentMetrics, assessmentOrder, fmt, fullDate, isSelf, metricValue, trustFor } from '@/services/assessmentMetrics';
@@ -13,12 +14,15 @@ export function MetricHistory({ hub, assessmentPath, capacityOnly = false }: { h
   const metric = metrics.find(item => item.key === selected);
   const points = metric ? rows.filter(row => metricValue(row, metric.key) !== null) : [];
   return <>
-    <div className="aw-chips" aria-label="Período">{[[0, 'Tudo'], [30, '30 dias'], [90, '90 dias']].map(([days, label]) => <button key={days} type="button" aria-pressed={period === days} onClick={() => setPeriod(Number(days))}>{label}</button>)}</div>
-    <div className="grid grid-cols-2 gap-3">
-      {metrics.map(item => { const latest = [...rows].reverse().find(row => metricValue(row, item.key) !== null)!; return <button type="button" key={item.key} onClick={() => setSelected(item.key)} className="rounded-2xl border border-border/15 bg-card p-4 text-left transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary"><span className="text-xs text-muted-foreground">{item.label}</span><strong className="mt-2 block text-2xl font-display">{fmt(metricValue(latest, item.key)!)} <small className="text-xs font-normal text-muted-foreground">{item.unit}</small></strong><span className="mt-2 block text-[11px] text-muted-foreground">{fullDate(latest.data_avaliacao)} · Ver evolução</span></button>; })}
+    <div className="pa-section-heading"><div><p className="pa-kicker">SUAS MEDIDAS</p><h3>Explore por área</h3></div><div className="aw-chips" aria-label="Período">{[[0, 'Tudo'], [30, '30 dias'], [90, '90 dias']].map(([days, label]) => <button key={days} type="button" aria-pressed={period === days} onClick={() => setPeriod(Number(days))}>{label}</button>)}</div></div>
+    <div className="pa-metric-sections">
+      {(['composicao','forca','resistencia','core','cardio','mobilidade'] as const).map(pillar => {
+        const group=metrics.filter(item=>item.pillar===pillar);
+        if(!group.length)return null;
+        return <section className="pa-metric-group" key={pillar}><header><span><Layers3 size={16} aria-hidden="true"/>{({composicao:'Composição corporal',forca:'Força',resistencia:'Resistência',core:'Core',cardio:'Cardio',mobilidade:'Mobilidade'})[pillar]}</span><small>{group.length} {group.length===1?'métrica':'métricas'}</small></header><div className="pa-metric-grid">{group.map(item => { const latest = [...rows].reverse().find(row => metricValue(row, item.key) !== null)!; return <button type="button" key={item.key} onClick={() => setSelected(item.key)} className="pa-metric-tile"><span className="text-xs text-muted-foreground">{item.label}</span><strong className="mt-2 block text-2xl font-display">{fmt(metricValue(latest, item.key)!)} <small className="text-xs font-normal text-muted-foreground">{item.unit}</small></strong><span className="mt-2 block text-[11px] text-muted-foreground">{fullDate(latest.data_avaliacao)} · Ver evolução <ArrowUpRight size={13} aria-hidden="true"/></span></button>; })}</div></section>;})}
     </div>
-    {!metrics.length && <p className="aw-empty">{capacityOnly ? 'Nenhuma medida de capacidade registrada neste período. Registre os testes que realizou para acompanhar sua evolução.' : 'Suas métricas aparecem aqui assim que uma avaliação for registrada.'}</p>}
-    <button type="button" className="aw-secondary" onClick={() => setSelected('registros')}>Ver avaliações e treinos registrados</button>
+    {!metrics.length && <p className="aw-empty">Suas métricas aparecem aqui assim que uma avaliação for registrada.</p>}
+    <button type="button" className="aw-secondary pa-history-link" onClick={() => setSelected('registros')}><Activity size={18} aria-hidden="true"/>Ver avaliações e treinos registrados<ArrowUpRight size={17} aria-hidden="true"/></button>
     <Dialog open={selected !== null} onOpenChange={open => { if (!open) setSelected(null); }}>
       <DialogContent className="fitpro-orange max-h-[90dvh] overflow-y-auto rounded-2xl border-border/20 bg-background sm:max-w-2xl">
         <DialogHeader className="border-b border-border/15 pb-4 pr-7"><DialogTitle>{metric?.label ?? 'Seus registros'}</DialogTitle><DialogDescription>{metric ? 'Todas as suas medidas, em ordem de data. A origem e o método acompanham cada registro.' : 'Avaliações e treinos em um só lugar.'}</DialogDescription></DialogHeader>

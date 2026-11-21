@@ -1,3 +1,4 @@
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 import { useQueryClient } from '@tanstack/react-query';
 import { withTimeout } from '@/lib/withTimeout';
 import { getAthleteScores } from '@/hooks/useAthleteScores';
@@ -226,7 +227,7 @@ export function CompleteProfileFlow({ open, onClose, editOnly = false }: Props) 
               {streakDays >= 3 && workoutsDone >= 3 ? (
                 <>
                   <p className="text-sm text-muted-foreground">{streakDays} dias consecutivos · {workoutsDone} treinos. Você liberou consultoria.</p>
-                  <button onClick={() => { navigate("/9fit/staff"); onClose(); }}
+                  <button onClick={() => { navigate(STAFF_FLOW_ROUTE); onClose(); }}
                     className="w-full rounded-full bg-primary text-primary-foreground font-bold py-3">Agendar consultoria</button>
                 </>
               ) : (

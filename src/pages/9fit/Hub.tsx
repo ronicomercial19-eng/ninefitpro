@@ -1,5 +1,6 @@
+import { useSyncScore } from "@/hooks/useSyncScore";
 import { HubQuickRecords } from "@/components/9fit/HubQuickRecords";
-import { businessDate, dailySync } from "@/services/dailyContextRules";
+
 import { withTimeout } from '@/lib/withTimeout';
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
@@ -58,10 +59,9 @@ export default function NineFitHub() {
   const { athleteId, athleteName, loading: athleteLoading, error: identityError, retry: retryIdentity } = useAthleteId();
   const navigate = useNavigate();
   const { invalidate } = useUserState();
-  const [quick, setQuick] = useState<{ athleteId: string; date: string; records: string[] }>();
   const [showDiagnosis, setShowDiagnosis] = useState(false);
-  const { data: liveScores, status: scoreStatus, refresh: refreshScores } = useAthleteScores(athleteId);
-  const routine = dailySync(liveScores?.context, undefined, quick?.athleteId === athleteId && quick?.date === businessDate() ? quick.records : undefined);
+  const { data: liveScores, refresh: refreshScores } = useAthleteScores(athleteId);
+  const {routine,status:scoreStatus,context:syncContext,refresh:refreshSync}=useSyncScore(athleteId);
   useOnboardingCheck(); // Auto-ativa Prime aos 7 dias
 
   const [protocolCount, setProtocolCount] = useState(0);
@@ -216,14 +216,14 @@ export default function NineFitHub() {
             breakdown={breakdown}
             routinePillars
             onDiagnosis={() => setShowDiagnosis(true)}
-            lastUpdate={liveScores?.sync.observed_at ?? undefined}
-            onRefresh={() => void refreshScores()}
+            lastUpdate={syncContext?.generated_at}
+            onRefresh={() => { void refreshSync(); void refreshScores(); }}
           />
         </motion.div>
 
-        {athleteId && user?.id && <HubQuickRecords key={athleteId} athleteId={athleteId} userId={user.id} onToday={setQuick} />}
+        {athleteId && user?.id && <HubQuickRecords key={athleteId} athleteId={athleteId} userId={user.id} />}
         <SyncScoreDiagnosisModal
-           context={liveScores?.context}
+           context={syncContext}
            open={showDiagnosis}
            onClose={() => setShowDiagnosis(false)}
            score={routine.value}
@@ -233,7 +233,7 @@ export default function NineFitHub() {
         />
 
         <motion.div variants={hubStaggerItem}>
-          <HubRonCard syncScore={liveScores?.sync.value ?? null} scoreStatus={scoreStatus} name={name} />
+          <HubRonCard syncScore={routine.value} scoreStatus={scoreStatus} name={name} />
         </motion.div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-primary/20 p-3 text-xs text-muted-foreground" aria-label="Resumo do perfil e da rotina">
           <span>Peso: {weightLabel}</span>

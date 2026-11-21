@@ -101,7 +101,22 @@ Deno.serve(withPaidAccess(async (req) => {
 
   try {
     if (action === "content" && req.method === "GET") {
-      const r = await callHF("/fitpro-content", { method: "GET" });
+      const query = new URLSearchParams();
+      if (url.searchParams.get("view") === "home") {
+        if (!athleteId) return json(403, { error: "athlete profile required" });
+        // Always resolve identity from the authenticated session, never the query string.
+        query.set("view", "home");
+        query.set("fitpro_student_id", String(athleteId));
+        const goals = ["emagrecimento", "hipertrofia", "condicionamento", "mobilidade", "bem_estar"];
+        const levels = ["iniciante", "intermediario", "avancado"];
+        const goal = url.searchParams.get("goal") || "";
+        const level = url.searchParams.get("level") || "";
+        const minutes = Number(url.searchParams.get("minutes"));
+        if (goals.includes(goal)) query.set("goal", goal);
+        if (levels.includes(level)) query.set("level", level);
+        if (Number.isFinite(minutes) && minutes > 0 && minutes <= 240) query.set("minutes", String(Math.round(minutes)));
+      }
+      const r = await callHF(`/fitpro-content${query.size ? `?${query}` : ""}`, { method: "GET" });
       return json(r.status, r.data);
     }
     if (action === "health" && req.method === "GET") {
@@ -129,6 +144,10 @@ Deno.serve(withPaidAccess(async (req) => {
         fitpro_student_id: studentId,
         fitpro_professor_id: userId,
         role: isStaff ? "professor" : "student",
+        ...(body.content_id != null ? {
+          view: "workout",
+          content_id: String(body.content_id).slice(0, 180),
+        } : { view: "home" }),
       };
       if (!isStaff) {
         await callHF("/fitpro-sync", {

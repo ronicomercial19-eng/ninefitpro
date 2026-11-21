@@ -1,3 +1,4 @@
+import { useSyncScore } from "@/hooks/useSyncScore";
 import { useEffect, useRef, useState } from "react";
 import { businessDate } from "@/services/dailyContextRules";
 import { ArrowLeftRight, ChevronLeft, Check, Loader2, Play, RefreshCw, RotateCcw, Send, SlidersHorizontal, Sparkles, X } from "lucide-react";
@@ -58,12 +59,12 @@ export default function NineFitAjusteTreino() {
   const [availableSessions,setAvailableSessions]=useState<{id:string;day_name:string;workout_type:string}[]>([]);
   const { athleteId } = useAthleteId();
   const { data: scores, refresh: refreshScores } = useAthleteScores(athleteId);
+  const displaySync=useSyncScore(athleteId);
   const [mode, setMode] = useState<"suggestion" | "manual">("suggestion");
   const [request, setRequest] = useState("");
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [applied, setApplied] = useState(false);
   const [published, setPublished] = useState(false);
-  const [animatedSync, setAnimatedSync] = useState(0);
   const [requestSheetOpen, setRequestSheetOpen] = useState(false);
   const [swapOpen, setSwapOpen] = useState<string | null>(null);
   const [exercises, setExercises] = useState<Ex[]>([]);
@@ -92,17 +93,6 @@ export default function NineFitAjusteTreino() {
   const needsReview = !!redFlagSource || !!scores?.context?.safety.review_required;
   const reviewBlocked = activeAlert || (needsReview && !restrictionReviewed);
   useEffect(() => { setRestrictionReviewed(false); }, [athleteId, selectedDate, scores?.context?.calibration.observed_at]);
-
-  useEffect(() => {
-    const target = scores?.sync.status === 'available' ? scores.sync.value : null;
-    if (target == null) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setAnimatedSync(Math.round(target)); return; }
-    const started = performance.now();
-    let frame = 0;
-    const tick = (now: number) => { const progress = Math.min(1, (now - started) / 650); setAnimatedSync(Math.round(target * (1 - (1 - progress) ** 3))); if (progress < 1) frame = requestAnimationFrame(tick); };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [scores?.sync.value, scores?.sync.status]);
 
   const loadToday = async () => {
     if (!athleteId) return;
@@ -411,7 +401,7 @@ export default function NineFitAjusteTreino() {
       )}
 
       {exercises.length > 0 && <div className="mx-auto mt-5 max-w-2xl px-4"><div className="rounded-[26px] border border-primary/25 bg-gradient-to-br from-primary/15 via-white/[0.04] to-transparent p-5 shadow-[0_20px_60px_-35px_hsl(var(--primary)/0.8)]">
-        <p className="text-xs text-muted-foreground">{selectedDate === today ? 'Hoje' : selectedDate} · {dayNumber ? `Dia ${dayNumber} do ciclo` : 'Sessão programada'} · Sync {scores?.sync.status === 'available' ? `${animatedSync}%` : '—'}</p>
+        <p className="text-xs text-muted-foreground">{selectedDate === today ? 'Hoje' : selectedDate} · {dayNumber ? `Dia ${dayNumber} do ciclo` : 'Sessão programada'} · Sync de hoje {displaySync.value!==null ? `${displaySync.value}/100` : '—'}</p>
         <div className="mt-5 rounded-2xl border border-primary/20 bg-background/40 p-4"><div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><h2 className="font-bold">RON IA · ajuste desta sessão</h2></div>
         <p className="mt-2 text-xs text-muted-foreground">Melhor hoje pode ser manter. Sua prescrição só muda após confirmar em Aplicar ajustes.</p>
         {!executionStatus && <div className="mt-3 flex flex-wrap gap-2">{['Revisar contexto', 'Mais leve hoje', 'Pouco tempo, encurtar', 'Falta equipamento'].map(option => <button key={option} type="button" disabled={loading || reloading} onClick={() => void runCopilot(option === 'Revisar contexto' ? '' : option)} className="rounded-full border border-primary/30 px-3 py-2 text-xs text-primary disabled:opacity-40">{option}</button>)}</div>}

@@ -1,3 +1,4 @@
+import { ArrowUpRight, Dumbbell, FileText, Layers3 } from 'lucide-react';
 import { isExecutableTraining } from '@/lib/executableTraining';
 import { withTimeout } from '@/lib/withTimeout';
 import { useCallback, useEffect, useState, useRef } from 'react';
@@ -7,10 +8,13 @@ import { AssignedTraining, isAvailableTraining, trainingMedia } from '@/lib/assi
 import { AssignedTrainingViewer } from './AssignedTrainingViewer';
 import { ProtocolListItem, ProtocolViewer } from './ProtocolViewer';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'react-router-dom';
 
 // Lista única de tudo o que o coach (ou o NINE/LIMA) entregou ao aluno, separada em dois grupos:
 // prescrições/modelos de treino e conteúdos (infoprodutos, e-books, sistemas, HTML).
 export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('assignment');
   const requestRef = useRef(0);
   const [trainings, setTrainings] = useState<AssignedTraining[]>([]);
   const [library, setLibrary] = useState<any[]>([]);
@@ -40,8 +44,17 @@ export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
   }, [load]);
   useRealtimeTable({ table: 'student_training_assignments', filter: athleteId ? 'student_id=eq.'+athleteId : undefined, enabled: !!athleteId }, () => void load());
   useRealtimeTable({ table: 'student_library_assignments', filter: athleteId ? 'athlete_id=eq.'+athleteId : undefined, enabled: !!athleteId }, () => void load());
-  if (selected?.source === 'training') return <AssignedTrainingViewer key={selected.row.id} training={selected.row} onBack={() => setSelected(null)} />;
-  if (selected) return <ProtocolViewer key={selected.row.id} assignment={selected.row} onBack={() => setSelected(null)} onComplete={() => { setSelected(null); void load(); }} />;
+  const linked = requested ? library.find(row => row.id === requested) : null;
+  const close = () => {
+    setSelected(null);
+    if (!requested) return;
+    const next = new URLSearchParams(params);
+    next.delete('assignment');
+    setParams(next, { replace: true });
+  };
+  if (selected?.source === 'training') return <AssignedTrainingViewer key={selected.row.id} training={selected.row} onBack={close} />;
+  const opened = selected?.row ?? linked;
+  if (opened) return <ProtocolViewer key={opened.id} assignment={opened} onBack={close} onComplete={() => { close(); void load(); }} />;
   if (loading) return <p role="status">Carregando protocolos…</p>;
   if (error) return <div role="alert" className="surface-card p-4"><p>Não foi possível consultar seus protocolos.</p><Button onClick={() => void load()}>Tentar novamente</Button></div>;
   if (!trainings.length && !library.length) return <div className="surface-card p-6 text-center"><p>Nenhum protocolo atribuído.</p><p className="text-sm text-muted-foreground">Quando seu coach enviar um conteúdo, ele aparecerá aqui.</p></div>;
@@ -50,13 +63,15 @@ export function AssignedProtocols({ athleteId }: { athleteId: string | null }) {
   const doneLibrary = library.filter(row => !!row.completed_at);
 
   return <div className="space-y-5">
-    {[{ label: 'PRESCRIÇÕES COM EXERCÍCIOS', rows: trainings.filter(isExecutableTraining) },
-      { label: 'MODELOS EM PREPARAÇÃO', rows: trainings.filter(row => trainingMedia(row).kind === 'model' && !isExecutableTraining(row)) },
-      { label: 'ARQUIVOS DO PROFISSIONAL', rows: trainings.filter(row => trainingMedia(row).kind !== 'model' && !isExecutableTraining(row)) }].map(group => group.rows.length > 0 && <section key={group.label}>
-      <p className="text-label mb-2">{group.label} ({group.rows.length})</p>
-      <div className="space-y-2">{group.rows.map(row => <button key={row.id} className="surface-card p-4 w-full text-left hover:border-primary/40" onClick={() => setSelected({ source: 'training', row })}>
-        <p className="font-semibold">{row.training_name}</p>
-        <p className="text-xs text-muted-foreground mt-1">{group.label === 'MODELOS EM PREPARAÇÃO' ? 'Aguardando exercícios, séries e doses do profissional. Consultar modelo →' : 'Consultar prescrição →'}</p>
+    {requested && <p role="status" className="text-sm text-muted-foreground">Este conteúdo não está disponível para sua conta.</p>}
+    {[{ label: 'Prescrições com exercícios', kind: 'ready', icon: Dumbbell, caption: 'Seu treino em detalhes, exercício por exercício.', rows: trainings.filter(isExecutableTraining) },
+      { label: 'Modelos em preparação', kind: 'pending', icon: Layers3, caption: 'O planejamento começa aqui. Seu professor ainda está definindo os exercícios e as doses.', rows: trainings.filter(row => trainingMedia(row).kind === 'model' && !isExecutableTraining(row)) },
+      { label: 'Arquivos do profissional', kind: 'files', icon: FileText, caption: 'Materiais de apoio para acompanhar sua jornada.', rows: trainings.filter(row => trainingMedia(row).kind !== 'model' && !isExecutableTraining(row)) }].map(group => group.rows.length > 0 && <section key={group.kind} className={`protocol-group protocol-group--${group.kind}`}>
+      <div className="protocol-group-heading"><h3>{group.label}<span>{String(group.rows.length).padStart(2,'0')}</span></h3><p>{group.caption}</p></div>
+      <div className="protocol-grid">{group.rows.map((row,index) => <button type="button" key={row.id} className="protocol-tile" onClick={() => setSelected({ source: 'training', row })}>
+        <div className="protocol-tile-top"><span className="protocol-tile-icon"><group.icon size={23} aria-hidden="true"/></span><span className="protocol-tile-status">{group.kind==='ready'?'Prescrição disponível':group.kind==='pending'?'Em preparação':'Material do professor'}</span></div>
+        <div className="protocol-tile-body"><span className="protocol-tile-number" aria-hidden="true">{String(index+1).padStart(2,'0')}</span><h4>{row.training_name}</h4></div>
+        <div className="protocol-tile-action"><span>{group.kind==='pending'?'Consultar planejamento':group.kind==='files'?'Abrir arquivo':'Ver prescrição'}</span><ArrowUpRight size={20} aria-hidden="true"/></div>
       </button>)}</div>
     </section>)}
     {activeLibrary.length > 0 && (

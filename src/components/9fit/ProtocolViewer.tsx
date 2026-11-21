@@ -269,8 +269,8 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+          <Button variant="outline" size="sm" className="min-h-11" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar aos protocolos
           </Button>
           {!assignment.completed_at && (
             <Button onClick={markDone} disabled={marking || !canComplete} size="sm" className="bg-primary text-primary-foreground">
@@ -401,8 +401,8 @@ export function ProtocolViewer({ assignment, onBack, onComplete }: {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+        <Button variant="outline" size="sm" className="min-h-11" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar aos protocolos
         </Button>
         {!assignment.completed_at && (
           <Button onClick={markDone} disabled={marking || !canComplete} className="bg-primary text-primary-foreground">

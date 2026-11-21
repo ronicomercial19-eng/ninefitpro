@@ -19,7 +19,10 @@ export function mergeHealthCatalog(remote: any[], local: any[]): HealthVideo[] {
         external_id: key,
         title: String(r.title || r.name || "Sem título"),
         video_url: r.video_url || r.player_url,
-        thumbnail: r.thumbnail || r.thumbnail_url,
+        thumbnail: r.cover_hd_url || r.cover_16x9_url || r.cover_url || r.thumbnail || r.thumbnail_url,
+        category: r.modality || r.category,
+        level: r.level_key || r.level,
+        duration: r.duration_label || r.duration,
       });
   }
   const ordered = [...local].sort(

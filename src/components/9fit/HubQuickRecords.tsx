@@ -15,7 +15,7 @@ const source = "fitpro_hub_quick";
 export function HubQuickRecords({ athleteId, userId, onToday }: {
   athleteId: string;
   userId: string;
-  onToday: (snapshot: { athleteId: string; date: string; records: Category[] }) => void;
+  onToday?: (snapshot: { athleteId: string; date: string; records: Category[] }) => void;
 }) {
   const [clock, setClock] = useState(() => new Date());
   const date = businessDate(clock);
@@ -70,7 +70,7 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
     }
     setEntries(records);
     setReadyDate(date);
-    onToday({ athleteId, date, records: categories.filter(category => records.some(row => row.date === date && row.category === category)) });
+    onToday?.({ athleteId, date, records: categories.filter(category => records.some(row => row.date === date && row.category === category)) });
   }
 
   useEffect(() => {

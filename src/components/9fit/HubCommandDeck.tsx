@@ -31,7 +31,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKno
   const current = !context.isError && context.data?.date === businessDate() ? context.data : null;
   const command = current ? selectDayCommand(current) : null;
   const progress = current ? dayProgress(current) : null;
-  const scoreReady = !context.isError && typeof syncScore === "number" && scoreStatus === "available";
+  const scoreReady = !context.isError && typeof syncScore === "number" && ["available","stale","offline"].includes(scoreStatus);
   const headline = command?.title || (context.isError ? 'Não consegui ler seu dia.' : 'Lendo seus registros de hoje…');
   const failure = context.isError ? readFailure(context.error, context.online) : null;
   const primaryLabel = failure?.action || command?.label || 'Atualizando…';

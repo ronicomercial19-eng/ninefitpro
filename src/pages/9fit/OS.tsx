@@ -1,3 +1,4 @@
+import { useSyncScore } from "@/hooks/useSyncScore";
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { OSDashboard } from "@/components/9fit/OSDashboard";
 import { QuickTrainModal } from "@/components/9fit/QuickTrainModal";
@@ -12,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 export default function NineFitOS() {
   const { user, profile } = useAuth();
   const { athleteId, athleteName, loading: athleteLoading } = useAthleteId();
-  const { data: scores, status } = useAthleteScores(athleteId);
+  const { data: scores } = useAthleteScores(athleteId);
+  const sync=useSyncScore(athleteId);
   const [cycleStatus, setCycleStatus] = useState<CycleStatus>("loading");
   const [showQuickTrain, setShowQuickTrain] = useState(false);
   const [showMotivationalQuote, setShowMotivationalQuote] = useState(false);
@@ -51,8 +53,8 @@ export default function NineFitOS() {
     <div className="fit-os-grid min-h-screen bg-background pb-28">
       <OSDashboard
         name={name}
-        syncScore={scores?.sync.value ?? null}
-        scoreStatus={athleteLoading ? "loading" : status}
+        syncScore={sync.value}
+        scoreStatus={athleteLoading ? "loading" : sync.status}
         weekly={scores?.weekly ?? null}
         cycleStatus={cycleStatus}
       />

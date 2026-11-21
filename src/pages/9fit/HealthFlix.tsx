@@ -1,3 +1,5 @@
+import { contentId, healthEmbedUrl, facetOptions, type HealthHome } from '@/lib/healthFlixHome';
+import { HealthFlixHome, HealthCover } from '@/components/9fit/HealthFlixHome';
 import { BottomNavigation } from "@/components/9fit/BottomNavigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -8,7 +10,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { matchesCatalog, type CatalogFilters } from "@/services/catalogFilters";
 import { TrackedLibraryVideo } from "@/components/9fit/TrackedLibraryVideo";
-import { loadHealthFlixCatalog } from "@/services/healthFlixCatalog";
+import { loadHealthFlixHomeCatalog } from "@/services/healthFlixCatalog";
 
 interface CatalogItem {
   id: string;
@@ -25,6 +27,9 @@ interface CatalogItem {
   progress_percent?: number;
   last_position_seconds?: number;
   duration_seconds?: number;
+  play?: { content_id?: string | number };
+  cover_hd_url?: string; cover_url?: string; cover_16x9_url?: string;
+  level_key?: string; modality?: string; duration_label?: string; match_percent?: number;
 }
 
 function normalizePlayerUrl(item: CatalogItem) {
@@ -67,6 +72,10 @@ function normalizePlayerUrl(item: CatalogItem) {
 export default function NineFitHealthFlix() {
   const { athleteId } = useAthleteId();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [home, setHome] = useState<HealthHome>({ hero: null, rows: [], facets: {} });
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+  const [playerError, setPlayerError] = useState(false);
+  const [playerAttempt, setPlayerAttempt] = useState(0);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -92,7 +101,7 @@ export default function NineFitHealthFlix() {
     () =>
       items.map((item) => ({
         ...item,
-        ...(savedProgress[item.external_id || item.id] || {}),
+        ...(savedProgress[contentId(item)] || {}),
       })),
     [items, savedProgress],
   );
@@ -103,9 +112,10 @@ export default function NineFitHealthFlix() {
       setLoading(true);
       setLoadError(false);
       try {
-        const catalog = await loadHealthFlixCatalog();
+        const catalog = await loadHealthFlixHomeCatalog(athleteId);
         if (active) {
           setItems(catalog.items);
+          setHome(catalog.home);
           setExternalAvailable(catalog.externalAvailable);
         }
       } catch (error) {
@@ -121,7 +131,7 @@ export default function NineFitHealthFlix() {
     return () => {
       active = false;
     };
-  }, [catalogAttempt]);
+  }, [catalogAttempt, athleteId]);
 
   useEffect(() => {
     setSavedProgress({});
@@ -153,6 +163,7 @@ export default function NineFitHealthFlix() {
     if (!requestedId || !catalogItems.length) return;
     const item = catalogItems.find(
       (entry) =>
+        contentId(entry) === requestedId ||
         entry.id === requestedId ||
         entry.external_id === requestedId ||
         entry.slug === requestedId,
@@ -183,7 +194,7 @@ export default function NineFitHealthFlix() {
           event_type: eventType,
           fitpro_student_id: athleteId,
           entity_type: "content",
-          entity_id: item.external_id || item.id,
+          entity_id: contentId(item),
           payload: {
             title: item.title,
             progress_percent: progressPercent,
@@ -199,7 +210,7 @@ export default function NineFitHealthFlix() {
           toast.error("Não foi possível salvar o progresso. Tente novamente.");
           return;
         }
-        const key = item.external_id || item.id;
+        const key = contentId(item);
         setSavedProgress((current) => ({
           ...current,
           [key]: {
@@ -217,11 +228,50 @@ export default function NineFitHealthFlix() {
       });
   };
 
+  useEffect(() => {
+    setEmbedUrl(null); setPlayerError(false);
+    if (!selected?.play?.content_id) return;
+    let active = true;
+    void supabase.functions.invoke('healthflix-proxy?action=context', {
+      body: { content_id: contentId(selected) },
+    }).then(({ data, error }) => {
+      if (!active) return;
+      const url = !error && healthEmbedUrl(data?.embed_url, contentId(selected));
+      if (url) setEmbedUrl(url); else setPlayerError(true);
+    }).catch(() => { if (active) setPlayerError(true); });
+    return () => { active = false; };
+  }, [selected, athleteId, playerAttempt]);
+  const playerUrl = selected?.play?.content_id ? embedUrl : selected ? normalizePlayerUrl(selected) : null;
+  const openItem = (item: CatalogItem) => {
+    if (!item.play?.content_id && !normalizePlayerUrl(item)) { toast.info('Este conteúdo ainda não possui player configurado.'); return; }
+    setSelected(item);
+    setSearchParams(current => { current.set('content', contentId(item)); return current; }, { replace: true });
+    if (!item.play?.content_id) trackEvent(item, 'content_started', item.last_position_seconds || 0, item.duration_seconds || 0);
+  };
+  const closePlayer = () => {
+    setSelected(null); setEmbedUrl(null);
+    setSearchParams(current => { current.delete('content'); return current; }, { replace: true });
+    setCatalogAttempt(attempt => attempt + 1);
+  };
+  useEffect(() => {
+    if (!selected) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const keydown = (event: KeyboardEvent) => { if (event.key === 'Escape') closePlayer(); };
+    window.addEventListener('keydown', keydown);
+    return () => { window.removeEventListener('keydown', keydown); previous?.focus(); };
+  }, [selected]);
+  useEffect(() => {
+    const refresh = () => { if (!document.hidden && !selected) setCatalogAttempt(attempt => attempt + 1); };
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, [selected]);
+
+  const categoryFacets = facetOptions(home.facets, 'modality');
   const categories = useMemo(() => {
     const set = new Set<string>();
     catalogItems.forEach((i) => i.category && set.add(String(i.category)));
-    return Array.from(set);
-  }, [catalogItems]);
+    return Array.from(new Set([...categoryFacets.map(entry => entry.value), ...set]));
+  }, [catalogItems, home.facets]);
 
   const filtered = useMemo(
     () => catalogItems.filter((item) => matchesCatalog(item, filters)),
@@ -231,13 +281,13 @@ export default function NineFitHealthFlix() {
   const options = (key: "level" | "objective" | "equipment") =>
     Array.from(
       new Set(
-        catalogItems.flatMap((item) =>
+        [...(key === "equipment" ? [] : facetOptions(home.facets, key).map(entry => entry.value)), ...catalogItems.flatMap((item) =>
           key === "equipment" && Array.isArray(item.equipment)
             ? item.equipment
             : item[key]
               ? [String(item[key])]
               : [],
-        ),
+        )],
       ),
     );
   const field = "rounded-lg border border-white/15 bg-background p-2 text-xs";
@@ -252,16 +302,11 @@ export default function NineFitHealthFlix() {
           AULAS EM VÍDEO
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Catálogo conectado em tempo real via API.
+          Encontre seu ritmo. Dê play na sua evolução.
         </p>
       </div>
 
-      <div className="px-4 mb-3">
-        <p className="w-full rounded-2xl border border-primary/40 bg-primary/[0.08] py-3 text-center text-xs font-bold text-primary">
-          CATÁLOGO HEALTHFLIX VIA API
-        </p>
-      </div>
-
+      {!loading && !loadError && !Object.values(filters).some(Boolean) && <HealthFlixHome home={home} onOpen={openItem}/>}
       <section className="mx-4 mb-4 space-y-2" aria-label="Filtros do catálogo">
         <label className="block text-xs">
           Buscar conteúdo
@@ -285,7 +330,7 @@ export default function NineFitHealthFlix() {
             >
               <option value="">Todas</option>
               {categories.map((value) => (
-                <option key={value}>{value}</option>
+                <option key={value} value={value}>{value}{categoryFacets.find(entry => entry.value === value)?.count != null ? ` (${categoryFacets.find(entry => entry.value === value)?.count})` : ""}</option>
               ))}
               <option value="__unknown">Não informada</option>
             </select>
@@ -324,7 +369,7 @@ export default function NineFitHealthFlix() {
               >
                 <option value="">Todos</option>
                 {options(key).map((value) => (
-                  <option key={value}>{value}</option>
+                  <option key={value} value={value}>{value}</option>
                 ))}
                 <option value="__unknown">Não informado</option>
               </select>
@@ -384,44 +429,14 @@ export default function NineFitHealthFlix() {
         {filtered.slice(0, visibleCount).map((v, i) => (
           <motion.button
             key={v.id}
-            onClick={() => {
-              if (!normalizePlayerUrl(v)) {
-                toast.info(
-                  "Este conteúdo ainda não possui player configurado.",
-                );
-                return;
-              }
-              setSelected(v);
-              setSearchParams(
-                (current) => {
-                  current.set("content", v.external_id || v.id);
-                  return current;
-                },
-                { replace: true },
-              );
-              trackEvent(
-                v,
-                "content_started",
-                v.last_position_seconds || 0,
-                v.duration_seconds || 0,
-              );
-            }}
+            onClick={() => openItem(v)}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.4) }}
             className="glass-mission rounded-xl overflow-hidden text-left group"
           >
             <div className="aspect-video bg-white/[0.03] flex items-center justify-center relative">
-              {v.thumbnail ? (
-                <img
-                  src={v.thumbnail}
-                  alt={v.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <Film className="w-6 h-6 text-muted-foreground" />
-              )}
+              <HealthCover item={v} />
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Play className="w-8 h-8 text-primary" />
               </div>
@@ -458,7 +473,7 @@ export default function NineFitHealthFlix() {
           Mostrar mais conteúdos
         </button>
       )}
-      {selected && normalizePlayerUrl(selected) && (
+      {selected && (
         <div
           className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-md p-3 sm:p-6 flex items-center justify-center"
           role="dialog"
@@ -477,7 +492,7 @@ export default function NineFitHealthFlix() {
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href={normalizePlayerUrl(selected) as string}
+                  href={playerUrl || undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40"
@@ -486,16 +501,8 @@ export default function NineFitHealthFlix() {
                   <ExternalLink className="w-4 h-4" />
                 </a>
                 <button
-                  onClick={() => {
-                    setSelected(null);
-                    setSearchParams(
-                      (current) => {
-                        current.delete("content");
-                        return current;
-                      },
-                      { replace: true },
-                    );
-                  }}
+                  onClick={closePlayer}
+                  autoFocus
                   className="w-9 h-9 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-primary/40"
                   aria-label="Fechar player"
                 >
@@ -507,8 +514,9 @@ export default function NineFitHealthFlix() {
               Se o provedor bloquear a reprodução aqui, use Abrir em nova aba.
             </p>
             <div className="w-full flex-1 min-h-0 bg-black">
-              <TrackedLibraryVideo
-                url={normalizePlayerUrl(selected) as string}
+              {playerError ? <div role="alert" className="p-6 text-sm text-white">Não foi possível abrir este treino.<button onClick={() => setPlayerAttempt(value => value + 1)} className="ml-3 underline text-primary">Tentar novamente</button></div> : !playerUrl ? <div role="status" className="p-6 text-sm text-white">Preparando seu treino…</div> : <TrackedLibraryVideo
+                key={playerUrl}
+                url={playerUrl}
                 title={selected.title}
                 startSeconds={selected.last_position_seconds || 0}
                 onProgress={(position, duration) =>
@@ -522,7 +530,7 @@ export default function NineFitHealthFlix() {
                 onComplete={(duration) =>
                   trackEvent(selected, "content_completed", duration, duration)
                 }
-              />
+              />}
             </div>
           </div>
         </div>

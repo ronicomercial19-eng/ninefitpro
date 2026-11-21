@@ -108,11 +108,9 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
       return;
     }
 
-    let score: number | null = null;
     try {
       const context = await fetchDailyContext();
       if(actor.current!==owner)return;
-      score = context.sync.value;
       queryClient.setQueryData(['daily-context', user?.id], context);
     } catch {
       void queryClient.resetQueries({ queryKey: ['daily-context', user?.id] });
@@ -121,9 +119,9 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
     savingRef.current=false;setSaving(false);
     try { localStorage.setItem(STORAGE_KEY, businessDate()); } catch { /* Storage is optional. */ }
     setDone(true);
-    onComplete?.(score);
-    toast.success(score === null ? 'Calibração salva. A leitura será atualizada ao reconectar.' : `SYNC atualizada: ${score}/100`);
-    window.dispatchEvent(new CustomEvent("9fit:sync_updated", { detail: { score } }));
+    onComplete?.(null);
+    toast.success('Calibração salva. Atualizando a Sync em todas as telas.');
+    window.dispatchEvent(new Event("9fit:sync_updated"));
   };
 
   if (completedToday || done) {

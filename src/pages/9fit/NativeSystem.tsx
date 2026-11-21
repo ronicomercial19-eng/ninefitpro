@@ -4,7 +4,6 @@ import { ArrowLeft, ExternalLink, MessageCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { safeExternalAppUrl } from "@/lib/externalApps";
 import { getEmbeddedApp } from "@/data/ecosystemApps";
-import { StaffBookingStatus } from '@/components/9fit/StaffBookingStatus';
 
 export default function NineFitNativeSystem() {
   const navigate = useNavigate();
@@ -16,7 +15,6 @@ export default function NineFitNativeSystem() {
   // Sem URL nativa ainda → mostra fallback operacional + WhatsApp
   const externalUrl = safeExternalAppUrl(app.url);
   const showFallback = !externalUrl;
-  if (appKey === 'staff') return <main className="min-h-screen bg-background p-4 pt-16 space-y-4"><h1 className="text-2xl font-bold">9FIT Staff</h1><StaffBookingStatus /><Link className="block min-h-11 text-primary" to="/9fit/staff">Escolher profissional</Link><Link className="block min-h-11 text-primary" to="/9fit/aulas-creditos?tab=schedule">Abrir agenda</Link><button className="min-h-11" onClick={()=>goBackOrHome(navigate)}>Voltar</button></main>;
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
@@ -36,6 +34,7 @@ export default function NineFitNativeSystem() {
         )}
       </header>
 
+      {appKey === 'staff' && <div className="flex flex-wrap items-center gap-4 border-b border-primary/20 px-4 py-3 text-xs"><span className="text-muted-foreground">Seleção e agendamento no fluxo oficial Staff.</span><Link className="min-h-11 inline-flex items-center text-primary underline" to="/9fit/staff">Minha equipe e agendamentos</Link><Link className="min-h-11 inline-flex items-center text-primary underline" to="/9fit/aulas-creditos?tab=schedule">Agenda FitPro</Link></div>}
       {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
 
       <p className="px-4 py-2 text-xs text-muted-foreground">Aplicativo externo. Pode solicitar acesso próprio; seus registros aqui não comprovam sincronização com o 9FIT.</p>

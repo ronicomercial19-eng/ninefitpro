@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { MODULE_IMAGES } from "@/assets/modules";
 import { useTiltCard } from "@/hooks/useTiltCard";
 import { EcosystemOverlay } from "./EcosystemOverlay";
-import { moduleRoute } from "@/lib/moduleRoute";
+import { moduleRoute, STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 
 interface PhysioModule {
   id: string;
@@ -68,13 +68,13 @@ const MODULE_META: Record<
     icon: Crown,
     category: "PREMIUM",
     color: "#F59E0B",
-    defaultRoute: "/9fit/primepass",
+    defaultRoute: "/9fit/planos",
   },
   primepass: {
     icon: Crown,
     category: "PREMIUM",
     color: "#F59E0B",
-    defaultRoute: "/9fit/primepass",
+    defaultRoute: "/9fit/planos",
   },
   biblioteca: {
     icon: Library,
@@ -167,11 +167,11 @@ const CANONICAL_MODULES: PhysioModule[] = [
   {
     id: "mod-primepass",
     key: "prime_pass",
-    name: "Prime Pass",
+    name: "Assinatura do app",
     description: "Benefícios exclusivos e acesso VIP",
     hero_image: null,
     cta_label: "Acessar",
-    cta_route: "/9fit/primepass",
+    cta_route: "/9fit/planos",
     category: "PREMIUM",
     display_order: 30,
     connector_key: null,
@@ -416,8 +416,8 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   const fallbackRoutes: Record<string, string> = {
     staff: "/9fit/staff",
     smarttreino: "/9fit/train",
-    prime_pass: "/9fit/primepass",
-    primepass: "/9fit/primepass",
+    prime_pass: "/9fit/planos",
+    primepass: "/9fit/planos",
     biblioteca: "/9fit/biblioteca",
     ron: "/9fit/ron",
     progress: "/9fit/progresso",
