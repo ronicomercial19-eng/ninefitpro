@@ -28980,6 +28980,7 @@ export type Database = {
         Args: { p_student_id: string }
         Returns: string
       }
+      fn_extrair_rpe_cap: { Args: { p_rpe: string }; Returns: number }
       fn_falhas_geracao_treino: {
         Args: { p_athlete_id: string; p_limit?: number }
         Returns: {
