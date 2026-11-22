@@ -2963,5 +2963,16 @@
     "version": "20261121232748",
     "name": "restrict_community_and_catalog_reads",
     "sha256": "0181c1eeffe0c352af76d6d67d60cca16f85b4cad4aa2c9a21dee0518f7844df"
+  },
+  {
+    "version": "20261121232838",
+    "name": "fix_parser_rpe_decimal_e_faixa",
+    "sha256": "39e1f9bb6999b10fb362536c07c34582e72137cde63a98c573249b188b806a67"
+  },
+  {
+    "version": "20261122100537",
+    "name": "implementar_fn_materializar_annual_plan_do_catalogo",
+    "sha256": "f23c98af65d329c6ae3954986e6ce0e06889d2f91ed93150ceb113a8b90eb0f9"
   }
 ]
+
