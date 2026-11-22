@@ -34,13 +34,13 @@ export function OnboardingsCard() {
 
   if (query.isPending) return null;
   if (query.isError || !query.data) {
-    return <section className="px-4 mt-5"><button className="w-full rounded-2xl border border-border p-4 text-left text-sm" onClick={() => void query.refetch()}>Não foi possível carregar seus onboardings. Tentar novamente</button></section>;
+    return <section className="px-4 mt-5"><button className="w-full rounded-2xl border border-border p-4 text-left text-sm" onClick={() => void query.refetch()}>Não foi possível carregar seus primeiros passos. Tentar novamente</button></section>;
   }
   const { stages, current } = query.data;
   const allDone = stages.every((s) => s.completed);
   return (
-    <section className="px-4 mt-5 space-y-2" aria-label="Onboardings">
-      <h2 className="pt-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Onboardings</h2>
+    <section className="px-4 mt-5 space-y-2" aria-label="Primeiros passos">
+      <h2 className="pt-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Primeiros passos</h2>
       {stages.map((stage, i) => {
         const isCurrent = stage.key === current;
         const cta = CTA[stage.key];
@@ -64,7 +64,7 @@ export function OnboardingsCard() {
                     </li>
                   ))}
                 </ul>
-                <button type="button" className="w-full min-h-11 rounded-xl bg-primary text-primary-foreground text-[11px] font-display uppercase tracking-widest" onClick={() => (cta.route ? navigate(cta.route) : setQuickOpen(true))}>{cta.label}</button>
+                <button type="button" className="w-full min-h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold" onClick={() => (cta.route ? navigate(cta.route) : setQuickOpen(true))}>{cta.label}</button>
               </>
             )}
           </div>

@@ -1,9 +1,20 @@
-import { lazy, Suspense, useState } from 'react';
-import { Shield, Share2, X, Pencil } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
-const ShareableCard = lazy(() => import('@/components/9fit/ShareableCard').then(module => ({ default: module.ShareableCard })));
-const CompleteProfileFlow = lazy(() => import('@/components/9fit/CompleteProfileFlow').then(module => ({ default: module.CompleteProfileFlow })));
-
+import { lazy, Suspense, useState } from "react";
+import { Share2, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+const ShareableCard = lazy(() =>
+  import("./ShareableCard").then((m) => ({ default: m.ShareableCard }))
+);
+const CompleteProfileFlow = lazy(() =>
+  import("./CompleteProfileFlow").then((m) => ({
+    default: m.CompleteProfileFlow,
+  }))
+);
 interface Props {
   name: string;
   level: number;
@@ -15,162 +26,226 @@ interface Props {
   age?: number | null;
   heightCm?: number | null;
   weightKg?: number | null;
+  statsKnown?: boolean;
+  bioRead?: "loading" | "unavailable" | "ready";
+  weightRead?: "loading" | "unavailable" | "ready";
 }
-
-/**
- * Redesign Nine Pro v2 (21/09): card de identidade simplificado — 1 barra de
- * XP só como decisão principal; Sync e Streak viram texto de apoio numa
- * linha, não 3 caixas de "Stat" competindo em peso visual com o nível.
- * "Completar perfil" é o CTA embutido no próprio card quando faltam dados
- * físicos (não é mais um botão duplicado solto em Profile.tsx) — abre o
- * fluxo completo de 5 etapas (com a recompensa de streak) na 1ª vez; o lápis
- * no topo do card abre só a etapa 1 (editOnly) pra ajustes pontuais depois.
- * Paleta contida a preto/laranja (holográfico trocado de laranja+roxo pra
- * laranja+âmbar).
- */
-export function DigitalIDCard({ name, level, classTier = 'Diamante', syncScore, totalXP, streak, avatarUrl, age, heightCm, weightKg }: Props) {
-  const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
-  const levelProgress = (totalXP % 1000) / 10;
-  const [showShare, setShowShare] = useState(false);
-  const [adjusting, setAdjusting] = useState(false); // lápis — só etapa 1 (editOnly)
-  const [completing, setCompleting] = useState(false); // CTA embutido — fluxo completo de 5 etapas
+export function DigitalIDCard({
+  name,
+  level,
+  classTier,
+  syncScore,
+  totalXP,
+  streak,
+  avatarUrl,
+  age,
+  heightCm,
+  weightKg,
+  statsKnown = true,
+  bioRead = "ready",
+  weightRead = "ready",
+}: Props) {
+  const [share, setShare] = useState(false),
+    [adjusting, setAdjusting] = useState(false),
+    [completing, setCompleting] = useState(false);
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   const hasBioData = Boolean(age || heightCm || weightKg);
-
+  const progress = Math.max(0, Math.min(100, (totalXP % 1000) / 10));
   return (
     <>
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-card shadow-elevated">
-        {/* Holográfico — laranja + âmbar, sem roxo */}
-        <div
-          className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(circle at 20% 0%, hsl(var(--primary) / 0.35), transparent 55%), radial-gradient(circle at 100% 100%, hsl(30 95% 52% / 0.20), transparent 60%)',
-          }}
-        />
-        <div className="relative p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-data tracking-[0.3em] text-muted-foreground">9FIT · ID CARD</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setAdjusting(true)}
-                aria-label="Ajustar dados do perfil"
-                className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setShowShare(true)}
-                aria-label="Compartilhar ID Card"
-                className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-              </button>
-              <Shield className="w-4 h-4 text-primary" />
-            </div>
+      <section
+        aria-label="Sua identidade no 9FIT"
+        className="relative overflow-hidden rounded-3xl border border-primary/20 bg-[radial-gradient(ellipse_at_top_right,rgba(239,122,69,0.13),#111416_65%)] p-5 sm:p-7"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+            9FIT / Sua identidade
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setAdjusting(true)}
+              aria-label="Ajustar dados do perfil"
+              className="grid size-11 place-items-center rounded-xl border border-white/15 text-muted-foreground hover:text-primary"
+            >
+              <Pencil size={17} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShare(true)}
+              aria-label="Compartilhar ID Card"
+              className="grid size-11 place-items-center rounded-xl border border-white/15 text-muted-foreground hover:text-primary"
+            >
+              <Share2 size={17} aria-hidden="true" />
+            </button>
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-elevated border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="font-display text-2xl text-foreground">{initials}</span>
-              )}
+        </div>
+        <div className="mt-5 flex items-center gap-4">
+          <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/15 bg-white/5">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl font-semibold text-primary">
+                {initials}
+              </span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <h2 className="break-words text-xl font-semibold tracking-tight sm:text-2xl">
+              {name}
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Seus dados, suas preferências e o contexto do seu plano.
+            </p>
+          </div>
+        </div>
+        <dl className="mt-5 grid grid-cols-3 gap-2">
+          {[
+            {
+              label: "Idade",
+              value:
+                bioRead === "loading"
+                  ? "Consultando…"
+                  : bioRead === "unavailable"
+                  ? "Não confirmado"
+                  : age
+                  ? `${age} anos`
+                  : "Não informada",
+            },
+            {
+              label: "Altura",
+              value:
+                bioRead === "loading"
+                  ? "Consultando…"
+                  : bioRead === "unavailable"
+                  ? "Não confirmado"
+                  : heightCm
+                  ? `${heightCm} cm`
+                  : "Não informada",
+            },
+            {
+              label: "Peso",
+              value:
+                weightRead === "loading"
+                  ? "Consultando…"
+                  : weightRead === "unavailable"
+                  ? "Não confirmado"
+                  : weightKg
+                  ? `${weightKg} kg`
+                  : "Não informado",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="min-w-0 rounded-xl border border-white/10 bg-black/20 px-2 py-3 text-center"
+            >
+              <dt className="text-[10px] text-muted-foreground">
+                {item.label}
+              </dt>
+              <dd className="mt-1 break-words text-xs font-semibold sm:text-sm">
+                {item.value}
+              </dd>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-display text-xl truncate">{name}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-bold tracking-widest uppercase text-primary">
-                  NÍVEL {level}
+          ))}
+        </dl>
+        <button
+          type="button"
+          onClick={() =>
+            hasBioData ? setAdjusting(true) : setCompleting(true)
+          }
+          className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary"
+        >
+          <Pencil size={15} aria-hidden="true" />
+          {hasBioData ? "Atualizar meus dados" : "Adicionar meus dados"}
+        </button>
+        <details className="mt-3 border-t border-white/10 pt-3">
+          <summary className="min-h-11 cursor-pointer text-xs text-muted-foreground">
+            Pontos e participação no app
+          </summary>
+          {statsKnown ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap justify-between gap-2 text-xs">
+                <span>
+                  Nível {level}
+                  {classTier ? ` · ${classTier}` : ""}
                 </span>
-                <span className="text-[10px] tracking-widest uppercase text-muted-foreground">· {classTier}</span>
+                <span>{totalXP.toLocaleString("pt-BR")} XP</span>
               </div>
-            </div>
-          </div>
-
-          {/* Dados físicos (da etapa 1 do Completar Perfil) — ou CTA embutido pro fluxo completo */}
-          {hasBioData ? (
-            <div className="grid grid-cols-3 gap-2">
-              <BioChip label="Idade" value={age ? `${age}a` : '—'} />
-              <BioChip label="Altura" value={heightCm ? `${heightCm}cm` : '—'} />
-              <BioChip label="Peso" value={weightKg ? `${weightKg}kg` : '—'} />
+              <div
+                role="progressbar"
+                aria-label="Pontos dentro do nível de mil XP"
+                aria-valuemin={0}
+                aria-valuemax={1000}
+                aria-valuenow={totalXP % 1000}
+                className="h-1.5 overflow-hidden rounded-full bg-white/10"
+              >
+                <div
+                  className="h-full bg-primary"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sequência registrada: {streak} dias. Pontos representam
+                participação no app.
+              </p>
             </div>
           ) : (
-            <button
-              onClick={() => setCompleting(true)}
-              className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.03] py-2.5 text-[11px] text-primary font-semibold"
-            >
-              Completar perfil (5 etapas)
-            </button>
+            <p className="text-xs text-muted-foreground">
+              Pontos e nível não confirmados nesta leitura.
+            </p>
           )}
-
-          {hasBioData && (!age || !heightCm || !weightKg) && <button onClick={() => setAdjusting(true)} className="text-sm text-primary underline">Completar ({[age, heightCm, weightKg].filter(Boolean).length}/3 dados): {[!age && 'idade', !heightCm && 'altura', !weightKg && 'peso'].filter(Boolean).join(', ')}</button>}
-
-          {/* XP bar — única barra, decisão principal do card */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] tracking-widest uppercase text-muted-foreground">PONTOS DE EXPERIÊNCIA</span>
-              <span className="text-[10px] font-data text-foreground">{totalXP.toLocaleString('pt-BR')} XP</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-elevated overflow-hidden">
-              <div
-                className="h-full transition-all duration-700"
-                style={{ width: `${levelProgress}%`, background: 'hsl(var(--primary))' }}
-              />
-            </div>
-          </div>
-
-          {/* Sync/Streak — texto de apoio, não competem com a barra de XP */}
-          <p className="text-[11px] text-muted-foreground text-center pt-1">
-            Sync <span className="text-foreground font-semibold">{syncScore == null ? "Sem leitura" : `${syncScore}%`}</span>
-            <span className="mx-2 text-white/15">·</span>
-            Sequência <span className="text-foreground font-semibold">{streak}d</span>
+          <p className="mt-3 text-xs text-muted-foreground">
+            SYNC:{" "}
+            {syncScore == null ? "sem leitura confirmada" : `${syncScore}/100`}.
+            Consulte o Hub para entender o resumo do dia.
           </p>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {showShare && (
-          <motion.div
-            className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowShare(false)}
-          >
-            <motion.div
-              className="w-full max-w-sm rounded-t-3xl sm:rounded-3xl border border-primary/30 bg-background p-5 pb-8 sm:pb-5"
-              initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-display text-lg">Compartilhar ID Card</p>
-                <button onClick={() => setShowShare(false)} className="w-7 h-7 rounded-lg border border-white/10 grid place-items-center">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <Suspense fallback={<p role="status">Preparando seu card…</p>}><ShareableCard
-                contentType="id_card_upgrade"
-                title={name}
-                subtitle={`NÍVEL ${level} · ${classTier}`}
-                stat={{ label: 'SYNC SCORE', value: syncScore == null ? "Sem leitura" : `${syncScore}%` }}
-              /></Suspense>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Lápis: reabre só a etapa 1 do wizard, fecha ao salvar */}
-      {adjusting && <Suspense fallback={<p role="status">Abrindo edição…</p>}><CompleteProfileFlow open onClose={() => setAdjusting(false)} editOnly /></Suspense>}
-      {/* CTA embutido (sem dados ainda): fluxo completo de 5 etapas, com recompensa de streak */}
-      {completing && <Suspense fallback={<p role="status">Abrindo seu perfil…</p>}><CompleteProfileFlow open onClose={() => setCompleting(false)} /></Suspense>}
+        </details>
+      </section>
+      <Dialog open={share} onOpenChange={setShare}>
+        <DialogContent className="rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Compartilhar seu card</DialogTitle>
+            <DialogDescription>
+              Confira os dados antes de compartilhar sua identidade do 9FIT.
+            </DialogDescription>
+          </DialogHeader>
+          <Suspense fallback={<p role="status">Preparando seu card…</p>}>
+            <ShareableCard
+              contentType="id_card_upgrade"
+              title={name}
+              subtitle={statsKnown ? `NÍVEL ${level}` : "9FIT"}
+              stat={{
+                label: "SYNC / ROTINA",
+                value: syncScore == null ? "Sem leitura" : `${syncScore}/100`,
+              }}
+            />
+          </Suspense>
+        </DialogContent>
+      </Dialog>
+      {adjusting && (
+        <Suspense fallback={<p role="status">Abrindo edição…</p>}>
+          <CompleteProfileFlow
+            open
+            onClose={() => setAdjusting(false)}
+            editOnly
+          />
+        </Suspense>
+      )}
+      {completing && (
+        <Suspense fallback={<p role="status">Abrindo seu perfil…</p>}>
+          <CompleteProfileFlow open onClose={() => setCompleting(false)} />
+        </Suspense>
+      )}
     </>
-  );
-}
-
-function BioChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] py-2 text-center">
-      <p className="text-[8px] tracking-widest uppercase text-muted-foreground">{label}</p>
-      <p className="text-sm font-display text-foreground">{value}</p>
-    </div>
   );
 }
