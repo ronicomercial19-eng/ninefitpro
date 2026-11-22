@@ -136,7 +136,7 @@ export function AppSidebar() {
               <div>
                 <h2 className="text-lg font-bold text-foreground">NINE CORE</h2>
                 <p className="text-xs text-muted-foreground">
-                  Nine Pro · Professor
+                  Espaço do professor
                 </p>
               </div>
             )}

@@ -24,8 +24,8 @@ interface OnboardingStep {
 
 const steps: OnboardingStep[] = [
   {
-    title: "Bem-vindo ao 9FIT!",
-    description: "Tour rápido das principais funcionalidades. Vamos lá!",
+    title: "Bem-vindo ao NINE CORE.",
+    description: "Organize sua carteira, confira os relatos e prepare as próximas sessões.",
     emoji: "🎉",
     icon: <Sparkles className="w-10 h-10 text-primary" />,
   },
@@ -39,7 +39,7 @@ const steps: OnboardingStep[] = [
   {
     title: "Treinos",
     description:
-      "Crie treinos com IA ou faça upload de HTML. Biblioteca com exercícios.",
+      "Selecione o aluno, confira o planejamento e revise os exercícios antes de entregar a sessão.",
     emoji: "💪",
     icon: <Dumbbell className="w-10 h-10 text-primary" />,
     action: { label: "Treino IA", href: "/app/treino-ia" },
@@ -47,14 +47,14 @@ const steps: OnboardingStep[] = [
   {
     title: "Agenda",
     description:
-      "Agende avaliações, aulas e consultorias. Multi-dia disponível!",
+      "Organize avaliações e atendimentos na sua programação.",
     emoji: "📅",
     icon: <Calendar className="w-10 h-10 text-primary" />,
     action: { label: "Ver Agenda", href: "/app/agenda" },
   },
   {
     title: "Relatórios",
-    description: "Estatísticas, presença e progresso dos alunos em tempo real.",
+    description: "Compare registros por período e leve o histórico para a revisão com cada aluno.",
     emoji: "📊",
     icon: <TrendingUp className="w-10 h-10 text-primary" />,
     action: { label: "Ver Estatísticas", href: "/app/estatisticas" },

@@ -149,7 +149,7 @@ export function ProfessorStudentBar() {
     >
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="professor-student" className="text-sm font-medium">
-          Aluno
+          Contexto do acompanhamento
         </label>
         <input
           aria-label="Buscar aluno em acompanhamento"
@@ -157,11 +157,11 @@ export function ProfessorStudentBar() {
           type="search"
           value={search}
           onChange={event => setSearch(event.target.value)}
-          className="max-w-full rounded-lg border border-border bg-background p-2 text-sm"
+          className="min-h-11 max-w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
         />
         <select
           id="professor-student"
-          className="max-w-full rounded-lg border border-border bg-background p-2 text-sm"
+          className="min-h-11 max-w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
           value={w.athleteId ?? ""}
           disabled={w.loading || w.error}
           onChange={(e) => w.select(e.target.value || null)}

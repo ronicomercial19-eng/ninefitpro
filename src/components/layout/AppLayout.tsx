@@ -239,7 +239,7 @@ function NexusDock() {
   const { isAdmin } = useAuth();
   const workspace = useProfessorWorkspace();
   const destinations = nexusDestinations.filter(({ adminOnly }) => !adminOnly || isAdmin);
-  if (!destinations.some(({ path }) => path === pathname)) return null;
+  if (pathname === "/app" || !destinations.some(({ path }) => path === pathname)) return null;
 
   return (
     <nav className="nine-core-nexus-dock" aria-label="Áreas do NEXUS">

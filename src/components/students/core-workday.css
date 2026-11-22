@@ -1,0 +1,558 @@
+.core-workday {
+  --core-panel: #111518;
+  --core-line: rgba(255, 255, 255, 0.11);
+  color: hsl(var(--foreground));
+  display: grid;
+  gap: 2rem;
+}
+.core-workday * {
+  min-width: 0;
+}
+.core-workday :where(a, button, input, select, summary):focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 3px;
+}
+.core-workday-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  gap: 2rem;
+  border: 1px solid var(--core-line);
+  border-radius: 1.5rem;
+  background: radial-gradient(
+      ellipse at top right,
+      rgba(255, 90, 31, 0.13),
+      transparent 65%
+    ),
+    #101416;
+  padding: clamp(1.35rem, 3vw, 2.5rem);
+}
+.core-workday-eyebrow {
+  color: #f7956f;
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.core-workday-hero h1 {
+  max-width: 23ch;
+  margin-top: 0.9rem;
+  font: 650 clamp(1.7rem, 3.5vw, 3.1rem) / 1.12 var(--font-display);
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.core-workday-lead {
+  max-width: 61ch;
+  margin-top: 1rem;
+  color: #b3b9be;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+.core-workday-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+.core-workday-primary,
+.core-workday-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.core-workday-primary {
+  background: #ff8958;
+  color: #211009;
+  border: 1px solid #ff8958;
+}
+.core-workday-primary:hover {
+  background: #ffa078;
+}
+.core-workday-ghost {
+  border: 1px solid var(--core-line);
+  color: #d1d5d8;
+  background: rgba(255, 255, 255, 0.025);
+}
+.core-workday-ghost:hover {
+  border-color: #a76347;
+}
+.core-workday button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.core-workday-purpose {
+  position: relative;
+  align-self: center;
+  border-inline-start: 1px solid var(--core-line);
+  padding-inline-start: 1.4rem;
+}
+.core-workday-purpose ol {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.15rem;
+  color: #d1d5d8;
+  font-size: 0.8rem;
+}
+.core-workday-purpose li {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+.core-workday-purpose li span {
+  color: #ff9b72;
+  font: 500 0.7rem ui-monospace, monospace;
+}
+.core-workday-orbit {
+  position: absolute;
+  z-index: -1;
+  right: -5rem;
+  top: -7rem;
+  width: 30rem;
+  height: 30rem;
+  border: 1px solid rgba(255, 137, 88, 0.07);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rem rgba(255, 137, 88, 0.025),
+    0 0 0 8rem rgba(255, 137, 88, 0.015);
+  pointer-events: none;
+}
+.core-workday-section {
+  display: grid;
+  gap: 1rem;
+}
+.core-workday-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.core-workday-section-heading h2 {
+  margin-top: 0.5rem;
+  font: 600 clamp(1.2rem, 2vw, 1.6rem) / 1.2 var(--font-display);
+  letter-spacing: -0.025em;
+}
+.core-workday-section-heading p:not(.core-workday-eyebrow) {
+  max-width: 72ch;
+  margin-top: 0.5rem;
+  color: #aeb5bc;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+.core-workday-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.core-workday-toolbar select {
+  min-height: 2.75rem;
+  border: 1px solid var(--core-line);
+  border-radius: 0.75rem;
+  background: #111518;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.8rem;
+}
+.core-workday-metrics {
+  display: grid;
+  gap: 0.8rem;
+}
+.core-workday-metrics article {
+  border: 1px solid var(--core-line);
+  background: var(--core-panel);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+.core-workday-metrics h3 {
+  font-size: 0.8rem;
+  color: #c5cbd0;
+}
+.core-workday-metrics svg {
+  color: #f7956f;
+}
+.core-workday-metrics strong {
+  display: block;
+  margin-top: 1rem;
+  font: 650 clamp(2rem, 4vw, 3rem) / 1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.core-workday-metrics p {
+  margin-top: 0.7rem;
+  font-size: 0.7rem;
+  color: #a1aab2;
+  line-height: 1.5;
+}
+.core-workday-coverage {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--core-line);
+  border-radius: 1rem;
+  background: linear-gradient(125deg, #111518, #14191c);
+}
+.core-workday-coverage h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.core-workday-coverage p {
+  margin-top: 0.4rem;
+  color: #aeb5bc;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.core-workday-coverage-bar {
+  display: flex;
+  gap: 3px;
+  height: 0.8rem;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #252c32;
+}
+.core-workday-coverage-bar span {
+  height: 100%;
+}
+.core-workday [data-tone="current"] {
+  background: #80b7c5;
+}
+.core-workday [data-tone="withoutEndDate"] {
+  background: #aba6d0;
+}
+.core-workday [data-tone="expired"] {
+  background: #e7ba76;
+}
+.core-workday [data-tone="withoutTraining"] {
+  background: #f58b68;
+}
+.core-workday-coverage ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem 1rem;
+  margin-top: 1rem;
+}
+.core-workday-coverage li {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: #c2c8cd;
+  font-size: 0.7rem;
+}
+.core-workday-coverage li strong {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: white;
+}
+.core-workday-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: none;
+  border-radius: 50%;
+}
+.core-workday-source {
+  color: #9ca6ae;
+  font-size: 0.7rem;
+  line-height: 1.6;
+}
+.core-workday-inboxes {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+.core-workday-inbox {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--core-line);
+  background: var(--core-panel);
+  border-radius: 1.25rem;
+}
+.core-workday-inbox h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.core-workday-inbox-header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: start;
+  justify-content: space-between;
+}
+.core-workday-inbox p {
+  color: #aeb5bc;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.core-workday-inbox .core-workday-count {
+  display: block;
+  margin-block: 0.7rem;
+  color: #f5f6f7;
+  font: 600 2rem/1 var(--font-display);
+}
+.core-workday-inbox-list {
+  display: grid;
+  gap: 0.5rem;
+}
+.core-workday-inbox-list a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 4.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--core-line);
+  border-radius: 0.75rem;
+  background: #0e1214;
+}
+.core-workday-inbox-list a:hover {
+  border-color: #965d46;
+}
+.core-workday-inbox-list a strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.core-workday-inbox-list a span {
+  display: block;
+  margin-top: 0.3rem;
+  color: #adb7bf;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+.core-workday-inbox-list svg {
+  flex: none;
+  color: #f7956f;
+}
+.core-workday-inbox-empty {
+  border: 1px dashed var(--core-line);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.core-workday-notice {
+  padding: 1rem;
+  border: 1px solid #715845;
+  background: #221c17;
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+.core-workday-roster-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.core-workday-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--core-line);
+  border-radius: 0.75rem;
+  background: #101416;
+  padding: 0 0.8rem;
+  flex: 1 1 15rem;
+}
+.core-workday-search svg {
+  color: #aeb5bc;
+  flex: none;
+}
+.core-workday-search input {
+  width: 100%;
+  min-height: 2.75rem;
+  background: transparent;
+  border: 0;
+  font-size: 0.8rem;
+}
+.core-workday-roster-tools [role="group"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.core-workday-roster-tools button {
+  min-height: 2.75rem;
+  border: 1px solid var(--core-line);
+  border-radius: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  color: #b3bdc5;
+  font-size: 0.7rem;
+}
+.core-workday-roster-tools button[aria-pressed="true"] {
+  color: #ffad8b;
+  border-color: #a9684e;
+  background: #271b16;
+}
+.core-workday-roster {
+  display: grid;
+  gap: 0.65rem;
+}
+.core-workday-roster article {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--core-line);
+  border-radius: 1rem;
+  background: var(--core-panel);
+}
+.core-workday-person {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.core-workday-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid #705341;
+  background: #261d17;
+  border-radius: 0.8rem;
+  font-size: 0.8rem;
+  color: #ffac86;
+  flex: none;
+}
+.core-workday-person h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.core-workday-badge {
+  margin-top: 0.3rem;
+  color: #aeb9c1;
+  font-size: 0.65rem;
+}
+.core-workday-badge[data-state="expired"],
+.core-workday-badge[data-state="missing"] {
+  color: #eeb48d;
+}
+.core-workday-roster dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.core-workday-roster dt {
+  font-size: 0.65rem;
+  color: #a2aeb7;
+}
+.core-workday-roster dd {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.core-workday-row-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #734d3c;
+  border-radius: 0.65rem;
+  color: #ffa780;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.core-workday-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  font-size: 0.75rem;
+}
+.core-workday-pagination button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--core-line);
+  border-radius: 0.6rem;
+}
+.core-workday-method {
+  border-top: 1px solid var(--core-line);
+  padding-top: 0.5rem;
+  color: #aeb9c1;
+  font-size: 0.75rem;
+}
+.core-workday-method summary {
+  min-height: 2.75rem;
+  display: list-item;
+  align-content: center;
+  cursor: pointer;
+}
+.core-workday-method p {
+  max-width: 90ch;
+  margin-top: 0.6rem;
+  line-height: 1.75;
+}
+.core-workday-empty {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px dashed var(--core-line);
+  border-radius: 1rem;
+}
+.core-workday-empty svg {
+  color: #f7956f;
+}
+.core-workday-empty h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.core-workday-empty p {
+  max-width: 60ch;
+  color: #aeb5bc;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+@media (min-width: 40rem) {
+  .core-workday-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .core-workday-roster dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .core-workday-hero {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+  .core-workday-coverage {
+    grid-template-columns: 1fr 1.5fr;
+    align-items: center;
+  }
+  .core-workday-inboxes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 80rem) {
+  .core-workday-roster article {
+    grid-template-columns: minmax(12rem, 1fr) minmax(20rem, 1.8fr) auto;
+    align-items: center;
+  }
+}
+
+/* Keep reviews above the fold; the workflow diagram is optional on a small screen. */
+.core-workday-hero h1 {
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  overflow-wrap: anywhere;
+}
+#core-review-queues {
+  scroll-margin-top: 1rem;
+}
+@media (max-width: 63.99rem) {
+  .core-workday-purpose {
+    display: none;
+  }
+  .core-workday-hero {
+    gap: 0;
+  }
+}
