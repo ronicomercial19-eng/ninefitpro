@@ -1,3 +1,4 @@
+import { RecordMeaning } from './RecordMeaning';
 import { readFailure } from '@/lib/readFailure';
 import { motion } from "framer-motion";
 import { ArrowUpRight, Brain, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
@@ -31,7 +32,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKno
   const current = !context.isError && context.data?.date === businessDate() ? context.data : null;
   const command = current ? selectDayCommand(current) : null;
   const progress = current ? dayProgress(current) : null;
-  const scoreReady = !context.isError && typeof syncScore === "number" && ["available","stale","offline"].includes(scoreStatus);
+  const scoreReady = !!current && !context.isError && typeof syncScore === "number" && ["available","stale","offline"].includes(scoreStatus);
   const headline = command?.title || (context.isError ? 'Não consegui ler seu dia.' : 'Lendo seus registros de hoje…');
   const failure = context.isError ? readFailure(context.error, context.online) : null;
   const primaryLabel = failure?.action || command?.label || 'Atualizando…';
@@ -47,7 +48,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKno
       toast.success(patch.rating ? 'Balanço registrado' : 'Descanso registrado para hoje. Sua prescrição foi preservada.');
     } catch { toast.error('Não foi possível salvar. Tente novamente.'); } finally { setSaving(false); }
   };
-  const consistency = Math.min(100, Math.round((weekly.treinos / 5) * 100));
+
 
   return (
     <section className="w-full" aria-label="Comando do dia">
@@ -60,7 +61,7 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKno
                 <Sparkles strokeWidth={1.75} className="h-3 w-3 text-[#EF7A45]" />
               </span>
               <span className="text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-[#EF7A45]">
-                Comando do Dia
+                Seu próximo passo
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -104,9 +105,9 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKno
 
           {/* Métricas Semanais */}
           {!context.isError && weeklyKnown && <div className="mt-2.5 grid grid-cols-3 gap-2">
-            <CommandMetric label="Treinos" value={weekly.treinos} suffix="sem" progress={consistency} />
-            <CommandMetric label="Minutos" value={weekly.minutos} suffix="min" progress={Math.min(100, Math.round((weekly.minutos / 180) * 100))} />
-            <CommandMetric label="Nutrição" value={weekly.nutri} suffix="reg" progress={Math.min(100, weekly.nutri * 20)} />
+            <CommandMetric label="Treinos" value={weekly.treinos} suffix="na semana" />
+            <CommandMetric label="Minutos" value={weekly.minutos} suffix="na semana" />
+            <CommandMetric label="Nutrição" value={weekly.nutri} suffix="registros" />
           </div>
 
           }
@@ -126,11 +127,12 @@ export function HubCommandDeck({ name, syncScore, scoreStatus, weekly, weeklyKno
               className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] px-3 py-2.5 text-[11px] font-medium text-white/65 hover:text-white transition-colors"
             >
               <CheckCircle2 strokeWidth={1.75} className="h-4 w-4 text-[#EF7A45]" />
-              <span>Registrar sinal</span>
+              <span>Como estou hoje</span>
             </button>
           </div>
         </div>
       </div>
+      <RecordMeaning context={current} />
       <PDIWizard open={modal === 'profile'} onClose={() => setModal(null)} />
       <Dialog open={modal === 'calibration' || modal === 'review'} onOpenChange={open => { if (!open) setModal(null); }}>
         <DialogContent><DialogHeader><DialogTitle>{modal === 'review' ? 'Como foi seu dia?' : 'Calibração diária'}</DialogTitle><DialogDescription>{modal === 'review' ? 'Um balanço da sua rotina, separado dos sinais ao acordar.' : 'Cinco sinais declarados para orientar o dia.'}</DialogDescription></DialogHeader>
@@ -173,7 +175,7 @@ function SyncDial({ score }: { score: number | null }) {
   );
 }
 
-function CommandMetric({ label, value, suffix, progress }: { label: string; value: number; suffix: string; progress: number }) {
+function CommandMetric({ label, value, suffix }: { label: string; value: number; suffix: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
@@ -191,9 +193,7 @@ function CommandMetric({ label, value, suffix, progress }: { label: string; valu
           {suffix}
         </span>
       </div>
-      <div className="mt-1.5 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div className="h-full bg-[#EF7A45] transition-all duration-500" style={{ width: `${progress}%` }} />
-      </div>
+
     </motion.div>
   );
 }

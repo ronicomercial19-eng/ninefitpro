@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { effortFeedback } from "@/lib/studentGuidance";
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -115,9 +116,9 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
   };
 
   const getMessage = () => {
-    if (rpe >= 8) return { text: "Superação! Você se superou hoje! 🏆", color: "text-red-400" };
-    if (rpe >= 5) return { text: "Consistência é a chave! Continue assim! 💪", color: "text-primary" };
-    return { text: "Bom treino leve. Aumente a intensidade próxima vez! 🎯", color: "text-yellow-400" };
+    if (rpe >= 8) return { text: effortFeedback(rpe), color: "text-primary" };
+    if (rpe >= 5) return { text: effortFeedback(rpe), color: "text-primary" };
+    return { text: effortFeedback(rpe), color: "text-primary" };
   };
 
   const rpeInfo = RPE_LABELS[rpe];
@@ -199,7 +200,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
               disabled={saving}
               className="w-full bg-primary text-primary-foreground font-bold py-6"
             >
-              {saving ? "Salvando..." : "Confirmar Treino"}
+              {saving ? "Salvando..." : "Salvar como foi o treino"}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -210,7 +211,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Zap className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">Parabéns! 🔥</h2>
+              <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">Seu relato foi salvo</h2>
               <p className={`text-sm font-bold mt-1 ${getMessage().color}`}>{getMessage().text}</p>
             </div>
 
@@ -223,7 +224,7 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
               <div className="bg-card border border-border rounded-sm p-3">
                 <Flame className="w-5 h-5 text-primary mx-auto mb-1" />
                 <p className="text-xl font-black text-foreground">{caloriesBurned}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">KCAL</p>
+                <p className="text-[10px] text-muted-foreground uppercase">KCAL estimadas</p>
               </div>
               <div className="bg-card border border-border rounded-sm p-3">
                 <Heart className="w-5 h-5 text-red-400 mx-auto mb-1" />
@@ -236,25 +237,24 @@ export function PostWorkoutModal({ open, onClose, athleteId, executionId, traini
               <div className="bg-card border border-border rounded-sm p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">RPE anterior</span>
+                  <span className="text-xs text-muted-foreground">Esforço: sessão anterior → atual</span>
                 </div>
                 <span className="text-sm font-bold text-foreground">
                   {lastRpe}/10 → {rpe}/10
-                  {rpe > lastRpe ? " ↑" : rpe < lastRpe ? " ↓" : " ="}
+
                 </span>
               </div>
             )}
 
+            <p className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left text-xs leading-relaxed text-muted-foreground">Seu esforço e suas observações ficam disponíveis no histórico para revisar as próximas sessões com seu professor. Esforço maior não significa treino melhor; esse registro não confirma um novo ajuste.</p>
             <div className="space-y-2">
+              <Button onClick={onClose} className="w-full rounded-xl py-6">Concluir e continuar</Button>
               <Button
                 onClick={() => setStep("share")}
                 className="w-full bg-primary text-primary-foreground font-bold py-6"
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Compartilhar resultado
-              </Button>
-              <Button onClick={onClose} variant="ghost" className="w-full text-muted-foreground font-bold">
-                Agora não
               </Button>
             </div>
           </div>

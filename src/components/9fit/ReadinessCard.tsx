@@ -39,13 +39,13 @@ export function ReadinessCard({athleteId,coach=false}:{athleteId:string;coach?:b
  {!state?.preferences?.enabled?<div className="space-y-3"><p className="text-sm text-muted-foreground">{coach?'O aluno ainda não autorizou a personalização pela Sync.':'A Sync cruza seu check-in com a prescrição para avaliar ajustes nas séries, no descanso e no aquecimento. Você decide quando ativar.'}</p>{!coach&&<><label className="flex gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs text-muted-foreground"><input type="checkbox" className="mt-0.5 accent-[#EF7A45]" checked={consent} onChange={e=>setConsent(e.target.checked)}/>Autorizo o uso desses sinais para os ajustes explicados no meu treino e acompanhamento pelo meu professor.</label><button className={primaryBtn} disabled={!consent||busy} onClick={()=>void action(()=>readinessRpc('fn_set_readiness_preferences',{p_enabled:true}))}>Ativar personalização pela Sync</button></>}</div>:<>
  {d?<div className="space-y-4">
   <div className="rounded-2xl border border-primary/20 bg-primary/[0.06] p-4 space-y-1.5">
-   <p className={eyebrow}>MODO DE HOJE</p>
+   <p className={eyebrow}>{d.status==='applied'?'ALTERAÇÃO APLICADA':'DECISÃO REGISTRADA · CONFIRA O STATUS'}</p>
    <p className="font-display text-base text-foreground">{modes[d.mode]}</p>
    <p className="text-xs leading-relaxed text-muted-foreground">{statusText}</p>
    {d.status==='applied'&&(d.rest_delta_s>0||d.warmup_add_min>0)&&<p className="text-xs text-muted-foreground">Descanso adicional: {d.rest_delta_s}s · aquecimento adicional: {d.warmup_add_min} min.</p>}
-   {reasonsText&&<p className="text-[11px] text-muted-foreground">{reasonsText}</p>}
+   {reasonsText&&<p className="text-[11px] text-muted-foreground"><span className="font-semibold text-foreground">Por que essa decisão: </span>{reasonsText}</p>}
   </div>
-  <p className="text-[11px] leading-relaxed text-muted-foreground">O SYNC resume os sinais e registros do dia. A decisão desta sessão também considera o histórico recente, a recuperação e as regras da prescrição.</p>
+  <p className="text-[11px] leading-relaxed text-muted-foreground">O SYNC resume os sinais e registros do dia. A decisão desta sessão também considera o histórico recente, a recuperação e as regras da prescrição. Antes de começar, confira a ficha abaixo: só o status “Alteração aplicada” confirma que a sessão foi modificada.</p>
   <div className="flex flex-wrap gap-2">
    {(d.gate_level>0||d.flags.includes('timed_session_review'))&&<Link className={ghostBtn} to={coach?withAthlete('/app/acompanhamento',athleteId):'/9fit/ajuste-treino'}>Revisar a sessão</Link>}
    {d.status==='applied'&&d.applied_workout_id&&<button type="button" disabled={busy} className={ghostBtn} onClick={()=>void action(()=>readinessRpc('fn_revert_readiness_workout',{p_daily_workout_id:d.applied_workout_id}))}>Restaurar original</button>}

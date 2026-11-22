@@ -21,16 +21,16 @@ export default function NineFitNativeSystem() {
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-50">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-primary/30 bg-black/80">
-        <button onClick={() => goBackOrHome(navigate)} className="w-9 h-9 rounded-lg border border-white/10 grid place-items-center">
-          <ArrowLeft className="w-4 h-4 text-foreground" />
+        <button onClick={() => goBackOrHome(navigate)} aria-label="Voltar ao 9FIT" className="min-h-11 rounded-xl border border-white/15 px-3 flex items-center gap-2 text-xs">
+          <ArrowLeft className="w-4 h-4 text-foreground" />Voltar
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Aplicativo externo</p>
+          <p className="text-[10px] uppercase tracking-widest text-primary font-bold">9FIT / Serviço parceiro</p>
           <p className="font-display text-sm truncate">{app.label}</p>
         </div>
         {externalUrl && (
           <a href={externalUrl ?? undefined} target="_blank" rel="noreferrer"
-            className="w-9 h-9 rounded-lg border border-primary/40 grid place-items-center text-primary">
+            aria-label={`Abrir ${app.label} em nova aba`} className="w-11 h-11 rounded-xl border border-primary/40 grid place-items-center text-primary">
             <ExternalLink className="w-4 h-4" />
           </a>
         )}
@@ -38,7 +38,7 @@ export default function NineFitNativeSystem() {
 
       {appKey === "store" && <div className="px-4 py-3 border-b border-primary/20 text-sm text-muted-foreground">9FIT Store · confira as condições de cada oferta na loja. Se o catálogo não aparecer, <a href={externalUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-primary underline">abra a loja em uma nova aba</a>.</div>}
 
-      <p className="px-4 py-2 text-xs text-muted-foreground">Aplicativo externo. Pode solicitar acesso próprio; seus registros aqui não comprovam sincronização com o 9FIT.</p>
+      <p className="px-4 py-2 text-xs text-muted-foreground">Você está na interface oficial deste serviço. Use Voltar para retomar sua rotina no 9FIT. O parceiro pode pedir um acesso próprio; os registros feitos aqui não confirmam atualização no 9FIT.</p>
       {showFallback ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 text-center">
           <div className="w-20 h-20 rounded-full border border-primary/40 grid place-items-center">

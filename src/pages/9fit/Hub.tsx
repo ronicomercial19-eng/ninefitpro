@@ -1,4 +1,5 @@
 import { useSyncScore } from "@/hooks/useSyncScore";
+import { RecordMeaning } from "@/components/9fit/RecordMeaning";
 import { HubQuickRecords } from "@/components/9fit/HubQuickRecords";
 
 import { withTimeout } from '@/lib/withTimeout';
@@ -207,7 +208,7 @@ export default function NineFitHub() {
         animate="visible"
         className="w-full space-y-6 px-4 md:px-6"
       >
-        <header className="flex items-center justify-between pt-4"><h1 className="text-2xl font-bold">Hub</h1><Link to="/9fit/modules" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-primary-foreground">Ver módulos</Link></header>
+        <header className="flex items-center justify-between pt-4"><div><p className="text-[10px] uppercase tracking-widest text-primary">9FIT / HUB</p><h1 className="text-2xl font-bold">Sua rotina, em perspectiva</h1><p className="mt-1 text-xs text-muted-foreground">Registre, acompanhe e confira o que fazer a seguir.</p></div><Link to="/9fit/modules" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-primary-foreground">Ver módulos</Link></header>
         <motion.div variants={hubStaggerItem} className="relative">
           <HeroSyncSection
             name={name}
@@ -222,6 +223,7 @@ export default function NineFitHub() {
         </motion.div>
 
         {athleteId && user?.id && <HubQuickRecords key={athleteId} athleteId={athleteId} userId={user.id} />}
+        {scoreStatus === "available" && <RecordMeaning context={syncContext} />}
         <SyncScoreDiagnosisModal
            context={syncContext}
            open={showDiagnosis}

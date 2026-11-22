@@ -147,7 +147,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
       tag: 'NOTÍCIAS & UPDATES',
       category: 'DESAFIO DA TEMPORADA',
       title: 'Desafio Semanal: 5 Treinos Ativos',
-      description: 'Mantenha a consistência no microciclo para acelerar sua telemetria.',
+      description: 'Participe no seu ritmo e compartilhe sua experiência.',
       stats: 'Temporada Oficial',
       cta: 'Ver Novidades',
       route: '/9fit/social'
@@ -178,7 +178,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
         : cycleStatus === "none" ? "Sem prescrição ativa detectada"
         : "Não foi possível confirmar a prescrição agora",
       status: hasRank ? `#${myRankPos}` : treinoStatus,
-      description: 'Progressão de cargas, densidade de treino e biomecânica executiva.'
+      description: 'Consulte seu treino, execute a sessão e registre como foi.'
     },
     {
       id: 'nutricional' as const,
@@ -187,34 +187,34 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
         ? week.nutriSubtitle
         : weekly && weekly.nutri > 0 ? `${weekly.nutri} refeições registradas na semana` : 'Nenhuma refeição registrada nesta semana',
       status: nutriStatus,
-      description: 'Janela anabólica, síntese de aminoácidos e equilíbrio de macronutrientes.'
+      description: 'Acompanhe seu plano alimentar e registre suas refeições.'
     },
     {
       id: 'psicologica' as const,
       name: 'Foco & Mente',
       subtitle: syncScore == null ? 'Aguardando calibração do Sync Score' : 'RON usa seu contexto de prontidão atual',
       status: focoStatus,
-      description: 'Gestão de estresse, prontidão neural para carga e clareza mental.'
+      description: 'Registre como se sente e encontre uma pausa para sua rotina.'
     },
     {
       id: 'comportamental' as const,
       name: 'Consistência',
       subtitle: weekly && weekly.treinos > 0
-        ? `${weekly.treinos} treinos no microciclo`
+        ? `${weekly.treinos} treinos no semana`
         : weekReadState !== "ready"
-          ? (weekReadState === "loading" ? "Lendo treinos do microciclo" : "Treinos do microciclo ainda não confirmados")
-          : cycleStatus === "active" ? "Ciclo ativo, ainda sem treino registrado no microciclo"
-          : cycleKnown ? "Ainda sem treino registrado no microciclo"
-          : "Ainda não foi possível confirmar o microciclo",
+          ? (weekReadState === "loading" ? "Lendo treinos do semana" : "Treinos do semana ainda não confirmados")
+          : cycleStatus === "active" ? "Ciclo ativo, ainda sem treino registrado no semana"
+          : cycleKnown ? "Ainda sem treino registrado no semana"
+          : "Ainda não foi possível confirmar o semana",
       status: consistenciaStatus,
-      description: 'Consistência do microciclo, disciplina de horários e rituais diários.'
+      description: 'Veja em quais dias você conseguiu manter sua rotina.'
     },
     {
       id: 'biometrica' as const,
       name: 'Recuperação',
       subtitle: syncScore == null ? 'Faça uma calibração para ativar sinais de recuperação' : `Estado do score: ${scoreStatus}`,
       status: recuperacaoStatus,
-      description: 'Variação da frequência cardíaca, qualidade de sono e peso seco.'
+      description: 'Confira seus relatos de sono, energia e recuperação.'
     },
     {
       id: 'ambiental' as const,
@@ -229,8 +229,8 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
     <div className="px-3.5 sm:px-4 pt-1 space-y-3 sm:space-y-3.5 pb-12 max-w-2xl mx-auto">
       <StudentSectionHeader
         kicker="9FIT // FIT OS"
-        title="Seu sistema"
-        description="Sinais de prontidão, treino e consistência em um só lugar"
+        title="Seu dia, um passo de cada vez"
+        description="Comece pela orientação de hoje. As outras áreas ficam disponíveis quando precisar."
         actions={<div className="flex items-center gap-2"><button type="button" onClick={() => navigate('/9fit/profile')} className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary">Perfil</button><button type="button" onClick={() => navigate('/9fit/settings')} className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary">Ajustes</button></div>}
       />
 
@@ -537,7 +537,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
                   <div className="space-y-2.5">
                     <div className="text-center pb-0.5">
                       <h3 className="text-sm sm:text-base font-bold text-white font-display">Inteligência Ativa Ron AI</h3>
-                      <p className="text-[11.5px] text-neutral-400">Modelos de IA, prontidão cognitiva e adaptação de carga</p>
+                      <p className="text-[11.5px] text-neutral-400">Seu contexto de hoje e os motivos da orientação</p>
                     </div>
                     <ActiveSkillsBadge />
                     <button
@@ -575,7 +575,7 @@ export function OSDashboard({ name, syncScore, scoreStatus, weekly, cycleStatus 
                   <div className="space-y-3">
                     <div className="text-center pb-0.5">
                       <h3 className="text-sm sm:text-base font-bold text-white font-display">Telemetria & Validação Diária</h3>
-                      <p className="text-[11.5px] text-neutral-400">Registro de presença, humor, prontidão e recuperação do sono</p>
+                      <p className="text-[11.5px] text-neutral-400">Seus registros de rotina, humor e sono</p>
                     </div>
                     <div className="space-y-2">
                       <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
