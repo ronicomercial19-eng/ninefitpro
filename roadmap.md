@@ -1,4 +1,9 @@
 # Checkout InfinitePay
+- [ ] Gerar imagens reais via AI Gateway para o catálogo e exibir em produto/checkout.
+- [ ] Corrigir vendas para aluno NINE PRO de R$ 97 e preparar primeira campanha Meta (aguarda público, mercado, verba e aprovações).
+- [ ] Testar pagamento real de R$ 97 (aguarda identificação da conta e pagamento pelo titular).
+- [ ] Verificar gráficos Hub no celular/desktop com dados reais e publicar mudanças autorizadas.
+- [ ] Criar painel privado de anúncios com acesso exclusivo ao proprietário e métricas reais da jornada.
 - [ ] Hub: substituir listas principais por ondas reais de sete dias, preservar ações e validar sem publicar.
 - [ ] Separar os quatro produtos no pedido e na assinatura canônica.
 - [ ] Checkout e retorno profissional; confirmação pelo provedor e idempotência.
