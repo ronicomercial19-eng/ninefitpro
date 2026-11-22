@@ -6,7 +6,7 @@ const require=createRequire(import.meta.url);
 const {PGlite}=require(process.env.PGLITE_MODULE||'./qa-db/node_modules/@electric-sql/pglite');
 const db=new PGlite();let checks=0;
 const check=(name,fn)=>{fn();checks++;console.log('PASS',name)};
-const sql=await readFile(new URL('../supabase/migrations/20261028173013_hoist_remaining_policy_identity_checks.sql',import.meta.url),'utf8');
+const sql=await readFile(new URL('../supabase/migration-references/20261028173013_hoist_remaining_policy_identity_checks.sql',import.meta.url),'utf8');
 const snapshot=JSON.parse(await readFile(new URL('./fixtures/rls-identity-before.json',import.meta.url),'utf8'));
 const tables=['secure_data','role_scope','jwt_scope','mixed_scope'];
 const uid=n=>`10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;

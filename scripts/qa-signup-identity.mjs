@@ -25,7 +25,7 @@ try{
  const legacyOwner=await owner(aid(1));
  check('actual legacy trigger reproduces an unverified email-based reassignment',()=>assert.equal(legacyOwner,id(2)));
  await db.exec(`UPDATE public.athletes SET user_id='${id(1)}' WHERE id='${aid(1)}';DELETE FROM public.athlete_auth_link;INSERT INTO public.athlete_auth_link VALUES('${aid(1)}','${id(1)}');DELETE FROM auth.users WHERE id='${id(2)}';`);
- await db.exec(await readFile(new URL('../supabase/migrations/20261028181332_preserve_verified_signup_athlete_identity.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028181332_preserve_verified_signup_athlete_identity.sql',import.meta.url),'utf8'));
  for(let n=2;n<=8;n++)await db.query('INSERT INTO public.athletes(id,email,metadata)VALUES($1,$2,$3::jsonb)',[aid(n),`manual${n}@test.invalid`,JSON.stringify({notes:'Keep registration data'})]);
  await signup(3,'owned@test.invalid',{},false);
  const stillOwned=await owner(aid(1));check('unverified signup never replaces an existing owner',()=>assert.equal(stillOwned,id(1)));

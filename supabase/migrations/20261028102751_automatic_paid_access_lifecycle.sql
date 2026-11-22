@@ -255,3 +255,5 @@ CREATE FUNCTION public.fn_fitpro_billing_overview(p_offset integer DEFAULT 0,p_l
 REVOKE ALL ON FUNCTION public.fn_fitpro_billing_overview(integer,integer) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_fitpro_billing_overview(integer,integer),private.fn_fitpro_billing_overview(integer,integer) TO authenticated;
 NOTIFY pgrst,'reload schema';
+
+;

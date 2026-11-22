@@ -73,3 +73,5 @@ CREATE POLICY "FitPro admins read legacy audit" ON public.audit_log FOR SELECT T
 USING ((SELECT private.fitpro_actor_role()) IN ('admin','super_admin'));
 REVOKE INSERT, UPDATE, DELETE ON public.audit_log FROM anon, authenticated;
 REVOKE ALL ON FUNCTION public.log_audit(text,text,text) FROM PUBLIC, anon, authenticated;
+
+;

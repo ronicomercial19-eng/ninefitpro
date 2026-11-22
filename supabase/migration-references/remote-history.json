@@ -1,0 +1,2967 @@
+[
+  {
+    "version": "20250628025858",
+    "name": "ead6f8c8-6777-40b0-998a-6d266e0c6d01",
+    "sha256": "25984de3d0d11905d353b8820cf5bcb8430ed03aa6e35326dff8cc667b34b821"
+  },
+  {
+    "version": "20250630053754",
+    "name": "18d4ccb2-2375-4588-b3ed-d63dd8d7eae8",
+    "sha256": "294690e9c3019f7e74e82a81b3860fb6766f2f01bccbdc3d415f8d6d828af72e"
+  },
+  {
+    "version": "20250704020015",
+    "name": "",
+    "sha256": "d36989c709ceec3435b7cee869873f40392e097c567ed0945a1c628b69163766"
+  },
+  {
+    "version": "20250704023538",
+    "name": "",
+    "sha256": "ea1439deb1bee1f84ccd7b7302ae706659ab44e893157cfb869e34f2bc2f305f"
+  },
+  {
+    "version": "20250705033936",
+    "name": "",
+    "sha256": "3341207b0880b834b8bc17468ef8bec4d1296f8fd86a8546d0ac1e6fb301b01b"
+  },
+  {
+    "version": "20250708011051",
+    "name": "",
+    "sha256": "9e26fee0e9efbbdcaef220cdb941e338c4c92d0875032c58f6087d6f290e75b6"
+  },
+  {
+    "version": "20250708062801",
+    "name": "",
+    "sha256": "92902982ec18e9c1729fd59a68a7faf1c030167baefe03066906f896a35f0726"
+  },
+  {
+    "version": "20250708125654",
+    "name": "",
+    "sha256": "9c4edc512be99b4f51e1b9e1c488524643ac6faab850adec2d55ed85b28c61d2"
+  },
+  {
+    "version": "20250709091456",
+    "name": "",
+    "sha256": "43c8dd39ec89d22b8d6b9e65d4cd88aa1d30390dda258b915e96ea605f0140da"
+  },
+  {
+    "version": "20250711012220",
+    "name": "",
+    "sha256": "c94b717b93ea119956fec191bfffb15d26453af564f145e86bfb92326a5699f4"
+  },
+  {
+    "version": "20250718082351",
+    "name": "",
+    "sha256": "ccfc5bb0502e64774c7a025efa61547450271d696ba4e36bce945e4e385de529"
+  },
+  {
+    "version": "20250806074641",
+    "name": "",
+    "sha256": "41da76f790ee24a1d24bc0140bf1741c29544078e81ffd9b3272c53c10c3d05c"
+  },
+  {
+    "version": "20250806075933",
+    "name": "",
+    "sha256": "a29f03c76897c3040486c68da1390d2a462334634c471de6ce80d59fb91da390"
+  },
+  {
+    "version": "20250811012231",
+    "name": "",
+    "sha256": "1955f5b7ea78b820875f7b202cd6fa44932cfb9a9385c3110c1bdeb28459b1d6"
+  },
+  {
+    "version": "20250811014006",
+    "name": "",
+    "sha256": "9db6d9c850d2e350b956a4c64ec485682b2666f3e3ef8bc48d08dbd532a47c93"
+  },
+  {
+    "version": "20250812010952",
+    "name": "",
+    "sha256": "9708d9a5fb5d0b3eaef522ca7d41fb427d17f0bfa6be5821d57d7290f32053c9"
+  },
+  {
+    "version": "20250812013129",
+    "name": "",
+    "sha256": "9fb0d1abcba340681546b35954b313c19cabdfd3393d77b90161f1ab5bcb1bff"
+  },
+  {
+    "version": "20250812013159",
+    "name": "",
+    "sha256": "9a8084c57117c7a13e1b7c834bfdad42a8ff02be9d5b8929431a3c13228477fb"
+  },
+  {
+    "version": "20250812020122",
+    "name": "",
+    "sha256": "8955e24c5fa0d4fd7699429cc400250e0af49085f5d1daa9dd0cf7d2161cbc71"
+  },
+  {
+    "version": "20250814021459",
+    "name": "",
+    "sha256": "ad17d87b0b2d526f67bdb516f7ca748caedf24e960b6e5c8dafde8693a785709"
+  },
+  {
+    "version": "20250815072319",
+    "name": "",
+    "sha256": "1556596198b335a922d6ee6f05ef20767fb836c498a56259a6b64c2baaef9c39"
+  },
+  {
+    "version": "20250826064213",
+    "name": "",
+    "sha256": "a30707fc8453a5a17587903568d3bb9269eed844f2c63b7e6954e2cc6264a2ad"
+  },
+  {
+    "version": "20250904063145",
+    "name": "",
+    "sha256": "69fced2d4863e06208c1120cd760f58542c01d1c34c4bc7d0cbee3f5389534f7"
+  },
+  {
+    "version": "20250904080149",
+    "name": "",
+    "sha256": "02449870661df04b6501b5b0390d2cc66c973117bc89f12964a11c7c5693257b"
+  },
+  {
+    "version": "20250907094425",
+    "name": "",
+    "sha256": "6fe9cf35193b7142b0cae3feee21da807f38f527d4b785ffef140658353e69fc"
+  },
+  {
+    "version": "20250907094450",
+    "name": "",
+    "sha256": "6fe9cf35193b7142b0cae3feee21da807f38f527d4b785ffef140658353e69fc"
+  },
+  {
+    "version": "20250907094515",
+    "name": "",
+    "sha256": "9fc43bf96619ca1333d7c112a31ad4b3b63dfb408d17330aedcc81a7fcc81c83"
+  },
+  {
+    "version": "20250907101307",
+    "name": "",
+    "sha256": "767c9fc48fc4a94a577073dd1acb1cb9b7ca981e0f517bf96496dbe40ef2d22d"
+  },
+  {
+    "version": "20250909023250",
+    "name": "",
+    "sha256": "24b39803288a7713fd66bc53e87a878153984752f8d1e08cec25b081d4da282f"
+  },
+  {
+    "version": "20250910011918",
+    "name": "",
+    "sha256": "5898816c2ac9f0f0cbeadc13189fc8d8085dbd9163da68c6007a0522b8526f69"
+  },
+  {
+    "version": "20250910035958",
+    "name": "",
+    "sha256": "8a09a057ed8abb7cdc17d898afa31166da4b70f4692c673e388aef1e0e7617b2"
+  },
+  {
+    "version": "20250911044634",
+    "name": "",
+    "sha256": "6d624dce03138240aca55e07bb0c871ffa7131895ee1e6d4fe5013755bf78cb4"
+  },
+  {
+    "version": "20250913022159",
+    "name": "",
+    "sha256": "538c6df96f76981905e100ca8ab782f0b77b1fd98b23c61e011704dcd4b4d270"
+  },
+  {
+    "version": "20250914024114",
+    "name": "",
+    "sha256": "d36ca0403f641a7d4e4e7b3b16dcdf150969ae2101e83e4396ff258a2a6db14a"
+  },
+  {
+    "version": "20250919065639",
+    "name": "",
+    "sha256": "c541dbdb27fa89ad73e3f23ebb98e6a7190598d47d4bf1d06bbd42c26cc60e77"
+  },
+  {
+    "version": "20250921012049",
+    "name": "",
+    "sha256": "60177b908440ebd5a055e0d520bea7326a1cbcdc49a4cc09a998ece405384fa1"
+  },
+  {
+    "version": "20251001083637",
+    "name": "",
+    "sha256": "44e1b1b6ee9b4a549ba85e6e6d602d7bf9c44a68399de4e93916a8adf23fc27d"
+  },
+  {
+    "version": "20251002011545",
+    "name": "",
+    "sha256": "692b2bd0b93a014cbbf4d47a2db6e8e9c25d1fb6d23efb3b3afb69944436a301"
+  },
+  {
+    "version": "20251002120716",
+    "name": "",
+    "sha256": "e150796a1f82ccf3719048b0a1142129394735b14ec7f9bfb88f3cb1594bda08"
+  },
+  {
+    "version": "20251002123629",
+    "name": "",
+    "sha256": "a59e8f0ae1287df0a8cda625c46adc76e00ece53929c6f6d69b0099075cb1f2b"
+  },
+  {
+    "version": "20251003021326",
+    "name": "",
+    "sha256": "c7f98deab59f544749ff00affe0144e63924da779cc95844ce01bade6e1754b1"
+  },
+  {
+    "version": "20251004035158",
+    "name": "",
+    "sha256": "dbe7ddf719de1e3a95bd445c064f169332edc23466e10e30c6c5295945e2c316"
+  },
+  {
+    "version": "20251004042959",
+    "name": "",
+    "sha256": "51dcb851b5557155e124c3d548a26423948eaf7cf46b68f0b3b70a85502a1e69"
+  },
+  {
+    "version": "20251007020946",
+    "name": "",
+    "sha256": "e8b7286ad6939a5fbe592c1d6260af85b3c05d7a1e5d233540bef5aadb43b12b"
+  },
+  {
+    "version": "20251009020749",
+    "name": "",
+    "sha256": "a67069a9fb2578d03f3403a57f5d884efbf6f5b4391ba8c4bea9f4823f5016ff"
+  },
+  {
+    "version": "20251009024452",
+    "name": "",
+    "sha256": "712949016ab87e684a3d3195df41034c5ed79d44cef48e816759daa189ff8e48"
+  },
+  {
+    "version": "20251009032423",
+    "name": "",
+    "sha256": "5024f6429ff54d23d2d32292f01924ed921400d9499e988663c69fb01fe702d9"
+  },
+  {
+    "version": "20251009083219",
+    "name": "",
+    "sha256": "1c937d00149beb4fd193e8ad1600a135a42399737f80a36a76d2961cdd9ded07"
+  },
+  {
+    "version": "20251105181557",
+    "name": "",
+    "sha256": "5743f969543b5580fadeb6fb448fbc935814a85759b818348720227cf350599a"
+  },
+  {
+    "version": "20251105182726",
+    "name": "",
+    "sha256": "030bd712018b01186a10bb4047e5a8f53c3630b6780aefda9f72347679392c46"
+  },
+  {
+    "version": "20251105201035",
+    "name": "",
+    "sha256": "3b50164b37031b7dfe99e5c49acb9f4b81763cd0cc3d19fe8a649ff6b8588f6c"
+  },
+  {
+    "version": "20251107235756",
+    "name": "",
+    "sha256": "355074a15f40cf69f34f748b175307acb3fd14e4360d52ba948f64fdbb5913b0"
+  },
+  {
+    "version": "20251122232229",
+    "name": "",
+    "sha256": "729e2c04a7bce2a09896efa152b75443cc052d438af47f943ebf741cf0b4e459"
+  },
+  {
+    "version": "20251129185337",
+    "name": "",
+    "sha256": "bf6a498125854a09a7880eb5543157d0a22c4977fefdef2e1f98dc1487468b12"
+  },
+  {
+    "version": "20251203194557",
+    "name": "",
+    "sha256": "19b9a77ae3f4ea363088a5c11d65fcb021e20169029d80dcc94bed444cef762c"
+  },
+  {
+    "version": "20251216232630",
+    "name": "",
+    "sha256": "49aea7e17909cfe4d74cc1098269905787b7e3d1952e1a240e821b34264b1e53"
+  },
+  {
+    "version": "20251217134615",
+    "name": "",
+    "sha256": "dd2998dad8a8334feb481475f972422e547dd18da8b61492e562f9c94956ada2"
+  },
+  {
+    "version": "20251221024511",
+    "name": "",
+    "sha256": "c61640447a24794e55a2a176fa21bb22f74f8ff08f0800e35c81053216928ee3"
+  },
+  {
+    "version": "20251229212307",
+    "name": "",
+    "sha256": "56eeafa6c48c84c57efc4c413313779e6f3657628c72223f2e047e59f1e856d2"
+  },
+  {
+    "version": "20260107193804",
+    "name": "",
+    "sha256": "773de274d8cba3ba8cdb45586b16276790b481bb09b74638143daaf4cbac21e4"
+  },
+  {
+    "version": "20260107200356",
+    "name": "",
+    "sha256": "cb94b4367639000b3d4600f868cf7d6c120255a0f37503cdaf1d30b6293a7eef"
+  },
+  {
+    "version": "20260109114156",
+    "name": "",
+    "sha256": "6c7e2f1c7e9a360cf0b1ebdf9150f595dcf03ddc84d694b91a80b41c7a4bf972"
+  },
+  {
+    "version": "20260109114621",
+    "name": "",
+    "sha256": "7e54d39b64184fcde3174cd20ca47085b9dc7ac084cc25c392dfd43861147126"
+  },
+  {
+    "version": "20260109214438",
+    "name": "",
+    "sha256": "5a084260d17ae1b0dbcb06847ca94fac27a9470c3433a778210a381d2a246b2e"
+  },
+  {
+    "version": "20260114213533",
+    "name": "",
+    "sha256": "47744b61c246bcc923e05fdd3145b9e61765b66deef9e61d999df14b0e952a1c"
+  },
+  {
+    "version": "20260116224350",
+    "name": "",
+    "sha256": "46ca0d2e427f7b57ec50c88dfec47a860caae73e38d55f835064a9929a4b6274"
+  },
+  {
+    "version": "20260117222107",
+    "name": "",
+    "sha256": "66c20a0ae2ac5efc116619a027db4036f4bab676b8e025672e78252c8c63b52a"
+  },
+  {
+    "version": "20260117224719",
+    "name": "",
+    "sha256": "054176af942051e1dc409e669b5eebc2828cdf1c0adf32adf2a53e15e3f84568"
+  },
+  {
+    "version": "20260128151253",
+    "name": "",
+    "sha256": "cea32a8207a832597d9b9ba641fd4146d87a27943d4d470309aa5494f323824f"
+  },
+  {
+    "version": "20260203144600",
+    "name": "",
+    "sha256": "2575c57409f2ced8de363bf72c3b352de935d3d7dde9cd76e4a4d81462b27129"
+  },
+  {
+    "version": "20260204014149",
+    "name": "",
+    "sha256": "714d0efd84dbbcf03cb48d74e990d68c8308b768aa8edeed477dc67e64c2974f"
+  },
+  {
+    "version": "20260204191940",
+    "name": "",
+    "sha256": "65c18888c5877b6ade3b364764d539f55a1f59d900b58d9b15602835201219ef"
+  },
+  {
+    "version": "20260205021622",
+    "name": "",
+    "sha256": "fb650761d247f8efbe245db98672f2f9dd16ceff78fc5ab0c1302b4a660808e7"
+  },
+  {
+    "version": "20260211153611",
+    "name": "",
+    "sha256": "43dbbd9938fe98b10549b0827d390f82f84af95295c39291b40f482219edba1f"
+  },
+  {
+    "version": "20260212024134",
+    "name": "",
+    "sha256": "a4c2f646fd8401bb50cf3da6735af93e1206d598ab368de9f9632e2407643456"
+  },
+  {
+    "version": "20260212031036",
+    "name": "",
+    "sha256": "81f0b16b740ea7ac7f294e8c6c11617cbed8b0cb1cccc87e08d12692aab2711c"
+  },
+  {
+    "version": "20260216130828",
+    "name": "",
+    "sha256": "076b262d358957370c2ce6efadc789797cef185c5e87f94333e27589cf427f18"
+  },
+  {
+    "version": "20260216132106",
+    "name": "",
+    "sha256": "aadf6320445a4ef3c4b7b2f339b45d2950a3bc114264fa9529df72d79dedf600"
+  },
+  {
+    "version": "20260301010307",
+    "name": "",
+    "sha256": "7c9ad748cc386930cd694b37363f18a2ea787f1902a127c6776d0077cd97797f"
+  },
+  {
+    "version": "20260301211026",
+    "name": "",
+    "sha256": "add8445cbf54a1d3f26975edc8c3f89c59e33e40a2474fe26a272d6542552988"
+  },
+  {
+    "version": "20260307010832",
+    "name": "",
+    "sha256": "f7c16eb53e7b17c687d5f5e12725b1a0573e476f15e6ab4b53a4af4e3a6c8abb"
+  },
+  {
+    "version": "20260308152407",
+    "name": "",
+    "sha256": "01d9fae41a5d3bc54eb107372df4b3be0e6bdf6fd4e780c3d47aad83049b35cd"
+  },
+  {
+    "version": "20260308214844",
+    "name": "",
+    "sha256": "9a76bb14f824e927e40c54cc6f3ca9d5381be1afe98bd792c6e8877eecc13ad4"
+  },
+  {
+    "version": "20260308220930",
+    "name": "",
+    "sha256": "62dfa3cab6355cb4606c4014f97a09d8f44e60d997ca1b9240ea8e4bba5fd471"
+  },
+  {
+    "version": "20260308221310",
+    "name": "",
+    "sha256": "517f11e0b438dfdd6e751c698bb5ec85636dd7d930e858f6a646bc5b571480e0"
+  },
+  {
+    "version": "20260308221917",
+    "name": "",
+    "sha256": "e22f466a2b8acf5e884da16f7307e9bf4527a5d3500893792f71dd6406056613"
+  },
+  {
+    "version": "20260308223114",
+    "name": "",
+    "sha256": "b44a1c9fabe08a4a034f984433590d4f0afff98ba1d9fa0af36961bc80f984e3"
+  },
+  {
+    "version": "20260308223532",
+    "name": "",
+    "sha256": "e7c4da1377d3903a888f36dfca1f2c00f8f5906c1850a0838e41e2ba01805edb"
+  },
+  {
+    "version": "20260308225542",
+    "name": "",
+    "sha256": "58283864ebe0d99746398d5199e7b3e8858fc17f8bc0137378ec72f431de138d"
+  },
+  {
+    "version": "20260308230436",
+    "name": "",
+    "sha256": "360f28065ed4840a2a6c33f3ec645a7db1d30be6ae1cd0a69d21851bba6e88d8"
+  },
+  {
+    "version": "20260308233754",
+    "name": "",
+    "sha256": "3a3fdb784a832d41be54c3b4b6d654817eb74d9adb1a26fd4a2bc418d9baabc5"
+  },
+  {
+    "version": "20260309024740",
+    "name": "",
+    "sha256": "b93ca81a9309e5f2c821714bd544bb324148dd1461aa2a7deabf8772e54f0ae5"
+  },
+  {
+    "version": "20260309025151",
+    "name": "",
+    "sha256": "89a35c41b694261e75197c8cb86d6fecac2196a5f3a3ab46bfccfacc0325a511"
+  },
+  {
+    "version": "20260309025911",
+    "name": "",
+    "sha256": "509b90e72dab2b95efabc80bcf83a0117b08158b7819ee64e3ed8685f1e6f995"
+  },
+  {
+    "version": "20260309033033",
+    "name": "",
+    "sha256": "4688ff409bbef2fef4f69f4944c110fc0412b6c9ba79d02916c57bc6aab1a5ee"
+  },
+  {
+    "version": "20260309033518",
+    "name": "",
+    "sha256": "ed80344ce753dd7601ba371fd1af364520c921251a8f5b247c72854f39b2bd43"
+  },
+  {
+    "version": "20260309041340",
+    "name": "",
+    "sha256": "c555e36d9264e81e1059e961d1b7d53ed57ae2a1619632bf18df67a5eb51963d"
+  },
+  {
+    "version": "20260309041506",
+    "name": "",
+    "sha256": "f2041d1aa990b6f10209826295233ad92a9b51dd9bb25754ff4825638438593f"
+  },
+  {
+    "version": "20260309041910",
+    "name": "",
+    "sha256": "8cbd2ce9f399ba178003c8ecadba4d70f3b5ef145908d41501f1d8e52e8f7196"
+  },
+  {
+    "version": "20260309044713",
+    "name": "",
+    "sha256": "f0e08d3730a7041e3441170342b00b07da22fdbd69eceb43d06bd15a228ecbf6"
+  },
+  {
+    "version": "20260309045443",
+    "name": "",
+    "sha256": "bdc37e1d6904a82ffec4875cdd82d73c5d4fb8dedb55129dbe7cf4426be5725c"
+  },
+  {
+    "version": "20260309045927",
+    "name": "",
+    "sha256": "8a3c2d4eab9ec6d7b09861c6e568f1380bca2a9a9aafb2e78ab63096bc43c562"
+  },
+  {
+    "version": "20260319010635",
+    "name": "",
+    "sha256": "fa969ca7c4f4328f8ad590d7276dab992416bb7ed7644591c3ad61eafdce9841"
+  },
+  {
+    "version": "20260403143522",
+    "name": "",
+    "sha256": "80ba16565c91559ffaa5721f48019c11b3a401212112e6e29bac9cb75614d817"
+  },
+  {
+    "version": "20260403151145",
+    "name": "",
+    "sha256": "a904db1ba22cf4513bc8da20e37818cb4833cc49f426bbde79ce06d21543b016"
+  },
+  {
+    "version": "20260403235408",
+    "name": "",
+    "sha256": "7e504816a6bb2f9ae910f08f3e558b7dfcc6b53882b50e63516eb93af36df7b4"
+  },
+  {
+    "version": "20260404221952",
+    "name": "",
+    "sha256": "c94a731c23a46cf23e32cbe4489af7b80b27be1a93d447d44781ad7ff585d292"
+  },
+  {
+    "version": "20260405231404",
+    "name": "",
+    "sha256": "506e8af95c1bc98c0bcf4934e2bfd33fa8712c1916e26b82b61999fe8beced0e"
+  },
+  {
+    "version": "20260406134853",
+    "name": "",
+    "sha256": "57807cc9938201c131f897774e2d07bc2b486be052ac67a0e71285622a9b3cdf"
+  },
+  {
+    "version": "20260407160005",
+    "name": "",
+    "sha256": "134582922e8c2b7876f96242405ff71266d8dca89145913b3b97329814668380"
+  },
+  {
+    "version": "20260409194342",
+    "name": "",
+    "sha256": "c69d6dda21c2900cf52ec42c306d2323ddc15c2565508487360419fda1797313"
+  },
+  {
+    "version": "20260409214513",
+    "name": "",
+    "sha256": "ef911678b790a3cd6cc7efe81df54e75073320a6a15b2497d6342b42f87b13f1"
+  },
+  {
+    "version": "20260503030146",
+    "name": "",
+    "sha256": "0905c71da8139009adfc4def49701785495122756fc469a1a06427b5338add58"
+  },
+  {
+    "version": "20260503030333",
+    "name": "",
+    "sha256": "8d15a02321afb58689707e6c49a0dcfff08a38cf2d6efd6759aa0839fbc95202"
+  },
+  {
+    "version": "20260504000654",
+    "name": "",
+    "sha256": "dff5a8e93052899fbbaa0ae2b2ad20cba48c8fb8e916ca6e5b3bf4948f8c4934"
+  },
+  {
+    "version": "20260509014633",
+    "name": "",
+    "sha256": "0d32d1d518d1cf534fe49e96185504b76da8bc93adaf2076c2f072a2718db99f"
+  },
+  {
+    "version": "20260511234920",
+    "name": "",
+    "sha256": "a41ce484782be718882b4d15b2b260b478695cfed9c6d31fc0cde5fd25b234dd"
+  },
+  {
+    "version": "20260516194618",
+    "name": "",
+    "sha256": "3a1f2ead1f9a46f0b0f9f9ef9e1f04a4a9865c58c1825b3c63d69449fd604c09"
+  },
+  {
+    "version": "20260517002235",
+    "name": "",
+    "sha256": "889dd0e8e079464191e3d065a1842f63e1a826ccc5071aad27e261d6ea06ae94"
+  },
+  {
+    "version": "20260517025438",
+    "name": "",
+    "sha256": "874da58028172d80f76e7e06b292c9872cdd02eb5d6d07919ce9e17e121343a7"
+  },
+  {
+    "version": "20260517025948",
+    "name": "",
+    "sha256": "bc1b8d3453f3bea11b237f7bf90b4dc3e5f2f307438eae1370b8c1457cf66033"
+  },
+  {
+    "version": "20260518212721",
+    "name": "",
+    "sha256": "a894b2c711be778bdb174710760c10c504fbc8ba227f4b076f87d1cbacdb5bb0"
+  },
+  {
+    "version": "20260518212803",
+    "name": "",
+    "sha256": "2a180c425114ffef9e493c6e594cd51a2f8bedc6f5ba2a4e0ad9981b3f0ffe30"
+  },
+  {
+    "version": "20260519195539",
+    "name": "",
+    "sha256": "216647cf1004e13c8ad7e9dd45e10d837cf6480dc0defe2e798bf67d73a8afda"
+  },
+  {
+    "version": "20260521020543",
+    "name": "",
+    "sha256": "31541a08377693c8a0faee391860ab7f9079ace3159c91736edc5b74361dd224"
+  },
+  {
+    "version": "20260521020741",
+    "name": "",
+    "sha256": "e3894f8bd12bea960a101028c93f218d4a0cdf59e18b1cff2e68cd00af40131b"
+  },
+  {
+    "version": "20260521214631",
+    "name": "",
+    "sha256": "4bdf3cd7949d6aeda2a527d719f5cf185ad306f87c21f4762d5a4668a1470b8e"
+  },
+  {
+    "version": "20260525030807",
+    "name": "",
+    "sha256": "15762e7122348b87982116289265d7bd5d2f534af4c24a4a1d55ec1a2209720e"
+  },
+  {
+    "version": "20260526001943",
+    "name": "",
+    "sha256": "7aaf06f4f78018cca8162aa3b330509d2f703dc37dfc1f9df358f2a7bba6d912"
+  },
+  {
+    "version": "20260528024924",
+    "name": "",
+    "sha256": "318cc074471a0dd2901ac2400086c295eac4ffdcb8a1fa5df5159aeab56590f9"
+  },
+  {
+    "version": "20260529001605",
+    "name": "",
+    "sha256": "f4738711cfcfce9b8cbe7c156155d937bb1277eb3a0388dd6ea0c142d5f4cb8a"
+  },
+  {
+    "version": "20260530203053",
+    "name": "",
+    "sha256": "4afb702fdea1f9cab182ab6f8a8fd023960ba94cd3686e9371df7ad755b53a91"
+  },
+  {
+    "version": "20260601131312",
+    "name": "",
+    "sha256": "70dc3250f9445942dd0f2e3e647260a603bc7199195d3f31b07ac82eb01ad585"
+  },
+  {
+    "version": "20260601132157",
+    "name": "",
+    "sha256": "221a92b002079568b383d75a700a530e75304d4d5f34b4029f725ee9ce4aed75"
+  },
+  {
+    "version": "20260603155434",
+    "name": "",
+    "sha256": "1a577517fee57fce5355557ae8faba50bc21969ba3c97be549f0bb965512b62d"
+  },
+  {
+    "version": "20260604210354",
+    "name": "",
+    "sha256": "a97ec10e189c30a54bd2b82564178771b282a5815639acbccac727ed36b305a1"
+  },
+  {
+    "version": "20260604211322",
+    "name": "",
+    "sha256": "38948876da8dc55fd292a7a13f55cbf6bd9de29d5f162702e75f4c5c239a547e"
+  },
+  {
+    "version": "20260604212612",
+    "name": "",
+    "sha256": "287f9fded0e643a132b5c6cf5e983c0e2e4a789744a72a0e2d3ee6eac2205152"
+  },
+  {
+    "version": "20260604214620",
+    "name": "",
+    "sha256": "388e0dd41fa05c793bbd1212e57ab6796d6921684d58de233e84f7e6f05aa955"
+  },
+  {
+    "version": "20260605014510",
+    "name": "",
+    "sha256": "2de90d6c115cb7af20b3ebcfc9023ad3848b55e84ca4ab9a08375905a5622d04"
+  },
+  {
+    "version": "20260606235030",
+    "name": "",
+    "sha256": "9f3007036ea4d50e5c842c5c7f0e3bd6b6430affbe3629fb08decafe4d5bbe32"
+  },
+  {
+    "version": "20260607000853",
+    "name": "",
+    "sha256": "cfa42a257e9904cf8764a3822bc707f0dc78380af747ad7592b6aec706b241a3"
+  },
+  {
+    "version": "20260607015632",
+    "name": "",
+    "sha256": "8f47bbde5a352b72388f5d2ac9e29e7e47611e320a27ee7d31b8fb7cd4bfd8fa"
+  },
+  {
+    "version": "20260608003952",
+    "name": "",
+    "sha256": "20bc2d1faf8f53a129ba91d13c975c8ed36418b8c1df6fef3be0bf69069eb043"
+  },
+  {
+    "version": "20260610225242",
+    "name": "",
+    "sha256": "94c59c2b5b6d8c66cce3eedf98f29b188d4569a3a861c8ade2fb890d9a1ea6da"
+  },
+  {
+    "version": "20260611005637",
+    "name": "",
+    "sha256": "1b1229680248a21d40de48255cca9ca016ecde7264c512091357663bdeb6d38b"
+  },
+  {
+    "version": "20260611005740",
+    "name": "",
+    "sha256": "f0e9859d3ed819a6e07add70da91097d1b83276b7a125765fdda9a6683a7eb34"
+  },
+  {
+    "version": "20260611014021",
+    "name": "",
+    "sha256": "23cf849c1e5b42f608367158fc1952b34e092e4048b45c21a44deb84916c1cba"
+  },
+  {
+    "version": "20260614124109",
+    "name": "",
+    "sha256": "4830e4fbf5ac9c96ac404d38d6bc00de78ac6958d74f8384655c2a0b554543a3"
+  },
+  {
+    "version": "20260614124430",
+    "name": "",
+    "sha256": "b9c83f6910cc1617ffe07d2b04462d7491c81506b44c846cbe97138b534de070"
+  },
+  {
+    "version": "20260617132604",
+    "name": "",
+    "sha256": "147fd56014cfad8534e5f43b69c9dcdc345728fe6f58863edb04fafc46cf1314"
+  },
+  {
+    "version": "20260617151612",
+    "name": "",
+    "sha256": "b1f22fada0bef50bfb4766c3566ede50acdc430facb3200ad5237442b7e6e8ca"
+  },
+  {
+    "version": "20260617214038",
+    "name": "",
+    "sha256": "8220da05f81128c94377dad1e509088f640ffb6c3b3423267ef62ae636712c54"
+  },
+  {
+    "version": "20260617224813",
+    "name": "",
+    "sha256": "da6db3ee74c9bf328ec44340d9b5a20c8ead2c4fa51a5cca61772d0c0f7f34d9"
+  },
+  {
+    "version": "20260618021156",
+    "name": "",
+    "sha256": "ed509e3447fcf0a2029b6d383ebb9ed787926801029450d5c6fab459811de625"
+  },
+  {
+    "version": "20260702202655",
+    "name": "",
+    "sha256": "e97e924f74ebb22fc801e2869bf4b8e1318aa67d4097bb700bb28b460c5fa219"
+  },
+  {
+    "version": "20260702212559",
+    "name": "",
+    "sha256": "057cbd171993609ca4651f22596a690933f352ed97b7c1f6748295e2b5882273"
+  },
+  {
+    "version": "20260702212824",
+    "name": "",
+    "sha256": "f3482dc8b3ddb28532141e92263cc4d0a84f91993c83a4a6b6836718877bd0e6"
+  },
+  {
+    "version": "20260703152208",
+    "name": "",
+    "sha256": "066572163c5094f41660b1c7dd98c742eadc0050fb4689f46ed4faef79e4eea2"
+  },
+  {
+    "version": "20260703203457",
+    "name": "20260703203448_e9231548-92bc-4258-bfb2-d2276f71eb34",
+    "sha256": "a3c0f11975c8f41e3f3881d388c5d96168ac2c561301c306f052f1a1e0111e41"
+  },
+  {
+    "version": "20260703203542",
+    "name": "20260703203538_b02db1e3-06b9-4d18-b3c8-70a2a595f2a4",
+    "sha256": "2b73d1924adb96ed69a05375eac262555aba26d6de5ef4b3fa42ca2fc412b37e"
+  },
+  {
+    "version": "20260703215858",
+    "name": "20260703215854_428a9450-f704-4431-9a16-e7f3d3586c38",
+    "sha256": "62ae62c470dbc89bcb3ab45bcaeee83dc8dec26537dc90fe991d838029fda304"
+  },
+  {
+    "version": "20260709233439",
+    "name": "20260709233431_f149dcd6-2a81-4291-989b-e7dc05c1e082",
+    "sha256": "c383ad60c36f504f2236515048a96fcf35879da745a9542dd87ad77550aec96b"
+  },
+  {
+    "version": "20260715185723",
+    "name": "20260715185720_a847581d-4264-490b-b85d-cee07830994c",
+    "sha256": "6e5976887613b252449346389d65424f95fbcc8d47cccdc3aac335b64ce5a4b1"
+  },
+  {
+    "version": "20260720202349",
+    "name": "20260720202344_cff4d2dd-510b-4e26-a8c3-08473bca3811",
+    "sha256": "bac290156ceadb8b485dd4347388e66ed80b608968e071c11d168baef6328501"
+  },
+  {
+    "version": "20260720203019",
+    "name": "20260720203016_599136ac-62a0-4361-91a4-07becaa7f1e0",
+    "sha256": "358cba9084492a2cd710c9c1f388dcb18ff99e2e4fdca5e38064139f478f23e5"
+  },
+  {
+    "version": "20260725221635",
+    "name": "fix_avaliacoes_unificadas_aluno_id",
+    "sha256": "53177b49247435d3408203942eb53950a005ff74bd52daad80b99e9553897a5f"
+  },
+  {
+    "version": "20260725221657",
+    "name": "fix_avaliacoes_origem_constraint",
+    "sha256": "c8563064a555e277b5aa996b1c51c35f25539a1e7c32bf795949f07615ace2dc"
+  },
+  {
+    "version": "20260725222147",
+    "name": "fix_sync_score_motor_checkin",
+    "sha256": "bcea7c8a9d8034a7644bcecd23defea8943091fd9971f6c9a8e5ddc2cf29e5ab"
+  },
+  {
+    "version": "20260725222246",
+    "name": "fix_radar_eixos_e_fn_get_scores",
+    "sha256": "c2056400bd0a79750c4eae7781820084f4977bb8047d3f6fe3834b35badbe6d6"
+  },
+  {
+    "version": "20260725222920",
+    "name": "fix_get_healthflix_feed_drop_recreate",
+    "sha256": "15f0945f363ee70b40114d1166b705529d84eb863360c6206b0543a2dd2fe32e"
+  },
+  {
+    "version": "20260728213052",
+    "name": "restore_fn_treino_rapido_bloco_a",
+    "sha256": "f134bd8ac29d8dff1b2e49c9dc62541e23d1babce76261beb8da016c139b9bbc"
+  },
+  {
+    "version": "20260728214439",
+    "name": "20260728214434_fe365a56-f46c-433c-8b34-58c0a1567fda",
+    "sha256": "cb47aecfcc0583ab81c6eae9595c62e12113cf931f8026f6d179ece261c67a3a"
+  },
+  {
+    "version": "20260728215000",
+    "name": "fix_get_workout_of_day_synthetic_fallback",
+    "sha256": "aa25a135ff79af2ba1ecb47ad2ae6be3c5857cc73d8811db77b62066e507d366"
+  },
+  {
+    "version": "20260728215158",
+    "name": "fix_staff_gate_and_exercise_video_filter",
+    "sha256": "3bfc34eb9c7f0d934d13d53e46bf4748c305f2f80b44081964f8589c192321f7"
+  },
+  {
+    "version": "20260728215314",
+    "name": "fix_workout_of_day_muscle_mapping",
+    "sha256": "da6e8a1f22c5de828ff903de044e38fd5ddf21da7f40df34d946387963913e94"
+  },
+  {
+    "version": "20260730204101",
+    "name": "fix_staff_route_block_for_students",
+    "sha256": "fae46fb69057025e311f2cf73a0c4990b43feaafff8750c41c19bfe028ce2026"
+  },
+  {
+    "version": "20260805193757",
+    "name": "create_hydration_logs",
+    "sha256": "a5e9ac0e7a93025ffc10763cbc72c513ded531200ba08bca74b48f678de97eb4"
+  },
+  {
+    "version": "20260805231527",
+    "name": "wire_hydration_to_master_registry",
+    "sha256": "2bffe95d755058daafd890939d1e20e3a60712cf126bad2d2ab7ced75723f591"
+  },
+  {
+    "version": "20260806231512",
+    "name": "560457a5-b614-440e-bf32-1caa2c6a773b",
+    "sha256": "26b76f8242e4fa4807078f386e1f386be75e6e4a90db113a6e10d0daf83ca03b"
+  },
+  {
+    "version": "20260806231650",
+    "name": "5b297e15-9b56-4536-aec5-6bd3f812b7fc",
+    "sha256": "36cc3aebbd582ec48c6a235bca763ab4602454b2ab9742bb248991eaab3e1314"
+  },
+  {
+    "version": "20260806231828",
+    "name": "04d98ba3-29d8-4571-9bd5-1c7c56524d33",
+    "sha256": "2656732aa24a2c7354911584bbb906aaa63a15cb3af14ca764c3b26670652b27"
+  },
+  {
+    "version": "20260807013547",
+    "name": "d9b96568-59ba-4116-a114-158d3e6336d8",
+    "sha256": "f1c19ff6c21762b957276350a33a087b10ac051bd9392a7a4654624e2714bbdb"
+  },
+  {
+    "version": "20260811013054",
+    "name": "fix_fn_on_xp_awarded_column_mismatch",
+    "sha256": "98920b5af5c45612ff2ad4226b665f33744cda7009649f4334ad1d65e76d44b6"
+  },
+  {
+    "version": "20260811013126",
+    "name": "fix_fn_on_xp_awarded_remove_phantom_streak_call",
+    "sha256": "7c168ee642cd108b994955742f6df6dcd18cc9fc586e20745bd631ceeaa71acf"
+  },
+  {
+    "version": "20260811013321",
+    "name": "fix_workout_completion_triggers",
+    "sha256": "178f0c8ec76dec1c1c33d30d7ca73db24eb2ccc8136ff84d91fca4c430cb1526"
+  },
+  {
+    "version": "20260811194836",
+    "name": "fix_fn_award_xp_overload_and_event_logging",
+    "sha256": "60b6f40f91d9988974dc4f13a3a234584efa585c865c80d96ada64718e897856"
+  },
+  {
+    "version": "20260811194949",
+    "name": "create_calculate_avaliacao_score_function",
+    "sha256": "f4a0f17e96267729af87b8d562285fc0d6e32a8602d1a5703d916eaf530f9c58"
+  },
+  {
+    "version": "20260811195119",
+    "name": "fix_fn_log_sync_score_event_column_mismatch",
+    "sha256": "99370d43660d6a7d64835a3bdf733880980b8b4580da068a1a08176bfc54be8d"
+  },
+  {
+    "version": "20260811195139",
+    "name": "fix_fn_log_sync_score_event_missing_score",
+    "sha256": "d6b617273d976f0155e9937eafab01902d2dad6918b63652d13feb11d0f7c643"
+  },
+  {
+    "version": "20260811195314",
+    "name": "create_supra_bridge_function_and_triggers_v2",
+    "sha256": "6a40ba61b7a78e812a8ec635dd53bcf0f4348ccc91893708923c129a8dbd6a44"
+  },
+  {
+    "version": "20260811201127",
+    "name": "fix_athletes_rls_bypass",
+    "sha256": "c7cf9bb18f9976f69f772dd4ca3374a5e97ee0f17c872007ab2f5ed0628a10e6"
+  },
+  {
+    "version": "20260812222859",
+    "name": "fix_fn_ajustar_treino_dia_propaga_changes_json",
+    "sha256": "7e346bca6dacc5c2dc28ba882eeeada393df4bcb33f3a6e3280c903d318b18a9"
+  },
+  {
+    "version": "20260812223012",
+    "name": "fix_fn_ajustar_treino_dia_match_correct_assignment",
+    "sha256": "8095eedc014dedfaf95f4c52849134bf5033768a919c7ee5719b6e753d00db17"
+  },
+  {
+    "version": "20260812225146",
+    "name": "add_detailed_periodization_columns",
+    "sha256": "0a459509c2a09eec3c8149f8aba2cdaf9017bd51ccaecd5bde356e906fa250d3"
+  },
+  {
+    "version": "20260812225215",
+    "name": "populate_periodization_models_detail_batch1",
+    "sha256": "dd3c74c50a401f56923f5e4a465ff594998cd154fc1661bc757290684ae02885"
+  },
+  {
+    "version": "20260812225410",
+    "name": "populate_periodization_b00",
+    "sha256": "8624769dee39a19adc9eb8d1be6dbccd1334b8be40fcb2afc57ae95c22b93314"
+  },
+  {
+    "version": "20260813145627",
+    "name": "fix_fn_ajustar_treino_dia_match_by_exercise_id",
+    "sha256": "9b4031fe2e9b27608d59049dd4466e348fea0ad5744cfe1414bef8746b92118f"
+  },
+  {
+    "version": "20260813145743",
+    "name": "fix_fn_ajustar_treino_dia_build_from_workout_exercises",
+    "sha256": "3bb80ab90fa29ac16dea1e7da920c5bae1df2eea2de0f6e0676409fe90eab9b7"
+  },
+  {
+    "version": "20260813230415",
+    "name": "create_community_social_layer",
+    "sha256": "1c33076e023eb3138951a24cc0115276f85cc1de43a84bc51cc81eceb1359282"
+  },
+  {
+    "version": "20260813230807",
+    "name": "fix_leaderboard_and_activate_dead_features_v2",
+    "sha256": "98d4b7e5a6c44c26e9565187a20d68470a19a6e759a24bcd0dfab15d1bd4c796"
+  },
+  {
+    "version": "20260813231013",
+    "name": "enable_rls_community_tables",
+    "sha256": "ea9ccb138ce4e673f23897be1e767eaabf22af74514dd12b0f816285436930d6"
+  },
+  {
+    "version": "20260813231205",
+    "name": "community_backend_finishing",
+    "sha256": "2c6c35d9b3190a39668e068dae54d6ed1c6da7102e6d65447b55adc03510488e"
+  },
+  {
+    "version": "20260813231304",
+    "name": "cover_insert_path_for_workout_triggers",
+    "sha256": "18b74a7c9fc0abcb5b6bbb59ab3bec4e0599aad0eb1fbb035c1ffc58af245bbb"
+  },
+  {
+    "version": "20260813231743",
+    "name": "remove_duplicate_community_layer_v2",
+    "sha256": "427b0b258583aea8895d445f4d4ce480c3f5816ed960ab616206accde0371f27"
+  },
+  {
+    "version": "20260815023344",
+    "name": "create_community_bridge_lookup_function_v2",
+    "sha256": "174957f582e57be164275b25d9163d81f5435bd688638f469335869f723c5d35"
+  },
+  {
+    "version": "20260815205056",
+    "name": "fn_search_exercises_by_muscle_term",
+    "sha256": "3f3db8550efc3cd5ad069bb55fd50153ee84d6238c89f6a9b46c7bb01b1de324"
+  },
+  {
+    "version": "20260815213821",
+    "name": "fix_fn_generate_waves_from_periodization",
+    "sha256": "fa781023ed08ad070470e99a4b9116f4ed0dbeccaea3f9dfa23676760fa0d159"
+  },
+  {
+    "version": "20260816145428",
+    "name": "create_fn_montar_bloco_exercicios",
+    "sha256": "f5b3bf58dec10a4e0903be985c8bac46dc2dddb8ab38f4554b4c1a659619af79"
+  },
+  {
+    "version": "20260816145436",
+    "name": "drop_old_prescrever_treino",
+    "sha256": "28b943d473f8b86ee218f02e5d512f9f896e65d95d0fd45d9a6864c861df9381"
+  },
+  {
+    "version": "20260816145454",
+    "name": "rewrite_prescrever_treino_protocolo_real",
+    "sha256": "2c8b2c43fdfcaa66aea14cde7e8ea38580a153bc34e1d8e408058eb6a31ba9fd"
+  },
+  {
+    "version": "20260816145518",
+    "name": "fix_semana_atual_date_arithmetic",
+    "sha256": "c1156c64ee2e5f85b7e17d3d58059582346595249f478f00cbe72bd2dcb43fc6"
+  },
+  {
+    "version": "20260816145652",
+    "name": "fix_montar_bloco_usa_model_description",
+    "sha256": "b54e55d3b9a01fc223a5a05dfd7635d7fd76e4489d513427aab365e9dbf87c81"
+  },
+  {
+    "version": "20260816145824",
+    "name": "seed_exercises_cardio_corrida",
+    "sha256": "890c150babdc4ecbae7867621d9058238cd9cafed63df802da98b7c0c874ec14"
+  },
+  {
+    "version": "20260816145850",
+    "name": "fix_montar_bloco_deteccao_cardio",
+    "sha256": "72bf7a9c0be8c5fc4c2fd1b2339918096209a3b06945a9d5f9f25e790c08d65d"
+  },
+  {
+    "version": "20260816145905",
+    "name": "fix_montar_bloco_record_not_assigned",
+    "sha256": "1622615832202ecb1c8ed96b18761d0858e38467564f177a8e4c8dbac2f45062"
+  },
+  {
+    "version": "20260816145935",
+    "name": "fix_montar_bloco_regex_postgres",
+    "sha256": "1fe31277449aafd2d16441800f4138ac5b39284e16e81a19cd917cc88ba7c3df"
+  },
+  {
+    "version": "20260816150111",
+    "name": "create_fn_grupo_muscular_do_dia",
+    "sha256": "05c1c520d1b657dd6ab824f5919ee40e47136ee28f01f556d12f8dbab8ce5a95"
+  },
+  {
+    "version": "20260816150127",
+    "name": "add_bloco9_grupo_muscular_param",
+    "sha256": "397c5434d6431d968d050fd6ae2dbe92fc3c7c9ac3737f8eaacee19339c71317"
+  },
+  {
+    "version": "20260816150149",
+    "name": "prescrever_treino_usa_split_muscular",
+    "sha256": "2e48213ede0872ae36346bca0efe18439b9aba98659b502fb565fb9ff6157628"
+  },
+  {
+    "version": "20260816150244",
+    "name": "fix_shape_exercicio_prescrito",
+    "sha256": "7b87e96267591499c0f9ed1cdb4240b3e373699a00edc6acb4e331c84d18b115"
+  },
+  {
+    "version": "20260816150304",
+    "name": "prescrever_treino_shape_final",
+    "sha256": "22eb0d8efbaa67df3b0b30bb4bb5aab8ab2d09a0f6677b333b05ae684c4048a8"
+  },
+  {
+    "version": "20260816172410",
+    "name": "extend_pain_reports_and_add_protocol_feedback",
+    "sha256": "30c260f8b4754ca62f90a1f655a75edcc34f86cc2f753e410fd36e1f1378b09d"
+  },
+  {
+    "version": "20260820182516",
+    "name": "create_temp_html_extraction_table",
+    "sha256": "12c608cadf08fe929f4fed2bec66adb1ecb253e5ce486d478c9ff762d459192e"
+  },
+  {
+    "version": "20260820182636",
+    "name": "create_template_catalog_schema",
+    "sha256": "ab2588b6c9ce47bf5c51cf362bbbfc26b0443d8a8fb465d0e3be4552a4bcca31"
+  },
+  {
+    "version": "20260820182810",
+    "name": "update_template_dark_app_checklist",
+    "sha256": "7aba6d829c860212887bd7c69d3abb1e0ad4df370d281841a8c4bc29e4164963"
+  },
+  {
+    "version": "20260820182932",
+    "name": "update_template_protocolo_clinico_completo",
+    "sha256": "345b17ab8f8a24d3579abab802c50dd0df523aef0288c80ab03d26734aee98f7"
+  },
+  {
+    "version": "20260820182936",
+    "name": "extend_notifications_and_appointment_triggers",
+    "sha256": "dcbc8927d0c386d1d5f3565038e9c769e9726b9c6f9d282e731af72572f2eb47"
+  },
+  {
+    "version": "20260820182949",
+    "name": "update_template_brutalist_mobile",
+    "sha256": "3ee15fd98d75f9803bd5b75a6b1d3fa84b08295ebcf690e5eb5b0ac700e266b1"
+  },
+  {
+    "version": "20260820183003",
+    "name": "notify_workout_update_and_completion",
+    "sha256": "86efb615faa3ec3b5cd20191de8bda2ad37dfcfc87440ca7ade52ce65ee9c3b2"
+  },
+  {
+    "version": "20260820183015",
+    "name": "update_template_session_command",
+    "sha256": "4779f2a987b5ce634e3028923a07b2cd8a4a75c48cb16b8f4d71b6e9b7c3de5d"
+  },
+  {
+    "version": "20260820183031",
+    "name": "update_template_dashboard_corrida",
+    "sha256": "04f8a535ac9cdaef8e8970bbfdd3b785708d4fcecaf46f02a2332e5a048cfcc9"
+  },
+  {
+    "version": "20260820183052",
+    "name": "update_template_clinic_tabs",
+    "sha256": "9cd885b83026d6f50aedb5fffd3eff9786d0f914b5e0a39337f251fce247d3e6"
+  },
+  {
+    "version": "20260820183109",
+    "name": "update_template_guia_pdf_a4",
+    "sha256": "8042b910913a4e36c01900fe8ebf691f11e8b683793af31f4f795e23345d3aa0"
+  },
+  {
+    "version": "20260820183424",
+    "name": "trigger_push_on_notification_insert",
+    "sha256": "2f18f2c248f7ae625c1b7e8cbe78f0d38cd87ea3370f07f3138b7f1460b6e8b1"
+  },
+  {
+    "version": "20260820183747",
+    "name": "unify_gym_classes_into_appointments",
+    "sha256": "7d2d3264ee51741bdc7e96716b9988a5183b60ed4f9212833376a89d84e14811"
+  },
+  {
+    "version": "20260820183841",
+    "name": "notify_payment_received",
+    "sha256": "a01cbeaf0d39e753c07528bdf51fec2b0f06c00394603575a72abfc83d308b26"
+  },
+  {
+    "version": "20260820184837",
+    "name": "fix_sync_fitpro_planejamento_reps_sets_key",
+    "sha256": "62d4c78b83a8c2ca4d82f86f5597e1f5f9181dfe714ba72361233688799eda06"
+  },
+  {
+    "version": "20260820185411",
+    "name": "create_fn_sync_macro_rules_from_periodization",
+    "sha256": "f20c4c1d0e535a6e2ee6244889189f7192208e3189585c4eb18a218d46614a79"
+  },
+  {
+    "version": "20260820185449",
+    "name": "fix_fn_sync_macro_rules_professor_fallback",
+    "sha256": "3cc5e997fc6b6c54a4d73a8126a7571e658876afa17ccfa355c72569603e64fe"
+  },
+  {
+    "version": "20260820185524",
+    "name": "wire_macro_rules_sync_into_periodization_sync",
+    "sha256": "2d2d894a24aec0720e1937bbe9f2ef9a844de55ca05144e03aa19dd7c66573ce"
+  },
+  {
+    "version": "20260823143237",
+    "name": "742b2bbe-9420-462e-83f5-012f88a6429b",
+    "sha256": "fe18424b9cd1a6adfd91d062afd4e453e8c9a65a60fa3bca7ae51ae0cf44d068"
+  },
+  {
+    "version": "20260824135028",
+    "name": "4dedcbef-a0f6-464b-81f9-89dfb0d226fd",
+    "sha256": "726a0402350dc359553c0f201631dd6054a7cbe9688b420d8fe835da3ec5862f"
+  },
+  {
+    "version": "20260824135057",
+    "name": "07b70352-6bab-45df-8c8a-9eda415bb5c5",
+    "sha256": "5ea409f2576fc75ee7dfbf0df73428212281336cbceb213740ba758e3a2742a1"
+  },
+  {
+    "version": "20260824151115",
+    "name": "create_fn_generate_plan_from_bank_model",
+    "sha256": "2347ed073986cf33dad831a2f2bca0cc120ffb059c0022dce0d731ff8a73a2b0"
+  },
+  {
+    "version": "20260825232853",
+    "name": "fix_appointment_insert_notification_direction",
+    "sha256": "fd26c06455bfc5a80b96249c73ab62d99efc92e715d56ee1446ee62506e7a80f"
+  },
+  {
+    "version": "20260825232917",
+    "name": "allow_staff_full_view_appointments",
+    "sha256": "25e994ef9f32d543044caba07fce4dd6728aacd9137e9ebbe1c1fc3157fe18fe"
+  },
+  {
+    "version": "20260826195237",
+    "name": "notifications_app_wide_coverage",
+    "sha256": "cdaae1355934e9db4ca9dd203fee6340529d13dcb65510e78324f2fbf3c6d91e"
+  },
+  {
+    "version": "20260826195554",
+    "name": "notifications_batch_2_full_app_coverage",
+    "sha256": "041633d48226d82e51dfa646ebc2f544ef36ddef2d6d1d252c74029ecce76c1d"
+  },
+  {
+    "version": "20260826195949",
+    "name": "fix_notification_type_enum_violation_all_triggers",
+    "sha256": "161a5a4acfbab9dee9403b19b8f32c211a5b08b4cbf729a575fec425ee782bfc"
+  },
+  {
+    "version": "20260826201338",
+    "name": "add_real_waves_join_to_periodizacao_ativa_view",
+    "sha256": "c51d87821008219179c9587b5ab49c1d626f4012b76130f9d247a20050052b7d"
+  },
+  {
+    "version": "20260827182603",
+    "name": "fix_activation_xp_bugs_p0",
+    "sha256": "62084fc1db6a0f4366e0a6be89a42655713c6597435f2cc325a85ce68ec72661"
+  },
+  {
+    "version": "20260827184754",
+    "name": "fix_bug3_unify_sync_score_source",
+    "sha256": "9f0a11924030b9dea7bf8163b39f47b29e6468a0900f894a7c3ef466078c4927"
+  },
+  {
+    "version": "20260827185222",
+    "name": "implement_daily_noncumulative_ron_credits",
+    "sha256": "c4b88e095c324a7c861648e3dcd07941d43249d07babc60a75798b09c80e5a15"
+  },
+  {
+    "version": "20260827185412",
+    "name": "fix_bug8_deterministic_exercise_selection",
+    "sha256": "20b0ce7d4d54edbc618fbc08ed2b025d3ccf15e857fb7cb7dab7df042cf4328f"
+  },
+  {
+    "version": "20260827191525",
+    "name": "log_sync_fitpro_planejamento_into_logs_sincronizacao",
+    "sha256": "e8dee0eb039a49cb2fa554275189cf9992e8e75ce89741bac2d44d19fc57abb8"
+  },
+  {
+    "version": "20260827192120",
+    "name": "fix_prescrever_treino_unassigned_protocol_and_persist_default_mesos",
+    "sha256": "c6ab15b411130b20e5beb18c605b37d0af3322344ee424dadd40a7bfb379a38c"
+  },
+  {
+    "version": "20260827192323",
+    "name": "enforce_single_active_annual_plan_per_athlete",
+    "sha256": "768632755d798f079b3dbc2e8ad7f59d51ab7845663b2a79a99c9be3320e58c9"
+  },
+  {
+    "version": "20260828082315",
+    "name": "fix_bug23_25_consultoria_typo_and_free_offer",
+    "sha256": "b5387d4a7a60ab3a56e29a6dbff8bfa95477918b60249e9b54367a3c2f761d21"
+  },
+  {
+    "version": "20260828152217",
+    "name": "archive_previous_active_plan_trigger",
+    "sha256": "fc5241a859d296a7278018ed37a198f1dc7664f9d51ea052c761071fe88926cd"
+  },
+  {
+    "version": "20260828152554",
+    "name": "create_periodization_models_valid_view",
+    "sha256": "c13d46254e1be0c255dec7a6a84b85170b2f24a7102dde4e9a20e28756818912"
+  },
+  {
+    "version": "20260828235031",
+    "name": "fix_bug36_38_module_lock_reasons_and_branding",
+    "sha256": "d966017d6c3e2c8ce9bfffcd198bc930509b21fbfc83b57e6fc6bafa8e149e30"
+  },
+  {
+    "version": "20260828235330",
+    "name": "fix_bug5_real_credit_function_daily_reset",
+    "sha256": "d2c0d2908a64b6ef375a07ef05d4bceea5e85f2b6408369f439db18c5a5b1b21"
+  },
+  {
+    "version": "20260830202824",
+    "name": "fix_treino_rapido_real_answer_mapping",
+    "sha256": "c91248d538550132575b529e0af6ca8bd7a8a736eaf704e01e294ae48e22fe36"
+  },
+  {
+    "version": "20260830202953",
+    "name": "fix_personal_records_dual_id_columns",
+    "sha256": "8b0833dcd5b3acfbfe6d56a291e931562af36e72c4f2b7404f279958bbc670a2"
+  },
+  {
+    "version": "20260830203054",
+    "name": "fix_personal_records_id_bridge_properly",
+    "sha256": "a19fd2ba76d035644237bdb2283e9e650235422e6e6810ac9f57ba7afea0b2aa"
+  },
+  {
+    "version": "20260831211359",
+    "name": "fix_get_athlete_scores_single_source_qa3",
+    "sha256": "a783d0d28a61767ae03a3137b5dd0928effc1ef0dad18b50041aab5db4d3eedc"
+  },
+  {
+    "version": "20260831215147",
+    "name": "fix_fn_generate_plan_from_bank_model_duplicate_insert",
+    "sha256": "aee9c04381dad53ff85c2ca589a2a4f3e8917ac9e8044d6800f0e18540e94810"
+  },
+  {
+    "version": "20260831215155",
+    "name": "drop_redundant_archive_trigger",
+    "sha256": "8c09d030f7f86402ba247c5e6548f50c6add5f0526706e035d9b79afbdce6061"
+  },
+  {
+    "version": "20260831221341",
+    "name": "fill_30_empty_periodization_models_content",
+    "sha256": "f66744724d77b75cc848d7a61880ae3999c77487464849f056074afc404cc242"
+  },
+  {
+    "version": "20260831221421",
+    "name": "fix_fn_generate_plan_from_bank_model_24m_duration",
+    "sha256": "9476dc766dac345f03004596fa3bd76b4087fda19e2b15a2a07daaba2abc3651"
+  },
+  {
+    "version": "20260831221448",
+    "name": "fix_macro_name_jsonb_quotes_bug",
+    "sha256": "b9a5602246b257d4b8942b09f7f9a660a304622a546a2510dbfa84ef91538182"
+  },
+  {
+    "version": "20260901223045",
+    "name": "fn_reward_share_xp",
+    "sha256": "ea8c225132e588cb2b2b06de53a1f81190e6d1432fa1cede2b37190a1d0593ba"
+  },
+  {
+    "version": "20260901225309",
+    "name": "perf_fix_unindexed_foreign_keys",
+    "sha256": "b969a7fbf346e1486cabaac3ab470625156cd40848a409fc4ce0ae368a378b0c"
+  },
+  {
+    "version": "20260901225319",
+    "name": "perf_drop_duplicate_indexes",
+    "sha256": "7d6b11d2b458e6401d2718219a86b4c10b79177e6c594ff6ce7e2860f948aa8f"
+  },
+  {
+    "version": "20260901225702",
+    "name": "compat_aliases_broken_column_names",
+    "sha256": "b3bcd60f4dcad377c1d89a3cfa0a5c4e156ee7a9a63a8a0253a29a896497472c"
+  },
+  {
+    "version": "20260905235440",
+    "name": "compat_monetization_offers_slug",
+    "sha256": "a967d4861b1a7a0fc7dd900ed76b15e16a7a90fa15332a1da08a6f0ecfbf65af"
+  },
+  {
+    "version": "20260907224327",
+    "name": "add_unique_constraint_workout_exercise_sets",
+    "sha256": "73f17f354c2d48365107452b1e6fa1117641314d32a13cdbe3949e2a23d65971"
+  },
+  {
+    "version": "20260911113042",
+    "name": "20260908232549_hub_snapshot_contract",
+    "sha256": "10497c362e5eaedddd0159ce6ba5d4ae80df8486c359e233c4a5f9bb59cc7e99"
+  },
+  {
+    "version": "20260911113134",
+    "name": "20260908235741_reconcile_identity_and_score_contract",
+    "sha256": "f94d7295d5dd3e70525e92121e9a2f8854444c80520a29745236e0a3e9e5d4c5"
+  },
+  {
+    "version": "20260911113145",
+    "name": "20260909000014_workout_execution_contract",
+    "sha256": "7737224032e00b6cde9bc996ec58f9eb4223d9026062b415e0632bd6e7d69dd8"
+  },
+  {
+    "version": "20260911113222",
+    "name": "20260911120000_drop_duplicate_workout_set_index",
+    "sha256": "2176e8e71607917654b4771bc6900d5d342eb7b85421b48604535267fefff99c"
+  },
+  {
+    "version": "20260911113249",
+    "name": "20260911121500_index_workout_execution_assignment",
+    "sha256": "e8ad3a1bed9d3abcff202c85a43ee6615311d60f0995900d8c2b85b35bccf919"
+  },
+  {
+    "version": "20260911113439",
+    "name": "20260911130000_align_workout_rls_with_canonical_identity",
+    "sha256": "d98425b0c7fb49ec06ebbb9599457d02c89432709e0b39ea0737f660aebd4195"
+  },
+  {
+    "version": "20260911114006",
+    "name": "20260911140000_create_ninefit_template_library",
+    "sha256": "2dbb361bd6fe1bd48c893ab7485d022e16a857f2ea1c5a755e31eb3369f19018"
+  },
+  {
+    "version": "20260911114139",
+    "name": "20260911150000_apply_approved_template_to_athlete",
+    "sha256": "d2d99e33887bb0b33c4addede97fdfdbabfe7d6c27e32ab09befaccee03101a5"
+  },
+  {
+    "version": "20260911114712",
+    "name": "20260911160000_lock_temp_html_extraction",
+    "sha256": "80988c270096af1c0f1fe1aaf91bb4ab4f9ff31d3c0d7b9b9b23f589bb6c563e"
+  },
+  {
+    "version": "20260911114735",
+    "name": "20260911161000_template_review_workflow",
+    "sha256": "66c213b1d6971510ba1920054270c11cd3f259737d6cd6854c1f7d468d290e8f"
+  },
+  {
+    "version": "20260911115216",
+    "name": "20260911170000_index_legacy_workout_foreign_keys",
+    "sha256": "688d4a5b27d16b594156d3a8945ad5c92bccdb4c5586c30e1a856891ad68fa2b"
+  },
+  {
+    "version": "20260911115244",
+    "name": "20260911171000_index_template_created_by",
+    "sha256": "7c1528ff39e66b8515c479d9f4b0ef2e5d3c7d4ea4358b8470a8a1abe7af4273"
+  },
+  {
+    "version": "20260911142712",
+    "name": "create_fitpro_athlete_canonical_view",
+    "sha256": "d3491848e8af6efa5424203180755b005e767f88d3cedc4b082e24e957e01bc0"
+  },
+  {
+    "version": "20260911144638",
+    "name": "configure_ecosystem_frontend_urls",
+    "sha256": "75757b6427137a58404f7ed049e576e76050e7f163aee74049528fc2faa22c0f"
+  },
+  {
+    "version": "20260911144919",
+    "name": "configure_events_frontend_url",
+    "sha256": "7c9f10d2835857ce97d3aedbd144d5dcada971d2503fdaa498e4951c2bda6e8a"
+  },
+  {
+    "version": "20260911144936",
+    "name": "route_events_card_to_external_frontend",
+    "sha256": "d056968bbfe3eb8b773b8681e2fe125e610c52537f04eb8636e8d8d2e51ab9ac"
+  },
+  {
+    "version": "20260911145250",
+    "name": "align_ecosystem_module_routing",
+    "sha256": "ab057883cb1b86e5b372f8813eaf878ad5ee7148c6d7d91874f060c3c00a4250"
+  },
+  {
+    "version": "20260911145611",
+    "name": "phase4_performance_overview",
+    "sha256": "7817328ab0a51bdb920b641a13b6b6e32130c36a3c20e52e5265b3d729bcf46d"
+  },
+  {
+    "version": "20260911150726",
+    "name": "phase5_coach_student_performance",
+    "sha256": "d8bd98b54c022105b14849cea151dc6992a334bd2c5e88773b1a4e2c3256e270"
+  },
+  {
+    "version": "20260911150842",
+    "name": "phase6_safety_context",
+    "sha256": "9a45f77f9255767b96e846c39f73448dbc0b55251d051f193e7f00718e0c84b0"
+  },
+  {
+    "version": "20260911150944",
+    "name": "phase7_healthflix_bridge",
+    "sha256": "d238d0c6d5c8d1b700490057b579e8503574d8ae4ccb138f7d5dd18e711ea961"
+  },
+  {
+    "version": "20260911151041",
+    "name": "phase8_ecosystem_status",
+    "sha256": "72d1c3b59acc5fe250d65ce97fcb15a8b245bfc78d26a619626b07e09270b0bc"
+  },
+  {
+    "version": "20260911151259",
+    "name": "phase9_share_catalog",
+    "sha256": "c2cfeb2b1f2f113609ab6dbf739c1c3ee23cf58e683927705d6e3eb5d40c0853"
+  },
+  {
+    "version": "20260911151410",
+    "name": "phase10_consistency_audit",
+    "sha256": "deb2a65fdd95e96c40a6707b2c9a43c02b2f44bf3040361ba8b8338b21dbd3ca"
+  },
+  {
+    "version": "20260911151536",
+    "name": "phase11_release_readiness",
+    "sha256": "484d59339435d1141e291ef3c8290773b7c07fcac7929076f88a27a65614852e"
+  },
+  {
+    "version": "20260911151639",
+    "name": "phase12_security_readiness",
+    "sha256": "fe8076699bc3ca132ca67805dc8682d0b10cab741ff17b1314eaf174adb8b73c"
+  },
+  {
+    "version": "20260911151736",
+    "name": "phase13_operational_health",
+    "sha256": "3c5b351b9d5be94fd6fa5aaa9114e07d5b0e8c29f42277215e2515d8eb53b6a8"
+  },
+  {
+    "version": "20260911151917",
+    "name": "fix_nutri_card_route_to_dieta",
+    "sha256": "51c5d66f8c04ec9e0e7ee09198d3adbbb8a3a1ed470162596be83f8c7b5ae00d"
+  },
+  {
+    "version": "20260911152303",
+    "name": "phase14_diet_context",
+    "sha256": "511fd68229bd00144577132d567cb079d9fade9bd8bd1e434a00592bcbbfe3e9"
+  },
+  {
+    "version": "20260911193652",
+    "name": "p3_template_versioning",
+    "sha256": "87a0ad8fcc9d6aaedce49ac620d7e36225aaa8b09fe80a4aa1c9644774700a84"
+  },
+  {
+    "version": "20260911200928",
+    "name": "p3_link_assignment_template_version",
+    "sha256": "d4558c484635626ea66831a672cffdd83f2b4c2119c3a77d2854cf2e6c180c31"
+  },
+  {
+    "version": "20260911201328",
+    "name": "p3_assignment_version_view",
+    "sha256": "85c4eb4a878985ff67e354f60b7da33ba02e18e548f8741844c906aee73348de"
+  },
+  {
+    "version": "20260911220010",
+    "name": "tighten_coach_student_rls_scope",
+    "sha256": "5c16fc416ca4350e1e251acb86d78fcb2020c98bf74e4580922ad9a20b3c9264"
+  },
+  {
+    "version": "20260911220025",
+    "name": "remove_legacy_broad_assignment_policies",
+    "sha256": "128facbc76d55bd7d785ffd3f08d21e6a8716892e1fefc971feaee5560fdd989"
+  },
+  {
+    "version": "20260911220132",
+    "name": "scope_coach_policies_to_authenticated",
+    "sha256": "9bc156841f4f6ca003bae6905868b7c9441d88cca468109331ca6a5329dde120"
+  },
+  {
+    "version": "20260911220208",
+    "name": "scope_training_and_move_rls_to_authenticated",
+    "sha256": "70a424f8d338356f02ddb5e0b5e8f9114a2da950d7471a3d207688317ff5812a"
+  },
+  {
+    "version": "20260911220254",
+    "name": "tighten_workout_sets_coach_scope",
+    "sha256": "a1dcfd2c68a134e602b158873f000a9e0acfcfbe856e4141f99319c3d4ff84cc"
+  },
+  {
+    "version": "20260911220353",
+    "name": "scope_progress_sources_to_authenticated",
+    "sha256": "0196ff51c5c73d124f9aff0214535fb666c4a5a9dc03034cc7e9fad6406c74c0"
+  },
+  {
+    "version": "20260911220704",
+    "name": "scope_activity_history_to_authenticated",
+    "sha256": "3fa61e717cd5234ac02285488f878f5b978508771b1232922b87e7bfc89b911c"
+  },
+  {
+    "version": "20260911220931",
+    "name": "secure_periodization_view_invoker",
+    "sha256": "d0c5b07572419ffd3087d718efa6905ec05ff40cb5dc21291ff15d3b7694c26e"
+  },
+  {
+    "version": "20260911221012",
+    "name": "secure_canonical_fitpro_views_invoker",
+    "sha256": "b0104dece017d8d5f9b22c6d4500800aa3e2f4cd038731797f5fb5f3378ca9ae"
+  },
+  {
+    "version": "20260911221110",
+    "name": "secure_leaderboard_view_invoker",
+    "sha256": "2b14b800c8f47cb0efaeabf1dc3636795d11b24abea277c68ca2ecfff8162dfb"
+  },
+  {
+    "version": "20260912230727",
+    "name": "add_rls_policies_avaliacoes_unificadas",
+    "sha256": "e772719e1504ed4ae1e187171e4a8800192f290189764bcefbe5797dc68e87ac"
+  },
+  {
+    "version": "20260912230815",
+    "name": "unify_sync_score_single_source",
+    "sha256": "ecb3b2886cf87ca214775eaa9bc8c7d5f24f48c56770860043a9321d75fb9e49"
+  },
+  {
+    "version": "20260912232516",
+    "name": "create_recalc_athlete_stats_from_real_tables",
+    "sha256": "096fe58665e876e23842e83ab5720355984c274f93e505a9909ce479c582d1ff"
+  },
+  {
+    "version": "20260912232528",
+    "name": "add_unique_constraint_athlete_id_user_stats_agg",
+    "sha256": "3e8774219bfeb174566ffe7f9be7532c62317d08dead1ac2a81b68a2d63752ac"
+  },
+  {
+    "version": "20260912232601",
+    "name": "backfill_and_promote_athlete_id_pk_user_stats_agg",
+    "sha256": "32f98f19b0a6ea8647398a65f0a7e90e969f9c9a15f744fa3461cef82aed6db2"
+  },
+  {
+    "version": "20260912232629",
+    "name": "trg_auto_recalc_athlete_stats",
+    "sha256": "1c0d3af5abc6fb31fc26b18601c0eb3db21e508f1ef8adddad1bf94dcfe0237a"
+  },
+  {
+    "version": "20260912233311",
+    "name": "trg_auto_create_pr_from_assessment",
+    "sha256": "033beb143bff6d1c6e262e71c8e3b869e4d9b0afc3c30baa9cdef4bed8077c57"
+  },
+  {
+    "version": "20260912233342",
+    "name": "extract_pr_check_logic_as_callable_function",
+    "sha256": "74bcfe4159e61d5e0c9ec4280b2689ad1ff44f4a0c71619893208767f2266266"
+  },
+  {
+    "version": "20260912233415",
+    "name": "fix_legacy_trigger_after_pk_migration",
+    "sha256": "09b1c5fa9ae8eea16d2032f336c427829a337cd7902fda137bb6f782fcbf4feb"
+  },
+  {
+    "version": "20260912233438",
+    "name": "remove_redundant_legacy_triggers",
+    "sha256": "989736a1527c4416805019785867619d9d3baaa480646b0ac0e379aac2f32b95"
+  },
+  {
+    "version": "20260913132902",
+    "name": "auto_resolve_athlete_id_avaliacoes_unificadas",
+    "sha256": "79fd5a5465017fd7be137d53a265cc740779d403baf79549719f79120340bafd"
+  },
+  {
+    "version": "20260913141057",
+    "name": "start_daily_workout_execution",
+    "sha256": "4019611197a7bf681d963a7c6a256a8915093768252783e8d56949ee6e675a59"
+  },
+  {
+    "version": "20260913235159",
+    "name": "create_diet_meals_structured",
+    "sha256": "6367bb7f210e8f53e0689d226a2739f9af9a6007579f2d95cafd9566a4d08af4"
+  },
+  {
+    "version": "20260913235604",
+    "name": "create_foods_catalog_and_diet_meal_items",
+    "sha256": "d217acb76695b49167289ed248059a272c83917a759a027c4bcace64a511dbee"
+  },
+  {
+    "version": "20260914000955",
+    "name": "create_fn_get_athlete_timeline",
+    "sha256": "bbd8f03f6b73de944fc841621c56a0d04e08e1a9736d880c18e2f94752a7b47c"
+  },
+  {
+    "version": "20260914001451",
+    "name": "create_fn_get_ron_progresso_screen",
+    "sha256": "c67cdede4d7680dabf5b3f32e15956b929441bd107672f64992d3cd291f522b8"
+  },
+  {
+    "version": "20260914225209",
+    "name": "fix_forca_total_column_names",
+    "sha256": "a49388c1b03465599afa22ee6b32e928706541af20f0bfb3cc8c7d82a347c20c"
+  },
+  {
+    "version": "20260914225628",
+    "name": "create_fn_registrar_peso_avulso",
+    "sha256": "5fb519fc5b4bbca6dd5afee53caf075a844428df8872431c4572e8f13a07dd87"
+  },
+  {
+    "version": "20260914225656",
+    "name": "extend_fn_get_ron_progresso_screen_metas_insights",
+    "sha256": "2ddac676498946eb2468106697a385c924fdf95890fffbfbd1ecc699dcb16d57"
+  },
+  {
+    "version": "20260914225728",
+    "name": "fix_delta_compare_against_first_assessment",
+    "sha256": "80bd7d854091b988b9e3079219e98275c4db2261f6420e58b1100fea3f1c31b4"
+  },
+  {
+    "version": "20260914225753",
+    "name": "fix_delta_ignore_zero_score_assessments",
+    "sha256": "1640e4ae3067e4b2d26e81b86ce827f99200121740d07196009aa251b070e8ce"
+  },
+  {
+    "version": "20260914231138",
+    "name": "fix_ron_progresso_screen_and_peso_avulso_authorization",
+    "sha256": "b154888811cd2a0abea8080d0d34479ae101a6443f3adf5d72626ceccd619b19"
+  },
+  {
+    "version": "20260914231351",
+    "name": "add_gordura_param_to_fn_registrar_peso_avulso",
+    "sha256": "38c402f2ff46bce419d418381e183d7df82e58c19d9e08354030e0c5d85f1b3f"
+  },
+  {
+    "version": "20260915162223",
+    "name": "fix_email_fallback_in_ron_progresso_auth_check",
+    "sha256": "dd3e35cf5d74602ad5163020045a078fb025d4872489f199a25e027f7b4d0919"
+  },
+  {
+    "version": "20260915162345",
+    "name": "make_aluno_id_nullable_on_metas_progresso",
+    "sha256": "724a8246e39990addcf241595e4d6faef627894b3acf013f07f72efd383ba7e4"
+  },
+  {
+    "version": "20260915162527",
+    "name": "fix_fn_get_athlete_timeline_authorization",
+    "sha256": "cf593f61d539b0973494c6bce76a2ad60a0cbaecedbcae93cf14f7b44607c446"
+  },
+  {
+    "version": "20260915182910",
+    "name": "hybrid_staff_appointments",
+    "sha256": "f074a4b34def76a0095965bc840e1b6d4b864eed6517a76470455ab893786175"
+  },
+  {
+    "version": "20260915222352",
+    "name": "fix_fn_registrar_peso_avulso_overload_ambiguity",
+    "sha256": "d37a72c1bb26bae16807369b8d9025f61e9430a1a2f5b1d7a870766aac504ce6"
+  },
+  {
+    "version": "20260915222431",
+    "name": "fix_fn_notify_avaliacao_pronta_wrong_id",
+    "sha256": "c32ff81ee1418a900499c1563c605ee91c044c2914fbaea2db88347429f8a7e1"
+  },
+  {
+    "version": "20260915222759",
+    "name": "fix_trg_resolver_aluno_id_fallback_bug",
+    "sha256": "fdf77f443e76bde36747d97dbf26a5f155ce8794c53ce982ba30b945e6e9e7bd"
+  },
+  {
+    "version": "20260915222848",
+    "name": "fix_fn_refresh_consistency_30d_wrong_id",
+    "sha256": "042dbb221272781e7617514a938f1214792995adab117d0bdb01c323f362e5f2"
+  },
+  {
+    "version": "20260915230253",
+    "name": "create_ai_training_generations",
+    "sha256": "cba613913c0c5b29e90031d6f9c349a5eb403f8054627f1be40d09fd842be220"
+  },
+  {
+    "version": "20260915230440",
+    "name": "add_notification_preferences_to_profiles",
+    "sha256": "e5fcd0aa7cf2f251b27191d6abd15111eb913d4e3448a9fcaac5424d55780884"
+  },
+  {
+    "version": "20260918000722",
+    "name": "create_fn_get_leaderboard",
+    "sha256": "c766dce4a48496f83b1b968d7e8841707efb27fea973599f9c142570bef3b9b2"
+  },
+  {
+    "version": "20260918005046",
+    "name": "extend_fn_get_leaderboard_with_level",
+    "sha256": "e8dfa8a13c05c6b7e7382944d0bc467fca8e54c190c2e88f86daa703d38b0342"
+  },
+  {
+    "version": "20260918005400",
+    "name": "fix_class_bookings_capacity_and_duplicates",
+    "sha256": "d5f694f38287aa4e2f059ef0c56cb6cb870acc7d2dfa35410dc4831158088c68"
+  },
+  {
+    "version": "20260918013119",
+    "name": "add_score_historico_ron_progresso_screen",
+    "sha256": "a14e0689cfa8dd10d485235857b9211285e378ab5ccdc0fa0e9f46e92e44f65b"
+  },
+  {
+    "version": "20260919155137",
+    "name": "fix_fn_ajustar_treino_dia_authorization",
+    "sha256": "4de8d7e42df7ea8ea9e53e922244b5129825dbdd333780432082e767d68b930e"
+  },
+  {
+    "version": "20260919155222",
+    "name": "create_shared_athlete_ownership_guard",
+    "sha256": "35d546e4eaa40668b7c60e01d9ae36c5dd76a0217017892676974735b6729978"
+  },
+  {
+    "version": "20260919155253",
+    "name": "restrict_create_athlete_auth_user_to_service_role",
+    "sha256": "05d60869e05ff014a7257a8417766f0b1fb31574a6c44afc0145ccb389566be1"
+  },
+  {
+    "version": "20260919155323",
+    "name": "restrict_credit_granting_functions_to_server",
+    "sha256": "2b9c93e9b1b122f43eb117f3fc13f10b2f7a44d861cb6c1fe552ed4a2d9ac2d5"
+  },
+  {
+    "version": "20260919155348",
+    "name": "add_owner_check_to_credit_consume_functions",
+    "sha256": "2f2d1cec0331c6effb6b2443cfa58dc1b7c8496c05d28541b24083d621c2c438"
+  },
+  {
+    "version": "20260920140327",
+    "name": "lote_0_weekly_training_automation",
+    "sha256": "764da9455027de97b3dde02493f24e958a96c91a7a47154da31197f433a76426"
+  },
+  {
+    "version": "20260920151720",
+    "name": "lote_1_feedback_adjustments",
+    "sha256": "21ca1a122847940c879581486852e4fb9d4b49dcb8e23bd2fc04663e04c6cf3c"
+  },
+  {
+    "version": "20260920153803",
+    "name": "lote_5_adjustment_delivery_audit",
+    "sha256": "9699c74072d27dfe076649a0e0b33b72affaa9b7658a23a0ea6e28dd9c175040"
+  },
+  {
+    "version": "20260920155512",
+    "name": "lote_7_adjustment_feedback",
+    "sha256": "7106a8efb6711e692336422f6568239c184bfa876e6fb452087cf32f5969b763"
+  },
+  {
+    "version": "20260921105613",
+    "name": "fix_workout_completion_notification_enum",
+    "sha256": "e5d506ab20eebfb22026128f2069b1fce7da16465829ff8ec3ad7cd63c38f088"
+  },
+  {
+    "version": "20260921110410",
+    "name": "make_workout_completion_notification_non_blocking",
+    "sha256": "57952f18036aaadf67a967d19192b932850de1281ab351b4ecaffa22350a722f"
+  },
+  {
+    "version": "20260921111904",
+    "name": "20260921143000_fix_notification_type_text_cast",
+    "sha256": "f91189d89741aa2ca598e5fe399822d5cafde040cc726b08a565ec4c4a35586d"
+  },
+  {
+    "version": "20260921111923",
+    "name": "20260921144500_remove_recursive_notification_cast",
+    "sha256": "287e8dd7de3a323d3e7b62463692c75ff399787283fe94272f134f4d5073a172"
+  },
+  {
+    "version": "20260921111949",
+    "name": "20260921150000_fix_notifications_type_compatibility",
+    "sha256": "655ad3ba44cb27e5235327194dc538e518756619f7df361deba2db982b0f033b"
+  },
+  {
+    "version": "20260921113403",
+    "name": "20260921153000_qualify_workout_xp_trigger",
+    "sha256": "4de6eaf9bf4ce512ac890b06d328a8ce6607773413f6ca22a6f4911e2fb4dcee"
+  },
+  {
+    "version": "20260921121433",
+    "name": "phase2_cover_foreign_key_indexes",
+    "sha256": "715adb74a5c7f7292f1c67de25e2b770527fe0e16df89c4a21556358f99447ec"
+  },
+  {
+    "version": "20260921121551",
+    "name": "phase2_optimize_canonical_workout_rls",
+    "sha256": "bdcc19884025f87a38cc66a857b25fd025e3277763f831eb8094b5e301cf9ebb"
+  },
+  {
+    "version": "20260921121727",
+    "name": "phase2_restrict_canonical_workout_rpcs",
+    "sha256": "ee5368d3e62f560ff6195a719cb49c6d21eda89b78bf188e52a943cfac5bd771"
+  },
+  {
+    "version": "20260921130650",
+    "name": "phase2_secure_workout_views",
+    "sha256": "fc7b7015aa9fc21ca0fe43fad3ec1771ea3d394027014ee4409b2d56d4cc4b80"
+  },
+  {
+    "version": "20260921131122",
+    "name": "phase2_restrict_internal_training_rpcs",
+    "sha256": "1e07508c84c1f5609ada4470dfb758882e5d4a48678cbc01900e562445671e4a"
+  },
+  {
+    "version": "20260921131202",
+    "name": "phase2_revoke_public_training_rpcs",
+    "sha256": "256aefd134555dfcd829ee64f72d396941b59d5692def898aa3b02f96d5283a8"
+  },
+  {
+    "version": "20260921131249",
+    "name": "phase2_harden_training_function_search_path",
+    "sha256": "7cedf29384bf8e95e2c91d93a970d38130373dbea63cc4b1e1465cd78071663c"
+  },
+  {
+    "version": "20260921131718",
+    "name": "phase2_restrict_high_impact_workout_rpcs",
+    "sha256": "e9fa9289eea250a7e91be69afd445fe59c6efd08294958c4617da3f80fe8b12d"
+  },
+  {
+    "version": "20260921131953",
+    "name": "phase2_restrict_internal_credits_periodization_rpcs",
+    "sha256": "b50215ec8bca5ca1bad80fc0d541c61c15ea2db7d26ce1ae2eaf4e60a42ea9b9"
+  },
+  {
+    "version": "20260921132120",
+    "name": "phase2_secure_remaining_public_views",
+    "sha256": "d3a9bb958bcc66ecbd8f6b730e8ae0b187eb81e8727083985df70619280bd0fd"
+  },
+  {
+    "version": "20260921132229",
+    "name": "phase2_harden_remaining_function_search_paths",
+    "sha256": "3eea6a18af4fde8fca4053773afbddca2730d0184e670bfff1bd9388b24ebc25"
+  },
+  {
+    "version": "20260921132313",
+    "name": "phase2_harden_last_function_search_path",
+    "sha256": "51365f2a7a34b0cde0ed9a5f0568b150b24f14bc273d1dda3d893c039bb5a993"
+  },
+  {
+    "version": "20260921132424",
+    "name": "phase2_restrict_internal_domain_rpcs",
+    "sha256": "e0aa0f85668e3a347be2cf4eaca8d76aec36d3c7bf9618afa2d40ca1037ab96f"
+  },
+  {
+    "version": "20260921132530",
+    "name": "phase2_close_remaining_anon_security_definer_rpcs",
+    "sha256": "f2acbc0b37ef54f676fbec4f3eba63bcfb09c4616349673122c5c545c3b4bb2b"
+  },
+  {
+    "version": "20260921132810",
+    "name": "phase3_create_canonical_identity_view",
+    "sha256": "ec1ab23304f0e5ccda0d4fa898fd3d877fcb1727ba62def8265c6323a95fbba9"
+  },
+  {
+    "version": "20260921135106",
+    "name": "phase4_create_canonical_relationships_view",
+    "sha256": "22735618920a4994c90e497f155ee7feda4607fc1d1d21093ef6477f76c8ffc3"
+  },
+  {
+    "version": "20260921135627",
+    "name": "phase5_align_open_execution_index_status",
+    "sha256": "d428063cc87f9866f35722b1952081723b25477753f78e39531c89b28bd1e5d5"
+  },
+  {
+    "version": "20260922225902",
+    "name": "smart_treino_publicar_treino_via_banco",
+    "sha256": "484b1d22f99c8063c2d18adead34ebfd808cdbbbe5477f1d66f29458748d4afe"
+  },
+  {
+    "version": "20260922230219",
+    "name": "notificar_professor_ajuste_treino_aluno",
+    "sha256": "46c2703d8589ca72d3987443b358c3ea68e2e7467f77920826c85ece9d02decf"
+  },
+  {
+    "version": "20260924220955",
+    "name": "appointment_status_add_confirmed",
+    "sha256": "3a5f5ed5a977721949e95184e69d1c841aab326e3b3983a43dcbd55b7b63d4c0"
+  },
+  {
+    "version": "20260924221118",
+    "name": "agenda_nativa_tracking_events_stats",
+    "sha256": "f20ac73b4f55c88451c46e6532cc03c1957b9e4018dbbb465fdaf3a02a345606"
+  },
+  {
+    "version": "20260924221724",
+    "name": "creditos_aulas_ledger_seguranca_e_motor",
+    "sha256": "59f848622a77d02025198c548711cba2688c82fa8f86cb966e3dcbdbf7d4abe7"
+  },
+  {
+    "version": "20260924221907",
+    "name": "agenda_reagendar_baixa_em_lote_notif",
+    "sha256": "2f966099febb8665d9f532eae752a7e9f89f885f1fb1c4ddc9f37c63d0e11ed3"
+  },
+  {
+    "version": "20260925144723",
+    "name": "harden_athlete_activation",
+    "sha256": "b79fa40f6b6069babebe10dd61be9c304d987788a5599dd2a6270c4d3e58d39f"
+  },
+  {
+    "version": "20260925144804",
+    "name": "harden_activation_consistency_contract",
+    "sha256": "2c7d2b140a68428c2df91df33313c0013141f694484ac11a48c93cd6257ae1c9"
+  },
+  {
+    "version": "20260925144914",
+    "name": "harden_quick_training_owner_guard_v2",
+    "sha256": "ba74cba0b5a9ec5a23ebcdbb06ae2c2e2ae8609b5facb77980cdcdb3c318b336"
+  },
+  {
+    "version": "20260925144924",
+    "name": "restrict_quick_training_stub_overload",
+    "sha256": "651d3d0037146ab0eb2fcc263c38cc35c8a6e65c57935495d4655814ef50a0cc"
+  },
+  {
+    "version": "20260925165007",
+    "name": "support_tickets_20260925130000",
+    "sha256": "15de99ab4c1f4f39eb5bc49b5710a4e0e6c85bb1053575ded16a3e71cd15f96a"
+  },
+  {
+    "version": "20260925165010",
+    "name": "booking_context_20260925131000",
+    "sha256": "8c9c8991644435a86b0cad8ea7fe1a60d4191bebe7c2f22cd8ac7ec4ace0b8f9"
+  },
+  {
+    "version": "20260928102512",
+    "name": "fn_create_staff_appointment_teacher_choice_and_types",
+    "sha256": "4221c09950b442592ad4de86dfe49ff6e45acbd3a3adafca37b744d1c87fe4ef"
+  },
+  {
+    "version": "20260928215553",
+    "name": "daily_checkins_add_humor_motivacao",
+    "sha256": "a0cf6fa7e5c7946a75e4715b1cc8bd5ef931c0eecee7755c17457a60069f7e38"
+  },
+  {
+    "version": "20260929184949",
+    "name": "nine_lima_wrapper_fn_aplicar_nine_lima",
+    "sha256": "8e0c4b3ca718b1eb3de873986fe2d69a2e2414a9f65da91a0f33e9a042fc6344"
+  },
+  {
+    "version": "20261001090133",
+    "name": "instructor_community_phase1",
+    "sha256": "9050bde2ed7e8528e4a72937e625cc7b02647c825dc222be942e7cbfd4ea9f93"
+  },
+  {
+    "version": "20261001091008",
+    "name": "fix_fn_publicar_treino_smartreino_observations_column",
+    "sha256": "c8e9cd5849b67547097f0036d4e21dc5150fd5a2c6ac9d140c9a19f04ad9906a"
+  },
+  {
+    "version": "20261001205806",
+    "name": "strava_integration_phase2",
+    "sha256": "52898a133364678dbef0287bbe98e2c7546fb13e99949894f2701f74c9f59c70"
+  },
+  {
+    "version": "20261001210242",
+    "name": "community_feed_and_api_keys_fix",
+    "sha256": "f8ba61cce76dbee888d534a2559ebb432bc62747323329328b783f10bd3ca80d"
+  },
+  {
+    "version": "20261001223430",
+    "name": "fitpro_daily_checkins_and_repairs",
+    "sha256": "7ce9f0192a13ac8a530c4890153cb8cb439355af7bd085019042e65b5167a52e"
+  },
+  {
+    "version": "20261001231000",
+    "name": "prescrever_treino_grava_direto_daily_workouts",
+    "sha256": "2c0b741d5f79d11de05d86659c93a915b5bdffe128c577cad1df598f1862cb85"
+  },
+  {
+    "version": "20261002150441",
+    "name": "quick_training_personalized",
+    "sha256": "869128068dd436073399fe5437765cb0e652d420925e7cab06924ddf8aeb1119"
+  },
+  {
+    "version": "20261002154200",
+    "name": "actionable_athlete_cards",
+    "sha256": "85eef2d37c56066b93aafc089a547a48420f4401c5fbe83961dfe909a6a84b78"
+  },
+  {
+    "version": "20261005172949",
+    "name": "nine_lima_level_fallback",
+    "sha256": "002b9392cb0b9044de0ceb8f85482f80d20657238e04010c16acadfe2fdd496f"
+  },
+  {
+    "version": "20261005174146",
+    "name": "share_events_server_side_xp",
+    "sha256": "e42beef1afdb6915b8f9f67a262a56b60f149701622e5b8d56ccce2f433d53ca"
+  },
+  {
+    "version": "20261005174240",
+    "name": "treino_rapido_selecao_estruturada",
+    "sha256": "6b3d997cb4930cdb0f9e92c0cac3a5635d563b177c6f67b0a33ae73401790132"
+  },
+  {
+    "version": "20261005184301",
+    "name": "macro01_loop_foundation",
+    "sha256": "46dae0978f76946c8bc2bd7b496ef98007574766de3ab9915f5509c3ccd4a80f"
+  },
+  {
+    "version": "20261005184700",
+    "name": "macro01_remaining_rpc_guards",
+    "sha256": "4b2c8578a32bc028411fd65a64fa93550d5ff5c51226f7b7fa067b52a73fe70a"
+  },
+  {
+    "version": "20261005184924",
+    "name": "macro01_preserve_nine_lima_and_week_guard",
+    "sha256": "bc40e9f95bf605f68bb0e6186462825ea63690a656d252d30b80c097e08337d2"
+  },
+  {
+    "version": "20261005193514",
+    "name": "macro02_daily_context",
+    "sha256": "23c2307d9d27d3d138d690f4ccf5681aaf4bc80fe673b90b4878ee01a721d24a"
+  },
+  {
+    "version": "20261005193750",
+    "name": "macro02_context_auth_hardening",
+    "sha256": "c5c69135209cf62dcefa344d3e2e5b4715b8d8706f6ef32390fcc9afef967384"
+  },
+  {
+    "version": "20261005201753",
+    "name": "macro03_periodized_week_and_execution_states",
+    "sha256": "b2e41ad21579169477bfd5690dbb49ab7d1f551147346ad7ef2b6da511656fd9"
+  },
+  {
+    "version": "20261005202025",
+    "name": "macro03_preserve_quick_workouts",
+    "sha256": "1c2050d1800706ff4d301bc4e3730ff7bea16acd41956828f9a100ca803eabfc"
+  },
+  {
+    "version": "20261005202245",
+    "name": "macro03_preserve_open_executions",
+    "sha256": "56bc61cc9cc3990778153f597a61df40df03665becd0e512634a449b09236265"
+  },
+  {
+    "version": "20261005202841",
+    "name": "macro03_deterministic_periodized_selection",
+    "sha256": "d5206796107cafbea8da64b017339042f2ed1b7d12bc869bef5f79ae8c029268"
+  },
+  {
+    "version": "20261005221050",
+    "name": "macro04_nutrition_adherence_context",
+    "sha256": "8ad6e0911b0e4064e2ea7739060684bc5929973ab6c7847c45f09c50b994802f"
+  },
+  {
+    "version": "20261005235242",
+    "name": "fix_complete_first_access_removed_password_column",
+    "sha256": "0f93f23a41dd5064aa3fb652a529f7c97fa8021e4a5631f87e658e24ae223d91"
+  },
+  {
+    "version": "20261006164518",
+    "name": "treino_rapido_respeita_zonas_de_lesao",
+    "sha256": "62a41fbd8898b49b0fed4009e05bc60e724f4aca485efdfeaf11560a33819564"
+  },
+  {
+    "version": "20261006211632",
+    "name": "padroniza_vw_periodizacao",
+    "sha256": "a17ba2840a916645ada7aed0939f82eb3b727178877013a09a91a391cd27fc9e"
+  },
+  {
+    "version": "20261007002623",
+    "name": "week_workouts_lazy_generate",
+    "sha256": "c4754675311e704d6ab76415f17a587af2d25ce387474ba5215fb2b8edfaec25"
+  },
+  {
+    "version": "20261007002732",
+    "name": "treino_rapido_ativacao_default",
+    "sha256": "8ed23650a875fbab659cc658dd0cc389becd2c218204a612e334cca87e137132"
+  },
+  {
+    "version": "20261007002752",
+    "name": "treino_rapido_tempo_normalizado",
+    "sha256": "73d872393b5d41ded9c058748ceff87e25a9ba8fa252a6194609fe1bbe3ded8e"
+  },
+  {
+    "version": "20261007002931",
+    "name": "sync_score_checkin_completo",
+    "sha256": "401d3a449b7aabb1594327e64b6fd2cde7e4d7e71696ebeb74f22a4ba4fa73ac"
+  },
+  {
+    "version": "20261007085040",
+    "name": "athlete_profile_sheet_phase1",
+    "sha256": "53bd166bd1679146d0f8d64a23ec29ba25fe05b61f4c618e6e14ead5dbeec584"
+  },
+  {
+    "version": "20261007085304",
+    "name": "periodization_models_publish_catalog",
+    "sha256": "31d3490fa3f5426aff591f82c8ccc9f5a2366a0b8dc52d53545bfd2745ab8527"
+  },
+  {
+    "version": "20261007085329",
+    "name": "treino_rapido_trava_restricao_legado",
+    "sha256": "6fadee2be781ae9e6675eb97f57a86c8624bd44ba79ffeac22a86754a5aebae0"
+  },
+  {
+    "version": "20261007085349",
+    "name": "treino_rapido_trava_restricao_legado_fix_null",
+    "sha256": "b554c59fe9e465655c4540ca72f205376db320a39036bbbab3e2032fd8898dc2"
+  },
+  {
+    "version": "20261007085439",
+    "name": "library_player_progress",
+    "sha256": "8cd13865e438098741be3e4bf60d505f6492e79264db541720bd450e3b8d693e"
+  },
+  {
+    "version": "20261007085648",
+    "name": "loop_event_contract",
+    "sha256": "0e468315259c18527d191a697ae13e7d5278ddd87a4c4adfea44aadec913420e"
+  },
+  {
+    "version": "20261007085818",
+    "name": "legacy_xp_trigger_no_level_overwrite",
+    "sha256": "9b5e68c5d925d1007d506b4d92ca0a9ce9e398beced59c77dce3e9e769bb48f9"
+  },
+  {
+    "version": "20261007161024",
+    "name": "macro05_healthflix_resume_progress",
+    "sha256": "613bad1d5e7dcafaaa39532cf5ffa5a8a10d920d25d6b765b481d3d92c1c9f28"
+  },
+  {
+    "version": "20261007165907",
+    "name": "remove_duplicate_profile_sheet",
+    "sha256": "00eaf035d469c7b4c702c5247b48feecfb3e6f34d06c75bf3f859be9e0a789e3"
+  },
+  {
+    "version": "20261007212759",
+    "name": "vw_periodizacao_pct_onda_atual_max_99",
+    "sha256": "f33a3a496d61649ba51f96c5f9edc624d2da6a76dea30b8f5451ac15362b4840"
+  },
+  {
+    "version": "20261007214622",
+    "name": "protocol_dose_units_guard",
+    "sha256": "d1f0ce087e4c1bf95228480996507179dacfe01a395ccd70bffaf72e0f96af81"
+  },
+  {
+    "version": "20261007230520",
+    "name": "share_events_reward_tipos_reais",
+    "sha256": "a3c00294067c5bad8f6af68810c8e8e129f4602bb6196a56e1176ecf177d68a5"
+  },
+  {
+    "version": "20261007230545",
+    "name": "nine_lima_entrega_protocolo_infoproduto",
+    "sha256": "f65fd7bbc27142b877435b888b94daf25c1e758d65c189dc68985cadbe77a085"
+  },
+  {
+    "version": "20261007230623",
+    "name": "nine_lima_tenta_proximo_protocolo",
+    "sha256": "e115fd4e16f5ab1256d7ec4ae746f4abe362f7082db956ae0fbc46d1c56a7c7b"
+  },
+  {
+    "version": "20261007230757",
+    "name": "nine_lima_goal_tags_e_selecao_balanceada",
+    "sha256": "03edd2c933bcd2e9a62a7922a7f855b2325fcab30f123951ff7fd83ffbcfb979"
+  },
+  {
+    "version": "20261008085436",
+    "name": "reverte_nine_lima_goal_tags_e_entrega",
+    "sha256": "73a012e713df53102647726b0db022357d7eaf6a38a733bde1c8c2b10f8e8054"
+  },
+  {
+    "version": "20261008101657",
+    "name": "stripe_billing_phase3",
+    "sha256": "1122921a4b41b7ae16c1fc2d900d325fd374dfb46b0053ad512e039d1b7d9445"
+  },
+  {
+    "version": "20261011175810",
+    "name": "qa_master_snapshot_consistency",
+    "sha256": "b921475dd1b4e0c06934e1482727e31b76bfacb4e821df065bc2797c92e62916"
+  },
+  {
+    "version": "20261011191328",
+    "name": "professor_access_boundaries",
+    "sha256": "993a5cdf13314ce9ecc6f496568ae50ecc31aa418e6850bca4af85307e01c936"
+  },
+  {
+    "version": "20261011191701",
+    "name": "professor_periodization_privacy",
+    "sha256": "7e490107fc855e6f7daccc281d2a6a1e76ed6c9cb0182a6d7a274a9b4582778b"
+  },
+  {
+    "version": "20261012100901",
+    "name": "professor_private_media",
+    "sha256": "612e8294841627d4566a44871c87d80b8a1b3b2acca0d11c60f56e643ae13c3b"
+  },
+  {
+    "version": "20261012101725",
+    "name": "professor_assessment_metadata",
+    "sha256": "8a2eb39362c71b213d5abca30499bdaed29b372129eb200b38857f2d40bfa08b"
+  },
+  {
+    "version": "20261012102309",
+    "name": "professor_audit_events",
+    "sha256": "8fbab75d154960ceb46778089b078b26b4937f469db33d210520c568ddab823f"
+  },
+  {
+    "version": "20261013210504",
+    "name": "planejamento_semana_por_data",
+    "sha256": "9062088013fc38387f2e60061569644a38b7e49415346d189c0f350097c04344"
+  },
+  {
+    "version": "20261016194154",
+    "name": "professor_private_periodization_pdfs",
+    "sha256": "28846011b0fa377d106b23f4ef93f18d5de9b07bf7f576613f32ce9981a09856"
+  },
+  {
+    "version": "20261016194628",
+    "name": "professor_revoke_anon_prescription",
+    "sha256": "a9df2f58732403ad9502eb9b8d06dfe0bbc29c4d1e0987e0d39e6d3c101b58be"
+  },
+  {
+    "version": "20261016200351",
+    "name": "professor_postura_upload",
+    "sha256": "b6f1b5f8c87e03537c37265b7ea441ff74cfac851e5d26992546dfd34aebe473"
+  },
+  {
+    "version": "20261016200452",
+    "name": "professor_postura_student_read",
+    "sha256": "a2a42260bb755794d0b1d106b794b9de2e4ab0f1f634634373a5cd090b4926fd"
+  },
+  {
+    "version": "20261016211840",
+    "name": "connector_secrets_vault",
+    "sha256": "afb2577f6c82634082cbc489e084be44c1e1730e1d5bbd4f33c5f15db445acc4"
+  },
+  {
+    "version": "20261017183045",
+    "name": "newsletter_optins",
+    "sha256": "2d3c2a309aafdfe7ab21ab70a37b815d328036f99e10bb51e4050f8e0f0bd8f2"
+  },
+  {
+    "version": "20261020085307",
+    "name": "ajuste_treino_revisao_publicacao",
+    "sha256": "ce1b9e511f1d2fb352328c706d7ba2cc2d954d6f60c7c45f45308a24373fb306"
+  },
+  {
+    "version": "20261020135425",
+    "name": "assessment_hub_shared_contract",
+    "sha256": "4d481b4a567d2a9b5aa24a7852860e4b49b70d2c68ed08a4b45a9861d6643c06"
+  },
+  {
+    "version": "20261020135704",
+    "name": "assessment_official_confidence_guards",
+    "sha256": "10b09a3f1009a011fc5068397dd66e8a9ad04bad3c63c1c9550f2a4d4db9792b"
+  },
+  {
+    "version": "20261020140438",
+    "name": "assessment_canonical_writer",
+    "sha256": "b8fe1669f51d70bea3e8ed61fc1da4dc2e2a6c0d356af73fa7487dd419693164"
+  },
+  {
+    "version": "20261020140931",
+    "name": "assessment_hub_legacy_read_alignment",
+    "sha256": "bc6dd2d33840f0ebc8b3feec3902e879cccc46b24771902c48d84fbbd22876ee"
+  },
+  {
+    "version": "20261020141121",
+    "name": "assessment_source_visibility",
+    "sha256": "2eb402a568c13b376d33b174558081a3810aeb36221cd23188e3eb80452def32"
+  },
+  {
+    "version": "20261020141416",
+    "name": "assessment_rpc_surface",
+    "sha256": "11e2bc2f1d40a4b6c52c61cb2ba44c66b02c8f42d0a5462c60677a3d296c1015"
+  },
+  {
+    "version": "20261020150356",
+    "name": "guided_assessment_daily_upsert",
+    "sha256": "0fc1c55e458c73420ab911b42983961ab4a91c5175a467ec331a6bf574633f4b"
+  },
+  {
+    "version": "20261020213650",
+    "name": "sync_daily_readiness_v3",
+    "sha256": "c2a7206035ba856da9821ad7304825762c2a6ea725d9d0a4702db9bac2445b0e"
+  },
+  {
+    "version": "20261020213821",
+    "name": "sync_daily_readiness_v3_profile_contract_fix",
+    "sha256": "7be8f436b274bb947b19807e060d4131b76332b36b63fe016b9cd2681f083284"
+  },
+  {
+    "version": "20261021203424",
+    "name": "get_staff_directory_rpc",
+    "sha256": "89e8888eee5df8b0ecd7b397bf4276c4dec27cc24a1777fa757f7195a675107e"
+  },
+  {
+    "version": "20261021204131",
+    "name": "fix_rls_leaks_ai_chat_and_notifications",
+    "sha256": "01a06598b65b177a15b8ba10e718aed8cd5cc49b439e529e37448e2f9d806861"
+  },
+  {
+    "version": "20261022085244",
+    "name": "athlete_weight_history",
+    "sha256": "53ad50b56d8c4f73e155b3ffee8c753beb36c6ed1dde9d330827b163374a7527"
+  },
+  {
+    "version": "20261022085644",
+    "name": "fn_salvar_avaliacao_guiada_v2",
+    "sha256": "6f017dbcc7c398c67d19f278adda1eb1bd5ac74a83e92442b2bfc0c179521a77"
+  },
+  {
+    "version": "20261022090843",
+    "name": "guided_v2_extras_and_student_photos_fix",
+    "sha256": "3088be00548b70f20e9a6180b1f38e0a869c8afdda16ee3f82a65ea08b0250b0"
+  },
+  {
+    "version": "20261022101840",
+    "name": "assessment_history_contract_completion",
+    "sha256": "1a015458759bdf49901b73a945133bb72e6118fe6fbfcdf4437dac93e0332b9f"
+  },
+  {
+    "version": "20261022102100",
+    "name": "assessment_history_goal_owner_access",
+    "sha256": "f4b846564814acf0c5b180a06e0f978d10453c6250db15216299fb40fe957515"
+  },
+  {
+    "version": "20261022235018",
+    "name": "ninefit_customer_entry_provisioning",
+    "sha256": "74a8594495fdaa6910d3bff33b8c18e492c7f767880fc4ec51d23a641bd17076"
+  },
+  {
+    "version": "20261023001841",
+    "name": "planning_adjustment_contract_repair",
+    "sha256": "ab1320fe20407008590e5e415698c86687d31a42c3ebfac71b6b2de8bea9ebf2"
+  },
+  {
+    "version": "20261023212315",
+    "name": "student_audit_contracts_and_receipts",
+    "sha256": "7ac38f83b9bf839ea97b28e22d9413e76d2ed100c330614368a9cc697d551c29"
+  },
+  {
+    "version": "20261023212444",
+    "name": "student_habit_account_policy",
+    "sha256": "afa0125ec8d74b6deb8b4c0d2f3c634e085f5474eddbd09f0a7e91b06a0818ef"
+  },
+  {
+    "version": "20261023213537",
+    "name": "zap_thread_map_server_side_ownership",
+    "sha256": "64f51827321ec968a4e66ee716c1e312611810254b1159e686bcc3559f462f8c"
+  },
+  {
+    "version": "20261023222926",
+    "name": "professor_student_workspace",
+    "sha256": "ab0bf4d4fe6b19a933a13cc30d463da306639ba4aa4665a9ca15bf2679a4ef8a"
+  },
+  {
+    "version": "20261023235119",
+    "name": "prescrever_treino_enriquece_com_volume_enfase",
+    "sha256": "1c490dea5596b734017d7a0c5b40e91422814e491a928f169d27d25eedde3f1e"
+  },
+  {
+    "version": "20261024000440",
+    "name": "professor_module_delivery_closure",
+    "sha256": "f7f7c9dff6702d9dad119dc1378e20e4287aac95998d8d44e0b5fc6b63aeebbb"
+  },
+  {
+    "version": "20261024002833",
+    "name": "student_professional_care_loop",
+    "sha256": "316b0914d2cda4464dd7215ea14c8968841d41485ae014fdb806e946549e98ee"
+  },
+  {
+    "version": "20261026182500",
+    "name": "workout_safety_and_session_validity",
+    "sha256": "9d5b50b2f650002a3829f938cb0561a1b0aebc39ba8916ed1d3f2183e85ebb72"
+  },
+  {
+    "version": "20261026183330",
+    "name": "canonical_readiness_engagement_and_hub",
+    "sha256": "4ba62be0ec1ad235000872859017d9bb722c55e6ce62789a9a3e14c9e789f9f4"
+  },
+  {
+    "version": "20261026183719",
+    "name": "staff_sync_receipts_and_photo_consent",
+    "sha256": "3337b896ab26dd6db6b1c28dfdf1a07a0811377ef798c4b4e96680032c876e3b"
+  },
+  {
+    "version": "20261026185657",
+    "name": "weekly_prescription_snapshot_contract",
+    "sha256": "d942c766fc01e8b592950ea121266b05dc33cc46ce2f4b1adcfc82abef72f8e2"
+  },
+  {
+    "version": "20261026190708",
+    "name": "preserve_legacy_photo_consent_rollout",
+    "sha256": "0e37cb0ff4eb574feeea3cd5c937557bf9b46546e59db65fdaed87107a16882e"
+  },
+  {
+    "version": "20261026192025",
+    "name": "fn_decidir_foco_dia_filtra_periodizacao_ativa",
+    "sha256": "e284f3791b179692b4cc1e45f9aa960d8845804e2ee4e24930057a0c170aaf4d"
+  },
+  {
+    "version": "20261026192326",
+    "name": "exclusividade_periodizacao_ativa_por_atleta",
+    "sha256": "041f9e2fe2bc1494a5afac6f3eb79f34dc991e80d786a178ce6b9b753e75fafc"
+  },
+  {
+    "version": "20261026204308",
+    "name": "fix_focus_guard_exempt_activation_mobility_blocks",
+    "sha256": "06f5d193594cbc5a5f45e9258ad7b544d6e2c3ef1c97715d8b78c162c8daa1c6"
+  },
+  {
+    "version": "20261026204813",
+    "name": "fix_prescrever_treino_blocos_preparacao_nao_suspendem_dia",
+    "sha256": "b5c09b0b2a1f625baaf7215ea34df64004cfcc1e9face1ed4b813ff0e169b753"
+  },
+  {
+    "version": "20261027213723",
+    "name": "assessment_weighted_score_self_counts_with_lower_weight",
+    "sha256": "4e119b2fb43ff77fb92e681fb86d5fcf9209ddddca507e85fa0995915839c28d"
+  },
+  {
+    "version": "20261027214130",
+    "name": "guided_assessment_require_at_least_one_measure",
+    "sha256": "f776eaebe9cc34c54168b450e7562caa6f9124bbda05ea4f04ac6e2684efdefe"
+  },
+  {
+    "version": "20261027214150",
+    "name": "guided_assessment_guard_null_safe",
+    "sha256": "d3eb9f5dabd4b4374f8e17bed4442074432a617353fc4a56c2241157afe78f7b"
+  },
+  {
+    "version": "20261027214309",
+    "name": "assessment_master_checkpoint_and_capacity_profile",
+    "sha256": "09edd63a18906c37bb93c97b570f827c64ba22a2c06a19700a6dee430027cba5"
+  },
+  {
+    "version": "20261027214437",
+    "name": "assessment_weight_rm_plausibility_gate",
+    "sha256": "a1a8f31638be4be5067b92b808723099b001e5411d7e8fe6192fe1dc63e1636c"
+  },
+  {
+    "version": "20261027234722",
+    "name": "reconcile_student_professor_progress",
+    "sha256": "861a4af954d789484b66f2c6a72d70e2df74e0510bab7d69f6025edd2997eff9"
+  },
+  {
+    "version": "20261028001400",
+    "name": "infinitepay_verified_checkout",
+    "sha256": "87a5b63ae1853b450b71830323215c842129f611be828cb16f1e1cf7c18d5e57"
+  },
+  {
+    "version": "20261028001615",
+    "name": "infinitepay_checkout_encoded_url",
+    "sha256": "7c87416e7cdb6810def066053f3fc1b52d6bf0a3aa7ce3c928236234ad8be0d6"
+  },
+  {
+    "version": "20261028084328",
+    "name": "complete_activation_profile",
+    "sha256": "e6a8e288a9cb5751e4309da2398eaac73f89056c7b53cb876f01d1460d4a81d8"
+  },
+  {
+    "version": "20261028090752",
+    "name": "app_activation_onboarding",
+    "sha256": "5508c1de10af7afc1443a3a12c47d9f3a77ebf9972d451f935a46372e801edcc"
+  },
+  {
+    "version": "20261028091426",
+    "name": "harden_app_onboarding_reads",
+    "sha256": "b5fc3b6b608ea5dda6fa6af8f0922617fb8aa583a53dfcc14427d345266ba8e3"
+  },
+  {
+    "version": "20261028092723",
+    "name": "scale_guard_hydration_xp",
+    "sha256": "be12d8213029bb1e133bb1feb1181d7d61ad6f901cb1fff360c42b002d61aad2"
+  },
+  {
+    "version": "20261028094531",
+    "name": "scale_hot_indexes_rls",
+    "sha256": "b37ac30eb28690d834b92197fdcd72fb8fcff5b65ac660fb2d0d04a0b3e4fdd8"
+  },
+  {
+    "version": "20261028102751",
+    "name": "automatic_paid_access_lifecycle",
+    "sha256": "88e7a881b128dee6e8082825420412ce5305976ba7498c12f4554bae57dc223c"
+  },
+  {
+    "version": "20261028171719",
+    "name": "durable_payment_confirmation_queue",
+    "sha256": "1bb39fb3b5db4899551134e42ec690ffc781fd8ed1e5b6ead135971cf9971a5b"
+  },
+  {
+    "version": "20261028172029",
+    "name": "complete_verified_payment_candidates",
+    "sha256": "117777b4de1dbf8e35778425b8b216d76acb8f521ca84a730643e1d030cae9c0"
+  },
+  {
+    "version": "20261028173013",
+    "name": "hoist_remaining_policy_identity_checks",
+    "sha256": "aca5eb041782c56cd515d56b2fa643ccd7cbfa7fc272b994c16853532a1388bc"
+  },
+  {
+    "version": "20261028174412",
+    "name": "paged_professor_workspace",
+    "sha256": "c7ca20dc4f7e9b0a905120f89ac80a8b849caf0761e8cd27a68d40c675ee5292"
+  },
+  {
+    "version": "20261028175419",
+    "name": "index_professional_context_history",
+    "sha256": "b2bce34c6db810bd986eda4c707b125e49fb39de6cb54c846dbb363ac0076fe4"
+  },
+  {
+    "version": "20261028175702",
+    "name": "deterministic_professional_history_order",
+    "sha256": "8a5a03ece8488b32744a05fea1c7a8b644db12fba2c07ac360add3c21d742f3f"
+  },
+  {
+    "version": "20261028181332",
+    "name": "preserve_verified_signup_athlete_identity",
+    "sha256": "96781f73cde3fb92228050b51764f65cf6b24fb59b49830bb0add6521eff4063"
+  },
+  {
+    "version": "20261029100921",
+    "name": "capacity_core_functions_and_foco_dia_exposes_capacidade",
+    "sha256": "8ec23fcc7a55d2a49b88aeb6890592b4ac4e94987080e940cc78c8ee8d97252a"
+  },
+  {
+    "version": "20261029100943",
+    "name": "revoke_anon_fn_assessment_weight",
+    "sha256": "0fbec9fe3bec99ec3921f498cc3f876e09d9dfb49016a9cd0bb32a0ca7b2f3f8"
+  },
+  {
+    "version": "20261029105218",
+    "name": "onboarding_profile_persistence",
+    "sha256": "79082bb3f091327264c3f51d8eda94fe9133ca284e4c1f05cfa97c86427abbef"
+  },
+  {
+    "version": "20261029105935",
+    "name": "canonical_identity_view",
+    "sha256": "76287194ea9a502a068a32b7575e0ef7f7b9db3589c4321bcc135c110d209357"
+  },
+  {
+    "version": "20261029112836",
+    "name": "readiness_decisions_and_workout_sync",
+    "sha256": "edff3086eee55cb9671cbdfc8e4bba2ef195512a53babe291dc377a47d014781"
+  },
+  {
+    "version": "20261029113805",
+    "name": "canonical_catalog_permissions",
+    "sha256": "2bce3225a4d93215fd1de63327087a07ec0f3fc8252027ad0455de2a015010ef"
+  },
+  {
+    "version": "20261029114244",
+    "name": "readiness_guard_timed_sessions",
+    "sha256": "4c0379f8a1338a7fa2c4e93a0465bb3647f498d00a8f2c757292b1a4e54c2ba6"
+  },
+  {
+    "version": "20261029114917",
+    "name": "capacity_reset_prescription",
+    "sha256": "48aef70919cbbaeeba2b7165148905568b605e79f2f26072c7fe397e8c41c2c8"
+  },
+  {
+    "version": "20261029115131",
+    "name": "confirmed_strength_reference_hints",
+    "sha256": "4f544f9e5c404cf3a73e7b9ddd5246d590b38c0af084600ab616abb9975549d9"
+  },
+  {
+    "version": "20261029115906",
+    "name": "timed_readiness_application",
+    "sha256": "cfc1f91fd59e3a554e200a27c7ee1e9078c62c8963f26338ae88ef0afc633587"
+  },
+  {
+    "version": "20261029120423",
+    "name": "professor_readiness_queue",
+    "sha256": "9f73008979760af1466324a477693c375afa0724d81eaca79f3965989e8c4031"
+  },
+  {
+    "version": "20261029122640",
+    "name": "explicit_training_alerts",
+    "sha256": "061c947186a67c9f0b378bc1883bf3567d821c8cc5faa4530aee2d0cdb854607"
+  },
+  {
+    "version": "20261029195257",
+    "name": "separate_checkin_and_alert_observation_times",
+    "sha256": "40a24e2b058f6409be3c6bf5903af601ac01ddf45216e8c98adfb6c54c57f5b7"
+  },
+  {
+    "version": "20261029200744",
+    "name": "daily_sync_activation",
+    "sha256": "eaaa183b0d76436c5bd77d988c384914bb2b0187eeb31de05b2731742f2d978e"
+  },
+  {
+    "version": "20261029203210",
+    "name": "core_chat_identity",
+    "sha256": "0bfeb256641248a2e61d5671e665d99e3ef78f870ee6db023f4608c014a1f4a6"
+  },
+  {
+    "version": "20261029210455",
+    "name": "canonical_training_read_and_week",
+    "sha256": "3c1f2b640bc635afae0f7ff7bc79ad2dc791da987853b38d223a401980171696"
+  },
+  {
+    "version": "20261029210746",
+    "name": "canonical_training_adjustments",
+    "sha256": "0675789a0b8a3baa2dcc98f6eb38a44bc83baa5cb3d8aab42256bc7696ad512f"
+  },
+  {
+    "version": "20261029211658",
+    "name": "preserve_quick_execution_states",
+    "sha256": "e63791e711346bca5459f8fe1ad41cb35df8cb76cdc6bb64204750b844aed5ea"
+  },
+  {
+    "version": "20261029214109",
+    "name": "progress_tracker_canonical_writes",
+    "sha256": "49fc968eb8ceb5966bba7d200b63200f8b545e3aa571b3f91e540da7d55f5a2d"
+  },
+  {
+    "version": "20261029214507",
+    "name": "progress_tracker_screen_contract",
+    "sha256": "80eb3d1593ac0028aa364cb4bd10488492a63000534b53562c34319f0ac31ab3"
+  },
+  {
+    "version": "20261030165834",
+    "name": "progress_body_measure_provenance",
+    "sha256": "ed06daddec3836541d0fcebe357a07fb15c07214265eac063d43f624b4663e12"
+  },
+  {
+    "version": "20261030171410",
+    "name": "progress_legacy_history_continuity",
+    "sha256": "8788d20f3a36ef4fa78a641e65ba90614223fef6facf9f46ce0d4cc541860a90"
+  },
+  {
+    "version": "20261030175415",
+    "name": "training_sessions_and_smart_signals",
+    "sha256": "23f2c5879ea9120d6f552659b46876625820ca465146c605187086640aff3896"
+  },
+  {
+    "version": "20261030175957",
+    "name": "preserve_smartreino_delivery_sessions",
+    "sha256": "18ba382e1d88d1314fedb710876d747a90479ecab37c28c53ece86df35a8005a"
+  },
+  {
+    "version": "20261101220515",
+    "name": "conservative_adjustment_review",
+    "sha256": "4e619bda857572c34e35518684d8c76418bc8867de3e04d1f41819b08780b0a8"
+  },
+  {
+    "version": "20261103191314",
+    "name": "coach_pending_access_grants",
+    "sha256": "c54d94c5c9c163c25cb433e52f11e72b272193a2fa8de5c08e4d953e9fba0037"
+  },
+  {
+    "version": "20261104011322",
+    "name": "professor_models_delivery_and_examples",
+    "sha256": "b4a1fbbd8d95c6d2c57459615dcf2437ca97176fca398062c031b69a74739c7a"
+  },
+  {
+    "version": "20261104111457",
+    "name": "professor_publish_reviewed_window",
+    "sha256": "11ee033a6ac1bd946941cf2b73e12cf1e6093684fcfe8fb5260ce162a8a493f9"
+  },
+  {
+    "version": "20261104194502",
+    "name": "fix_readiness_workout_rpe_ambiguity",
+    "sha256": "025406cffdeea9802d7d4f5a82c63b2559e8dc44c94439e30cf0d141e123012f"
+  },
+  {
+    "version": "20261105231040",
+    "name": "smartreino_fixes_guard_gate_ajustes",
+    "sha256": "1eba377cf04303929820af54df5301f6a9c2217038ee281c8e76f48bf84fd2a1"
+  },
+  {
+    "version": "20261106233253",
+    "name": "smartreino_fallback_categoria_blocos_rigidos",
+    "sha256": "1e04a2b5fbbefa62433de0f21096d004305c96ade312a46384ad59af9e49c2fe"
+  },
+  {
+    "version": "20261106234610",
+    "name": "smartreino_prescrever_treino_evitar_regiao",
+    "sha256": "cfde52ea3b7321c6b4e3f0c99c4aea0dd53700f8c9eb0b0fb54917ccf889782d"
+  },
+  {
+    "version": "20261106234852",
+    "name": "smartreino_rastro_decisao_selection_rationale",
+    "sha256": "8c5b926528d1cd7fc92ca58b3380d6959e734864f554f5b497783b05c82bf5fb"
+  },
+  {
+    "version": "20261106235057",
+    "name": "smartreino_propagar_rationale_prescrever_treino",
+    "sha256": "da2d913996edf5f3eae9cc7dfea10dff8c91b042b5a49432225498a668f865e0"
+  },
+  {
+    "version": "20261109135911",
+    "name": "core_durable_integration",
+    "sha256": "b99f3451f0fcb44cc13eef2908ae2d34606a96487b3e37c706bd7b3400a22f16"
+  },
+  {
+    "version": "20261109140328",
+    "name": "core_integration_pilot_guard",
+    "sha256": "21fcbb5156924a7b1025d08837c830d9b8a1df44e6bffbf2f6dd3b9ad7c57b16"
+  },
+  {
+    "version": "20261109140754",
+    "name": "core_coach_requests",
+    "sha256": "2db93ac040a7e3a1f164a043a593f185f353f86da60e9e7cc4a3eb5983d7a5c0"
+  },
+  {
+    "version": "20261109141515",
+    "name": "core_canonical_goal_contract",
+    "sha256": "e4a5edabb6663ae94dd9daf95ebaef0e6b3c0b64ec9a036c116020301de86ba1"
+  },
+  {
+    "version": "20261109213336",
+    "name": "core_action_precondition_reasons",
+    "sha256": "5b57497195af10396c31711bc4c3440909ce5664e97d2d6e66cc048958d9cb61"
+  },
+  {
+    "version": "20261109230931",
+    "name": "smartreino_densificacao_catalogo",
+    "sha256": "aa52d365ef97d981eee37c8841290a6c472fdaca7d2475b3869a655a24718e57"
+  },
+  {
+    "version": "20261109231118",
+    "name": "smartreino_prescricao_metodo",
+    "sha256": "af875936bf411755c32bdda81d5c7201d89551a9b40a7623462012a26ed1b2fd"
+  },
+  {
+    "version": "20261109231443",
+    "name": "smartreino_densificacao_marcar_bloco9",
+    "sha256": "9406df9b199dad7ea55b8757d81495a5ad782c3c15128e64c1b293b2e441afd5"
+  },
+  {
+    "version": "20261109232006",
+    "name": "smartreino_densificacao_parametros",
+    "sha256": "8d8c383dff52f4f69005809c532002724c1ef8e766813070e5ed9f5b56ea48b7"
+  },
+  {
+    "version": "20261109232211",
+    "name": "smartreino_densificacao_aplicar_parametros",
+    "sha256": "ad441fa4398c66902de25fa727295735b7c9a57d5f8313bd2e691f1ed86983af"
+  },
+  {
+    "version": "20261111195236",
+    "name": "fn_periodizacao_prescricao_atual",
+    "sha256": "0228db60109761aef9db4e4a45f2b99ded5e121e27d05e9dd5d6be6529d90ce9"
+  },
+  {
+    "version": "20261112220009",
+    "name": "smartreino_fn_montar_bloco_validar_categoria_passo1",
+    "sha256": "2336afdc073d98a2af5cbb0e36321df2a6e6b956bda5fc0db4fac3b9d59542fb"
+  },
+  {
+    "version": "20261113224840",
+    "name": "conectar_fn_decidir_foco_dia_ao_catalogo",
+    "sha256": "3b1ec70085807984a5ca985c7acee0a616079d2982a269c931d192e0dfb23a1a"
+  },
+  {
+    "version": "20261113224958",
+    "name": "conectar_prescrever_treino_ao_catalogo",
+    "sha256": "e542fd48eeb6f4fc0f38ce0b96d400a07ca41445845a83120a811214a811e896"
+  },
+  {
+    "version": "20261113225500",
+    "name": "smartreino_pdi_auto_falha_visivel_cluster_onda",
+    "sha256": "dacb34a1c382c57d18330b67ba0db49e4b33e7e75cffc1a27db8426297731318"
+  },
+  {
+    "version": "20261113225637",
+    "name": "fix_bloco9_cardio_ignora_grupo_do_dia",
+    "sha256": "ab3dcf90aec8a3a408be0396d623fc3266039406766704c15022d1020ff2eade"
+  },
+  {
+    "version": "20261113230057",
+    "name": "fix_bloco9_usa_modality_real_nao_regex",
+    "sha256": "97c6db3f8983c2193124c1c6db64f983089c1edc2aa88397f3b969c05e9e2b21"
+  },
+  {
+    "version": "20261113230409",
+    "name": "smartreino_sugestao_perfil_so_forca",
+    "sha256": "50af5e2fe32a2632adb550eceb1a89cc8ab965163bc6531668bbd851a5ab1c09"
+  },
+  {
+    "version": "20261113232446",
+    "name": "smartreino_remove_overload_ambiguo_bloco9",
+    "sha256": "4f0e1830c97d7f74c0dc00bedb848addd6eb717d3bccfebf0bd60e91b88f1d2d"
+  },
+  {
+    "version": "20261114231219",
+    "name": "da4eb3ad-73a9-41c8-beb1-93363d1d5b65",
+    "sha256": "c1a1c33c43cb59f1776937eef6c2f21e9343bd059b83e7a57c84771bcecb41d3"
+  },
+  {
+    "version": "20261114231329",
+    "name": "30c9c256-7eb4-44ed-8680-2c6bfe7b62f7",
+    "sha256": "74e8d97e6590f1613f53769df9dafd0ddf93bd337b0c4dac4a4d93f8659ba33c"
+  },
+  {
+    "version": "20261116001029",
+    "name": "criar_motor_cardio_fn_montar_sessao_cardio",
+    "sha256": "b36f7911cdaa7c6eaa8a8b890332fbf26993fbd58d239776589b271e727a87c8"
+  },
+  {
+    "version": "20261116001102",
+    "name": "fix_parenteses_dose_desc_cardio",
+    "sha256": "c7d24606703b311916478f26b04b87c032c773d43ebdb09599d9933a57bc76d8"
+  },
+  {
+    "version": "20261116001239",
+    "name": "auditoria_coerencia_avaliacoes",
+    "sha256": "3052b13bc454f8d2cef31f4d23bdc80ee16dc8912261cda7cf9038aa6c2339df"
+  },
+  {
+    "version": "20261116195339",
+    "name": "core_first_workout_and_inactivity",
+    "sha256": "2302936baa28145e2e0cbc7695a3ef32084f17e9cd4fa7986c29be7703269297"
+  },
+  {
+    "version": "20261116214024",
+    "name": "prescrever_treino_com_motor_cardio_v4",
+    "sha256": "baba6ff7e9e423595d586223ddb8d86baf79d330b0b732015979542eddbc1c22"
+  },
+  {
+    "version": "20261116214137",
+    "name": "guiada_v2_aceita_massa_muscular",
+    "sha256": "95f9b7df9f56c5df673648f549acdfcfa20faff047605dd75f0367c03900c985"
+  },
+  {
+    "version": "20261116214334",
+    "name": "fix_focus_muscles_cardio_v5",
+    "sha256": "04e04c3e72f79388c21d22e287c0e13d53cbeda0988ac8e2166a05101f24eb21"
+  },
+  {
+    "version": "20261118100209",
+    "name": "manual_access_block_with_reason",
+    "sha256": "839c71466e5678a6dc3645f83a140b7fca266d36090a7161fa1393d0423858a7"
+  },
+  {
+    "version": "20261118100748",
+    "name": "auto_release_block_on_paid_subscription",
+    "sha256": "1f4db2eae7485fa1220eb9a50bb0fd243a7c323fd25e51cb2d919e0719bcf56e"
+  },
+  {
+    "version": "20261119183637",
+    "name": "student_curriculum_read_model",
+    "sha256": "35656c49e6e64058cc5e3e7ca9228de18c1a28523c1dcb03eddd250b6096eaf8"
+  },
+  {
+    "version": "20261119184039",
+    "name": "onboardings_three_stages",
+    "sha256": "9f72c654aa8f6ca161dc5b1ca656b65e2a217cae1263789cbeefa157ad2e5af8"
+  },
+  {
+    "version": "20261121123628",
+    "name": "fn_materializar_annual_plan_do_catalogo_implementada",
+    "sha256": "9574818db2b6f09020c436166ef11212a08b3c968e405acfb86754a24f86f7bf"
+  },
+  {
+    "version": "20261121124128",
+    "name": "fn_resolver_macro_cascata_na_geracao",
+    "sha256": "fab9683b5a92caae9336409f32dd086c5476700ecf8977ff567a6cac50c3d456"
+  },
+  {
+    "version": "20261121124901",
+    "name": "fn_montar_bloco9_corrige_extracao_rpe_range_v3",
+    "sha256": "19047e55cba8538c6510f26c1710dec0379a9396ec21aedee38a3988a4852f93"
+  },
+  {
+    "version": "20261121131334",
+    "name": "onboardings_align_tour_and_optional_photo",
+    "sha256": "79f6535259d8433f212c60e4a87df9debc00c75a4f17c716cf45f1fa3a2eed8c"
+  },
+  {
+    "version": "20261121131634",
+    "name": "coach_access_controls_by_athlete",
+    "sha256": "dea0ee01f678c1b606f7b7543fbe0a4577fd5a1574422a4f74f193a74f7ae5cd"
+  },
+  {
+    "version": "20261121131930",
+    "name": "notify_coach_on_student_health_flag",
+    "sha256": "7ea813f477fddc7b7c6a1ed9d1f25a4cb6f45ff500a55c7a6573fb98e53bee4e"
+  },
+  {
+    "version": "20261121232203",
+    "name": "secure_student_data_and_assessment",
+    "sha256": "3af1b182cca3494b27ce45a6d4c023254359c06e271855459aefec4feda06e28"
+  },
+  {
+    "version": "20261121232414",
+    "name": "scope_legacy_workout_access",
+    "sha256": "a13369338daf137646915e2399bb5a6c7bfe435be691193cb6fdf5020358752c"
+  },
+  {
+    "version": "20261121232748",
+    "name": "restrict_community_and_catalog_reads",
+    "sha256": "0181c1eeffe0c352af76d6d67d60cca16f85b4cad4aa2c9a21dee0518f7844df"
+  }
+]

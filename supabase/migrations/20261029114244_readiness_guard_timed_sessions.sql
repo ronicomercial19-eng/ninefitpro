@@ -129,3 +129,5 @@ ALTER TABLE public.readiness_preferences DROP CONSTRAINT readiness_preferences_a
 ALTER TABLE public.readiness_preferences DROP CONSTRAINT readiness_preferences_pdi_confirmed_by_fkey,
  ADD CONSTRAINT readiness_preferences_pdi_confirmed_by_fkey FOREIGN KEY(pdi_confirmed_by) REFERENCES auth.users(id) ON DELETE SET NULL;
 NOTIFY pgrst,'reload schema';
+
+;

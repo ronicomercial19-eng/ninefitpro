@@ -15,3 +15,5 @@ BEGIN
  EXECUTE v_def;
 END $$;
 NOTIFY pgrst,'reload schema';
+
+;

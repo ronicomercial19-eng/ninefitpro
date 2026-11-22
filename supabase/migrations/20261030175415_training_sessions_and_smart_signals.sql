@@ -756,3 +756,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_smart_training_signals(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_smart_training_signals(uuid) TO authenticated;
+;

@@ -20,8 +20,8 @@ await db.exec(`
  GRANT ALL ON public.user_subscriptions TO service_role;
  INSERT INTO auth.users VALUES('${user}'),('${other}');
 `);
-await db.exec(await readFile(new URL('../supabase/migrations/20261028001400_infinitepay_verified_checkout.sql',import.meta.url),'utf8'));
-await db.exec(await readFile(new URL('../supabase/migrations/20261028001615_infinitepay_checkout_encoded_url.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../supabase/migration-references/20261028001400_infinitepay_verified_checkout.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../supabase/migration-references/20261028001615_infinitepay_checkout_encoded_url.sql',import.meta.url),'utf8'));
 const value=async sql=>(await db.query(sql)).rows[0].value;
 const prepare=async(period,request)=>value(`SELECT public.fn_prepare_infinitepay_order('${user}','${period}','${request}') value`);
 const verify=(id,txn='transaction-1',amount=9700,paid=true)=>value(`SELECT public.fn_confirm_infinitepay_order('${id}','${txn}','invoice-1','${JSON.stringify({success:true,paid,amount,paid_amount:amount})}'::jsonb) value`);

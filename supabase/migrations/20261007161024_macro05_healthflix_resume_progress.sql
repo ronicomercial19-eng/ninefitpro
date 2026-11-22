@@ -1,4 +1,3 @@
--- Persist player position for HealthFlix content so athletes can resume on any device.
 ALTER TABLE public.healthflix_progress
   ADD COLUMN IF NOT EXISTS last_position_seconds integer NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS duration_seconds integer NOT NULL DEFAULT 0,
@@ -13,4 +12,4 @@ BEGIN
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_healthflix_progress_athlete_recent
-  ON public.healthflix_progress (athlete_id, last_event_at DESC);
+  ON public.healthflix_progress (athlete_id, last_event_at DESC);;

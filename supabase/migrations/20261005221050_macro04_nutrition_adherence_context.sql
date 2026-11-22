@@ -1,5 +1,4 @@
--- Macro 04: nutrition adherence is an optional, athlete-declared property of
--- the existing meal log. NULL preserves legacy/unclassified records.
+-- Macro 04: nutrition adherence is an optional, athlete-declared property of the existing meal log. NULL preserves legacy/unclassified records.
 ALTER TABLE public.nutrition_logs
   ADD COLUMN IF NOT EXISTS adherence_status text;
 
@@ -19,4 +18,4 @@ END;
 $migration$;
 
 COMMENT ON COLUMN public.nutrition_logs.adherence_status IS
-  'Optional meal-plan context self-reported by the athlete; NULL means not classified.';
+  'Optional meal-plan context self-reported by the athlete; NULL means not classified.';;

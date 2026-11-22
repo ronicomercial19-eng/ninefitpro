@@ -341,3 +341,5 @@ UPDATE public.readiness_rules SET copy_variants=CASE question
  WHEN 'pain' THEN '["O desconforto informado pede atenção na sessão.","Sua percepção de dor foi considerada.","Restrições e desconforto orientam a revisão com o professor."]'::jsonb
  ELSE '["Sua motivação foi considerada para manter a adesão.","A proposta leva em conta sua vontade de treinar hoje.","O acompanhamento considera sua motivação atual."]'::jsonb END;
 NOTIFY pgrst,'reload schema';
+
+;

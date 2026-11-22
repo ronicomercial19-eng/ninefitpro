@@ -13,3 +13,5 @@ END $$;
 REVOKE ALL ON FUNCTION public.fn_attach_infinitepay_link(uuid,text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_attach_infinitepay_link(uuid,text) TO service_role;
 NOTIFY pgrst,'reload schema';
+
+;

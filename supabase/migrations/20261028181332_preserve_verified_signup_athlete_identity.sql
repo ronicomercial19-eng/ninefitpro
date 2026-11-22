@@ -32,3 +32,5 @@ CREATE TRIGGER fitpro_link_confirmed_athlete
  AFTER UPDATE OF email_confirmed_at,email ON auth.users
  FOR EACH ROW WHEN(NEW.email_confirmed_at IS NOT NULL AND(OLD.email_confirmed_at IS DISTINCT FROM NEW.email_confirmed_at OR OLD.email IS DISTINCT FROM NEW.email))
  EXECUTE FUNCTION private.auto_link_athlete_on_signup();
+
+;

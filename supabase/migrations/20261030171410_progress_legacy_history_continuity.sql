@@ -36,3 +36,5 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_professor_progress_assessment_count(integer) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_professor_progress_assessment_count(integer) TO authenticated;
+
+;

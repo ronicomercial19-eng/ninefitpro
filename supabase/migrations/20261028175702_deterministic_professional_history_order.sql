@@ -14,3 +14,5 @@ BEGIN
  body:=replace(body,'ORDER BY c.completion_date DESC LIMIT 30','ORDER BY c.completion_date DESC,c.protocol_id DESC LIMIT 30');
  EXECUTE body;
 END $migration$;
+
+;

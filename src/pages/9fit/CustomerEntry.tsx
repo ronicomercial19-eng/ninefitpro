@@ -63,7 +63,7 @@ export default function CustomerEntry() {
     })();
     return () => { active = false; };
   }, [user?.id, authLoading, revision, paymentReturn, purchase]);
-  // O plano escolhido antes do login só pré-seleciona o card em /9fit/planos; não confirma acesso nem pagamento.
+  // Retoma o checkout escolhido antes do login; não confirma acesso nem pagamento.
   const proceed = () => { if (!state) return; const target = planDestination(state.destination, readPlan(entryStorage())); clearEntry(entryStorage()); clearPlan(entryStorage()); navigate(target, { replace: true }); };
   async function createTeamProfile() {
     if (provisioning) return;
@@ -92,7 +92,7 @@ export default function CustomerEntry() {
       </> : error ? <div role="alert" className="space-y-3"><p className="text-sm">Não foi possível conferir sua conta. Nenhuma cobrança ou alteração de acesso foi feita.</p><button className="text-sm text-primary underline" onClick={() => setRevision(n => n + 1)}>Tentar novamente</button></div> : !state ? <p role="status" className="text-sm text-muted-foreground">Conferindo seu acesso e sua configuração…</p> : <>
         <p role="status" className="rounded-xl border border-primary/20 bg-primary/[0.06] p-4 text-sm leading-relaxed">{state.access ? 'Seu acesso está confirmado no app. Não é necessário pagar novamente.' : paymentReturn ? 'Retorno recebido. Ainda não há acesso ativo confirmado nesta conta. Não pague novamente enquanto conferimos.' : 'Você pode começar a configuração sem confirmar uma nova compra. Recursos pagos dependem do acesso registrado.'}</p>
         {state.missingProfile && <div className="space-y-3"><p className="text-sm leading-relaxed text-muted-foreground">Sua conta existe, mas ainda não há ficha de atleta vinculada. Ao criar sua ficha, ela ficará sob responsabilidade da equipe NINE FIT (Rony).</p><button disabled={provisioning} onClick={() => void createTeamProfile()} className="w-full rounded-xl border border-primary/40 p-4 text-sm font-semibold text-primary disabled:opacity-50">{provisioning ? 'Preparando sua ficha…' : 'Criar minha ficha com a equipe NINE FIT'}</button><p role="alert" className="text-sm text-destructive">{provisionError}</p></div>}
-        <button onClick={proceed} className="w-full rounded-xl bg-primary p-4 font-semibold text-primary-foreground">{state.destination === '/9fit/planos' ? 'Ver planos e condições' : state.missingProfile ? 'Abrir início' : state.access ? 'Continuar para o app' : 'Continuar minha configuração'} <span aria-hidden>→</span></button>
+        <button onClick={proceed} className="w-full rounded-xl bg-primary p-4 font-semibold text-primary-foreground">{state.destination === '/9fit/planos' ? (readPlan(entryStorage()) ? 'Continuar para o pagamento' : 'Ver planos e condições') : state.missingProfile ? 'Abrir início' : state.access ? 'Continuar para o app' : 'Continuar minha configuração'} <span aria-hidden>→</span></button>
         <button className="text-sm text-muted-foreground underline" onClick={() => setRevision(n => n + 1)}>Conferir confirmação novamente</button>
       </>}
       </JourneyCard>

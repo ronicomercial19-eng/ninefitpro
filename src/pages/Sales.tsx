@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { COMMERCIAL_PLANS, OFFER_BENEFITS, OFFER_SCOPE, CHECKOUT_READY, SUPPORT_EMAIL, commercialPlanHref } from "@/config/commercialOffer";
+import { SUPPORT_EMAIL } from "@/config/commercialOffer";
 import { PlansGlow } from "@/components/9fit/PlansHero";
 
 const coreScreens = [
@@ -26,7 +26,6 @@ const expansions = [
 const cta = "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#ff5a1f] px-5 py-3 font-semibold text-[#0a0b0c] transition-colors hover:bg-[#ff7848] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ff7848]";
 
 export default function Sales() {
-  const [params] = useSearchParams();
   const [screenIndex, setScreenIndex] = useState(0);
   const screen = coreScreens[screenIndex];
   const moveScreen = (offset: number) =>
@@ -35,7 +34,7 @@ export default function Sales() {
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,#302016_0%,#0a0b0c_45rem)] text-[#f4f2ee]">
       <Helmet>
-        <title>NINE CORE e NINE PRO | Plataforma para personal trainers</title>
+        <title>NINE CORE | Plataforma para personal trainers</title>
         <meta name="description" content="Planeje, prescreva e acompanhe no NINE CORE. Seu aluno recebe a orientação e registra o treino no app NINE PRO." />
       </Helmet>
 
@@ -138,27 +137,10 @@ export default function Sales() {
           </div>
         </section>
 
-        <section id="planos" className="relative isolate mt-10 scroll-mt-6 overflow-hidden rounded-2xl border border-white/15 bg-[#151719] p-6 sm:p-12">
-          <PlansGlow className="opacity-70" />
-          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#ff7848]">Para quem vai treinar</p>
-          <h2 className="font-display text-3xl font-extrabold uppercase sm:text-5xl">Planos do aluno · NINE PRO</h2>
-          <p className="mt-4 max-w-xl text-white/70">Escolha o período de acesso ao app. Você paga uma vez e, após a confirmação do pagamento, o NINE PRO guia seu primeiro acesso.</p>
-          <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-white/70">{OFFER_BENEFITS.map(benefit => <li key={benefit}>{benefit}</li>)}</ul>
-          {!CHECKOUT_READY && <p role="status" className="mb-4 text-sm text-white/70">Contratação online em configuração. Consulte as condições com a NINE.</p>}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {COMMERCIAL_PLANS.map(plan => (
-              <article key={plan.id} className={`space-y-3 rounded-xl border bg-white/[0.04] p-5 backdrop-blur-md ${params.get("plan") === plan.id ? "border-[#ff7848]" : "border-white/15"}`}>
-                <h3 className="font-semibold">{plan.name}</h3>
-                <p className="text-xl text-[#ff7848]">{plan.price}<span className="text-sm text-white/70"> {plan.period}</span></p>
-                <p className="text-sm text-white/70">Pagamento único, sem renovação automática.</p>
-                <a className={cta} href={commercialPlanHref(plan)}>
-                  {CHECKOUT_READY ? (plan.id === "basic" ? "Escolher 1 mês" : "Escolher 12 meses") : "Consultar este plano"}
-                </a>
-              </article>
-            ))}
-          </div>
-          <p className="mt-4 text-sm text-white/70">{OFFER_SCOPE}</p>
-        </section>
+        <aside className="my-10 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-white/10 bg-[#151719] p-6 sm:p-8" aria-label="Acesso do aluno">
+          <div><p className="text-xs font-semibold uppercase tracking-widest text-[#ff7848]">Quer treinar?</p><h2 className="mt-2 text-xl font-bold">Conheça o app do aluno</h2><p className="mt-2 max-w-xl text-sm text-white/70">Os planos do NINE PRO são para uso individual. O acesso profissional ao NINE CORE tem contratação própria.</p></div>
+          <Link className={cta} to="/#planos">Ver planos do aluno <ArrowUpRight aria-hidden="true" size={18} /></Link>
+        </aside>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-6 text-sm text-white/70">
           <span>NINE PRO</span><a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-4">{SUPPORT_EMAIL}</a>

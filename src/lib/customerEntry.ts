@@ -32,7 +32,7 @@ export function readPlan(store: Store | undefined, now = Date.now()): PurchasePl
 }
 export function clearPlan(store?: Store) { try { store?.removeItem(PLAN_KEY); } catch { /* Optional. */ } }
 export function planDestination(destination: string, plan: PurchasePlan | null) {
-  return destination === '/9fit/planos' && plan ? `/9fit/planos?plan=${plan}#plano-${plan}` : destination;
+  return destination === '/9fit/planos' && plan ? `/9fit/checkout/${plan}` : destination;
 }
 
 export interface EntryState { roleHome: string; firstAccessDone: boolean; googleIdentity: boolean; athleteId: string | null; activationDone: boolean; profileDone: boolean; intent: EntryIntent; access?: boolean; }

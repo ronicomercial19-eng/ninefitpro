@@ -93,3 +93,5 @@ BEGIN
  RETURN to_jsonb(rec);
 END $$;
 NOTIFY pgrst,'reload schema';
+
+;

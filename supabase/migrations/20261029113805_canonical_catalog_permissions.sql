@@ -26,3 +26,5 @@ BEGIN
 END $$;
 ALTER FUNCTION public.fn_rm_plausible(text,numeric,numeric,text) SET search_path='';
 NOTIFY pgrst,'reload schema';
+
+;

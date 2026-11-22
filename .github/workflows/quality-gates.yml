@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci --no-audit --no-fund
+      - run: node scripts/qa-migration-history.mjs
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:core-integration
@@ -42,6 +43,7 @@ jobs:
           node scripts/qa-context-history.mjs
           node scripts/qa-signup-identity.mjs
           node scripts/qa-canonical-identity-view.mjs
+          node scripts/qa-student-security-db.mjs
       - run: node --import tsx --test scripts/qa-auth-first-access.ts scripts/qa-login-flow.ts scripts/qa-protocol-delivery.ts scripts/qa-current-athlete.ts
       - run: npm run qa:fase2
       - run: npm run qa:macro02

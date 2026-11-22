@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
-import { Resend } from "npm:resend@4.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,7 +84,7 @@ serve(async (req) => {
       ? String(appUrl)
       : 'https://ninefitpro.lovable.app/9fit/login';
 
-    const emailResponse = await resend.emails.send({
+    const email = {
       from: "9FIT PRO <onboarding@resend.dev>",
       to: [trimmedEmail],
       subject: `Bem-vindo ao 9FIT PRO, ${safeName}!`,
@@ -122,10 +119,19 @@ serve(async (req) => {
         </body>
         </html>
       `,
+    };
+    const key = Deno.env.get("RESEND_API_KEY");
+    if (!key) return apiError('EMAIL_UNAVAILABLE', 'Envio de email indisponível', 503);
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(email), signal: AbortSignal.timeout(15_000),
     });
-
-    console.log("Email sent successfully:", emailResponse?.data?.id);
-    return apiResponse({ emailId: emailResponse?.data?.id, message: 'Email enviado com sucesso' });
+    const result: unknown = await response.json();
+    if (!response.ok || !result || typeof result !== 'object' || !('id' in result) || typeof result.id !== 'string') {
+      return apiError('EMAIL_ERROR', 'O provedor não confirmou o envio. Tente novamente.', 502);
+    }
+    console.log("Email confirmed by provider:", result.id);
+    return apiResponse({ emailId: result.id, message: 'Email enviado com sucesso' });
   } catch (error: any) {
     console.error("Error sending welcome email:", error);
     return apiError('EMAIL_ERROR', 'Erro ao enviar email', 500);

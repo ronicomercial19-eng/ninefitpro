@@ -34,7 +34,7 @@ export function rhythmSelection(dates: readonly string[], selected: string, key:
 /** Horizontal cubic controls keep every segment within its two endpoints (no overshoot). */
 export function rhythmCurve(points: readonly RhythmPoint[]) {
   const max = Math.max(1, ...points.map(point => point.value));
-  const coordinates = points.map((point, index) => ({ x: 12 + index * 46, y: 112 - point.value / max * 88 }));
+  const coordinates = points.map((point, index) => ({ x: (index + 0.5) * 300 / points.length, y: 112 - point.value / max * 88 }));
   const first = coordinates[0];
   if (!first) return { line: "", area: "", coordinates, max };
   let line = `M ${first.x} ${first.y}`;

@@ -307,4 +307,4 @@ begin
  end loop;
  return result;
 end;
-$function$;
+$function$;;

@@ -37,3 +37,5 @@ USING (athlete_id IS NOT NULL AND (SELECT private.fitpro_actor_role()) IS NOT NU
   AND (private.fitpro_can_manage_athlete(athlete_id) OR athlete_id=(SELECT public.fn_current_athlete_id())));
 REVOKE ALL ON public.user_assessments FROM anon;
 GRANT SELECT, INSERT, DELETE ON public.user_assessments TO authenticated;
+
+;

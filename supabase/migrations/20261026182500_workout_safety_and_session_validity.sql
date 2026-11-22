@@ -262,3 +262,5 @@ BEGIN
   EXECUTE v_def;
  END LOOP;
 END $patch$;
+
+;

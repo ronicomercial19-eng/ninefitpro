@@ -14,3 +14,4 @@ AS $function$
 $function$;
 CREATE POLICY assessment_goals_canonical_actor ON public.metas_progresso FOR ALL TO authenticated
 USING(public.fn_assessment_can_read(athlete_id)) WITH CHECK(public.fn_assessment_can_read(athlete_id));
+;

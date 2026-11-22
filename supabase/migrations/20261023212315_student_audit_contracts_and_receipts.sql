@@ -260,3 +260,4 @@ END $$;
 REVOKE ALL ON FUNCTION public.fn_complete_student_protocol(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_complete_student_protocol(uuid) TO authenticated;
 NOTIFY pgrst, 'reload schema';
+;

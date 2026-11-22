@@ -24,7 +24,7 @@ try {
  GRANT USAGE ON SCHEMA public,auth TO authenticated;
  GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
  SELECT set_config('request.jwt.claim.sub','${uid}',false);`);
- await db.exec(await readFile(new URL('../supabase/migrations/20261029105935_canonical_identity_view.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261029105935_canonical_identity_view.sql',import.meta.url),'utf8'));
  await db.exec('GRANT SELECT ON public.vw_current_identity TO authenticated; SET ROLE authenticated;');
  const read=async()=> (await db.query('SELECT * FROM public.vw_current_identity')).rows;
  let rows=await read();

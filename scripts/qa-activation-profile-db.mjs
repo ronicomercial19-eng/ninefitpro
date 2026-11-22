@@ -31,7 +31,7 @@ try {
  INSERT INTO public.user_parameters(user_id,goal)VALUES('${other}','aesthetics');
  INSERT INTO public.user_context_settings(user_id,pdi_completed_at,declared_keys)VALUES('${other}','2026-10-01T00:00:00Z',ARRAY['goal']);
  `);
- await db.exec(await readFile(new URL('../supabase/migrations/20261028084328_complete_activation_profile.sql', import.meta.url), 'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028084328_complete_activation_profile.sql', import.meta.url), 'utf8'));
  await db.exec(`SET ROLE authenticated;SELECT set_config('request.jwt.claim.sub','${owner}',false);`);
  const draft = await save({ goal: 'longevity' });
  check('draft persists one confirmed answer without completing profile', () => { assert.equal(draft.saved, true); assert.equal(draft.completed_at, null); assert.deepEqual(draft.declared_keys, ['goal']); });

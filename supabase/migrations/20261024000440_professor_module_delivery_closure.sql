@@ -124,3 +124,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_review_ninefit_template(uuid,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_review_ninefit_template(uuid,text) TO authenticated;
+;

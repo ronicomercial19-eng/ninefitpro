@@ -46,3 +46,5 @@ END $migration$;
 
 -- Identical non-constraint index; the teacher/date index remains in place.
 DROP INDEX IF EXISTS public.idx_appointments_teacher_sched;
+
+;

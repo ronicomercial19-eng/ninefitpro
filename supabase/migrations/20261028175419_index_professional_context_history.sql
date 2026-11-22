@@ -28,3 +28,5 @@ BEGIN
  body:=replace(body,'private.fitpro_athlete_goal(id)->>','v_goal->>');
  EXECUTE body;
 END $migration$;
+
+;

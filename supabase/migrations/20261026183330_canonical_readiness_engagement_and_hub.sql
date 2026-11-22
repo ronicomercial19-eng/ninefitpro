@@ -92,3 +92,5 @@ BEGIN
  END LOOP;
 END $patch$;
 NOTIFY pgrst,'reload schema';
+
+;

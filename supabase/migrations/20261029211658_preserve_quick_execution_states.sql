@@ -5,4 +5,4 @@ BEGIN
  IF strpos(d,anchor)=0 THEN RAISE EXCEPTION 'quick_execution_guard_anchor_missing';END IF;
  EXECUTE replace(d,anchor,'phase_name=''quick'' AND status IN (''started'',''in_progress'',''paused'',''completed'',''skipped'')');
 END $patch$;
-
+;

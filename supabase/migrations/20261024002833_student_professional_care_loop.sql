@@ -89,3 +89,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_care_seen(uuid,integer) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_care_seen(uuid,integer) TO authenticated;
+;

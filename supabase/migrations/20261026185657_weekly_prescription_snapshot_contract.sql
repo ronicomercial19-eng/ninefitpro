@@ -12,3 +12,5 @@ BEGIN
 END $$;
 UPDATE public.api_connectors SET endpoint='https://xtexysqtfsofdohujtfr.supabase.co/functions/v1/fitpro-staff-gateway' WHERE key='staff';
 NOTIFY pgrst,'reload schema';
+
+;

@@ -206,4 +206,4 @@ BEGIN
  d:=replace(d,'''Treino Rápido — ''','''Treino — ''');
  EXECUTE d;
 END $patch$;
-
+;

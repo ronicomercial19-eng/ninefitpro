@@ -28,12 +28,12 @@ try{
  GRANT USAGE ON SCHEMA public,auth,private TO authenticated,service_role;
  GRANT ALL ON public.user_subscriptions TO service_role;
  `);
- for(const name of ['20261028001400_infinitepay_verified_checkout.sql','20261028001615_infinitepay_checkout_encoded_url.sql'])await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'));
+ for(const name of ['20261028001400_infinitepay_verified_checkout.sql','20261028001615_infinitepay_checkout_encoded_url.sql'])await db.exec(await readFile(new URL('../supabase/migration-references/'+name,import.meta.url),'utf8'));
  for(const table of ['daily_workouts','workout_exercises','student_training_assignments','workout_executions','workout_exercise_sets'])await db.exec(`CREATE TABLE public.${table}(id uuid DEFAULT gen_random_uuid(),user_id uuid);ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;CREATE POLICY owned ON public.${table} TO authenticated USING(user_id=auth.uid())WITH CHECK(user_id=auth.uid());GRANT SELECT,INSERT,UPDATE,DELETE ON public.${table} TO authenticated;`);
  await db.exec(`CREATE FUNCTION public.fn_start_workout_execution() RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
  BEGIN
  INSERT INTO public.workout_executions(user_id)VALUES(auth.uid());END$$;`);
- await db.exec(await readFile(new URL('../supabase/migrations/20261028102751_automatic_paid_access_lifecycle.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028102751_automatic_paid_access_lifecycle.sql',import.meta.url),'utf8'));
  const unpaid=await access();check('new unpaid account denied by canonical status',()=>assert.equal(unpaid.allowed,false));
  const existing=await access(legacy);check('one-time consulting grant preserves existing account',()=>assert.equal(existing.reason,'legacy_consultoria'));
  await db.exec(`INSERT INTO public.athletes(user_id,coach_id)VALUES('${user}','${coach}');`);
@@ -82,8 +82,8 @@ try{
  const admin=await value('SELECT public.fn_fitpro_billing_overview(0,1) value');
  check('admin monitor pages accounts and never exposes cron credential',()=>{assert.equal(admin.accounts_total,3);assert.equal(admin.accounts.length,1);assert.equal(JSON.stringify(admin).includes('job_token'),false)});
  await db.exec('RESET ROLE;');
- await db.exec(await readFile(new URL('../supabase/migrations/20261028171719_durable_payment_confirmation_queue.sql',import.meta.url),'utf8'));
- await db.exec(await readFile(new URL('../supabase/migrations/20261028172029_complete_verified_payment_candidates.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028171719_durable_payment_confirmation_queue.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028172029_complete_verified_payment_candidates.sql',import.meta.url),'utf8'));
  const pendingOrder=await value(`SELECT public.fn_prepare_infinitepay_order('${user}','annual',gen_random_uuid()) value`);
  const stage=()=>value(`SELECT public.fn_fitpro_stage_payment_candidate('${pendingOrder.id}','candidate-txn','candidate-slug') value`);
  const subsBefore=await value('SELECT count(*)::int value FROM public.user_subscriptions');

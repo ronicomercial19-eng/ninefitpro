@@ -189,3 +189,4 @@ AS $function$
 $function$;
 
 NOTIFY pgrst,'reload schema';
+;

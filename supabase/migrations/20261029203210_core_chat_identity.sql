@@ -9,4 +9,4 @@ CREATE INDEX core_chat_threads_athlete_idx ON public.core_chat_threads(athlete_i
 ALTER TABLE public.core_chat_threads ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.core_chat_threads FROM anon, authenticated;
 GRANT ALL ON public.core_chat_threads TO service_role;
-
+;

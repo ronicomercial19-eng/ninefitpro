@@ -37,7 +37,7 @@ try{
  INSERT INTO public.class_bookings(class_id,user_id,status,booking_time) SELECT id,'${id(1)}','confirmed','2026-09-01T12:00:00Z' FROM public.gym_classes WHERE class_name<>'Regular';
  GRANT USAGE ON SCHEMA public,auth,private TO authenticated;
  `);
- await db.exec(await readFile(new URL('../supabase/migrations/20261028174412_paged_professor_workspace.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028174412_paged_professor_workspace.sql',import.meta.url),'utf8'));
  await actor(coach);
  const first=await page(0,999,'','all',id(2800));
  check('server bounds page to 100 while reporting the full authorized roster',()=>{assert.equal(first.total,2900);assert.equal(first.students.length,100)});

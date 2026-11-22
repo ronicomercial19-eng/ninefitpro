@@ -17,4 +17,4 @@ BEGIN
     SET password_changed = true, updated_at = now()
     WHERE user_id = v_uid;
 END;
-$function$;
+$function$;;

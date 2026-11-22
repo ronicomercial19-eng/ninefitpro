@@ -146,4 +146,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_record_progress_workout(uuid,uuid,date,text,jsonb,numeric,integer,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_record_progress_workout(uuid,uuid,date,text,jsonb,numeric,integer,text) TO authenticated;
-
+;

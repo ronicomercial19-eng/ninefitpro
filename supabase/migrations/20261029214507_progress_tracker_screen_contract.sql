@@ -222,4 +222,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_professor_progress_assessments(int,int) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_professor_progress_assessments(int,int) TO authenticated;
-
+;

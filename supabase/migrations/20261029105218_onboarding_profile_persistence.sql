@@ -59,6 +59,7 @@ BEGIN
  END IF;
  RETURN jsonb_build_object('saved',true,'onboarding',to_jsonb(v));
 END $$;
+
 CREATE OR REPLACE FUNCTION public.fn_get_app_onboarding()
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY INVOKER SET search_path='' AS $$
 DECLARE u uuid:=auth.uid();a uuid;j jsonb;sub jsonb;w jsonb;
@@ -70,4 +71,7 @@ BEGIN
  SELECT jsonb_build_object('id',d.id,'title',d.day_name,'date',d.workout_date) INTO w FROM public.daily_workouts d WHERE d.athlete_id=a AND d.workout_date>=(now() AT TIME ZONE 'America/Sao_Paulo')::date AND EXISTS(SELECT 1 FROM public.workout_exercises e WHERE e.daily_workout_id=d.id AND e.exercise_id IS NOT NULL AND e.sets>0 AND nullif(btrim(e.reps_range),'') IS NOT NULL) ORDER BY d.workout_date LIMIT 1;
  RETURN jsonb_build_object('onboarding',j,'full_name',(SELECT name FROM public.athletes WHERE id=a),'birthdate',(SELECT birthdate FROM public.athletes WHERE id=a),'gender',(SELECT gender FROM public.athletes WHERE id=a),'subscription',sub,'next_workout',w,'assignments',coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM(SELECT id,training_name,training_type,training_data,html_file_url FROM public.student_training_assignments WHERE student_id=a AND is_active AND(start_date IS NULL OR start_date<=(now() AT TIME ZONE 'America/Sao_Paulo')::date) AND(end_date IS NULL OR end_date>=(now() AT TIME ZONE 'America/Sao_Paulo')::date) ORDER BY created_at DESC LIMIT 10)t),'[]'),'first_workout_completed',EXISTS(SELECT 1 FROM public.workout_executions WHERE athlete_id=a AND status='completed' AND completion_valid IS TRUE));
 END $$;
+
 NOTIFY pgrst,'reload schema';
+
+;

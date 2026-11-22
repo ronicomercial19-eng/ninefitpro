@@ -479,4 +479,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_coach_training_setup_queue(int,int) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_coach_training_setup_queue(int,int) TO authenticated;
-
+;

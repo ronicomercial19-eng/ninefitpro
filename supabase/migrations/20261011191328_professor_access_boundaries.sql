@@ -185,3 +185,4 @@ CREATE POLICY fitpro_bookings_staff ON public.class_bookings FOR ALL TO authenti
 DROP POLICY IF EXISTS credits_select_coach_trainer ON public.student_credits;
 CREATE POLICY credits_select_coach_trainer ON public.student_credits FOR SELECT TO authenticated
 USING (private.fitpro_can_manage_athlete(student_id));
+;

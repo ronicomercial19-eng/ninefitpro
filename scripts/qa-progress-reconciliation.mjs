@@ -61,7 +61,7 @@ await db.exec(`
  INSERT INTO public.treinos_realizados VALUES(gen_random_uuid(),'${athlete}',current_date,'External',200,7);
  SELECT set_config('request.jwt.claim.sub','${coach}',false);
 `);
-await db.exec(await readFile(new URL('../supabase/migrations/20261027234722_reconcile_student_professor_progress.sql', import.meta.url), 'utf8'));
+await db.exec(await readFile(new URL('../supabase/migration-references/20261027234722_reconcile_student_professor_progress.sql', import.meta.url), 'utf8'));
 const call = async sql => (await db.query(sql)).rows[0].value;
 const ctx = await call(`SELECT public.fn_coach_student_context('${athlete}') value`);
 const overview = await call(`SELECT public.fn_coach_overview((now() AT TIME ZONE 'America/Sao_Paulo')::date-29,(now() AT TIME ZONE 'America/Sao_Paulo')::date) value`);

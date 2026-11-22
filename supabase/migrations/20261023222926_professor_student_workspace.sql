@@ -534,3 +534,4 @@ END $$;
 REVOKE ALL ON FUNCTION public.fn_coach_subscription_context(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_coach_subscription_context(uuid) TO authenticated;
 NOTIFY pgrst,'reload schema';
+;

@@ -54,6 +54,12 @@ describe("ondas reais do Hub", () => {
     assert.equal(removed.reduce((sum, point) => sum + point.value, 0), 0);
     assert.notEqual(rhythmCurve(removed).line, rhythmCurve(rhythmSeries(fixture, "Mente", end)).line);
   });
+  it("alinha cada ponto ao centro da respectiva coluna de data em qualquer largura", () => {
+    const coordinates = rhythmCurve(rhythmSeries(fixture, "Água", end)).coordinates;
+    for (const width of [288, 462, 680]) coordinates.forEach((point, index) => {
+      assert.ok(Math.abs(point.x / 300 * width - (index + 0.5) * width / 7) < 0.00001);
+    });
+  });
   it("vazio mantém sete dias sem registros e curva finita", () => {
     const points = rhythmSeries([], "Água", end);
     assert.equal(points.length, 7);

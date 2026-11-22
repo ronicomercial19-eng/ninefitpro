@@ -62,3 +62,5 @@ BEGIN
  EXECUTE v_def;
 END $patch$;
 NOTIFY pgrst,'reload schema';
+
+;

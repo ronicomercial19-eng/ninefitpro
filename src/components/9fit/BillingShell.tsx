@@ -14,7 +14,7 @@ export function BillingShell({
   children,
   step,
   title,
-  eyebrow = '9FIT · PRIME',
+  eyebrow = '9FIT · ASSINATURA DO APP',
   backTo = '/9fit/planos',
   backLabel = 'Voltar aos planos',
 }: {

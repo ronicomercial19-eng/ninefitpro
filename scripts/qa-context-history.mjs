@@ -38,14 +38,14 @@ try{
  CREATE INDEX existing_pain_history ON public.pain_reports(athlete_id,created_at);
  ANALYZE;
  `);
- const original=await readFile(new URL('../supabase/migrations/20261027234722_reconcile_student_professor_progress.sql',import.meta.url),'utf8');
+ const original=await readFile(new URL('../supabase/migration-references/20261027234722_reconcile_student_professor_progress.sql',import.meta.url),'utf8');
  const start=original.indexOf('CREATE OR REPLACE FUNCTION public.fn_coach_student_context('),end=original.indexOf('CREATE OR REPLACE FUNCTION public.fn_coach_students()',start);
  await db.exec(original.slice(start,end));
  await db.exec("SELECT setval('goal_calls',1,false)");
  const before=await value(`SELECT public.fn_coach_student_context('${athlete}') value`);
  const oldCalls=await value("SELECT last_value::int value FROM goal_calls");
  const flags=await value("SELECT jsonb_build_object('stable',provolatile,'definer',prosecdef,'config',proconfig) value FROM pg_proc WHERE oid='public.fn_coach_student_context(uuid)'::regprocedure");
- const sql=await readFile(new URL('../supabase/migrations/20261028175419_index_professional_context_history.sql',import.meta.url),'utf8');
+ const sql=await readFile(new URL('../supabase/migration-references/20261028175419_index_professional_context_history.sql',import.meta.url),'utf8');
  await db.exec(sql);
  await db.exec("SELECT setval('goal_calls',1,false)");
  const after=await value(`SELECT public.fn_coach_student_context('${athlete}') value`);
@@ -63,7 +63,7 @@ try{
  await db.exec(`INSERT INTO public.workout_executions(athlete_id,workout_date,status)SELECT '${athlete}',current_date-1000-n,'in_progress' FROM generate_series(1,1000)n;ANALYZE public.workout_executions;`);
  const plan=JSON.stringify((await db.query(`EXPLAIN SELECT id FROM public.workout_executions WHERE athlete_id='${athlete}' AND workout_date BETWEEN current_date-29 AND current_date ORDER BY workout_date DESC LIMIT 60`)).rows);
  check('all-status ordered history uses the composite index',()=>assert.match(plan,/scale_workouts_athlete_date/));
- await db.exec(await readFile(new URL('../supabase/migrations/20261028175702_deterministic_professional_history_order.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migration-references/20261028175702_deterministic_professional_history_order.sql',import.meta.url),'utf8'));
  await db.exec(`INSERT INTO public.workout_executions(athlete_id,workout_date,status)SELECT '${athlete}',current_date,'completed' FROM generate_series(1,120);`);
  await db.exec('SET enable_indexscan=off;');
  const bitmap=await value(`SELECT public.fn_coach_student_context('${athlete}') value`);

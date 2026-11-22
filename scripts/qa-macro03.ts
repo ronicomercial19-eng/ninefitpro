@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
-const migration = read("../supabase/migrations/20261005200347_macro03_periodized_week_and_execution_states.sql");
-const deterministic = read("../supabase/migrations/20261005203000_macro03_deterministic_periodized_selection.sql");
+const migration = read("../supabase/migration-references/20261005200347_macro03_periodized_week_and_execution_states.sql");
+const deterministic = read("../supabase/migration-references/20261005203000_macro03_deterministic_periodized_selection.sql");
 const weekView = read("../src/components/9fit/WeeklyTrainingView.tsx");
 const planning = read("../src/pages/9fit/Planejamento.tsx");
 const planningCalendar = read("../src/components/9fit/PlanejamentoPro.tsx");

@@ -14,3 +14,5 @@ CREATE TRIGGER fitpro_complete_verified_candidates
 UPDATE private.fitpro_payment_candidates q SET state='complete',last_error=NULL
 FROM public.infinitepay_orders o
 WHERE o.id=q.order_id AND o.status='paid' AND o.transaction_nsu=q.transaction_nsu AND o.invoice_slug=q.invoice_slug AND q.state<>'complete';
+
+;

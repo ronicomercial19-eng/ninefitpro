@@ -49,3 +49,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_billing_subscription_list() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_billing_subscription_list() TO authenticated;
+;

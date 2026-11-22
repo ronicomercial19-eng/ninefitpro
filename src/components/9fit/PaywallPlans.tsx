@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { CHECKOUT_READY, OFFER_BENEFITS, PAYWALL_BENEFITS, planInsights, type CommercialPlan } from '@/config/commercialOffer';
 import { cn } from '@/lib/utils';
 
@@ -22,11 +22,11 @@ export function PaywallPlans({ plans, initialPlanId, hrefFor, onSelect, onContin
   const [selectedId, setSelectedId] = useState<string>(() => plans.find(p => p.id === initialPlanId)?.id ?? plans[0].id);
   const selected = plans.find(p => p.id === selectedId) ?? plans[0];
   const href = hrefFor(selected);
-  const label = CHECKOUT_READY ? 'Ver condições de contratação' : 'Falar com a NINE FIT sobre este plano';
-  const ctaClass = 'block w-full rounded-2xl bg-primary py-4 text-center font-black text-primary-foreground transition-opacity hover:opacity-90';
+  const label = CHECKOUT_READY ? `Continuar com o ${planInsights(selected).shortName.toLowerCase()}` : 'Falar com a NINE FIT sobre este plano';
+  const ctaClass = 'flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-[#ff783d] to-[#ed4d18] px-4 py-4 text-center font-bold text-white shadow-[0_8px_28px_-10px_rgba(255,90,31,0.65)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary motion-reduce:transition-none';
   const cta = href.startsWith('/')
-    ? <Link to={href} onClick={() => onContinue?.(selected)} className={ctaClass}>{label}</Link>
-    : <a href={href} rel="noopener noreferrer" onClick={() => onContinue?.(selected)} className={ctaClass}>{label}</a>;
+    ? <Link to={href} onClick={() => onContinue?.(selected)} className={ctaClass}>{label}<ArrowRight size={18} aria-hidden="true" /></Link>
+    : <a href={href} rel="noopener noreferrer" onClick={() => onContinue?.(selected)} className={ctaClass}>{label}<ArrowRight size={18} aria-hidden="true" /></a>;
 
   return (
     <div className="space-y-5">
@@ -57,13 +57,13 @@ export function PaywallPlans({ plans, initialPlanId, hrefFor, onSelect, onContin
                 role="radio"
                 aria-checked={active}
                 onClick={() => { setSelectedId(plan.id); onSelect?.(plan); }}
-                className={cn('flex w-full items-center justify-between rounded-2xl border bg-card/60 p-4 text-left transition-colors', active ? 'border-primary' : 'border-white/10')}
+                className={cn('flex min-h-24 w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary motion-reduce:transition-none', active ? 'border-primary/70 bg-gradient-to-br from-primary/[0.12] to-[#181a1c] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'border-white/10 bg-[#181a1c] hover:border-white/25')}
               >
-                <span>
+                <span className="flex min-w-0 items-center gap-3"><span aria-hidden="true" className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-full border", active ? "border-primary bg-primary text-primary-foreground" : "border-white/30")}>{active && <Check size={12} strokeWidth={3} />}</span><span>
                   <span className="block text-lg font-bold">{info.shortName}</span>
                   <span className="block text-xs text-muted-foreground">{info.periodLabel}{info.perMonth ? ` · ${info.perMonth}` : ''}</span>
-                </span>
-                <strong className="text-xl">{plan.price}</strong>
+                </span></span>
+                <strong className="shrink-0 text-lg font-bold tabular-nums sm:text-xl">{plan.price}</strong>
               </button>
             </div>
           );

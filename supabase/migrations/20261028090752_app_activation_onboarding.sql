@@ -86,3 +86,5 @@ END $$;
 REVOKE ALL ON FUNCTION public.fn_get_app_onboarding() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_get_app_onboarding() TO authenticated;
 NOTIFY pgrst,'reload schema';
+
+;

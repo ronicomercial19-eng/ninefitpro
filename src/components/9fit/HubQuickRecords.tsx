@@ -33,7 +33,8 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
   const pending = useRef<{ key: string; id: string } | null>(null);
   const locked = useRef(false);
   const request = useRef(0);
-  const [readyDate, setReadyDate] = useState<string>();
+  const contextKey = `${athleteId}:${userId}:${date}`;
+  const [readyContext, setReadyContext] = useState<string>();
   const [selected, setSelected] = useState(date);
   const [entireWeek, setEntireWeek] = useState(false);
   const dates = rhythmWeek(date);
@@ -69,7 +70,7 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
         ? data.meals.filter(meal => typeof meal?.name === "string" && meal.name.trim()) : []);
     }
     setEntries(records);
-    setReadyDate(date);
+    setReadyContext(contextKey);
     onToday?.({ athleteId, date, records: categories.filter(category => records.some(row => row.date === date && row.category === category)) });
   }
 
@@ -145,7 +146,7 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
     { category: "Mente" as const, action: "Fiz uma pausa", label: "Pausa mental" },
   ];
 
-  const coverageRead: CoverageRead = loadError ? "unavailable" : readyDate === date ? "ready" : "loading";
+  const coverageRead: CoverageRead = loadError ? "unavailable" : readyContext === contextKey ? "ready" : "loading";
   const explored = rhythmRows(entries, dates, selectedDate, entireWeek);
 
   return <section className="hub-rhythm space-y-4" aria-label="Seu ritmo">
@@ -174,7 +175,7 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
         const rows = today.filter(row => row.category === category);
         const done = category === "Nutrição" ? rows.some(row => row.label === label) : category !== "Água" && rows.length > 0;
         const nutritionBlocked = category === "Nutrição" && planUnread;
-        return <Button variant="outline" key={category} type="button" disabled={!!busy || done || loadError || readyDate !== date || nutritionBlocked}
+        return <Button variant="outline" key={category} type="button" disabled={!!busy || done || loadError || readyContext !== contextKey || nutritionBlocked}
           className="h-auto min-h-20 min-w-0 flex-col items-start gap-1 whitespace-normal rounded-xl border border-border/10 bg-card p-3 text-left text-sm disabled:opacity-75"
           onClick={() => label ? void save(category, label) : setChoice(value => !value)}>
           <span className="block text-xs text-muted-foreground">{category}</span>

@@ -326,3 +326,4 @@ BEGIN
  IF changed<>299 THEN RAISE EXCEPTION 'policy_count_mismatch';END IF;
 END $migration$;
 DROP FUNCTION pg_temp.fitpro_hoist_identity(text);
+;

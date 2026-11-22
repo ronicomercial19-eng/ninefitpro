@@ -34,7 +34,7 @@ try{
  INSERT INTO public.push_subscriptions(user_id,endpoint)SELECT id,'https://test.invalid/'||id FROM auth.users;
  CREATE INDEX notification_feed ON public.notifications(user_id,created_at DESC);
  `);
- const sql=await readFile(new URL('../supabase/migrations/20261028094531_scale_hot_indexes_rls.sql',import.meta.url),'utf8');
+ const sql=await readFile(new URL('../supabase/migration-references/20261028094531_scale_hot_indexes_rls.sql',import.meta.url),'utf8');
  await db.exec('BEGIN;'+sql+'COMMIT;');
  const count=await value("SELECT count(*)::int value FROM pg_indexes WHERE indexname LIKE 'scale_fk_%'");
  check('missing FK is indexed while existing full and partial prefixes are preserved',()=>assert.equal(count,1));

@@ -13,3 +13,5 @@ LEFT JOIN public.athletes ath ON ath.id=aal.athlete_id
 LEFT JOIN public.alunos a ON a.id=ath.aluno_id
 WHERE p.user_id=auth.uid();
 NOTIFY pgrst,'reload schema';
+
+;

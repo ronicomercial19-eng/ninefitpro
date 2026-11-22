@@ -1,0 +1,1 @@
+alter view public.vw_meus_alunos set (security_invoker = true); alter view public.vw_periodizacao_ativa_aluno set (security_invoker = true); alter view public.vw_protocolo_dia set (security_invoker = true); alter view public.vw_radar_5d set (security_invoker = true);;

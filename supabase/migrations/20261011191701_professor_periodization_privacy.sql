@@ -35,3 +35,4 @@ REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.postura_scans FROM au
 REVOKE ALL ON FUNCTION public.fn_appointments_before_delete(), public.fn_appointments_guard_and_track(),
   public.fn_appointments_log_event(), public.fn_notify_coach_workout_adjusted(), public.sync_community_cheer_count()
 FROM PUBLIC, anon, authenticated;
+;

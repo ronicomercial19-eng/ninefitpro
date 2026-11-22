@@ -448,4 +448,4 @@ CREATE OR REPLACE VIEW public.vw_athlete_periodizacao_ativa WITH (security_invok
     micro_rules -> 'load_progression_rules'::text AS load_progression_rules,
     macro_weeks,
     meso_weeks
-   FROM fin;
+   FROM fin;;

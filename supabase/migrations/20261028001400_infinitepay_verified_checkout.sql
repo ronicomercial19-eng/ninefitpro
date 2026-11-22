@@ -101,3 +101,5 @@ END $$;
 REVOKE ALL ON FUNCTION public.fn_prepare_infinitepay_order(uuid,text,uuid),public.fn_attach_infinitepay_link(uuid,text),public.fn_confirm_infinitepay_order(uuid,text,text,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_prepare_infinitepay_order(uuid,text,uuid),public.fn_attach_infinitepay_link(uuid,text),public.fn_confirm_infinitepay_order(uuid,text,text,jsonb) TO service_role;
 NOTIFY pgrst,'reload schema';
+
+;

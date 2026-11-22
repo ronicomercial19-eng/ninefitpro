@@ -127,3 +127,5 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.fn_publicar_ajuste_treino_dia(uuid,date,uuid,timestamptz,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.fn_publicar_ajuste_treino_dia(uuid,date,uuid,timestamptz,jsonb) TO authenticated;
+
+;

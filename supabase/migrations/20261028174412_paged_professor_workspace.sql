@@ -42,3 +42,5 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path='' AS $$SELEC
 REVOKE ALL ON FUNCTION public.fn_coach_agenda(date,uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_coach_agenda(date,uuid) TO authenticated;
 NOTIFY pgrst,'reload schema';
+
+;

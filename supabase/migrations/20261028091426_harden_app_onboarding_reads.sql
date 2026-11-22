@@ -15,3 +15,5 @@ $$;
 REVOKE ALL ON FUNCTION public.fn_save_app_onboarding(jsonb,integer,boolean) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_save_app_onboarding(jsonb,integer,boolean) TO authenticated;
 NOTIFY pgrst,'reload schema';
+
+;

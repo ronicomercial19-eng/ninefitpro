@@ -40,3 +40,5 @@ END $$;
 REVOKE ALL ON FUNCTION public.fn_get_strength_reference_hints(uuid,numeric) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_get_strength_reference_hints(uuid,numeric) TO authenticated;
 NOTIFY pgrst,'reload schema';
+
+;

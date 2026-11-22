@@ -51,3 +51,4 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.fn_ensure_ninefit_customer() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.fn_ensure_ninefit_customer() TO authenticated;
+;

@@ -1,0 +1,35 @@
+-- Índices em FKs sem cobertura — evita full table scan em joins/filtros por essas colunas.
+-- Tabelas pequenas hoje, mas isso é o que trava conforme o volume cresce (e não custa nada agora).
+CREATE INDEX IF NOT EXISTS idx_athlete_pdi_history_athlete_id ON public.athlete_pdi_history(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_athlete_planning_history_athlete_id ON public.athlete_planning_history(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_athlete_profile_snapshots_athlete_id ON public.athlete_profile_snapshots(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_biohacker_protocols_skill_id ON public.biohacker_protocols(skill_id);
+CREATE INDEX IF NOT EXISTS idx_credit_transactions_athlete_id ON public.credit_transactions(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_fitpro_events_connection_id ON public.fitpro_events(connection_id);
+CREATE INDEX IF NOT EXISTS idx_fitpro_student_map_athlete_id ON public.fitpro_student_map(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_healthflix_progress_athlete_id ON public.healthflix_progress(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_ninefit_checkins_aluno_id ON public.ninefit_checkins(aluno_id);
+CREATE INDEX IF NOT EXISTS idx_ninefit_checkins_athlete_id ON public.ninefit_checkins(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_ninefit_reports_aluno_id ON public.ninefit_reports(aluno_id);
+CREATE INDEX IF NOT EXISTS idx_pain_reports_athlete_id ON public.pain_reports(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_pain_reports_exercise_id ON public.pain_reports(exercise_id);
+CREATE INDEX IF NOT EXISTS idx_pain_reports_workout_execution_id ON public.pain_reports(workout_execution_id);
+CREATE INDEX IF NOT EXISTS idx_periodization_annual_plans_athlete_id ON public.periodization_annual_plans(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_personal_records_treino_id ON public.personal_records(treino_id);
+CREATE INDEX IF NOT EXISTS idx_protocol_feedback_athlete_id ON public.protocol_feedback(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_protocol_feedback_pain_report_id ON public.protocol_feedback(pain_report_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_aluno_id ON public.push_subscriptions(aluno_id);
+CREATE INDEX IF NOT EXISTS idx_share_events_athlete_id ON public.share_events(athlete_id);
+CREATE INDEX IF NOT EXISTS idx_skill_activations_activated_by ON public.skill_activations(activated_by);
+CREATE INDEX IF NOT EXISTS idx_skills_owner_id ON public.skills(owner_id);
+CREATE INDEX IF NOT EXISTS idx_smart_treino_macro_rules_professor_id ON public.smart_treino_macro_rules(professor_id);
+CREATE INDEX IF NOT EXISTS idx_smart_treino_muscle_volume_macro_rules_id ON public.smart_treino_muscle_volume(macro_rules_id);
+CREATE INDEX IF NOT EXISTS idx_smart_treino_profiles_professor_id ON public.smart_treino_profiles(professor_id);
+CREATE INDEX IF NOT EXISTS idx_strength_records_workout_execution_id ON public.strength_records(workout_execution_id);
+CREATE INDEX IF NOT EXISTS idx_super_sets_created_by ON public.super_sets(created_by);
+CREATE INDEX IF NOT EXISTS idx_training_html_deliveries_template_id ON public.training_html_deliveries(template_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_plan_id ON public.user_subscriptions(plan_id);
+CREATE INDEX IF NOT EXISTS idx_workout_schedules_professor_id ON public.workout_schedules(professor_id);
+CREATE INDEX IF NOT EXISTS idx_workout_schedules_user_id ON public.workout_schedules(user_id);
+CREATE INDEX IF NOT EXISTS idx_workouts_periodization_id ON public.workouts(periodization_id);
+CREATE INDEX IF NOT EXISTS idx_workouts_new_created_by ON public.workouts_new(created_by);;
