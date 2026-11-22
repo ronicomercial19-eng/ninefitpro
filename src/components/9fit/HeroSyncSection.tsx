@@ -1,66 +1,154 @@
-import { motion } from "framer-motion";
-import { SyncScoreRing } from "./SyncScoreRing";
+import { useState } from "react";
+import { RefreshCw, Activity } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { EmojiCalibrationQuiz } from "./EmojiCalibrationQuiz";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
-
 interface Props {
   name: string;
   syncScore: number | null;
   scoreStatus?: HubScoreStatus;
-  breakdown: { treino: number | null; nutri: number | null; sono: number | null; mob: number | null; hidr: number | null };
+  breakdown: {
+    treino: number | null;
+    nutri: number | null;
+    sono: number | null;
+    mob: number | null;
+    hidr: number | null;
+  };
   lastUpdate?: string;
   onRefresh?: () => void;
   onDiagnosis?: () => void;
   routinePillars?: boolean;
 }
-
-export function HeroSyncSection({ name, syncScore, scoreStatus = "calibrating", breakdown, lastUpdate, onRefresh, onDiagnosis, routinePillars }: Props) {
-  const measured = typeof syncScore === "number" && (scoreStatus === "available" || scoreStatus === "stale");
-  const headline =
-    scoreStatus === "offline" ? "Você está sem conexão. O último estado não será recalculado." :
-    scoreStatus === "error" ? "Não foi possível atualizar seus dados agora." :
-    scoreStatus === "loading" ? "Atualizando seus registros de rotina…" :
-    !measured ? "Complete a calibração diária para calcular o índice de rotina." :
-    scoreStatus === "stale" ? "Seus dados precisam de uma nova leitura." :
-    syncScore >= 80 ? "Seu plano está em máxima consistência." :
-    syncScore >= 60 ? "Seu ritmo está estável. Vamos manter a consistência." :
-    `Olá, ${name}. Sinto falta dos seus sinais! Vamos retomar o registro para calibrar seu plano com precisão?`;
-
-  const validUpdate = lastUpdate && Number.isFinite(new Date(lastUpdate).getTime());
-  const timestamp = scoreStatus === "offline" ? "OFFLINE"
-    : scoreStatus === "error" ? "ERRO"
-    : scoreStatus === "loading" ? "ATUALIZANDO"
-    : validUpdate ? `Leitura ${new Date(lastUpdate).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
-    : "CALIBRANDO";
-
+export function HeroSyncSection({
+  syncScore,
+  scoreStatus = "calibrating",
+  lastUpdate,
+  onRefresh,
+  onDiagnosis,
+}: Props) {
+  const [checkin, setCheckin] = useState(false);
+  const measured =
+    typeof syncScore === "number" &&
+    Number.isFinite(syncScore) &&
+    ["available", "stale", "offline"].includes(scoreStatus);
+  const value = measured
+    ? Math.round(Math.max(0, Math.min(100, syncScore!)))
+    : null;
+  const updated =
+    lastUpdate && Number.isFinite(new Date(lastUpdate).getTime())
+      ? new Date(lastUpdate).toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+  const message =
+    scoreStatus === "offline"
+      ? "Sem conexão. Reconecte para recalcular."
+      : scoreStatus === "error"
+      ? "Não conseguimos confirmar a leitura. Tente atualizar."
+      : scoreStatus === "stale"
+      ? "Última leitura disponível. Atualize para confirmar o dia."
+      : scoreStatus === "loading"
+      ? "Lendo seus registros…"
+      : value === null
+      ? "Responda como você está para começar a leitura do dia."
+      : "Check-in e registros confirmados compõem este resumo. Confira no Treino se houve um ajuste na sessão.";
   return (
-    <section className="relative w-full px-4 pt-4 pb-2">
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="space-y-4"
-      >
-        <div className="flex items-center justify-between text-[11px] font-mono tracking-widest text-muted-foreground uppercase">
-          <span className="text-primary font-bold">NINE PRO · FIT OS</span>
-          <span role="status" aria-live="polite">{timestamp}</span>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-mono">
-            {name ? `Olá, ${name}` : "Sincronia diária"}
+    <section
+      aria-label="Resumo SYNC"
+      className="rounded-3xl border border-primary/20 bg-[radial-gradient(ellipse_at_top_right,rgba(239,122,69,0.10),#111416_70%)] p-5 sm:p-6"
+    >
+      <div className="flex items-start gap-4">
+        <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+          <Activity size={21} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+            SYNC / Leitura do dia
           </p>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-0.5 leading-tight">
-            {headline}
-          </h1>
+          <h2 className="mt-2 text-lg font-semibold tracking-tight">
+            Um resumo para conferir seu contexto.
+          </h2>
+          <p
+            className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground"
+            role="status"
+          >
+            {message}
+          </p>
         </div>
-
-        <p className="text-xs text-muted-foreground mb-2">O SYNC do dia começa com os cinco emojis e acompanha seus registros confirmados de água, nutrição, treino e mente.</p>
-      <SyncScoreRing score={syncScore} status={scoreStatus} breakdown={breakdown} hidePillars={routinePillars} />
-        {onDiagnosis && <button type="button" onClick={onDiagnosis} className="mr-4 min-h-11 text-sm font-semibold text-primary">Entender meu SYNC</button>}
-        {onRefresh && <button type="button" onClick={onRefresh} disabled={scoreStatus === "loading"} className="text-xs text-primary disabled:opacity-50 min-h-10">
-          {scoreStatus === "loading" ? "Atualizando…" : "Atualizar meus dados"}
-        </button>}
-      </motion.div>
+        <div className="shrink-0 text-right">
+          <p className="text-3xl font-semibold tabular-nums text-foreground sm:text-4xl">
+            {value ?? "—"}
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            {scoreStatus === "stale" || scoreStatus === "offline"
+              ? "última leitura"
+              : "de 100"}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-3">
+        {value === null &&
+          scoreStatus !== "loading" &&
+          scoreStatus !== "offline" &&
+          scoreStatus !== "error" && (
+            <button
+              type="button"
+              onClick={() => setCheckin(true)}
+              className="min-h-11 text-sm font-semibold text-primary"
+            >
+              Responder check-in
+            </button>
+          )}
+        {onDiagnosis && (
+          <button
+            type="button"
+            onClick={onDiagnosis}
+            className="min-h-11 text-sm text-primary"
+          >
+            Como esse número é formado
+          </button>
+        )}
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={scoreStatus === "loading" || scoreStatus === "offline"}
+            className="inline-flex min-h-11 items-center gap-2 text-xs text-muted-foreground disabled:opacity-50"
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+            Atualizar leitura
+          </button>
+        )}
+        <span className="text-[11px] text-muted-foreground">
+          {updated ? `Leitura de ${updated}` : "Aguardando leitura confirmada"}
+        </span>
+      </div>
+      <Dialog open={checkin} onOpenChange={setCheckin}>
+        <DialogContent className="rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Como você está hoje?</DialogTitle>
+            <DialogDescription>
+              Seu relato ajuda a revisar o dia. SYNC não é uma nota de saúde nem
+              liberação para treinar.
+            </DialogDescription>
+          </DialogHeader>
+          <EmojiCalibrationQuiz
+            onComplete={() => {
+              setCheckin(false);
+              onRefresh?.();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

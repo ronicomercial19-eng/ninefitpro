@@ -1,32 +1,32 @@
-import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
-import { NutritionCompactCard } from "./NutritionCompactCard";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
-  ChevronRight,
-  Target,
   Users,
   ShoppingBag,
-  Compass,
+  Target,
   CalendarCheck,
+  Compass,
   Crown,
-  Dumbbell,
-  Utensils,
-  Lightbulb,
-  Zap,
+  Calendar,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { describeHubWeek, weekRead, weekSessionSuffix, type WeeklyCounts } from "@/components/9fit/hubWeeklyBrief";
-import { cycleBadge, type CycleStatus } from "@/components/9fit/cycleStatus";
+import { STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { StudentActionCard } from "./StudentExperience";
+import { NutritionCompactCard } from "./NutritionCompactCard";
+import { DailyProtocol } from "./DailyProtocol";
+import { WeeklyRadar3D } from "./WeeklyRadar3D";
+import type { WeeklyCounts } from "./hubWeeklyBrief";
+import type { CycleStatus } from "./cycleStatus";
 import type { HubScoreStatus } from "@/hooks/useAthleteScores";
-import { DailyProtocol } from "@/components/9fit/DailyProtocol";
-import { WeeklyRadar3D } from "@/components/9fit/WeeklyRadar3D";
-
 interface Props {
   weekly: WeeklyCounts | null;
   scoreStatus: HubScoreStatus;
-  liveScoresVitals?: any;
+  liveScoresVitals?: unknown;
   invalidateUserState: () => void;
   performancePlanTitle: string | null;
   cycleStatus: CycleStatus;
@@ -40,270 +40,96 @@ interface Props {
   };
   protocolCount: number;
 }
-
-interface Shortcut {
-  key: string;
-  title: string;
-  status: string;
-  icon: any;
-  /** só true quando houver novidade/pendência real — sem novidade, sem bolinha */
-  hasNews?: boolean;
-  /** rota ao tocar; sem rota = abre splash (apenas Radar 3D, que depende dos dados do Hub) */
-  route?: string;
-}
-
-const PILLAR_LABEL: Record<string, string> = {
-  treino: "treino",
-  nutri: "nutrição",
-  sono: "sono",
-  mob: "mobilidade",
-  hidr: "hidratação",
-};
-
 export function FitOSConsoleDock({
   weekly,
   scoreStatus,
-  liveScoresVitals,
   performancePlanTitle,
   cycleStatus,
   libraryStatus,
   breakdown,
   protocolCount,
 }: Props) {
-  const navigate = useNavigate();
   const [radarOpen, setRadarOpen] = useState(false);
-
-  // Comandos & Sinais: Staff / Store / Metas  ·  Compromissos / Radar 3D / Prime Pass
-  const shortcuts: Shortcut[] = [
-    { key: "staff", title: "Staff", status: "PROFISSIONAIS", icon: Users, route: STAFF_FLOW_ROUTE },
-    { key: "store", title: "Store", status: "LOJA", icon: ShoppingBag, route: "/9fit/native-system?app=store" },
-    { key: "metas", title: "Metas", status: "EVOLUÇÃO", icon: Target, route: "/9fit/progresso" },
-    { key: "compromissos", title: "Compromissos", status: "AGENDA", icon: CalendarCheck, route: "/9fit/aulas-creditos?tab=schedule" },
-    { key: "radar", title: "Radar 3D", status: "SEMANA", icon: Compass },
-    { key: "prime", title: "Plano do app", status: "ASSINATURA", icon: Crown, route: "/9fit/planos" },
-  ];
-
-  const onShortcut = (s: Shortcut) => {
-    if (s.route) navigate(s.route);
-    else setRadarOpen(true);
-  };
-
-  // ---------- Brief do Foco atual (só dados reais da semana; sem números inventados) ----------
-  const week = describeHubWeek(weekly, weekRead(weekly != null, scoreStatus));
-  const trainStatus = week.trainStatus;
-  const dietStatus = week.dietStatus;
-
-  const lowest = (Object.entries(breakdown) as [string, number | null][])
-    .filter(([, v]) => v != null)
-    .sort((a, b) => (a[1] as number) - (b[1] as number))[0];
-
-  let guidance = week.guidance;
-  if (weekly && guidance == null) {
-    if (lowest && (lowest[1] as number) < 60) guidance = `Maior oportunidade: ${PILLAR_LABEL[lowest[0]] || lowest[0]}. Foque nisso nos próximos dias.`;
-    else guidance = "Bom ritmo. Mantenha a rotina e continue registrando sono e hidratação.";
-  }
-  if (!guidance) {
-    guidance = weekRead(weekly != null, scoreStatus) === "loading"
-      ? "O brief espera a leitura da semana. Ausência de resposta não é zero treino."
-      : "Não vou orientar a semana enquanto a leitura não voltar.";
-  }
-
-  const cycle = cycleBadge(cycleStatus);
-  const focusTitle =
-    cycleStatus === "active" ? (performancePlanTitle || "Ciclo ativo")
-    : cycleStatus === "none" ? "Defina seu objetivo"
-    : cycleStatus === "loading" ? "Lendo seu ciclo"
-    : "Ciclo ainda não confirmado";
-  const libraryLine =
-    libraryStatus === "ready" && protocolCount > 0
-      ? `${protocolCount} conteúdos atribuídos ainda não concluídos na Biblioteca. A rotina diária é acompanhada separadamente.`
-      : libraryStatus === "ready"
-        ? "Nenhuma intervenção prescrita disponível."
-        : libraryStatus === "loading"
-          ? "Lendo conteúdos atribuídos."
-          : "Não foi possível confirmar a biblioteca agora.";
-
+  const plan =
+    cycleStatus === "active"
+      ? performancePlanTitle || "Planejamento ativo"
+      : cycleStatus === "none"
+      ? "Seu planejamento"
+      : cycleStatus === "loading"
+      ? "Lendo planejamento"
+      : "Planejamento a confirmar";
+  const library =
+    libraryStatus === "ready"
+      ? `${protocolCount} conteúdos atribuídos ainda não concluídos`
+      : libraryStatus === "loading"
+      ? "Consultando seus conteúdos"
+      : "Não foi possível confirmar seus conteúdos";
   return (
-    <div className="w-full space-y-4">
-
-      {/* Cabeçalho "Sua alimentação hoje" — abre splash com o conteúdo completo */}
+    <div className="space-y-5">
       <NutritionCompactCard />
-
-      {/* FOCO ATUAL com brief do atleta */}
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.25 }}
-        onClick={() => navigate("/9fit/planejamento")}
-        className="relative overflow-hidden rounded-3xl border border-[#EF7A45]/25 bg-[#0B0B0C] bg-gradient-to-b from-[#EF7A45]/[0.05] to-transparent p-4 sm:p-5 cursor-pointer group"
-      >
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-mono tracking-[0.12em] font-bold text-[#EF7A45] uppercase">
-              FOCO ATUAL · FIT OS
-            </span>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-[0.08em] border ${
-              cycle.active
-                ? "text-[#EF7A45] bg-[#EF7A45]/15 border-[#EF7A45]/25"
-                : "text-white/55 bg-white/5 border-white/15"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${cycle.active ? "bg-[#EF7A45]" : "bg-white/35"}`} />
-              {cycle.label}
-            </span>
-          </div>
-
-          <div>
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
-              {focusTitle}
-            </h3>
-            <p className="text-xs text-white/65 mt-1">
-              {libraryLine}
-            </p>
-          </div>
-
-          {/* Brief: estado atual em treino e dieta + orientação */}
-          <div className="rounded-2xl border border-[#EF7A45]/25 bg-black/30 p-3 space-y-2.5">
-            <p className="text-[11px] font-mono tracking-[0.12em] uppercase font-bold text-[#EF7A45]">
-              Brief do atleta
-            </p>
-            <div className="flex items-start gap-2.5 text-[12px] text-white/65">
-              <Dumbbell strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
-              <span><b className="font-semibold text-white">Treino:</b> {trainStatus}{weekSessionSuffix(weekly, week.barPercent)}</span>
-            </div>
-            <div className="flex items-start gap-2.5 text-[12px] text-white/65">
-              <Utensils strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
-              <span><b className="font-semibold text-white">Dieta:</b> {dietStatus}</span>
-            </div>
-            <div className="flex items-start gap-2.5 text-[12px] text-white/65">
-              <Lightbulb strokeWidth={1.75} className="w-5 h-5 text-[#EF7A45] shrink-0" />
-              <span><b className="font-semibold text-white">Para melhorar:</b> {guidance}</span>
-            </div>
-          </div>
-
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl bg-[#EF7A45] text-white font-semibold text-sm shadow-[0_8px_24px_rgba(239,122,69,0.25)] active:scale-95 transition-transform">
-              <span>Acessar</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between gap-3 text-[11px] font-mono text-white/65">
-            <span className="shrink-0">Consistência do ciclo:</span>
-            <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden mx-2" aria-hidden="true">
-              {week.barPercent != null && (
-                <div
-                  className="h-full bg-[#EF7A45] rounded-full transition-all duration-1000"
-                  style={{ width: `${week.barPercent}%` }}
-                />
-              )}
-            </div>
-            <span className="text-white font-bold shrink-0">{week.sessionsLabel}{week.barPercent == null ? "" : " sessões"}</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* COMANDOS & SINAIS — atalhos com rota própria */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[11px] font-mono tracking-[0.12em] text-white/45 uppercase font-bold flex items-center gap-1.5">
-            <Zap strokeWidth={1.75} className="w-3.5 h-3.5 text-[#EF7A45]" />
-            COMANDOS & SINAIS
-          </span>
-          <span className="text-[10px] font-mono text-white/35 uppercase tracking-[0.12em]">TOQUE PARA ABRIR</span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-          {shortcuts.map((s) => {
-            const Icon = s.icon;
-            const active = s.key === "radar" && radarOpen;
-            return (
-              <motion.button
-                key={s.key}
-                type="button"
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.2 }}
-                onClick={() => onShortcut(s)}
-                className={`relative flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-[20px] border text-center cursor-pointer overflow-hidden transition-colors ${
-                  active
-                    ? "border-[#EF7A45]/60 bg-[#EF7A45]/[0.08]"
-                    : "border-[#EF7A45]/25 bg-[#0B0B0C]"
-                }`}
-              >
-                {s.hasNews && (
-                  <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-[#EF7A45]" />
-                )}
-
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2 bg-[#EF7A45]/[0.12] border border-[#EF7A45]/25">
-                  <Icon strokeWidth={1.75} className="w-6 h-6 text-[#EF7A45]" />
-                </div>
-
-                <span className="text-[15px] sm:text-base font-bold text-white font-display leading-tight truncate w-full">
-                  {s.title}
-                </span>
-                <span className="text-[11px] font-mono text-white/45 uppercase tracking-[0.08em] mt-0.5 truncate w-full">
-                  {s.status}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
+      <StudentActionCard
+        icon={Calendar}
+        title={plan}
+        description={
+          weekly
+            ? `${weekly.treinos} sessões e ${weekly.minutos} minutos registrados nesta semana. ${library}.`
+            : scoreStatus === "loading"
+            ? "Lendo o resumo da semana."
+            : `Resumo semanal não confirmado. ${library}.`
+        }
+        to="/9fit/planejamento"
+      />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <StudentActionCard
+          icon={Users}
+          title="Staff · profissionais"
+          description="Abra a interface oficial para consultar atendimentos."
+          to={STAFF_FLOW_ROUTE}
+        />
+        <StudentActionCard
+          icon={Target}
+          title="Metas e evolução"
+          description="Acompanhe suas medidas e compare períodos."
+          to="/9fit/progresso"
+        />
+        <StudentActionCard
+          icon={CalendarCheck}
+          title="Compromissos"
+          description="Consulte sua agenda e as condições de cada reserva."
+          to="/9fit/aulas-creditos?tab=schedule"
+        />
+        <StudentActionCard
+          icon={Compass}
+          title="Cobertura dos registros"
+          description="Veja o radar semanal e consulte seus protocolos."
+          onClick={() => setRadarOpen(true)}
+        />
+        <StudentActionCard
+          icon={ShoppingBag}
+          title="Loja 9FIT"
+          description="Produtos e condições disponíveis no serviço parceiro."
+          to="/9fit/native-system?app=store"
+        />
+        <StudentActionCard
+          icon={Crown}
+          title="Plano do app"
+          description="Consulte acesso, prazo e condições da assinatura do 9FIT."
+          to="/9fit/planos"
+        />
       </div>
-
-      {/* Splash do Radar 3D (não tem rota própria: depende dos dados do Hub) */}
-      <AnimatePresence>
-        {radarOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setRadarOpen(false)}
-          >
-            <motion.div
-              className="relative w-full max-w-lg max-h-[88vh] overflow-y-auto rounded-2xl border border-white/15 bg-[#090909] p-5 sm:p-6 shadow-2xl shadow-black flex flex-col my-auto"
-              initial={{ scale: 0.94, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0, y: 15 }}
-              transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--orange-500)] to-transparent opacity-80" />
-              <button
-                type="button"
-                onClick={() => setRadarOpen(false)}
-                aria-label="Fechar painel"
-                className="absolute top-4 right-4 w-8 h-8 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="mb-5 pt-1 pr-8">
-                <span className="text-[9px] font-mono tracking-[0.25em] font-bold uppercase text-[var(--orange-400)]">
-                  PROGRAMAÇÃO DO DIA
-                </span>
-                <h3 className="text-xl font-bold text-white tracking-tight font-display mt-1">Radar 3D</h3>
-                <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                  Cobertura dos seus registros na semana: treino, nutrição, sono, mobilidade e hidratação.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <DailyProtocol />
-                <WeeklyRadar3D current={breakdown} />
-              </div>
-
-              <div className="mt-5 pt-4 border-t border-white/10 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setRadarOpen(false)}
-                  className="px-5 py-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/10 text-xs font-semibold text-neutral-300 hover:text-white transition-colors cursor-pointer"
-                >
-                  Concluir
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Dialog open={radarOpen} onOpenChange={setRadarOpen}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Cobertura dos registros</DialogTitle>
+            <DialogDescription>
+              O radar mostra os dados disponíveis da semana. Não é uma avaliação
+              de saúde ou uma meta de treino.
+            </DialogDescription>
+          </DialogHeader>
+          <DailyProtocol />
+          <WeeklyRadar3D current={breakdown} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

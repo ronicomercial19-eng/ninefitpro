@@ -4,18 +4,31 @@ import { businessDate } from "@/services/dailyContextRules";
 import { type CoverageRead } from "@/components/9fit/hubQuickCoverage";
 import { Button } from "@/components/ui/button";
 import { HubRhythmCharts } from "./HubRhythmCharts";
-import { rhythmCategories, rhythmRows, rhythmWeek, type RhythmEntry } from "./hubRhythm";
+import {
+  rhythmCategories,
+  rhythmRows,
+  rhythmWeek,
+  type RhythmEntry,
+} from "./hubRhythm";
 
 const categories = rhythmCategories;
-type Category = typeof categories[number];
+type Category = (typeof categories)[number];
 type Entry = RhythmEntry;
 type Meal = { name: string; time?: string };
 const source = "fitpro_hub_quick";
 
-export function HubQuickRecords({ athleteId, userId, onToday }: {
+export function HubQuickRecords({
+  athleteId,
+  userId,
+  onToday,
+}: {
   athleteId: string;
   userId: string;
-  onToday?: (snapshot: { athleteId: string; date: string; records: Category[] }) => void;
+  onToday?: (snapshot: {
+    athleteId: string;
+    date: string;
+    records: Category[];
+  }) => void;
 }) {
   const [clock, setClock] = useState(() => new Date());
   const date = businessDate(clock);
@@ -43,52 +56,139 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
   async function refresh() {
     const sequence = ++request.current;
     const [water, nutrition, workouts, quick, diet] = await Promise.all([
-      supabase.from("hydration_logs").select("log_date,amount_ml").eq("athlete_id", athleteId).gte("log_date", start).lte("log_date", date),
-      supabase.from("nutrition_logs").select("date,meal_name").eq("athlete_id", athleteId).gte("date", start).lte("date", date),
-      supabase.from("workout_executions").select("workout_date").eq("athlete_id", athleteId).eq("status", "completed").eq("completion_valid", true).gte("workout_date", start).lte("workout_date", date),
-      supabase.from("master_registry").select("id,payload").eq("user_id", userId).eq("source", source).eq("payload->>athlete_id", athleteId).gte("payload->>date", start).lte("payload->>date", date),
-      supabase.from("vw_fitpro_diet_context").select("diet_assignment_id,diet_data,start_date,end_date,is_active").eq("athlete_id", athleteId).maybeSingle(),
+      supabase
+        .from("hydration_logs")
+        .select("log_date,amount_ml")
+        .eq("athlete_id", athleteId)
+        .gte("log_date", start)
+        .lte("log_date", date),
+      supabase
+        .from("nutrition_logs")
+        .select("date,meal_name")
+        .eq("athlete_id", athleteId)
+        .gte("date", start)
+        .lte("date", date),
+      supabase
+        .from("workout_executions")
+        .select("workout_date")
+        .eq("athlete_id", athleteId)
+        .eq("status", "completed")
+        .eq("completion_valid", true)
+        .gte("workout_date", start)
+        .lte("workout_date", date),
+      supabase
+        .from("master_registry")
+        .select("id,payload")
+        .eq("user_id", userId)
+        .eq("source", source)
+        .eq("payload->>athlete_id", athleteId)
+        .gte("payload->>date", start)
+        .lte("payload->>date", date),
+      supabase
+        .from("vw_fitpro_diet_context")
+        .select("diet_assignment_id,diet_data,start_date,end_date,is_active")
+        .eq("athlete_id", athleteId)
+        .maybeSingle(),
     ]);
     if (sequence !== request.current) return;
-    if ([water, nutrition, workouts, quick].some(result => result.error)) { setLoadError(true); return; }
+    if ([water, nutrition, workouts, quick].some((result) => result.error)) {
+      setLoadError(true);
+      return;
+    }
     setLoadError(false);
     const records: Entry[] = [
-      ...(water.data ?? []).map(row => ({ category: "Água" as const, date: row.log_date, label: row.amount_ml + " ml", amountMl: Number(row.amount_ml) })),
-      ...(nutrition.data ?? []).map(row => ({ category: "Nutrição" as const, date: row.date, label: row.meal_name })),
-      ...(workouts.data ?? []).map(row => ({ category: "Treino" as const, date: row.workout_date, label: "Sessão concluída" })),
+      ...(water.data ?? []).map((row) => ({
+        category: "Água" as const,
+        date: row.log_date,
+        label: row.amount_ml + " ml",
+        amountMl: Number(row.amount_ml),
+      })),
+      ...(nutrition.data ?? []).map((row) => ({
+        category: "Nutrição" as const,
+        date: row.date,
+        label: row.meal_name,
+      })),
+      ...(workouts.data ?? []).map((row) => ({
+        category: "Treino" as const,
+        date: row.workout_date,
+        label: "Sessão concluída",
+      })),
     ];
     for (const row of quick.data ?? []) {
       const value = row.payload as Partial<Entry> | null;
-      if (value?.category && categories.includes(value.category) && value.date && value.label) records.push({ ...value as Entry, quickId: row.id });
+      if (
+        value?.category &&
+        categories.includes(value.category) &&
+        value.date &&
+        value.label
+      )
+        records.push({ ...(value as Entry), quickId: row.id });
     }
     const plan = diet.data;
     setPlanUnread(!!diet.error);
     if (!diet.error) {
       setPlanId(plan?.diet_assignment_id ?? undefined);
       const data = plan?.diet_data as { meals?: Meal[] } | null;
-      setMeals(plan?.is_active && (!plan.start_date || plan.start_date <= date) && (!plan.end_date || plan.end_date >= date) && Array.isArray(data?.meals)
-        ? data.meals.filter(meal => typeof meal?.name === "string" && meal.name.trim()) : []);
+      setMeals(
+        plan?.is_active &&
+          (!plan.start_date || plan.start_date <= date) &&
+          (!plan.end_date || plan.end_date >= date) &&
+          Array.isArray(data?.meals)
+          ? data.meals.filter(
+              (meal) => typeof meal?.name === "string" && meal.name.trim()
+            )
+          : []
+      );
     }
     setEntries(records);
     setReadyContext(contextKey);
-    onToday?.({ athleteId, date, records: categories.filter(category => records.some(row => row.date === date && row.category === category)) });
+    onToday?.({
+      athleteId,
+      date,
+      records: categories.filter((category) =>
+        records.some((row) => row.date === date && row.category === category)
+      ),
+    });
   }
 
   useEffect(() => {
     void refresh();
-    const events = ["9fit:sync_updated", "9fit:nutrition-updated", "9fit:workout-updated", "9fit:water-updated", "9fit:hydration-updated"];
+    const events = [
+      "9fit:sync_updated",
+      "9fit:nutrition-updated",
+      "9fit:workout-updated",
+      "9fit:water-updated",
+      "9fit:hydration-updated",
+    ];
     const update = () => void refresh();
-    events.forEach(event => window.addEventListener(event, update));
-    const onVisible = () => { if (document.visibilityState === "visible") update(); };
+    events.forEach((event) => window.addEventListener(event, update));
+    const onVisible = () => {
+      if (document.visibilityState === "visible") update();
+    };
     document.addEventListener("visibilitychange", onVisible);
     const timer = window.setInterval(() => setClock(new Date()), 15_000);
-    return () => { ++request.current; window.clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); events.forEach(event => window.removeEventListener(event, update)); };
+    return () => {
+      ++request.current;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      events.forEach((event) => window.removeEventListener(event, update));
+    };
   }, [athleteId, userId, date]);
 
-  const today = entries.filter(row => row.date === date);
-  const now = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(clock);
-  const minute = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
-  const nearby = meals.filter(meal => meal.time && /^([01]\d|2[0-3]):[0-5]\d$/.test(meal.time) && Math.abs(minute(meal.time) - minute(now)) <= 60);
+  const today = entries.filter((row) => row.date === date);
+  const now = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(clock);
+  const minute = (time: string) =>
+    Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+  const nearby = meals.filter(
+    (meal) =>
+      meal.time &&
+      /^([01]\d|2[0-3]):[0-5]\d$/.test(meal.time) &&
+      Math.abs(minute(meal.time) - minute(now)) <= 60
+  );
   const suggested = nearby.length === 1 ? nearby[0] : undefined;
 
   async function save(category: Category, label: string) {
@@ -97,14 +197,42 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
     setBusy(category);
     setFailure(undefined);
     const key = JSON.stringify([date, category, label]);
-    if (pending.current?.key !== key) pending.current = { key, id: crypto.randomUUID() };
+    if (pending.current?.key !== key)
+      pending.current = { key, id: crypto.randomUUID() };
     const id = pending.current.id;
     try {
-      const result = category === "Água"
-        ? await supabase.from("hydration_logs").insert({ id, athlete_id: athleteId, log_date: date, amount_ml: 500 })
-        : category === "Nutrição"
-          ? await supabase.rpc("fn_hub_confirm_meal" as any, { p_id: id, p_plan: planId, p_date: date, p_name: label })
-          : await supabase.from("master_registry").insert({ id, user_id: userId, source, event_type: "hub_quick_record", payload: { category, date, label, athlete_id: athleteId, self_reported: true } });
+      const result =
+        category === "Água"
+          ? await supabase
+              .from("hydration_logs")
+              .insert({
+                id,
+                athlete_id: athleteId,
+                log_date: date,
+                amount_ml: 500,
+              })
+          : category === "Nutrição"
+          ? await supabase.rpc("fn_hub_confirm_meal" as any, {
+              p_id: id,
+              p_plan: planId,
+              p_date: date,
+              p_name: label,
+            })
+          : await supabase
+              .from("master_registry")
+              .insert({
+                id,
+                user_id: userId,
+                source,
+                event_type: "hub_quick_record",
+                payload: {
+                  category,
+                  date,
+                  label,
+                  athlete_id: athleteId,
+                  self_reported: true,
+                },
+              });
       if (result.error && result.error.code !== "23505") throw result.error;
       pending.current = null;
       setChoice(false);
@@ -121,13 +249,24 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
 
   const [deleteError, setDeleteError] = useState(false);
   async function remove(entry: Entry) {
-    if (!entry.quickId || locked.current || !window.confirm("Excluir este registro?")) return;
+    if (
+      !entry.quickId ||
+      locked.current ||
+      !window.confirm("Excluir este registro?")
+    )
+      return;
     locked.current = true;
     setBusy(entry.category);
     setDeleteError(false);
     try {
-      const { data, error } = await supabase.from("master_registry").delete()
-        .eq("id", entry.quickId).eq("user_id", userId).eq("source", source).select("id").maybeSingle();
+      const { data, error } = await supabase
+        .from("master_registry")
+        .delete()
+        .eq("id", entry.quickId)
+        .eq("user_id", userId)
+        .eq("source", source)
+        .select("id")
+        .maybeSingle();
       if (error || !data) throw error ?? new Error("Registro não encontrado.");
       await refresh();
       window.dispatchEvent(new Event("9fit:sync_updated"));
@@ -141,52 +280,220 @@ export function HubQuickRecords({ athleteId, userId, onToday }: {
 
   const buttons = [
     { category: "Água" as const, action: "+500 ml", label: "500 ml" },
-    { category: "Nutrição" as const, action: suggested ? "Fiz: " + suggested.name : "Escolher refeição", label: suggested?.name },
-    { category: "Treino" as const, action: "Treinei hoje", label: "Treino autorrelatado" },
-    { category: "Mente" as const, action: "Fiz uma pausa", label: "Pausa mental" },
+    {
+      category: "Nutrição" as const,
+      action: suggested ? "Fiz: " + suggested.name : "Escolher refeição",
+      label: suggested?.name,
+    },
+    {
+      category: "Treino" as const,
+      action: "Treinei hoje",
+      label: "Treino autorrelatado",
+    },
+    {
+      category: "Mente" as const,
+      action: "Fiz uma pausa",
+      label: "Pausa mental",
+    },
   ];
 
-  const coverageRead: CoverageRead = loadError ? "unavailable" : readyContext === contextKey ? "ready" : "loading";
+  const coverageRead: CoverageRead = loadError
+    ? "unavailable"
+    : readyContext === contextKey
+    ? "ready"
+    : "loading";
   const explored = rhythmRows(entries, dates, selectedDate, entireWeek);
 
-  return <section className="hub-rhythm space-y-4" aria-label="Seu ritmo">
-    <header className="space-y-2">
-      <p className="text-sm text-muted-foreground">Seu ritmo / 7 dias</p>
-      <h2 className="font-display text-2xl font-bold italic">Pequenos registros. Uma rotina em movimento.</h2>
-    </header>
-    <HubRhythmCharts entries={entries} endDate={date} selectedDate={selectedDate} onSelectDate={setSelected} read={coverageRead} />
-    <details className="rounded-xl border border-border/10 p-3">
-      <summary className="hub-rhythm-summary min-h-11 cursor-pointer text-sm font-semibold">Explorar registros</summary>
-      <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Filtrar registros">
-        <Button variant="outline" aria-pressed={!entireWeek} onClick={() => setEntireWeek(false)}>Dia selecionado</Button>
-        <Button variant="outline" aria-pressed={entireWeek} onClick={() => setEntireWeek(true)}>Semana inteira</Button>
+  return (
+    <section className="hub-rhythm space-y-4" aria-label="Seu ritmo">
+      <header className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+          01 / Registrar hoje
+        </p>
+        <h2 className="font-display text-2xl font-semibold tracking-tight">
+          O que aconteceu no seu dia?
+        </h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Adicione o que você fez. Os gráficos abaixo acompanham os registros
+          confirmados.
+        </p>
+      </header>
+      <h3 className="sr-only">Registro rápido</h3>
+      {deleteError && (
+        <p role="alert">
+          Não foi possível excluir o registro. Tente novamente.
+        </p>
+      )}
+      {loadError && (
+        <Button
+          variant="link"
+          className="h-auto min-h-11 whitespace-normal"
+          onClick={() => void refresh()}
+        >
+          Não foi possível atualizar. Tentar novamente
+        </Button>
+      )}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {buttons.map(({ category, action, label }) => {
+          const rows = today.filter((row) => row.category === category);
+          const done =
+            category === "Nutrição"
+              ? rows.some((row) => row.label === label)
+              : category !== "Água" && rows.length > 0;
+          const nutritionBlocked = category === "Nutrição" && planUnread;
+          return (
+            <Button
+              variant="outline"
+              key={category}
+              type="button"
+              disabled={
+                !!busy ||
+                done ||
+                loadError ||
+                readyContext !== contextKey ||
+                nutritionBlocked
+              }
+              className="h-auto min-h-20 min-w-0 flex-col items-start gap-1 whitespace-normal rounded-xl border border-border/10 bg-card p-3 text-left text-sm disabled:opacity-75"
+              onClick={() =>
+                label
+                  ? void save(category, label)
+                  : setChoice((value) => !value)
+              }
+            >
+              <span className="block text-xs text-muted-foreground">
+                {category}
+              </span>
+              <strong className="text-primary">
+                {busy === category
+                  ? "Salvando…"
+                  : failure === category
+                  ? "Tentar novamente"
+                  : nutritionBlocked
+                  ? "Plano não confirmado"
+                  : done
+                  ? "Registrado"
+                  : action}
+              </strong>
+              {!!rows.length && (
+                <span className="block text-xs text-muted-foreground">
+                  {category === "Água"
+                    ? rows.reduce(
+                        (total, row) => total + (row.amountMl ?? 0),
+                        0
+                      ) + " ml hoje"
+                    : rows.at(-1)?.label}
+                </span>
+              )}
+            </Button>
+          );
+        })}
       </div>
-      {coverageRead !== "ready" ? <p className="py-3 text-sm text-muted-foreground">{coverageRead === "loading" ? "Carregando registros…" : "Registros indisponíveis. Tente atualizar."}</p> : !explored.length ? <p className="py-3 text-sm text-muted-foreground">Sem registro {entireWeek ? "nesta semana" : "neste dia"}.</p> : <ul className="mt-3 space-y-2 text-sm">
-        {explored.map((row, index) => <li className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2" key={row.quickId ?? index}>
-          <span className="min-w-0 break-words">{row.date.split("-").reverse().join("/")} · {row.category} · {row.label}</span>
-          {row.quickId && <Button variant="ghost" disabled={!!busy} onClick={() => void remove(row)}>Excluir {row.label}</Button>}
-        </li>)}
-      </ul>}
-    </details>
-    <h2 className="font-semibold">Registro rápido</h2>{deleteError && <p role="alert">Não foi possível excluir o registro. Tente novamente.</p>}
-    {loadError && <Button variant="link" className="h-auto min-h-11 whitespace-normal" onClick={() => void refresh()}>Não foi possível atualizar. Tentar novamente</Button>}
-    <div className="grid grid-cols-2 gap-2">
-      {buttons.map(({ category, action, label }) => {
-        const rows = today.filter(row => row.category === category);
-        const done = category === "Nutrição" ? rows.some(row => row.label === label) : category !== "Água" && rows.length > 0;
-        const nutritionBlocked = category === "Nutrição" && planUnread;
-        return <Button variant="outline" key={category} type="button" disabled={!!busy || done || loadError || readyContext !== contextKey || nutritionBlocked}
-          className="h-auto min-h-20 min-w-0 flex-col items-start gap-1 whitespace-normal rounded-xl border border-border/10 bg-card p-3 text-left text-sm disabled:opacity-75"
-          onClick={() => label ? void save(category, label) : setChoice(value => !value)}>
-          <span className="block text-xs text-muted-foreground">{category}</span>
-          <strong className="text-primary">{busy === category ? "Salvando…" : failure === category ? "Tentar novamente" : nutritionBlocked ? "Plano não confirmado" : done ? "Registrado" : action}</strong>
-          {!!rows.length && <span className="block text-xs text-muted-foreground">{category === "Água" ? rows.reduce((total, row) => total + (row.amountMl ?? 0), 0) + " ml hoje" : rows.at(-1)?.label}</span>}
-        </Button>;
-      })}
-    </div>
-    {choice && !planUnread && <div className="flex flex-wrap gap-2" aria-label="Escolher refeição">
-      {meals.map((meal, index) => <Button variant="outline" key={index} type="button" className="h-auto min-h-11 whitespace-normal rounded-lg" disabled={!!busy || today.some(row => row.category === "Nutrição" && row.label === meal.name)} onClick={() => void save("Nutrição", meal.name)}>{meal.name}</Button>)}
-      {!meals.length && <a className="text-sm text-primary" href="/9fit/dieta?action=log">Registrar refeição no diário</a>}
-    </div>}
-  </section>;
+      {choice && !planUnread && (
+        <div className="flex flex-wrap gap-2" aria-label="Escolher refeição">
+          {meals.map((meal, index) => (
+            <Button
+              variant="outline"
+              key={index}
+              type="button"
+              className="h-auto min-h-11 whitespace-normal rounded-lg"
+              disabled={
+                !!busy ||
+                today.some(
+                  (row) =>
+                    row.category === "Nutrição" && row.label === meal.name
+                )
+              }
+              onClick={() => void save("Nutrição", meal.name)}
+            >
+              {meal.name}
+            </Button>
+          ))}
+          {!meals.length && (
+            <a className="text-sm text-primary" href="/9fit/dieta?action=log">
+              Registrar refeição no diário
+            </a>
+          )}
+        </div>
+      )}
+      <div className="border-t border-white/10 pt-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+          02 / Seu ritmo em 7 dias
+        </p>
+        <h2 className="mt-2 text-xl font-semibold tracking-tight">
+          Veja onde sua rotina aparece.
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Toque em uma data para consultar o dia nos quatro gráficos. Cada curva
+          tem sua própria escala; sem registro não significa atividade não
+          realizada.
+        </p>
+      </div>
+      <HubRhythmCharts
+        entries={entries}
+        endDate={date}
+        selectedDate={selectedDate}
+        onSelectDate={setSelected}
+        read={coverageRead}
+      />
+      <details className="rounded-xl border border-border/10 p-3">
+        <summary className="hub-rhythm-summary min-h-11 cursor-pointer text-sm font-semibold">
+          Explorar registros
+        </summary>
+        <div
+          className="mt-2 flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filtrar registros"
+        >
+          <Button
+            variant="outline"
+            aria-pressed={!entireWeek}
+            onClick={() => setEntireWeek(false)}
+          >
+            Dia selecionado
+          </Button>
+          <Button
+            variant="outline"
+            aria-pressed={entireWeek}
+            onClick={() => setEntireWeek(true)}
+          >
+            Semana inteira
+          </Button>
+        </div>
+        {coverageRead !== "ready" ? (
+          <p className="py-3 text-sm text-muted-foreground">
+            {coverageRead === "loading"
+              ? "Carregando registros…"
+              : "Registros indisponíveis. Tente atualizar."}
+          </p>
+        ) : !explored.length ? (
+          <p className="py-3 text-sm text-muted-foreground">
+            Sem registro {entireWeek ? "nesta semana" : "neste dia"}.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-sm">
+            {explored.map((row, index) => (
+              <li
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2"
+                key={row.quickId ?? index}
+              >
+                <span className="min-w-0 break-words">
+                  {row.date.split("-").reverse().join("/")} · {row.category} ·{" "}
+                  {row.label}
+                </span>
+                {row.quickId && (
+                  <Button
+                    variant="ghost"
+                    disabled={!!busy}
+                    onClick={() => void remove(row)}
+                  >
+                    Excluir {row.label}
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
+    </section>
+  );
 }
