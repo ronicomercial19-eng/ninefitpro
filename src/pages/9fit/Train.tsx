@@ -1,8 +1,11 @@
-import { estimateWorkoutMinutes } from '@/lib/workoutDose';
-import { ReadinessCard } from '@/components/9fit/ReadinessCard';
+import { estimateWorkoutMinutes } from "@/lib/workoutDose";
+import { ReadinessCard } from "@/components/9fit/ReadinessCard";
 import { withTimeout } from "@/lib/withTimeout";
-import { activeTrainingOnDate, resolveTrainingSources } from "@/lib/trainingSources";
-import { isExecutableTraining } from '@/lib/executableTraining';
+import {
+  activeTrainingOnDate,
+  resolveTrainingSources,
+} from "@/lib/trainingSources";
+import { isExecutableTraining } from "@/lib/executableTraining";
 import { loadActivitySummary } from "@/services/activitySummary";
 import { format } from "date-fns";
 import { useState, useEffect, useRef } from "react";
@@ -22,7 +25,13 @@ import { WeeklyTrainingView } from "@/components/9fit/WeeklyTrainingView";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { loadResolvedTemplateAssignments } from "@/integrations/templateAssignments";
-import { Film, Dumbbell as DumbIcon, Target, Zap, Calendar, ArrowUpRight, Dumbbell } from "lucide-react";
+import {
+  Film,
+  Dumbbell as DumbIcon,
+  Target,
+  Calendar,
+  Dumbbell,
+} from "lucide-react";
 import { TrainingAdjustmentBanner } from "@/components/9fit/TrainingAdjustmentBanner";
 import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 import { businessDate } from "@/services/dailyContextRules";
@@ -44,10 +53,16 @@ interface TrainingAssignment {
 type WorkoutFlow = "HOME" | "OVERVIEW" | "EXECUTION";
 
 // Explicit time doses take precedence; repetition-based sets retain an estimate.
-const estimateMinutes=estimateWorkoutMinutes;
+const estimateMinutes = estimateWorkoutMinutes;
 
 export default function NineFitTrain() {
-  const { athleteId, athleteName, loading: athleteLoading, error: athleteError, retry: retryAthlete } = useAthleteId();
+  const {
+    athleteId,
+    athleteName,
+    loading: athleteLoading,
+    error: athleteError,
+    retry: retryAthlete,
+  } = useAthleteId();
   const navigate = useNavigate();
   const location = useLocation();
   const [trainings, setTrainings] = useState<TrainingAssignment[]>([]);
@@ -55,15 +70,26 @@ export default function NineFitTrain() {
   const [prescriptionIssue, setPrescriptionIssue] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [templateWarning, setTemplateWarning] = useState(false);
-  const requests = useRef<{ training: AbortController | null; count: AbortController | null }>({ training: null, count: null });
+  const requests = useRef<{
+    training: AbortController | null;
+    count: AbortController | null;
+  }>({ training: null, count: null });
   const currentAthlete = useRef(athleteId);
   currentAthlete.current = athleteId;
   const [countWarning, setCountWarning] = useState(false);
+  const [countAthlete, setCountAthlete] = useState<string | null>(null);
   const [weeklyCompleted, setWeeklyCompleted] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
-  const [subTab, setSubTab] = useState<"train" | "semana" | "protocol" | "healthflix">("train");
+  const [subTab, setSubTab] = useState<
+    "train" | "semana" | "protocol" | "healthflix"
+  >("train");
   const [quickOpen, setQuickOpen] = useState(false);
-  const [previousSession, setPreviousSession] = useState<{ id: string; workout_date: string; daily_workout_id: string | null; assignment_id: string | null } | null>(null);
+  const [previousSession, setPreviousSession] = useState<{
+    id: string;
+    workout_date: string;
+    daily_workout_id: string | null;
+    assignment_id: string | null;
+  } | null>(null);
   const [sessionBusy, setSessionBusy] = useState(false);
   useEffect(() => {
     if (!athleteId) {
@@ -71,16 +97,27 @@ export default function NineFitTrain() {
       return;
     }
     let active = true;
-    const refreshOpenSession = () => supabase.from('workout_executions').select('id,workout_date,daily_workout_id,assignment_id')
-      .eq('athlete_id', athleteId).eq('status','in_progress').lte('workout_date',businessDate())
-      .order('created_at',{ascending:false}).limit(1).maybeSingle().then(({data,error}) => {
-        if (active && !error) setPreviousSession(data);
-      });
+    const refreshOpenSession = () =>
+      supabase
+        .from("workout_executions")
+        .select("id,workout_date,daily_workout_id,assignment_id")
+        .eq("athlete_id", athleteId)
+        .eq("status", "in_progress")
+        .lte("workout_date", businessDate())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (active && !error) setPreviousSession(data);
+        });
     void refreshOpenSession();
-    window.addEventListener('9fit:open-workout-conflict', refreshOpenSession);
+    window.addEventListener("9fit:open-workout-conflict", refreshOpenSession);
     return () => {
       active = false;
-      window.removeEventListener('9fit:open-workout-conflict', refreshOpenSession);
+      window.removeEventListener(
+        "9fit:open-workout-conflict",
+        refreshOpenSession
+      );
     };
   }, [athleteId, completedCount]);
 
@@ -89,47 +126,120 @@ export default function NineFitTrain() {
     setSessionBusy(true);
     try {
       if (!resume) {
-        if (!window.confirm('Encerrar a sessão aberta com as séries que já foram registradas?')) return;
-        const { data, error } = await supabase.rpc('fn_complete_workout_execution',{p_execution_id:previousSession.id,p_duration_seconds:0});
-        if (error || !(data as any)?.ok) throw error || new Error('Não foi possível finalizar.');
-        toast.info((data as any).completion_valid ? 'Treino finalizado.' : 'Sessão salva sem entrar nos contadores.');
+        if (
+          !window.confirm(
+            "Encerrar a sessão aberta com as séries que já foram registradas?"
+          )
+        )
+          return;
+        const { data, error } = await supabase.rpc(
+          "fn_complete_workout_execution",
+          { p_execution_id: previousSession.id, p_duration_seconds: 0 }
+        );
+        if (error || !(data as any)?.ok)
+          throw error || new Error("Não foi possível finalizar.");
+        toast.info(
+          (data as any).completion_valid
+            ? "Treino finalizado."
+            : "Sessão salva sem entrar nos contadores."
+        );
         setPreviousSession(null);
         await fetchCompletedCount(athleteId);
       } else if (previousSession.daily_workout_id) {
-        const { data, error } = await (supabase as any).from('daily_workouts')
-          .select('id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes,exercises(name,video_url,gif_url))')
-          .eq('id',previousSession.daily_workout_id).eq('athlete_id',athleteId).single();
+        const { data, error } = await (supabase as any)
+          .from("daily_workouts")
+          .select(
+            "id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,exercise_order,sets,reps_range,rest_seconds,tempo,observations,notes,exercises(name,video_url,gif_url))"
+          )
+          .eq("id", previousSession.daily_workout_id)
+          .eq("athlete_id", athleteId)
+          .single();
         if (error) throw error;
-        if (data.prescription_issue) throw new Error('A prescrição precisa de revisão do profissional antes da retomada.');
-        const resumedTraining = { id:data.id,daily_workout_id:data.id,execution_id:previousSession.id,training_name:data.day_name,
-          start_date:data.workout_date,is_active:true,training_type:'structured',training_data:{exercises:data.workout_exercises.sort((a:any,b:any)=>a.exercise_order-b.exercise_order).map((e:any)=>({exercise_id:e.exercise_id,name:e.exercise_name||e.exercises?.name,video_url:e.exercises?.video_url,gif_url:e.exercises?.gif_url,sets:e.sets,reps:e.reps_range,rest_seconds:e.rest_seconds,tempo:e.tempo,notes:e.observations?.notes || e.notes}))} };
-        if (!isExecutableTraining(resumedTraining)) throw new Error("A sessão original precisa de exercícios, séries e doses confirmados.");
+        if (data.prescription_issue)
+          throw new Error(
+            "A prescrição precisa de revisão do profissional antes da retomada."
+          );
+        const resumedTraining = {
+          id: data.id,
+          daily_workout_id: data.id,
+          execution_id: previousSession.id,
+          training_name: data.day_name,
+          start_date: data.workout_date,
+          is_active: true,
+          training_type: "structured",
+          training_data: {
+            exercises: data.workout_exercises
+              .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
+              .map((e: any) => ({
+                exercise_id: e.exercise_id,
+                name: e.exercise_name || e.exercises?.name,
+                video_url: e.exercises?.video_url,
+                gif_url: e.exercises?.gif_url,
+                sets: e.sets,
+                reps: e.reps_range,
+                rest_seconds: e.rest_seconds,
+                tempo: e.tempo,
+                notes: e.observations?.notes || e.notes,
+              })),
+          },
+        };
+        if (!isExecutableTraining(resumedTraining))
+          throw new Error(
+            "A sessão original precisa de exercícios, séries e doses confirmados."
+          );
         setSelectedTraining(resumedTraining);
-        setFlow('EXECUTION');
+        setFlow("EXECUTION");
       } else {
-        let training = trainings.find(item=>item.id===previousSession.assignment_id);
+        let training = trainings.find(
+          (item) => item.id === previousSession.assignment_id
+        );
         if (!training && previousSession.assignment_id) {
-          const { data, error } = await supabase.from('student_training_assignments').select('*')
-            .eq('id', previousSession.assignment_id).eq('student_id', athleteId).maybeSingle();
+          const { data, error } = await supabase
+            .from("student_training_assignments")
+            .select("*")
+            .eq("id", previousSession.assignment_id)
+            .eq("student_id", athleteId)
+            .maybeSingle();
           if (error) throw error;
           training = (data ?? undefined) as TrainingAssignment | undefined;
         }
-        if (!training) throw new Error('A atribuição original não está disponível. Finalize o registro ou fale com seu profissional.');
-        if (!isExecutableTraining(training)) throw new Error('A prescrição precisa ser completada pelo profissional.');
-        setSelectedTraining({...training,execution_id:previousSession.id});setFlow('EXECUTION');
+        if (!training)
+          throw new Error(
+            "A atribuição original não está disponível. Finalize o registro ou fale com seu profissional."
+          );
+        if (!isExecutableTraining(training))
+          throw new Error(
+            "A prescrição precisa ser completada pelo profissional."
+          );
+        setSelectedTraining({ ...training, execution_id: previousSession.id });
+        setFlow("EXECUTION");
       }
-    } catch (error) { toast.error(error instanceof Error ? error.message : 'Não foi possível consultar a sessão.'); }
-    finally { setSessionBusy(false); }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível consultar a sessão."
+      );
+    } finally {
+      setSessionBusy(false);
+    }
   }
-  const initialCalendarDate = new URLSearchParams(location.search).get("date") || undefined;
+  const initialCalendarDate =
+    new URLSearchParams(location.search).get("date") || undefined;
 
   useEffect(() => {
-    setSubTab(new URLSearchParams(location.search).get("tab") === "semana" || initialCalendarDate ? "semana" : "train");
+    setSubTab(
+      new URLSearchParams(location.search).get("tab") === "semana" ||
+        initialCalendarDate
+        ? "semana"
+        : "train"
+    );
   }, [location.search, initialCalendarDate]);
 
   // Workout flow state
   const [flow, setFlow] = useState<WorkoutFlow>("HOME");
-  const [selectedTraining, setSelectedTraining] = useState<TrainingAssignment | null>(null);
+  const [selectedTraining, setSelectedTraining] =
+    useState<TrainingAssignment | null>(null);
 
   useEffect(() => {
     if (!athleteLoading && athleteId) {
@@ -139,17 +249,27 @@ export default function NineFitTrain() {
     } else if (!athleteLoading && !athleteId) {
       setLoading(false);
     }
-    return () => { requests.current.training?.abort(); requests.current.count?.abort(); };
+    return () => {
+      requests.current.training?.abort();
+      requests.current.count?.abort();
+    };
   }, [athleteId, athleteLoading]);
 
   const previousAthlete = useRef<string | null>(null);
   useEffect(() => {
-    const changed = previousAthlete.current !== null && previousAthlete.current !== athleteId;
+    const changed =
+      previousAthlete.current !== null && previousAthlete.current !== athleteId;
     previousAthlete.current = athleteId;
     if (!changed) return;
-    setTrainings([]); setSelectedTraining(null); setFlow("HOME");
-    setCompletedCount(0); setWeeklyCompleted(0); setPrescriptionIssue(false);
-    setTemplateWarning(false); setCountWarning(false);
+    setTrainings([]);
+    setSelectedTraining(null);
+    setFlow("HOME");
+    setCountAthlete(null);
+    setCompletedCount(0);
+    setWeeklyCompleted(0);
+    setPrescriptionIssue(false);
+    setTemplateWarning(false);
+    setCountWarning(false);
   }, [athleteId]);
 
   // FIX (bug real 4 — Treino Rápido / Ajuste não entravam no player guiado):
@@ -176,11 +296,22 @@ export default function NineFitTrain() {
       filter: athleteId ? `student_id=eq.${athleteId}` : undefined,
       enabled: !!athleteId,
     },
-    () => { if (athleteId) { fetchTrainings(athleteId); fetchCompletedCount(athleteId); } },
+    () => {
+      if (athleteId) {
+        fetchTrainings(athleteId);
+        fetchCompletedCount(athleteId);
+      }
+    }
   );
   useRealtimeTable(
-    { table: "daily_workouts", filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined, enabled: !!athleteId },
-    () => { if (athleteId) void fetchTrainings(athleteId); },
+    {
+      table: "daily_workouts",
+      filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined,
+      enabled: !!athleteId,
+    },
+    () => {
+      if (athleteId) void fetchTrainings(athleteId);
+    }
   );
   useRealtimeTable(
     {
@@ -188,62 +319,117 @@ export default function NineFitTrain() {
       filter: athleteId ? `athlete_id=eq.${athleteId}` : undefined,
       enabled: !!athleteId,
     },
-    () => { if (athleteId) fetchCompletedCount(athleteId); },
+    () => {
+      if (athleteId) fetchCompletedCount(athleteId);
+    }
   );
 
-  useEffect(() => { const refresh=()=>{ if(athleteId) { void fetchTrainings(athleteId); void fetchCompletedCount(athleteId); } }; window.addEventListener("9fit:workout-updated",refresh); return ()=>window.removeEventListener("9fit:workout-updated",refresh); }, [athleteId]);
+  useEffect(() => {
+    const refresh = () => {
+      if (athleteId) {
+        void fetchTrainings(athleteId);
+        void fetchCompletedCount(athleteId);
+      }
+    };
+    window.addEventListener("9fit:workout-updated", refresh);
+    return () => window.removeEventListener("9fit:workout-updated", refresh);
+  }, [athleteId]);
 
   const fetchTrainings = async (aid: string) => {
     requests.current.training?.abort();
     const controller = new AbortController();
     requests.current.training = controller;
-    const alive = () => !controller.signal.aborted && currentAthlete.current === aid;
+    const alive = () =>
+      !controller.signal.aborted && currentAthlete.current === aid;
     try {
       setLoadError(false);
       const today = businessDate();
-      const sources = await withTimeout(resolveTrainingSources<any, any, any>(
-        supabase.from("student_training_assignments").select("*").eq("student_id", aid)
-          .eq("is_active", true).order("created_at", { ascending: false }).abortSignal(controller.signal),
-        (supabase as any).from("daily_workouts")
-          .select("id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))")
-          .eq("athlete_id", aid).eq("workout_date", today).order("created_at", { ascending: false }).abortSignal(controller.signal),
-        withTimeout(loadResolvedTemplateAssignments(aid, undefined, controller.signal)),
-      ));
+      const sources = await withTimeout(
+        resolveTrainingSources<any, any, any>(
+          supabase
+            .from("student_training_assignments")
+            .select("*")
+            .eq("student_id", aid)
+            .eq("is_active", true)
+            .order("created_at", { ascending: false })
+            .abortSignal(controller.signal),
+          (supabase as any)
+            .from("daily_workouts")
+            .select(
+              "id,day_name,workout_date,prescription_issue,changes_json,workout_exercises(exercise_id,exercise_name,sets,reps_range,rest_seconds,exercise_order,tempo,notes,observations,exercises(name,video_url,gif_url))"
+            )
+            .eq("athlete_id", aid)
+            .eq("workout_date", today)
+            .order("created_at", { ascending: false })
+            .abortSignal(controller.signal),
+          withTimeout(
+            loadResolvedTemplateAssignments(aid, undefined, controller.signal)
+          )
+        )
+      );
       if (!alive()) return;
-      const valid = sources.assignments.filter(t => activeTrainingOnDate(t, today) && !t.training_data?.model_delivery_id);
+      const valid = sources.assignments.filter(
+        (t) =>
+          activeTrainingOnDate(t, today) && !t.training_data?.model_delivery_id
+      );
       const assigned = sources.templates;
       const dailyRows = sources.daily;
       setTemplateWarning(sources.templatesUnavailable);
       const assignedTrainings: TrainingAssignment[] = assigned
-          .filter((item: any) => item.prescription_schema || item.protocol_schema)
-          .map((item: any) => ({
+        .filter((item: any) => item.prescription_schema || item.protocol_schema)
+        .map((item: any) => ({
           id: item.assignment_id,
-          training_name: item.content_title || item.content_ref || "Protocolo atribuído",
+          training_name:
+            item.content_title || item.content_ref || "Protocolo atribuído",
           training_description: "Atribuído pelo seu professor",
           start_date: today,
           is_active: true,
           training_type: "structured",
-          training_data: item.prescription_schema || item.protocol_schema || undefined,
+          training_data:
+            item.prescription_schema || item.protocol_schema || undefined,
         }));
-        setPrescriptionIssue((dailyRows || []).some((d: any) => !!d.prescription_issue));
-        const dailyTrainings: TrainingAssignment[] = (dailyRows || [])
-          .filter((d: any) => !d.prescription_issue && d.workout_exercises?.length)
-          .map((d: any) => {
-            const exercises = [...d.workout_exercises]
-              .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
-              .map((e: any) => ({ exercise_id: e.exercise_id, name: e.exercise_name || e.exercises?.name, sets: e.sets, reps: e.reps_range, rest_seconds: e.rest_seconds, tempo:e.tempo, notes:e.observations?.notes || e.notes, video_url: e.exercises?.video_url, gif_url: e.exercises?.gif_url }));
-            return {
-              id: d.id,
-              daily_workout_id: d.id,
-              training_name: d.day_name,
-              training_description: d.changes_json?.template_name ? `Modelo: ${d.changes_json.template_name}` : undefined,
-              start_date: d.workout_date,
-              is_active: true,
-              training_type: "structured",
-              training_data: { exercises, estimated_duration: estimateMinutes(exercises) },
-            };
-          });
-      setTrainings([...dailyTrainings, ...assignedTrainings, ...(valid as TrainingAssignment[])]);
+      setPrescriptionIssue(
+        (dailyRows || []).some((d: any) => !!d.prescription_issue)
+      );
+      const dailyTrainings: TrainingAssignment[] = (dailyRows || [])
+        .filter(
+          (d: any) => !d.prescription_issue && d.workout_exercises?.length
+        )
+        .map((d: any) => {
+          const exercises = [...d.workout_exercises]
+            .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
+            .map((e: any) => ({
+              exercise_id: e.exercise_id,
+              name: e.exercise_name || e.exercises?.name,
+              sets: e.sets,
+              reps: e.reps_range,
+              rest_seconds: e.rest_seconds,
+              tempo: e.tempo,
+              notes: e.observations?.notes || e.notes,
+              video_url: e.exercises?.video_url,
+              gif_url: e.exercises?.gif_url,
+            }));
+          return {
+            id: d.id,
+            daily_workout_id: d.id,
+            training_name: d.day_name,
+            training_description: d.changes_json?.template_name
+              ? `Modelo: ${d.changes_json.template_name}`
+              : undefined,
+            start_date: d.workout_date,
+            is_active: true,
+            training_type: "structured",
+            training_data: {
+              exercises,
+              estimated_duration: estimateMinutes(exercises),
+            },
+          };
+        });
+      setTrainings([
+        ...dailyTrainings,
+        ...assignedTrainings,
+        ...(valid as TrainingAssignment[]),
+      ]);
     } catch (error) {
       if (!alive()) return;
       setLoadError(true);
@@ -259,20 +445,33 @@ export default function NineFitTrain() {
     requests.current.count?.abort();
     const controller = new AbortController();
     requests.current.count = controller;
-    const alive = () => !controller.signal.aborted && currentAthlete.current === aid;
+    const alive = () =>
+      !controller.signal.aborted && currentAthlete.current === aid;
     try {
       const activity = await loadActivitySummary(aid, controller.signal);
       if (!alive()) return;
-      setCompletedCount(activity.total); setWeeklyCompleted(activity.week); setCountWarning(false);
+      setCountAthlete(aid);
+      setCompletedCount(activity.total);
+      setWeeklyCompleted(activity.week);
+      setCountWarning(false);
     } catch {
       if (alive()) setCountWarning(true);
-    } finally { controller.abort(); }
+    } finally {
+      controller.abort();
+    }
   };
 
   const handleSelectWorkout = (training: TrainingAssignment) => {
-    if (["html", "link", "periodization"].includes(training.training_type || "")) { navigate("/9fit/protocolo"); return; }
+    if (
+      ["html", "link", "periodization"].includes(training.training_type || "")
+    ) {
+      navigate("/9fit/protocolo");
+      return;
+    }
     if (!isExecutableTraining(training)) {
-      toast.info("Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca.");
+      toast.info(
+        "Este protocolo ainda não tem exercícios estruturados. Consulte a Biblioteca."
+      );
       navigate("/9fit/biblioteca");
       return;
     }
@@ -286,8 +485,11 @@ export default function NineFitTrain() {
       navigate("/9fit/biblioteca");
       return;
     }
-    if (selectedTraining?.training_type === 'link' && selectedTraining.html_file_url) {
-      window.open(selectedTraining.html_file_url, '_blank');
+    if (
+      selectedTraining?.training_type === "link" &&
+      selectedTraining.html_file_url
+    ) {
+      window.open(selectedTraining.html_file_url, "_blank");
       return;
     }
     setFlow("EXECUTION");
@@ -315,7 +517,9 @@ export default function NineFitTrain() {
     }));
 
     if (!isExecutableTraining({ training_data: { exercises } })) {
-      toast.info("Esta sessão ainda não tem exercícios prescritos. Consulte seu profissional antes de executar.");
+      toast.info(
+        "Esta sessão ainda não tem exercícios prescritos. Consulte seu profissional antes de executar."
+      );
       return;
     }
 
@@ -326,7 +530,10 @@ export default function NineFitTrain() {
       start_date: day.date,
       is_active: true,
       training_type: "structured",
-      training_data: { exercises, estimated_duration: estimateMinutes(exercises) },
+      training_data: {
+        exercises,
+        estimated_duration: estimateMinutes(exercises),
+      },
     });
     setFlow("OVERVIEW");
   };
@@ -363,180 +570,243 @@ export default function NineFitTrain() {
 
   return (
     <div className="fitpro-orange min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
-      {previousSession && <section className="mx-4 mt-16 rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-3">
-        <h2 className="font-bold">Você tem um treino em andamento</h2>
-        <p className="text-sm">Há uma sessão de {new Date(`${previousSession.workout_date}T12:00:00`).toLocaleDateString('pt-BR')} aberta.</p>
-        <div className="flex gap-3"><button disabled={sessionBusy} className="min-h-11 rounded-xl bg-primary px-4 text-black disabled:opacity-50" onClick={()=>void handlePreviousSession(true)}>Retomar</button><button disabled={sessionBusy} className="min-h-11 rounded-xl border border-primary/50 px-4 disabled:opacity-50" onClick={()=>void handlePreviousSession(false)}>Encerrar sessão</button></div>
-      </section>}
-      <StudentSectionHeader
-        kicker="9FIT // TREINO"
-        title={flow === "HOME" ? "Seu treino" : "Visão geral da sessão"}
-        description={athleteName || "ATLETA 9FIT"}
-        actions={<button type="button" onClick={() => navigate('/9fit/move')} className="rounded-lg border border-primary/25 bg-primary/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary/25">Move GPS</button>}
-      />
-
-      {athleteId&&flow==="HOME"&&<div className="px-4 mb-4"><ReadinessCard athleteId={athleteId}/></div>}
-      <div className="px-4 relative z-10">
-        <TrainingAdjustmentBanner />
-      </div>
-
-      {prescriptionIssue && flow === "HOME" && <div role="alert" className="px-4 mb-4"><p className="rounded-xl border border-orange-500 p-4 text-sm">O treino automático foi suspenso por uma inconsistência na prescrição. Abra a aba Protocolo para ver o que seu coach enviou.</p></div>}
-
-      {templateWarning && flow === "HOME" && !loadError && <div role="status" className="px-4 mb-4 rounded-xl border border-primary/30 p-4 text-sm">Parte dos protocolos não pôde ser consultada. Os treinos carregados continuam disponíveis. <button className="underline text-primary" onClick={() => { if (athleteId) void fetchTrainings(athleteId); }}>Tentar novamente</button></div>}
-      {countWarning && flow === "HOME" && !loadError && (
-        <div role="status" className="px-4 mb-4">
-          <p className="rounded-xl border border-[#EF7A45]/40 bg-[#EF7A45]/10 p-4 text-sm">
-            Os contadores de sessões não foram confirmados. O treino do dia continua disponível.
-            <button type="button" className="ml-2 font-semibold text-[#EF7A45]" onClick={() => athleteId && void fetchCompletedCount(athleteId)}>Tentar de novo</button>
-          </p>
-        </div>
-      )}
-
-      {/* Upsell contextual no topo de Train */}
-      <div className="px-4 mb-3 relative z-10">
-        <UpsellBanner
-          context="feature_locked"
-          storageKey="train_top"
-          variant="cyan"
-          headline="Organize seus treinos e acompanhe sua evolução no 9FIT PRO"
-          cta="Conhecer a assinatura"
+      <div className="mx-auto max-w-5xl">
+        {previousSession && (
+          <section className="mx-4 mt-16 rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-3">
+            <h2 className="font-bold">Você tem um treino em andamento</h2>
+            <p className="text-sm">
+              Há uma sessão de{" "}
+              {new Date(
+                `${previousSession.workout_date}T12:00:00`
+              ).toLocaleDateString("pt-BR")}{" "}
+              aberta.
+            </p>
+            <div className="flex gap-3">
+              <button
+                disabled={sessionBusy}
+                className="min-h-11 rounded-xl bg-primary px-4 text-black disabled:opacity-50"
+                onClick={() => void handlePreviousSession(true)}
+              >
+                Retomar
+              </button>
+              <button
+                disabled={sessionBusy}
+                className="min-h-11 rounded-xl border border-primary/50 px-4 disabled:opacity-50"
+                onClick={() => void handlePreviousSession(false)}
+              >
+                Encerrar sessão
+              </button>
+            </div>
+          </section>
+        )}
+        <StudentSectionHeader
+          kicker="9FIT // TREINO"
+          title={flow === "HOME" ? "Seu treino" : "Visão geral da sessão"}
+          description={
+            flow === "HOME"
+              ? "Confira a decisão da Sync, escolha sua sessão e registre como foi."
+              : "Revise os exercícios e as doses antes de começar."
+          }
+          actions={
+            <button
+              type="button"
+              onClick={() => navigate("/9fit/move")}
+              className="min-h-11 rounded-xl border border-primary/25 bg-primary/15 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary/25"
+            >
+              Move GPS
+            </button>
+          }
         />
-      </div>
 
-      {/* Sub-tabs no padrão Pill Segmented Control */}
-      {flow === "HOME" && (
-        <div className="px-4 mb-3.5 relative z-10">
-          <div className="rounded-2xl bg-[#0B0B0C] border border-[#EF7A45]/25 p-1 grid grid-cols-4 gap-1">
-            {[
-              { k: "train", l: "Hoje", I: DumbIcon },
-              { k: "semana", l: "Semana", I: Calendar },
-              { k: "protocol", l: "Protocolo", I: Target },
-              { k: "healthflix", l: "Streaming", I: Film },
-            ].map(({ k, l, I }) => {
-              const isActive = subTab === k;
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => {
-                    if (k === "healthflix") navigate("/9fit/healthflix");
-                    else if (k === "protocol") navigate("/9fit/protocolo");
-                    else {
-                      const params = new URLSearchParams(location.search);
-                      params.delete("date");
-                      if (k === "semana") params.set("tab", "semana"); else params.delete("tab");
-                      navigate({ pathname: location.pathname, search: params.toString() });
-                    }
-                  }}
-                  className={`py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                    isActive
-                      ? "bg-[#EF7A45] text-white"
-                      : "text-white/45 hover:text-white hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <I strokeWidth={1.75} className="w-3.5 h-3.5" />
-                  <span>{l}</span>
-                </button>
-              );
-            })}
+        {athleteId && flow === "HOME" && (
+          <div className="px-4 mb-4">
+            <ReadinessCard compact athleteId={athleteId} />
           </div>
+        )}
+        <div className="px-4 relative z-10">
+          <TrainingAdjustmentBanner />
         </div>
-      )}
 
-      <div className="px-4 relative z-10">
-        {loading || athleteLoading ? (
-          <div className="space-y-3">
-            <SkeletonCard />
-            <SkeletonCard />
+        {prescriptionIssue && flow === "HOME" && (
+          <div role="alert" className="px-4 mb-4">
+            <p className="rounded-xl border border-orange-500 p-4 text-sm">
+              O treino automático foi suspenso por uma inconsistência na
+              prescrição. Abra a aba Protocolo para ver o que seu coach enviou.
+            </p>
           </div>
-        ) : athleteError ? (
-          <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
-            <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-sm text-neutral-300">{athleteError}</p>
-            <button type="button" onClick={() => void retryAthlete()}
-              className="mt-3 mr-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
-              Tentar novamente
-            </button>
-            <button 
-              type="button"
-              onClick={() => navigate("/9fit/profile")} 
-              className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
-            >
-              Ir para o perfil
-            </button>
-          </div>
-        ) : loadError ? (
-          <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
-            <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-sm text-neutral-300">Não foi possível carregar seus treinos.</p>
-            <button 
-              type="button"
-              onClick={() => athleteId && fetchTrainings(athleteId)} 
-              className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        ) : flow === "OVERVIEW" && selectedTraining ? (
-          <WorkoutOverview
-            training={selectedTraining}
-            onBack={handleBack}
-            onStart={handleStartExecution}
-          />
-        ) : subTab === "protocol" ? (
-          <DailyProtocol />
-        ) : subTab === "semana" && athleteId ? (
-          <WeeklyTrainingView
-            athleteId={athleteId}
-            onExecuteToday={handleExecuteWeekDay}
-            initialDate={initialCalendarDate}
-          />
-        ) : (
-          <>
-            {/* Botão Treino Rápido */}
-            <button 
-              type="button"
-              onClick={() => setQuickOpen(true)}
-              className="w-full mb-3.5 p-3 rounded-3xl border border-[#EF7A45]/25 hover:border-[#EF7A45]/40 bg-[#0B0B0C] flex items-center justify-between transition-colors group cursor-pointer active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#EF7A45]/[0.12] border border-[#EF7A45]/25 flex items-center justify-center text-[#EF7A45]">
-                  <Zap strokeWidth={1.75} className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <span className="text-xs font-bold text-white block">
-                    Calibrar Treino Rápido
-                  </span>
-                  <span className="text-[10px] font-mono text-white/45 block">
-                    Ajuste dinâmico por tempo disponível e energia (3 etapas)
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] font-semibold text-[#EF7A45]">
-                <span>Calibrar</span>
-                <ArrowUpRight strokeWidth={1.75} className="w-3.5 h-3.5" />
-              </div>
-            </button>
-
-            <WorkoutHome
-              trainings={trainings}
-              athleteName={athleteName || "Atleta"}
-              completedCount={completedCount}
-            weeklyCompleted={weeklyCompleted}
-              onSelectWorkout={handleSelectWorkout}
-              onStartQuick={() => setQuickOpen(true)}
-            />
-          </>
         )}
-        <QuickTrainModal open={quickOpen} onClose={() => setQuickOpen(false)} />
 
+        {templateWarning && flow === "HOME" && !loadError && (
+          <div
+            role="status"
+            className="px-4 mb-4 rounded-xl border border-primary/30 p-4 text-sm"
+          >
+            Parte dos protocolos não pôde ser consultada. Os treinos carregados
+            continuam disponíveis.{" "}
+            <button
+              className="underline text-primary"
+              onClick={() => {
+                if (athleteId) void fetchTrainings(athleteId);
+              }}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+        {countWarning && flow === "HOME" && !loadError && (
+          <div role="status" className="px-4 mb-4">
+            <p className="rounded-xl border border-[#EF7A45]/40 bg-[#EF7A45]/10 p-4 text-sm">
+              Os contadores de sessões não foram confirmados. O treino do dia
+              continua disponível.
+              <button
+                type="button"
+                className="ml-2 font-semibold text-[#EF7A45]"
+                onClick={() => athleteId && void fetchCompletedCount(athleteId)}
+              >
+                Tentar de novo
+              </button>
+            </p>
+          </div>
+        )}
+
+        {/* Sub-tabs no padrão Pill Segmented Control */}
         {flow === "HOME" && (
-          <div className="mt-6 space-y-6">
-            <DynamicOffers category="training" compact />
+          <div className="px-4 mb-3.5 relative z-10">
+            <div className="rounded-2xl bg-[#0B0B0C] border border-[#EF7A45]/25 p-1 grid grid-cols-4 gap-1">
+              {[
+                { k: "train", l: "Hoje", I: DumbIcon },
+                { k: "semana", l: "Semana", I: Calendar },
+                { k: "protocol", l: "Protocolo", I: Target },
+                { k: "healthflix", l: "Streaming", I: Film },
+              ].map(({ k, l, I }) => {
+                const isActive = subTab === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => {
+                      if (k === "healthflix") navigate("/9fit/healthflix");
+                      else if (k === "protocol") navigate("/9fit/protocolo");
+                      else {
+                        const params = new URLSearchParams(location.search);
+                        params.delete("date");
+                        if (k === "semana") params.set("tab", "semana");
+                        else params.delete("tab");
+                        navigate({
+                          pathname: location.pathname,
+                          search: params.toString(),
+                        });
+                      }
+                    }}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`min-h-11 py-2 px-1 text-[10.5px] sm:text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                      isActive
+                        ? "bg-[#EF7A45] text-[#241007]"
+                        : "text-white/45 hover:text-white hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <I strokeWidth={1.75} className="w-3.5 h-3.5" />
+                    <span>{l}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
-      </div>
 
+        <div className="px-4 relative z-10">
+          {loading || athleteLoading ? (
+            <div className="space-y-3">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          ) : athleteError ? (
+            <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
+              <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
+              <p className="text-sm text-neutral-300">{athleteError}</p>
+              <button
+                type="button"
+                onClick={() => void retryAthlete()}
+                className="mt-3 mr-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+              >
+                Tentar novamente
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/9fit/profile")}
+                className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
+              >
+                Ir para o perfil
+              </button>
+            </div>
+          ) : loadError ? (
+            <div className="rounded-xl border border-destructive/30 bg-[#140c0f] p-6 text-center">
+              <Dumbbell className="w-6 h-6 text-destructive mx-auto mb-2" />
+              <p className="text-sm text-neutral-300">
+                Não foi possível carregar seus treinos.
+              </p>
+              <button
+                type="button"
+                onClick={() => athleteId && fetchTrainings(athleteId)}
+                className="mt-3 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition cursor-pointer"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          ) : flow === "OVERVIEW" && selectedTraining ? (
+            <WorkoutOverview
+              training={selectedTraining}
+              onBack={handleBack}
+              onStart={handleStartExecution}
+            />
+          ) : subTab === "protocol" ? (
+            <DailyProtocol />
+          ) : subTab === "semana" && athleteId ? (
+            <WeeklyTrainingView
+              athleteId={athleteId}
+              onExecuteToday={handleExecuteWeekDay}
+              initialDate={initialCalendarDate}
+            />
+          ) : (
+            <>
+              <WorkoutHome
+                trainings={trainings}
+                athleteName={athleteName || "Atleta"}
+                completedCount={completedCount}
+                weeklyCompleted={weeklyCompleted}
+                countsKnown={countAthlete === athleteId && !countWarning}
+                onSelectWorkout={handleSelectWorkout}
+                onStartQuick={() => setQuickOpen(true)}
+              />
+            </>
+          )}
+          <QuickTrainModal
+            open={quickOpen}
+            onClose={() => setQuickOpen(false)}
+          />
+
+          {flow === "HOME" && (
+            <div className="mt-8 space-y-6">
+              <details className="rounded-2xl border border-white/10 p-4">
+                <summary className="min-h-11 cursor-pointer text-sm text-muted-foreground">
+                  Planos e opções adicionais
+                </summary>{" "}
+                {/* Oferta secundária, após a sessão */}
+                <div className="px-4 mb-3 relative z-10">
+                  <UpsellBanner
+                    context="feature_locked"
+                    storageKey="train_top"
+                    variant="cyan"
+                    headline="Organize seus treinos e acompanhe sua evolução no 9FIT PRO"
+                    cta="Conhecer a assinatura"
+                  />
+                </div>
+                <DynamicOffers category="training" compact />
+              </details>
+            </div>
+          )}
+        </div>
+      </div>
       <BottomNavigation />
     </div>
   );
