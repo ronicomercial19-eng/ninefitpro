@@ -24,7 +24,7 @@ const server = await createServer({
 });
 try {
   await server.listen();
-  for (const screen of ["home", "train", "hub", "profile", "routes"])
+  for (const screen of (process.argv.length>2 ? process.argv.slice(2) : ["home", "train", "hub", "profile", "routes"]))
     await new Promise((resolve, reject) => {
       const child = spawn(
         process.execPath,
