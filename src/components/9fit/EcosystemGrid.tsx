@@ -22,6 +22,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { MODULE_IMAGES } from "@/assets/modules";
 import { useTiltCard } from "@/hooks/useTiltCard";
+import { ModuleHologram } from "./ModuleHologram";
 import { EcosystemOverlay } from "./EcosystemOverlay";
 import { moduleRoute, STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
 
@@ -41,7 +42,7 @@ interface PhysioModule {
 
 interface Props {
   category?: string;
-  variant?: "grid" | "rail" | "dense";
+  variant?: "grid" | "rail" | "dense" | "hologram";
   showHeader?: boolean;
   showAll?: boolean;
   onModuleSelect?: (m: PhysioModule) => void;
@@ -488,6 +489,21 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     setPreviewModuleKey(m.key);
     setShowOverlay(true);
   };
+
+  if (variant === "hologram") return <>
+    <ModuleHologram modules={visibleItems.map(m => {
+      const meta = MODULE_META[m.key];
+      const status = statusByKey[m.key];
+      return { id: m.id, name: m.key === "events" ? "Comunidade" : m.key === "progress" ? "Minha evolução" : m.name,
+        description: m.description, category: meta?.category || m.category,
+        icon: meta?.icon || Sparkles,
+        color: ({ staff: "#ac9cf5", smarttreino: "#f68a59", ron: "#a7a4ff", progress: "#7abcf4", progresso: "#7abcf4", biblioteca: "#e9ba7c" } as Record<string,string>)[m.key] || meta?.color || "#70d8e8",
+        available: Boolean(destination(m)) || status === "native" || status === "configured",
+        status: status === "waiting" ? "Catálogo em modo de reserva" : ["staff", "store", "foods", "events"].includes(m.key) ? "Abre o serviço parceiro" : status === "native" ? "Disponível no app" : status === "configured" ? "Serviço externo" : "Integração não confirmada",
+        onOpen: () => openModule(m) };
+    })} />
+    <EcosystemOverlay open={showOverlay} initialModuleKey={previewModuleKey} onClose={() => setShowOverlay(false)} />
+  </>;
 
   const teaserItems = showHeader && !showAll ? items.slice(0, 2) : [];
   const listItems = !showHeader || showAll ? visibleItems : [];

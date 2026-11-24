@@ -1,3 +1,4 @@
+import Modules from "/src/pages/9fit/Modules";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -189,7 +190,7 @@ createRoot(document.getElementById("root")!).render(
       <React.Suspense fallback={<p>Carregando fixture…</p>}>
         <main className="dark fit-os-grid min-h-screen bg-background pb-28 text-foreground">
           {new URLSearchParams(location.search).get("screen") ===
-          "hub-route" ? (
+          "modules" ? <Modules /> : new URLSearchParams(location.search).get("screen") === "hub-route" ? (
             <Hub />
           ) : new URLSearchParams(location.search).get("screen") ===
             "train-route" ? (
