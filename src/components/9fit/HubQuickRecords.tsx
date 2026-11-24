@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
-import { type CoverageRead, coverageReadState } from "@/components/9fit/hubQuickCoverage";
+import {
+  type CoverageRead,
+  coverageReadState,
+} from "@/components/9fit/hubQuickCoverage";
 import { Button } from "@/components/ui/button";
+import { HubRecordBars } from "./HubRecordBars";
 import { HubRhythmPanel } from "./HubRhythmPanel";
 import {
   rhythmCategories,
@@ -49,6 +53,7 @@ export function HubQuickRecords({
   const contextKey = `${athleteId}:${userId}:${date}`;
   const [readyContext, setReadyContext] = useState<string>();
   const [selected, setSelected] = useState(date);
+  const [recordsOpen, setRecordsOpen] = useState(false);
   const [entireWeek, setEntireWeek] = useState(false);
   const dates = rhythmWeek(date);
   const selectedDate = dates.includes(selected) ? selected : date;
@@ -294,7 +299,10 @@ export function HubQuickRecords({
   ];
 
   const confirmedWeek = readyContext === contextKey;
-  const coverageRead: CoverageRead = coverageReadState(confirmedWeek, loadError);
+  const coverageRead: CoverageRead = coverageReadState(
+    confirmedWeek,
+    loadError
+  );
   const explored = rhythmRows(entries, dates, selectedDate, entireWeek);
 
   return (
@@ -419,60 +427,81 @@ export function HubQuickRecords({
           <summary className="hub-rhythm-summary min-h-11 cursor-pointer text-sm font-semibold">
             Explorar registros
           </summary>
-          <div
-            className="mt-2 flex flex-wrap gap-2"
-            role="group"
-            aria-label="Filtrar registros"
-          >
-            <Button
-              variant="outline"
-              aria-pressed={!entireWeek}
-              onClick={() => setEntireWeek(false)}
-            >
-              Dia selecionado
-            </Button>
-            <Button
-              variant="outline"
-              aria-pressed={entireWeek}
-              onClick={() => setEntireWeek(true)}
-            >
-              Semana inteira
-            </Button>
-          </div>
-          {coverageRead !== "ready" ? (
-            <p className="py-3 text-sm text-muted-foreground">
-              {coverageRead === "loading"
-                ? "Carregando registros…"
-                : "Registros indisponíveis. Tente atualizar."}
-            </p>
-          ) : !explored.length ? (
-            <p className="py-3 text-sm text-muted-foreground">
-              Sem registro {entireWeek ? "nesta semana" : "neste dia"}.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2 text-sm">
-              {explored.map((row, index) => (
-                <li
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2"
-                  key={row.quickId ?? index}
-                >
-                  <span className="min-w-0 break-words">
-                    {row.date.split("-").reverse().join("/")} · {row.category} ·{" "}
-                    {row.label}
-                  </span>
-                  {row.quickId && (
-                    <Button
-                      variant="ghost"
-                      disabled={!!busy}
-                      onClick={() => void remove(row)}
-                    >
-                      Excluir {row.label}
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
+          {coverageRead === "ready" && (
+            <HubRecordBars
+              entries={entries}
+              endDate={date}
+              selectedDate={selectedDate}
+              onSelectDate={(day) => {
+                setSelected(day);
+                setEntireWeek(false);
+                setRecordsOpen(true);
+              }}
+            />
           )}
+          <details
+            open={recordsOpen}
+            onToggle={(event) => setRecordsOpen(event.currentTarget.open)}
+            className="mt-3"
+          >
+            <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
+              Consultar registros e exclusões
+            </summary>
+            <div
+              className="mt-2 flex flex-wrap gap-2"
+              role="group"
+              aria-label="Filtrar registros"
+            >
+              <Button
+                variant="outline"
+                aria-pressed={!entireWeek}
+                onClick={() => setEntireWeek(false)}
+              >
+                Dia selecionado
+              </Button>
+              <Button
+                variant="outline"
+                aria-pressed={entireWeek}
+                onClick={() => setEntireWeek(true)}
+              >
+                Semana inteira
+              </Button>
+            </div>
+            {coverageRead !== "ready" ? (
+              <p className="py-3 text-sm text-muted-foreground">
+                {coverageRead === "loading"
+                  ? "Carregando registros…"
+                  : "Registros indisponíveis. Tente atualizar."}
+              </p>
+            ) : !explored.length ? (
+              <p className="py-3 text-sm text-muted-foreground">
+                Sem registro {entireWeek ? "nesta semana" : "neste dia"}.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2 text-sm">
+                {explored.map((row, index) => (
+                  <li
+                    className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2"
+                    key={row.quickId ?? index}
+                  >
+                    <span className="min-w-0 break-words">
+                      {row.date.split("-").reverse().join("/")} · {row.category}{" "}
+                      · {row.label}
+                    </span>
+                    {row.quickId && (
+                      <Button
+                        variant="ghost"
+                        disabled={!!busy}
+                        onClick={() => void remove(row)}
+                      >
+                        Excluir {row.label}
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </details>
         </details>
       </HubRhythmPanel>
     </section>
