@@ -33,7 +33,7 @@ try {
     .getByRole("heading", { name: "O que aconteceu no seu dia?" })
     .waitFor();
   await page
-    .locator("summary").filter({ hasText: "Planejamento, serviços e conta" })
+    .locator("summary").filter({ hasText: "Seu espaço 9FIT" })
     .click();
   await page.getByRole("link", { name: /Staff · profissionais/ }).waitFor();
   assert.ok(

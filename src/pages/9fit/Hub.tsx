@@ -341,8 +341,8 @@ export default function NineFitHub() {
         </StudentDetailGroup>
 
         <StudentDetailGroup
-          title="Planejamento, serviços e conta"
-          description="Acesse sua prescrição, sua equipe e os outros serviços quando precisar."
+          title="Seu espaço 9FIT"
+          description="Planejamento, equipe e serviços."
         >
           <FitOSConsoleDock
             weekly={weekly}

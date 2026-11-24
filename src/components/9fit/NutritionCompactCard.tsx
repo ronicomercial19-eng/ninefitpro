@@ -11,7 +11,7 @@ import { nutritionGoalLine, nutritionHeadline, nutritionKcalText, nutritionRead 
  * Cabeçalho compacto "Sua alimentação hoje".
  * Fechado: resumo curto. Ao tocar, abre splash com o conteúdo completo (registro de refeição, água, histórico, dieta).
  */
-export function NutritionCompactCard() {
+export function NutritionCompactCard({ variant = "default" }: { variant?: "default" | "console" }) {
   const { athleteId } = useAthleteId();
   const data = useNutritionToday(athleteId);
   const [open, setOpen] = useState(false);
@@ -35,7 +35,7 @@ export function NutritionCompactCard() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Sua alimentação hoje"
-        className="w-full text-left relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#161720] via-[#0e0f14] to-[#08080b] p-4 shadow-xl shadow-black/60 group cursor-pointer active:scale-[0.99] transition-transform"
+        className={variant === "console" ? "hub-service-nutrition group" : "w-full text-left relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#161720] via-[#0e0f14] to-[#08080b] p-4 shadow-xl shadow-black/60 group cursor-pointer active:scale-[0.99] transition-transform"}
       >
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--orange-400)] to-transparent opacity-70 group-hover:opacity-100 transition-opacity" />
         <div className="flex items-center gap-3">
