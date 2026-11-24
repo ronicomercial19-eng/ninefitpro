@@ -8,8 +8,8 @@ try {
   const page = await browser.newPage({ reducedMotion: "reduce" });
   page.setDefaultTimeout(120000);
   page.setDefaultNavigationTimeout(120000);
-  await page.route("https://fonts.googleapis.com/**", r=>r.abort());
-  await page.route("https://fonts.gstatic.com/**", r=>r.abort());
+  await page.route("https://fonts.googleapis.com/**", (r) => r.abort());
+  await page.route("https://fonts.gstatic.com/**", (r) => r.abort());
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.route("https://mfrydtrzjxscbkaiwfnw.supabase.co/**", (r) =>
@@ -24,10 +24,18 @@ try {
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     await page.goto(
-      "http://127.0.0.1:4197/scripts/fixtures/student-experience/index.html?screen=hub", { waitUntil: "domcontentloaded" });
+      "http://127.0.0.1:4197/scripts/fixtures/student-experience/index.html?screen=hub",
+      { waitUntil: "domcontentloaded" }
+    );
     await page
       .getByRole("heading", { name: "O que aconteceu no seu dia?" })
       .waitFor();
+    const disclosure = page.getByRole("button", {
+      name: /Ver gráficos da rotina/,
+    });
+    assert.equal(await disclosure.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator(".hub-rhythm-plot svg").count(), 0);
+    await disclosure.click();
     await page.getByRole("article", { name: "Água", exact: true }).waitFor();
     await page
       .getByRole("button", { name: "Como esse número é formado" })
@@ -47,6 +55,11 @@ try {
         .getAttribute("href"),
       "/9fit/staff/fluxo"
     );
+    await page
+      .getByRole("button", { name: /Recolher gráficos da rotina/ })
+      .click();
+    assert.equal(await page.locator(".hub-rhythm-plot svg").count(), 0);
+    await page.evaluate(()=>window.scrollTo(0,0));
     await page.screenshot({
       path: "output/hub-experience-" + width + ".png",
       fullPage: true,

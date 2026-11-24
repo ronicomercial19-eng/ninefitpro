@@ -1,9 +1,7 @@
+import { HomeAccessLines } from "./HomeAccessLines";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Brain,
-  Dumbbell,
-  Utensils,
   ChartNoAxesCombined,
   Moon,
   Users,
@@ -89,33 +87,10 @@ export function OSDashboard({
           title="Seu caminho no app"
           description="Vá direto ao que você precisa, sem passar por uma nova escolha."
         />
-        <div id="home-shortcuts" className="grid gap-3 sm:grid-cols-2">
-          <StudentActionCard
-            icon={Dumbbell}
-            title="Meu treino"
-            description="Confira a sessão, os ajustes e o ponto de onde parou."
-            to="/9fit/train"
-            badge={planLabel}
-          />
-          <StudentActionCard
-            icon={ChartNoAxesCombined}
-            title="Minha evolução"
-            description="Compare seus registros e acompanhe mudanças ao longo do tempo."
-            to="/9fit/progresso"
-          />
-          <StudentActionCard
-            icon={Utensils}
-            title="Alimentação e água"
-            description="Consulte sua dieta e registre o que consumiu hoje."
-            onClick={() => setPanel("nutrition")}
-          />
-          <StudentActionCard
-            icon={Brain}
-            title="Conversar com RON"
-            description="Leve uma dúvida e seu contexto para a conversa com o assistente."
-            to="/9fit/ron?context=hub_command"
-          />
-        </div>
+        <HomeAccessLines
+          onNutrition={() => setPanel("nutrition")}
+          planLabel={planLabel}
+        />
       </section>
       <StudentDetailGroup
         title="Olhar mais de perto"

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
 import { type CoverageRead, coverageReadState } from "@/components/9fit/hubQuickCoverage";
 import { Button } from "@/components/ui/button";
-import { HubRhythmCharts } from "./HubRhythmCharts";
+import { HubRhythmPanel } from "./HubRhythmPanel";
 import {
   rhythmCategories,
   rhythmRows,
@@ -203,14 +203,12 @@ export function HubQuickRecords({
     try {
       const result =
         category === "Água"
-          ? await supabase
-              .from("hydration_logs")
-              .insert({
-                id,
-                athlete_id: athleteId,
-                log_date: date,
-                amount_ml: 500,
-              })
+          ? await supabase.from("hydration_logs").insert({
+              id,
+              athlete_id: athleteId,
+              log_date: date,
+              amount_ml: 500,
+            })
           : category === "Nutrição"
           ? await supabase.rpc("fn_hub_confirm_meal" as any, {
               p_id: id,
@@ -218,21 +216,19 @@ export function HubQuickRecords({
               p_date: date,
               p_name: label,
             })
-          : await supabase
-              .from("master_registry")
-              .insert({
-                id,
-                user_id: userId,
-                source,
-                event_type: "hub_quick_record",
-                payload: {
-                  category,
-                  date,
-                  label,
-                  athlete_id: athleteId,
-                  self_reported: true,
-                },
-              });
+          : await supabase.from("master_registry").insert({
+              id,
+              user_id: userId,
+              source,
+              event_type: "hub_quick_record",
+              payload: {
+                category,
+                date,
+                label,
+                athlete_id: athleteId,
+                self_reported: true,
+              },
+            });
       if (result.error && result.error.code !== "23505") throw result.error;
       pending.current = null;
       setChoice(false);
@@ -311,8 +307,8 @@ export function HubQuickRecords({
           O que aconteceu no seu dia?
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Adicione o que você fez. Os gráficos abaixo acompanham os registros
-          confirmados.
+          Adicione o que você fez. Abra o cabeçalho de gráficos para explorar os
+          registros confirmados.
         </p>
       </header>
       <h3 className="sr-only">Registro rápido</h3>
@@ -412,85 +408,73 @@ export function HubQuickRecords({
           )}
         </div>
       )}
-      <div className="border-t border-white/10 pt-6">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-          02 / Seu ritmo em 7 dias
-        </p>
-        <h2 className="mt-2 text-xl font-semibold tracking-tight">
-          Veja onde sua rotina aparece.
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Toque em uma data para consultar o dia nos quatro gráficos. Cada curva
-          tem sua própria escala; sem registro não significa atividade não
-          realizada.
-        </p>
-      </div>
-      <HubRhythmCharts
+      <HubRhythmPanel
         entries={entries}
         endDate={date}
         selectedDate={selectedDate}
         onSelectDate={setSelected}
         read={coverageRead}
-      />
-      <details className="rounded-xl border border-border/10 p-3">
-        <summary className="hub-rhythm-summary min-h-11 cursor-pointer text-sm font-semibold">
-          Explorar registros
-        </summary>
-        <div
-          className="mt-2 flex flex-wrap gap-2"
-          role="group"
-          aria-label="Filtrar registros"
-        >
-          <Button
-            variant="outline"
-            aria-pressed={!entireWeek}
-            onClick={() => setEntireWeek(false)}
+      >
+        <details className="rounded-xl border border-border/10 p-3">
+          <summary className="hub-rhythm-summary min-h-11 cursor-pointer text-sm font-semibold">
+            Explorar registros
+          </summary>
+          <div
+            className="mt-2 flex flex-wrap gap-2"
+            role="group"
+            aria-label="Filtrar registros"
           >
-            Dia selecionado
-          </Button>
-          <Button
-            variant="outline"
-            aria-pressed={entireWeek}
-            onClick={() => setEntireWeek(true)}
-          >
-            Semana inteira
-          </Button>
-        </div>
-        {coverageRead !== "ready" ? (
-          <p className="py-3 text-sm text-muted-foreground">
-            {coverageRead === "loading"
-              ? "Carregando registros…"
-              : "Registros indisponíveis. Tente atualizar."}
-          </p>
-        ) : !explored.length ? (
-          <p className="py-3 text-sm text-muted-foreground">
-            Sem registro {entireWeek ? "nesta semana" : "neste dia"}.
-          </p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm">
-            {explored.map((row, index) => (
-              <li
-                className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2"
-                key={row.quickId ?? index}
-              >
-                <span className="min-w-0 break-words">
-                  {row.date.split("-").reverse().join("/")} · {row.category} ·{" "}
-                  {row.label}
-                </span>
-                {row.quickId && (
-                  <Button
-                    variant="ghost"
-                    disabled={!!busy}
-                    onClick={() => void remove(row)}
-                  >
-                    Excluir {row.label}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </details>
+            <Button
+              variant="outline"
+              aria-pressed={!entireWeek}
+              onClick={() => setEntireWeek(false)}
+            >
+              Dia selecionado
+            </Button>
+            <Button
+              variant="outline"
+              aria-pressed={entireWeek}
+              onClick={() => setEntireWeek(true)}
+            >
+              Semana inteira
+            </Button>
+          </div>
+          {coverageRead !== "ready" ? (
+            <p className="py-3 text-sm text-muted-foreground">
+              {coverageRead === "loading"
+                ? "Carregando registros…"
+                : "Registros indisponíveis. Tente atualizar."}
+            </p>
+          ) : !explored.length ? (
+            <p className="py-3 text-sm text-muted-foreground">
+              Sem registro {entireWeek ? "nesta semana" : "neste dia"}.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2 text-sm">
+              {explored.map((row, index) => (
+                <li
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border/10 py-2"
+                  key={row.quickId ?? index}
+                >
+                  <span className="min-w-0 break-words">
+                    {row.date.split("-").reverse().join("/")} · {row.category} ·{" "}
+                    {row.label}
+                  </span>
+                  {row.quickId && (
+                    <Button
+                      variant="ghost"
+                      disabled={!!busy}
+                      onClick={() => void remove(row)}
+                    >
+                      Excluir {row.label}
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </details>
+      </HubRhythmPanel>
     </section>
   );
 }
