@@ -1,5 +1,6 @@
+import { SyncScoreRing } from "./SyncScoreRing";
 import { useState } from "react";
-import { RefreshCw, Activity } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,8 @@ interface Props {
 }
 export function HeroSyncSection({
   syncScore,
+  breakdown,
+  routinePillars,
   scoreStatus = "calibrating",
   lastUpdate,
   onRefresh,
@@ -62,39 +65,19 @@ export function HeroSyncSection({
       ? "Responda como você está para começar a leitura do dia."
       : "Check-in e registros confirmados compõem este resumo. Confira no Treino se houve um ajuste na sessão.";
   return (
-    <section
-      aria-label="Resumo SYNC"
-      className="rounded-3xl border border-primary/20 bg-[radial-gradient(ellipse_at_top_right,rgba(239,122,69,0.10),#111416_70%)] p-5 sm:p-6"
-    >
-      <div className="flex items-start gap-4">
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-          <Activity size={21} aria-hidden="true" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-            SYNC / Leitura do dia
-          </p>
-          <h2 className="mt-2 text-lg font-semibold tracking-tight">
-            Um resumo para conferir seu contexto.
-          </h2>
-          <p
-            className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground"
-            role="status"
-          >
-            {message}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="text-3xl font-semibold tabular-nums text-foreground sm:text-4xl">
-            {value ?? "—"}
-          </p>
-          <p className="mt-1 text-[10px] text-muted-foreground">
-            {scoreStatus === "stale" || scoreStatus === "offline"
-              ? "última leitura"
-              : "de 100"}
-          </p>
-        </div>
-      </div>
+    <section aria-label="Resumo SYNC" className="min-w-0 space-y-3">
+      <SyncScoreRing
+        score={value}
+        status={scoreStatus}
+        breakdown={breakdown}
+        hidePillars={routinePillars}
+      />
+      <p
+        className="px-1 text-xs leading-relaxed text-muted-foreground"
+        role="status"
+      >
+        {message}
+      </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-3">
         {value === null &&
           scoreStatus !== "loading" &&

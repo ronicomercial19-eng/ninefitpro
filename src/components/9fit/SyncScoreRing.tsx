@@ -171,7 +171,7 @@ export function SyncScoreRing({ score, status, breakdown, hidePillars }: Props) 
       />
 
       {/* Cabeçalho do Card com Título e Status de Performance */}
-      <div className="relative z-10 flex items-center justify-between mb-2">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-[#FF6600]" />
           <span className="text-[11px] font-mono tracking-[0.2em] uppercase font-bold text-white/90">
@@ -188,7 +188,7 @@ export function SyncScoreRing({ score, status, breakdown, hidePillars }: Props) 
       <div className="relative z-10 flex flex-col items-center justify-center my-2 sm:my-3">
         <div className="relative w-48 h-36 flex items-center justify-center">
           {/* Segmentos de tick do semicírculo */}
-          <svg className="w-44 h-44 -rotate-90" viewBox="0 0 100 100">
+          <svg role="img" aria-label={`Índice Sync: ${Math.round(safeScore)} de 100`} className="w-44 h-44 -rotate-90" viewBox="0 0 100 100">
             {/* Trilha de fundo */}
             <circle
               cx="50"

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 
+const allowsTilt = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export interface TiltCardOptions {
   maxTilt?: number; // Maximum tilt angle in degrees (default: 5)
   haloColor?: string; // Color of the halo spotlight (default: "rgba(255, 102, 0, 0.22)")
@@ -27,7 +29,7 @@ export function useTiltCard<T extends HTMLElement = HTMLDivElement>(options: Til
 
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {
-      if (disabled || !elementRef.current) return;
+      if (disabled || !elementRef.current || !allowsTilt()) return;
       if (e.pointerType === "touch") return; // Touch devices scroll, don't tilt
 
       const el = elementRef.current;
@@ -74,18 +76,18 @@ export function useTiltCard<T extends HTMLElement = HTMLDivElement>(options: Til
   );
 
   const handlePointerLeave = useCallback(() => {
-    if (disabled || !elementRef.current) return;
+    if (!elementRef.current) return;
     const el = elementRef.current;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     // Smooth ease-out reset
     el.style.transition = "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease-out, border-color 0.3s ease-out";
-    el.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px) scale3d(1, 1, 1)";
+    el.style.removeProperty("transform");
     el.style.setProperty("--halo-opacity", "0");
   }, [disabled]);
 
   const handleFocus = useCallback(() => {
-    if (disabled || !elementRef.current) return;
+    if (disabled || !elementRef.current || !allowsTilt()) return;
     const el = elementRef.current;
     el.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease-out";
     el.style.transform = `perspective(1000px) rotateX(1.5deg) rotateY(0deg) translateY(-2px) scale3d(${scale}, ${scale}, ${scale})`;
@@ -97,22 +99,20 @@ export function useTiltCard<T extends HTMLElement = HTMLDivElement>(options: Til
   }, [disabled, scale, haloColor, haloSize]);
 
   const handleBlur = useCallback(() => {
-    if (disabled || !elementRef.current) return;
     handlePointerLeave();
-  }, [disabled, handlePointerLeave]);
+  }, [handlePointerLeave]);
 
   useEffect(() => {
     const el = elementRef.current;
     if (!el || disabled) return;
 
-    // Check reduced motion preference
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
 
     el.addEventListener("pointerenter", handlePointerEnter);
     el.addEventListener("pointermove", handlePointerMove);
     el.addEventListener("pointerleave", handlePointerLeave);
+    el.addEventListener("pointercancel", handlePointerLeave);
+    window.addEventListener("resize", handlePointerLeave);
+    window.visualViewport?.addEventListener("resize", handlePointerLeave);
     el.addEventListener("focus", handleFocus, true);
     el.addEventListener("blur", handleBlur, true);
 
@@ -121,6 +121,10 @@ export function useTiltCard<T extends HTMLElement = HTMLDivElement>(options: Til
       el.removeEventListener("pointerenter", handlePointerEnter);
       el.removeEventListener("pointermove", handlePointerMove);
       el.removeEventListener("pointerleave", handlePointerLeave);
+      el.removeEventListener("pointercancel", handlePointerLeave);
+      window.removeEventListener("resize", handlePointerLeave);
+      window.visualViewport?.removeEventListener("resize", handlePointerLeave);
+      el.style.removeProperty("transform");
       el.removeEventListener("focus", handleFocus, true);
       el.removeEventListener("blur", handleBlur, true);
     };

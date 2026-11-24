@@ -1,0 +1,44 @@
+/* Keep document layout fluid without preventing user pinch/page zoom. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body,
+#root {
+  min-width: 0;
+  min-height: 100%;
+}
+#root {
+  width: 100%;
+}
+/* Short inputs cause Safari to zoom on focus and often retain that scale after save. */
+@media (max-width: 768px), (pointer: coarse) {
+  html
+    :is(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+          [type="color"]
+        ):not([type="file"]):not([type="button"]):not([type="submit"]),
+      textarea,
+      select,
+      [contenteditable="true"]
+    ) {
+    font-size: 16px !important;
+  }
+}
+/* Portalled dialogs follow the visible area when a virtual keyboard is open. */
+html [data-app-dialog] {
+  top: calc(
+    var(--app-visible-top, 0px) + var(--app-visible-height, 100dvh) / 2
+  );
+  max-height: calc(var(--app-visible-height, 100dvh) - 2rem);
+  overscroll-behavior: contain;
+}
+html [data-app-dialog] {
+  transition-property: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  html [data-app-dialog] {
+    animation: none;
+    transition: none;
+  }
+}

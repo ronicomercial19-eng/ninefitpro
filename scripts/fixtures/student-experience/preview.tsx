@@ -1,3 +1,5 @@
+import "/src/styles/responsive-viewport.css";
+import { installResponsiveViewport } from "/src/lib/responsiveViewport";
 import Modules from "/src/pages/9fit/Modules";
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -184,6 +186,7 @@ client.setQueryData(
 window.qaReadiness = (value) => client.setQueryData(["daily-readiness", user, "00000000-0000-4000-8000-000000000001"], value);
 window.qaContext = (patch) =>
   client.setQueryData(["daily-context", user], { ...context, ...patch });
+installResponsiveViewport();
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={client}>
     <BrowserRouter>

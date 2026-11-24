@@ -1,3 +1,5 @@
+import { installResponsiveViewport } from "./lib/responsiveViewport";
+import "./styles/responsive-viewport.css";
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { HelmetProvider } from 'react-helmet-async'
@@ -9,6 +11,9 @@ import './styles/touch-feedback.css'
 import './styles/experience-theme.css'
 import './styles/brand-nine.css'
 import { initializeCapacitor } from "./utils/capacitor";
+
+const removeViewportListeners = installResponsiveViewport();
+if (import.meta.hot) import.meta.hot.dispose(removeViewportListeners);
 
 // Initialize Capacitor plugins
 initializeCapacitor();
