@@ -177,7 +177,7 @@ export function ReadinessCard({
         .join(" · ");
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-primary/25 bg-card bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.12),transparent_65%)] p-4 sm:p-5 space-y-3">
+    <section className="readiness-session-card relative overflow-hidden rounded-3xl border border-primary/25 bg-card bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.12),transparent_65%)] p-4 sm:p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className={`${eyebrow} flex items-center gap-2`}>

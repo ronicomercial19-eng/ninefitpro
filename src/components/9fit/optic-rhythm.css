@@ -1,0 +1,219 @@
+/* Optical 1:1: a single main subject, then a preview. Orange signifies action. */
+.optic-page {
+  --optic-ink: #090a0c;
+  --optic-panel: #17191d;
+  --optic-raised: #22252a;
+  --optic-white: #f5f3ee;
+  --optic-muted: #a5a8ae;
+  background: var(--optic-ink) !important;
+  color: var(--optic-white);
+  background-image: none !important;
+}
+.optic-content {
+  max-width: 52rem !important;
+}
+.optic-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+  min-width: 0;
+  min-height: max(420px, calc(100svh - 13rem));
+  padding: 12px 0 32px;
+  scroll-margin-top: 88px;
+  outline: none;
+}
+.optic-stage-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.optic-page .optic-stage-content > :where(section, article, details) {
+  min-width: 0;
+}
+.optic-page .optic-next {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 76px;
+  padding: 16px 20px;
+  border: 0;
+  border-top: 1px solid #ffffff1b;
+  border-radius: 0;
+  background: transparent;
+  color: var(--optic-white);
+  text-align: left;
+  box-shadow: none;
+}
+.optic-next small {
+  display: block;
+  margin-bottom: 6px;
+  font: 9px monospace;
+  letter-spacing: 0.18em;
+  color: var(--optic-muted);
+}
+.optic-next strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.optic-next > svg {
+  color: var(--optic-muted);
+}
+.optic-next:hover > svg {
+  color: #ef7a45;
+}
+.optic-next:focus-visible {
+  outline: 2px solid #ef7a45;
+  outline-offset: 3px;
+}
+.optic-page .readiness-session-card {
+  background: var(--optic-panel);
+  background-image: none;
+  border-color: #ffffff20;
+  box-shadow: 0 18px 50px #0002;
+}
+.optic-page .readiness-session-card > div:first-child p {
+  color: var(--optic-muted);
+}
+.optic-page .readiness-session-card > div:first-child .rounded-full {
+  background: #ffffff06;
+  border-color: #ffffff20;
+  color: var(--optic-white);
+}
+.optic-page .readiness-session-card [class*="bg-primary/"] {
+  background-color: #ffffff05;
+  border-color: #ffffff1b;
+}
+.optic-page .optic-train-tabs > div {
+  border-color: #ffffff18;
+  background: #121417;
+}
+.optic-page .optic-train-tabs button[aria-current="page"] {
+  background: #eeece6;
+  color: #17191d;
+  box-shadow: none;
+}
+.optic-page .optic-stage .hub-card-interactive {
+  background: #17191d;
+  border-color: #ffffff1b;
+  box-shadow: none;
+}
+.optic-page .hub-rhythm > header > p:first-child {
+  color: var(--optic-muted);
+}
+.optic-page .hub-rhythm > div.grid > button {
+  background: #1d2024;
+  border-color: #ffffff15;
+}
+.optic-page .hub-rhythm > div.grid > button strong {
+  color: var(--optic-white);
+}
+.optic-page .hub-rhythm > div.grid > button:not(:disabled):hover {
+  border-color: #ef7a4580;
+}
+.optic-page .hub-rhythm-summary {
+  color: var(--optic-white);
+}
+.optic-page .optic-ecosystem-entry {
+  background: #1c1f23 !important;
+  background-image: none !important;
+  color: var(--optic-white);
+  box-shadow: none;
+}
+.optic-page .optic-ecosystem-entry :is(p, svg) {
+  color: var(--optic-muted);
+}
+.optic-page .hub-service-console .hub-service-nutrition {
+  background: #222326;
+  border-color: #ffffff1b;
+}
+.optic-page .hub-service-console .hub-service-plan {
+  background: #181d20;
+  border-color: #ffffff1b;
+}
+.optic-page .hub-service-console .hub-service-kicker,
+.optic-page
+  .hub-service-nutrition
+  > div:last-child
+  > div:nth-child(2)
+  > p:first-child {
+  color: #c0c2c7;
+}
+.optic-page .optic-stage .hub-rhythm > section {
+  background: #15171a;
+}
+.optic-page .optic-stage :where(header) > p[class*="text-primary"] {
+  color: var(--optic-muted);
+}
+@media (max-height: 600px) {
+  .optic-stage {
+    min-height: 360px;
+  }
+}
+@media (min-width: 1024px) {
+  .optic-stage {
+    padding-top: 24px;
+    padding-bottom: 40px;
+  }
+  .optic-next {
+    max-width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .optic-next {
+    scroll-behavior: auto;
+  }
+}
+.optic-page :where(button, a)[class~="bg-primary"] {
+  background: #ef7a45;
+  color: #21150e;
+  box-shadow: none;
+}
+.optic-page .readiness-session-card > div:first-child button {
+  border-color: #ffffff24;
+  color: #d4d5d8;
+  background: transparent;
+}
+.optic-page .optic-session-card {
+  border-color: #ffffff20;
+  background: #17191d;
+}
+.optic-page
+  .optic-stage
+  > .optic-stage-content
+  > section[aria-label="Resumo SYNC"]
+  > div
+  > button {
+  color: #d4d5d8;
+}
+html[data-ninefit-surface] .optic-page :where(button, a)[class~="bg-primary"] {
+  background-color: #ef7a45;
+  color: #21150e;
+  box-shadow: none;
+}
+/* A single light interaction surface distinguishes recording from reading. */
+.optic-page .hub-rhythm > div.grid {
+  background: #eeece6;
+  border-radius: 18px;
+  padding: 8px;
+  gap: 4px;
+}
+.optic-page .hub-rhythm > div.grid > button {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #202329;
+}
+.optic-page .hub-rhythm > div.grid > button strong {
+  color: #202329;
+}
+.optic-page .hub-rhythm > div.grid > button span {
+  color: #565b63;
+}
+.optic-page .hub-rhythm > div.grid > button:not(:disabled):hover {
+  background: #ffffff80;
+  border-color: #20232930;
+}

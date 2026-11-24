@@ -191,7 +191,7 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={client}>
     <BrowserRouter>
       <React.Suspense fallback={<p>Carregando fixture…</p>}>
-        <main className="dark fit-os-grid min-h-screen bg-background pb-28 text-foreground">
+        <main className="optic-page dark fit-os-grid min-h-screen bg-background pb-28 text-foreground">
           {new URLSearchParams(location.search).get("screen") ===
           "modules" ? <Modules /> : new URLSearchParams(location.search).get("screen") === "hub-route" ? (
             <Hub />

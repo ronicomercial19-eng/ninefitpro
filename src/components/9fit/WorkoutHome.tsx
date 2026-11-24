@@ -1,3 +1,4 @@
+import { OpticStage } from "./OpticStage";
 import { isExecutableTraining } from "@/lib/executableTraining";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -75,86 +76,91 @@ export function WorkoutHome({
   const minutes = activeWorkout?.training_data?.estimated_duration;
   return (
     <div className="space-y-6">
-      <section
-        className="overflow-hidden rounded-3xl border border-primary/25 bg-[#111416]"
-        aria-label="Sua sessão disponível"
+      <OpticStage
+        id="train-workout"
+        next={{ id: "train-history", label: "Seu histórico" }}
       >
-        <div className="relative h-36 overflow-hidden sm:h-48">
-          <img
-            src={trainHeroBanner}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111416] via-black/30 to-black/20" />
-          <p className="absolute left-5 top-5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white">
-            {executable
-              ? "Prescrição disponível"
-              : activeWorkout
-              ? "Em preparação"
-              : "Vamos encontrar seu começo"}
-          </p>
-        </div>
-        <div className="relative space-y-4 px-5 pb-6 sm:px-7">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-              01 / Sua sessão
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
-              {activeWorkout?.training_name ||
-                "Seu primeiro treino começa por aqui."}
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/65">
+        <section
+          className="optic-session-card overflow-hidden rounded-3xl border border-white/10 bg-[#17191d]"
+          aria-label="Sua sessão disponível"
+        >
+          <div className="relative h-36 overflow-hidden sm:h-48">
+            <img
+              src={trainHeroBanner}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#111416] via-black/30 to-black/20" />
+            <p className="absolute left-5 top-5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white">
               {executable
-                ? activeWorkout.training_description ||
-                  "Confira os exercícios, séries e descansos antes de iniciar."
+                ? "Prescrição disponível"
                 : activeWorkout
-                ? "Seu profissional ainda precisa confirmar os exercícios e as doses desta sessão. Você pode consultar o protocolo enquanto isso."
-                : "Consulte os conteúdos disponíveis ou encontre um profissional para preparar sua prescrição."}
+                ? "Em preparação"
+                : "Vamos encontrar seu começo"}
             </p>
           </div>
-          {activeWorkout && (
-            <div className="flex flex-wrap gap-2 text-xs text-white/70">
-              {minutes != null && minutes > 0 && (
-                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2">
-                  <Clock size={14} aria-hidden="true" />
-                  {minutes} min estimados
-                </span>
-              )}
-              {count != null && (
-                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2">
-                  <Dumbbell size={14} aria-hidden="true" />
-                  {count} {count === 1 ? "exercício" : "exercícios"}
-                </span>
-              )}
+          <div className="relative space-y-4 px-5 pb-6 sm:px-7">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                01 / Sua sessão
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+                {activeWorkout?.training_name ||
+                  "Seu primeiro treino começa por aqui."}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/65">
+                {executable
+                  ? activeWorkout.training_description ||
+                    "Confira os exercícios, séries e descansos antes de iniciar."
+                  : activeWorkout
+                  ? "Seu profissional ainda precisa confirmar os exercícios e as doses desta sessão. Você pode consultar o protocolo enquanto isso."
+                  : "Consulte os conteúdos disponíveis ou encontre um profissional para preparar sua prescrição."}
+              </p>
             </div>
-          )}
-          <button
-            type="button"
-            onClick={() =>
-              executable && activeWorkout
-                ? onSelectWorkout(activeWorkout)
-                : navigate(activeWorkout ? "/9fit/protocolo" : "/9fit/staff")
-            }
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EF7A45] px-5 text-sm font-semibold text-[#241007] transition-colors hover:bg-[#ff9465] sm:w-auto"
-          >
-            <Play size={17} aria-hidden="true" />
-            {executable
-              ? "Conferir e iniciar sessão"
-              : activeWorkout
-              ? "Consultar meu protocolo"
-              : "Encontrar orientação profissional"}
-          </button>
-          {!activeWorkout && (
+            {activeWorkout && (
+              <div className="flex flex-wrap gap-2 text-xs text-white/70">
+                {minutes != null && minutes > 0 && (
+                  <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2">
+                    <Clock size={14} aria-hidden="true" />
+                    {minutes} min estimados
+                  </span>
+                )}
+                {count != null && (
+                  <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2">
+                    <Dumbbell size={14} aria-hidden="true" />
+                    {count} {count === 1 ? "exercício" : "exercícios"}
+                  </span>
+                )}
+              </div>
+            )}
             <button
               type="button"
-              onClick={() => navigate("/9fit/healthflix")}
-              className="block min-h-11 text-sm text-primary underline underline-offset-4"
+              onClick={() =>
+                executable && activeWorkout
+                  ? onSelectWorkout(activeWorkout)
+                  : navigate(activeWorkout ? "/9fit/protocolo" : "/9fit/staff")
+              }
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EF7A45] px-5 text-sm font-semibold text-[#241007] transition-colors hover:bg-[#ff9465] sm:w-auto"
             >
-              Explorar treinos em vídeo
+              <Play size={17} aria-hidden="true" />
+              {executable
+                ? "Conferir e iniciar sessão"
+                : activeWorkout
+                ? "Consultar meu protocolo"
+                : "Encontrar orientação profissional"}
             </button>
-          )}
-        </div>
-      </section>
+            {!activeWorkout && (
+              <button
+                type="button"
+                onClick={() => navigate("/9fit/healthflix")}
+                className="block min-h-11 text-sm text-primary underline underline-offset-4"
+              >
+                Explorar treinos em vídeo
+              </button>
+            )}
+          </div>
+        </section>
+      </OpticStage>
       {trainings.length > 1 && (
         <StudentDetailGroup
           title="Outras prescrições disponíveis"
@@ -185,39 +191,41 @@ export function WorkoutHome({
           </div>
         </StudentDetailGroup>
       )}
-      <section>
-        <StudentBlockTitle
-          number="02"
-          title="Seu treino tem continuidade"
-          description="A sessão de hoje se conecta ao que você já registrou."
-        />
-        {countsKnown && (
-          <div className="mb-3 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-[#121416] p-4">
-              <p className="text-xs text-muted-foreground">
-                Concluídos nesta semana
-              </p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums">
-                {weeklyCompleted}
-              </p>
+      <OpticStage id="train-history">
+        <section>
+          <StudentBlockTitle
+            number="02"
+            title="Seu treino tem continuidade"
+            description="A sessão de hoje se conecta ao que você já registrou."
+          />
+          {countsKnown && (
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-[#121416] p-4">
+                <p className="text-xs text-muted-foreground">
+                  Concluídos nesta semana
+                </p>
+                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                  {weeklyCompleted}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#121416] p-4">
+                <p className="text-xs text-muted-foreground">
+                  Sessões no histórico
+                </p>
+                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                  {completedCount}
+                </p>
+              </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#121416] p-4">
-              <p className="text-xs text-muted-foreground">
-                Sessões no histórico
-              </p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums">
-                {completedCount}
-              </p>
-            </div>
-          </div>
-        )}
-        <StudentActionCard
-          icon={History}
-          title="Rever sessões anteriores"
-          description="Consulte o histórico antes de comparar cargas e esforço."
-          onClick={() => setHistoryOpen(true)}
-        />
-      </section>
+          )}
+          <StudentActionCard
+            icon={History}
+            title="Rever sessões anteriores"
+            description="Consulte o histórico antes de comparar cargas e esforço."
+            onClick={() => setHistoryOpen(true)}
+          />
+        </section>
+      </OpticStage>
       <StudentDetailGroup
         title="Precisa de outra forma de treinar?"
         description="Ajuste o apoio ou veja alternativas sem substituir sua prescrição automaticamente."

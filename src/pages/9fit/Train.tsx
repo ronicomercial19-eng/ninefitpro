@@ -1,3 +1,4 @@
+import { OpticStage } from "@/components/9fit/OpticStage";
 import { estimateWorkoutMinutes } from "@/lib/workoutDose";
 import { ReadinessCard } from "@/components/9fit/ReadinessCard";
 import { withTimeout } from "@/lib/withTimeout";
@@ -569,8 +570,8 @@ export default function NineFitTrain() {
   }
 
   return (
-    <div className="fitpro-orange min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
-      <div className="mx-auto max-w-5xl">
+    <div className="optic-page fitpro-orange min-h-screen bg-[#08090b] text-neutral-100 pb-28 selection:bg-primary selection:text-black relative">
+      <div className="optic-content mx-auto max-w-5xl">
         {previousSession && (
           <section className="mx-4 mt-16 rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-3">
             <h2 className="font-bold">Você tem um treino em andamento</h2>
@@ -620,7 +621,9 @@ export default function NineFitTrain() {
 
         {athleteId && flow === "HOME" && (
           <div className="px-4 mb-4">
-            <ReadinessCard compact athleteId={athleteId} />
+            <OpticStage id="train-preparation" next={{id:"train-session",label:"Sua sessão"}}>
+              <ReadinessCard compact athleteId={athleteId} />
+            </OpticStage>
           </div>
         )}
         <div className="px-4 relative z-10">
@@ -671,7 +674,7 @@ export default function NineFitTrain() {
 
         {/* Sub-tabs no padrão Pill Segmented Control */}
         {flow === "HOME" && (
-          <div className="px-4 mb-3.5 relative z-10">
+          <div id="train-session" tabIndex={-1} className="optic-train-tabs px-4 mb-3.5 relative z-10">
             <div className="rounded-2xl bg-[#0B0B0C] border border-[#EF7A45]/25 p-1 grid grid-cols-4 gap-1">
               {[
                 { k: "train", l: "Hoje", I: DumbIcon },

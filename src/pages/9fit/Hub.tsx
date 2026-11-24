@@ -1,3 +1,4 @@
+import { OpticStage } from "@/components/9fit/OpticStage";
 import { useSyncScore } from "@/hooks/useSyncScore";
 import { StudentSectionHeader } from "@/components/9fit/StudentSectionHeader";
 import { StudentDetailGroup } from "@/components/9fit/StudentExperience";
@@ -231,7 +232,7 @@ export default function NineFitHub() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="optic-page min-h-screen bg-background pb-28">
       <WeeklyRecapPrompt />
       {fichaNotice === "unlinked" && (
         <p className="mx-4 mt-3 rounded-xl border border-border p-4 text-sm">
@@ -270,7 +271,7 @@ export default function NineFitHub() {
         variants={hubStaggerContainer}
         initial="hidden"
         animate="visible"
-        className="mx-auto w-full max-w-5xl space-y-6 px-4 sm:px-6"
+        className="optic-content mx-auto w-full max-w-5xl space-y-6 px-4 sm:px-6"
       >
         <StudentSectionHeader
           kicker="9FIT / HUB"
@@ -285,30 +286,41 @@ export default function NineFitHub() {
             </Link>
           }
         />
-        <motion.div variants={hubStaggerItem} className="relative">
-          <HeroSyncSection
-            name={name}
-            syncScore={routine.value}
-            scoreStatus={scoreStatus}
-            breakdown={breakdown}
-            routinePillars
-            onDiagnosis={() => setShowDiagnosis(true)}
-            lastUpdate={syncContext?.generated_at}
-            onRefresh={() => {
-              void refreshSync();
-              void refreshScores();
-            }}
-          />
-        </motion.div>
-
-        {athleteId && user?.id && (
-          <HubQuickRecords
-            key={athleteId}
-            athleteId={athleteId}
-            userId={user.id}
-          />
-        )}
-        {scoreStatus === "available" && <RecordMeaning context={syncContext} />}
+        <OpticStage
+          id="hub-sync"
+          next={{ id: "hub-records", label: "Registre seu dia" }}
+        >
+          <motion.div variants={hubStaggerItem} className="relative">
+            <HeroSyncSection
+              name={name}
+              syncScore={routine.value}
+              scoreStatus={scoreStatus}
+              breakdown={breakdown}
+              routinePillars
+              onDiagnosis={() => setShowDiagnosis(true)}
+              lastUpdate={syncContext?.generated_at}
+              onRefresh={() => {
+                void refreshSync();
+                void refreshScores();
+              }}
+            />
+          </motion.div>
+        </OpticStage>
+        <OpticStage
+          id="hub-records"
+          next={{ id: "hub-support", label: "Seu acompanhamento" }}
+        >
+          {athleteId && user?.id && (
+            <HubQuickRecords
+              key={athleteId}
+              athleteId={athleteId}
+              userId={user.id}
+            />
+          )}
+          {scoreStatus === "available" && (
+            <RecordMeaning context={syncContext} />
+          )}
+        </OpticStage>
         <SyncScoreDiagnosisModal
           context={syncContext}
           open={showDiagnosis}
@@ -319,71 +331,73 @@ export default function NineFitHub() {
           breakdown={breakdown}
         />
 
-        <motion.div variants={hubStaggerItem}>
-          <HubRonCard
-            syncScore={routine.value}
-            scoreStatus={scoreStatus}
-            name={name}
-          />
-        </motion.div>
-        <StudentDetailGroup
-          title="Outros dados da sua rotina"
-          description="Peso, sequência de check-ins e engajamento registrados."
-        >
-          <div
-            className="flex flex-wrap gap-3 rounded-2xl border border-white/10 p-3 text-xs text-muted-foreground"
-            aria-label="Resumo do perfil e da rotina"
+        <OpticStage id="hub-support">
+          <motion.div variants={hubStaggerItem}>
+            <HubRonCard
+              syncScore={routine.value}
+              scoreStatus={scoreStatus}
+              name={name}
+            />
+          </motion.div>
+          <StudentDetailGroup
+            title="Outros dados da sua rotina"
+            description="Peso, sequência de check-ins e engajamento registrados."
           >
-            <span>Peso: {weightLabel}</span>
-            <span>Sequência de calibração: {streakLabel}</span>
-            <span>Engajamento: {engagementLabel}</span>
-          </div>
-        </StudentDetailGroup>
-
-        <StudentDetailGroup
-          title="Seu espaço 9FIT"
-          description="Planejamento, equipe e serviços."
-        >
-          <FitOSConsoleDock
-            weekly={weekly}
-            scoreStatus={athleteLoading ? "loading" : scoreStatus}
-            liveScoresVitals={liveScores?.vitals}
-            invalidateUserState={invalidate}
-            performancePlanTitle={performancePlanTitle}
-            cycleStatus={cycleStatus}
-            libraryStatus={libraryStatus}
-            breakdown={breakdown}
-            protocolCount={protocolCount}
-          />
-        </StudentDetailGroup>
-
-        {/* Explorar ecossistema: os 2 cards de destaque (Staff e SmartTreino) saíram do grid.
-            Fica só a entrada para a tela de módulos. */}
-        <motion.div variants={hubStaggerItem} id="ecosystem-grid">
-          <button
-            type="button"
-            onClick={() => navigate("/9fit/modules")}
-            aria-label="Abrir tela com todos os módulos"
-            className="w-full rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/20 to-black p-5 text-left flex items-center justify-between gap-3"
-          >
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight text-white">
-                Precisa de outro serviço?
-              </h2>
-              <p className="font-mono text-[11px] text-primary mt-2">
-                Explorar módulos e serviços
-              </p>
+            <div
+              className="flex flex-wrap gap-3 rounded-2xl border border-white/10 p-3 text-xs text-muted-foreground"
+              aria-label="Resumo do perfil e da rotina"
+            >
+              <span>Peso: {weightLabel}</span>
+              <span>Sequência de calibração: {streakLabel}</span>
+              <span>Engajamento: {engagementLabel}</span>
             </div>
-            <ChevronRight className="w-5 h-5 text-primary shrink-0" />
-          </button>
-        </motion.div>
+          </StudentDetailGroup>
 
-        <StudentDetailGroup
-          title="Explorar novidades"
-          description="Conteúdos e destaques adicionais do ecossistema."
-        >
-          <HubSequentialCarousel />
-        </StudentDetailGroup>
+          <StudentDetailGroup
+            title="Seu espaço 9FIT"
+            description="Planejamento, equipe e serviços."
+          >
+            <FitOSConsoleDock
+              weekly={weekly}
+              scoreStatus={athleteLoading ? "loading" : scoreStatus}
+              liveScoresVitals={liveScores?.vitals}
+              invalidateUserState={invalidate}
+              performancePlanTitle={performancePlanTitle}
+              cycleStatus={cycleStatus}
+              libraryStatus={libraryStatus}
+              breakdown={breakdown}
+              protocolCount={protocolCount}
+            />
+          </StudentDetailGroup>
+
+          {/* Explorar ecossistema: os 2 cards de destaque (Staff e SmartTreino) saíram do grid.
+            Fica só a entrada para a tela de módulos. */}
+          <motion.div variants={hubStaggerItem} id="ecosystem-grid">
+            <button
+              type="button"
+              onClick={() => navigate("/9fit/modules")}
+              aria-label="Abrir tela com todos os módulos"
+              className="optic-ecosystem-entry w-full rounded-3xl border border-white/10 bg-[#191c20] p-5 text-left flex items-center justify-between gap-3"
+            >
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-white">
+                  Precisa de outro serviço?
+                </h2>
+                <p className="font-mono text-[11px] text-primary mt-2">
+                  Explorar módulos e serviços
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+            </button>
+          </motion.div>
+
+          <StudentDetailGroup
+            title="Explorar novidades"
+            description="Conteúdos e destaques adicionais do ecossistema."
+          >
+            <HubSequentialCarousel />
+          </StudentDetailGroup>
+        </OpticStage>
       </motion.div>
 
       <BottomNavigation />
