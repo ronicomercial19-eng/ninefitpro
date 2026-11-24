@@ -25,6 +25,17 @@ try {
       { waitUntil: "domcontentloaded" }
     );
     await page.getByRole("heading", { name: "Como você está hoje?" }).waitFor();
+    const daily = page
+      .locator("details")
+      .filter({
+        has: page.locator("summary").filter({ hasText: "Registros de hoje" }),
+      });
+    await daily.locator("summary").click();
+    await daily.getByText("Pendente", { exact: true }).waitFor();
+    await daily.getByText("750 ml", { exact: true }).waitFor();
+    await daily.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await daily.screenshot({ path: "output/day-summary-" + width + ".png" });
+    await daily.locator("summary").click();
     const access = page.getByRole("navigation", { name: "Acessos do Início" });
     assert.equal(await access.locator(".home-access-item").count(), 5);
     assert.equal(await access.locator(".home-access-line").count(), 5);
@@ -104,6 +115,19 @@ try {
   );
   await page.getByRole("button", { name: "Retomar treino" }).waitFor();
   console.log("PASS current context changes primary action");
+  const currentSummary = page
+    .locator("details")
+    .filter({
+      has: page.locator("summary").filter({ hasText: "Registros de hoje" }),
+    });
+  await currentSummary.locator("summary").click();
+  await currentSummary.getByText("Respondido", { exact: true }).waitFor();
+  await currentSummary.getByText("Em andamento", { exact: true }).waitFor();
+  await currentSummary.locator("summary").click();
+  console.log(
+    "PASS concise day summary updates from the confirmed current context"
+  );
+
   for (const [width, height] of [
     [320, 568],
     [390, 844],

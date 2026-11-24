@@ -1,15 +1,69 @@
-import { businessDate, type DailyContext } from '../services/dailyContextRules';
+import { businessDate, type DailyContext } from "../services/dailyContextRules";
 
-/** Describe confirmed evidence, never infer adherence or a training adjustment from a log. */
-export function studentEvidence(context: DailyContext | null | undefined, date = businessDate()) {
+export interface StudentRecordSummary {
+  key: "checkin" | "training" | "nutrition" | "water";
+  label: string;
+  value: string;
+  recorded: boolean;
+}
+
+/** Current-day records, without inferring health, adherence or a training adjustment. */
+export function studentEvidence(
+  context: DailyContext | null | undefined,
+  date = businessDate()
+): StudentRecordSummary[] {
   if (!context || context.date !== date) return [];
+  const { today, calibration } = context;
+  const number = new Intl.NumberFormat("pt-BR");
   return [
-    { title: 'Como você está', value: context.calibration.complete ? 'Check-in respondido' : 'Check-in pendente', use: 'Sono, energia e desconforto ajudam a revisar a sessão. Confira no Treino se houve ajuste aplicado.' },
-    { title: 'O que você fez', value: context.today.workout_completed ? 'Treino concluído' : context.today.workout_in_progress ? 'Treino em andamento' : context.today.rest_day ? 'Descanso registrado' : 'Treino ainda não concluído', use: 'A sessão e seu relato de esforço ficam no histórico para acompanhar a evolução com seu professor.' },
-    { title: 'Sua rotina', value: `${context.today.meals} refeições · ${context.today.water_ml} ml de água`, use: 'Os registros mostram quando sua rotina acontece. Quantidade registrada não comprova adequação nutricional nem altera a prescrição por si só.' },
+    {
+      key: "checkin",
+      label: "Check-in",
+      value: calibration.complete ? "Respondido" : "Pendente",
+      recorded: calibration.complete,
+    },
+    {
+      key: "training",
+      label: "Treino",
+      value: today.workout_completed
+        ? "Concluído"
+        : today.workout_in_progress
+        ? "Em andamento"
+        : today.rest_day
+        ? "Descanso"
+        : today.workout_scheduled
+        ? "Programado"
+        : "Sem registro",
+      recorded:
+        today.workout_completed || today.workout_in_progress || today.rest_day,
+    },
+    {
+      key: "nutrition",
+      label: "Refeições",
+      value:
+        today.meals > 0
+          ? `${number.format(today.meals)} ${
+              today.meals === 1 ? "refeição" : "refeições"
+            }`
+          : "Sem registro",
+      recorded: today.meals > 0,
+    },
+    {
+      key: "water",
+      label: "Água",
+      value:
+        today.water_ml > 0
+          ? `${number.format(today.water_ml)} ml`
+          : "Sem registro",
+      recorded: today.water_ml > 0,
+    },
   ];
 }
 
 export function effortFeedback(rpe: number) {
-  return rpe >= 8 ? 'Você relatou um esforço alto nesta sessão.' : rpe >= 5 ? 'Você relatou um esforço moderado nesta sessão.' : 'Você relatou um esforço leve nesta sessão.';
+  return rpe >= 8
+    ? "Você relatou um esforço alto nesta sessão."
+    : rpe >= 5
+    ? "Você relatou um esforço moderado nesta sessão."
+    : "Você relatou um esforço leve nesta sessão.";
 }
