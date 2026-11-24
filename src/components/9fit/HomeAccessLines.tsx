@@ -16,6 +16,7 @@ export function HomeAccessLines({
       emoji: "🏋️",
       to: "/9fit/train",
       hint: planLabel,
+      caption: "Sua sessão",
     },
     {
       key: "nutrition",
@@ -24,6 +25,7 @@ export function HomeAccessLines({
       emoji: "🥗",
       action: onNutrition,
       hint: "Consultar alimentação e registrar água",
+      caption: "Alimentação e água",
     },
     {
       key: "progress",
@@ -32,6 +34,7 @@ export function HomeAccessLines({
       emoji: "📈",
       to: "/9fit/progresso",
       hint: "Consultar medidas, metas e histórico",
+      caption: "Medidas e metas",
     },
     {
       key: "ron",
@@ -40,6 +43,7 @@ export function HomeAccessLines({
       emoji: "🧠",
       to: "/9fit/ron?context=hub_command",
       hint: "Conversar com o assistente",
+      caption: "Seu assistente",
     },
     {
       key: "hub",
@@ -48,13 +52,17 @@ export function HomeAccessLines({
       emoji: "🌊",
       to: "/9fit/hub",
       hint: "Registrar a rotina e abrir os gráficos",
+      caption: "Registros e gráficos",
     },
   ];
   return (
     <nav className="home-access-lines" aria-label="Acessos do Início">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const content = (
           <>
+            <span className="home-access-code" aria-hidden="true">
+              0{index + 1}
+            </span>
             <span className="home-access-line" aria-hidden="true">
               <span />
             </span>
@@ -62,6 +70,9 @@ export function HomeAccessLines({
               {item.emoji}
             </span>
             <span className="home-access-label">{item.label}</span>
+            <span className="home-access-caption" aria-hidden="true">
+              {item.caption}
+            </span>
           </>
         );
         const props = {

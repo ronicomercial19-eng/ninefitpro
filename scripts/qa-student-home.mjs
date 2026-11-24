@@ -16,7 +16,10 @@ try {
     r.fulfill({ status: 200, contentType: "application/json", body: "[]" })
   );
   for (const width of [320, 390, 768, 1440]) {
-    await page.setViewportSize({ width, height: 960 });
+    await page.setViewportSize({
+      width,
+      height: width === 320 ? 568 : width === 390 ? 844 : 960,
+    });
     await page.goto(
       "http://127.0.0.1:4197/scripts/fixtures/student-experience/index.html",
       { waitUntil: "domcontentloaded" }
@@ -49,6 +52,12 @@ try {
     for (const target of await access.locator(".home-access-item").all()) {
       const box = await target.boundingBox();
       assert.ok(box.width >= 44 && box.height >= 44);
+      assert.ok(
+        await target
+          .locator(".home-access-label")
+          .evaluate((el) => el.scrollWidth <= el.clientWidth),
+        "access name must fit at phone width"
+      );
     }
 
     assert.equal(
@@ -66,9 +75,11 @@ try {
         () => document.documentElement.scrollWidth <= innerWidth
       )
     );
-    await access.evaluate(el=>el.scrollIntoView({block:'center'}));
-    await page.mouse.move(0,0);
-    await access.evaluate(el=>{if(el.contains(document.activeElement)) document.activeElement.blur();});
+    await access.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await page.mouse.move(0, 0);
+    await access.evaluate((el) => {
+      if (el.contains(document.activeElement)) document.activeElement.blur();
+    });
     await access.screenshot({
       path: "output/home-diagonals-" + width + ".png",
     });
@@ -93,6 +104,64 @@ try {
   );
   await page.getByRole("button", { name: "Retomar treino" }).waitFor();
   console.log("PASS current context changes primary action");
+  for (const [width, height] of [
+    [320, 568],
+    [390, 844],
+  ]) {
+    const phone = await browser.newPage({
+      viewport: { width, height },
+      isMobile: true,
+      hasTouch: true,
+      deviceScaleFactor: 2,
+      reducedMotion: "reduce",
+    });
+    phone.on("pageerror", (error) => errors.push(error.message));
+    await phone.route("https://fonts.googleapis.com/**", (route) =>
+      route.abort()
+    );
+    await phone.route("https://fonts.gstatic.com/**", (route) => route.abort());
+    await phone.route("https://mfrydtrzjxscbkaiwfnw.supabase.co/**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: "[]",
+      })
+    );
+    await phone.goto(
+      "http://127.0.0.1:4197/scripts/fixtures/student-experience/index.html",
+      { waitUntil: "domcontentloaded" }
+    );
+    const shortcuts = phone.getByRole("navigation", {
+      name: "Acessos do Início",
+    });
+    await shortcuts.waitFor();
+    assert.equal(
+      await phone.evaluate(() => matchMedia("(hover: none)").matches),
+      true
+    );
+    await shortcuts.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await shortcuts
+      .getByRole("button", { name: "Alimentação e água", exact: true })
+      .tap();
+    await phone.getByRole("dialog").waitFor();
+    await phone.keyboard.press("Escape");
+    await phone.getByRole("dialog").waitFor({ state: "hidden" });
+    await shortcuts.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await shortcuts.screenshot({ path: "output/home-phone-" + width + ".png" });
+    assert.ok(
+      await phone.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth
+      )
+    );
+    console.log(
+      "PASS touch phone " +
+        width +
+        "x" +
+        height +
+        ", DPR 2, full theme and nutrition dialog"
+    );
+    await phone.close();
+  }
   assert.deepEqual(errors, []);
 } finally {
   await browser.close();

@@ -12,6 +12,13 @@ import { OSDashboard } from "/src/components/9fit/OSDashboard";
 import { BottomNavigation } from "/src/components/9fit/BottomNavigation";
 import { businessDate } from "/src/services/dailyContextRules";
 import "/src/index.css";
+import "/src/styles/orange-palette.css";
+import "/src/styles/touch-feedback.css";
+import "/src/styles/experience-theme.css";
+import "/src/styles/brand-nine.css";
+document.documentElement.classList.add("dark");
+document.documentElement.dataset.ninefitSurface = "student";
+
 const Hub = React.lazy(() => import("/src/pages/9fit/Hub"));
 const Train = React.lazy(() => import("/src/pages/9fit/Train"));
 const Profile = React.lazy(() => import("/src/pages/9fit/Profile"));
@@ -178,29 +185,33 @@ window.qaContext = (patch) =>
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={client}>
     <BrowserRouter>
-      <React.Suspense fallback={<p>Carregando fixture…</p>}><main className="dark min-h-screen bg-background pb-28 text-foreground">
-        {new URLSearchParams(location.search).get("screen") === "hub-route" ? (
-          <Hub />
-        ) : new URLSearchParams(location.search).get("screen") ===
-          "train-route" ? (
-          <Train />
-        ) : new URLSearchParams(location.search).get("screen") === "profile" ? (
-          <Profile />
-        ) : new URLSearchParams(location.search).get("screen") === "hub" ? (
-          <HubFixture />
-        ) : new URLSearchParams(location.search).get("screen") === "train" ? (
-          <TrainFixture />
-        ) : (
-          <OSDashboard
-            name="Marina"
-            syncScore={72}
-            scoreStatus="available"
-            weekly={{ treinos: 2, nutri: 4, minutos: 78 }}
-            cycleStatus="active"
-          />
-        )}
-        <BottomNavigation />
-      </main></React.Suspense>
+      <React.Suspense fallback={<p>Carregando fixture…</p>}>
+        <main className="dark fit-os-grid min-h-screen bg-background pb-28 text-foreground">
+          {new URLSearchParams(location.search).get("screen") ===
+          "hub-route" ? (
+            <Hub />
+          ) : new URLSearchParams(location.search).get("screen") ===
+            "train-route" ? (
+            <Train />
+          ) : new URLSearchParams(location.search).get("screen") ===
+            "profile" ? (
+            <Profile />
+          ) : new URLSearchParams(location.search).get("screen") === "hub" ? (
+            <HubFixture />
+          ) : new URLSearchParams(location.search).get("screen") === "train" ? (
+            <TrainFixture />
+          ) : (
+            <OSDashboard
+              name="Marina"
+              syncScore={72}
+              scoreStatus="available"
+              weekly={{ treinos: 2, nutri: 4, minutos: 78 }}
+              cycleStatus="active"
+            />
+          )}
+          <BottomNavigation />
+        </main>
+      </React.Suspense>
     </BrowserRouter>
   </QueryClientProvider>
 );
