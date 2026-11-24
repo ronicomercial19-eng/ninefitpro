@@ -180,6 +180,7 @@ client.setQueryData(
   ],
   { context, routine: { value: 72, markers: [], base: 57, recordPoints: 15 } }
 );
+window.qaReadiness = (value) => client.setQueryData(["daily-readiness", user, "00000000-0000-4000-8000-000000000001"], value);
 window.qaContext = (patch) =>
   client.setQueryData(["daily-context", user], { ...context, ...patch });
 createRoot(document.getElementById("root")!).render(

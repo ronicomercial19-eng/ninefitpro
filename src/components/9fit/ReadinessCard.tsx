@@ -1,13 +1,24 @@
 import { businessDate } from "@/services/dailyContextRules";
 import { withAthlete } from "@/lib/professorWorkspace";
 import { PDIWizard } from "./PDIWizard";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { RefreshCw, ChevronDown, Activity, ArrowUpRight } from "lucide-react";
 import { useReadiness } from "@/hooks/useReadiness";
 import { readinessRpc, refreshReadiness } from "@/services/readiness";
 import { supabase } from "@/integrations/supabase/client";
 import { withTimeout } from "@/lib/withTimeout";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+const InlineCheckin = lazy(() =>
+  import("./EmojiCalibrationQuiz").then((m) => ({
+    default: m.EmojiCalibrationQuiz,
+  }))
+);
 const labels: Record<string, string> = {
   sleep: "Sono",
   energy: "Energia",
@@ -72,6 +83,7 @@ export function ReadinessCard({
   compact?: boolean;
 }) {
   const query = useReadiness(athleteId);
+  const [checkinOpen, setCheckinOpen] = useState(false);
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -176,7 +188,7 @@ export function ReadinessCard({
             {!state?.preferences?.enabled
               ? "Personalização desativada"
               : !d
-              ? "Check-in pendente"
+              ? "Antes da sessão"
               : d.status === "applied"
               ? "Ajuste aplicado"
               : "Análise registrada"}
@@ -451,48 +463,91 @@ export function ReadinessCard({
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-                Informe seu sono, energia, humor, motivação e desconforto. A
-                Sync usa essas respostas para avaliar se a sessão precisa de
-                ajustes nas séries, no descanso ou no aquecimento.
-              </p>
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-xl font-semibold tracking-tight">
+                  Seu treino começa em você.
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Cinco sinais. Uma leitura da sua sessão.
+                </p>
+              </div>
               <div
-                className={`${compact ? "hidden" : "grid"} grid-cols-3 gap-2`}
+                className="grid grid-cols-5 gap-1.5"
+                aria-label="Sinais do check-in"
               >
                 {[
-                  { n: "01", title: "Você sinaliza", text: "Check-in do dia" },
-                  {
-                    n: "02",
-                    title: "A Sync analisa",
-                    text: "Sinais + prescrição",
-                  },
-                  { n: "03", title: "Você confere", text: "Ajustes e motivos" },
-                ].map((step) => (
+                  ["🌙", "Sono", "#a78bfa"],
+                  ["⚡", "Energia", "#fbbf24"],
+                  ["🙂", "Humor", "#34d399"],
+                  ["🫶", "Corpo", "#fb7185"],
+                  ["🔥", "Motivação", "#fb923c"],
+                ].map(([emoji, label, color]) => (
                   <div
-                    key={step.n}
-                    className="rounded-xl border border-border/70 bg-background/40 p-3"
+                    key={label}
+                    className="relative overflow-hidden rounded-xl border border-white/10 bg-background/40 px-1 pb-3 pt-4 text-center"
                   >
-                    <span className="font-mono text-[10px] text-primary">
-                      {step.n}
+                    <span
+                      className="absolute inset-x-2 top-0 h-0.5 -skew-x-12"
+                      style={{ background: color }}
+                    />
+                    <span aria-hidden="true" className="block text-xl">
+                      {emoji}
                     </span>
-                    <p className="mt-2 text-xs font-semibold text-foreground">
-                      {step.title}
-                    </p>
-                    <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
-                      {step.text}
-                    </p>
+                    <span className="mt-2 block text-[10px] text-muted-foreground">
+                      {label}
+                    </span>
                   </div>
                 ))}
               </div>
               {!coach && (
-                <Link
-                  className={`${primaryBtn} inline-flex items-center justify-center gap-2 sm:w-auto`}
-                  to="/9fit/os"
-                >
-                  Responder check-in no Início
-                  <ArrowUpRight size={16} aria-hidden="true" />
-                </Link>
+                <>
+                  <button
+                    type="button"
+                    className={`${primaryBtn} inline-flex items-center justify-center gap-2 sm:w-auto`}
+                    onClick={() => setCheckinOpen(true)}
+                  >
+                    Fazer meu check-in{" "}
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </button>
+                  <p className="text-xs text-muted-foreground">
+                    Responda aqui. Confira a decisão da Sync neste card.
+                  </p>
+                  <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
+                    <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl p-4 sm:p-6">
+                      <DialogTitle>Como você chega ao treino?</DialogTitle>
+                      <DialogDescription>
+                        Responda com o que sente hoje.
+                      </DialogDescription>
+                      <Suspense
+                        fallback={<p role="status">Abrindo seu check-in…</p>}
+                      >
+                        <InlineCheckin
+                          showReadiness={false}
+                          onComplete={() => {
+                            setCheckinOpen(false);
+                            setBusy(true);
+                            setError("");
+                            void refreshReadiness(athleteId)
+                              .then(() => query.refetch())
+                              .then((result) => {
+                                if (result.error) throw result.error;
+                                window.dispatchEvent(
+                                  new Event("9fit:workout-updated")
+                                );
+                              })
+                              .catch(() =>
+                                setError(
+                                  "Check-in salvo. Não foi possível atualizar a decisão. Toque em Atualizar para tentar novamente."
+                                )
+                              )
+                              .finally(() => setBusy(false));
+                          }}
+                        />
+                      </Suspense>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
             </div>
           )}

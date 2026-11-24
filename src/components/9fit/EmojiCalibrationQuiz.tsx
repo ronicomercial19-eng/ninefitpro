@@ -37,7 +37,7 @@ function todayISO() {
   return businessDate();
 }
 
-export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: number | null) => void }) {
+export function EmojiCalibrationQuiz({ onComplete, showReadiness = true }: { onComplete?: (score: number | null) => void; showReadiness?: boolean }) {
   const { athleteId } = useAthleteId();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -135,7 +135,7 @@ export function EmojiCalibrationQuiz({ onComplete }: { onComplete?: (score: numb
           <p className="text-xs text-muted-foreground">Seus cinco sinais estão salvos. Atualize se algo mudar.</p>
           <button type="button" className="mt-2 text-xs text-primary underline" onClick={() => { setCompletedToday(false); setDone(false); setStep(0); setAnswers({}); }}>Meus sinais mudaram · atualizar</button>
         </div>
-      </div>{athleteId&&<ReadinessCard athleteId={athleteId}/>}</div>
+      </div>{showReadiness&&athleteId&&<ReadinessCard athleteId={athleteId}/>}</div>
     );
   }
 
