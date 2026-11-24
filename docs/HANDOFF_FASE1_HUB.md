@@ -1,7 +1,7 @@
 # Handoff — Fase 1 · Hub
 
 Data: 2026-10-27
-Revisão: 2026-11-20
+Revisão: 2026-11-24
 Repositório: ronicomercial19-eng/ninefitpro
 Branch: main
 
@@ -22,6 +22,9 @@ Branch: main
 - O console do Hub (`FitOSConsoleDock`) ainda pintava a barra de consistência em 0% quando `barPercent` era nulo, e ainda colava `· 0/5 sessões` no brief sempre que o objeto da semana existia. O texto dizia "lendo", a barra parecia zero.
 - O registro rápido, antes da primeira leitura, mostrava "0 de 7 dias com registro" e a barra cheia em zero. Falha ao ler o plano alimentar esvaziava as refeições e o botão oferecia "Escolher refeição", como se não houvesse plano.
 - O card "Sua alimentação hoje" dizia "sem meta prescrita" enquanto a leitura ainda não tinha voltado, ao lado de kcal em traço. Se um refresh falhava depois de um dia já lido, o card escondia kcal e plano e o resumo deixava de mostrar os números. O pedido ao RON ainda narrava "nenhum" plano e zero refeições.
+- O card do RON no Hub, enquanto o SYNC carregava ou falhava, dizia "Comece contando como você está hoje." e abria a calibração. O resumo SYNC, na mesma tela, já dizia "Lendo" ou "não confirmada".
+- Uma falha ao reler treinos, dieta ou agenda zerava os slides de resultado do RON. A semana já lida sumia e o aviso "Resultados indisponíveis" ficava sozinho.
+- No registro rápido, qualquer erro de refresh marcava a cobertura como não confirmada. Os gráficos da semana já lida viravam "Curva indisponível" e "—", mesmo com os registros ainda na memória.
 
 ## O que foi feito
 
@@ -39,6 +42,9 @@ Branch: main
 - Registro rápido: enquanto a leitura não volta, o rótulo é "Lendo os últimos 7 dias" e a barra não recebe valor. Se a primeira leitura falha, "Últimos 7 dias não confirmados". Uma leitura já confirmada não é apagada por um refresh que falha. Zero real continua "0 de 7 dias com registro".
 - Falha da view de dieta não zera o plano já lido e o botão de nutrição diz "Plano não confirmado" em vez de pedir para escolher uma refeição que não foi lida.
 - Alimentação de hoje: antes da primeira leitura, o card diz "Lendo a alimentação de hoje" e "Lendo a meta". Kcal fica em traço. Falha sem leitura anterior diz "Alimentação de hoje não confirmada" e "Meta não confirmada", não "sem meta prescrita". Se já havia leitura, um refresh que falha mantém plano, kcal e meta e avisa "atualização não confirmada". O texto enviado ao RON e ao Staff, sem leitura confirmada, não inventa plano nem zero refeições. Uma exceção na consulta também vira falha, em vez de deixar o card em "Carregando" para sempre.
+- Card do RON: em carga, "Lendo seus registros de hoje" e o atalho abre o RON, sem calibração. Em falha, "Leitura de hoje não confirmada", também sem calibração. Com SYNC disponível, offline, desatualizado ou ainda sem leitura de fato, o texto e o check-in continuam os de antes. A regra está em `src/components/9fit/ronTodayCopy.ts`.
+- Resultados do RON: falha da nova consulta não apaga os cards já mostrados. A primeira falha, sem card anterior, continua só com "Resultados indisponíveis · tentar novamente". Troca de atleta ainda zera os slides antes da nova leitura.
+- Ritmo de 7 dias: se a semana daquele atleta e daquela data já foi confirmada, um refresh que falha mantém os gráficos e o "N/7 dias". O botão "Não foi possível atualizar" continua. Sem confirmação anterior, a falha segue "Últimos 7 dias não confirmados" e a curva não desenha zero.
 
 ## O que não foi mexido
 
@@ -46,16 +52,18 @@ Branch: main
 - Checkout, prescrição, GPS, créditos e migrações.
 - Atalhos de apoio no player e o atalho Store do console, que ainda usam `/9fit/native-system`.
 - Cor semântica do anel de sync (`#FF6600` no estado estável). Não é o laranja de destaque dos cards (`#EF7A45`).
-- Textos do comando do dia, calibração e ranking. A faixa numérica da semana no Início continua escondida enquanto o snapshot não chega (`weeklyKnown`).
+- Textos do comando do dia e do ranking. O quiz de calibração em si não mudou; no card do RON ele só deixa de abrir enquanto o SYNC está carregando ou falhou. A faixa numérica da semana no Início continua escondida enquanto o snapshot não chega (`weeklyKnown`).
+- Selo de ciclo, brief semanal e a página `/9fit/ron`. Esta rodada não reabre esses contratos.
 - Bloqueio manual de acesso e splash de marca, entregues em 18/11/2026, ficaram como estão.
 
 ## Como conferir
 
 - Sem snapshot: brief sem "Sem treino", sem `0/5`, barra sem preenchimento laranja.
 - Com snapshot vazio: "Sem treino registrado esta semana" e `· 0/5 sessões`.
-- Registro rápido, antes da resposta: "Lendo os últimos 7 dias", não "0 de 7".
+- Registro rápido, antes da resposta: "Lendo os últimos 7 dias", não "0 de 7". Com a semana já desenhada, um refresh que falha não troca a curva por "Curva indisponível".
 - Alimentação de hoje, antes da resposta: "Lendo a meta", não "sem meta prescrita". Com dia já lido e refresh falho: kcal e nome do plano continuam, com "atualização não confirmada".
-- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts`, `src/lib/__tests__/hubQuickCoverage.test.ts` e `src/lib/__tests__/nutritionTodayCopy.test.ts`.
+- Card do RON, com SYNC carregando ou em erro: não aparece "Comece contando como você está hoje." e a calibração não abre sozinha. Resultados da semana já lidos não somem nesse erro.
+- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts`, `src/lib/__tests__/hubQuickCoverage.test.ts`, `src/lib/__tests__/nutritionTodayCopy.test.ts` e `src/lib/__tests__/ronTodayCopy.test.ts`.
 
 ## Próximo passo
 

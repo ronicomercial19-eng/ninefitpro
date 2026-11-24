@@ -9,6 +9,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAthleteId } from "@/hooks/useAthleteId";
 import { useRonResultCards } from "@/hooks/useRonResultCards";
+import { ronTodayCopy } from "./ronTodayCopy";
 import { EmojiCalibrationQuiz } from "./EmojiCalibrationQuiz";
 import {
   Dialog,
@@ -25,7 +26,7 @@ interface Props {
 
 export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
   const navigate = useNavigate();
-  const reliable = scoreStatus === "available" && syncScore !== null;
+  const today = ronTodayCopy(scoreStatus, syncScore);
   const color = "#EF7A45";
   const { athleteId } = useAthleteId();
   const results = useRonResultCards(athleteId);
@@ -65,23 +66,12 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
     setIndex(0);
     setCalibration(false);
   }, [athleteId]);
-  const insight = reliable
-    ? "Seus registros estão disponíveis para uma conversa."
-    : scoreStatus === "offline"
-    ? "Reconecte para atualizar seus registros."
-    : scoreStatus === "stale"
-    ? "Confira a leitura antes de interpretar o dia."
-    : "Comece contando como você está hoje.";
   const slides = [
     {
       id: "today",
-      title: insight,
-      description: reliable
-        ? "Leve uma dúvida ao RON e use seu histórico para preparar a revisão com seu professor."
-        : scoreStatus === "offline"
-        ? "A leitura não é recalculada sem conexão."
-        : "O check-in ajuda a compor o contexto; não confirma uma mudança na prescrição.",
-      action: reliable ? "Conversar com RON" : "Responder check-in",
+      title: today.title,
+      description: today.description,
+      action: today.action,
       route: "/9fit/ron",
     },
     ...results.cards,
@@ -149,7 +139,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
               }}
             >
               <Brain className="w-3 h-3" />
-              RON IA · {reliable ? "CONTEXTO DISPONÍVEL" : "LEITURA DO DIA"}
+              RON IA · {today.chip}
             </span>
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-[#EF7A45]">
@@ -159,11 +149,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
 
             <span className="flex items-center gap-1 text-[10px] font-mono text-neutral-400">
               <Zap className="w-3 h-3 text-[#EF7A45]" />
-              {!reliable
-                ? scoreStatus === "offline"
-                  ? "Offline"
-                  : "Atualizar leitura"
-                : `SYNC ${Math.round(syncScore)}/100`}
+              {today.signal}
             </span>
           </div>
 
@@ -188,7 +174,7 @@ export function HubRonCard({ syncScore, scoreStatus, name }: Props) {
                 className="mt-3 min-h-11 text-sm font-semibold text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (selected.id === "today" && !reliable)
+                  if (selected.id === "today" && today.openCheckin)
                     setCalibration(true);
                   else navigate(selected.route);
                 }}

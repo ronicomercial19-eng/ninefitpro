@@ -10,3 +10,9 @@ export function coverageLabel(read: CoverageRead, days: number): string {
 export function coverageFill(read: CoverageRead, days: number): number | undefined {
   return read === "ready" ? days : undefined;
 }
+
+/** Uma semana já confirmada não volta a "não confirmada" se o refresh falhar. */
+export function coverageReadState(confirmed: boolean, loadError: boolean): CoverageRead {
+  if (confirmed) return "ready";
+  return loadError ? "unavailable" : "loading";
+}

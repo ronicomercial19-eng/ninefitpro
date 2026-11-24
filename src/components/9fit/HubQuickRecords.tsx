@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { businessDate } from "@/services/dailyContextRules";
-import { type CoverageRead } from "@/components/9fit/hubQuickCoverage";
+import { type CoverageRead, coverageReadState } from "@/components/9fit/hubQuickCoverage";
 import { Button } from "@/components/ui/button";
 import { HubRhythmCharts } from "./HubRhythmCharts";
 import {
@@ -297,11 +297,8 @@ export function HubQuickRecords({
     },
   ];
 
-  const coverageRead: CoverageRead = loadError
-    ? "unavailable"
-    : readyContext === contextKey
-    ? "ready"
-    : "loading";
+  const confirmedWeek = readyContext === contextKey;
+  const coverageRead: CoverageRead = coverageReadState(confirmedWeek, loadError);
   const explored = rhythmRows(entries, dates, selectedDate, entireWeek);
 
   return (
