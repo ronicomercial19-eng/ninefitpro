@@ -27,6 +27,13 @@ import { WeeklyRecapPrompt } from "@/components/9fit/WeeklyRecapPrompt";
 import { type CycleStatus } from "@/components/9fit/cycleStatus";
 import { hubFactLabel } from "@/components/9fit/hubWeeklyBrief";
 import {
+  hubFocusNotice,
+  libraryAfterRead,
+  planAfterRead,
+  type ConfirmedLibrary,
+  type ConfirmedPlan,
+} from "@/components/9fit/hubFocusRead";
+import {
   IDENTITY_COPY,
   identityNotice,
 } from "@/components/9fit/identityNotice";
@@ -94,6 +101,8 @@ export default function NineFitHub() {
   const [hubLoading, setHubLoading] = useState(true);
   const hubRequest = useRef(0);
   const [hubError, setHubError] = useState<string | null>(null);
+  const confirmedPlan = useRef<ConfirmedPlan | null>(null);
+  const confirmedLibrary = useRef<ConfirmedLibrary | null>(null);
 
   const breakdown = {
     treino: liveScores?.dimensions.treino.value ?? null,
@@ -110,6 +119,8 @@ export default function NineFitHub() {
   const loadHubData = async () => {
     const request = ++hubRequest.current;
     if (!athleteId) {
+      confirmedPlan.current = null;
+      confirmedLibrary.current = null;
       setHubLoading(athleteLoading);
       setPerformancePlanTitle(null);
       setCycleStatus(athleteLoading ? "loading" : "unavailable");
@@ -117,8 +128,34 @@ export default function NineFitHub() {
       setLibraryStatus(athleteLoading ? "loading" : "unavailable");
       return;
     }
+    if (confirmedPlan.current?.athleteId !== athleteId) {
+      confirmedPlan.current = null;
+      setPerformancePlanTitle(null);
+      setCycleStatus("loading");
+    }
+    if (confirmedLibrary.current?.athleteId !== athleteId) {
+      confirmedLibrary.current = null;
+      setProtocolCount(0);
+      setLibraryStatus("loading");
+    }
     setHubLoading(true);
     setHubError(null);
+    const applyRead = (planFailed: boolean, title: string | null, libraryFailed: boolean, count: number) => {
+      const plan = planAfterRead(confirmedPlan.current, athleteId, planFailed, title);
+      const library = libraryAfterRead(confirmedLibrary.current, athleteId, libraryFailed, count);
+      confirmedPlan.current = plan.confirmed;
+      confirmedLibrary.current = library.confirmed;
+      setPerformancePlanTitle(plan.title);
+      setCycleStatus(plan.status);
+      setProtocolCount(library.count);
+      setLibraryStatus(library.status);
+      setHubError(hubFocusNotice({
+        planFailed,
+        libraryFailed,
+        planStale: plan.stale,
+        libraryStale: library.stale,
+      }));
+    };
     try {
       const [performanceResult, libraryResult] = await withTimeout(
         Promise.all([
@@ -136,38 +173,17 @@ export default function NineFitHub() {
       );
       if (request !== hubRequest.current) return;
 
-      if (!performanceResult.error) {
-        const title =
-          (performanceResult.data as { plan_title?: string | null } | null)
-            ?.plan_title || null;
-        setPerformancePlanTitle(title);
-        setCycleStatus(title ? "active" : "none");
-      } else {
-        setPerformancePlanTitle(null);
-        setCycleStatus("unavailable");
-      }
-      if (!libraryResult.error) {
-        setProtocolCount(libraryResult.count || 0);
-        setLibraryStatus("ready");
-      } else {
-        setProtocolCount(0);
-        setLibraryStatus("unavailable");
-      }
-
-      const failed = [performanceResult.error, libraryResult.error].filter(
-        Boolean
+      const title = performanceResult.error
+        ? null
+        : (performanceResult.data as { plan_title?: string | null } | null)?.plan_title || null;
+      applyRead(
+        !!performanceResult.error,
+        title,
+        !!libraryResult.error,
+        libraryResult.count || 0,
       );
-      if (failed.length === 2)
-        setHubError("Não foi possível carregar seus dados agora.");
-      else if (failed.length) setHubError("Alguns sinais estão sincronizando.");
     } catch {
-      if (request === hubRequest.current) {
-        setHubError("Não foi possível carregar seus dados agora.");
-        setPerformancePlanTitle(null);
-        setCycleStatus("unavailable");
-        setProtocolCount(0);
-        setLibraryStatus("unavailable");
-      }
+      if (request === hubRequest.current) applyRead(true, null, true, 0);
     } finally {
       if (request === hubRequest.current) setHubLoading(false);
     }
@@ -250,7 +266,7 @@ export default function NineFitHub() {
           </button>
         </div>
       )}
-      {hubLoading && (
+      {hubLoading && cycleStatus === "loading" && libraryStatus === "loading" && (
         <p className="px-4 pt-3 text-[11px] text-muted-foreground">
           Carregando seus dados…
         </p>

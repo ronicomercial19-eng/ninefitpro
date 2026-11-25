@@ -1,7 +1,7 @@
 # Handoff — Fase 1 · Hub
 
 Data: 2026-10-27
-Revisão: 2026-11-24
+Revisão: 2026-11-25
 Repositório: ronicomercial19-eng/ninefitpro
 Branch: main
 
@@ -25,6 +25,7 @@ Branch: main
 - O card do RON no Hub, enquanto o SYNC carregava ou falhava, dizia "Comece contando como você está hoje." e abria a calibração. O resumo SYNC, na mesma tela, já dizia "Lendo" ou "não confirmada".
 - Uma falha ao reler treinos, dieta ou agenda zerava os slides de resultado do RON. A semana já lida sumia e o aviso "Resultados indisponíveis" ficava sozinho.
 - No registro rápido, qualquer erro de refresh marcava a cobertura como não confirmada. Os gráficos da semana já lida viravam "Curva indisponível" e "—", mesmo com os registros ainda na memória.
+- Uma nova consulta do plano ou da biblioteca, quando falhava, apagava o ciclo e a contagem que já estavam na tela. O selo saía de "CICLO EM ANDAMENTO" para "CICLO NÃO CONFIRMADO" e a biblioteca deixava de mostrar a quantidade já lida. A primeira falha e a falha de atualização pareciam a mesma coisa.
 
 ## O que foi feito
 
@@ -45,6 +46,7 @@ Branch: main
 - Card do RON: em carga, "Lendo seus registros de hoje" e o atalho abre o RON, sem calibração. Em falha, "Leitura de hoje não confirmada", também sem calibração. Com SYNC disponível, offline, desatualizado ou ainda sem leitura de fato, o texto e o check-in continuam os de antes. A regra está em `src/components/9fit/ronTodayCopy.ts`.
 - Resultados do RON: falha da nova consulta não apaga os cards já mostrados. A primeira falha, sem card anterior, continua só com "Resultados indisponíveis · tentar novamente". Troca de atleta ainda zera os slides antes da nova leitura.
 - Ritmo de 7 dias: se a semana daquele atleta e daquela data já foi confirmada, um refresh que falha mantém os gráficos e o "N/7 dias". O botão "Não foi possível atualizar" continua. Sem confirmação anterior, a falha segue "Últimos 7 dias não confirmados" e a curva não desenha zero.
+- Ciclo e biblioteca: a regra está em `src/components/9fit/hubFocusRead.ts`. A primeira falha do plano continua "CICLO NÃO CONFIRMADO", sem título e sem afirmar ausência. A primeira falha da biblioteca continua "Não foi possível confirmar seus conteúdos", sem contar zero. Se aquele atleta já tinha leitura, o refresh que falha mantém o selo, o nome do plano e a contagem. O aviso passa a ser "Não foi possível atualizar. A última leitura confirmada continua na tela." Troca de atleta não reaproveita a leitura anterior. "Carregando seus dados…" só aparece antes da primeira leitura do ciclo e da biblioteca, não por cima de um ciclo já confirmado.
 
 ## O que não foi mexido
 
@@ -53,7 +55,7 @@ Branch: main
 - Atalhos de apoio no player e o atalho Store do console, que ainda usam `/9fit/native-system`.
 - Cor semântica do anel de sync (`#FF6600` no estado estável). Não é o laranja de destaque dos cards (`#EF7A45`).
 - Textos do comando do dia e do ranking. O quiz de calibração em si não mudou; no card do RON ele só deixa de abrir enquanto o SYNC está carregando ou falhou. A faixa numérica da semana no Início continua escondida enquanto o snapshot não chega (`weeklyKnown`).
-- Selo de ciclo, brief semanal e a página `/9fit/ron`. Esta rodada não reabre esses contratos.
+- As frases do selo de ciclo não mudaram. Em 25/11/2026 o selo só passou a permanecer quando a leitura daquele atleta já existia. O brief semanal e a página `/9fit/ron` não foram reabertos.
 - Bloqueio manual de acesso e splash de marca, entregues em 18/11/2026, ficaram como estão.
 
 ## Como conferir
@@ -63,7 +65,9 @@ Branch: main
 - Registro rápido, antes da resposta: "Lendo os últimos 7 dias", não "0 de 7". Com a semana já desenhada, um refresh que falha não troca a curva por "Curva indisponível".
 - Alimentação de hoje, antes da resposta: "Lendo a meta", não "sem meta prescrita". Com dia já lido e refresh falho: kcal e nome do plano continuam, com "atualização não confirmada".
 - Card do RON, com SYNC carregando ou em erro: não aparece "Comece contando como você está hoje." e a calibração não abre sozinha. Resultados da semana já lidos não somem nesse erro.
-- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts`, `src/lib/__tests__/hubQuickCoverage.test.ts`, `src/lib/__tests__/nutritionTodayCopy.test.ts` e `src/lib/__tests__/ronTodayCopy.test.ts`.
+- Testes: `src/lib/__tests__/hubWeeklyBrief.test.ts`, `src/lib/__tests__/hubQuickCoverage.test.ts`, `src/lib/__tests__/nutritionTodayCopy.test.ts`, `src/lib/__tests__/ronTodayCopy.test.ts` e `src/lib/__tests__/hubFocusRead.test.ts`.
+- Com ciclo já confirmado, um refresh que falha não troca "CICLO EM ANDAMENTO" por "CICLO NÃO CONFIRMADO" nem por "SEM CICLO ATIVO". Sem leitura anterior, a falha continua "CICLO NÃO CONFIRMADO".
+- Biblioteca já lida não volta a "não confirmada" só porque o refresh falhou. Zero confirmado continua "0 conteúdos".
 
 ## Próximo passo
 
