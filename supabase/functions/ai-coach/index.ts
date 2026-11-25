@@ -5,6 +5,7 @@ import {
   validatePrescriptionExercises,
 } from "../_shared/professorContract.ts";
 import { decodeRonChat } from "../_shared/ronActionContract.ts";
+import { RON_APP_MANIFEST } from "../_shared/ronAppManifest.ts";
 import { missingPhysiologyReply } from "../_shared/ronSnapshotGuard.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
@@ -471,6 +472,7 @@ Diferencie ficha declarada, percepção diária e execução observada. Registro
 ${stateInstructions[inferredState]}
 Português brasileiro. Use o contexto abaixo em TODAS as respostas. Quando citar dados, seja específico.
 NUNCA invente dados que não estão no contexto.
+${RON_APP_MANIFEST}
 ${ctx}
 
 <INSTRUÇÕES_RON>
@@ -486,6 +488,10 @@ ${ctx}
 - Não afirme que aplicou ajuste, fez reserva ou entregou um serviço sem confirmação do sistema.
 - Recomende a próxima ação objetiva nos módulos nativos. Quando a jornada estiver registrada, permita encerrar por hoje.
 - Adapte tom conforme estado inferido acima.
+- Sobre o app, use SOMENTE telas e recursos do MAPA_DO_APP. Se a pergunta for sobre algo que não está no mapa (ex.: bioimpedância, dobras cutâneas), diga que não tem certeza de que existe no app e indique a aba Equipe. Nunca cite rota ou nome de tela fora do mapa.
+- Para "como faço X no app", diga a tela do mapa e proponha NAVIGATE para ela.
+- Não presuma gênero do aluno. Fale em "você" e use termos neutros; nunca "atleta" com artigo ou flexão de gênero.
+- Dias ativos, treinos concluídos, XP e percentuais do Radar são métricas diferentes. Cite cada número com o rótulo exato que ele tem no contexto. Se o número não estiver no contexto, diga que não tem esse dado em vez de estimar.
 </INSTRUÇÕES_RON>`;
 
       // Build messages: prefer explicit `messages[]`, fall back to history + message
@@ -594,50 +600,59 @@ ${richCtx || "Sem dados adicionais fornecidos — gere recomendações pedindo q
         ' Retorne JSON com {"content":"resposta","actions":[]}. Não execute operações, não proponha ações do aluno como ações do professor.';
     if (mode === "chat" && !professional)
       systemPrompt += `
-Retorne JSON com {"content":"resposta em português","actions":[]}. Ações são propostas para confirmação humana, nunca operações já executadas.
-Use no máximo 5 ações. Tipos permitidos: NAVIGATE(payload.path em /9fit/os,/9fit/hub,/9fit/train,/9fit/planejamento,/9fit/progresso,/9fit/dieta,/9fit/dieta?action=log,/9fit/profile,/9fit/staff,/9fit/aulas-creditos,/9fit/ajuste-treino,/9fit/recovery,/9fit/avaliacao-guiada,/9fit/habit-flow); START_WORKOUT; SCHEDULE_CALENDAR; TRIGGER_RECOVERY; ADJUST_TRAINING_VOLUME.
+Retorne SOMENTE um único objeto JSON {"content":"resposta em português","actions":[]}, sem texto antes ou depois e sem cerca de código. Ações são propostas para confirmação humana, nunca operações já executadas.
+Use no máximo 5 ações. Tipos permitidos: NAVIGATE(payload.path em /9fit/os,/9fit/hub,/9fit/train,/9fit/planejamento,/9fit/progresso,/9fit/dieta,/9fit/dieta?action=log,/9fit/profile,/9fit/staff,/9fit/aulas-creditos,/9fit/ajuste-treino,/9fit/recovery,/9fit/avaliacao-guiada,/9fit/avaliacao-guiada?modo=completa,/9fit/habit-flow,/9fit/move,/9fit/pos-treino); START_WORKOUT; SCHEDULE_CALENDAR; TRIGGER_RECOVERY; ADJUST_TRAINING_VOLUME.
 LOG_WATER exige amountMl inteiro explícito entre 1 e 5000. LOG_NUTRITION exige mealName e calories/protein/carbs/fats numéricos informados pelo aluno: não invente macros. Se faltarem dados proponha NAVIGATE para o diário.
 REGISTER_PAIN exige region e intensity explícitos de 1 a 10; não prometa liberação ou mudança da prescrição. DELETE_NUTRITION só com mealId conhecido do registro.
 Toda ação tem type,title,payload e autoExecute:false. Sem solicitação clara, actions vazio. Nunca inclua tokens, identidade do usuário ou promessas de XP.`;
     let lastStatus = 0;
-    for (const provider of providers) {
-      try {
-        const response = await fetch(provider.endpoint, {
-          method: "POST",
-          signal: AbortSignal.timeout(30000),
-          headers: {
-            Authorization: `Bearer ${provider.key}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: provider.model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...chatMessages,
-            ],
-          }),
-        });
-        if (!response.ok) {
-          const txt = await response.text().catch(() => "");
-          console.error(
-            `AI provider error (${provider.name}):`,
-            response.status,
-            txt.slice(0, 400),
-          );
-          lastStatus = response.status;
-          continue;
+    providerLoop: for (const provider of providers) {
+      // No chat, pede JSON nativo ao provedor; se ele rejeitar (400), repete sem response_format.
+      for (const jsonFormat of mode === "chat" ? [true, false] : [false]) {
+        try {
+          const response = await fetch(provider.endpoint, {
+            method: "POST",
+            signal: AbortSignal.timeout(30000),
+            headers: {
+              Authorization: `Bearer ${provider.key}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: provider.model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                ...chatMessages,
+              ],
+              ...(jsonFormat
+                ? { response_format: { type: "json_object" } }
+                : {}),
+            }),
+          });
+          if (!response.ok) {
+            const txt = await response.text().catch(() => "");
+            console.error(
+              `AI provider error (${provider.name}):`,
+              response.status,
+              txt.slice(0, 400),
+            );
+            lastStatus = response.status;
+            if (jsonFormat && response.status === 400) continue;
+            continue providerLoop;
+          }
+          const result = await response.json();
+          const candidate = result.choices?.[0]?.message?.content;
+          if (typeof candidate === "string" && candidate.trim().length > 0) {
+            content = candidate;
+            break providerLoop;
+          }
+          console.error(`AI provider returned empty content (${provider.name})`);
+          lastStatus = 502;
+          continue providerLoop;
+        } catch (e: any) {
+          console.error(`AI provider exception (${provider.name}):`, e?.message);
+          lastStatus = 503;
+          continue providerLoop;
         }
-        const result = await response.json();
-        const candidate = result.choices?.[0]?.message?.content;
-        if (typeof candidate === "string" && candidate.trim().length > 0) {
-          content = candidate;
-          break;
-        }
-        console.error(`AI provider returned empty content (${provider.name})`);
-        lastStatus = 502;
-      } catch (e: any) {
-        console.error(`AI provider exception (${provider.name}):`, e?.message);
-        lastStatus = 503;
       }
     }
 
@@ -737,4 +752,3 @@ Toda ação tem type,title,payload e autoExecute:false. Sem solicitação clara,
     return apiError("INTERNAL_ERROR", e?.message || "Erro interno", 500);
   }
 }, {bucket:'ai'}));
-
