@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ChevronRight,
@@ -25,6 +25,14 @@ import { useTiltCard } from "@/hooks/useTiltCard";
 import { ModuleHologram } from "./ModuleHologram";
 import { EcosystemOverlay } from "./EcosystemOverlay";
 import { moduleRoute, STAFF_FLOW_ROUTE } from "@/lib/moduleRoute";
+import {
+  cardStatusCopy,
+  catalogAfterRead,
+  configuredCountLabel,
+  hologramStatusCopy,
+  type ConfirmedCatalog,
+  type ModuleLink,
+} from "./ecosystemCatalogRead";
 
 interface PhysioModule {
   id: string;
@@ -311,17 +319,28 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   const [showOverlay, setShowOverlay] = useState(false);
   const [previewModuleKey, setPreviewModuleKey] = useState<string | null>(null);
   const [items, setItems] = useState<PhysioModule[]>([]);
-  const [statusByKey, setStatusByKey] = useState<Record<string, "native" | "configured" | "waiting" | "not_configured">>({});
+  const [statusByKey, setStatusByKey] = useState<Record<string, ModuleLink>>({});
   const [iframeByKey, setIframeByKey] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [catalogUnread, setCatalogUnread] = useState(false);
+  const [staleNotice, setStaleNotice] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const confirmedRef = useRef<ConfirmedCatalog<PhysioModule> | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
+    const scope = category ?? "all";
+    const previous = confirmedRef.current?.scope === scope ? confirmedRef.current : null;
+    if (!previous) {
+      confirmedRef.current = null;
+      setLoading(true);
+      setItems([]);
+      setStatusByKey({});
+      setIframeByKey({});
+      setCatalogUnread(false);
+      setStaleNotice(null);
+    }
 
     async function loadModules() {
       try {
@@ -355,8 +374,6 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         // Sort by display order
         list.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
-        setItems(list);
-
         const keys = list.map((m) => m.connector_key).filter(Boolean);
         const { data: conns, error: connectorError } = keys.length
           ? await supabase.from("api_connectors").select("key, status, iframe_url").in("key", keys)
@@ -364,7 +381,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
 
         if (connectorError) throw connectorError;
         const connectorByKey = new Map((conns || []).map((c) => [c.key, c]));
-        const map: Record<string, "native" | "configured" | "waiting" | "not_configured"> = {};
+        const map: Record<string, ModuleLink> = {};
         const iframeMap: Record<string, string | null> = {};
 
         list.forEach((m) => {
@@ -382,20 +399,35 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
           }
         });
 
-        if (!cancelled) {
-          setStatusByKey(map);
-          setIframeByKey(iframeMap);
-          setLoading(false);
-        }
+        if (cancelled) return;
+        const next = catalogAfterRead(previous, scope, false, list, map, iframeMap);
+        confirmedRef.current = next.confirmed;
+        setItems(next.items);
+        setStatusByKey(next.statusByKey);
+        setIframeByKey(next.iframeByKey);
+        setCatalogUnread(false);
+        setStaleNotice(null);
+        setLoading(false);
       } catch (err) {
         console.error("[EcosystemGrid] Load error:", err);
-        if (!cancelled) {
-          setItems(CANONICAL_MODULES);
-          const fallbackStatus: Record<string, "waiting"> = {};
-          CANONICAL_MODULES.forEach((m) => { fallbackStatus[m.key] = "waiting"; });
-          setStatusByKey(fallbackStatus);
-          setLoading(false);
+        if (cancelled) return;
+        const known = category
+          ? CANONICAL_MODULES.filter((m) => m.category.toLowerCase() === category.toLowerCase())
+          : CANONICAL_MODULES;
+        const next = catalogAfterRead(previous, scope, true, known, {}, {});
+        confirmedRef.current = next.confirmed;
+        if (!next.stale) {
+          setItems(next.items);
+          setStatusByKey({});
+          setIframeByKey({});
         }
+        setCatalogUnread(next.unread);
+        setStaleNotice(
+          next.stale
+            ? "Não foi possível atualizar. A última leitura confirmada continua na tela."
+            : null,
+        );
+        setLoading(false);
       }
     }
 
@@ -433,7 +465,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     habitflow: "/9fit/habitflow",
   };
 
-  if (loading)
+  if (loading && items.length === 0)
     return (
       <section className="space-y-4" aria-busy="true">
         <div className="h-5 w-40 bg-muted/40 animate-pulse rounded-md" />
@@ -452,24 +484,23 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
       </section>
     );
 
-  if (loadError)
-    return (
-      <section className="border border-destructive/30 bg-destructive/5 p-4 rounded-2xl text-sm text-muted-foreground flex items-center justify-between gap-3">
-        <span>{loadError}</span>
-        <button
-          type="button"
-          onClick={() => setReloadToken((value) => value + 1)}
-          className="inline-flex items-center gap-1.5 text-primary font-semibold shrink-0 cursor-pointer"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Tentar novamente
-        </button>
-      </section>
-    );
-
   if (!items.length)
     return (
-      <section className="border border-white/10 bg-card/40 p-5 rounded-2xl text-sm text-muted-foreground">
-        Nenhum módulo disponível nesta categoria.
+      <section className="border border-white/10 bg-card/40 p-5 rounded-2xl text-sm text-muted-foreground flex items-center justify-between gap-3">
+        <span>
+          {catalogUnread
+            ? "Não foi possível confirmar os módulos desta categoria. Isso não significa que eles estão desligados."
+            : "Nenhum módulo disponível nesta categoria."}
+        </span>
+        {catalogUnread && (
+          <button
+            type="button"
+            onClick={() => setReloadToken((value) => value + 1)}
+            className="inline-flex items-center gap-1.5 text-primary font-semibold shrink-0 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Tentar novamente
+          </button>
+        )}
       </section>
     );
 
@@ -491,6 +522,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   };
 
   if (variant === "hologram") return <>
+    <CatalogNotice unread={catalogUnread} staleNotice={staleNotice} onRetry={() => setReloadToken((value) => value + 1)} />
     <ModuleHologram modules={visibleItems.map(m => {
       const meta = MODULE_META[m.key];
       const status = statusByKey[m.key];
@@ -499,7 +531,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         icon: meta?.icon || Sparkles,
         color: ({ staff: "#ac9cf5", smarttreino: "#f68a59", ron: "#a7a4ff", progress: "#7abcf4", progresso: "#7abcf4", biblioteca: "#e9ba7c" } as Record<string,string>)[m.key] || meta?.color || "#70d8e8",
         available: Boolean(destination(m)) || status === "native" || status === "configured",
-        status: status === "waiting" ? "Catálogo em modo de reserva" : ["staff", "store", "foods", "events"].includes(m.key) ? "Abre o serviço parceiro" : status === "native" ? "Disponível no app" : status === "configured" ? "Serviço externo" : "Integração não confirmada",
+        status: hologramStatusCopy(m.key, status, catalogUnread),
         onOpen: () => openModule(m) };
     })} />
     <EcosystemOverlay open={showOverlay} initialModuleKey={previewModuleKey} onClose={() => setShowOverlay(false)} />
@@ -512,11 +544,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
     const route = destination(m);
     const status = statusByKey[m.key];
     const online = status === "native" || status === "configured";
-    const label =
-      ["staff", "store", "foods", "events"].includes(m.key) ? "Serviço externo" : status === "native" ? "Tela no app"
-      : status === "configured" ? "Destino configurado · disponibilidade externa não verificada"
-      : status === "waiting" ? "Catálogo temporariamente indisponível"
-      : "Integração não configurada";
+    const label = cardStatusCopy(m.key, status, catalogUnread);
     return (
       <EcosystemModuleCard
         key={m.id}
@@ -525,6 +553,7 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
         online={online}
         label={label}
         canOpen={Boolean(route) || online}
+        blockedLabel={catalogUnread ? "Leitura não confirmada" : "Indisponível"}
         fallbackImage={MODULE_IMAGES[m.key]}
         accessibilityLabel={moduleActions[m.key] || m.description || label}
         variant={cardVariant}
@@ -536,13 +565,14 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
 
   return (
     <section className="space-y-4">
+      <CatalogNotice unread={catalogUnread} staleNotice={staleNotice} onRetry={() => setReloadToken((value) => value + 1)} />
       {showHeader && (
         <header className="p-5 bg-gradient-to-r from-primary/20 to-black rounded-3xl border border-primary/20">
           <h2 className="text-xl font-black uppercase tracking-tight text-white">
             Explorar ecossistema
           </h2>
           <p className="font-mono text-[11px] text-primary mt-2">
-            {activeCount} DE {items.length} DESTINOS CONFIGURADOS
+            {configuredCountLabel(activeCount, items.length, catalogUnread)}
           </p>
           {items.length > teaserItems.length && (
             <button
@@ -574,12 +604,39 @@ export function EcosystemGrid({ category, variant = "grid", showHeader = true, s
   );
 }
 
+function CatalogNotice({
+  unread,
+  staleNotice,
+  onRetry,
+}: {
+  unread: boolean;
+  staleNotice: string | null;
+  onRetry: () => void;
+}) {
+  if (!unread && !staleNotice) return null;
+  return (
+    <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-muted-foreground" role="status">
+      <span>
+        {staleNotice ?? "Não foi possível confirmar o catálogo. Os módulos abaixo não estão desligados."}
+      </span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="inline-flex items-center gap-1.5 shrink-0 font-semibold text-primary cursor-pointer"
+      >
+        <RefreshCw className="w-3.5 h-3.5" /> Tentar novamente
+      </button>
+    </div>
+  );
+}
+
 interface CardItemProps {
   m: PhysioModule;
   src: string | undefined | null;
   online: boolean;
   label: string;
   canOpen: boolean;
+  blockedLabel: string;
   fallbackImage: string | undefined;
   accessibilityLabel: string;
   variant: "grid" | "rail" | "dense";
@@ -593,6 +650,7 @@ function EcosystemModuleCard({
   online,
   label,
   canOpen,
+  blockedLabel,
   fallbackImage,
   accessibilityLabel,
   variant,
@@ -672,7 +730,7 @@ function EcosystemModuleCard({
             <p className="font-display font-black text-sm sm:text-base text-white group-hover:text-primary transition-colors tracking-tight truncate">
               {m.name}
             </p>
-              <span className="block text-xs font-semibold text-primary">{canOpen ? accessibilityLabel : "Indisponível"}</span>
+              <span className="block text-xs font-semibold text-primary">{canOpen ? accessibilityLabel : blockedLabel}</span>
             <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5 font-semibold">
               {meta.category || m.category || "PERFORMANCE"}
             </p>
@@ -736,7 +794,7 @@ function EcosystemModuleCard({
           <p className="font-display font-black text-sm leading-tight text-white group-hover:text-primary transition-colors truncate">
             {m.name}
           </p>
-            <span className="block text-xs font-semibold text-primary">{canOpen ? accessibilityLabel : "Indisponível"}</span>
+            <span className="block text-xs font-semibold text-primary">{canOpen ? accessibilityLabel : blockedLabel}</span>
           <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-400 truncate mt-0.5 font-semibold">
             {meta.category || m.category}
           </p>

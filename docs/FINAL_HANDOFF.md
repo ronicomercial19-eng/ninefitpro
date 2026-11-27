@@ -1,7 +1,7 @@
 # Handoff final — NineFitPro
 
 A main contém os blocos 1–6 executados.
-Última correção de consistência: Hub, 25/11/2026. A Fase 1 está em [HANDOFF_FASE1_HUB.md](HANDOFF_FASE1_HUB.md). A Fase 2 permanece em [HANDOFF_FASE2_TRAIN.md](HANDOFF_FASE2_TRAIN.md). A Fase 3 está em [HANDOFF_FASE3_INICIO.md](HANDOFF_FASE3_INICIO.md). A Fase 4 está em [HANDOFF_FASE4_PERFIL.md](HANDOFF_FASE4_PERFIL.md). A Fase 5 está em [HANDOFF_FASE5_RON.md](HANDOFF_FASE5_RON.md).
+Última correção de consistência: módulos do ecossistema, 27/11/2026. A Fase 1 está em [HANDOFF_FASE1_HUB.md](HANDOFF_FASE1_HUB.md). A Fase 2 permanece em [HANDOFF_FASE2_TRAIN.md](HANDOFF_FASE2_TRAIN.md). A Fase 3 está em [HANDOFF_FASE3_INICIO.md](HANDOFF_FASE3_INICIO.md). A Fase 4 está em [HANDOFF_FASE4_PERFIL.md](HANDOFF_FASE4_PERFIL.md). A Fase 5 está em [HANDOFF_FASE5_RON.md](HANDOFF_FASE5_RON.md). A Fase 6 está em [HANDOFF_FASE6_ECOSSISTEMA.md](HANDOFF_FASE6_ECOSSISTEMA.md).
 
 ## Publicação Lovable
 1. Sincronizar a branch main.
@@ -18,6 +18,12 @@ A main contém os blocos 1–6 executados.
 12. No card do RON dentro do Hub, SYNC carregando ou em erro não pode dizer "Comece contando como você está hoje." nem abrir a calibração. Uma falha ao reler os resultados não pode apagar os cards da semana já mostrados.
 13. No ritmo de 7 dias, uma semana já confirmada não pode virar "Curva indisponível" só porque o refresh falhou.
 14. No Hub, ciclo ou biblioteca já confirmados não podem sumir só porque o refresh falhou. Sem leitura anterior, falha do plano continua "CICLO NÃO CONFIRMADO" e não "SEM CICLO ATIVO".
+15. Em `/9fit/modules`, falha ao ler o catálogo não pode dizer "Catálogo em modo de reserva", "temporariamente indisponível" nem "0 destinos configurados". Uma atualização que falha não apaga o catálogo já confirmado.
+
+## O que entrou em 27/11/2026 nos módulos
+- `catalogAfterRead` separa a primeira falha de uma atualização que falha.
+- A primeira falha mantém os módulos conhecidos abríveis e diz "Leitura do módulo não confirmada".
+- Status, lista e iframe já confirmados permanecem quando a consulta seguinte falha no mesmo escopo.
 
 ## O que entrou em 25/11/2026 no Hub
 - `planAfterRead` e `libraryAfterRead` separam a primeira falha de uma atualização que falha.
@@ -39,7 +45,7 @@ A main contém os blocos 1–6 executados.
 - `coverageReadState` mantém o ritmo de 7 dias já lido durante um refresh que falha.
 
 ## Pendências conhecidas
-- Fases 6 a 8 ainda não foram reabertas nesta rodada: módulos do ecossistema, painel do professor e o passo final aluno/professor.
+- Fase 6 do catálogo do aluno foi reaberta em 27/11/2026. Fases 7 e 8 desta rodada continuam abertas: painel do professor com as APIs respectivas e o passo final aluno/professor.
 - O redesign Nine Core do painel do professor (05/11/2026) não foi reaberto aqui.
 - 5 módulos em atenção/configuração.
 - 5 tabelas RLS sem política.

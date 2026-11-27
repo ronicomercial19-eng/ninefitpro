@@ -30,3 +30,5 @@ Branch: main
 ## Próximo passo
 
 Fase 6 — módulos do ecossistema: conferir se um módulo sem leitura ainda aparece como desligado ou sem conteúdo. Não reabrir a conversa do RON nem o aviso de ficha.
+
+Esse passo foi executado em 27/11/2026. O registro está em [HANDOFF_FASE6_ECOSSISTEMA.md](HANDOFF_FASE6_ECOSSISTEMA.md).
